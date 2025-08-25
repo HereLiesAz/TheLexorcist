@@ -8,5 +8,7 @@ data class FinancialEntry(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
     val amount: String,
-    val timestamp: Long
+    val timestamp: Long,
+    val sourceDocument: String,
+    val documentDate: Long
 )
