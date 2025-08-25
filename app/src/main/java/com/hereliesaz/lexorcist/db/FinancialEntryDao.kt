@@ -15,4 +15,7 @@ interface FinancialEntryDao {
             "CASE WHEN :sortOrder = 'AMOUNT_ASC' THEN CAST(REPLACE(REPLACE(amount, '$', ''), ',', '') AS REAL) END ASC, " +
             "CASE WHEN :sortOrder = 'AMOUNT_DESC' THEN CAST(REPLACE(REPLACE(amount, '$', ''), ',', '') AS REAL) END DESC")
     suspend fun getEntries(sortOrder: SortOrder, startDate: Long, endDate: Long): List<FinancialEntry>
+
+    @Query("SELECT * FROM financial_entries")
+    suspend fun getAllEntries(): List<FinancialEntry>
 }
