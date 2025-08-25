@@ -10,5 +10,6 @@ data class FinancialEntry(
     val amount: String,
     val timestamp: Long,
     val sourceDocument: String,
-    val documentDate: Long
+    val documentDate: Long,
+    val category: String = "Uncategorized"
 )
