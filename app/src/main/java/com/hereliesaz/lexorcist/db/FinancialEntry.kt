@@ -1,4 +1,4 @@
-package com.example.legalparser.db
+package com.hereliesaz.lexorcist.db
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

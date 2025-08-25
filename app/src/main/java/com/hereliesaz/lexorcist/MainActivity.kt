@@ -1,4 +1,4 @@
-package com.example.legalparser
+package com.hereliesaz.lexorcist
 
 import android.graphics.Bitmap
 import android.net.Uri
@@ -15,8 +15,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.legalparser.db.AppDatabase
-import com.example.legalparser.db.FinancialEntry
+import com.hereliesaz.lexorcist.db.AppDatabase
+import com.hereliesaz.lexorcist.db.FinancialEntry
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
@@ -28,7 +28,7 @@ import android.app.DatePickerDialog
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Spinner
-import com.example.legalparser.db.SortOrder
+import com.hereliesaz.lexorcist.db.SortOrder
 import java.text.SimpleDateFormat
 
 class MainActivity : AppCompatActivity() {

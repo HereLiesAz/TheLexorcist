@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">LegalParser</string>
+    <string name="app_name">The Lexorcist</string>
     <string-array name="sort_options">
         <item>Sort by Date (Newest)</item>
         <item>Sort by Date (Oldest)</item>

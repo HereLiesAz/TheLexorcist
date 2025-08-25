@@ -1,4 +1,4 @@
-package com.example.legalparser.db
+package com.hereliesaz.lexorcist.db
 
 enum class SortOrder {
     DATE_ASC,

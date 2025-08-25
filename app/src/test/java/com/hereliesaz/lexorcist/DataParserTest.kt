@@ -1,4 +1,4 @@
-package com.example.legalparser
+package com.hereliesaz.lexorcist
 
 import org.junit.Assert.assertEquals
 import org.junit.Test

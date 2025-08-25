@@ -1,4 +1,4 @@
-package com.example.legalparser.db
+package com.hereliesaz.lexorcist.db
 
 import android.content.Context
 import androidx.room.Database

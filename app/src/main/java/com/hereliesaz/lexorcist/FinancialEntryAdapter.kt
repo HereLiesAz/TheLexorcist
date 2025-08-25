@@ -1,4 +1,4 @@
-package com.example.legalparser
+package com.hereliesaz.lexorcist
 
 import android.view.LayoutInflater
 import android.view.View
@@ -7,7 +7,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.example.legalparser.db.FinancialEntry
+import com.hereliesaz.lexorcist.db.FinancialEntry
 import java.text.SimpleDateFormat
 import java.util.*
 
