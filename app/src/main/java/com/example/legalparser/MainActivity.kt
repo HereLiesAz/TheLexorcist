@@ -24,6 +24,13 @@ import kotlinx.coroutines.launch
 import java.text.NumberFormat
 import java.util.*
 
+import android.app.DatePickerDialog
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
+import android.widget.Spinner
+import com.example.legalparser.db.SortOrder
+import java.text.SimpleDateFormat
+
 class MainActivity : AppCompatActivity() {
 
     private lateinit var selectImageButton: Button
@@ -31,15 +38,21 @@ class MainActivity : AppCompatActivity() {
     private lateinit var entriesRecyclerView: RecyclerView
     private lateinit var totalAmountTextView: TextView
     private lateinit var entryAdapter: FinancialEntryAdapter
+    private lateinit var sortSpinner: Spinner
+    private lateinit var filterButton: Button
 
     private val db by lazy { AppDatabase.getDatabase(this) }
+    private var currentSortOrder = SortOrder.DATE_DESC
+    private var startDate: Long? = null
+    private var endDate: Long? = null
+
 
     private val selectImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let {
             val bitmap = MediaStore.Images.Media.getBitmap(this.contentResolver, it)
             imageView.setImageBitmap(bitmap)
             imageView.visibility = View.VISIBLE
-            runTextRecognition(bitmap)
+            runTextRecognition(bitmap, it)
         }
     }
 
@@ -51,8 +64,12 @@ class MainActivity : AppCompatActivity() {
         imageView = findViewById(R.id.image_view)
         entriesRecyclerView = findViewById(R.id.entries_recyclerview)
         totalAmountTextView = findViewById(R.id.total_amount_textview)
+        sortSpinner = findViewById(R.id.sort_spinner)
+        filterButton = findViewById(R.id.filter_button)
 
         setupRecyclerView()
+        setupSortSpinner()
+        setupFilterButton()
 
         selectImageButton.setOnClickListener {
             selectImageLauncher.launch("image/*")
@@ -61,19 +78,72 @@ class MainActivity : AppCompatActivity() {
         loadAndDisplayEntriesAndTotal()
     }
 
+    private fun setupFilterButton() {
+        filterButton.setOnClickListener {
+            showDateRangePicker()
+        }
+    }
+
+    private fun showDateRangePicker() {
+        val calendar = Calendar.getInstance()
+        val year = calendar.get(Calendar.YEAR)
+        val month = calendar.get(Calendar.MONTH)
+        val day = calendar.get(Calendar.DAY_OF_MONTH)
+
+        DatePickerDialog(this, { _, startYear, startMonth, startDay ->
+            val startCalendar = Calendar.getInstance().apply { set(startYear, startMonth, startDay, 0, 0, 0) }
+            startDate = startCalendar.timeInMillis
+
+            DatePickerDialog(this, { _, endYear, endMonth, endDay ->
+                val endCalendar = Calendar.getInstance().apply { set(endYear, endMonth, endDay, 23, 59, 59) }
+                endDate = endCalendar.timeInMillis
+                loadAndDisplayEntriesAndTotal()
+            }, year, month, day).apply {
+                setTitle("Select End Date")
+                show()
+            }
+        }, year, month, day).apply {
+            setTitle("Select Start Date")
+            show()
+        }
+    }
+
+    private fun setupSortSpinner() {
+        val adapter = ArrayAdapter.createFromResource(
+            this,
+            R.array.sort_options,
+            android.R.layout.simple_spinner_item
+        )
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        sortSpinner.adapter = adapter
+        sortSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                currentSortOrder = when (position) {
+                    0 -> SortOrder.DATE_DESC
+                    1 -> SortOrder.DATE_ASC
+                    2 -> SortOrder.AMOUNT_DESC
+                    else -> SortOrder.AMOUNT_ASC
+                }
+                loadAndDisplayEntriesAndTotal()
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+        }
+    }
+
     private fun setupRecyclerView() {
         entryAdapter = FinancialEntryAdapter()
         entriesRecyclerView.adapter = entryAdapter
         entriesRecyclerView.layoutManager = LinearLayoutManager(this)
     }
 
-    private fun runTextRecognition(bitmap: Bitmap) {
+    private fun runTextRecognition(bitmap: Bitmap, uri: Uri) {
         val image = InputImage.fromBitmap(bitmap, 0)
         val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
         recognizer.process(image)
             .addOnSuccessListener { visionText ->
                 Toast.makeText(this, "Text recognized!", Toast.LENGTH_SHORT).show()
-                parseTextAndSaveData(visionText.text)
+                parseTextAndSaveData(visionText.text, uri)
             }
             .addOnFailureListener { e ->
                 Log.e("OCR", "Error recognizing text", e)
@@ -81,13 +151,20 @@ class MainActivity : AppCompatActivity() {
             }
     }
 
-    private fun parseTextAndSaveData(text: String) {
+    private fun parseTextAndSaveData(text: String, uri: Uri) {
         val amounts = DataParser.parseAmounts(text)
+        val dates = DataParser.parseDates(text)
+        val documentDate = dates.firstOrNull() ?: System.currentTimeMillis()
 
         if (amounts.isNotEmpty()) {
             lifecycleScope.launch {
                 amounts.forEach { amount ->
-                    val entry = FinancialEntry(amount = amount, timestamp = System.currentTimeMillis())
+                    val entry = FinancialEntry(
+                        amount = amount,
+                        timestamp = System.currentTimeMillis(),
+                        sourceDocument = uri.toString(),
+                        documentDate = documentDate
+                    )
                     db.financialEntryDao().insert(entry)
                 }
                 Log.d("DB", "Inserted ${amounts.size} entries.")
@@ -100,7 +177,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun loadAndDisplayEntriesAndTotal() {
         lifecycleScope.launch {
-            val entries = db.financialEntryDao().getAllEntries()
+            val entries = db.financialEntryDao().getEntries(
+                currentSortOrder,
+                startDate ?: 0,
+                endDate ?: Long.MAX_VALUE
+            )
             entryAdapter.submitList(entries)
 
             val total = entries.sumOf { entry ->

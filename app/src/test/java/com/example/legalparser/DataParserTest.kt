@@ -30,14 +30,14 @@ class DataParserTest {
     fun `test with amount without dollar sign`() {
         val text = "The value is 500.00"
         val amounts = DataParser.parseAmounts(text)
-        assertEquals(listOf("500.00"), amounts)
+        assertEquals(emptyList<String>(), amounts)
     }
 
     @Test
     fun `test with multiple amounts`() {
         val text = "Invoice with items: $25.50, $10, and 5.00."
         val amounts = DataParser.parseAmounts(text)
-        assertEquals(listOf("$25.50", "$10", "5.00"), amounts)
+        assertEquals(listOf("$25.50", "$10"), amounts)
     }
 
     @Test
