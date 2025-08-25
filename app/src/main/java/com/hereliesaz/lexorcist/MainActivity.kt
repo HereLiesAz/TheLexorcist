@@ -38,7 +38,6 @@ import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.Scope
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.common.SignInButton
-import androidx.activity.result.contract.ActivityResultContracts
 import android.app.AlertDialog
 import android.widget.EditText
 import android.text.InputType
