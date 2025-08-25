@@ -74,9 +74,9 @@ dependencies {
 
     // Google APIs
     implementation("com.google.api-client:google-api-client-android:2.2.0")
-    implementation("com.google.apis:google-api-services-drive:v3-rev20240701-2.0.0")
-    implementation("com.google.apis:google-api-services-sheets:v4-rev20240630-2.0.0")
-    implementation("com.google.apis:google-api-services-script:v1-rev20220627-2.0.0")
+    implementation("com.google.apis:google-api-services-drive:v3-rev20250819-2.0.0")
+    implementation("com.google.apis:google-api-services-sheets:v4-rev20250616-2.0.0")
+    implementation("com.google.apis:google-api-services-script:v1-rev20250623-2.0.0")
 }
 
 kapt {
