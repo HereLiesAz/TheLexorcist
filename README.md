@@ -1,13 +1,13 @@
 # Lexorcist
 
-Lexorcist is an Android application designed to help users track their expenses by digitizing paper receipts. Using the device's camera, Lexorcist can perform Optical Character Recognition (OCR) on a receipt, extract relevant financial information, and store it in a local database. This provides a convenient way to manage and review expenses without manually entering data.
+Lexorcist is an Android application designed for legal professionals to parse, track, and manage evidence from financial documents. By using the device's camera to perform Optical Character Recognition (OCR) on receipts and other documents, Lexorcist extracts key information and stores it for evidence management. This tool helps streamline the process of handling financial evidence for legal cases.
 
 ## Features
 
-- **OCR-based Expense Tracking:** Automatically digitize receipts by taking a picture. The app uses Google's ML Kit to recognize and extract text.
-- **Data Parsing:** Intelligently parses recognized text to identify key information such as the total amount, date, and vendor.
-- **Local Storage:** Securely stores all extracted financial data on the device using a Room database.
-- **Expense History:** View a list of all saved financial entries, sorted by date.
+- **OCR-based Evidence Tracking:** Automatically digitize receipts and other financial documents by taking a picture. The app uses Google's ML Kit to recognize and extract text.
+- **Data Parsing:** Intelligently parses recognized text to identify key information such as the total amount, date, and vendor, which can be used as evidence.
+- **Local Storage:** Securely stores all extracted financial data on the device using a Room database, ensuring the integrity of the evidence.
+- **Evidence History:** View a list of all saved financial entries, which can be used as a chain of custody for the evidence.
 
 ## Technologies Used
 

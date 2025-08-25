@@ -3,18 +3,23 @@
 This document outlines the long-term vision for the Lexorcist application. These are features and enhancements that can be considered after the items in the `TODO.md` file have been addressed.
 
 ## Core Functionality Enhancements
-- **Cloud Sync:** Implement a cloud synchronization feature to allow users to back up their data and access it from multiple devices. This would likely involve a backend server and user authentication.
-- **Multi-Currency Support:** Add the ability to handle expenses in different currencies, with automatic conversion to a user-defined base currency.
-- **Budgeting and Financial Planning:** Introduce features that allow users to set budgets, track their spending against those budgets, and receive insights into their financial health.
+- **Secure Cloud Sync:** Implement a secure, encrypted cloud synchronization feature to allow legal teams to back up their data and collaborate across multiple devices. This would require a robust backend server with strong user authentication and access control.
+- **Multi-Currency Support:** Add the ability to handle financial documents in different currencies, with automatic conversion to a user-defined base currency for consistent reporting.
+- **Financial Analysis for Legal Cases:** Introduce features for analyzing financial data in the context of a legal case, such as identifying patterns, flagging suspicious transactions, and generating summary reports.
+
+## Legal Tech Features
+- **Case Management Integration:** Allow users to link financial evidence to specific cases or clients within the app.
+- **Evidence Tagging and Notes:** Add the ability to tag evidence with relevant keywords (e.g., "disputed," "fraudulent") and add notes for context.
+- **Secure, Auditable Export:** Provide a feature to export evidence in a secure, auditable format (e.g., a signed PDF with a chain of custody report) for use in legal proceedings.
 
 ## Platform Expansion
-- **Web Application:** Develop a web-based version of the app that syncs with the mobile app. This would provide users with a more powerful interface for managing and analyzing their data.
-- **iOS Version:** Create a version of the app for iOS to reach a wider audience.
+- **Web Application:** Develop a web-based version of the app that syncs with the mobile app. This would provide a more powerful interface for managing and analyzing evidence, especially for large cases.
+- **iOS Version:** Create a version of the app for iOS to reach a wider audience of legal professionals.
 
 ## Advanced Features
-- **Machine Learning-based Categorization:** Use machine learning to automatically categorize expenses based on the vendor or other information from the receipt.
-- **Integration with Financial Institutions:** Allow users to link their bank accounts or credit cards to automatically import transactions.
-- **Recurring Expenses:** Add a feature to manage recurring expenses, such as monthly subscriptions or bills.
+- **ML-based Evidence Categorization:** Use machine learning to automatically categorize financial documents based on their content, helping to identify relevant evidence more quickly.
+- **Integration with Legal Software:** Explore integrations with popular legal practice management software to streamline workflows.
+- **Recurring Transactions:** Add a feature to manage and track recurring transactions that may be relevant to a case.
 
 ## Monetization
 - **Freemium Model:** Offer a free version of the app with basic features, and a premium version with advanced features like cloud sync, unlimited receipt scans, and advanced reporting.
