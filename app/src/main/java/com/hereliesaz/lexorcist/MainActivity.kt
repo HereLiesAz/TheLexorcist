@@ -1,197 +1,222 @@
 package com.hereliesaz.lexorcist
 
+import android.app.Application
 import android.graphics.Bitmap
 import android.net.Uri
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
-import android.util.Log
-import android.view.View
-import android.widget.Button
-import android.widget.ImageView
-import android.widget.TextView
-import android.widget.Toast
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import com.hereliesaz.lexorcist.db.AppDatabase
+import androidx.activity.viewModels
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import com.hereliesaz.lexorcist.db.FinancialEntry
-import com.google.mlkit.vision.common.InputImage
-import com.google.mlkit.vision.text.TextRecognition
-import com.google.mlkit.vision.text.latin.TextRecognizerOptions
-import kotlinx.coroutines.launch
-import java.text.NumberFormat
-import java.util.*
-
-import android.app.DatePickerDialog
-import android.widget.AdapterView
-import android.widget.ArrayAdapter
-import android.widget.Spinner
 import com.hereliesaz.lexorcist.db.SortOrder
-import java.text.SimpleDateFormat
+import com.hereliesaz.lexorcist.ui.theme.LexorcistTheme
+import java.util.Calendar
+import com.google.android.material.datepicker.MaterialDatePicker
+import androidx.compose.runtime.remember
+import androidx.compose.ui.text.font.FontWeight
+import androidx.fragment.app.FragmentActivity
 
-class MainActivity : AppCompatActivity() {
 
-    private lateinit var selectImageButton: Button
-    private lateinit var imageView: ImageView
-    private lateinit var entriesRecyclerView: RecyclerView
-    private lateinit var totalAmountTextView: TextView
-    private lateinit var entryAdapter: FinancialEntryAdapter
-    private lateinit var sortSpinner: Spinner
-    private lateinit var filterButton: Button
+class MainActivity : FragmentActivity() {
 
-    private val db by lazy { AppDatabase.getDatabase(this) }
-    private var currentSortOrder = SortOrder.DATE_DESC
-    private var startDate: Long? = null
-    private var endDate: Long? = null
-
+    private val viewModel: MainViewModel by viewModels()
+    private var tempBitmap: Bitmap? = null
 
     private val selectImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let {
             val bitmap = MediaStore.Images.Media.getBitmap(this.contentResolver, it)
-            imageView.setImageBitmap(bitmap)
-            imageView.visibility = View.VISIBLE
-            runTextRecognition(bitmap, it)
+            tempBitmap = bitmap
+            viewModel.runTextRecognition(bitmap, it)
         }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-
-        selectImageButton = findViewById(R.id.select_image_button)
-        imageView = findViewById(R.id.image_view)
-        entriesRecyclerView = findViewById(R.id.entries_recyclerview)
-        totalAmountTextView = findViewById(R.id.total_amount_textview)
-        sortSpinner = findViewById(R.id.sort_spinner)
-        filterButton = findViewById(R.id.filter_button)
-
-        setupRecyclerView()
-        setupSortSpinner()
-        setupFilterButton()
-
-        selectImageButton.setOnClickListener {
-            selectImageLauncher.launch("image/*")
-        }
-
-        loadAndDisplayEntriesAndTotal()
-    }
-
-    private fun setupFilterButton() {
-        filterButton.setOnClickListener {
-            showDateRangePicker()
+        setContent {
+            LexorcistTheme {
+                MainScreen(
+                    viewModel = viewModel,
+                    onSelectImage = { selectImageLauncher.launch("image/*") },
+                    bitmap = tempBitmap,
+                    showDateRangePicker = {
+                        showDateRangePicker()
+                    }
+                )
+            }
         }
     }
 
     private fun showDateRangePicker() {
-        val calendar = Calendar.getInstance()
-        val year = calendar.get(Calendar.YEAR)
-        val month = calendar.get(Calendar.MONTH)
-        val day = calendar.get(Calendar.DAY_OF_MONTH)
+        val picker = MaterialDatePicker.Builder.dateRangePicker()
+            .setTitleText("Select date range")
+            .build()
 
-        DatePickerDialog(this, { _, startYear, startMonth, startDay ->
-            val startCalendar = Calendar.getInstance().apply { set(startYear, startMonth, startDay, 0, 0, 0) }
-            startDate = startCalendar.timeInMillis
-
-            DatePickerDialog(this, { _, endYear, endMonth, endDay ->
-                val endCalendar = Calendar.getInstance().apply { set(endYear, endMonth, endDay, 23, 59, 59) }
-                endDate = endCalendar.timeInMillis
-                loadAndDisplayEntriesAndTotal()
-            }, year, month, day).apply {
-                setTitle("Select End Date")
-                show()
-            }
-        }, year, month, day).apply {
-            setTitle("Select Start Date")
-            show()
+        picker.addOnPositiveButtonClickListener {
+            viewModel.setDateRange(it.first, it.second)
         }
+        picker.show(supportFragmentManager, picker.toString())
     }
+}
 
-    private fun setupSortSpinner() {
-        val adapter = ArrayAdapter.createFromResource(
-            this,
-            R.array.sort_options,
-            android.R.layout.simple_spinner_item
-        )
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        sortSpinner.adapter = adapter
-        sortSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                currentSortOrder = when (position) {
-                    0 -> SortOrder.DATE_DESC
-                    1 -> SortOrder.DATE_ASC
-                    2 -> SortOrder.AMOUNT_DESC
-                    else -> SortOrder.AMOUNT_ASC
-                }
-                loadAndDisplayEntriesAndTotal()
-            }
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MainScreen(
+    viewModel: MainViewModel,
+    onSelectImage: () -> Unit,
+    bitmap: Bitmap?,
+    showDateRangePicker: () -> Unit
+) {
+    val entries by viewModel.entries.observeAsState(initial = emptyList())
+    val totalAmount by viewModel.totalAmount.observeAsState(initial = "")
 
-            override fun onNothingSelected(parent: AdapterView<*>?) {}
-        }
-    }
-
-    private fun setupRecyclerView() {
-        entryAdapter = FinancialEntryAdapter()
-        entriesRecyclerView.adapter = entryAdapter
-        entriesRecyclerView.layoutManager = LinearLayoutManager(this)
-    }
-
-    private fun runTextRecognition(bitmap: Bitmap, uri: Uri) {
-        val image = InputImage.fromBitmap(bitmap, 0)
-        val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
-        recognizer.process(image)
-            .addOnSuccessListener { visionText ->
-                Toast.makeText(this, "Text recognized!", Toast.LENGTH_SHORT).show()
-                parseTextAndSaveData(visionText.text, uri)
-            }
-            .addOnFailureListener { e ->
-                Log.e("OCR", "Error recognizing text", e)
-                Toast.makeText(this, "Error recognizing text", Toast.LENGTH_SHORT).show()
-            }
-    }
-
-    private fun parseTextAndSaveData(text: String, uri: Uri) {
-        val amounts = DataParser.parseAmounts(text)
-        val dates = DataParser.parseDates(text)
-        val documentDate = dates.firstOrNull() ?: System.currentTimeMillis()
-
-        if (amounts.isNotEmpty()) {
-            lifecycleScope.launch {
-                amounts.forEach { amount ->
-                    val entry = FinancialEntry(
-                        amount = amount,
-                        timestamp = System.currentTimeMillis(),
-                        sourceDocument = uri.toString(),
-                        documentDate = documentDate
-                    )
-                    db.financialEntryDao().insert(entry)
-                }
-                Log.d("DB", "Inserted ${amounts.size} entries.")
-                loadAndDisplayEntriesAndTotal()
-            }
-        } else {
-            Toast.makeText(this, "No amounts found in image.", Toast.LENGTH_LONG).show()
-        }
-    }
-
-    private fun loadAndDisplayEntriesAndTotal() {
-        lifecycleScope.launch {
-            val entries = db.financialEntryDao().getEntries(
-                currentSortOrder,
-                startDate ?: 0,
-                endDate ?: Long.MAX_VALUE
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Lexorcist") },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    titleContentColor = MaterialTheme.colorScheme.primary,
+                )
             )
-            entryAdapter.submitList(entries)
-
-            val total = entries.sumOf { entry ->
-                // Clean the string and parse to Double
-                val cleanString = entry.amount.replace(Regex("[^\\d.]"), "")
-                cleanString.toDoubleOrNull() ?: 0.0
+        }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Button(onClick = onSelectImage) {
+                Text("Select Image to Scan")
             }
 
-            val currencyFormat = NumberFormat.getCurrencyInstance()
-            totalAmountTextView.text = "Total: ${currencyFormat.format(total)}"
+            bitmap?.let {
+                Image(
+                    bitmap = it.asImageBitmap(),
+                    contentDescription = "Selected Image",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                        .padding(vertical = 16.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            SortAndFilter(viewModel, showDateRangePicker)
+
+            LazyColumn(modifier = Modifier.weight(1f)) {
+                items(entries) { entry ->
+                    FinancialEntryRow(entry)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(text = totalAmount, style = MaterialTheme.typography.headlineSmall)
         }
+    }
+}
+
+@Composable
+fun SortAndFilter(viewModel: MainViewModel, showDateRangePicker: () -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    val sortOptions = listOf(
+        "Sort by Date (Newest)",
+        "Sort by Date (Oldest)",
+        "Sort by Amount (High to Low)",
+        "Sort by Amount (Low to High)"
+    )
+    var selectedSort by remember { mutableStateOf(sortOptions[0]) }
+
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box {
+            Button(onClick = { expanded = true }) {
+                Text(selectedSort)
+            }
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                sortOptions.forEachIndexed { index, text ->
+                    DropdownMenuItem(
+                        text = { Text(text) },
+                        onClick = {
+                            selectedSort = text
+                            expanded = false
+                            val sortOrder = when (index) {
+                                0 -> SortOrder.DATE_DESC
+                                1 -> SortOrder.DATE_ASC
+                                2 -> SortOrder.AMOUNT_DESC
+                                else -> SortOrder.AMOUNT_ASC
+                            }
+                            viewModel.setSortOrder(sortOrder)
+                        }
+                    )
+                }
+            }
+        }
+        Spacer(modifier = Modifier.width(8.dp))
+        OutlinedButton(onClick = showDateRangePicker) {
+            Text("Filter")
+        }
+    }
+}
+
+@Composable
+fun FinancialEntryRow(entry: FinancialEntry) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = entry.amount,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date(entry.documentDate)),
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+    }
+}
+
+class MockApplication : Application()
+
+@Preview(showBackground = true)
+@Composable
+fun DefaultPreview() {
+    LexorcistTheme {
+        MainScreen(
+            viewModel = MainViewModel(MockApplication()),
+            onSelectImage = {},
+            bitmap = null,
+            showDateRangePicker = {}
+        )
     }
 }
