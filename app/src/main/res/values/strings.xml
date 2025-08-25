@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">LegalParser</string>
+    <string-array name="sort_options">
+        <item>Sort by Date (Newest)</item>
+        <item>Sort by Date (Oldest)</item>
+        <item>Sort by Amount (High to Low)</item>
+        <item>Sort by Amount (Low to High)</item>
+    </string-array>
 </resources>

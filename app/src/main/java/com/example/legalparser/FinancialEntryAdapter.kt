@@ -25,12 +25,14 @@ class FinancialEntryAdapter : ListAdapter<FinancialEntry, FinancialEntryAdapter.
 
     class EntryViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val amountTextView: TextView = itemView.findViewById(R.id.amount_textview)
-        private val timestampTextView: TextView = itemView.findViewById(R.id.timestamp_textview)
-        private val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+        private val documentDateTextView: TextView = itemView.findViewById(R.id.document_date_textview)
+        private val sourceTextView: TextView = itemView.findViewById(R.id.source_textview)
+        private val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
 
         fun bind(entry: FinancialEntry) {
             amountTextView.text = entry.amount
-            timestampTextView.text = dateFormat.format(Date(entry.timestamp))
+            documentDateTextView.text = "Document Date: ${dateFormat.format(Date(entry.documentDate))}"
+            sourceTextView.text = "Source: ${entry.sourceDocument}"
         }
     }
 
