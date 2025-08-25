@@ -1,6 +1,5 @@
 package com.hereliesaz.lexorcist
 
-import android.content.Context
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
 import com.google.api.client.http.ByteArrayContent
 import com.google.api.client.http.javanet.NetHttpTransport
@@ -8,6 +7,7 @@ import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.services.drive.Drive
 import com.google.api.services.script.Script
 import com.google.api.services.script.model.Content
+import com.google.api.services.script.model.CreateProjectRequest
 import com.google.api.services.script.model.File
 import com.google.api.services.script.model.Project
 import com.google.api.services.sheets.v4.Sheets
@@ -153,7 +153,7 @@ class GoogleApiService(credential: GoogleAccountCredential, applicationName: Str
         }
     }
 
-    suspend fun createSpreadsheet(title: String): String? = withContext(Dispatchers.IO) {
+    suspend fun createSpreadsheet(title: String, caseInfo: Map<String, String>): String? = withContext(Dispatchers.IO) {
         try {
             val fileMetadata = com.google.api.services.drive.model.File()
             fileMetadata.name = title
@@ -168,7 +168,7 @@ class GoogleApiService(credential: GoogleAccountCredential, applicationName: Str
     suspend fun attachScript(spreadsheetId: String, masterTemplateId: String) = withContext(Dispatchers.IO) {
         try {
             val project = Project().setTitle("Case Tools Script").setParentId(spreadsheetId)
-            val createdProject = script.projects().create(project).execute()
+            val createdProject = script.projects().create(project as CreateProjectRequest?).execute()
             val scriptId = createdProject.scriptId ?: return@withContext
 
             val scriptContent = """
