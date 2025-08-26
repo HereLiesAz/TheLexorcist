@@ -1,1 +1,47 @@
-{"project_id":{"client_id":"1079155203544-03eb3osudsk2tq3prlanfu914468gggv.apps.googleusercontent.com","project_id":"the-lexorcist","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://oauth2.googleapis.com/token","auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs"}}
+{
+  "project_info": {
+    "project_number": "1079155203544",
+    "project_id": "the-lexorcist",
+    "storage_bucket": "the-lexorcist.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1079155203544:android:6d0c18ed2df246069ee6ad",
+        "android_client_info": {
+          "package_name": "com.hereliesaz.lexorcist"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1079155203544-03eb3osudsk2tq3prlanfu914468gggv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.hereliesaz.lexorcist",
+            "certificate_hash": "5bd499caba4438aabe1b2e260c5ee23abb96e86c"
+          }
+        },
+        {
+          "client_id": "1079155203544-gqpiq4qq3d4n8amsmbn3k3o2jsqs5cg9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCbh_mUGE5srd8ubdhClcsOCdG_JDbkKbo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1079155203544-gqpiq4qq3d4n8amsmbn3k3o2jsqs5cg9.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
