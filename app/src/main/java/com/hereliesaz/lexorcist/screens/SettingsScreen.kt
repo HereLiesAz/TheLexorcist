@@ -23,8 +23,23 @@ fun SettingsScreen(viewModel: MainViewModel) {
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
             .padding(16.dp)
     ) {
+        Text("Settings Screen")
+        // Text("Filters", style = androidx.compose.material3.MaterialTheme.typography.headlineMedium)
+        // Spacer(modifier = Modifier.height(16.dp))
+        // LazyColumn(modifier = Modifier.weight(1f)) {
+        //     items(filters) { filter ->
+        //         FilterItem(filter = filter)
+        //     }
+        // }
+        // Spacer(modifier = Modifier.height(16.dp))
+        // Button(onClick = { showAddFilterDialog = true }) {
+        //     Text("Add New Filter")
+        // }
         Text("Filters", style = androidx.compose.material3.MaterialTheme.typography.headlineMedium)
         Spacer(modifier = Modifier.height(16.dp))
         LazyColumn(modifier = Modifier.weight(1f)) {
@@ -38,6 +53,48 @@ fun SettingsScreen(viewModel: MainViewModel) {
         }
     }
 
+    // if (showAddFilterDialog) {
+    //     androidx.compose.material3.AlertDialog(
+    //         onDismissRequest = { showAddFilterDialog = false },
+    //         title = { Text("New Filter") },
+    //         text = {
+    //             Column {
+    //                 OutlinedTextField(
+    //                     value = filterName,
+    //                     onValueChange = { filterName = it },
+    //                     label = { Text("Filter Name") },
+    //                     singleLine = true
+    //                 )
+    //                 Spacer(modifier = Modifier.height(8.dp))
+    //                 OutlinedTextField(
+    //                     value = filterValue,
+    //                     onValueChange = { filterValue = it },
+    //                     label = { Text("Filter Value") },
+    //                     singleLine = true
+    //                 )
+    //             }
+    //         },
+    //         confirmButton = {
+    //             Button(
+    //                 onClick = {
+    //                     if (filterName.isNotBlank() && filterValue.isNotBlank()) {
+    //                         viewModel.addFilter(filterName, filterValue)
+    //                         showAddFilterDialog = false
+    //                         filterName = ""
+    //                         filterValue = ""
+    //                     }
+    //                 }
+    //             ) {
+    //                 Text("Add")
+    //             }
+    //         },
+    //         dismissButton = {
+    //             Button(onClick = { showAddFilterDialog = false }) {
+    //                 Text("Cancel")
+    //             }
+    //         }
+    //     )
+    // }
     if (showAddFilterDialog) {
         androidx.compose.material3.AlertDialog(
             onDismissRequest = { showAddFilterDialog = false },
