@@ -7,6 +7,7 @@ plugins {
     // Removed kotlin("kapt")
     id("org.jetbrains.kotlin.plugin.compose") version "2.2.10"
     id("com.google.devtools.ksp") version "2.2.10-2.0.2" // Added KSP plugin
+    id("com.google.gms.google-services") // Add this line at the end of the plugins block
 }
 
 android {

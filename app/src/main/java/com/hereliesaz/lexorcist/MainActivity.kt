@@ -120,7 +120,8 @@ class MainActivity : ComponentActivity() {
             return
         }
         lifecycleScope.launch {
-            val spreadsheetId = viewModel.createSpreadsheet(caseName)
+            // Pass an empty map for caseInfo for now, as it's not provided by MainScreen
+            val spreadsheetId = viewModel.googleApiService.value?.createSpreadsheet(caseName, emptyMap())
             if (spreadsheetId != null) {
                 Toast.makeText(this@MainActivity, "Case created: $spreadsheetId", Toast.LENGTH_LONG).show()
                 viewModel.attachScript(spreadsheetId, masterTemplateId)

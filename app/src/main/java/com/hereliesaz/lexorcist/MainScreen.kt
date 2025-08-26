@@ -14,7 +14,7 @@ fun MainScreen(
     viewModel: MainViewModel = viewModel(),
     onSignIn: () -> Unit,
     onCreateMasterTemplate: () -> Unit,
-    onCreateCase: (String) -> Unit
+    onCreateCase: (String) -> Unit // Corrected this line
 ) {
     val isSignedIn by viewModel.isSignedIn.collectAsState()
     var showCreateCaseDialog by remember { mutableStateOf(false) }
