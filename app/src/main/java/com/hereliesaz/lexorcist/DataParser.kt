@@ -22,21 +22,46 @@ object DataParser {
             SimpleDateFormat("MM/dd/yy", Locale.US),
             SimpleDateFormat("MM-dd-yy", Locale.US),
             SimpleDateFormat("yyyy/MM/dd", Locale.US),
-            SimpleDateFormat("MMM d, yyyy", Locale.US)
+            SimpleDateFormat("MMM d, yyyy", Locale.US),
+            SimpleDateFormat("MMMM d, yyyy", Locale.US)
         ).onEach {
             it.timeZone = TimeZone.getTimeZone("UTC")
-            it.isLenient = false
+            it.isLenient = true // Set to true to allow for more flexible parsing
         }
 
         return matches.mapNotNull { matchResult ->
             for (format in dateFormats) {
                 try {
-                    return@mapNotNull format.parse(matchResult.value)?.time
+                    return@mapNotNull format.parse(matchResult.value.trim())?.time
                 } catch (e: Exception) {
                     // Ignore and try next format
                 }
             }
             null
         }.toList()
+    }
+
+    fun parseNames(text: String): List<String> {
+        val nameRegex = """\b[A-Z][a-z]+ [A-Z][a-z]+\b""".toRegex()
+        return nameRegex.findAll(text).map { it.value }.toList()
+    }
+
+    fun parseAddresses(text: String): List<String> {
+        val addressRegex = """\d+\s+([a-zA-Z]+\s+)+[a-zA-Z]+,\s+[A-Z]{2}\s+\d{5}""".toRegex()
+        return addressRegex.findAll(text).map { it.value }.toList()
+    }
+
+    fun tagData(text: String): Map<String, List<String>> {
+        val amounts = parseAmounts(text)
+        val dates = parseDates(text).map { Date(it).toString() }
+        val names = parseNames(text)
+        val addresses = parseAddresses(text)
+
+        return mapOf(
+            "amounts" to amounts,
+            "dates" to dates,
+            "names" to names,
+            "addresses" to addresses
+        )
     }
 }

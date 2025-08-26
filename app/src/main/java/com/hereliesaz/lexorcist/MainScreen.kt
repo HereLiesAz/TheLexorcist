@@ -7,76 +7,58 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.hereliesaz.lexorcist.components.AppNavRail
+import com.hereliesaz.lexorcist.screens.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
     viewModel: MainViewModel = viewModel(),
     onSignIn: () -> Unit,
-    onCreateMasterTemplate: () -> Unit,
-    onCreateCase: (String) -> Unit // Corrected this line
+    onSelectImage: () -> Unit
 ) {
     val isSignedIn by viewModel.isSignedIn.collectAsState()
-    var showCreateCaseDialog by remember { mutableStateOf(false) }
-    var caseName by remember { mutableStateOf("") }
+    var currentScreen by remember { mutableStateOf("home") }
 
     Scaffold(
         topBar = {
             TopAppBar(title = { Text("Lexorcist") })
         }
     ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            if (isSignedIn) {
-                AuthenticatedView(
-                    onCreateMasterTemplate = onCreateMasterTemplate,
-                    onCreateCase = { showCreateCaseDialog = true }
-                )
-            } else {
+        if (isSignedIn) {
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+            ) {
+                AppNavRail(onNavigate = { screen -> currentScreen = screen })
+                Box(modifier = Modifier.weight(1f)) {
+                    when (currentScreen) {
+                        "home" -> AuthenticatedView(
+                            onCreateMasterTemplate = {},
+                            onCreateCase = {}
+                        )
+                        "cases" -> CasesScreen(viewModel = viewModel)
+                        "add_evidence" -> AddEvidenceScreen(viewModel = viewModel, onSelectImage = onSelectImage)
+                        "timeline" -> TimelineScreen(viewModel = viewModel)
+                        "settings" -> SettingsScreen(viewModel = viewModel)
+                    }
+                }
+            }
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
                 Button(onClick = onSignIn) {
                     Text("Sign in with Google")
                 }
             }
         }
-    }
-
-    if (showCreateCaseDialog) {
-        AlertDialog(
-            onDismissRequest = { showCreateCaseDialog = false },
-            title = { Text("New Case Name") },
-            text = {
-                OutlinedTextField(
-                    value = caseName,
-                    onValueChange = { caseName = it },
-                    label = { Text("Case Name") },
-                    singleLine = true
-                )
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        if (caseName.isNotBlank()) {
-                            onCreateCase(caseName)
-                            showCreateCaseDialog = false
-                            caseName = ""
-                        }
-                    }
-                ) {
-                    Text("Create")
-                }
-            },
-            dismissButton = {
-                Button(onClick = { showCreateCaseDialog = false }) {
-                    Text("Cancel")
-                }
-            }
-        )
     }
 }
 
@@ -86,15 +68,20 @@ fun AuthenticatedView(
     onCreateCase: () -> Unit
 ) {
     Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.Center
     ) {
-        Button(onClick = onCreateMasterTemplate) {
-            Text("Create/Update Master Template")
-        }
-        Button(onClick = onCreateCase) {
-            Text("Create New Case")
-        }
-        // Add other authenticated UI elements here (e.g., list cases, etc.)
+        Text(
+            text = "Welcome to The Lexorcist!",
+            style = androidx.compose.material3.MaterialTheme.typography.headlineMedium
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = "Use the navigation rail on the left to get started.",
+            style = androidx.compose.material3.MaterialTheme.typography.bodyLarge
+        )
     }
 }

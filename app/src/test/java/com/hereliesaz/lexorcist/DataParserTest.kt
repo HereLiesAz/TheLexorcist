@@ -60,4 +60,39 @@ class DataParserTest {
         val amounts = DataParser.parseAmounts(text)
         assertEquals(listOf("$1,234.56", "$86.42", "$1,320.98"), amounts)
     }
+
+    @Test
+    fun `test parseDates with yyyy-MM-dd format`() {
+        val text = "Date: 2023-01-15"
+        val dates = DataParser.parseDates(text)
+        assertEquals(1, dates.size)
+    }
+
+    @Test
+    fun `test parseDates with MM-dd-yyyy format`() {
+        val text = "Date: 01-15-2023"
+        val dates = DataParser.parseDates(text)
+        assertEquals(1, dates.size)
+    }
+
+    @Test
+    fun `test parseDates with MMM d, yyyy format`() {
+        val text = "Date: Jan 15, 2023"
+        val dates = DataParser.parseDates(text)
+        assertEquals(1, dates.size)
+    }
+
+    @Test
+    fun `test parseNames`() {
+        val text = "John Doe and Jane Smith are here."
+        val names = DataParser.parseNames(text)
+        assertEquals(listOf("John Doe", "Jane Smith"), names)
+    }
+
+    @Test
+    fun `test parseAddresses`() {
+        val text = "123 Main St, Anytown, CA 12345"
+        val addresses = DataParser.parseAddresses(text)
+        assertEquals(listOf("123 Main St, Anytown, CA 12345"), addresses)
+    }
 }

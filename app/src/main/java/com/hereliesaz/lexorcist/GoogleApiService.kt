@@ -234,4 +234,28 @@ class GoogleApiService(credential: GoogleAccountCredential, applicationName: Str
             e.printStackTrace()
         }
     }
+
+    suspend fun addSheet(spreadsheetId: String, title: String) = withContext(Dispatchers.IO) {
+        try {
+            val addSheetRequest = com.google.api.services.sheets.v4.model.AddSheetRequest()
+                .setProperties(com.google.api.services.sheets.v4.model.SheetProperties().setTitle(title))
+            val request = com.google.api.services.sheets.v4.model.Request().setAddSheet(addSheetRequest)
+            val batchUpdateRequest = com.google.api.services.sheets.v4.model.BatchUpdateSpreadsheetRequest().setRequests(listOf(request))
+            sheets.spreadsheets().batchUpdate(spreadsheetId, batchUpdateRequest).execute()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    suspend fun appendData(spreadsheetId: String, sheetName: String, data: List<List<Any>>) = withContext(Dispatchers.IO) {
+        try {
+            val valueRange = com.google.api.services.sheets.v4.model.ValueRange().setValues(data)
+            sheets.spreadsheets().values()
+                .append(spreadsheetId, sheetName, valueRange)
+                .setValueInputOption("RAW")
+                .execute()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
 }
