@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lexorcist - Tame Your Legal Paperwork</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --background-color: #121212;
+            --surface-color: #1e1e1e;
+            --primary-text-color: #e0e0e0;
+            --secondary-text-color: #a0a0a0;
+            --accent-color: #ffffff;
+            --border-color: #333333;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--background-color);
+            color: var(--primary-text-color);
+            margin: 0;
+            line-height: 1.6;
+        }
+
+        h1, h2, h3, .logo {
+            font-family: 'Lora', serif;
+            font-weight: 700;
+        }
+
+        a {
+            color: var(--accent-color);
+            text-decoration: none;
+        }
+
+        header {
+            background: rgba(18, 18, 18, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 1rem 5%;
+            position: fixed;
+            width: 90%;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            letter-spacing: 2px;
+        }
+
+        .nav-links {
+            list-style: none;
+            display: flex;
+            gap: 2rem;
+            margin: 0;
+            padding: 0;
+        }
+
+        .nav-links a {
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--secondary-text-color);
+        }
+
+        main {
+            padding-top: 80px; /* Offset for fixed header */
+        }
+
+        #hero {
+            min-height: 80vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 2rem 5%;
+            background: radial-gradient(circle, #2a2a2a 0%, var(--background-color) 70%);
+        }
+
+        .hero-content {
+            max-width: 800px;
+        }
+
+        .hero-content h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            line-height: 1.2;
+        }
+
+        .hero-content p {
+            font-size: 1.2rem;
+            color: var(--secondary-text-color);
+            max-width: 600px;
+            margin: 0 auto 2rem auto;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background-color: var(--accent-color);
+            color: var(--background-color);
+            padding: 12px 28px;
+            border-radius: 5px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: transform 0.3s ease, background-color 0.3s ease;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-3px);
+            background-color: #f0f0f0;
+        }
+
+        #features, #workflow {
+            padding: 4rem 5%;
+            text-align: center;
+        }
+
+        #features h2, #workflow h2 {
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            text-align: left;
+        }
+
+        .feature-card {
+            background-color: var(--surface-color);
+            padding: 2rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+
+        .feature-card h3 {
+            font-size: 1.5rem;
+            margin-top: 0;
+        }
+
+        .feature-card p {
+            color: var(--secondary-text-color);
+        }
+
+        .workflow-steps {
+            display: flex;
+            justify-content: space-around;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .step {
+            max-width: 320px;
+        }
+
+        .step-number {
+            font-family: 'Lora', serif;
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--border-color);
+            line-height: 1;
+        }
+
+        .step h3 {
+            font-size: 1.5rem;
+            margin: 0.5rem 0;
+        }
+
+        .step p {
+            color: var(--secondary-text-color);
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem 5%;
+            margin-top: 2rem;
+            border-top: 1px solid var(--border-color);
+            color: var(--secondary-text-color);
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .hero-content h1 {
+                font-size: 2.5rem;
+            }
+            .hero-content p {
+                font-size: 1rem;
+            }
+            .nav-links {
+                display: none; /* Simplification for mobile */
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <nav>
+            <div class="logo">LEXORCIST</div>
+            <ul class="nav-links">
+                <li><a href="#features">Features</a></li>
+                <li><a href="#workflow">Workflow</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section id="hero">
+            <div class="hero-content">
+                <h1>Exorcise the Demons of Discovery.</h1>
+                <p>Lexorcist automates the tedious, soul-crushing process of evidence management. Scan documents, organize data in Google Sheets, and generate court-ready paperwork. Stop the madness. Start the case.</p>
+                <a href="#" class="cta-button">Get it on Google Play</a>
+            </div>
+        </section>
+
+        <section id="features">
+            <h2>The Ritual of Automation</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h3>Intelligent Scanning</h3>
+                    <p>Capture receipts, filings, and other documents with your device's camera. Our OCR extracts the critical data so you don't have to.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Google Suite Integration</h3>
+                    <p>Automatically organizes extracted data into a Google Sheet and links all generated documents to your Google Drive. Your case, contained.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Automated Document Generation</h3>
+                    <p>Generates cover sheets, affidavits, and metadata pages from your data with a single click, using customizable templates and a powerful backend script.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="workflow">
+            <h2>The Three Steps of Power</h2>
+            <div class="workflow-steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <h3>Configure</h3>
+                    <p>Sign in with your Google account and set up your case details. A one-time act of order against the chaos.</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <h3>Catalogue</h3>
+                    <p>Scan your evidence. The app captures the data, you categorize it. The machine does the rote work, you provide the intellect.</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <h3>Create</h3>
+                    <p>Open your case's Google Sheet and run the built-in tools to generate perfectly formatted legal documents from your evidence log.</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Here Lies AZ. All Rights Reserved. The law is serious; the paperwork doesn't have to be.</p>
+    </footer>
+
+    <script>
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+</body>
+</html>
