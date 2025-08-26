@@ -1,6 +1,6 @@
-# Lexorcist
+# The Lexorcist
 
-Lexorcist is an Android application designed for legal professionals to parse, track, and manage evidence from financial documents. By using the device's camera to perform Optical Character Recognition (OCR) on receipts and other documents, Lexorcist extracts key information and stores it for evidence management. This tool helps streamline the process of handling financial evidence for legal cases.
+The Lexorcist is an Android app for legalitarians to parse, track, and manage case evidence.
 
 ## Features
 
