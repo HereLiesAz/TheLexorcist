@@ -14,14 +14,6 @@
       },
       "oauth_client": [
         {
-          "client_id": "1079155203544-03eb3osudsk2tq3prlanfu914468gggv.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.hereliesaz.lexorcist",
-            "certificate_hash": "5bd499caba4438aabe1b2e260c5ee23abb96e86c"
-          }
-        },
-        {
           "client_id": "1079155203544-gqpiq4qq3d4n8amsmbn3k3o2jsqs5cg9.apps.googleusercontent.com",
           "client_type": 3
         }
