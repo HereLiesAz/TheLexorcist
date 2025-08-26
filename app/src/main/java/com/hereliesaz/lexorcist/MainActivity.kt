@@ -6,6 +6,9 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import android.graphics.ImageDecoder
+import android.os.Build
+import android.provider.MediaStore
 import androidx.activity.viewModels
 import androidx.compose.material3.MaterialTheme
 import androidx.lifecycle.lifecycleScope
@@ -44,6 +47,18 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private val selectImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        uri?.let {
+            val bitmap = if (Build.VERSION.SDK_INT < 28) {
+                MediaStore.Images.Media.getBitmap(this.contentResolver, uri)
+            } else {
+                val source = ImageDecoder.createSource(this.contentResolver, uri)
+                ImageDecoder.decodeBitmap(source)
+            }
+            viewModel.onImageSelected(bitmap)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -63,8 +78,7 @@ class MainActivity : ComponentActivity() {
                 MainScreen(
                     viewModel = viewModel,
                     onSignIn = { signIn() },
-                    onCreateMasterTemplate = { createMasterTemplate() },
-                    onCreateCase = { caseName -> createCase(caseName) }
+                    onSelectImage = { selectImage() }
                 )
             }
         }
@@ -92,42 +106,8 @@ class MainActivity : ComponentActivity() {
         signInLauncher.launch(signInIntent)
     }
 
-    private fun getMasterTemplateId(): String? {
-        val sharedPref = getPreferences(Context.MODE_PRIVATE)
-        return sharedPref.getString("masterTemplateId", null)
+    private fun selectImage() {
+        selectImageLauncher.launch("image/*")
     }
 
-    private fun createMasterTemplate() {
-        lifecycleScope.launch {
-            val templateId = viewModel.createMasterTemplate()
-            if (templateId != null) {
-                val sharedPref = getPreferences(Context.MODE_PRIVATE)
-                with(sharedPref.edit()) {
-                    putString("masterTemplateId", templateId)
-                    apply()
-                }
-                Toast.makeText(this@MainActivity, "Master Template created successfully.", Toast.LENGTH_LONG).show()
-            } else {
-                Toast.makeText(this@MainActivity, "Failed to create master template.", Toast.LENGTH_LONG).show()
-            }
-        }
-    }
-
-    private fun createCase(caseName: String) {
-        val masterTemplateId = getMasterTemplateId()
-        if (masterTemplateId == null) {
-            Toast.makeText(this, "Please create a master template first.", Toast.LENGTH_LONG).show()
-            return
-        }
-        lifecycleScope.launch {
-            // Pass an empty map for caseInfo for now, as it's not provided by MainScreen
-            val spreadsheetId = viewModel.googleApiService.value?.createSpreadsheet(caseName, emptyMap())
-            if (spreadsheetId != null) {
-                Toast.makeText(this@MainActivity, "Case created: $spreadsheetId", Toast.LENGTH_LONG).show()
-                viewModel.attachScript(spreadsheetId, masterTemplateId)
-            } else {
-                Toast.makeText(this@MainActivity, "Failed to create case.", Toast.LENGTH_LONG).show()
-            }
-        }
-    }
 }

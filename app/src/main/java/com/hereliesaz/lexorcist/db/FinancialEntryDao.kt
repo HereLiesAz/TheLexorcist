@@ -3,6 +3,7 @@ package com.hereliesaz.lexorcist.db
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface FinancialEntryDao {
@@ -17,5 +18,5 @@ interface FinancialEntryDao {
     suspend fun getEntries(sortOrder: SortOrder, startDate: Long, endDate: Long): List<FinancialEntry>
 
     @Query("SELECT * FROM financial_entries")
-    suspend fun getAllEntries(): List<FinancialEntry>
+    fun getAllEntries(): Flow<List<FinancialEntry>>
 }
