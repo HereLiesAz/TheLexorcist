@@ -1,4 +1,4 @@
-package com.hereliesaz.lexorcist
+package com.hereliesaz.lexorcist.ui
 
 import android.content.Context
 import android.os.Bundle

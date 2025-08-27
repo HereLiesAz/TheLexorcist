@@ -7,24 +7,423 @@ Where: sdk.dir property in local.properties file. Problem: Directory does not ex
 > Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
 > Task :app:checkDebugAarMetadata UP-TO-DATE
 > Task :app:generateDebugResValues UP-TO-DATE
-> Task :app:processDebugGoogleServices
-> Task :app:mapDebugSourceSetPaths
-> Task :app:generateDebugResources
+> Task :app:processDebugGoogleServices UP-TO-DATE
+> Task :app:mapDebugSourceSetPaths UP-TO-DATE
+> Task :app:generateDebugResources UP-TO-DATE
+> Task :app:mergeDebugResources UP-TO-DATE
+> Task :app:packageDebugResources UP-TO-DATE
+> Task :app:parseDebugLocalResources UP-TO-DATE
+> Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksDebug UP-TO-DATE
+> Task :app:processDebugMainManifest UP-TO-DATE
+> Task :app:processDebugManifest UP-TO-DATE
+> Task :app:processDebugManifestForPackage UP-TO-DATE
+> Task :app:processDebugResources UP-TO-DATE
+> Task :app:javaPreCompileDebug UP-TO-DATE
+> Task :app:mergeDebugShaders UP-TO-DATE
+> Task :app:compileDebugShaders NO-SOURCE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :app:mergeDebugAssets UP-TO-DATE
+> Task :app:compressDebugAssets UP-TO-DATE
+> Task :app:desugarDebugFileDependencies UP-TO-DATE
+> Task :app:checkDebugDuplicateClasses UP-TO-DATE
+> Task :app:mergeExtDexDebug UP-TO-DATE
+> Task :app:mergeLibDexDebug UP-TO-DATE
+> Task :app:mergeDebugJniLibFolders UP-TO-DATE
+> Task :app:mergeDebugNativeLibs UP-TO-DATE
+> Task :app:stripDebugDebugSymbols UP-TO-DATE
+> Task :app:validateSigningDebug UP-TO-DATE
+> Task :app:writeDebugAppMetadata UP-TO-DATE
+> Task :app:writeDebugSigningConfigVersions UP-TO-DATE
+> Task :app:preReleaseBuild UP-TO-DATE
+> Task :app:mergeReleaseJniLibFolders UP-TO-DATE
+> Task :app:mergeReleaseNativeLibs UP-TO-DATE
+> Task :app:stripReleaseDebugSymbols UP-TO-DATE
+> Task :app:extractReleaseNativeSymbolTables UP-TO-DATE
+> Task :app:mergeReleaseNativeDebugMetadata NO-SOURCE
+> Task :app:checkReleaseDuplicateClasses UP-TO-DATE
+> Task :app:buildKotlinToolingMetadata UP-TO-DATE
+> Task :app:checkReleaseAarMetadata UP-TO-DATE
+> Task :app:generateReleaseResValues UP-TO-DATE
+> Task :app:processReleaseGoogleServices UP-TO-DATE
+> Task :app:mapReleaseSourceSetPaths UP-TO-DATE
+> Task :app:generateReleaseResources UP-TO-DATE
+> Task :app:mergeReleaseResources UP-TO-DATE
+> Task :app:packageReleaseResources UP-TO-DATE
+> Task :app:parseReleaseLocalResources UP-TO-DATE
+> Task :app:createReleaseCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksRelease UP-TO-DATE
+> Task :app:processReleaseMainManifest UP-TO-DATE
+> Task :app:processReleaseManifest UP-TO-DATE
+> Task :app:processReleaseManifestForPackage UP-TO-DATE
+> Task :app:processReleaseResources UP-TO-DATE
+> Task :app:javaPreCompileRelease UP-TO-DATE
+> Task :app:desugarReleaseFileDependencies UP-TO-DATE
+> Task :app:mergeReleaseStartupProfile UP-TO-DATE
+> Task :app:mergeExtDexRelease UP-TO-DATE
+> Task :app:mergeReleaseArtProfile UP-TO-DATE
+> Task :app:mergeReleaseShaders UP-TO-DATE
+> Task :app:compileReleaseShaders NO-SOURCE
+> Task :app:generateReleaseAssets UP-TO-DATE
+> Task :app:mergeReleaseAssets UP-TO-DATE
+> Task :app:compressReleaseAssets UP-TO-DATE
+> Task :app:extractReleaseVersionControlInfo
+> Task :app:extractProguardFiles UP-TO-DATE
+> Task :app:optimizeReleaseResources UP-TO-DATE
+> Task :app:kspDebugKotlin
+> Task :app:collectReleaseDependencies UP-TO-DATE
+> Task :app:sdkReleaseDependencyData
+> Task :app:writeReleaseAppMetadata UP-TO-DATE
+> Task :app:writeReleaseSigningConfigVersions UP-TO-DATE
+> Task :app:preDebugAndroidTestBuild SKIPPED
+> Task :app:generateDebugAndroidTestResValues UP-TO-DATE
+> Task :app:preDebugUnitTestBuild UP-TO-DATE
+> Task :app:javaPreCompileDebugUnitTest UP-TO-DATE
+> Task :app:preReleaseUnitTestBuild UP-TO-DATE
+> Task :app:javaPreCompileReleaseUnitTest UP-TO-DATE
+> Task :app:kspReleaseKotlin
 
-> Task :app:mergeDebugResources FAILED
-ERROR: /app/app/src/main/res/raw/LexorcistTemplate.pdf: Resource and asset merger: 'L' is not a valid file-based resource name character: File-based resource names must contain only lowercase a-z, 0-9, or underscore
+> Task :app:compileDebugKotlin FAILED
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/GoogleApiService.kt:18:36 Unresolved reference 'FinancialEntry'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/GoogleApiService.kt:162:104 Unresolved reference 'FinancialEntry'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/GoogleApiService.kt:162:122 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/GoogleApiService.kt:162:122 Not enough information to infer type argument for 'T'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/GoogleApiService.kt:163:37 Unresolved reference 'FinancialEntry'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/GoogleApiService.kt:177:33 Unresolved reference 'FinancialEntry'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/GoogleApiService.kt:195:75 Unresolved reference 'FinancialEntry'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/GoogleApiService.kt:207:23 Unresolved reference 'amount'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/GoogleApiService.kt:208:23 Unresolved reference 'timestamp'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/GoogleApiService.kt:209:23 Unresolved reference 'sourceDocument'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/GoogleApiService.kt:210:23 Unresolved reference 'documentDate'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/GoogleApiService.kt:212:23 Unresolved reference 'allegationId'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainViewModel.kt:13:36 Unresolved reference 'FinancialEntry'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainViewModel.kt:51:59 Unresolved reference 'FinancialEntry'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainViewModel.kt:51:76 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainViewModel.kt:51:76 Argument type mismatch: actual type is 'List<uninferred T (of fun <T> emptyList)>', but 'List<ERROR CLASS: Symbol not found for FinancialEntry>' was expected.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainViewModel.kt:52:42 Unresolved reference 'FinancialEntry'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainViewModel.kt:78:47 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainViewModel.kt:78:47 Not enough information to infer type argument for 'T'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainViewModel.kt:173:39 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainViewModel.kt:173:39 Not enough information to infer type argument for 'T'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainViewModel.kt:180:39 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainViewModel.kt:180:39 Not enough information to infer type argument for 'T'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainViewModel.kt:224:35 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainViewModel.kt:224:35 Not enough information to infer type argument for 'T'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainViewModel.kt:234:35 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainViewModel.kt:234:35 Not enough information to infer type argument for 'T'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainViewModel.kt:295:39 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainViewModel.kt:295:39 Not enough information to infer type argument for 'T'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainViewModel.kt:339:34 Unresolved reference 'FinancialEntry'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainViewModel.kt:347:37 Unresolved reference 'copy'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/SpreadsheetParser.kt:43:49 Unresolved reference 'createMasterTemplate'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/SpreadsheetParser.kt:58:27 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/SpreadsheetParser.kt:58:31 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/SpreadsheetParser.kt:59:69 Too many arguments for 'suspend fun attachScript(spreadsheetId: String, scriptContent: String): Boolean'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/SpreadsheetParser.kt:64:91 No parameter with name 'masterTemplateId' found.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/SpreadsheetParser.kt:101:52 Unresolved reference 'addEvidenceToCase'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/screens/CasesScreen.kt:121:103 No value passed for parameter 'defendants'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/screens/CasesScreen.kt:121:103 No value passed for parameter 'courtName'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/screens/CasesScreen.kt:121:103 No value passed for parameter 'courtDistrict'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/screens/TimelineScreen.kt:27:18 Property delegate must have a 'getValue(Nothing?, KProperty0<ERROR CLASS: Cannot infer argument for type parameter T>)' method. None of the following functions is applicable:
+fun <T> State<T>.getValue(thisObj: Any?, property: KProperty<*>): T
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/screens/TimelineScreen.kt:27:21 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/screens/TimelineScreen.kt:27:31 Unresolved reference 'evidence'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/screens/TimelineScreen.kt:27:40 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/screens/TimelineScreen.kt:28:19 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/screens/TimelineScreen.kt:32:44 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/screens/TimelineScreen.kt:36:30 Unresolved reference 'tags'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/screens/TimelineScreen.kt:36:41 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/screens/TimelineScreen.kt:40:30 Unresolved reference 'content'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/screens/TimelineScreen.kt:43:30 Unresolved reference 'content'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/screens/TimelineScreen.kt:44:38 Unresolved reference 'tags'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/screens/TimelineScreen.kt:44:49 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/screens/TimelineScreen.kt:48:23 Unresolved reference 'it'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/screens/TimelineScreen.kt:48:52 Unresolved reference 'it'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/screens/TimelineScreen.kt:48:73 Unresolved reference 'it'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/screens/TimelineScreen.kt:49:18 Unresolved reference 'it'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/screens/TimelineScreen.kt:70:38 Argument type mismatch: actual type is 'Int', but 'TimelineEvent' was expected.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:27:28 Unresolved reference 'MainViewModel'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:27:42 Property delegate must have a 'getValue(MainActivity, KProperty1<MainActivity, ERROR CLASS: Symbol not found for MainViewModel>)' method. None of the following functions is applicable:
+fun <T> Lazy<T>.getValue(thisRef: Any?, property: KProperty<*>): T
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:27:45 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:27:45 Not enough information to infer type argument for 'VM'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:27:45 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:27:45 Not enough information to infer type argument for 'T'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:44:36 Unresolved reference 'GoogleApiService'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:44:75 Unresolved reference 'R'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:45:23 Unresolved reference 'onSignInSuccess'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:47:23 Unresolved reference 'onSignInFailed'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:60:23 Unresolved reference 'onImageSelected'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:75:27 Unresolved reference 'onImageSelected'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:82:23 Unresolved reference 'addFileEvidence'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:104:21 No parameter with name 'viewModel' found.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:105:21 No parameter with name 'onSignIn' found.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:106:21 No parameter with name 'onSelectImage' found.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:107:21 No parameter with name 'onTakePicture' found.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:108:21 No parameter with name 'onAddDocument' found.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:109:21 No parameter with name 'onAddSpreadsheet' found.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:109:21 No value passed for parameter 'navController'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:109:21 No value passed for parameter 'mainViewModel'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:109:21 No value passed for parameter 'dataReviewViewModel'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:109:21 No value passed for parameter 'onSignInClick'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:109:21 No value passed for parameter 'onExportClick'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:125:42 Unresolved reference 'googleApiService'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:133:36 Unresolved reference 'GoogleApiService'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:133:75 Unresolved reference 'R'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:134:23 Unresolved reference 'onSignInSuccess'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:136:23 Unresolved reference 'onSignOut'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainScreen.kt:16:17 Unresolved reference 'navigation'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainScreen.kt:17:43 Unresolved reference 'DataReviewViewModel'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainScreen.kt:22:20 Unresolved reference 'NavController'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainScreen.kt:24:26 Unresolved reference 'DataReviewViewModel'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainScreen.kt:40:31 Unresolved reference 'navigate'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainScreen.kt:46:19 Argument type mismatch: actual type is 'List<ERROR CLASS: Symbol not found for Evidence>', but 'Int' was expected.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainScreen.kt:47:38 Unresolved reference 'text'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/ScriptEditorActivity.kt:20:24 Unresolved reference 'R'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/ScriptEditorActivity.kt:22:39 Unresolved reference 'R'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/ScriptEditorActivity.kt:23:41 Unresolved reference 'R'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:7:33 Unresolved reference 'data'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:14:55 Unresolved reference 'Evidence'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:14:66 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:14:66 Argument type mismatch: actual type is 'List<uninferred T (of fun <T> emptyList)>', but 'List<ERROR CLASS: Symbol not found for Evidence>' was expected.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:15:38 Unresolved reference 'Evidence'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:37:68 Unresolved reference 'Evidence'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:41:17 Unresolved reference 'Evidence'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:49:67 Unresolved reference 'Evidence'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:52:37 Unresolved reference 'itextpdf'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:53:39 Unresolved reference 'itextpdf'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:57:36 Unresolved reference 'itextpdf'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:61:17 Unresolved reference 'Evidence'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:69:69 Unresolved reference 'Evidence'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:76:45 Unresolved reference 'Evidence'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:76:45 No value passed for parameter 'onCancellation'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:79:45 No value passed for parameter 'onCancellation'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:88:75 Unresolved reference 'Evidence'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:91:43 Unresolved reference 'poi'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:95:37 Method 'iterator()' is ambiguous for this expression. Applicable candidates:
+fun <T> Enumeration<T>.iterator(): Iterator<T>
+fun <T> Iterator<T>.iterator(): Iterator<T>
+fun <K, V> Map<out K, V>.iterator(): Iterator<Map.Entry<K, V>>
+fun <K, V> MutableMap<K, V>.iterator(): MutableIterator<MutableMap.MutableEntry<K, V>>
+fun CharSequence.iterator(): CharIterator
+fun BufferedInputStream.iterator(): ByteIterator
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:96:42 Method 'iterator()' is ambiguous for this expression. Applicable candidates:
+fun <T> Enumeration<T>.iterator(): Iterator<T>
+fun <T> Iterator<T>.iterator(): Iterator<T>
+fun <K, V> Map<out K, V>.iterator(): Iterator<Map.Entry<K, V>>
+fun <K, V> MutableMap<K, V>.iterator(): MutableIterator<MutableMap.MutableEntry<K, V>>
+fun CharSequence.iterator(): CharIterator
+fun BufferedInputStream.iterator(): ByteIterator
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:105:17 Unresolved reference 'Evidence'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:113:67 Unresolved reference 'Evidence'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:117:42 Unresolved reference 'poi'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:118:48 Unresolved reference 'poi'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:121:43 Unresolved reference 'poi'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:122:48 Unresolved reference 'poi'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:125:17 Unresolved reference 'Evidence'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:135:41 Unresolved reference 'Evidence'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:148:37 Unresolved reference 'Evidence'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:172:52 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:172:52 Unresolved reference. None of the following candidates is applicable because of a receiver type mismatch:
+fun <T, R> Iterable<T>.map(transform: (T) -> R): List<R>
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:172:58 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:173:25 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:173:41 Unresolved reference 'text'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:181:65 Unresolved reference 'ScriptRunner'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:188:55 Unresolved reference 'DataReviewViewModel'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:190:50 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:190:50 Unresolved reference. None of the following candidates is applicable because of a receiver type mismatch:
+fun <T, R> Iterable<T>.map(transform: (T) -> R): List<R>
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:190:56 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:192:42 Unresolved reference 'data'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:194:33 Unresolved reference 'setTaggedEvidence'.
 
-FAILURE: Build failed with an exception.
+> Task :app:compileReleaseKotlin
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/GoogleApiService.kt:18:36 Unresolved reference 'FinancialEntry'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/GoogleApiService.kt:162:104 Unresolved reference 'FinancialEntry'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/GoogleApiService.kt:162:122 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/GoogleApiService.kt:162:122 Not enough information to infer type argument for 'T'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/GoogleApiService.kt:163:37 Unresolved reference 'FinancialEntry'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/GoogleApiService.kt:177:33 Unresolved reference 'FinancialEntry'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/GoogleApiService.kt:195:75 Unresolved reference 'FinancialEntry'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/GoogleApiService.kt:207:23 Unresolved reference 'amount'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/GoogleApiService.kt:208:23 Unresolved reference 'timestamp'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/GoogleApiService.kt:209:23 Unresolved reference 'sourceDocument'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/GoogleApiService.kt:210:23 Unresolved reference 'documentDate'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/GoogleApiService.kt:212:23 Unresolved reference 'allegationId'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainViewModel.kt:13:36 Unresolved reference 'FinancialEntry'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainViewModel.kt:51:59 Unresolved reference 'FinancialEntry'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainViewModel.kt:51:76 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainViewModel.kt:51:76 Argument type mismatch: actual type is 'List<uninferred T (of fun <T> emptyList)>', but 'List<ERROR CLASS: Symbol not found for FinancialEntry>' was expected.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainViewModel.kt:52:42 Unresolved reference 'FinancialEntry'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainViewModel.kt:78:47 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainViewModel.kt:78:47 Not enough information to infer type argument for 'T'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainViewModel.kt:173:39 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainViewModel.kt:173:39 Not enough information to infer type argument for 'T'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainViewModel.kt:180:39 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainViewModel.kt:180:39 Not enough information to infer type argument for 'T'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainViewModel.kt:224:35 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainViewModel.kt:224:35 Not enough information to infer type argument for 'T'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainViewModel.kt:234:35 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainViewModel.kt:234:35 Not enough information to infer type argument for 'T'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainViewModel.kt:295:39 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainViewModel.kt:295:39 Not enough information to infer type argument for 'T'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainViewModel.kt:339:34 Unresolved reference 'FinancialEntry'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainViewModel.kt:347:37 Unresolved reference 'copy'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/SpreadsheetParser.kt:43:49 Unresolved reference 'createMasterTemplate'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/SpreadsheetParser.kt:58:27 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/SpreadsheetParser.kt:58:31 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/SpreadsheetParser.kt:59:69 Too many arguments for 'suspend fun attachScript(spreadsheetId: String, scriptContent: String): Boolean'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/SpreadsheetParser.kt:64:91 No parameter with name 'masterTemplateId' found.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/SpreadsheetParser.kt:101:52 Unresolved reference 'addEvidenceToCase'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/screens/CasesScreen.kt:121:103 No value passed for parameter 'defendants'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/screens/CasesScreen.kt:121:103 No value passed for parameter 'courtName'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/screens/CasesScreen.kt:121:103 No value passed for parameter 'courtDistrict'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/screens/TimelineScreen.kt:27:18 Property delegate must have a 'getValue(Nothing?, KProperty0<ERROR CLASS: Cannot infer argument for type parameter T>)' method. None of the following functions is applicable:
+fun <T> State<T>.getValue(thisObj: Any?, property: KProperty<*>): T
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/screens/TimelineScreen.kt:27:21 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/screens/TimelineScreen.kt:27:31 Unresolved reference 'evidence'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/screens/TimelineScreen.kt:27:40 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/screens/TimelineScreen.kt:28:19 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/screens/TimelineScreen.kt:32:44 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/screens/TimelineScreen.kt:36:30 Unresolved reference 'tags'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/screens/TimelineScreen.kt:36:41 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/screens/TimelineScreen.kt:40:30 Unresolved reference 'content'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/screens/TimelineScreen.kt:43:30 Unresolved reference 'content'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/screens/TimelineScreen.kt:44:38 Unresolved reference 'tags'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/screens/TimelineScreen.kt:44:49 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/screens/TimelineScreen.kt:48:23 Unresolved reference 'it'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/screens/TimelineScreen.kt:48:52 Unresolved reference 'it'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/screens/TimelineScreen.kt:48:73 Unresolved reference 'it'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/screens/TimelineScreen.kt:49:18 Unresolved reference 'it'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/screens/TimelineScreen.kt:70:38 Argument type mismatch: actual type is 'Int', but 'TimelineEvent' was expected.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:27:28 Unresolved reference 'MainViewModel'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:27:42 Property delegate must have a 'getValue(MainActivity, KProperty1<MainActivity, ERROR CLASS: Symbol not found for MainViewModel>)' method. None of the following functions is applicable:
+fun <T> Lazy<T>.getValue(thisRef: Any?, property: KProperty<*>): T
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:27:45 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:27:45 Not enough information to infer type argument for 'VM'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:27:45 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:27:45 Not enough information to infer type argument for 'T'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:44:36 Unresolved reference 'GoogleApiService'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:44:75 Unresolved reference 'R'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:45:23 Unresolved reference 'onSignInSuccess'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:47:23 Unresolved reference 'onSignInFailed'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:60:23 Unresolved reference 'onImageSelected'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:75:27 Unresolved reference 'onImageSelected'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:82:23 Unresolved reference 'addFileEvidence'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:104:21 No parameter with name 'viewModel' found.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:105:21 No parameter with name 'onSignIn' found.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:106:21 No parameter with name 'onSelectImage' found.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:107:21 No parameter with name 'onTakePicture' found.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:108:21 No parameter with name 'onAddDocument' found.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:109:21 No parameter with name 'onAddSpreadsheet' found.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:109:21 No value passed for parameter 'navController'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:109:21 No value passed for parameter 'mainViewModel'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:109:21 No value passed for parameter 'dataReviewViewModel'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:109:21 No value passed for parameter 'onSignInClick'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:109:21 No value passed for parameter 'onExportClick'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:125:42 Unresolved reference 'googleApiService'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:133:36 Unresolved reference 'GoogleApiService'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:133:75 Unresolved reference 'R'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:134:23 Unresolved reference 'onSignInSuccess'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:136:23 Unresolved reference 'onSignOut'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainScreen.kt:16:17 Unresolved reference 'navigation'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainScreen.kt:17:43 Unresolved reference 'DataReviewViewModel'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainScreen.kt:22:20 Unresolved reference 'NavController'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainScreen.kt:24:26 Unresolved reference 'DataReviewViewModel'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainScreen.kt:40:31 Unresolved reference 'navigate'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainScreen.kt:46:19 Argument type mismatch: actual type is 'List<ERROR CLASS: Symbol not found for Evidence>', but 'Int' was expected.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainScreen.kt:47:38 Unresolved reference 'text'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/ScriptEditorActivity.kt:20:24 Unresolved reference 'R'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/ScriptEditorActivity.kt:22:39 Unresolved reference 'R'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/ScriptEditorActivity.kt:23:41 Unresolved reference 'R'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:7:33 Unresolved reference 'data'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:14:55 Unresolved reference 'Evidence'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:14:66 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:14:66 Argument type mismatch: actual type is 'List<uninferred T (of fun <T> emptyList)>', but 'List<ERROR CLASS: Symbol not found for Evidence>' was expected.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:15:38 Unresolved reference 'Evidence'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:37:68 Unresolved reference 'Evidence'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:41:17 Unresolved reference 'Evidence'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:49:67 Unresolved reference 'Evidence'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:52:37 Unresolved reference 'itextpdf'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:53:39 Unresolved reference 'itextpdf'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:57:36 Unresolved reference 'itextpdf'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:61:17 Unresolved reference 'Evidence'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:69:69 Unresolved reference 'Evidence'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:76:45 Unresolved reference 'Evidence'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:76:45 No value passed for parameter 'onCancellation'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:79:45 No value passed for parameter 'onCancellation'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:88:75 Unresolved reference 'Evidence'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:91:43 Unresolved reference 'poi'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:95:37 Method 'iterator()' is ambiguous for this expression. Applicable candidates:
+fun <T> Enumeration<T>.iterator(): Iterator<T>
+fun <T> Iterator<T>.iterator(): Iterator<T>
+fun <K, V> Map<out K, V>.iterator(): Iterator<Map.Entry<K, V>>
+fun <K, V> MutableMap<K, V>.iterator(): MutableIterator<MutableMap.MutableEntry<K, V>>
+fun CharSequence.iterator(): CharIterator
+fun BufferedInputStream.iterator(): ByteIterator
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:96:42 Method 'iterator()' is ambiguous for this expression. Applicable candidates:
+fun <T> Enumeration<T>.iterator(): Iterator<T>
+fun <T> Iterator<T>.iterator(): Iterator<T>
+fun <K, V> Map<out K, V>.iterator(): Iterator<Map.Entry<K, V>>
+fun <K, V> MutableMap<K, V>.iterator(): MutableIterator<MutableMap.MutableEntry<K, V>>
+fun CharSequence.iterator(): CharIterator
+fun BufferedInputStream.iterator(): ByteIterator
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:105:17 Unresolved reference 'Evidence'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:113:67 Unresolved reference 'Evidence'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:117:42 Unresolved reference 'poi'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:118:48 Unresolved reference 'poi'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:121:43 Unresolved reference 'poi'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:122:48 Unresolved reference 'poi'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:125:17 Unresolved reference 'Evidence'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:135:41 Unresolved reference 'Evidence'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:148:37 Unresolved reference 'Evidence'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:172:52 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:172:52 Unresolved reference. None of the following candidates is applicable because of a receiver type mismatch:
+fun <T, R> Iterable<T>.map(transform: (T) -> R): List<R>
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:172:58 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:173:25 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:173:41 Unresolved reference 'text'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:181:65 Unresolved reference 'ScriptRunner'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:188:55 Unresolved reference 'DataReviewViewModel'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:190:50 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:190:50 Unresolved reference. None of the following candidates is applicable because of a receiver type mismatch:
+fun <T, R> Iterable<T>.map(transform: (T) -> R): List<R>
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:190:56 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:192:42 Unresolved reference 'data'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:194:33 Unresolved reference 'setTaggedEvidence'.
 
+> Task :app:compileReleaseKotlin FAILED
+
+FAILURE: Build completed with 2 failures.
+
+1: Task failed with an exception.
+-----------
 * What went wrong:
-Execution failed for task ':app:mergeDebugResources'.
-> /app/app/src/main/res/raw/LexorcistTemplate.pdf: Error: 'L' is not a valid file-based resource name character: File-based resource names must contain only lowercase a-z, 0-9, or underscore
+Execution failed for task ':app:compileDebugKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
 
 * Try:
 > Run with --stacktrace option to get the stack trace.
 > Run with --info or --debug option to get more log output.
 > Run with --scan to get full insights.
 > Get more help at https://help.gradle.org.
+==============================================================================
 
-BUILD FAILED in 3s
-6 actionable tasks: 4 executed, 2 up-to-date
+2: Task failed with an exception.
+-----------
+* What went wrong:
+Execution failed for task ':app:compileReleaseKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+==============================================================================
+
+BUILD FAILED in 11s
+70 actionable tasks: 6 executed, 64 up-to-date
