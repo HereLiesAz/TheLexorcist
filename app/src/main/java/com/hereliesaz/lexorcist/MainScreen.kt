@@ -16,7 +16,9 @@ fun MainScreen(
     viewModel: MainViewModel = viewModel(),
     onSignIn: () -> Unit,
     onSelectImage: () -> Unit,
-    onTakePicture: () -> Unit
+    onTakePicture: () -> Unit,
+    onAddDocument: () -> Unit,
+    onAddSpreadsheet: () -> Unit
 ) {
     val isSignedIn by viewModel.isSignedIn.collectAsState()
     var currentScreen by remember { mutableStateOf("home") }
@@ -37,11 +39,12 @@ fun MainScreen(
                         )
                         "cases" -> CasesScreen(viewModel = viewModel)
                         "add_evidence" -> AddEvidenceScreen(
-                            viewModel = viewModel, 
-                            onSelectImage = onSelectImage, 
-                            onTakePicture = onTakePicture, 
+                            viewModel = viewModel,
+                            onSelectImage = onSelectImage,
+                            onTakePicture = onTakePicture,
                             onAddTextEvidence = { currentScreen = "add_text_evidence" },
-                            onAddFile = {} // Added new onAddFile parameter
+                            onAddDocument = onAddDocument,
+                            onAddSpreadsheet = onAddSpreadsheet
                         )
                         "add_text_evidence" -> {
                             val context = androidx.compose.ui.platform.LocalContext.current
