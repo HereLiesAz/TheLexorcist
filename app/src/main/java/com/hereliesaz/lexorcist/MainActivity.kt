@@ -105,7 +105,7 @@ class MainActivity : ComponentActivity() {
     private fun takePicture() {
         val file = java.io.File(filesDir, "new_image.jpg")
         imageUri = androidx.core.content.FileProvider.getUriForFile(this, "com.hereliesaz.lexorcist.fileprovider", file)
-        takePictureLauncher.launch(imageUri)
+        imageUri?.let { takePictureLauncher.launch(it) }
     }
 
     override fun onStart() {

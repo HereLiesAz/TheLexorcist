@@ -4,8 +4,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Timeline
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
@@ -24,7 +24,8 @@ fun AppNavRail(onNavigate: (String) -> Unit) {
         Icons.Default.Home,
         Icons.Default.List,
         Icons.Default.Add,
-        Icons.Default.Timeline,
+        Icons.Default.Schedule,
+
         Icons.Default.Settings
     )
     val labels = listOf("Home", "Cases", "Add Evidence", "Timeline", "Settings")
