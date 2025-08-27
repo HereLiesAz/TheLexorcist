@@ -7,6 +7,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import android.graphics.ImageDecoder
+import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
 import androidx.activity.viewModels
@@ -59,7 +60,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private var imageUri: android.net.Uri? = null
+    private var imageUri: Uri = null
 
     private val takePictureLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
         if (success) {

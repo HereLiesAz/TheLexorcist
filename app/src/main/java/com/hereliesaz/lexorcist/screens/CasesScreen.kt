@@ -15,8 +15,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.google.api.services.drive.model.File
 import com.hereliesaz.lexorcist.MainViewModel
+import com.hereliesaz.lexorcist.db.Case
 
 @Composable
 fun CasesScreen(viewModel: MainViewModel) {
@@ -80,7 +80,7 @@ fun CasesScreen(viewModel: MainViewModel) {
 }
 
 @Composable
-fun CaseItem(case: File, isSelected: Boolean, onClick: () -> Unit) {
+fun CaseItem(case: Case, isSelected: Boolean, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
