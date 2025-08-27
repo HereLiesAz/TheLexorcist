@@ -14,7 +14,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.hereliesaz.lexorcist.MainViewModel
+import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 
 @Composable
 fun MainScreen(
@@ -42,7 +42,7 @@ fun MainScreen(
         }
         LazyColumn(modifier = Modifier.weight(1f)) {
             items(evidenceList) { evidence ->
-                Text(text = evidence.content, modifier = Modifier.padding(8.dp))
+                Text(text = evidence.text, modifier = Modifier.padding(8.dp))
             }
         }
     }

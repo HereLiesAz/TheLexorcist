@@ -2,7 +2,7 @@ package com.hereliesaz.lexorcist.viewmodel
 
 import androidx.lifecycle.ViewModel
 import com.hereliesaz.lexorcist.data.EvidenceRepository
-import com.hereliesaz.lexorcist.model.TaggedEvidence
+import com.hereliesaz.lexorcist.data.TaggedEvidence
 import kotlinx.coroutines.flow.StateFlow
 
 class DataReviewViewModel : ViewModel() {

@@ -9,20 +9,16 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.google.android.gms.auth.api.signin.GoogleSignIn
-import androidx.navigation.compose.rememberNavController
-import com.google.android.gms.auth.api.Auth.GoogleSignInApi
-import com.google.android.gms.auth.api.signin.GoogleSignInApi
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.Scope
 import com.hereliesaz.lexorcist.ui.theme.LexorcistTheme
-import com.hereliesaz.lexorcist.MainViewModel
+import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 
 class MainActivity : ComponentActivity() {
 
     private val viewModel: MainViewModel by viewModels()
 
-    /*
     private val signInLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
         try {
@@ -32,7 +28,6 @@ class MainActivity : ComponentActivity() {
             // Handle sign in error
         }
     }
-    */
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,22 +40,20 @@ class MainActivity : ComponentActivity() {
                         MainScreen(
                             navController = navController,
                             mainViewModel = viewModel,
-                            onSignInClick = { /*signIn()*/ },
-                            onExportClick = { /*viewModel.exportToSheet()*/ }
+                            onSignInClick = { signIn() },
+                            onExportClick = { viewModel.exportToSheet() }
                         )
                     }
-                    /*
                     composable("data_review") {
                         DataReviewScreen()
                     }
-                    */
                 }
             }
         }
     }
 
     private fun signIn() {
-        val gso = GoogleSignInApi.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestEmail()
             .requestScopes(Scope("https://www.googleapis.com/auth/spreadsheets"))
             .build()
