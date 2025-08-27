@@ -22,7 +22,8 @@ import com.hereliesaz.lexorcist.TaggedDataAdapter
 @Composable
 fun AddEvidenceScreen(
     viewModel: MainViewModel,
-    onSelectImage: () -> Unit
+    onSelectImage: () -> Unit,
+    onTakePicture: () -> Unit
 ) {
     val extractedText by viewModel.extractedText.collectAsState()
     val imageBitmap by viewModel.imageBitmap.collectAsState()
@@ -34,8 +35,18 @@ fun AddEvidenceScreen(
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Button(onClick = onSelectImage) {
-            Text("Select Image")
+        Row {
+            Button(onClick = onSelectImage) {
+                Text("Select Image")
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            Button(onClick = onTakePicture) {
+                Text("Take Picture")
+            }
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        Button(onClick = { /* TODO: Add text evidence */ }) {
+            Text("Add Text Evidence")
         }
         Spacer(modifier = Modifier.height(16.dp))
         imageBitmap?.let {
