@@ -79,12 +79,12 @@ fun AuthenticatedView(
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "Welcome to The Lexorcist!",
+            text = "The Lexorcist",
             style = androidx.compose.material3.MaterialTheme.typography.headlineMedium
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "Use the navigation rail on the left to get started.",
+            text = "Use the navigation rail to get started./n Tap the icon at the top to open the menu.",
             style = androidx.compose.material3.MaterialTheme.typography.bodyLarge
         )
     }

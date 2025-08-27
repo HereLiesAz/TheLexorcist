@@ -1,12 +1,11 @@
-package com.hereliesaz.lexorcist.components
+
 
 import android.content.Intent
 import android.net.Uri
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import com.hereliesaz.aznavrail.model.NavItem
 import com.hereliesaz.aznavrail.model.NavItemData
@@ -14,14 +13,22 @@ import com.hereliesaz.aznavrail.model.NavRailHeader
 import com.hereliesaz.aznavrail.model.NavRailMenuSection
 import com.hereliesaz.aznavrail.model.PredefinedAction
 import com.hereliesaz.aznavrail.ui.AzNavRail
-import androidx.core.net.toUri
+
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent {
+            TestAppScreen()
+        }
+    }
+}
+
 
 @Composable
-fun AppNavRail(onNavigate: (String) -> Unit) {
+fun TestAppScreen() {
     val context = LocalContext.current
     val appName = context.packageManager.getApplicationLabel(context.applicationInfo).toString()
 
-    val items = listOf("home", "cases", "add_evidence", "", "")
     // In your screen's Composable, e.g., inside a Row
     AzNavRail(
         appName = appName,
@@ -32,15 +39,12 @@ fun AppNavRail(onNavigate: (String) -> Unit) {
                 PredefinedAction.HOME -> { /* Navigate to Home */
                 }
                 PredefinedAction.ABOUT -> {
-                    val intent = Intent(
-                        Intent.ACTION_VIEW,
-                        "https://github.com/hereliesaz/$appName".toUri()
-                    )
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/hereliesaz/$appName"))
                     context.startActivity(intent)
                 }
                 PredefinedAction.FEEDBACK -> {
                     val intent = Intent(Intent.ACTION_SENDTO).apply {
-                        data = "mailto:hereliesaz@gmail.com".toUri()
+                        data = Uri.parse("mailto:hereliesaz@gmail.com")
                         putExtra(Intent.EXTRA_SUBJECT, "$appName - Feedback")
                     }
                     context.startActivity(intent)
@@ -58,25 +62,10 @@ fun AppNavRail(onNavigate: (String) -> Unit) {
                         showOnRail = true
                     ),
                     NavItem(
-                        text = "Cases",
+                        text = "Online",
                         data = NavItemData.Toggle(
-                            data = NavItemData.Action(predefinedAction = PredefinedAction.HOME),
-                            showOnRail = true
-                        ),
-                        NavItem(
-                            text = "Evidence",
-                            data = NavItemData.Action(predefinedAction = PredefinedAction.HOME),
-                            showOnRail = true
-                        ),
-                        NavItem(
-                            text = "Timeline",
-                            data = NavItemData.Action(predefinedAction = PredefinedAction.HOME),
-                            showOnRail = false
-                        ),
-                        NavItem(
-                            text = "settings",
-                            data = NavItemData.Action(predefinedAction = PredefinedAction.HOME),
-                            showOnRail = false
+                            initialIsChecked = true,
+                            onStateChange = { isOnline -> /* ... */ }
                         ),
                         showOnRail = true,
                         railButtonText = "On"
