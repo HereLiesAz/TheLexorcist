@@ -2,6 +2,8 @@ package com.hereliesaz.lexorcist
 
 import android.app.Application
 import android.content.Context
+import android.net.Uri
+import android.provider.OpenableColumns
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -75,6 +77,35 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     _allegations.value = emptyList()
                     _financialEntries.value = emptyList()
                 }
+            }
+        }
+    }
+
+    fun addFileEvidence(uri: Uri, context: Context) {
+        viewModelScope.launch {
+            val currentCase = _selectedCase.value
+            val apiService = _googleApiService.value
+
+            if (currentCase != null && apiService != null) {
+                val rawEvidenceFolderId = apiService.getOrCreateEvidenceFolder(currentCase.name) ?: return@launch
+
+                context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                    val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                    cursor.moveToFirst()
+                    val fileName = cursor.getString(nameIndex)
+                    val mimeType = context.contentResolver.getType(uri)
+
+                    val inputStream = context.contentResolver.openInputStream(uri)
+                    if (inputStream != null) {
+                        val file = java.io.File(context.cacheDir, fileName)
+                        file.outputStream().use {
+                            inputStream.copyTo(it)
+                        }
+                        apiService.uploadFile(file, rawEvidenceFolderId, mimeType ?: "application/octet-stream")
+                    }
+                }
+            } else {
+                Log.w(TAG, "addFileEvidence: Selected case or API service is null, skipping file upload.")
             }
         }
     }
