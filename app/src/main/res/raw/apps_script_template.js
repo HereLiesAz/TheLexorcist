@@ -338,6 +338,22 @@ function onEdit(e) { /* Full implementation from previous turn */ }
 
 // --- HELPER FUNCTIONS ---
 
+let caseInfoMap = null;
+
+function getCaseInfo() {
+  if (caseInfoMap === null) {
+    caseInfoMap = {}; // Initialize to avoid re-fetching on failure
+    const caseInfoSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CASE_INFO_SHEET_NAME);
+    if (caseInfoSheet) {
+      const caseInfoData = caseInfoSheet.getDataRange().getValues();
+      caseInfoData.forEach(row => {
+        if (row[0]) caseInfoMap[row[0]] = row[1];
+      });
+    }
+  }
+  return caseInfoMap;
+}
+
 function replaceCasePlaceholders(body, data) {
   body.replaceText('{{CASE_NUMBER}}', data.caseNumber);
   body.replaceText('{{SECTION}}', data.caseSection);
@@ -352,28 +368,20 @@ function getActiveRowData(sheet, activeRow, headers) {
   const ui = SpreadsheetApp.getUi();
   if (activeRow === 1) { ui.alert('Please select a data row, not the header.'); return null; }
   
-  // Get case-wide info
-  const caseInfoSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CASE_INFO_SHEET_NAME);
-  const caseInfoData = caseInfoSheet.getDataRange().getValues();
-  const caseInfoMap = {};
-  caseInfoData.forEach(row => {
-    if (row[0]) {
-      caseInfoMap[row[0]] = row[1];
-    }
-  });
+  const caseInfo = getCaseInfo();
 
   const rowData = sheet.getRange(activeRow, 1, 1, headers.length).getValues()[0];
   const dataMap = {};
   headers.forEach((header, i) => dataMap[header] = rowData[i]);
 
   return {
-    caseNumber: caseInfoMap['Case Number'] || '',
-    caseSection: caseInfoMap['Section'] || '',
-    caseJudge: caseInfoMap['Judge'] || '',
-    plaintiffs: caseInfoMap['Plaintiffs'] || '',
-    defendants: caseInfoMap['Defendants'] || '',
-    courtName: caseInfoMap['Court Name'] || '',
-    courtDistrict: caseInfoMap['Court District'] || '',
+    caseNumber: caseInfo['Case Number'] || '',
+    caseSection: caseInfo['Section'] || '',
+    caseJudge: caseInfo['Judge'] || '',
+    plaintiffs: caseInfo['Plaintiffs'] || '',
+    defendants: caseInfo['Defendants'] || '',
+    courtName: caseInfo['Court Name'] || '',
+    courtDistrict: caseInfo['Court District'] || '',
     exhibitNumber: dataMap['Exhibit No.'] || `Exhibit-${activeRow}`,
     exhibitName: dataMap['Exhibit Name'],
     exhibitDate: dataMap['Date'] ? new Date(dataMap['Date']).toLocaleDateString("en-US") : 'N/A',
@@ -414,13 +422,7 @@ function updateLinkInSheet(sheet, row, columnName, url, headers) {
 }
 
 function getOrCreateFolder(folderName) {
-  // Get the folder containing the current spreadsheet
-  const spreadsheetFile = DriveApp.getFileById(SpreadsheetApp.getActiveSpreadsheet().getId());
-  const parentFolders = spreadsheetFile.getParents();
-  
-  // Default to root if the spreadsheet is in the root for some reason
-  const parentFolder = parentFolders.hasNext() ? parentFolders.next() : DriveApp.getRootFolder();
-
+  const parentFolder = DriveApp.getRootFolder(); // Or specify a different parent
   const folders = parentFolder.getFoldersByName(folderName);
   if (folders.hasNext()) {
     return folders.next();

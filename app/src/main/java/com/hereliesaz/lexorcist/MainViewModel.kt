@@ -9,12 +9,10 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 // import com.hereliesaz.lexorcist.db.AppDatabase // Removed unused import
 import com.hereliesaz.lexorcist.db.Allegation
-import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.db.Case
-import com.hereliesaz.lexorcist.db.Evidence
+import com.hereliesaz.lexorcist.db.FinancialEntry
 import com.hereliesaz.lexorcist.model.SheetFilter
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import java.io.InputStreamReader
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -50,8 +48,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _selectedCase = MutableStateFlow<Case?>(null)
     val selectedCase: StateFlow<Case?> = _selectedCase.asStateFlow()
 
-    private val _evidence = MutableStateFlow<List<Evidence>>(emptyList())
-    val evidence: StateFlow<List<Evidence>> = _evidence.asStateFlow()
+    private val _financialEntries = MutableStateFlow<List<FinancialEntry>>(emptyList())
+    val financialEntries: StateFlow<List<FinancialEntry>> = _financialEntries.asStateFlow()
 
     private val _filters = MutableStateFlow<List<SheetFilter>>(emptyList())
     val filters: StateFlow<List<SheetFilter>> = _filters.asStateFlow()
@@ -69,7 +67,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         if (currentCase.spreadsheetId.isNotBlank()) {
                             loadFiltersFromSheet(currentCase.spreadsheetId)
                             loadAllegationsForSelectedCase(currentCase.spreadsheetId, currentCase.id)
-                            loadEvidenceForSelectedCase(currentCase.spreadsheetId, currentCase.id)
+                            loadFinancialEntriesForSelectedCase(currentCase.spreadsheetId, currentCase.id)
                         }
                     }
                 } else {
@@ -77,7 +75,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     _cases.value = emptyList()
                     _filters.value = emptyList()
                     _allegations.value = emptyList()
-                    _evidence.value = emptyList()
+                    _financialEntries.value = emptyList()
                 }
             }
         }
@@ -169,17 +167,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    private suspend fun loadEvidenceForSelectedCase(spreadsheetId: String, caseIdForAssociation: Int) {
+    private suspend fun loadFinancialEntriesForSelectedCase(spreadsheetId: String, caseIdForAssociation: Int) {
         val apiService = _googleApiService.value
         if (apiService == null || spreadsheetId.isBlank()) {
-            _evidence.value = emptyList(); return
+            _financialEntries.value = emptyList(); return
         }
         try {
-            _evidence.value = apiService.getEvidenceForCase(spreadsheetId, caseIdForAssociation)
-            Log.d(TAG, "loadEvidenceForSelectedCase: Loaded ${_evidence.value.size} evidence for case ID $caseIdForAssociation.")
+            _financialEntries.value = apiService.getFinancialEntriesForCase(spreadsheetId, caseIdForAssociation)
+            Log.d(TAG, "loadFinancialEntriesForSelectedCase: Loaded ${_financialEntries.value.size} financial entries for case ID $caseIdForAssociation.")
         } catch (e: Exception) {
-            Log.e(TAG, "loadEvidenceForSelectedCase: Error loading evidence for $spreadsheetId", e)
-            _evidence.value = emptyList()
+            Log.e(TAG, "loadFinancialEntriesForSelectedCase: Error loading financial entries for $spreadsheetId", e)
+            _financialEntries.value = emptyList()
         }
     }
 
@@ -211,7 +209,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 if (currentCase.spreadsheetId.isNotBlank()) {
                     loadFiltersFromSheet(currentCase.spreadsheetId)
                     loadAllegationsForSelectedCase(currentCase.spreadsheetId, currentCase.id)
-                    loadEvidenceForSelectedCase(currentCase.spreadsheetId, currentCase.id)
+                    loadFinancialEntriesForSelectedCase(currentCase.spreadsheetId, currentCase.id)
                 }
             }
         }
@@ -223,7 +221,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _cases.value = emptyList()
         _filters.value = emptyList()
         _allegations.value = emptyList()
-        _evidence.value = emptyList()
+        _financialEntries.value = emptyList()
     }
 
     fun onSignOut() {
@@ -233,7 +231,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _selectedCase.value = null
         _filters.value = emptyList()
         _allegations.value = emptyList()
-        _evidence.value = emptyList()
+        _financialEntries.value = emptyList()
     }
 
     fun createCase(
@@ -253,37 +251,27 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
             val caseFolderId = apiService.getOrCreateCaseFolder(caseName) ?: return@launch
             apiService.getOrCreateEvidenceFolder(caseName) // Create evidence folder when case is created
-
-            val newTemplate = apiService.copyFile(MASTER_TEMPLATE_ID, "$caseName Master Template", caseFolderId) ?: return@launch
-            val newTemplateId = newTemplate.id
-            val replacements = mapOf(
-                "CASE_NUMBER" to caseNumber,
-                "CASE_SECTION" to caseSection,
-                "JUDGE" to caseJudge
-            )
-            apiService.replacePlaceholdersInDoc(newTemplateId, replacements)
-
             val caseSpreadsheetId = apiService.createSpreadsheet(caseName, caseFolderId) ?: return@launch
 
             val caseInfo = mapOf(
-                "Case Number" to caseNumber,
-                "Section" to caseSection,
-                "Judge" to judge,
-                "Plaintiffs" to plaintiffs,
-                "Defendants" to defendants,
-                "Court Name" to courtName,
-                "Court District" to courtDistrict
+                KEY_CASE_NUMBER to caseNumber,
+                KEY_SECTION to caseSection,
+                KEY_JUDGE to judge,
+                KEY_PLAINTIFFS to plaintiffs,
+                KEY_DEFENDANTS to defendants,
+                KEY_COURT_NAME to courtName,
+                KEY_COURT_DISTRICT to courtDistrict
             )
             apiService.addCaseInfoSheet(caseSpreadsheetId, caseInfo)
 
-            val scriptTemplate = withContext(kotlinx.coroutines.Dispatchers.IO) {
-                getApplication<Application>().resources.openRawResource(R.raw.apps_script_template)
-                    .bufferedReader().use { it.readText() }
+            val scriptTemplate = getApplication<Application>().resources.openRawResource(R.raw.apps_script_template)
+                .bufferedReader().use { it.readText() }
+            if (!apiService.attachScript(caseSpreadsheetId, scriptTemplate)) {
+                Log.e(TAG, "Failed to attach script to case '$caseName'. Aborting case creation.")
+                return@launch
             }
-            apiService.attachScript(caseSpreadsheetId, scriptTemplate)
 
             val newCase = Case(name = caseName, spreadsheetId = caseSpreadsheetId)
-
             if (apiService.addCaseToRegistry(caseRegistrySpreadsheetId, newCase)) {
                 Log.d(TAG, "createCase: Case '$caseName' added to registry.")
                 loadCasesFromRegistry()
@@ -299,12 +287,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             viewModelScope.launch {
                 loadFiltersFromSheet(case.spreadsheetId)
                 loadAllegationsForSelectedCase(case.spreadsheetId, case.id)
-                loadEvidenceForSelectedCase(case.spreadsheetId, case.id)
+                loadFinancialEntriesForSelectedCase(case.spreadsheetId, case.id)
             }
         } else {
             _filters.value = emptyList()
             _allegations.value = emptyList()
-            _evidence.value = emptyList()
+            _financialEntries.value = emptyList()
         }
     }
 
@@ -348,25 +336,25 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun addEvidence(entry: Evidence) {
+    fun addFinancialEntry(entry: FinancialEntry) {
         val currentCase = _selectedCase.value
         val apiService = _googleApiService.value
         if (currentCase == null || currentCase.spreadsheetId.isBlank() || apiService == null) {
-            Log.w(TAG, "addEvidence: Missing data for adding evidence.")
+            Log.w(TAG, "addFinancialEntry: Missing data for adding financial entry.")
             return
         }
         // Ensure the entry is associated with the selected case ID
         val entryWithCaseId = entry.copy(caseId = currentCase.id)
         viewModelScope.launch {
             try {
-                if (apiService.addEvidenceToCase(currentCase.spreadsheetId, entryWithCaseId)) {
-                    Log.d(TAG, "addEvidence: Evidence added for case ID ${currentCase.id}.")
-                    loadEvidenceForSelectedCase(currentCase.spreadsheetId, currentCase.id)
+                if (apiService.addFinancialEntryToCase(currentCase.spreadsheetId, entryWithCaseId)) {
+                    Log.d(TAG, "addFinancialEntry: Entry added for case ID ${currentCase.id}.")
+                    loadFinancialEntriesForSelectedCase(currentCase.spreadsheetId, currentCase.id)
                 } else {
-                    Log.w(TAG, "addEvidence: Failed to add evidence for case ID ${currentCase.id}.")
+                    Log.w(TAG, "addFinancialEntry: Failed to add entry for case ID ${currentCase.id}.")
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "addEvidence: Error adding evidence for case ID ${currentCase.id}", e)
+                Log.e(TAG, "addFinancialEntry: Error adding entry for case ID ${currentCase.id}", e)
             }
         }
     }
@@ -394,17 +382,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 val timestamp = System.currentTimeMillis()
                 val file = java.io.File(context.cacheDir, "evidence-$timestamp.txt")
                 file.writeText(text)
-                val uploadedFile = apiService.uploadFile(file, rawEvidenceFolderId, "text/plain")
-                if (uploadedFile != null) {
-                    val newEvidence = Evidence(
-                        caseId = currentCase.id,
-                        content = text,
-                        timestamp = System.currentTimeMillis(),
-                        sourceDocument = uploadedFile.name,
-                        documentDate = System.currentTimeMillis()
-                    )
-                    addEvidence(newEvidence)
-                }
+                apiService.uploadFile(file, rawEvidenceFolderId, "text/plain")
             } else {
                 Log.w(TAG, "addTextEvidence: Selected case or API service is null, skipping file upload.")
             }
@@ -415,7 +393,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         Log.d(TAG, "processImage called")
         val currentCase = _selectedCase.value
         val apiService = _googleApiService.value
-        var uploadedFile: com.google.api.services.drive.model.File? = null
 
         if (currentCase != null && apiService != null) {
             val rawEvidenceFolderId = apiService.getOrCreateEvidenceFolder(currentCase.name) ?: return
@@ -424,7 +401,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             file.outputStream().use {
                 bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 100, it)
             }
-            uploadedFile = apiService.uploadFile(file, rawEvidenceFolderId, "image/jpeg")
+            apiService.uploadFile(file, rawEvidenceFolderId, "image/jpeg")
         } else {
             Log.w(TAG, "processImage: Selected case or API service is null, skipping file upload.")
         }
@@ -435,16 +412,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             .addOnSuccessListener { visionText ->
                 Log.d(TAG, "processImage: Text recognition successful")
                 _extractedText.value = visionText.text
-                if (currentCase != null) {
-                    val newEvidence = Evidence(
-                        caseId = currentCase.id,
-                        content = visionText.text,
-                        timestamp = System.currentTimeMillis(),
-                        sourceDocument = uploadedFile?.name ?: "Unknown image source",
-                        documentDate = System.currentTimeMillis()
-                    )
-                    addEvidence(newEvidence)
-                }
+                val taggedDataMap = DataParser.tagData(visionText.text)
+                Log.d(TAG, "processImage: taggedData: $taggedDataMap")
+                storeTaggedData(taggedDataMap)
             }
             .addOnFailureListener { e ->
                 Log.e(TAG, "processImage: Text recognition failed", e)
@@ -508,8 +478,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     companion object {
         private const val FILTERS_SHEET_NAME = "Filters"
         private const val RAW_EVIDENCE_FOLDER_NAME = "Raw Evidence"
-        private const val MASTER_TEMPLATE_ID = "1Ux9i8GSJ3qJjYqO5ngXMIgCE94LCDkBwfCv0ReJA5eg"
         // ALLEGATIONS_SHEET_NAME is in GoogleApiService.kt
         // FINANCIAL_ENTRIES_SHEET_NAME is in GoogleApiService.kt
+        private const val KEY_CASE_NUMBER = "Case Number"
+        private const val KEY_SECTION = "Section"
+        private const val KEY_JUDGE = "Judge"
+        private const val KEY_PLAINTIFFS = "Plaintiffs"
+        private const val KEY_DEFENDANTS = "Defendants"
+        private const val KEY_COURT_NAME = "Court Name"
+        private const val KEY_COURT_DISTRICT = "Court District"
     }
 }
