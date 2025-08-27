@@ -21,14 +21,10 @@ class GoogleApiService(credential: GoogleAccountCredential, applicationName: Str
 
     private val transport = NetHttpTransport()
     private val jsonFactory = JacksonFactory.getDefaultInstance()
-class GoogleApiService(
-    private val credential: GoogleAccountCredential,
-    private val sheetsService: Sheets,
-    private val driveService: Drive,
-    private val scriptService: Script
-) {
 
-    // ... (existing functions)
+    private val drive: Drive = Drive.Builder(transport, jsonFactory, credential)
+        .setApplicationName(applicationName)
+        .build()
 
     val sheets: Sheets = Sheets.Builder(transport, jsonFactory, credential)
         .setApplicationName(applicationName)
@@ -191,14 +187,17 @@ class GoogleApiService(
         } catch (e: Exception) {
             e.printStackTrace()
             null
+        }
+    }
+
     suspend fun readSpreadsheet(spreadsheetId: String): Map<String, List<List<Any>>>? {
         return withContext(Dispatchers.IO) {
             try {
-                val spreadsheet = sheetsService.spreadsheets().get(spreadsheetId).execute()
+                val spreadsheet = sheets.spreadsheets().get(spreadsheetId).execute()
                 val sheetData = mutableMapOf<String, List<List<Any>>>()
                 spreadsheet.sheets.forEach { sheet ->
                     val range = sheet.properties.title
-                    val response = sheetsService.spreadsheets().values().get(spreadsheetId, range).execute()
+                    val response = sheets.spreadsheets().values().get(spreadsheetId, range).execute()
                     sheetData[range] = response.getValues() ?: emptyList()
                 }
                 sheetData
@@ -209,35 +208,7 @@ class GoogleApiService(
         }
     }
 
-    suspend fun createSpreadsheet(title: String, caseInfo: Map<String, String>): String? {
-        return withContext(Dispatchers.IO) {
-            try {
-                val spreadsheet = Spreadsheet().setProperties(
-                    SpreadsheetProperties().setTitle(title)
-                )
-                val createdSpreadsheet = sheetsService.spreadsheets().create(spreadsheet).execute()
-                val spreadsheetId = createdSpreadsheet.spreadsheetId
-
-                // Now add the case info to a sheet
-                val sheetName = "Case Info"
-                val addSheetRequest = AddSheetRequest().setProperties(SheetProperties().setTitle(sheetName))
-                val batchUpdate = BatchUpdateSpreadsheetRequest().setRequests(listOf(Request().setAddSheet(addSheetRequest)))
-                sheetsService.spreadsheets().batchUpdate(spreadsheetId, batchUpdate).execute()
-
-                val values = caseInfo.map { (key, value) ->
-                    listOf(key, value)
-                }
-                val body = ValueRange().setValues(values)
-                sheetsService.spreadsheets().values().update(spreadsheetId, "$sheetName!A1", body)
-                    .setValueInputOption("RAW")
-                    .execute()
-
-                spreadsheetId
-            } catch (e: Exception) {
-                e.printStackTrace()
-                null
-            }
-    suspend fun createSpreadsheet(title: String, parentId: String? = null): String? = withContext(Dispatchers.IO) {
+    suspend fun createSpreadsheet(title: String, parentId: String? = null, caseInfo: Map<String, String>? = null): String? = withContext(Dispatchers.IO) {
         try {
             val fileMetadata = com.google.api.services.drive.model.File()
             fileMetadata.name = title
@@ -245,7 +216,23 @@ class GoogleApiService(
             if (parentId != null) {
                 fileMetadata.parents = listOf(parentId)
             }
-            drive.files().create(fileMetadata).setFields("id").execute()?.id
+            val spreadsheetFile = drive.files().create(fileMetadata).setFields("id").execute()
+            val spreadsheetId = spreadsheetFile?.id
+            if (spreadsheetId != null && caseInfo != null) {
+                val sheetName = "Case Info"
+                val addSheetRequest = AddSheetRequest().setProperties(SheetProperties().setTitle(sheetName))
+                val batchUpdate = BatchUpdateSpreadsheetRequest().setRequests(listOf(Request().setAddSheet(addSheetRequest)))
+                sheets.spreadsheets().batchUpdate(spreadsheetId, batchUpdate).execute()
+
+                val values = caseInfo.map { (key, value) ->
+                    listOf(key, value)
+                }
+                val body = ValueRange().setValues(values)
+                sheets.spreadsheets().values().update(spreadsheetId, "$sheetName!A1", body)
+                    .setValueInputOption("RAW")
+                    .execute()
+            }
+            spreadsheetId
         } catch (e: Exception) {
             e.printStackTrace()
             null
@@ -255,7 +242,8 @@ class GoogleApiService(
     suspend fun attachScript(spreadsheetId: String, masterTemplateId: String, caseFolderId: String?) = withContext(Dispatchers.IO) {
         try {
             val project = Project().setTitle("Case Tools Script").setParentId(spreadsheetId)
-            val createdProject = script.projects().create(project as CreateProjectRequest?).execute()
+            val createProjectRequest = CreateProjectRequest().setScriptId(project.scriptId).setParentId(spreadsheetId)
+            val createdProject = script.projects().create(createProjectRequest).execute()
             val scriptId = createdProject.scriptId ?: return@withContext
 
             val scriptContent = """
@@ -328,12 +316,15 @@ class GoogleApiService(
             script.projects().updateContent(scriptId, content).execute()
         } catch (e: Exception) {
             e.printStackTrace()
+        }
+    }
+
     suspend fun addSheet(spreadsheetId: String, sheetTitle: String) {
         withContext(Dispatchers.IO) {
             try {
                 val addSheetRequest = AddSheetRequest().setProperties(SheetProperties().setTitle(sheetTitle))
                 val batchUpdate = BatchUpdateSpreadsheetRequest().setRequests(listOf(Request().setAddSheet(addSheetRequest)))
-                sheetsService.spreadsheets().batchUpdate(spreadsheetId, batchUpdate).execute()
+                sheets.spreadsheets().batchUpdate(spreadsheetId, batchUpdate).execute()
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -344,7 +335,7 @@ class GoogleApiService(
         withContext(Dispatchers.IO) {
             try {
                 val body = ValueRange().setValues(values)
-                sheetsService.spreadsheets().values().append(spreadsheetId, sheetName, body)
+                sheets.spreadsheets().values().append(spreadsheetId, sheetName, body)
                     .setValueInputOption("RAW")
                     .execute()
             } catch (e: Exception) {
@@ -353,12 +344,52 @@ class GoogleApiService(
         }
     }
 
-    suspend fun createMasterTemplate(): String? {
-        // ... (implementation)
-        return null
+    suspend fun createCase(caseName: String, caseInfo: Map<String, String>): String? = withContext(Dispatchers.IO) {
+        try {
+            val rootFolderId = getOrCreateAppRootFolder() ?: return@withContext null
+            val caseFolderId = getOrCreateFolder(caseName, rootFolderId) ?: return@withContext null
+            val spreadsheetId = createSpreadsheet("$caseName Evidence", caseFolderId, caseInfo) ?: return@withContext null
+            val masterTemplateId = createMasterTemplate(rootFolderId) ?: return@withContext null
+            attachScript(spreadsheetId, masterTemplateId, caseFolderId)
+            spreadsheetId
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
     }
 
-    suspend fun attachScript(spreadsheetId: String, masterTemplateId: String) {
-        // ... (implementation)
+    suspend fun listCases(): List<com.google.api.services.drive.model.File> = withContext(Dispatchers.IO) {
+        try {
+            val rootFolderId = getOrCreateAppRootFolder() ?: return@withContext emptyList()
+            val query = "'$rootFolderId' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false"
+            drive.files().list().setQ(query).setSpaces("drive").execute().files ?: emptyList()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emptyList()
+        }
+    }
+
+    suspend fun uploadFile(name: String, content: ByteArray, mimeType: String, folderId: String): com.google.api.services.drive.model.File? = withContext(Dispatchers.IO) {
+        try {
+            val fileMetadata = com.google.api.services.drive.model.File().apply {
+                this.name = name
+                parents = listOf(folderId)
+            }
+            val mediaContent = ByteArrayContent(mimeType, content)
+            drive.files().create(fileMetadata, mediaContent).setFields("id, name").execute()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    suspend fun getFilesInFolder(folderId: String): List<com.google.api.services.drive.model.File> = withContext(Dispatchers.IO) {
+        try {
+            val query = "'$folderId' in parents and trashed=false"
+            drive.files().list().setQ(query).setSpaces("drive").execute().files ?: emptyList()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emptyList()
+        }
     }
 }
