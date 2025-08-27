@@ -276,8 +276,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             )
             apiService.addCaseInfoSheet(caseSpreadsheetId, caseInfo)
 
-            val scriptTemplate = getApplication<Application>().resources.openRawResource(R.raw.apps_script_template)
-                .bufferedReader().use { it.readText() }
+            val scriptTemplate = withContext(kotlinx.coroutines.Dispatchers.IO) {
+                getApplication<Application>().resources.openRawResource(R.raw.apps_script_template)
+                    .bufferedReader().use { it.readText() }
+            }
             apiService.attachScript(caseSpreadsheetId, scriptTemplate)
 
             val newCase = Case(name = caseName, spreadsheetId = caseSpreadsheetId)
