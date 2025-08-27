@@ -16,6 +16,7 @@ import com.google.api.services.sheets.v4.model.*
 import com.hereliesaz.lexorcist.db.Allegation
 import com.hereliesaz.lexorcist.db.Case
 import com.hereliesaz.lexorcist.db.FinancialEntry // Import FinancialEntry data class
+import com.hereliesaz.lexorcist.utils.FolderManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.IOException
@@ -46,26 +47,12 @@ class GoogleApiService(
         .setApplicationName(applicationName)
         .build()
 
+    private val folderManager = FolderManager(driveService)
+
     suspend fun getOrCreateFolder(folderName: String, parentId: String? = null): String? = withContext(Dispatchers.IO) {
         try {
-            val query = if (parentId != null) {
-                "'${parentId}' in parents and mimeType='application/vnd.google-apps.folder' and name='${folderName}' and trashed=false"
-            } else {
-                "mimeType='application/vnd.google-apps.folder' and name='${folderName}' and trashed=false"
-            }
-            val fileListResult = driveService.files().list().setQ(query).setSpaces("drive").execute()
-            val actualFiles = fileListResult?.files
-            if (actualFiles != null && actualFiles.isNotEmpty()) {
-                return@withContext actualFiles[0].id
-            }
-            val fileMetadata = DriveFile()
-            fileMetadata.name = folderName
-            fileMetadata.mimeType = "application/vnd.google-apps.folder"
-            if (parentId != null) {
-                fileMetadata.parents = listOf(parentId)
-            }
-            driveService.files().create(fileMetadata).setFields("id").execute()?.id
-        } catch (e: Exception) {
+            folderManager.getOrCreateFolder(folderName, parentId)
+        } catch (e: IOException) {
             e.printStackTrace()
             null
         }
@@ -73,6 +60,16 @@ class GoogleApiService(
 
     suspend fun getOrCreateAppRootFolder(): String? {
         return getOrCreateFolder(APP_ROOT_FOLDER_NAME)
+    }
+
+    suspend fun getOrCreateCaseFolder(caseName: String): String? {
+        val rootFolderId = getOrCreateAppRootFolder()
+        return getOrCreateFolder(caseName, rootFolderId)
+    }
+
+    suspend fun getOrCreateEvidenceFolder(caseName: String): String? {
+        val caseFolderId = getOrCreateCaseFolder(caseName)
+        return getOrCreateFolder("Evidence", caseFolderId)
     }
 
     suspend fun getOrCreateCaseRegistrySpreadsheetId(appRootFolderId: String): String? = withContext(Dispatchers.IO) {

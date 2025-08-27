@@ -23,7 +23,8 @@ import com.hereliesaz.lexorcist.TaggedDataAdapter
 fun AddEvidenceScreen(
     viewModel: MainViewModel,
     onSelectImage: () -> Unit,
-    onTakePicture: () -> Unit
+    onTakePicture: () -> Unit,
+    onAddTextEvidence: () -> Unit
 ) {
     val extractedText by viewModel.extractedText.collectAsState()
     val imageBitmap by viewModel.imageBitmap.collectAsState()
@@ -45,7 +46,7 @@ fun AddEvidenceScreen(
             }
         }
         Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = { /* TODO: Add text evidence */ }) {
+        Button(onClick = onAddTextEvidence) {
             Text("Add Text Evidence")
         }
         Spacer(modifier = Modifier.height(16.dp))
