@@ -316,6 +316,23 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun addTextEvidence(text: String, context: Context) {
+        viewModelScope.launch {
+            val currentCase = _selectedCase.value
+            val apiService = _googleApiService.value
+
+            if (currentCase != null && apiService != null) {
+                val rawEvidenceFolderId = apiService.getOrCreateEvidenceFolder(currentCase.name) ?: return@launch
+                val timestamp = System.currentTimeMillis()
+                val file = java.io.File(context.cacheDir, "evidence-$timestamp.txt")
+                file.writeText(text)
+                apiService.uploadFile(file, rawEvidenceFolderId, "text/plain")
+            } else {
+                Log.w(TAG, "addTextEvidence: Selected case or API service is null, skipping file upload.")
+            }
+        }
+    }
+
     private suspend fun processImage(bitmap: android.graphics.Bitmap, context: Context) {
         Log.d(TAG, "processImage called")
         val currentCase = _selectedCase.value
