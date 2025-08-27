@@ -3,7 +3,7 @@ package com.hereliesaz.lexorcist
 import android.util.Log
 import com.hereliesaz.lexorcist.db.Allegation
 import com.hereliesaz.lexorcist.db.Case
-import com.hereliesaz.lexorcist.db.FinancialEntry
+import com.hereliesaz.lexorcist.db.Evidence
 // DAOs are no longer used
 
 class SpreadsheetParser(
@@ -81,31 +81,30 @@ class SpreadsheetParser(
             }
         }
 
-        // 6. Parse and Store Financial Entries into the new case's spreadsheet
-        val damagesSheet = sheetsData["Damages Analysis"]
-        damagesSheet?.drop(1)?.forEach { row -> // Assuming first row is header
+        // 6. Parse and Store Evidence into the new case's spreadsheet
+        val evidenceSheet = sheetsData["Evidence"]
+        evidenceSheet?.drop(1)?.forEach { row -> // Assuming first row is header
             try {
-                val plaintiff = row.getOrNull(0)?.toString()
-                val category = row.getOrNull(1)?.toString()
-                val amountStr = row.getOrNull(2)?.toString()
+                val content = row.getOrNull(0)?.toString()
+                val tagsStr = row.getOrNull(1)?.toString()
 
-                if (plaintiff != null && category != null && amountStr != null) {
-                    val financialEntry = FinancialEntry(
+                if (content != null) {
+                    val evidence = Evidence(
                         caseId = newCase.id, // This id is local and not the primary key in Sheets
-                        amount = amountStr,
+                        content = content,
                         timestamp = System.currentTimeMillis(),
-                        sourceDocument = "Imported - Damages Analysis Sheet",
+                        sourceDocument = "Imported - Evidence Sheet",
                         documentDate = System.currentTimeMillis(),
-                        category = category,
+                        tags = tagsStr?.split(",")?.map { it.trim() } ?: emptyList(),
                         allegationId = null
                     )
-                    val success = googleApiService.addFinancialEntryToCase(newCaseSpreadsheetId, financialEntry)
+                    val success = googleApiService.addEvidenceToCase(newCaseSpreadsheetId, evidence)
                     if (!success) {
-                        Log.w(TAG, "parseAndStore: Failed to add financial entry: $financialEntry to $newCaseSpreadsheetId")
+                        Log.w(TAG, "parseAndStore: Failed to add evidence: $evidence to $newCaseSpreadsheetId")
                     }
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "parseAndStore: Error parsing financial entry row: $row", e)
+                Log.e(TAG, "parseAndStore: Error parsing evidence row: $row", e)
             }
         }
         Log.i(TAG, "parseAndStore: Finished importing data for case: $importedCaseName, Spreadsheet ID: $newCaseSpreadsheetId")

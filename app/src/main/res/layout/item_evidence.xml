@@ -6,7 +6,7 @@
     android:padding="8dp">
 
     <TextView
-        android:id="@+id/amount_textview"
+        android:id="@+id/content_textview"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textSize="16sp"
@@ -19,7 +19,7 @@
         android:layout_marginTop="4dp" />
 
     <TextView
-        android:id="@+id/category_textview"
+        android:id="@+id/tags_textview"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp" />

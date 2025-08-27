@@ -92,6 +92,7 @@ dependencies {
     implementation("com.google.android.gms:play-services-auth:21.4.0")
 
     // Google APIs
+    implementation("com.google.api-client:google-api-client:2.0.0")
     implementation("com.google.api-client:google-api-client-android:2.8.1")
     implementation("com.google.apis:google-api-services-drive:v3-rev20250819-2.0.0")
     implementation("com.google.apis:google-api-services-sheets:v4-rev20250616-2.0.0")
