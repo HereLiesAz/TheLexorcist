@@ -20,7 +20,10 @@ data class TimelineEvent(val date: Long, val description: String)
 
 @Composable
 fun TimelineScreen(viewModel: MainViewModel) {
-    val financialEntries by viewModel.financialEntries.collectAsState()
+    val financialEntries by viewModel.financialEntries.collectAsState(
+        initial = TODO(),
+        context = TODO()
+    )
     val timelineEvents = financialEntries.map {
         TimelineEvent(it.documentDate, "Amount: ${it.amount}, Category: ${it.category}")
     }.sortedBy { it.date }

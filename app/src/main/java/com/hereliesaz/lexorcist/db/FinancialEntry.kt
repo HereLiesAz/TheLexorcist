@@ -7,6 +7,8 @@ import androidx.room.PrimaryKey
 data class FinancialEntry(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
+    val caseId: Int,
+    val allegationId: Int? = null, // Foreign key to Allegation
     val amount: String,
     val timestamp: Long,
     val sourceDocument: String,

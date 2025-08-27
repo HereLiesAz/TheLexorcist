@@ -1,16 +1,19 @@
 package com.hereliesaz.lexorcist.components
 
 import androidx.compose.runtime.Composable
-import com.hereliesaz.aznavrail.AzNavRail
-import com.hereliesaz.aznavrail.NavItem
-import com.hereliesaz.aznavrail.NavItemData
-import com.hereliesaz.aznavrail.NavRailMenuSection
-import com.hereliesaz.aznavrail.PredefinedAction
+import com.hereliesaz.aznavrail.model.NavItem
+import com.hereliesaz.aznavrail.model.NavItemData
+import com.hereliesaz.aznavrail.model.NavRailHeader
+import com.hereliesaz.aznavrail.model.NavRailMenuSection
+import com.hereliesaz.aznavrail.model.PredefinedAction
+import com.hereliesaz.aznavrail.ui.AzNavRail
 
 @Composable
 fun AppNavRail(onNavigate: (String) -> Unit) {
     AzNavRail(
-        menuSections = listOf(
+        appName = "The Lexorcist",
+        header = NavRailHeader { }, // Or a Spacer if you want some minimal space// header = { Spacer(modifier = Modifier.height(0.dp)) },
+              menuSections = listOf(
             NavRailMenuSection(
                 title = "Main",
                 items = listOf(

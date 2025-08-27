@@ -26,7 +26,6 @@ fun SettingsScreen(viewModel: MainViewModel) {
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
-            .padding(16.dp)
     ) {
         Text("Settings Screen")
         // Text("Filters", style = androidx.compose.material3.MaterialTheme.typography.headlineMedium)
