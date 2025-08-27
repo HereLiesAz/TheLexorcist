@@ -25,6 +25,7 @@ fun AppNavRail(onNavigate: (String) -> Unit) {
         Icons.Default.List,
         Icons.Default.Add,
         Icons.Default.Schedule,
+
         Icons.Default.Settings
     )
     val labels = listOf("Home", "Cases", "Add Evidence", "Timeline", "Settings")

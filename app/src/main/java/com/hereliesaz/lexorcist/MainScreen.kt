@@ -37,10 +37,13 @@ fun MainScreen(
                         )
                         "cases" -> CasesScreen(viewModel = viewModel)
                         "add_evidence" -> AddEvidenceScreen(viewModel = viewModel, onSelectImage = onSelectImage, onTakePicture = onTakePicture, onAddTextEvidence = { currentScreen = "add_text_evidence" })
-                        "add_text_evidence" -> AddTextEvidenceScreen(viewModel = viewModel, onSave = { text ->
-                            viewModel.addTextEvidence(text)
-                            currentScreen = "cases"
-                        })
+                        "add_text_evidence" -> {
+                            val context = androidx.compose.ui.platform.LocalContext.current
+                            AddTextEvidenceScreen(viewModel = viewModel, onSave = { text ->
+                                viewModel.addTextEvidence(text, context)
+                                currentScreen = "cases"
+                            })
+                        }
                         "timeline" -> TimelineScreen(viewModel = viewModel)
                         "settings" -> SettingsScreen(viewModel = viewModel)
                     }
