@@ -36,7 +36,8 @@ class MainActivity : ComponentActivity() {
                 this, setOf(
                     "https://www.googleapis.com/auth/drive.file",
                     "https://www.googleapis.com/auth/spreadsheets",
-                    "https://www.googleapis.com/auth/script.projects"
+                    "https://www.googleapis.com/auth/script.projects",
+                    "https://www.googleapis.com/auth/documents"
                 )
             )
             credential.selectedAccountName = account.account?.name
@@ -89,7 +90,8 @@ class MainActivity : ComponentActivity() {
             .requestScopes(
                 Scope("https://www.googleapis.com/auth/drive.file"),
                 Scope("https://www.googleapis.com/auth/spreadsheets"),
-                Scope("https://www.googleapis.com/auth/script.projects")
+                Scope("https://www.googleapis.com/auth/script.projects"),
+                Scope("https://www.googleapis.com/auth/documents")
             )
             .requestEmail()
             .build()
@@ -124,7 +126,8 @@ class MainActivity : ComponentActivity() {
             val credential = GoogleAccountCredential.usingOAuth2(this, setOf(
                 "https://www.googleapis.com/auth/drive.file",
                 "https://www.googleapis.com/auth/spreadsheets",
-                "https://www.googleapis.com/auth/script.projects"
+                "https://www.googleapis.com/auth/script.projects",
+                "https://www.googleapis.com/auth/documents"
             ))
             credential.selectedAccountName = account.account?.name
             val googleApiService = GoogleApiService(credential, getString(R.string.app_name))

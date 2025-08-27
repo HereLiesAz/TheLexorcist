@@ -7,13 +7,14 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.hereliesaz.lexorcist.MainViewModel
-import com.hereliesaz.lexorcist.db.FinancialEntry
+import com.hereliesaz.lexorcist.db.Evidence
 import com.hereliesaz.lexorcist.models.TimelineEvent // Added import
 import java.text.SimpleDateFormat
 import java.util.*
@@ -23,25 +24,47 @@ import kotlin.coroutines.EmptyCoroutineContext
 
 @Composable
 fun TimelineScreen(viewModel: MainViewModel) {
-    val financialEntries by viewModel.financialEntries.collectAsState(
+    val evidence by viewModel.evidence.collectAsState(
         initial = emptyList(),
         context = EmptyCoroutineContext // Or remove this line to use the default
     )
-    val timelineEvents = financialEntries.map {
-        TimelineEvent(it.documentDate, "Amount: ${it.amount}, Category: ${it.category}")
+    var searchQuery by remember { mutableStateOf("") }
+    val timelineEvents = evidence.filter { evidenceItem ->
+        when {
+            searchQuery.startsWith("tag:") -> {
+                val tagQuery = searchQuery.substringAfter("tag:").trim()
+                evidenceItem.tags.any { tag -> tag.contains(tagQuery, ignoreCase = true) }
+            }
+            searchQuery.startsWith("content:") -> {
+                val contentQuery = searchQuery.substringAfter("content:").trim()
+                evidenceItem.content.contains(contentQuery, ignoreCase = true)
+            }
+            else -> {
+                evidenceItem.content.contains(searchQuery, ignoreCase = true) ||
+                        evidenceItem.tags.any { tag -> tag.contains(searchQuery, ignoreCase = true) }
+            }
+        }
+    }.map {
+        TimelineEvent(it.documentDate, "Content: ${it.content}, Tags: ${it.tags.joinToString(", ")}")
     }.sortedBy { it.date }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
-        horizontalAlignment = Alignment.End, // Align children to the End (right)
-        verticalArrangement = Arrangement.Center // Center children vertically as a group
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = { searchQuery = it },
+            label = { Text("Search") },
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(8.dp))
         LazyColumn(
             modifier = Modifier
-                .fillMaxWidth() // LazyColumn itself should span width
-                .weight(1f)     // Take available space within the centered group
+                .fillMaxWidth()
+                .weight(1f)
         ) {
             items(timelineEvents) { event ->
                 TimelineItem(event = event)
