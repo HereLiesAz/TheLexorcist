@@ -7,106 +7,104 @@ Where: sdk.dir property in local.properties file. Problem: Directory does not ex
 > Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
 > Task :app:checkDebugAarMetadata UP-TO-DATE
 > Task :app:generateDebugResValues UP-TO-DATE
-> Task :app:processDebugGoogleServices
-> Task :app:mapDebugSourceSetPaths
-> Task :app:generateDebugResources
-> Task :app:packageDebugResources
-> Task :app:mergeDebugResources
-> Task :app:createDebugCompatibleScreenManifests
-> Task :app:extractDeepLinksDebug
-> Task :app:parseDebugLocalResources
-> Task :app:processDebugMainManifest
-> Task :app:processDebugManifest
-> Task :app:processDebugManifestForPackage
-> Task :app:javaPreCompileDebug
-> Task :app:mergeDebugShaders
+> Task :app:processDebugGoogleServices UP-TO-DATE
+> Task :app:mapDebugSourceSetPaths UP-TO-DATE
+> Task :app:generateDebugResources UP-TO-DATE
+> Task :app:mergeDebugResources UP-TO-DATE
+> Task :app:packageDebugResources UP-TO-DATE
+> Task :app:parseDebugLocalResources UP-TO-DATE
+> Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksDebug UP-TO-DATE
+> Task :app:processDebugMainManifest UP-TO-DATE
+> Task :app:processDebugManifest UP-TO-DATE
+> Task :app:processDebugManifestForPackage UP-TO-DATE
+> Task :app:processDebugResources UP-TO-DATE
+> Task :app:javaPreCompileDebug UP-TO-DATE
+> Task :app:mergeDebugShaders UP-TO-DATE
 > Task :app:compileDebugShaders NO-SOURCE
 > Task :app:generateDebugAssets UP-TO-DATE
-> Task :app:mergeDebugAssets
-> Task :app:compressDebugAssets
-> Task :app:desugarDebugFileDependencies
-> Task :app:processDebugResources
-> Task :app:checkDebugDuplicateClasses
-> Task :app:kspDebugKotlin
-> Task :app:mergeExtDexDebug
-> Task :app:mergeDebugJniLibFolders
-> Task :app:mergeLibDexDebug
-> Task :app:mergeDebugNativeLibs
-> Task :app:validateSigningDebug
-> Task :app:compileDebugKotlin
-> Task :app:writeDebugAppMetadata
-
-> Task :app:stripDebugDebugSymbols
-Unable to strip the following libraries, packaging them as they are: libandroidx.graphics.path.so, libdatastore_shared_counter.so. Run with --info option to learn more.
-
-> Task :app:writeDebugSigningConfigVersions
+> Task :app:mergeDebugAssets UP-TO-DATE
+> Task :app:compressDebugAssets UP-TO-DATE
+> Task :app:desugarDebugFileDependencies UP-TO-DATE
+> Task :app:checkDebugDuplicateClasses UP-TO-DATE
+> Task :app:mergeExtDexDebug UP-TO-DATE
+> Task :app:mergeLibDexDebug UP-TO-DATE
+> Task :app:mergeDebugJniLibFolders UP-TO-DATE
+> Task :app:mergeDebugNativeLibs UP-TO-DATE
+> Task :app:stripDebugDebugSymbols UP-TO-DATE
+> Task :app:validateSigningDebug UP-TO-DATE
+> Task :app:writeDebugAppMetadata UP-TO-DATE
+> Task :app:writeDebugSigningConfigVersions UP-TO-DATE
 > Task :app:preReleaseBuild UP-TO-DATE
-> Task :app:mergeReleaseJniLibFolders
-> Task :app:mergeReleaseNativeLibs
-
-> Task :app:stripReleaseDebugSymbols
-Unable to strip the following libraries, packaging them as they are: libandroidx.graphics.path.so, libdatastore_shared_counter.so. Run with --info option to learn more.
-
-> Task :app:buildKotlinToolingMetadata
-> Task :app:checkReleaseDuplicateClasses
-> Task :app:extractReleaseNativeSymbolTables
-> Task :app:generateReleaseResValues
-> Task :app:checkReleaseAarMetadata
+> Task :app:mergeReleaseJniLibFolders UP-TO-DATE
+> Task :app:mergeReleaseNativeLibs UP-TO-DATE
+> Task :app:stripReleaseDebugSymbols UP-TO-DATE
+> Task :app:extractReleaseNativeSymbolTables UP-TO-DATE
 > Task :app:mergeReleaseNativeDebugMetadata NO-SOURCE
-> Task :app:processReleaseGoogleServices
-> Task :app:mapReleaseSourceSetPaths
-> Task :app:generateReleaseResources
-> Task :app:packageReleaseResources
-> Task :app:createReleaseCompatibleScreenManifests
-> Task :app:extractDeepLinksRelease
-> Task :app:parseReleaseLocalResources
-> Task :app:processReleaseMainManifest
-> Task :app:processReleaseManifest
-> Task :app:processReleaseManifestForPackage
-> Task :app:desugarReleaseFileDependencies
-> Task :app:javaPreCompileRelease
-> Task :app:mergeReleaseStartupProfile
-> Task :app:mergeReleaseResources
+> Task :app:checkReleaseDuplicateClasses UP-TO-DATE
+> Task :app:buildKotlinToolingMetadata UP-TO-DATE
+> Task :app:checkReleaseAarMetadata UP-TO-DATE
+> Task :app:generateReleaseResValues UP-TO-DATE
+> Task :app:processReleaseGoogleServices UP-TO-DATE
+> Task :app:mapReleaseSourceSetPaths UP-TO-DATE
+> Task :app:generateReleaseResources UP-TO-DATE
+> Task :app:mergeReleaseResources UP-TO-DATE
+> Task :app:packageReleaseResources UP-TO-DATE
+> Task :app:parseReleaseLocalResources UP-TO-DATE
+> Task :app:createReleaseCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksRelease UP-TO-DATE
+> Task :app:processReleaseMainManifest UP-TO-DATE
+> Task :app:processReleaseManifest UP-TO-DATE
+> Task :app:processReleaseManifestForPackage UP-TO-DATE
+> Task :app:processReleaseResources UP-TO-DATE
+> Task :app:javaPreCompileRelease UP-TO-DATE
+> Task :app:desugarReleaseFileDependencies UP-TO-DATE
+> Task :app:mergeReleaseStartupProfile UP-TO-DATE
+> Task :app:kspDebugKotlin
+> Task :app:mergeExtDexRelease UP-TO-DATE
+> Task :app:mergeReleaseArtProfile UP-TO-DATE
+> Task :app:mergeReleaseShaders UP-TO-DATE
+> Task :app:compileReleaseShaders NO-SOURCE
+> Task :app:generateReleaseAssets UP-TO-DATE
+> Task :app:mergeReleaseAssets UP-TO-DATE
+> Task :app:compressReleaseAssets UP-TO-DATE
+> Task :app:extractReleaseVersionControlInfo
+> Task :app:extractProguardFiles UP-TO-DATE
+> Task :app:optimizeReleaseResources UP-TO-DATE
+> Task :app:collectReleaseDependencies UP-TO-DATE
+> Task :app:sdkReleaseDependencyData UP-TO-DATE
+> Task :app:writeReleaseAppMetadata UP-TO-DATE
+> Task :app:writeReleaseSigningConfigVersions UP-TO-DATE
+> Task :app:preDebugAndroidTestBuild SKIPPED
+> Task :app:generateDebugAndroidTestResValues UP-TO-DATE
+> Task :app:preDebugUnitTestBuild UP-TO-DATE
+> Task :app:javaPreCompileDebugUnitTest UP-TO-DATE
+> Task :app:preReleaseUnitTestBuild UP-TO-DATE
+> Task :app:javaPreCompileReleaseUnitTest UP-TO-DATE
+> Task :app:kspReleaseKotlin
 
 > Task :app:compileDebugKotlin FAILED
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainViewModel.kt:70:92 Too many arguments for 'suspend fun loadFinancialEntriesForSelectedCase(spreadsheetId: String): Unit'.
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/SpreadsheetParser.kt:6:39 Unresolved reference 'Evidence'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainViewModel.kt:581:46 Unresolved reference 'hwpf'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainViewModel.kt:582:52 Unresolved reference 'hwpf'.
 e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:66:9 Unresolved reference 'signInLauncher'.
 e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainScreen.kt:37:31 Unresolved reference 'processEvidenceForReview'.
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainScreen.kt:44:19 Argument type mismatch: actual type is 'List<ERROR CLASS: Symbol not found for Evidence>', but 'Int' was expected.
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainScreen.kt:45:38 Unresolved reference 'content'.
 e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/ScriptEditorActivity.kt:20:24 Unresolved reference 'R'.
 e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/ScriptEditorActivity.kt:22:39 Unresolved reference 'R'.
 e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/ScriptEditorActivity.kt:23:41 Unresolved reference 'R'.
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:13:39 Unresolved reference 'Evidence'.
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:17:41 Unresolved reference 'ScriptRunner'.
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:26:23 Unresolved reference 'hwpf'.
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:27:23 Unresolved reference 'hwpf'.
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:34:55 Unresolved reference 'Evidence'.
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:34:66 Cannot infer type for this parameter. Specify it explicitly.
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:34:66 Argument type mismatch: actual type is 'List<uninferred T (of fun <T> emptyList)>', but 'List<ERROR CLASS: Symbol not found for Evidence>' was expected.
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:35:38 Unresolved reference 'Evidence'.
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:57:68 Unresolved reference 'Evidence'.
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:61:17 Unresolved reference 'Evidence'.
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:69:67 Unresolved reference 'Evidence'.
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:81:17 Unresolved reference 'Evidence'.
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:89:69 Unresolved reference 'Evidence'.
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:96:45 Unresolved reference 'Evidence'.
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:96:45 No value passed for parameter 'onCancellation'.
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:100:45 No value passed for parameter 'onCancellation'.
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:109:75 Unresolved reference 'Evidence'.
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:126:17 Unresolved reference 'Evidence'.
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:134:67 Unresolved reference 'Evidence'.
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:138:31 Unresolved reference 'HWPFDocument'.
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:139:37 Unresolved reference 'WordExtractor'.
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:146:17 Unresolved reference 'Evidence'.
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:156:41 Unresolved reference 'Evidence'.
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MainViewModel.kt:169:37 Unresolved reference 'Evidence'.
 
-> Task :app:mergeExtDexRelease
+> Task :app:compileReleaseKotlin FAILED
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainViewModel.kt:581:46 Unresolved reference 'hwpf'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainViewModel.kt:582:52 Unresolved reference 'hwpf'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainActivity.kt:66:9 Unresolved reference 'signInLauncher'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/MainScreen.kt:37:31 Unresolved reference 'processEvidenceForReview'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/ScriptEditorActivity.kt:20:24 Unresolved reference 'R'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/ScriptEditorActivity.kt:22:39 Unresolved reference 'R'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/ScriptEditorActivity.kt:23:41 Unresolved reference 'R'.
 
-FAILURE: Build failed with an exception.
+FAILURE: Build completed with 2 failures.
 
+1: Task failed with an exception.
+-----------
 * What went wrong:
 Execution failed for task ':app:compileDebugKotlin'.
 > A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
@@ -117,6 +115,21 @@ Execution failed for task ':app:compileDebugKotlin'.
 > Run with --info or --debug option to get more log output.
 > Run with --scan to get full insights.
 > Get more help at https://help.gradle.org.
+==============================================================================
 
-BUILD FAILED in 6m
-53 actionable tasks: 51 executed, 2 up-to-date
+2: Task failed with an exception.
+-----------
+* What went wrong:
+Execution failed for task ':app:compileReleaseKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+==============================================================================
+
+BUILD FAILED in 8s
+70 actionable tasks: 5 executed, 65 up-to-date

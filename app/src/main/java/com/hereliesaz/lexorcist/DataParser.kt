@@ -1,7 +1,7 @@
 package com.hereliesaz.lexorcist
 
 import com.hereliesaz.lexorcist.db.Allegation
-import com.hereliesaz.lexorcist.db.Evidence
+import com.hereliesaz.lexorcist.model.Evidence
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -69,8 +69,8 @@ object DataParser {
 
     private fun extractAllegations(caseId: Int, text: String): List<Allegation> {
         val allegationRegex = """(?i)\b(alleges|claims|argues that)\b.*""".toRegex()
-        return allegationRegex.findAll(text).map {
-            Allegation(caseId = caseId, text = it.value)
+        return allegationRegex.findAll(text).mapIndexed { index, matchResult ->
+            Allegation(id = index, caseId = caseId, text = matchResult.value)
         }.toList()
     }
 
@@ -109,7 +109,6 @@ object DataParser {
 
             entries.add(
                 Evidence(
-                    caseId = caseId,
                     allegationId = linkedAllegation?.id,
                     content = sentence,
                     timestamp = System.currentTimeMillis(),
