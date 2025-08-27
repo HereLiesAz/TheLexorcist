@@ -4,7 +4,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -25,14 +27,23 @@ fun CasesScreen(viewModel: MainViewModel) {
     var showCreateCaseDialog by remember { mutableStateOf(false) }
     var caseName by remember { mutableStateOf("") }
 
+    var showLoadCaseDialog by remember { mutableStateOf(false) }
+    var spreadsheetIdToLoad by remember { mutableStateOf("") }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(16.dp),
+        horizontalAlignment = Alignment.End, // Align children to the End (right)
+        verticalArrangement = Arrangement.Center // Center children vertically as a group
     ) {
         Text("Cases", style = androidx.compose.material3.MaterialTheme.typography.headlineMedium)
         Spacer(modifier = Modifier.height(16.dp))
-        LazyColumn(modifier = Modifier.weight(1f)) {
+        LazyColumn(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth() // LazyColumn itself should span width to allow items to align within it
+        ) {
             items(cases) { case ->
                 CaseItem(case = case, isSelected = case.id == selectedCase?.id) {
                     viewModel.selectCase(case)
@@ -40,21 +51,29 @@ fun CasesScreen(viewModel: MainViewModel) {
             }
         }
         Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = { showCreateCaseDialog = true }) {
-            Text("Create New Case")
+        // Column for buttons to stack them and ensure they are part of the right-alignment
+        Column(horizontalAlignment = Alignment.End) {
+            Button(onClick = { showCreateCaseDialog = true }) {
+                Text("Create New Case")
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(onClick = { showLoadCaseDialog = true }) {
+                Text("Load Case from Sheet")
+            }
         }
     }
 
     if (showCreateCaseDialog) {
-        androidx.compose.material3.AlertDialog(
+        AlertDialog(
             onDismissRequest = { showCreateCaseDialog = false },
             title = { Text("New Case Name") },
             text = {
-                androidx.compose.material3.OutlinedTextField(
+                OutlinedTextField(
                     value = caseName,
                     onValueChange = { caseName = it },
                     label = { Text("Case Name") },
-                    singleLine = true
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
                 )
             },
             confirmButton = {
@@ -77,20 +96,55 @@ fun CasesScreen(viewModel: MainViewModel) {
             }
         )
     }
+
+    if (showLoadCaseDialog) {
+        AlertDialog(
+            onDismissRequest = { showLoadCaseDialog = false },
+            title = { Text("Load Case from Spreadsheet") },
+            text = {
+                OutlinedTextField(
+                    value = spreadsheetIdToLoad,
+                    onValueChange = { spreadsheetIdToLoad = it },
+                    label = { Text("Spreadsheet ID") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (spreadsheetIdToLoad.isNotBlank()) {
+                            viewModel.importSpreadsheet(spreadsheetIdToLoad)
+                            showLoadCaseDialog = false
+                            spreadsheetIdToLoad = ""
+                        }
+                    }
+                ) {
+                    Text("Load")
+                }
+            },
+            dismissButton = {
+                Button(onClick = { showLoadCaseDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 }
 
 @Composable
 fun CaseItem(case: Case, isSelected: Boolean, onClick: () -> Unit) {
     Row(
         modifier = Modifier
-            .fillMaxWidth()
+            .fillMaxWidth() // Row still fills width to be clickable across the line
             .clickable(onClick = onClick)
             .padding(8.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.End // Align text to the end (right) of the Row
     ) {
         Text(
             text = case.name,
-            modifier = Modifier.weight(1f),
+            // modifier = Modifier.weight(1f), // Removed weight so horizontalArrangement can take effect
             style = if (isSelected) {
                 androidx.compose.material3.MaterialTheme.typography.bodyLarge.copy(
                     fontWeight = androidx.compose.ui.text.font.FontWeight.Bold

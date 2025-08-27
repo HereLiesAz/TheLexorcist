@@ -9,6 +9,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.hereliesaz.lexorcist.MainViewModel
@@ -30,13 +31,21 @@ fun TimelineScreen(viewModel: MainViewModel) {
         TimelineEvent(it.documentDate, "Amount: ${it.amount}, Category: ${it.category}")
     }.sortedBy { it.date }
 
-    LazyColumn(
+    Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(16.dp),
+        horizontalAlignment = Alignment.End, // Align children to the End (right)
+        verticalArrangement = Arrangement.Center // Center children vertically as a group
     ) {
-        items(timelineEvents) { event ->
-            TimelineItem(event = event)
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxWidth() // LazyColumn itself should span width
+                .weight(1f)     // Take available space within the centered group
+        ) {
+            items(timelineEvents) { event ->
+                TimelineItem(event = event)
+            }
         }
     }
 }
@@ -45,10 +54,13 @@ fun TimelineScreen(viewModel: MainViewModel) {
 fun TimelineItem(event: TimelineEvent) {
     Card(
         modifier = Modifier
-            .fillMaxWidth()
+            .fillMaxWidth() // Card still fills width to provide a background for the right-aligned text
             .padding(vertical = 8.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.End // Align text within the card to the End (right)
+        ) {
             Text(
                 text = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(event.date)),
                 style = MaterialTheme.typography.titleMedium

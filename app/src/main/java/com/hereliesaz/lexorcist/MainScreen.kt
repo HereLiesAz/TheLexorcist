@@ -61,7 +61,7 @@ fun MainScreen(
                     .fillMaxSize()
                     .padding(paddingValues)
                     .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
+                horizontalAlignment = Alignment.End, // Changed to End
                 verticalArrangement = Arrangement.Center
             ) {
                 Button(onClick = onSignIn) {
@@ -81,7 +81,7 @@ fun AuthenticatedView(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
+        horizontalAlignment = Alignment.End, // Changed to End
         verticalArrangement = Arrangement.Center
     ) {
         Text(
@@ -90,7 +90,11 @@ fun AuthenticatedView(
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "Use the navigation rail to get started./n Tap the icon at the top to open the menu.",
+            text = "Use the navigation rail to get started." ,
+            style = androidx.compose.material3.MaterialTheme.typography.bodyLarge
+        )
+        Text(
+            text = "Tap the icon at the top to open the menu.",
             style = androidx.compose.material3.MaterialTheme.typography.bodyLarge
         )
     }

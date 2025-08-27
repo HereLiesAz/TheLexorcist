@@ -25,13 +25,17 @@ fun SettingsScreen(viewModel: MainViewModel) {
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
+        horizontalAlignment = Alignment.End, // Changed to End
         verticalArrangement = Arrangement.Center
     ) {
         Text("Settings Screen")
         Text("Filters", style = androidx.compose.material3.MaterialTheme.typography.headlineMedium)
         Spacer(modifier = Modifier.height(16.dp))
-        LazyColumn(modifier = Modifier.weight(1f)) {
+        LazyColumn(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth() // Ensure LazyColumn takes full width for item alignment
+        ) {
             items(filters) { filter -> // filter is now SheetFilter
                 FilterItem(filter = filter)
             }
@@ -90,14 +94,16 @@ fun SettingsScreen(viewModel: MainViewModel) {
 fun FilterItem(filter: SheetFilter) { // Changed parameter type to SheetFilter
     Row(
         modifier = Modifier
-            .fillMaxWidth()
+            .fillMaxWidth() // Row fills width to allow content to be pushed to the end
             .padding(8.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.End // Align content to the End (right)
     ) {
         Text(
             text = filter.name,
-            modifier = Modifier.weight(1f)
+            // modifier = Modifier.weight(1f) // Removed weight
         )
+        Spacer(modifier = Modifier.width(8.dp)) // Add some space between name and value if desired
         Text(text = filter.value)
     }
 }

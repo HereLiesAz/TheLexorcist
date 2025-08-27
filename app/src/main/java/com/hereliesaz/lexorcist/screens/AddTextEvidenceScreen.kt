@@ -21,15 +21,16 @@ fun AddTextEvidenceScreen(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.End, // Align children to the End (right)
+        verticalArrangement = Arrangement.Center // Center children vertically as a group
     ) {
         OutlinedTextField(
             value = text,
             onValueChange = { text = it },
             label = { Text("Evidence Text") },
             modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
+                .fillMaxWidth() // TextField still fills width
+                .weight(1f)      // TextField takes available vertical space
         )
         Spacer(modifier = Modifier.height(16.dp))
         Button(onClick = { onSave(text) }) {

@@ -48,7 +48,7 @@ fun AppNavRail(onNavigate: (String) -> Unit) {
                             NavItem(
                         text = "Cases",
                         data = NavItemData.Action(onClick = { onNavigate("cases") }),
-                        showOnRail = false
+                        showOnRail = true
                     ),
                     NavItem(
                         text = "Timeline",

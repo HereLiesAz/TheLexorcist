@@ -25,7 +25,7 @@ fun AddEvidenceScreen(
     onSelectImage: () -> Unit,
     onTakePicture: () -> Unit,
     onAddTextEvidence: () -> Unit,
-    onAddFile: () -> Unit // New parameter for Add File action
+    onAddFile: () -> Unit
 ) {
     val extractedText by viewModel.extractedText.collectAsState()
     val imageBitmap by viewModel.imageBitmap.collectAsState()
@@ -35,41 +35,45 @@ fun AddEvidenceScreen(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
-        // horizontalAlignment = Alignment.CenterHorizontally // Keep parent column's default alignment or set as needed for other elements
+        horizontalAlignment = Alignment.End, // Align children to the end (right)
+        verticalArrangement = Arrangement.Center // Center children vertically as a group
     ) {
+        // Button column is now a direct child, will be right-aligned and vertically centered with other siblings.
         Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.End // Align buttons to the right
+            horizontalAlignment = Alignment.End // Ensure buttons within this column align to its end
         ) {
             Button(onClick = onSelectImage) {
                 Text("Select Image")
             }
-            Spacer(modifier = Modifier.height(8.dp)) // Space between buttons
+            Spacer(modifier = Modifier.height(8.dp))
             Button(onClick = onTakePicture) {
                 Text("Take Picture")
             }
-            Spacer(modifier = Modifier.height(8.dp)) // Space between buttons
+            Spacer(modifier = Modifier.height(8.dp))
             Button(onClick = onAddTextEvidence) {
                 Text("Add Text Evidence")
             }
-            Spacer(modifier = Modifier.height(8.dp)) // Space between buttons
-            Button(onClick = onAddFile) { // New Button
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(onClick = onAddFile) {
                 Text("Add File")
             }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
+
         imageBitmap?.let {
             Image(
                 bitmap = it.asImageBitmap(),
                 contentDescription = "Selected Image",
                 modifier = Modifier
-                    .fillMaxWidth() // Image can still fill width
+                    .fillMaxWidth() // Image takes full width
                     .height(200.dp)
-                    .align(Alignment.CenterHorizontally) // Center the image if the parent column doesn't do it
+                // Removed .align(Alignment.CenterHorizontally) - will be right-aligned by parent Column
             )
         }
+        
         Spacer(modifier = Modifier.height(16.dp))
+        
         AndroidView(
             factory = { context ->
                 RecyclerView(context).apply {
@@ -79,7 +83,7 @@ fun AddEvidenceScreen(
             update = { recyclerView ->
                 recyclerView.adapter = TaggedDataAdapter(taggedData)
             },
-            modifier = Modifier.fillMaxWidth() // Ensure RecyclerView takes full width
+            modifier = Modifier.fillMaxWidth() // RecyclerView takes full width, will be right-aligned by parent Column
         )
     }
 }
