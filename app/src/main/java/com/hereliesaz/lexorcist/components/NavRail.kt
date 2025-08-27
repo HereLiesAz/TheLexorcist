@@ -17,13 +17,13 @@ import com.hereliesaz.aznavrail.model.PredefinedAction
 import com.hereliesaz.aznavrail.ui.AzNavRail
 import com.hereliesaz.lexorcist.R
 
+import androidx.compose.material3.Icon
+
 @Composable
 fun AppNavRail(onNavigate: (String) -> Unit) {
     AzNavRail(
         appName = "The Lexorcist",
-        header = NavRailHeader(
-            onClick = { /* TODO: Handle click */ }
-        ) {
+        header = NavRailHeader {
             Image(
                 painter = painterResource(id = R.mipmap.ic_launcher),
                 contentDescription = "App Icon"
@@ -35,31 +35,31 @@ fun AppNavRail(onNavigate: (String) -> Unit) {
                 items = listOf(
                     NavItem(
                         text = "Home",
-                        icon = Icons.Default.Home,
+                        icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
                         data = NavItemData.Action(predefinedAction = PredefinedAction.HOME),
                         showOnRail = true
                     ),
                     NavItem(
                         text = "Cases",
-                        icon = Icons.Default.List,
+                        icon = { Icon(Icons.Default.List, contentDescription = "Cases") },
                         data = NavItemData.Action(onClick = { onNavigate("cases") }),
                         showOnRail = true
                     ),
                     NavItem(
                         text = "Add Evidence",
-                        icon = Icons.Default.Add,
+                        icon = { Icon(Icons.Default.Add, contentDescription = "Add Evidence") },
                         data = NavItemData.Action(onClick = { onNavigate("add_evidence") }),
                         showOnRail = true
                     ),
-                    NavItem(
-                        text = "Timeline",
-                        icon = Icons.Default.Timeline,
-                        data = NavItemData.Action(onClick = { onNavigate("timeline") }),
-                        showOnRail = true
-                    ),
+//                    NavItem(
+//                        text = "Timeline",
+//                        icon = { Icon(Icons.Default.Timeline, contentDescription = "Timeline") },
+//                        data = NavItemData.Action(onClick = { onNavigate("timeline") }),
+//                        showOnRail = true
+//                    ),
                     NavItem(
                         text = "Settings",
-                        icon = Icons.Default.Settings,
+                        icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
                         data = NavItemData.Action(predefinedAction = PredefinedAction.SETTINGS),
                         showOnRail = true
                     )
