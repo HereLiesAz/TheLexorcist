@@ -36,7 +36,13 @@ fun MainScreen(
                             onCreateCase = {}
                         )
                         "cases" -> CasesScreen(viewModel = viewModel)
-                        "add_evidence" -> AddEvidenceScreen(viewModel = viewModel, onSelectImage = onSelectImage, onTakePicture = onTakePicture, onAddTextEvidence = { currentScreen = "add_text_evidence" })
+                        "add_evidence" -> AddEvidenceScreen(
+                            viewModel = viewModel, 
+                            onSelectImage = onSelectImage, 
+                            onTakePicture = onTakePicture, 
+                            onAddTextEvidence = { currentScreen = "add_text_evidence" },
+                            onAddFile = {} // Added new onAddFile parameter
+                        )
                         "add_text_evidence" -> {
                             val context = androidx.compose.ui.platform.LocalContext.current
                             AddTextEvidenceScreen(viewModel = viewModel, onSave = { text ->
