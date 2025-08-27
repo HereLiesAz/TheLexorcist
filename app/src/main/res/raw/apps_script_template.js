@@ -414,7 +414,13 @@ function updateLinkInSheet(sheet, row, columnName, url, headers) {
 }
 
 function getOrCreateFolder(folderName) {
-  const parentFolder = DriveApp.getRootFolder(); // Or specify a different parent
+  // Get the folder containing the current spreadsheet
+  const spreadsheetFile = DriveApp.getFileById(SpreadsheetApp.getActiveSpreadsheet().getId());
+  const parentFolders = spreadsheetFile.getParents();
+  
+  // Default to root if the spreadsheet is in the root for some reason
+  const parentFolder = parentFolders.hasNext() ? parentFolders.next() : DriveApp.getRootFolder();
+
   const folders = parentFolder.getFoldersByName(folderName);
   if (folders.hasNext()) {
     return folders.next();
