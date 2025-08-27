@@ -1,0 +1,30 @@
+WARNING: The following problems were found when resolving the SDK location:
+Where: sdk.dir property in local.properties file. Problem: Directory does not exist
+
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:checkDebugAarMetadata UP-TO-DATE
+> Task :app:generateDebugResValues UP-TO-DATE
+> Task :app:processDebugGoogleServices
+> Task :app:mapDebugSourceSetPaths
+> Task :app:generateDebugResources
+
+> Task :app:mergeDebugResources FAILED
+ERROR: /app/app/src/main/res/raw/LexorcistTemplate.pdf: Resource and asset merger: 'L' is not a valid file-based resource name character: File-based resource names must contain only lowercase a-z, 0-9, or underscore
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:mergeDebugResources'.
+> /app/app/src/main/res/raw/LexorcistTemplate.pdf: Error: 'L' is not a valid file-based resource name character: File-based resource names must contain only lowercase a-z, 0-9, or underscore
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 3s
+6 actionable tasks: 4 executed, 2 up-to-date
