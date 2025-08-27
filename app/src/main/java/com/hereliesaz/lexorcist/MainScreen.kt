@@ -15,16 +15,13 @@ import com.hereliesaz.lexorcist.screens.*
 fun MainScreen(
     viewModel: MainViewModel = viewModel(),
     onSignIn: () -> Unit,
-    onSelectImage: () -> Unit
+    onSelectImage: () -> Unit,
+    onTakePicture: () -> Unit
 ) {
     val isSignedIn by viewModel.isSignedIn.collectAsState()
     var currentScreen by remember { mutableStateOf("home") }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(title = { Text("Lexorcist") })
-        }
-    ) { paddingValues ->
+    Scaffold { paddingValues ->
         if (isSignedIn) {
             Row(
                 modifier = Modifier
@@ -39,7 +36,11 @@ fun MainScreen(
                             onCreateCase = {}
                         )
                         "cases" -> CasesScreen(viewModel = viewModel)
-                        "add_evidence" -> AddEvidenceScreen(viewModel = viewModel, onSelectImage = onSelectImage)
+                        "add_evidence" -> AddEvidenceScreen(viewModel = viewModel, onSelectImage = onSelectImage, onTakePicture = onTakePicture, onAddTextEvidence = { currentScreen = "add_text_evidence" })
+                        "add_text_evidence" -> AddTextEvidenceScreen(viewModel = viewModel, onSave = { text ->
+                            viewModel.addTextEvidence(text)
+                            currentScreen = "cases"
+                        })
                         "timeline" -> TimelineScreen(viewModel = viewModel)
                         "settings" -> SettingsScreen(viewModel = viewModel)
                     }

@@ -59,6 +59,22 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private var imageUri: android.net.Uri? = null
+
+    private val takePictureLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
+        if (success) {
+            imageUri?.let {
+                val bitmap = if (Build.VERSION.SDK_INT < 28) {
+                    MediaStore.Images.Media.getBitmap(this.contentResolver, it)
+                } else {
+                    val source = ImageDecoder.createSource(this.contentResolver, it)
+                    ImageDecoder.decodeBitmap(source)
+                }
+                viewModel.onImageSelected(bitmap, this)
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -78,10 +94,17 @@ class MainActivity : ComponentActivity() {
                 MainScreen(
                     viewModel = viewModel,
                     onSignIn = { signIn() },
-                    onSelectImage = { selectImage() }
+                    onSelectImage = { selectImage() },
+                    onTakePicture = { takePicture() }
                 )
             }
         }
+    }
+
+    private fun takePicture() {
+        val file = java.io.File(filesDir, "new_image.jpg")
+        imageUri = androidx.core.content.FileProvider.getUriForFile(this, "com.hereliesaz.lexorcist.fileprovider", file)
+        takePictureLauncher.launch(imageUri)
     }
 
     override fun onStart() {
