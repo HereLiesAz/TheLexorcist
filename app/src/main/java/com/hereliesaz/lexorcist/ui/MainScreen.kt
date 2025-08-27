@@ -14,14 +14,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.hereliesaz.lexorcist.viewmodel.DataReviewViewModel
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 
 @Composable
 fun MainScreen(
     navController: NavController,
     mainViewModel: MainViewModel,
-    dataReviewViewModel: DataReviewViewModel,
     onSignInClick: () -> Unit,
     onExportClick: () -> Unit
 ) {
@@ -36,7 +34,7 @@ fun MainScreen(
                 Text("Export to Sheet")
             }
             Button(onClick = {
-                mainViewModel.processEvidenceForReview(dataReviewViewModel)
+                mainViewModel.processEvidenceForReview()
                 navController.navigate("data_review")
             }) {
                 Text("Review Data")

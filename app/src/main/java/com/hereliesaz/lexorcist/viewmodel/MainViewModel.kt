@@ -2,12 +2,31 @@ package com.hereliesaz.lexorcist.viewmodel
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount
+import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
+import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.text.TextRecognition
+import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import com.hereliesaz.lexorcist.data.Evidence
+import com.hereliesaz.lexorcist.data.EvidenceRepository
+import com.hereliesaz.lexorcist.data.TaggedEvidence
+import com.hereliesaz.lexorcist.service.GoogleApiService
+import com.hereliesaz.lexorcist.service.ScriptRunner
+import com.itextpdf.kernel.pdf.PdfDocument
+import com.itextpdf.kernel.pdf.PdfReader
+import com.itextpdf.kernel.pdf.canvas.parser.PdfTextExtractor
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
+import org.apache.poi.hwpf.HWPFDocument
+import org.apache.poi.hwpf.extractor.WordExtractor
+import org.apache.poi.ss.usermodel.WorkbookFactory
+import org.apache.poi.xwpf.usermodel.XWPFDocument
+import org.apache.poi.xwpf.extractor.XWPFWordExtractor
 
 class MainViewModel : ViewModel() {
 
@@ -24,7 +43,7 @@ class MainViewModel : ViewModel() {
                 "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" -> parseSpreadsheetFile(uri, context)
                 "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document" -> parseDocFile(uri, context)
                 else -> {
-                    // Handle unsupported file types
+                    Log.w("MainViewModel", "Unsupported file type: $mimeType")
                     null
                 }
             }
@@ -41,7 +60,7 @@ class MainViewModel : ViewModel() {
                 Evidence(text)
             }
         } catch (e: Exception) {
-            // Handle exceptions
+            Log.e("MainViewModel", "Failed to parse text file", e)
             null
         }
     }
@@ -49,38 +68,39 @@ class MainViewModel : ViewModel() {
     private suspend fun parsePdfFile(uri: Uri, context: Context): Evidence? {
         return try {
             context.contentResolver.openInputStream(uri)?.let { inputStream ->
-                val pdfReader = com.itextpdf.kernel.pdf.PdfReader(inputStream)
-                val pdfDocument = com.itextpdf.kernel.pdf.PdfDocument(pdfReader)
+                val pdfReader = PdfReader(inputStream)
+                val pdfDocument = PdfDocument(pdfReader)
                 val text = buildString {
                     for (i in 1..pdfDocument.numberOfPages) {
                         val page = pdfDocument.getPage(i)
-                        append(com.itextpdf.kernel.pdf.canvas.parser.PdfTextExtractor.getTextFromPage(page))
+                        append(PdfTextExtractor.getTextFromPage(page))
                     }
                 }
                 pdfDocument.close()
                 Evidence(text)
             }
         } catch (e: Exception) {
-            // Handle exceptions
+            Log.e("MainViewModel", "Failed to parse PDF file", e)
             null
         }
     }
 
     private suspend fun parseImageFile(uri: Uri, context: Context): Evidence? {
         return try {
-            val inputImage = com.google.mlkit.vision.common.InputImage.fromFilePath(context, uri)
-            val recognizer = com.google.mlkit.vision.text.TextRecognition.getClient(com.google.mlkit.vision.text.latin.TextRecognizerOptions.DEFAULT_OPTIONS)
-            kotlinx.coroutines.suspendCancellableCoroutine { continuation ->
+            val inputImage = InputImage.fromFilePath(context, uri)
+            val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+            suspendCancellableCoroutine { continuation ->
                 recognizer.process(inputImage)
                     .addOnSuccessListener { visionText ->
                         continuation.resume(Evidence(visionText.text))
                     }
                     .addOnFailureListener { e ->
+                        Log.e("MainViewModel", "Failed to parse image file", e)
                         continuation.resume(null)
                     }
             }
         } catch (e: Exception) {
-            // Handle exceptions
+            Log.e("MainViewModel", "Failed to parse image file", e)
             null
         }
     }
@@ -88,7 +108,7 @@ class MainViewModel : ViewModel() {
     private suspend fun parseSpreadsheetFile(uri: Uri, context: Context): Evidence? {
         return try {
             context.contentResolver.openInputStream(uri)?.let { inputStream ->
-                val workbook = org.apache.poi.ss.usermodel.WorkbookFactory.create(inputStream)
+                val workbook = WorkbookFactory.create(inputStream)
                 val text = buildString {
                     for (i in 0 until workbook.numberOfSheets) {
                         val sheet = workbook.getSheetAt(i)
@@ -105,7 +125,7 @@ class MainViewModel : ViewModel() {
                 Evidence(text)
             }
         } catch (e: Exception) {
-            // Handle exceptions
+            Log.e("MainViewModel", "Failed to parse spreadsheet file", e)
             null
         }
     }
@@ -114,18 +134,18 @@ class MainViewModel : ViewModel() {
         return try {
             context.contentResolver.openInputStream(uri)?.let { inputStream ->
                 val text = if (context.contentResolver.getType(uri) == "application/msword") {
-                    val doc = org.apache.poi.hwpf.HWPFDocument(inputStream)
-                    val extractor = org.apache.poi.hwpf.extractor.WordExtractor(doc)
+                    val doc = HWPFDocument(inputStream)
+                    val extractor = WordExtractor(doc)
                     extractor.text
                 } else {
-                    val docx = org.apache.poi.xwpf.usermodel.XWPFDocument(inputStream)
-                    val extractor = org.apache.poi.xwpf.extractor.XWPFWordExtractor(docx)
+                    val docx = XWPFDocument(inputStream)
+                    val extractor = XWPFWordExtractor(docx)
                     extractor.text
                 }
                 Evidence(text)
             }
         } catch (e: Exception) {
-            // Handle exceptions
+            Log.e("MainViewModel", "Failed to parse document file", e)
             null
         }
     }
@@ -153,14 +173,14 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    private var googleApiService: com.hereliesaz.lexorcist.service.GoogleApiService? = null
+    private var googleApiService: GoogleApiService? = null
 
-    fun onSignInResult(account: com.google.android.gms.auth.api.signin.GoogleSignInAccount, context: Context) {
+    fun onSignInResult(account: GoogleSignInAccount, context: Context) {
         viewModelScope.launch {
-            val credential = com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
+            val credential = GoogleAccountCredential
                 .usingOAuth2(context, setOf("https://www.googleapis.com/auth/spreadsheets"))
             credential.selectedAccount = account.account
-            googleApiService = com.hereliesaz.lexorcist.service.GoogleApiService(credential)
+            googleApiService = GoogleApiService(credential)
         }
     }
 
@@ -178,20 +198,20 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    private val scriptRunner = com.hereliesaz.lexorcist.service.ScriptRunner()
+    private val scriptRunner = ScriptRunner()
     private var script: String = ""
 
     fun setScript(script: String) {
         this.script = script
     }
 
-    fun processEvidenceForReview(dataReviewViewModel: DataReviewViewModel) {
+    fun processEvidenceForReview() {
         viewModelScope.launch {
             val taggedList = _evidenceList.value.map { evidence ->
                 val parser = scriptRunner.runScript(script, evidence)
-                com.hereliesaz.lexorcist.data.TaggedEvidence(evidence, parser.getTags())
+                TaggedEvidence(evidence, parser.getTags())
             }
-            dataReviewViewModel.setTaggedEvidence(taggedList)
+            EvidenceRepository.setTaggedEvidence(taggedList)
         }
     }
 }
