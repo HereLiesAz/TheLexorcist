@@ -97,9 +97,10 @@ dependencies {
     implementation("com.google.apis:google-api-services-sheets:v4-rev20250616-2.0.0")
     implementation("com.google.apis:google-api-services-script:v1-rev20250623-2.0.0")
     implementation("com.google.http-client:google-http-client-jackson2:2.0.0")
-
+    implementation("com.github.HereLiesAz:AzNavRail:1.9")
     implementation(platform("com.google.firebase:firebase-bom:34.1.0"))
     implementation("com.google.firebase:firebase-analytics")
+
 }
 
 // Removed kapt block entirely

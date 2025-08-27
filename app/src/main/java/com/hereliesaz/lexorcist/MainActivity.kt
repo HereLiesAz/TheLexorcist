@@ -108,6 +108,7 @@ class MainActivity : ComponentActivity() {
         imageUri?.let { takePictureLauncher.launch(it) }
     }
 
+
     override fun onStart() {
         super.onStart()
         val account = GoogleSignIn.getLastSignedInAccount(this)

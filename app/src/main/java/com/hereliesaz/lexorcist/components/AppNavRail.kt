@@ -1,12 +1,6 @@
 package com.hereliesaz.lexorcist.components
 
-import android.content.Intent
-import android.net.Uri
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import com.hereliesaz.aznavrail.model.NavItem
 import com.hereliesaz.aznavrail.model.NavItemData
@@ -14,33 +8,31 @@ import com.hereliesaz.aznavrail.model.NavRailHeader
 import com.hereliesaz.aznavrail.model.NavRailMenuSection
 import com.hereliesaz.aznavrail.model.PredefinedAction
 import com.hereliesaz.aznavrail.ui.AzNavRail
-import androidx.core.net.toUri
+import android.content.Intent
+import android.net.Uri
 
 @Composable
 fun AppNavRail(onNavigate: (String) -> Unit) {
     val context = LocalContext.current
     val appName = context.packageManager.getApplicationLabel(context.applicationInfo).toString()
-
-    val items = listOf("home", "cases", "add_evidence", "", "")
-    // In your screen's Composable, e.g., inside a Row
     AzNavRail(
-        appName = appName,
+        appName = "The Lexorcist",
         useAppIconAsHeader = true,
-        header = NavRailHeader { /* ... */ },
+        header = NavRailHeader {        },
         onPredefinedAction = { action ->
             when (action) {
-                PredefinedAction.HOME -> { /* Navigate to Home */
-                }
+                PredefinedAction.HOME -> onNavigate("home")
+                PredefinedAction.SETTINGS -> onNavigate("settings")
                 PredefinedAction.ABOUT -> {
                     val intent = Intent(
                         Intent.ACTION_VIEW,
-                        "https://github.com/hereliesaz/$appName".toUri()
+                        Uri.parse("https://github.com/hereliesaz/$appName")
                     )
                     context.startActivity(intent)
                 }
                 PredefinedAction.FEEDBACK -> {
                     val intent = Intent(Intent.ACTION_SENDTO).apply {
-                        data = "mailto:hereliesaz@gmail.com".toUri()
+                        data = Uri.parse("mailto:hereliesaz@gmail.com")
                         putExtra(Intent.EXTRA_SUBJECT, "$appName - Feedback")
                     }
                     context.startActivity(intent)
@@ -52,35 +44,32 @@ fun AppNavRail(onNavigate: (String) -> Unit) {
             NavRailMenuSection(
                 title = "",
                 items = listOf(
+
+                            NavItem(
+                        text = "Cases",
+                        data = NavItemData.Action(onClick = { onNavigate("cases") }),
+                        showOnRail = false
+                    ),
                     NavItem(
-                        text = "Home",
-                        data = NavItemData.Action(predefinedAction = PredefinedAction.HOME),
+                        text = "Timeline",
+                        data = NavItemData.Action(onClick = { onNavigate("timeline") }),
+                        showOnRail = false
+                    ),
+                    NavItem(
+                        text = "Evidence",
+                        data = NavItemData.Action(onClick = { onNavigate("evidence") }),
+                        showOnRail = false
+                    ),
+                    NavItem(
+                        text = "Add",
+                        data = NavItemData.Action(onClick = { onNavigate("add_evidence") }),
                         showOnRail = true
                     ),
                     NavItem(
-                        text = "Cases",
-                        data = NavItemData.Toggle(
-                            data = NavItemData.Action(predefinedAction = PredefinedAction.HOME),
-                            showOnRail = true
-                        ),
-                        NavItem(
-                            text = "Evidence",
-                            data = NavItemData.Action(predefinedAction = PredefinedAction.HOME),
-                            showOnRail = true
-                        ),
-                        NavItem(
-                            text = "Timeline",
-                            data = NavItemData.Action(predefinedAction = PredefinedAction.HOME),
-                            showOnRail = false
-                        ),
-                        NavItem(
-                            text = "settings",
-                            data = NavItemData.Action(predefinedAction = PredefinedAction.HOME),
-                            showOnRail = false
-                        ),
-                        showOnRail = true,
-                        railButtonText = "On"
-                    ),
+                        text = "Settings",
+                        data = NavItemData.Action(predefinedAction = PredefinedAction.SETTINGS),
+                        showOnRail = false
+                    )
                 )
             )
         ),
@@ -88,11 +77,11 @@ fun AppNavRail(onNavigate: (String) -> Unit) {
             NavItem(
                 text = "About",
                 data = NavItemData.Action(predefinedAction = PredefinedAction.ABOUT)
-            ),
+                ),
             NavItem(
                 text = "Feedback",
                 data = NavItemData.Action(predefinedAction = PredefinedAction.FEEDBACK)
-            )
         )
+    )
     )
 }
