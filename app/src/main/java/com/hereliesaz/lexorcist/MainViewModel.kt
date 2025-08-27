@@ -234,19 +234,41 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _financialEntries.value = emptyList()
     }
 
-    fun createCase(caseName: String) {
+    fun createCase(
+        caseName: String,
+        caseNumber: String,
+        caseSection: String,
+        judge: String,
+        plaintiffs: String,
+        defendants: String,
+        courtName: String,
+        courtDistrict: String
+    ) {
         viewModelScope.launch {
             val apiService = _googleApiService.value ?: return@launch
             val rootFolderId = apiService.getOrCreateAppRootFolder() ?: return@launch
             val caseRegistrySpreadsheetId = apiService.getOrCreateCaseRegistrySpreadsheetId(rootFolderId) ?: return@launch
 
-            val masterTemplateId = apiService.createMasterTemplate(rootFolderId) ?: return@launch
             val caseFolderId = apiService.getOrCreateCaseFolder(caseName) ?: return@launch
             apiService.getOrCreateEvidenceFolder(caseName) // Create evidence folder when case is created
             val caseSpreadsheetId = apiService.createSpreadsheet(caseName, caseFolderId) ?: return@launch
-            apiService.attachScript(caseSpreadsheetId, masterTemplateId, caseFolderId)
 
-            val newCase = Case(name = caseName, spreadsheetId = caseSpreadsheetId, masterTemplateId = masterTemplateId)
+            val caseInfo = mapOf(
+                "Case Number" to caseNumber,
+                "Section" to caseSection,
+                "Judge" to judge,
+                "Plaintiffs" to plaintiffs,
+                "Defendants" to defendants,
+                "Court Name" to courtName,
+                "Court District" to courtDistrict
+            )
+            apiService.addCaseInfoSheet(caseSpreadsheetId, caseInfo)
+
+            val scriptTemplate = getApplication<Application>().resources.openRawResource(R.raw.apps_script_template)
+                .bufferedReader().use { it.readText() }
+            apiService.attachScript(caseSpreadsheetId, scriptTemplate)
+
+            val newCase = Case(name = caseName, spreadsheetId = caseSpreadsheetId)
             if (apiService.addCaseToRegistry(caseRegistrySpreadsheetId, newCase)) {
                 Log.d(TAG, "createCase: Case '$caseName' added to registry.")
                 loadCasesFromRegistry()

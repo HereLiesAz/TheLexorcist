@@ -1,8 +1,13 @@
 // --- GLOBAL CONFIGURATION ---
+const TEMPLATE_IDS = {
+  'Cover Sheet': '1UXHuHvU3BzzIRr27ih9NT1QZPOA7t_WOwl7u89wAo8M',
+  'Metadata': '1tG9AjZKirK0lUfvCqQG-5KB2T6x4IueMjFEJVX_STFM',
+  'Affidavit': '13dSwwRSUjqHKFno6BKtnqNInujWmH89_blMMxtRdfxA',
+  'Chain of Custody': '1WEow0qDAz2hxyR3CuXuVMf9Z9uTK5XbcpBG4sXI1scA',
+  'Table of Exhibits': '128Yj6DagYMm-6TvTPvX_ok8qoLhd73ozpFqmCZy9NKM'
+};
 const EXHIBIT_SHEET_NAME = 'Exhibit Matrix - Exhibit List';
-const CASE_NUMBER = '2:25-cv-09889';
-const CASE_SECTION = 'R (5)';
-const CASE_JUDGE = 'LANCE M. AFRICK';
+const CASE_INFO_SHEET_NAME = 'Case Info';
 
 
 // --- MASTER MENU ---
@@ -10,7 +15,7 @@ const CASE_JUDGE = 'LANCE M. AFRICK';
 function onOpen() {
   const ui = SpreadsheetApp.getUi();
   const menu = ui.createMenu('Case Tools');
-  
+
   const docMenu = ui.createMenu('Document Generation');
   docMenu.addItem('Generate Cover Sheet', 'generateCoverSheetForRow');
   docMenu.addItem('Generate Supporting Docs (Metadata/CoC)', 'generateSupportingDocs');
@@ -26,24 +31,10 @@ function onOpen() {
   analysisMenu.addSeparator();
   analysisMenu.addItem('Run Full Test Suite', 'runFullTestSuite');
   menu.addSubMenu(analysisMenu);
-  
-  menu.addSeparator();
-  menu.addItem('Set Master Template ID', 'setMasterTemplateId');
+
   menu.addSeparator();
   menu.addItem('Create Instructions Sheet', 'createInstructionsSheet');
   menu.addToUi();
-}
-
-
-// --- SETUP FUNCTION ---
-
-function setMasterTemplateId() {
-  const ui = SpreadsheetApp.getUi();
-  const response = ui.prompt('Setup Master Template', 'Please enter the ID of your single "TEMPLATES" Google Doc:', ui.ButtonSet.OK_CANCEL);
-  if (response.getSelectedButton() == ui.Button.OK) {
-    PropertiesService.getUserProperties().setProperty('masterTemplateId', response.getResponseText());
-    ui.alert('Master Template ID saved successfully.');
-  }
 }
 
 
@@ -351,20 +342,38 @@ function replaceCasePlaceholders(body, data) {
   body.replaceText('{{CASE_NUMBER}}', data.caseNumber);
   body.replaceText('{{SECTION}}', data.caseSection);
   body.replaceText('{{JUDGE}}', data.caseJudge);
+  body.replaceText('{{PLAINTIFFS}}', data.plaintiffs);
+  body.replaceText('{{DEFENDANTS}}', data.defendants);
+  body.replaceText('{{COURT_NAME}}', data.courtName);
+  body.replaceText('{{COURT_DISTRICT}}', data.courtDistrict);
 }
 
 function getActiveRowData(sheet, activeRow, headers) {
   const ui = SpreadsheetApp.getUi();
   if (activeRow === 1) { ui.alert('Please select a data row, not the header.'); return null; }
   
+  // Get case-wide info
+  const caseInfoSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CASE_INFO_SHEET_NAME);
+  const caseInfoData = caseInfoSheet.getDataRange().getValues();
+  const caseInfoMap = {};
+  caseInfoData.forEach(row => {
+    if (row[0]) {
+      caseInfoMap[row[0]] = row[1];
+    }
+  });
+
   const rowData = sheet.getRange(activeRow, 1, 1, headers.length).getValues()[0];
   const dataMap = {};
   headers.forEach((header, i) => dataMap[header] = rowData[i]);
 
   return {
-    caseNumber: CASE_NUMBER,
-    caseSection: CASE_SECTION,
-    caseJudge: CASE_JUDGE,
+    caseNumber: caseInfoMap['Case Number'] || '',
+    caseSection: caseInfoMap['Section'] || '',
+    caseJudge: caseInfoMap['Judge'] || '',
+    plaintiffs: caseInfoMap['Plaintiffs'] || '',
+    defendants: caseInfoMap['Defendants'] || '',
+    courtName: caseInfoMap['Court Name'] || '',
+    courtDistrict: caseInfoMap['Court District'] || '',
     exhibitNumber: dataMap['Exhibit No.'] || `Exhibit-${activeRow}`,
     exhibitName: dataMap['Exhibit Name'],
     exhibitDate: dataMap['Date'] ? new Date(dataMap['Date']).toLocaleDateString("en-US") : 'N/A',
@@ -376,7 +385,39 @@ function getActiveRowData(sheet, activeRow, headers) {
   };
 }
 
-function getDocFromTab(tabTitle, newDocName) { /* Full implementation from previous turn */ }
-function createPdfFromDoc(doc, folder, pdfName) { /* Full implementation from previous turn */ }
-function updateLinkInSheet(sheet, row, columnName, url, headers) { /* Full implementation from previous turn */ }
-function getOrCreateFolder(folderName) { /* Full implementation from previous turn */ }
+function getDocFromTab(tabTitle, newDocName) {
+  const templateId = TEMPLATE_IDS[tabTitle];
+  if (!templateId) {
+    Logger.log('Template not found for title: ' + tabTitle);
+    return null;
+  }
+
+  const templateFile = DriveApp.getFileById(templateId);
+  const newFile = templateFile.makeCopy(newDocName);
+
+  return DocumentApp.openById(newFile.getId());
+}
+
+function createPdfFromDoc(doc, folder, pdfName) {
+  doc.saveAndClose();
+  const pdfBlob = doc.getAs('application/pdf');
+  const pdfFile = folder.createFile(pdfBlob).setName(pdfName || doc.getName() + '.pdf');
+  DriveApp.getFileById(doc.getId()).setTrashed(true); // Delete the temporary Google Doc
+  return pdfFile;
+}
+
+function updateLinkInSheet(sheet, row, columnName, url, headers) {
+  const colIndex = headers.indexOf(columnName) + 1;
+  if (colIndex > 0) {
+    sheet.getRange(row, colIndex).setValue(url);
+  }
+}
+
+function getOrCreateFolder(folderName) {
+  const parentFolder = DriveApp.getRootFolder(); // Or specify a different parent
+  const folders = parentFolder.getFoldersByName(folderName);
+  if (folders.hasNext()) {
+    return folders.next();
+  }
+  return parentFolder.createFolder(folderName);
+}
