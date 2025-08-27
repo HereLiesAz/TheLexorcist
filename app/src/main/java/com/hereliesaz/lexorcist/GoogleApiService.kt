@@ -14,6 +14,8 @@ import com.google.api.services.sheets.v4.Sheets
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
+private const val APP_ROOT_FOLDER_NAME = "The Lexorcist"
+
 class GoogleApiService(credential: GoogleAccountCredential, applicationName: String) {
 
     private val transport = NetHttpTransport()
@@ -31,7 +33,38 @@ class GoogleApiService(credential: GoogleAccountCredential, applicationName: Str
         .setApplicationName(applicationName)
         .build()
 
-    suspend fun createMasterTemplate(): String? = withContext(Dispatchers.IO) {
+    suspend fun getOrCreateFolder(folderName: String, parentId: String? = null): String? = withContext(Dispatchers.IO) {
+        try {
+            val query = if (parentId != null) {
+                "'${parentId}' in parents and mimeType='application/vnd.google-apps.folder' and name='${folderName}' and trashed=false"
+            } else {
+                "mimeType='application/vnd.google-apps.folder' and name='${folderName}' and trashed=false"
+            }
+
+            val files = drive.files().list().setQ(query).setSpaces("drive").execute().files
+            if (files != null && files.isNotEmpty()) {
+                return@withContext files[0].id
+            }
+
+            val fileMetadata = com.google.api.services.drive.model.File()
+            fileMetadata.name = folderName
+            fileMetadata.mimeType = "application/vnd.google-apps.folder"
+            if (parentId != null) {
+                fileMetadata.parents = listOf(parentId)
+            }
+
+            drive.files().create(fileMetadata).setFields("id").execute()?.id
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    suspend fun getOrCreateAppRootFolder(): String? {
+        return getOrCreateFolder(APP_ROOT_FOLDER_NAME)
+    }
+
+    suspend fun createMasterTemplate(parentId: String? = null): String? = withContext(Dispatchers.IO) {
         try {
             val templateContent = """
                 Cover Sheet
@@ -145,6 +178,9 @@ class GoogleApiService(credential: GoogleAccountCredential, applicationName: Str
             val fileMetadata = com.google.api.services.drive.model.File()
             fileMetadata.name = "Lexorcist Master Template"
             fileMetadata.mimeType = "application/vnd.google-apps.document"
+            if (parentId != null) {
+                fileMetadata.parents = listOf(parentId)
+            }
             val content = ByteArrayContent.fromString("text/plain", templateContent)
             drive.files().create(fileMetadata, content).setFields("id").execute()?.id
         } catch (e: Exception) {
@@ -153,11 +189,14 @@ class GoogleApiService(credential: GoogleAccountCredential, applicationName: Str
         }
     }
 
-    suspend fun createSpreadsheet(title: String, caseInfo: Map<String, String>): String? = withContext(Dispatchers.IO) {
+    suspend fun createSpreadsheet(title: String, parentId: String? = null): String? = withContext(Dispatchers.IO) {
         try {
             val fileMetadata = com.google.api.services.drive.model.File()
             fileMetadata.name = title
             fileMetadata.mimeType = "application/vnd.google-apps.spreadsheet"
+            if (parentId != null) {
+                fileMetadata.parents = listOf(parentId)
+            }
             drive.files().create(fileMetadata).setFields("id").execute()?.id
         } catch (e: Exception) {
             e.printStackTrace()
@@ -165,7 +204,7 @@ class GoogleApiService(credential: GoogleAccountCredential, applicationName: Str
         }
     }
 
-    suspend fun attachScript(spreadsheetId: String, masterTemplateId: String) = withContext(Dispatchers.IO) {
+    suspend fun attachScript(spreadsheetId: String, masterTemplateId: String, caseFolderId: String?) = withContext(Dispatchers.IO) {
         try {
             val project = Project().setTitle("Case Tools Script").setParentId(spreadsheetId)
             val createdProject = script.projects().create(project as CreateProjectRequest?).execute()
@@ -214,8 +253,17 @@ class GoogleApiService(credential: GoogleAccountCredential, applicationName: Str
                     template = template.replace(placeholder, rowData[key]);
                   }
 
-                  var newDoc = DocumentApp.create(documentTitle + ' - ' + (rowData['Exhibit Name'] || 'Exhibit ' + rowData['Exhibit No.']));
+                  var docName = documentTitle + ' - ' + (rowData['Exhibit Name'] || 'Exhibit ' + rowData['Exhibit No.']);
+                  var newDoc = DocumentApp.create(docName);
                   newDoc.getBody().setText(template);
+
+                  var caseFolderId = "$caseFolderId";
+                  if (caseFolderId) {
+                    var file = DriveApp.getFileById(newDoc.getId());
+                    var caseFolder = DriveApp.getFolderById(caseFolderId);
+                    file.moveTo(caseFolder);
+                  }
+
                   var url = newDoc.getUrl();
                   SpreadsheetApp.getUi().alert('Document created: ' + newDoc.getName(), url, SpreadsheetApp.getUi().ButtonSet.OK);
                 }
@@ -256,6 +304,19 @@ class GoogleApiService(credential: GoogleAccountCredential, applicationName: Str
                 .execute()
         } catch (e: Exception) {
             e.printStackTrace()
+        }
+    }
+
+    suspend fun uploadFile(file: java.io.File, parentId: String, mimeType: String): String? = withContext(Dispatchers.IO) {
+        try {
+            val fileMetadata = com.google.api.services.drive.model.File()
+            fileMetadata.name = file.name
+            fileMetadata.parents = listOf(parentId)
+            val mediaContent = com.google.api.client.http.FileContent(mimeType, file)
+            drive.files().create(fileMetadata, mediaContent).setFields("id").execute()?.id
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
         }
     }
 }
