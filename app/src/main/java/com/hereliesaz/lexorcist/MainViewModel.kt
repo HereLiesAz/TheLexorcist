@@ -208,12 +208,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val apiService = _googleApiService.value ?: return@launch
             val rootFolderId = apiService.getOrCreateAppRootFolder() ?: return@launch
             val caseRegistrySpreadsheetId = apiService.getOrCreateCaseRegistrySpreadsheetId(rootFolderId) ?: return@launch
-            
+
             val masterTemplateId = apiService.createMasterTemplate(rootFolderId) ?: return@launch
-            val caseFolderId = apiService.getOrCreateFolder(caseName, rootFolderId) ?: return@launch
+            val caseFolderId = apiService.getOrCreateCaseFolder(caseName) ?: return@launch
+            apiService.getOrCreateEvidenceFolder(caseName) // Create evidence folder when case is created
             val caseSpreadsheetId = apiService.createSpreadsheet(caseName, caseFolderId) ?: return@launch
             apiService.attachScript(caseSpreadsheetId, masterTemplateId, caseFolderId)
-            
+
             val newCase = Case(name = caseName, spreadsheetId = caseSpreadsheetId, masterTemplateId = masterTemplateId)
             if (apiService.addCaseToRegistry(caseRegistrySpreadsheetId, newCase)) {
                 Log.d(TAG, "createCase: Case '$caseName' added to registry.")
@@ -321,9 +322,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val apiService = _googleApiService.value
 
         if (currentCase != null && apiService != null) {
-            val rootFolderId = apiService.getOrCreateAppRootFolder() ?: return
-            val caseFolderId = apiService.getOrCreateFolder(currentCase.name, rootFolderId) ?: return
-            val rawEvidenceFolderId = apiService.getOrCreateFolder(RAW_EVIDENCE_FOLDER_NAME, caseFolderId) ?: return
+            val rawEvidenceFolderId = apiService.getOrCreateEvidenceFolder(currentCase.name) ?: return
             val timestamp = System.currentTimeMillis()
             val file = java.io.File(context.cacheDir, "evidence-$timestamp.jpg")
             file.outputStream().use {

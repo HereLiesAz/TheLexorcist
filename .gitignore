@@ -38,3 +38,7 @@ yarn-error.log*
 *.ap_
 *.dex
 local.properties
+
+# Google services
+google-services.json
+app/google-services.json
