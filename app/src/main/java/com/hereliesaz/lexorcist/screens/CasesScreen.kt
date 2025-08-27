@@ -26,6 +26,10 @@ fun CasesScreen(viewModel: MainViewModel) {
     val selectedCase by viewModel.selectedCase.collectAsState()
     var showCreateCaseDialog by remember { mutableStateOf(false) }
     var caseName by remember { mutableStateOf("") }
+    var exhibitSheetName by remember { mutableStateOf("Exhibit Matrix - Exhibit List") }
+    var caseNumber by remember { mutableStateOf("") }
+    var caseSection by remember { mutableStateOf("") }
+    var caseJudge by remember { mutableStateOf("") }
 
     var showLoadCaseDialog by remember { mutableStateOf(false) }
     var spreadsheetIdToLoad by remember { mutableStateOf("") }
@@ -66,21 +70,55 @@ fun CasesScreen(viewModel: MainViewModel) {
     if (showCreateCaseDialog) {
         AlertDialog(
             onDismissRequest = { showCreateCaseDialog = false },
-            title = { Text("New Case Name") },
+            title = { Text("New Case Details") },
             text = {
-                OutlinedTextField(
-                    value = caseName,
-                    onValueChange = { caseName = it },
-                    label = { Text("Case Name") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Column {
+                    OutlinedTextField(
+                        value = caseName,
+                        onValueChange = { caseName = it },
+                        label = { Text("Case Name") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = exhibitSheetName,
+                        onValueChange = { exhibitSheetName = it },
+                        label = { Text("Exhibit Sheet Name") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = caseNumber,
+                        onValueChange = { caseNumber = it },
+                        label = { Text("Case Number") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = caseSection,
+                        onValueChange = { caseSection = it },
+                        label = { Text("Case Section") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = caseJudge,
+                        onValueChange = { caseJudge = it },
+                        label = { Text("Case Judge") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             },
             confirmButton = {
                 Button(
                     onClick = {
                         if (caseName.isNotBlank()) {
-                            viewModel.createCase(caseName)
+                            viewModel.createCase(caseName, exhibitSheetName, caseNumber, caseSection, caseJudge)
                             showCreateCaseDialog = false
                             caseName = ""
                         }
