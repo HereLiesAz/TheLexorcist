@@ -5,6 +5,8 @@ import androidx.appcompat.app.AppCompatActivity
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
+import com.hereliesaz.lexorcist.R
+
 //import com.google.api.services.script.v1.model.Content
 //import com.google.api.services.script.v1.model.File
 //import com.google.api.services.script.v1.model.Project
