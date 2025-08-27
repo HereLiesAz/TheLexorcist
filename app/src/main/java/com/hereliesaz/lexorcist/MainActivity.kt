@@ -77,6 +77,12 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private val selectFileLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        uri?.let {
+            viewModel.addFileEvidence(it, this)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -98,7 +104,9 @@ class MainActivity : ComponentActivity() {
                     viewModel = viewModel,
                     onSignIn = { signIn() },
                     onSelectImage = { selectImage() },
-                    onTakePicture = { takePicture() }
+                    onTakePicture = { takePicture() },
+                    onAddDocument = { selectDocument() },
+                    onAddSpreadsheet = { selectSpreadsheet() }
                 )
             }
         }
@@ -136,6 +144,14 @@ class MainActivity : ComponentActivity() {
 
     private fun selectImage() {
         selectImageLauncher.launch("image/*")
+    }
+
+    private fun selectDocument() {
+        selectFileLauncher.launch("application/pdf")
+    }
+
+    private fun selectSpreadsheet() {
+        selectFileLauncher.launch("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
     }
 
 }

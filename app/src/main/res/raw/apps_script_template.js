@@ -1,8 +1,8 @@
 // --- GLOBAL CONFIGURATION ---
-const EXHIBIT_SHEET_NAME = '{{EXHIBIT_SHEET_NAME}}';
-const CASE_NUMBER = '{{CASE_NUMBER}}';
-const CASE_SECTION = '{{CASE_SECTION}}';
-const CASE_JUDGE = '{{CASE_JUDGE}}';
+const EXHIBIT_SHEET_NAME = 'Exhibit Matrix - Exhibit List';
+const CASE_NUMBER = '2:25-cv-09889';
+const CASE_SECTION = 'R (5)';
+const CASE_JUDGE = 'LANCE M. AFRICK';
 
 
 // --- MASTER MENU ---
@@ -10,7 +10,7 @@ const CASE_JUDGE = '{{CASE_JUDGE}}';
 function onOpen() {
   const ui = SpreadsheetApp.getUi();
   const menu = ui.createMenu('Case Tools');
-
+  
   const docMenu = ui.createMenu('Document Generation');
   docMenu.addItem('Generate Cover Sheet', 'generateCoverSheetForRow');
   docMenu.addItem('Generate Supporting Docs (Metadata/CoC)', 'generateSupportingDocs');
@@ -26,10 +26,24 @@ function onOpen() {
   analysisMenu.addSeparator();
   analysisMenu.addItem('Run Full Test Suite', 'runFullTestSuite');
   menu.addSubMenu(analysisMenu);
-
+  
+  menu.addSeparator();
+  menu.addItem('Set Master Template ID', 'setMasterTemplateId');
   menu.addSeparator();
   menu.addItem('Create Instructions Sheet', 'createInstructionsSheet');
   menu.addToUi();
+}
+
+
+// --- SETUP FUNCTION ---
+
+function setMasterTemplateId() {
+  const ui = SpreadsheetApp.getUi();
+  const response = ui.prompt('Setup Master Template', 'Please enter the ID of your single "TEMPLATES" Google Doc:', ui.ButtonSet.OK_CANCEL);
+  if (response.getSelectedButton() == ui.Button.OK) {
+    PropertiesService.getUserProperties().setProperty('masterTemplateId', response.getResponseText());
+    ui.alert('Master Template ID saved successfully.');
+  }
 }
 
 
@@ -37,12 +51,8 @@ function onOpen() {
 
 function runFullTestSuite() {
   const ui = SpreadsheetApp.getUi();
-  const config = getConfig();
-  if (!config || !config.masterTemplateId) {
-    ui.alert('Configuration error: masterTemplateId not found.');
-    return;
-  }
-  const masterTemplateId = config.masterTemplateId;
+  const masterTemplateId = PropertiesService.getUserProperties().getProperty('masterTemplateId');
+  if (!masterTemplateId) { ui.alert('Master Template ID not set. Please run Setup first.'); return; }
 
   ui.alert('Starting Test Suite', 'This will generate one of every document type using placeholder data. All files will be placed in their respective folders in your Google Drive.', ui.ButtonSet.OK);
 
@@ -58,7 +68,7 @@ function runFullTestSuite() {
     affiantName: 'Jane Doe',
     affiantTitle: 'Records Custodian',
   };
-
+  
   let dummyFile;
   try {
     dummyFile = DriveApp.createFile('dummy_exhibit_for_test.txt', 'This is a placeholder file for testing the document generation suite.');
@@ -77,7 +87,7 @@ function runFullTestSuite() {
 
     // Generate Supporting Docs
     generateSupportingDocs(true, testData);
-
+    
     // Generate Affidavit
     const affDoc = getDocFromTab('Affidavit', `TEMP - ${testData.exhibitNumber} - Affidavit`);
     if (affDoc) {
@@ -93,7 +103,7 @@ function runFullTestSuite() {
 
     // Generate Table of Exhibits
     generateTableOfExhibits();
-
+    
     // Assemble Final Exhibit
     assembleFinalExhibit(true, testData);
 
@@ -115,7 +125,7 @@ function generateCoverSheetForRow() {
   const ui = SpreadsheetApp.getUi();
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(EXHIBIT_SHEET_NAME);
   if (!sheet) { ui.alert(`Error: Sheet named "${EXHIBIT_SHEET_NAME}" not found.`); return; }
-
+  
   const activeRow = sheet.getActiveRange().getRow();
   const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
   const data = getActiveRowData(sheet, activeRow, headers);
@@ -130,7 +140,7 @@ function generateCoverSheetForRow() {
     body.replaceText('{{EXHIBIT_NUMBER}}', data.exhibitNumber);
     body.replaceText('{{EXHIBIT_NAME}}', data.exhibitName);
     body.replaceText('{{EXHIBIT_DATE}}', data.exhibitDate);
-
+    
     const pdfFile = createPdfFromDoc(doc, getOrCreateFolder('Generated Cover Sheets'));
     updateLinkInSheet(sheet, activeRow, 'Link: Cover Sheet', pdfFile.getUrl(), headers);
     ui.alert(`Cover Sheet for ${data.exhibitNumber} has been generated and linked.`);
@@ -144,7 +154,7 @@ function generateSupportingDocs(isTest, testData) {
   const ui = SpreadsheetApp.getUi();
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(EXHIBIT_SHEET_NAME);
   if (!sheet && !isTest) { ui.alert(`Error: Sheet named "${EXHIBIT_SHEET_NAME}" not found.`); return; }
-
+  
   let data, activeRow, headers;
   if(isTest){
     data = testData;
@@ -153,7 +163,7 @@ function generateSupportingDocs(isTest, testData) {
     headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
     data = getActiveRowData(sheet, activeRow, headers);
   }
-
+  
   if (!data || !data.exhibitFileId) { if(data) ui.alert('Missing "Exhibit File ID".'); return; }
 
   let metaDoc, cocDoc;
@@ -166,7 +176,7 @@ function generateSupportingDocs(isTest, testData) {
     if (!metaDoc) throw new Error("Could not extract Metadata tab.");
     const fileBytes = exhibitFile.getSize();
     const fileSize = fileBytes < 1048576 ? `${(fileBytes/1024).toFixed(2)} KB` : `${(fileBytes/1048576).toFixed(2)} MB`;
-
+    
     const metaBody = metaDoc.getBody();
     replaceCasePlaceholders(metaBody, data);
     metaBody.replaceText('{{EXHIBIT_NUMBER}}', data.exhibitNumber);
@@ -197,8 +207,8 @@ function generateSupportingDocs(isTest, testData) {
     if(!isTest) updateLinkInSheet(sheet, activeRow, 'Link: Chain of Custody', cocPdf.getUrl(), headers);
 
     if(!isTest) ui.alert(`Supporting Docs for ${data.exhibitNumber} generated and linked.`);
-  } catch(e) {
-    ui.alert('Error:', e.message, ui.ButtonSet.OK);
+  } catch(e) { 
+    ui.alert('Error:', e.message, ui.ButtonSet.OK); 
     if (metaDoc && DriveApp.getFileById(metaDoc.getId())) DriveApp.getFileById(metaDoc.getId()).setTrashed(true);
     if (cocDoc && DriveApp.getFileById(cocDoc.getId())) DriveApp.getFileById(cocDoc.getId()).setTrashed(true);
   }
@@ -208,7 +218,7 @@ function generateAffidavit() {
   const ui = SpreadsheetApp.getUi();
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(EXHIBIT_SHEET_NAME);
   if (!sheet) { ui.alert(`Error: Sheet named "${EXHIBIT_SHEET_NAME}" not found.`); return; }
-
+  
   const activeRow = sheet.getActiveRange().getRow();
   const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
   const data = getActiveRowData(sheet, activeRow, headers);
@@ -239,13 +249,13 @@ function generateTableOfExhibits() {
   const ui = SpreadsheetApp.getUi();
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(EXHIBIT_SHEET_NAME);
   if (!sheet) { ui.alert(`Error: Sheet named "${EXHIBIT_SHEET_NAME}" not found.`); return; }
-
+  
   const allData = sheet.getDataRange().getValues();
   allData.shift();
   const tableData = [['Exhibit No.', 'Description']];
   allData.forEach(row => { if (row[0] && row[3]) { tableData.push([row[0], row[3]]); } });
-
-  if (tableData.length <= 1) {
+  
+  if (tableData.length <= 1) { 
     if(SpreadsheetApp.getUi()){ ui.alert('No exhibit data found to generate table.'); }
     return;
   }
@@ -277,7 +287,7 @@ function assembleFinalExhibit(isTest, testData) {
   const ui = SpreadsheetApp.getUi();
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(EXHIBIT_SHEET_NAME);
   if (!sheet && !isTest) { ui.alert(`Error: Sheet named "${EXHIBIT_SHEET_NAME}" not found.`); return; }
-
+  
   let data, activeRow, headers;
   if(isTest){
     data = testData;
@@ -288,7 +298,7 @@ function assembleFinalExhibit(isTest, testData) {
   }
 
   if (!data || !data.exhibitFileId) { if(data) ui.alert('Missing "Exhibit File ID".'); return; }
-
+  
   const coverDoc = getDocFromTab('Cover Sheet', `TEMP - ${data.exhibitNumber}`);
   if (!coverDoc) return;
 
@@ -346,7 +356,7 @@ function replaceCasePlaceholders(body, data) {
 function getActiveRowData(sheet, activeRow, headers) {
   const ui = SpreadsheetApp.getUi();
   if (activeRow === 1) { ui.alert('Please select a data row, not the header.'); return null; }
-
+  
   const rowData = sheet.getRange(activeRow, 1, 1, headers.length).getValues()[0];
   const dataMap = {};
   headers.forEach((header, i) => dataMap[header] = rowData[i]);
@@ -370,13 +380,3 @@ function getDocFromTab(tabTitle, newDocName) { /* Full implementation from previ
 function createPdfFromDoc(doc, folder, pdfName) { /* Full implementation from previous turn */ }
 function updateLinkInSheet(sheet, row, columnName, url, headers) { /* Full implementation from previous turn */ }
 function getOrCreateFolder(folderName) { /* Full implementation from previous turn */ }
-
-function getConfig() {
-  const files = ScriptApp.getProjectRoot().getFiles();
-  for (let i = 0; i < files.length; i++) {
-    if (files[i].getName() === 'config.json') {
-      return JSON.parse(files[i].getSource());
-    }
-  }
-  return null;
-}

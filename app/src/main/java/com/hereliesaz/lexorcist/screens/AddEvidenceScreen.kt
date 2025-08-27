@@ -25,7 +25,8 @@ fun AddEvidenceScreen(
     onSelectImage: () -> Unit,
     onTakePicture: () -> Unit,
     onAddTextEvidence: () -> Unit,
-    onAddFile: () -> Unit
+    onAddDocument: () -> Unit,
+    onAddSpreadsheet: () -> Unit
 ) {
     val extractedText by viewModel.extractedText.collectAsState()
     val imageBitmap by viewModel.imageBitmap.collectAsState()
@@ -54,8 +55,12 @@ fun AddEvidenceScreen(
                 Text("Add Text Evidence")
             }
             Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = onAddFile) {
-                Text("Add File")
+            Button(onClick = onAddDocument) {
+                Text("Add Document")
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(onClick = onAddSpreadsheet) {
+                Text("Add Spreadsheet")
             }
         }
 
