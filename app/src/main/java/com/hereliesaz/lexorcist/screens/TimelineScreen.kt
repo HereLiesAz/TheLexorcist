@@ -13,16 +13,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.hereliesaz.lexorcist.MainViewModel
 import com.hereliesaz.lexorcist.db.FinancialEntry
+import com.hereliesaz.lexorcist.models.TimelineEvent // Added import
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.coroutines.EmptyCoroutineContext
 
-data class TimelineEvent(val date: Long, val description: String)
+// Removed TimelineEvent data class from here
 
 @Composable
 fun TimelineScreen(viewModel: MainViewModel) {
     val financialEntries by viewModel.financialEntries.collectAsState(
-        initial = TODO(),
-        context = TODO()
+        initial = emptyList(),
+        context = EmptyCoroutineContext // Or remove this line to use the default
     )
     val timelineEvents = financialEntries.map {
         TimelineEvent(it.documentDate, "Amount: ${it.amount}, Category: ${it.category}")
