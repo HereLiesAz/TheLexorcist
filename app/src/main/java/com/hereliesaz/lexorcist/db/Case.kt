@@ -7,5 +7,6 @@ import androidx.room.PrimaryKey
 data class Case(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val name: String,
-    val spreadsheetId: String
+    val spreadsheetId: String,
+    val masterTemplateId: String
 )

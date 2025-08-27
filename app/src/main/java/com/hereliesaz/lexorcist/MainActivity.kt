@@ -55,7 +55,7 @@ class MainActivity : ComponentActivity() {
                 val source = ImageDecoder.createSource(this.contentResolver, uri)
                 ImageDecoder.decodeBitmap(source)
             }
-            viewModel.onImageSelected(bitmap)
+            viewModel.onImageSelected(bitmap, this)
         }
     }
 
