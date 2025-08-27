@@ -3,7 +3,7 @@ package com.hereliesaz.lexorcist
 import android.util.Log
 import com.hereliesaz.lexorcist.db.Allegation
 import com.hereliesaz.lexorcist.db.Case
-import com.hereliesaz.lexorcist.model.Evidence
+import com.hereliesaz.lexorcist.db.Evidence
 // DAOs are no longer used
 
 class SpreadsheetParser(
@@ -40,13 +40,11 @@ class SpreadsheetParser(
 
         // 3. Create New Case Structure (since no duplicate was found)
         Log.d(TAG, "parseAndStore: No existing case found with name '$importedCaseName'. Proceeding to create new case structure.")
-        /*
         val masterTemplateId = googleApiService.createMasterTemplate(appRootFolderId)
         if (masterTemplateId == null) {
             Log.e(TAG, "parseAndStore: Failed to create master template.")
             // Decide if this is a fatal error for import, or proceed without a template
         }
-        */
         val newCaseFolderId = googleApiService.getOrCreateFolder(importedCaseName, appRootFolderId)
         if (newCaseFolderId == null) {
             Log.e(TAG, "parseAndStore: Failed to create folder for new case: $importedCaseName")
@@ -57,15 +55,13 @@ class SpreadsheetParser(
             Log.e(TAG, "parseAndStore: Failed to create spreadsheet for new case: $importedCaseName")
             return null
         }
-        /*
         masterTemplateId?.let {
-            googleApiService.attachScript(newCaseSpreadsheetId, it)
+            googleApiService.attachScript(newCaseSpreadsheetId, it, newCaseFolderId)
         }
-        */
         Log.d(TAG, "parseAndStore: Created new case structure: Folder ID $newCaseFolderId, Spreadsheet ID $newCaseSpreadsheetId")
 
         // 4. Add to Case Registry
-        val newCase = Case(name = importedCaseName, spreadsheetId = newCaseSpreadsheetId)
+        val newCase = Case(name = importedCaseName, spreadsheetId = newCaseSpreadsheetId, masterTemplateId = masterTemplateId ?: "")
         val addedToRegistry = googleApiService.addCaseToRegistry(caseRegistrySpreadsheetId, newCase)
         if (!addedToRegistry) {
             Log.w(TAG, "parseAndStore: Failed to add new case '$importedCaseName' to registry. Proceeding with data import to its sheet, but it won't be listed until registry issue is fixed.")
@@ -86,7 +82,6 @@ class SpreadsheetParser(
         }
 
         // 6. Parse and Store Evidence into the new case's spreadsheet
-        /*
         val evidenceSheet = sheetsData["Evidence"]
         evidenceSheet?.drop(1)?.forEach { row -> // Assuming first row is header
             try {
@@ -112,7 +107,6 @@ class SpreadsheetParser(
                 Log.e(TAG, "parseAndStore: Error parsing evidence row: $row", e)
             }
         }
-        */
         Log.i(TAG, "parseAndStore: Finished importing data for case: $importedCaseName, Spreadsheet ID: $newCaseSpreadsheetId")
         return newCase // Return the newly created Case object
     }

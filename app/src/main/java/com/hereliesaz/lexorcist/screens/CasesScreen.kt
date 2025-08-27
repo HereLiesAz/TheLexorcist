@@ -118,16 +118,7 @@ fun CasesScreen(viewModel: MainViewModel) {
                 Button(
                     onClick = {
                         if (caseName.isNotBlank()) {
-                            viewModel.createCase(
-                                caseName = caseName,
-                                caseNumber = caseNumber,
-                                caseSection = caseSection,
-                                judge = caseJudge,
-                                plaintiffs = viewModel.plaintiffs.value,
-                                defendants = viewModel.defendants.value,
-                                courtName = viewModel.court.value,
-                                courtDistrict = "" // Assuming court district is not available here
-                            )
+                            viewModel.createCase(caseName, exhibitSheetName, caseNumber, caseSection, caseJudge)
                             showCreateCaseDialog = false
                             caseName = ""
                         }

@@ -14,20 +14,38 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.hereliesaz.lexorcist.MainViewModel
-import com.hereliesaz.lexorcist.models.TimelineEvent
-import com.hereliesaz.lexorcist.model.FinancialEntry
+import com.hereliesaz.lexorcist.db.Evidence
+import com.hereliesaz.lexorcist.models.TimelineEvent // Added import
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.coroutines.EmptyCoroutineContext
+
+// Removed TimelineEvent data class from here
 
 @Composable
 fun TimelineScreen(viewModel: MainViewModel) {
-    val financialEntries by viewModel.financialEntries.collectAsState()
+    val evidence by viewModel.evidence.collectAsState(
+        initial = emptyList(),
+        context = EmptyCoroutineContext // Or remove this line to use the default
+    )
     var searchQuery by remember { mutableStateOf("") }
-    val timelineEvents = financialEntries.filter { entry ->
-        entry.sourceDocument.contains(searchQuery, ignoreCase = true) ||
-                entry.allegationId.contains(searchQuery, ignoreCase = true)
+    val timelineEvents = evidence.filter { evidenceItem ->
+        when {
+            searchQuery.startsWith("tag:") -> {
+                val tagQuery = searchQuery.substringAfter("tag:").trim()
+                evidenceItem.tags.any { tag -> tag.contains(tagQuery, ignoreCase = true) }
+            }
+            searchQuery.startsWith("content:") -> {
+                val contentQuery = searchQuery.substringAfter("content:").trim()
+                evidenceItem.content.contains(contentQuery, ignoreCase = true)
+            }
+            else -> {
+                evidenceItem.content.contains(searchQuery, ignoreCase = true) ||
+                        evidenceItem.tags.any { tag -> tag.contains(searchQuery, ignoreCase = true) }
+            }
+        }
     }.map {
-        TimelineEvent(it.documentDate.time, "Amount: ${it.amount}, Source: ${it.sourceDocument}")
+        TimelineEvent(it.documentDate, "Content: ${it.content}, Tags: ${it.tags.joinToString(", ")}")
     }.sortedBy { it.date }
 
     Column(

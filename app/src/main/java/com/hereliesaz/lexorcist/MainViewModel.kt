@@ -2,18 +2,17 @@ package com.hereliesaz.lexorcist
 
 import android.app.Application
 import android.content.Context
-import android.net.Uri
-import android.provider.OpenableColumns
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 // import com.hereliesaz.lexorcist.db.AppDatabase // Removed unused import
 import com.hereliesaz.lexorcist.db.Allegation
+import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.db.Case
-import com.hereliesaz.lexorcist.model.FinancialEntry
+import com.hereliesaz.lexorcist.db.Evidence
 import com.hereliesaz.lexorcist.model.SheetFilter
-import com.hereliesaz.lexorcist.model.Evidence
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import java.io.InputStreamReader
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -49,17 +48,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _selectedCase = MutableStateFlow<Case?>(null)
     val selectedCase: StateFlow<Case?> = _selectedCase.asStateFlow()
 
-    private val _financialEntries = MutableStateFlow<List<FinancialEntry>>(emptyList())
-    val financialEntries: StateFlow<List<FinancialEntry>> = _financialEntries.asStateFlow()
+    private val _evidence = MutableStateFlow<List<Evidence>>(emptyList())
+    val evidence: StateFlow<List<Evidence>> = _evidence.asStateFlow()
 
     private val _filters = MutableStateFlow<List<SheetFilter>>(emptyList())
     val filters: StateFlow<List<SheetFilter>> = _filters.asStateFlow()
 
     private val _allegations = MutableStateFlow<List<Allegation>>(emptyList())
     val allegations: StateFlow<List<Allegation>> = _allegations.asStateFlow()
-
-    private val _evidenceList = MutableStateFlow<List<Evidence>>(emptyList())
-    val evidenceList: StateFlow<List<Evidence>> = _evidenceList
 
     init {
         loadCaseInfo()
@@ -71,7 +67,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         if (currentCase.spreadsheetId.isNotBlank()) {
                             loadFiltersFromSheet(currentCase.spreadsheetId)
                             loadAllegationsForSelectedCase(currentCase.spreadsheetId, currentCase.id)
-                            loadFinancialEntriesForSelectedCase(currentCase.spreadsheetId)
+                            loadEvidenceForSelectedCase(currentCase.spreadsheetId, currentCase.id)
                         }
                     }
                 } else {
@@ -79,37 +75,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     _cases.value = emptyList()
                     _filters.value = emptyList()
                     _allegations.value = emptyList()
-                    _financialEntries.value = emptyList()
+                    _evidence.value = emptyList()
                 }
-            }
-        }
-    }
-
-    fun addFileEvidence(uri: Uri, context: Context) {
-        viewModelScope.launch {
-            val currentCase = _selectedCase.value
-            val apiService = _googleApiService.value
-
-            if (currentCase != null && apiService != null) {
-                val rawEvidenceFolderId = apiService.getOrCreateEvidenceFolder(currentCase.name) ?: return@launch
-
-                context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
-                    val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-                    cursor.moveToFirst()
-                    val fileName = cursor.getString(nameIndex)
-                    val mimeType = context.contentResolver.getType(uri)
-
-                    val inputStream = context.contentResolver.openInputStream(uri)
-                    if (inputStream != null) {
-                        val file = java.io.File(context.cacheDir, fileName)
-                        file.outputStream().use {
-                            inputStream.copyTo(it)
-                        }
-                        apiService.uploadFile(file, rawEvidenceFolderId, mimeType ?: "application/octet-stream")
-                    }
-                }
-            } else {
-                Log.w(TAG, "addFileEvidence: Selected case or API service is null, skipping file upload.")
             }
         }
     }
@@ -171,17 +138,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    private suspend fun loadFinancialEntriesForSelectedCase(spreadsheetId: String) {
+    private suspend fun loadEvidenceForSelectedCase(spreadsheetId: String, caseIdForAssociation: Int) {
         val apiService = _googleApiService.value
         if (apiService == null || spreadsheetId.isBlank()) {
-            _financialEntries.value = emptyList(); return
+            _evidence.value = emptyList(); return
         }
         try {
-            _financialEntries.value = apiService.getFinancialEntriesForCase(spreadsheetId)
-            Log.d(TAG, "loadFinancialEntriesForSelectedCase: Loaded ${_financialEntries.value.size} financial entries.")
+            _evidence.value = apiService.getEvidenceForCase(spreadsheetId, caseIdForAssociation)
+            Log.d(TAG, "loadEvidenceForSelectedCase: Loaded ${_evidence.value.size} evidence for case ID $caseIdForAssociation.")
         } catch (e: Exception) {
-            Log.e(TAG, "loadFinancialEntriesForSelectedCase: Error loading financial entries for $spreadsheetId", e)
-            _financialEntries.value = emptyList()
+            Log.e(TAG, "loadEvidenceForSelectedCase: Error loading evidence for $spreadsheetId", e)
+            _evidence.value = emptyList()
         }
     }
 
@@ -213,7 +180,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 if (currentCase.spreadsheetId.isNotBlank()) {
                     loadFiltersFromSheet(currentCase.spreadsheetId)
                     loadAllegationsForSelectedCase(currentCase.spreadsheetId, currentCase.id)
-                    loadFinancialEntriesForSelectedCase(currentCase.spreadsheetId)
+                    loadEvidenceForSelectedCase(currentCase.spreadsheetId, currentCase.id)
                 }
             }
         }
@@ -225,7 +192,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _cases.value = emptyList()
         _filters.value = emptyList()
         _allegations.value = emptyList()
-        _financialEntries.value = emptyList()
+        _evidence.value = emptyList()
     }
 
     fun onSignOut() {
@@ -235,19 +202,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _selectedCase.value = null
         _filters.value = emptyList()
         _allegations.value = emptyList()
-        _financialEntries.value = emptyList()
+        _evidence.value = emptyList()
     }
 
-    fun createCase(
-        caseName: String,
-        caseNumber: String,
-        caseSection: String,
-        judge: String,
-        plaintiffs: String,
-        defendants: String,
-        courtName: String,
-        courtDistrict: String
-    ) {
+    fun createCase(caseName: String, exhibitSheetName: String, caseNumber: String, caseSection: String, caseJudge: String) {
         viewModelScope.launch {
             val apiService = _googleApiService.value ?: return@launch
             val rootFolderId = apiService.getOrCreateAppRootFolder() ?: return@launch
@@ -255,27 +213,30 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
             val caseFolderId = apiService.getOrCreateCaseFolder(caseName) ?: return@launch
             apiService.getOrCreateEvidenceFolder(caseName) // Create evidence folder when case is created
+
+            val newTemplate = apiService.copyFile(MASTER_TEMPLATE_ID, "$caseName Master Template", caseFolderId) ?: return@launch
+            val newTemplateId = newTemplate.id
+            val replacements = mapOf(
+                "CASE_NUMBER" to caseNumber,
+                "CASE_SECTION" to caseSection,
+                "JUDGE" to caseJudge
+            )
+            apiService.replacePlaceholdersInDoc(newTemplateId, replacements)
+
             val caseSpreadsheetId = apiService.createSpreadsheet(caseName, caseFolderId) ?: return@launch
 
-            val caseInfo = mapOf(
-                KEY_CASE_NUMBER to caseNumber,
-                KEY_SECTION to caseSection,
-                KEY_JUDGE to judge,
-                KEY_PLAINTIFFS to plaintiffs,
-                KEY_DEFENDANTS to defendants,
-                KEY_COURT_NAME to courtName,
-                KEY_COURT_DISTRICT to courtDistrict
-            )
-            apiService.addCaseInfoSheet(caseSpreadsheetId, caseInfo)
-
-            val scriptTemplate = getApplication<Application>().resources.openRawResource(R.raw.apps_script_template)
-                .bufferedReader().use { it.readText() }
-            if (!apiService.attachScript(caseSpreadsheetId, scriptTemplate)) {
-                Log.e(TAG, "Failed to attach script to case '$caseName'. Aborting case creation.")
-                return@launch
+            val scriptTemplate = getApplication<Application>().resources.openRawResource(R.raw.apps_script_template).use {
+                InputStreamReader(it).readText()
             }
+            val scriptContent = scriptTemplate
+                .replace("{{EXHIBIT_SHEET_NAME}}", exhibitSheetName)
+                .replace("{{CASE_NUMBER}}", caseNumber)
+                .replace("{{CASE_SECTION}}", caseSection)
+                .replace("{{CASE_JUDGE}}", caseJudge)
 
-            val newCase = Case(name = caseName, spreadsheetId = caseSpreadsheetId)
+            apiService.attachScript(caseSpreadsheetId, scriptContent, newTemplateId)
+
+            val newCase = Case(name = caseName, spreadsheetId = caseSpreadsheetId, masterTemplateId = newTemplateId)
             if (apiService.addCaseToRegistry(caseRegistrySpreadsheetId, newCase)) {
                 Log.d(TAG, "createCase: Case '$caseName' added to registry.")
                 loadCasesFromRegistry()
@@ -291,12 +252,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             viewModelScope.launch {
                 loadFiltersFromSheet(case.spreadsheetId)
                 loadAllegationsForSelectedCase(case.spreadsheetId, case.id)
-                loadFinancialEntriesForSelectedCase(case.spreadsheetId)
+                loadEvidenceForSelectedCase(case.spreadsheetId, case.id)
             }
         } else {
             _filters.value = emptyList()
             _allegations.value = emptyList()
-            _financialEntries.value = emptyList()
+            _evidence.value = emptyList()
         }
     }
 
@@ -340,23 +301,25 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun addFinancialEntry(entry: FinancialEntry) {
+    fun addEvidence(entry: Evidence) {
         val currentCase = _selectedCase.value
         val apiService = _googleApiService.value
         if (currentCase == null || currentCase.spreadsheetId.isBlank() || apiService == null) {
-            Log.w(TAG, "addFinancialEntry: Missing data for adding financial entry.")
+            Log.w(TAG, "addEvidence: Missing data for adding evidence.")
             return
         }
+        // Ensure the entry is associated with the selected case ID
+        val entryWithCaseId = entry.copy(caseId = currentCase.id)
         viewModelScope.launch {
             try {
-                if (apiService.addFinancialEntryToCase(currentCase.spreadsheetId, entry)) {
-                    Log.d(TAG, "addFinancialEntry: Entry added for case ID ${currentCase.id}.")
-                    loadFinancialEntriesForSelectedCase(currentCase.spreadsheetId)
+                if (apiService.addEvidenceToCase(currentCase.spreadsheetId, entryWithCaseId)) {
+                    Log.d(TAG, "addEvidence: Evidence added for case ID ${currentCase.id}.")
+                    loadEvidenceForSelectedCase(currentCase.spreadsheetId, currentCase.id)
                 } else {
-                    Log.w(TAG, "addFinancialEntry: Failed to add entry for case ID ${currentCase.id}.")
+                    Log.w(TAG, "addEvidence: Failed to add evidence for case ID ${currentCase.id}.")
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "addFinancialEntry: Error adding entry for case ID ${currentCase.id}", e)
+                Log.e(TAG, "addEvidence: Error adding evidence for case ID ${currentCase.id}", e)
             }
         }
     }
@@ -384,7 +347,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 val timestamp = System.currentTimeMillis()
                 val file = java.io.File(context.cacheDir, "evidence-$timestamp.txt")
                 file.writeText(text)
-                apiService.uploadFile(file, rawEvidenceFolderId, "text/plain")
+                val uploadedFile = apiService.uploadFile(file, rawEvidenceFolderId, "text/plain")
+                if (uploadedFile != null) {
+                    val newEvidence = Evidence(
+                        caseId = currentCase.id,
+                        content = text,
+                        timestamp = System.currentTimeMillis(),
+                        sourceDocument = uploadedFile.name,
+                        documentDate = System.currentTimeMillis()
+                    )
+                    addEvidence(newEvidence)
+                }
             } else {
                 Log.w(TAG, "addTextEvidence: Selected case or API service is null, skipping file upload.")
             }
@@ -395,6 +368,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         Log.d(TAG, "processImage called")
         val currentCase = _selectedCase.value
         val apiService = _googleApiService.value
+        var uploadedFile: com.google.api.services.drive.model.File? = null
 
         if (currentCase != null && apiService != null) {
             val rawEvidenceFolderId = apiService.getOrCreateEvidenceFolder(currentCase.name) ?: return
@@ -403,7 +377,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             file.outputStream().use {
                 bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 100, it)
             }
-            apiService.uploadFile(file, rawEvidenceFolderId, "image/jpeg")
+            uploadedFile = apiService.uploadFile(file, rawEvidenceFolderId, "image/jpeg")
         } else {
             Log.w(TAG, "processImage: Selected case or API service is null, skipping file upload.")
         }
@@ -414,9 +388,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             .addOnSuccessListener { visionText ->
                 Log.d(TAG, "processImage: Text recognition successful")
                 _extractedText.value = visionText.text
-                val taggedDataMap = DataParser.tagData(visionText.text)
-                Log.d(TAG, "processImage: taggedData: $taggedDataMap")
-                storeTaggedData(taggedDataMap)
+                if (currentCase != null) {
+                    val newEvidence = Evidence(
+                        caseId = currentCase.id,
+                        content = visionText.text,
+                        timestamp = System.currentTimeMillis(),
+                        sourceDocument = uploadedFile?.name ?: "Unknown image source",
+                        documentDate = System.currentTimeMillis()
+                    )
+                    addEvidence(newEvidence)
+                }
             }
             .addOnFailureListener { e ->
                 Log.e(TAG, "processImage: Text recognition failed", e)
@@ -477,199 +458,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun addEvidence(uri: Uri, context: Context) {
-        viewModelScope.launch {
-            val mimeType = context.contentResolver.getType(uri)
-            val evidence = when (mimeType) {
-                "text/plain" -> parseTextFile(uri, context)
-                "application/pdf" -> parsePdfFile(uri, context)
-                "image/jpeg", "image/png" -> parseImageFile(uri, context)
-                "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" -> parseSpreadsheetFile(uri, context)
-                "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document" -> parseDocFile(uri, context)
-                else -> {
-                    Log.w("MainViewModel", "Unsupported file type: $mimeType")
-                    null
-                }
-            }
-            evidence?.let {
-                _evidenceList.value = _evidenceList.value + it
-            }
-        }
-    }
-
-    private suspend fun parseTextFile(uri: Uri, context: Context): Evidence? {
-        return try {
-            context.contentResolver.openInputStream(uri)?.bufferedReader()?.use {
-                val text = it.readText()
-                Evidence(content = text, timestamp = java.util.Date().time, sourceDocument = uri.toString(), documentDate = java.util.Date().time)
-            }
-        } catch (e: Exception) {
-            Log.e("MainViewModel", "Failed to parse text file", e)
-            null
-        }
-    }
-
-    private suspend fun parsePdfFile(uri: Uri, context: Context): Evidence? {
-        return try {
-            context.contentResolver.openInputStream(uri)?.let { inputStream ->
-                val pdfReader = com.itextpdf.kernel.pdf.PdfReader(inputStream)
-                val pdfDocument = com.itextpdf.kernel.pdf.PdfDocument(pdfReader)
-                val text = buildString {
-                    for (i in 1..pdfDocument.numberOfPages) {
-                        val page = pdfDocument.getPage(i)
-                        append(com.itextpdf.kernel.pdf.canvas.parser.PdfTextExtractor.getTextFromPage(page))
-                    }
-                }
-                pdfDocument.close()
-                Evidence(content = text, timestamp = java.util.Date().time, sourceDocument = uri.toString(), documentDate = java.util.Date().time)
-            }
-        } catch (e: Exception) {
-            Log.e("MainViewModel", "Failed to parse PDF file", e)
-            null
-        }
-    }
-
-    private suspend fun parseImageFile(uri: Uri, context: Context): Evidence? {
-        return try {
-            val inputImage = com.google.mlkit.vision.common.InputImage.fromFilePath(context, uri)
-            val recognizer = com.google.mlkit.vision.text.TextRecognition.getClient(com.google.mlkit.vision.text.latin.TextRecognizerOptions.DEFAULT_OPTIONS)
-            kotlinx.coroutines.suspendCancellableCoroutine { continuation ->
-                recognizer.process(inputImage)
-                    .addOnSuccessListener { visionText ->
-                        continuation.resume(Evidence(content = visionText.text, timestamp = java.util.Date().time, sourceDocument = uri.toString(), documentDate = java.util.Date().time), null)
-                    }
-                    .addOnFailureListener { e ->
-                        Log.e("MainViewModel", "Failed to parse image file", e)
-                        continuation.resume(null, null)
-                    }
-            }
-        } catch (e: Exception) {
-            Log.e("MainViewModel", "Failed to parse image file", e)
-            null
-        }
-    }
-
-    private suspend fun parseSpreadsheetFile(uri: Uri, context: Context): Evidence? {
-        return try {
-            context.contentResolver.openInputStream(uri)?.let { inputStream ->
-                val workbook = org.apache.poi.ss.usermodel.WorkbookFactory.create(inputStream)
-                val text = buildString {
-                    for (i in 0 until workbook.numberOfSheets) {
-                        val sheet = workbook.getSheetAt(i)
-                        for (row in sheet) {
-                            for (cell in row) {
-                                append(cell.toString())
-                                append("\t")
-                            }
-                            appendLine()
-                        }
-                    }
-                }
-                workbook.close()
-                Evidence(content = text, timestamp = java.util.Date().time, sourceDocument = uri.toString(), documentDate = java.util.Date().time)
-            }
-        } catch (e: Exception) {
-            Log.e("MainViewModel", "Failed to parse spreadsheet file", e)
-            null
-        }
-    }
-
-    private suspend fun parseDocFile(uri: Uri, context: Context): Evidence? {
-        return try {
-            context.contentResolver.openInputStream(uri)?.let { inputStream ->
-                val text = if (context.contentResolver.getType(uri) == "application/msword") {
-                    val doc = org.apache.poi.hwpf.HWPFDocument(inputStream)
-                    val extractor = org.apache.poi.hwpf.extractor.WordExtractor(doc)
-                    extractor.text
-                } else {
-                    val docx = org.apache.poi.xwpf.usermodel.XWPFDocument(inputStream)
-                    val extractor = org.apache.poi.xwpf.extractor.XWPFWordExtractor(docx)
-                    extractor.text
-                }
-                Evidence(content = text, timestamp = java.util.Date().time, sourceDocument = uri.toString(), documentDate = java.util.Date().time)
-            }
-        } catch (e: Exception) {
-            Log.e("MainViewModel", "Failed to parse document file", e)
-            null
-        }
-    }
-
-    fun importSmsMessages(context: Context) {
-        viewModelScope.launch {
-            val smsList = mutableListOf<Evidence>()
-            val cursor = context.contentResolver.query(
-                android.provider.Telephony.Sms.CONTENT_URI,
-                null,
-                null,
-                null,
-                null
-            )
-            cursor?.use {
-                if (it.moveToFirst()) {
-                    val bodyIndex = it.getColumnIndex(android.provider.Telephony.Sms.BODY)
-                    do {
-                        val body = it.getString(bodyIndex)
-                        smsList.add(Evidence(content = body, timestamp = java.util.Date().time, sourceDocument = "SMS", documentDate = java.util.Date().time))
-                    } while (it.moveToNext())
-                }
-            }
-            _evidenceList.value = _evidenceList.value + smsList
-        }
-    }
-
-    /*
-    fun onSignInResult(account: com.google.android.gms.auth.api.signin.GoogleSignInAccount, context: Context) {
-        viewModelScope.launch {
-            val credential = com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
-                .usingOAuth2(context, setOf("https://www.googleapis.com/auth/spreadsheets"))
-            credential.selectedAccount = account.account
-            _googleApiService.value = GoogleApiService(credential, getApplication<Application>().applicationInfo.name)
-        }
-    }
-
-    fun exportToSheet() {
-        viewModelScope.launch {
-            _googleApiService.value?.let {
-                val spreadsheetId = it.createSpreadsheet("Lexorcist Export")
-                spreadsheetId?.let { id ->
-                    val data = _evidenceList.value.map { evidence ->
-                        listOf(evidence.content)
-                    }
-                    it.appendData(id, "Sheet1", data)
-                }
-            }
-        }
-    }
-
-    private val scriptRunner = com.hereliesaz.lexorcist.service.ScriptRunner()
-    private var script: String = ""
-
-    fun setScript(script: String) {
-        this.script = script
-    }
-
-    fun processEvidenceForReview() {
-        viewModelScope.launch {
-            val taggedList = _evidenceList.value.map { evidence ->
-                val parser = scriptRunner.runScript(script, evidence)
-                com.hereliesaz.lexorcist.model.TaggedEvidence(id = evidence.id.toString(), tags = parser.getTags(), content = evidence.content)
-            }
-            com.hereliesaz.lexorcist.data.EvidenceRepository.setTaggedEvidence(taggedList)
-        }
-    }
-    */
-
     companion object {
         private const val FILTERS_SHEET_NAME = "Filters"
         private const val RAW_EVIDENCE_FOLDER_NAME = "Raw Evidence"
+        private const val MASTER_TEMPLATE_ID = "1Ux9i8GSJ3qJjYqO5ngXMIgCE94LCDkBwfCv0ReJA5eg"
         // ALLEGATIONS_SHEET_NAME is in GoogleApiService.kt
         // FINANCIAL_ENTRIES_SHEET_NAME is in GoogleApiService.kt
-        private const val KEY_CASE_NUMBER = "Case Number"
-        private const val KEY_SECTION = "Section"
-        private const val KEY_JUDGE = "Judge"
-        private const val KEY_PLAINTIFFS = "Plaintiffs"
-        private const val KEY_DEFENDANTS = "Defendants"
-        private const val KEY_COURT_NAME = "Court Name"
-        private const val KEY_COURT_DISTRICT = "Court District"
     }
 }
