@@ -60,7 +60,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private var imageUri: Uri = null
+    private var imageUri: Uri? = null
 
     private val takePictureLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
         if (success) {

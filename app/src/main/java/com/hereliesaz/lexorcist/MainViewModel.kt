@@ -208,12 +208,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val apiService = _googleApiService.value ?: return@launch
             val rootFolderId = apiService.getOrCreateAppRootFolder() ?: return@launch
             val caseRegistrySpreadsheetId = apiService.getOrCreateCaseRegistrySpreadsheetId(rootFolderId) ?: return@launch
-            
+
             val masterTemplateId = apiService.createMasterTemplate(rootFolderId) ?: return@launch
-            val caseFolderId = apiService.getOrCreateFolder(caseName, rootFolderId) ?: return@launch
+            val caseFolderId = apiService.getOrCreateCaseFolder(caseName) ?: return@launch
+            apiService.getOrCreateEvidenceFolder(caseName) // Create evidence folder when case is created
             val caseSpreadsheetId = apiService.createSpreadsheet(caseName, caseFolderId) ?: return@launch
             apiService.attachScript(caseSpreadsheetId, masterTemplateId, caseFolderId)
-            
+
             val newCase = Case(name = caseName, spreadsheetId = caseSpreadsheetId, masterTemplateId = masterTemplateId)
             if (apiService.addCaseToRegistry(caseRegistrySpreadsheetId, newCase)) {
                 Log.d(TAG, "createCase: Case '$caseName' added to registry.")
@@ -315,15 +316,30 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun addTextEvidence(text: String, context: Context) {
+        viewModelScope.launch {
+            val currentCase = _selectedCase.value
+            val apiService = _googleApiService.value
+
+            if (currentCase != null && apiService != null) {
+                val rawEvidenceFolderId = apiService.getOrCreateEvidenceFolder(currentCase.name) ?: return@launch
+                val timestamp = System.currentTimeMillis()
+                val file = java.io.File(context.cacheDir, "evidence-$timestamp.txt")
+                file.writeText(text)
+                apiService.uploadFile(file, rawEvidenceFolderId, "text/plain")
+            } else {
+                Log.w(TAG, "addTextEvidence: Selected case or API service is null, skipping file upload.")
+            }
+        }
+    }
+
     private suspend fun processImage(bitmap: android.graphics.Bitmap, context: Context) {
         Log.d(TAG, "processImage called")
         val currentCase = _selectedCase.value
         val apiService = _googleApiService.value
 
         if (currentCase != null && apiService != null) {
-            val rootFolderId = apiService.getOrCreateAppRootFolder() ?: return
-            val caseFolderId = apiService.getOrCreateFolder(currentCase.name, rootFolderId) ?: return
-            val rawEvidenceFolderId = apiService.getOrCreateFolder(RAW_EVIDENCE_FOLDER_NAME, caseFolderId) ?: return
+            val rawEvidenceFolderId = apiService.getOrCreateEvidenceFolder(currentCase.name) ?: return
             val timestamp = System.currentTimeMillis()
             val file = java.io.File(context.cacheDir, "evidence-$timestamp.jpg")
             file.outputStream().use {
