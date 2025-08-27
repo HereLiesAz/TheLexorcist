@@ -234,19 +234,44 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _financialEntries.value = emptyList()
     }
 
-    fun createCase(caseName: String) {
+    fun createCase(
+        caseName: String,
+        caseNumber: String,
+        caseSection: String,
+        judge: String,
+        plaintiffs: String,
+        defendants: String,
+        courtName: String,
+        courtDistrict: String
+    ) {
         viewModelScope.launch {
             val apiService = _googleApiService.value ?: return@launch
             val rootFolderId = apiService.getOrCreateAppRootFolder() ?: return@launch
             val caseRegistrySpreadsheetId = apiService.getOrCreateCaseRegistrySpreadsheetId(rootFolderId) ?: return@launch
 
-            val masterTemplateId = apiService.createMasterTemplate(rootFolderId) ?: return@launch
             val caseFolderId = apiService.getOrCreateCaseFolder(caseName) ?: return@launch
             apiService.getOrCreateEvidenceFolder(caseName) // Create evidence folder when case is created
             val caseSpreadsheetId = apiService.createSpreadsheet(caseName, caseFolderId) ?: return@launch
-            apiService.attachScript(caseSpreadsheetId, masterTemplateId, caseFolderId)
 
-            val newCase = Case(name = caseName, spreadsheetId = caseSpreadsheetId, masterTemplateId = masterTemplateId)
+            val caseInfo = mapOf(
+                KEY_CASE_NUMBER to caseNumber,
+                KEY_SECTION to caseSection,
+                KEY_JUDGE to judge,
+                KEY_PLAINTIFFS to plaintiffs,
+                KEY_DEFENDANTS to defendants,
+                KEY_COURT_NAME to courtName,
+                KEY_COURT_DISTRICT to courtDistrict
+            )
+            apiService.addCaseInfoSheet(caseSpreadsheetId, caseInfo)
+
+            val scriptTemplate = getApplication<Application>().resources.openRawResource(R.raw.apps_script_template)
+                .bufferedReader().use { it.readText() }
+            if (!apiService.attachScript(caseSpreadsheetId, scriptTemplate)) {
+                Log.e(TAG, "Failed to attach script to case '$caseName'. Aborting case creation.")
+                return@launch
+            }
+
+            val newCase = Case(name = caseName, spreadsheetId = caseSpreadsheetId)
             if (apiService.addCaseToRegistry(caseRegistrySpreadsheetId, newCase)) {
                 Log.d(TAG, "createCase: Case '$caseName' added to registry.")
                 loadCasesFromRegistry()
@@ -455,5 +480,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         private const val RAW_EVIDENCE_FOLDER_NAME = "Raw Evidence"
         // ALLEGATIONS_SHEET_NAME is in GoogleApiService.kt
         // FINANCIAL_ENTRIES_SHEET_NAME is in GoogleApiService.kt
+        private const val KEY_CASE_NUMBER = "Case Number"
+        private const val KEY_SECTION = "Section"
+        private const val KEY_JUDGE = "Judge"
+        private const val KEY_PLAINTIFFS = "Plaintiffs"
+        private const val KEY_DEFENDANTS = "Defendants"
+        private const val KEY_COURT_NAME = "Court Name"
+        private const val KEY_COURT_DISTRICT = "Court District"
     }
 }
