@@ -92,15 +92,15 @@ class GoogleApiService(
                 registrySpreadsheetId = createSpreadsheet(CASE_REGISTRY_SPREADSHEET_NAME, appRootFolderId)
                 if (registrySpreadsheetId == null) return@withContext null
                 addSheet(registrySpreadsheetId, CASE_REGISTRY_SHEET_NAME)
-                val header = listOf(listOf("Case Name", "Spreadsheet ID", "Master Template ID"))
+                val header = listOf(listOf("Case Name", "Spreadsheet ID"))
                 appendData(registrySpreadsheetId, CASE_REGISTRY_SHEET_NAME, header)
             }
             if (registrySpreadsheetId != null) {
                 addSheet(registrySpreadsheetId, CASE_REGISTRY_SHEET_NAME) // Ensure sheet exists
-                val range = "$CASE_REGISTRY_SHEET_NAME!A1:C1"
+                val range = "$CASE_REGISTRY_SHEET_NAME!A1:B1"
                 val currentHeader = sheetsService.spreadsheets().values().get(registrySpreadsheetId, range).execute()
                 if (currentHeader.getValues() == null || currentHeader.getValues().isEmpty()) {
-                    val header = listOf(listOf("Case Name", "Spreadsheet ID", "Master Template ID"))
+                    val header = listOf(listOf("Case Name", "Spreadsheet ID"))
                     appendData(registrySpreadsheetId, CASE_REGISTRY_SHEET_NAME, header)
                 }
             }
@@ -117,12 +117,11 @@ class GoogleApiService(
             val allSheetData = readSpreadsheet(registrySpreadsheetId)
             val caseSheetValues = allSheetData?.get(CASE_REGISTRY_SHEET_NAME)
             caseSheetValues?.drop(1)?.forEach { row ->
-                if (row.size >= 3) {
+                if (row.size >= 2) {
                     val name = row.getOrNull(0)?.toString() ?: ""
                     val spreadsheetId = row.getOrNull(1)?.toString() ?: ""
-                    val masterTemplateId = row.getOrNull(2)?.toString() ?: ""
                     if (name.isNotBlank() && spreadsheetId.isNotBlank()) {
-                        cases.add(Case(name = name, spreadsheetId = spreadsheetId, masterTemplateId = masterTemplateId))
+                        cases.add(Case(name = name, spreadsheetId = spreadsheetId))
                     }
                 }
             }
@@ -132,7 +131,7 @@ class GoogleApiService(
 
     suspend fun addCaseToRegistry(registrySpreadsheetId: String, caseData: Case): Boolean = withContext(Dispatchers.IO) {
         try {
-            val values = listOf(listOf(caseData.name, caseData.spreadsheetId, caseData.masterTemplateId))
+            val values = listOf(listOf(caseData.name, caseData.spreadsheetId))
             appendData(registrySpreadsheetId, CASE_REGISTRY_SHEET_NAME, values) != null
         } catch (e: Exception) {
             e.printStackTrace()
@@ -207,6 +206,7 @@ class GoogleApiService(
             // Ensure sheet exists and add header if it's new
             val sheetExists = sheetsService.spreadsheets().get(caseSpreadsheetId).execute().sheets?.any { it.properties?.title == EVIDENCE_SHEET_NAME } == true
             if (!sheetExists) {
+
                 addSheet(caseSpreadsheetId, EVIDENCE_SHEET_NAME)
                 val header = listOf(listOf("Content", "Timestamp", "Source Document", "Document Date", "Tags", "Allegation ID"))
                 appendData(caseSpreadsheetId, EVIDENCE_SHEET_NAME, header)
@@ -227,18 +227,22 @@ class GoogleApiService(
         }
     }
 
-    suspend fun createMasterTemplate(parentId: String? = null): String? = withContext(Dispatchers.IO) {
+    suspend fun addCaseInfoSheet(spreadsheetId: String, caseInfo: Map<String, String>): Boolean = withContext(Dispatchers.IO) {
         try {
-            val fileMetadata = DriveFile().setName("Lexorcist Master Template").setMimeType("application/vnd.google-apps.document")
-            if (parentId != null) fileMetadata.parents = listOf(parentId)
-            val content = ByteArrayContent.fromString("text/plain", "Placeholder for master template content.")
-            driveService.files().create(fileMetadata, content).setFields("id").execute()?.id
+            val sheetTitle = "Case Info"
+            addSheet(spreadsheetId, sheetTitle)
+
+            val values = caseInfo.map { (key, value) ->
+                listOf(key, value)
+            }
+
+            appendData(spreadsheetId, sheetTitle, values) != null
         } catch (e: Exception) {
             e.printStackTrace()
-            null
+            false
         }
     }
-    
+
     suspend fun readSpreadsheet(spreadsheetId: String): Map<String, List<List<Any>>>? = withContext(Dispatchers.IO) {
         try {
             val spreadsheet = sheetsService.spreadsheets().get(spreadsheetId).setIncludeGridData(false).execute()
@@ -267,7 +271,7 @@ class GoogleApiService(
             null
         }
     }
-    
+
     suspend fun addSheet(spreadsheetId: String, sheetTitle: String): BatchUpdateSpreadsheetResponse? = withContext(Dispatchers.IO) {
         try {
             val spreadsheet = sheetsService.spreadsheets().get(spreadsheetId).execute()
@@ -277,7 +281,7 @@ class GoogleApiService(
             sheetsService.spreadsheets().batchUpdate(spreadsheetId, batchUpdateRequest).execute()
         } catch (e: Exception) {
             e.printStackTrace()
-            null 
+            null
         }
     }
 
@@ -285,7 +289,7 @@ class GoogleApiService(
         try {
             val body = ValueRange().setValues(values)
             sheetsService.spreadsheets().values().append(spreadsheetId, "$sheetTitle!A1", body)
-                .setValueInputOption("USER_ENTERED") 
+                .setValueInputOption("USER_ENTERED")
                 .setInsertDataOption("INSERT_ROWS")
                 .execute()
         } catch (e: Exception) {
@@ -299,6 +303,7 @@ class GoogleApiService(
             val createProjectRequest = CreateProjectRequest().setTitle("Case Tools Script").setParentId(spreadsheetId)
             val createdProject = scriptService.projects().create(createProjectRequest).execute()
             val scriptId = createdProject.scriptId ?: return@withContext
+
 
             val scriptFile = ScriptPlatformFile().setSource(scriptContent).setName("Code")
             val configFile = ScriptPlatformFile().setSource("{\"masterTemplateId\": \"$masterTemplateId\"}").setName("config.json")

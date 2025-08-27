@@ -236,7 +236,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _evidence.value = emptyList()
     }
 
-    fun createCase(caseName: String, exhibitSheetName: String, caseNumber: String, caseSection: String, caseJudge: String) {
+    fun createCase(
+        caseName: String,
+        caseNumber: String,
+        caseSection: String,
+        judge: String,
+        plaintiffs: String,
+        defendants: String,
+        courtName: String,
+        courtDistrict: String
+    ) {
         viewModelScope.launch {
             val apiService = _googleApiService.value ?: return@launch
             val rootFolderId = apiService.getOrCreateAppRootFolder() ?: return@launch
@@ -256,18 +265,25 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
             val caseSpreadsheetId = apiService.createSpreadsheet(caseName, caseFolderId) ?: return@launch
 
-            val scriptTemplate = getApplication<Application>().resources.openRawResource(R.raw.apps_script_template).use {
-                InputStreamReader(it).readText()
+            val caseInfo = mapOf(
+                "Case Number" to caseNumber,
+                "Section" to caseSection,
+                "Judge" to judge,
+                "Plaintiffs" to plaintiffs,
+                "Defendants" to defendants,
+                "Court Name" to courtName,
+                "Court District" to courtDistrict
+            )
+            apiService.addCaseInfoSheet(caseSpreadsheetId, caseInfo)
+
+            val scriptTemplate = withContext(kotlinx.coroutines.Dispatchers.IO) {
+                getApplication<Application>().resources.openRawResource(R.raw.apps_script_template)
+                    .bufferedReader().use { it.readText() }
             }
-            val scriptContent = scriptTemplate
-                .replace("{{EXHIBIT_SHEET_NAME}}", exhibitSheetName)
-                .replace("{{CASE_NUMBER}}", caseNumber)
-                .replace("{{CASE_SECTION}}", caseSection)
-                .replace("{{CASE_JUDGE}}", caseJudge)
+            apiService.attachScript(caseSpreadsheetId, scriptTemplate)
 
-            apiService.attachScript(caseSpreadsheetId, scriptContent, newTemplateId)
+            val newCase = Case(name = caseName, spreadsheetId = caseSpreadsheetId)
 
-            val newCase = Case(name = caseName, spreadsheetId = caseSpreadsheetId, masterTemplateId = newTemplateId)
             if (apiService.addCaseToRegistry(caseRegistrySpreadsheetId, newCase)) {
                 Log.d(TAG, "createCase: Case '$caseName' added to registry.")
                 loadCasesFromRegistry()
