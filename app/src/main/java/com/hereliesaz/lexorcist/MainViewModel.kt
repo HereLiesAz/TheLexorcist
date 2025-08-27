@@ -5,62 +5,154 @@ import android.content.Context
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.hereliesaz.lexorcist.db.AppDatabase
+// import com.hereliesaz.lexorcist.db.AppDatabase // Removed unused import
+import com.hereliesaz.lexorcist.db.Allegation
 import com.hereliesaz.lexorcist.db.Case
-// import com.hereliesaz.lexorcist.db.Filter
+import com.hereliesaz.lexorcist.db.FinancialEntry
+import com.hereliesaz.lexorcist.model.SheetFilter
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val db = AppDatabase.getDatabase(application)
-    private val caseDao = db.caseDao()
-    private val allegationDao = db.allegationDao()
-    private val financialEntryDao = db.financialEntryDao()
+    // private val financialEntryDao = db.financialEntryDao() // Removed financialEntryDao
 
     private val TAG = "MainViewModel"
+
     private val sharedPref = application.getSharedPreferences("CaseInfoPrefs", Context.MODE_PRIVATE)
 
     private val _googleApiService = MutableStateFlow<GoogleApiService?>(null)
-    val googleApiService: StateFlow<GoogleApiService?> = _googleApiService
+    val googleApiService: StateFlow<GoogleApiService?> = _googleApiService.asStateFlow()
 
     private val _isSignedIn = MutableStateFlow(false)
-    val isSignedIn: StateFlow<Boolean> = _isSignedIn
+    val isSignedIn: StateFlow<Boolean> = _isSignedIn.asStateFlow()
 
     private val _plaintiffs = MutableStateFlow("")
-    val plaintiffs: StateFlow<String> = _plaintiffs
+    val plaintiffs: StateFlow<String> = _plaintiffs.asStateFlow()
 
     private val _defendants = MutableStateFlow("")
-    val defendants: StateFlow<String> = _defendants
+    val defendants: StateFlow<String> = _defendants.asStateFlow()
 
     private val _court = MutableStateFlow("")
-    val court: StateFlow<String> = _court
+    val court: StateFlow<String> = _court.asStateFlow()
+
+    private val _cases = MutableStateFlow<List<Case>>(emptyList())
+    val cases: StateFlow<List<Case>> = _cases.asStateFlow()
+
+    private val _selectedCase = MutableStateFlow<Case?>(null)
+    val selectedCase: StateFlow<Case?> = _selectedCase.asStateFlow()
+
+    private val _financialEntries = MutableStateFlow<List<FinancialEntry>>(emptyList())
+    val financialEntries: StateFlow<List<FinancialEntry>> = _financialEntries.asStateFlow()
+
+    private val _filters = MutableStateFlow<List<SheetFilter>>(emptyList())
+    val filters: StateFlow<List<SheetFilter>> = _filters.asStateFlow()
+
+    private val _allegations = MutableStateFlow<List<Allegation>>(emptyList())
+    val allegations: StateFlow<List<Allegation>> = _allegations.asStateFlow()
 
     init {
         loadCaseInfo()
         viewModelScope.launch {
-            caseDao.getAllCases().collect {
-                _cases.value = it
+            _googleApiService.collect { apiService ->
+                if (apiService != null && _isSignedIn.value) {
+                    loadCasesFromRegistry()
+                    _selectedCase.value?.let { currentCase ->
+                        if (currentCase.spreadsheetId.isNotBlank()) {
+                            loadFiltersFromSheet(currentCase.spreadsheetId)
+                            loadAllegationsForSelectedCase(currentCase.spreadsheetId, currentCase.id)
+                            loadFinancialEntriesForSelectedCase(currentCase.spreadsheetId, currentCase.id)
+                        }
+                    }
+                } else {
+                    // Clear data if API service is null or not signed in
+                    _cases.value = emptyList()
+                    _filters.value = emptyList()
+                    _allegations.value = emptyList()
+                    _financialEntries.value = emptyList()
+                }
             }
         }
     }
 
-    fun onPlaintiffsChanged(name: String) {
-        _plaintiffs.value = name
-        saveCaseInfo()
+    private suspend fun loadCasesFromRegistry() {
+        val apiService = _googleApiService.value
+        if (apiService == null) {
+            Log.w(TAG, "loadCasesFromRegistry: GoogleApiService is null.")
+            _cases.value = emptyList(); return
+        }
+        try {
+            val appRootFolderId = apiService.getOrCreateAppRootFolder()
+            if (appRootFolderId == null) {
+                Log.e(TAG, "loadCasesFromRegistry: Failed to get app root folder ID.")
+                _cases.value = emptyList(); return
+            }
+            val registryId = apiService.getOrCreateCaseRegistrySpreadsheetId(appRootFolderId)
+            if (registryId == null) {
+                Log.e(TAG, "loadCasesFromRegistry: Failed to get case registry spreadsheet ID.")
+                _cases.value = emptyList(); return
+            }
+            _cases.value = apiService.getAllCasesFromRegistry(registryId)
+            Log.d(TAG, "loadCasesFromRegistry: Loaded ${_cases.value.size} cases.")
+        } catch (e: Exception) {
+            Log.e(TAG, "loadCasesFromRegistry: Error loading cases", e)
+            _cases.value = emptyList()
+        }
     }
 
-    fun onDefendantsChanged(name: String) {
-        _defendants.value = name
-        saveCaseInfo()
+    private suspend fun loadFiltersFromSheet(spreadsheetId: String) {
+        val apiService = _googleApiService.value
+        if (apiService == null || spreadsheetId.isBlank()) {
+            _filters.value = emptyList(); return
+        }
+        try {
+            val allSheetData = apiService.readSpreadsheet(spreadsheetId)
+            val filterSheetData = allSheetData?.get(FILTERS_SHEET_NAME)
+            _filters.value = filterSheetData?.mapNotNull {
+                if (it.size >= 2) SheetFilter(it.getOrNull(0)?.toString() ?: "", it.getOrNull(1)?.toString() ?: "") else null
+            } ?: emptyList()
+            Log.d(TAG, "loadFiltersFromSheet: Loaded ${_filters.value.size} filters.")
+        } catch (e: Exception) {
+            Log.e(TAG, "loadFiltersFromSheet: Error loading filters for $spreadsheetId", e)
+            _filters.value = emptyList()
+        }
     }
 
-    fun onCourtChanged(name: String) {
-        _court.value = name
-        saveCaseInfo()
+    private suspend fun loadAllegationsForSelectedCase(spreadsheetId: String, caseIdForAssociation: Int) {
+        val apiService = _googleApiService.value
+        if (apiService == null || spreadsheetId.isBlank()) {
+            _allegations.value = emptyList(); return
+        }
+        try {
+            _allegations.value = apiService.getAllegationsForCase(spreadsheetId, caseIdForAssociation)
+            Log.d(TAG, "loadAllegationsForSelectedCase: Loaded ${_allegations.value.size} allegations for case ID $caseIdForAssociation.")
+        } catch (e: Exception) {
+            Log.e(TAG, "loadAllegationsForSelectedCase: Error loading allegations for $spreadsheetId", e)
+            _allegations.value = emptyList()
+        }
     }
+
+    private suspend fun loadFinancialEntriesForSelectedCase(spreadsheetId: String, caseIdForAssociation: Int) {
+        val apiService = _googleApiService.value
+        if (apiService == null || spreadsheetId.isBlank()) {
+            _financialEntries.value = emptyList(); return
+        }
+        try {
+            _financialEntries.value = apiService.getFinancialEntriesForCase(spreadsheetId, caseIdForAssociation)
+            Log.d(TAG, "loadFinancialEntriesForSelectedCase: Loaded ${_financialEntries.value.size} financial entries for case ID $caseIdForAssociation.")
+        } catch (e: Exception) {
+            Log.e(TAG, "loadFinancialEntriesForSelectedCase: Error loading financial entries for $spreadsheetId", e)
+            _financialEntries.value = emptyList()
+        }
+    }
+
+    fun onPlaintiffsChanged(name: String) { _plaintiffs.value = name; saveCaseInfo() }
+    fun onDefendantsChanged(name: String) { _defendants.value = name; saveCaseInfo() }
+    fun onCourtChanged(name: String) { _court.value = name; saveCaseInfo() }
 
     private fun saveCaseInfo() {
         with(sharedPref.edit()) {
@@ -77,50 +169,137 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _court.value = sharedPref.getString("court", "") ?: ""
     }
 
-
     fun onSignInSuccess(apiService: GoogleApiService) {
         _googleApiService.value = apiService
         _isSignedIn.value = true
+        viewModelScope.launch {
+            loadCasesFromRegistry()
+            _selectedCase.value?.let { currentCase ->
+                if (currentCase.spreadsheetId.isNotBlank()) {
+                    loadFiltersFromSheet(currentCase.spreadsheetId)
+                    loadAllegationsForSelectedCase(currentCase.spreadsheetId, currentCase.id)
+                    loadFinancialEntriesForSelectedCase(currentCase.spreadsheetId, currentCase.id)
+                }
+            }
+        }
     }
 
     fun onSignInFailed() {
         _googleApiService.value = null
         _isSignedIn.value = false
+        _cases.value = emptyList()
+        _filters.value = emptyList()
+        _allegations.value = emptyList()
+        _financialEntries.value = emptyList()
     }
 
     fun onSignOut() {
         _googleApiService.value = null
         _isSignedIn.value = false
-    }
-
-    suspend fun createMasterTemplate(parentId: String): String? {
-        return _googleApiService.value?.createMasterTemplate(parentId)
-    }
-
-    suspend fun createSpreadsheet(title: String, parentId: String): String? {
-        return _googleApiService.value?.createSpreadsheet(title, parentId)
-    }
-
-    suspend fun attachScript(spreadsheetId: String, masterTemplateId: String, caseFolderId: String) {
-        _googleApiService.value?.attachScript(spreadsheetId, masterTemplateId, caseFolderId)
+        _cases.value = emptyList()
+        _selectedCase.value = null
+        _filters.value = emptyList()
+        _allegations.value = emptyList()
+        _financialEntries.value = emptyList()
     }
 
     fun createCase(caseName: String) {
         viewModelScope.launch {
-            val apiService = googleApiService.value ?: return@launch
+            val apiService = _googleApiService.value ?: return@launch
             val rootFolderId = apiService.getOrCreateAppRootFolder() ?: return@launch
+            val caseRegistrySpreadsheetId = apiService.getOrCreateCaseRegistrySpreadsheetId(rootFolderId) ?: return@launch
+            
             val masterTemplateId = apiService.createMasterTemplate(rootFolderId) ?: return@launch
             val caseFolderId = apiService.getOrCreateFolder(caseName, rootFolderId) ?: return@launch
-            val spreadsheetId = apiService.createSpreadsheet(caseName, caseFolderId) ?: return@launch
-            apiService.attachScript(spreadsheetId, masterTemplateId, caseFolderId)
-            val newCase = Case(name = caseName, spreadsheetId = spreadsheetId, masterTemplateId = masterTemplateId)
-            caseDao.insert(newCase)
+            val caseSpreadsheetId = apiService.createSpreadsheet(caseName, caseFolderId) ?: return@launch
+            apiService.attachScript(caseSpreadsheetId, masterTemplateId, caseFolderId)
+            
+            val newCase = Case(name = caseName, spreadsheetId = caseSpreadsheetId, masterTemplateId = masterTemplateId)
+            if (apiService.addCaseToRegistry(caseRegistrySpreadsheetId, newCase)) {
+                Log.d(TAG, "createCase: Case '$caseName' added to registry.")
+                loadCasesFromRegistry()
+            } else {
+                Log.w(TAG, "createCase: Failed to add case '$caseName' to registry.")
+            }
         }
     }
 
-    fun selectCase(case: Case) {
+    fun selectCase(case: Case?) {
         _selectedCase.value = case
-        // ...
+        if (case != null && case.spreadsheetId.isNotBlank() && _googleApiService.value != null) {
+            viewModelScope.launch {
+                loadFiltersFromSheet(case.spreadsheetId)
+                loadAllegationsForSelectedCase(case.spreadsheetId, case.id)
+                loadFinancialEntriesForSelectedCase(case.spreadsheetId, case.id)
+            }
+        } else {
+            _filters.value = emptyList()
+            _allegations.value = emptyList()
+            _financialEntries.value = emptyList()
+        }
+    }
+
+    fun addFilter(name: String, value: String) {
+        val currentCase = _selectedCase.value
+        val apiService = _googleApiService.value
+        if (currentCase == null || currentCase.spreadsheetId.isBlank() || apiService == null) return
+
+        viewModelScope.launch {
+            try {
+                apiService.addSheet(currentCase.spreadsheetId, FILTERS_SHEET_NAME) 
+                if (apiService.appendData(currentCase.spreadsheetId, FILTERS_SHEET_NAME, listOf(listOf(name, value))) != null) {
+                    loadFiltersFromSheet(currentCase.spreadsheetId)
+                } else {
+                    Log.w(TAG, "addFilter: Failed to add filter '$name' to sheet.")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "addFilter: Error adding filter '$name'", e)
+            }
+        }
+    }
+
+    fun addAllegation(allegationText: String) {
+        val currentCase = _selectedCase.value
+        val apiService = _googleApiService.value
+        if (currentCase == null || currentCase.spreadsheetId.isBlank() || allegationText.isBlank() || apiService == null) {
+            Log.w(TAG, "addAllegation: Missing data for adding allegation.")
+            return
+        }
+        viewModelScope.launch {
+            try {
+                if (apiService.addAllegationToCase(currentCase.spreadsheetId, allegationText)) {
+                    Log.d(TAG, "addAllegation: Allegation added for case ID ${currentCase.id}.")
+                    loadAllegationsForSelectedCase(currentCase.spreadsheetId, currentCase.id)
+                } else {
+                    Log.w(TAG, "addAllegation: Failed to add allegation for case ID ${currentCase.id}.")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "addAllegation: Error adding allegation for case ID ${currentCase.id}", e)
+            }
+        }
+    }
+
+    fun addFinancialEntry(entry: FinancialEntry) {
+        val currentCase = _selectedCase.value
+        val apiService = _googleApiService.value
+        if (currentCase == null || currentCase.spreadsheetId.isBlank() || apiService == null) {
+            Log.w(TAG, "addFinancialEntry: Missing data for adding financial entry.")
+            return
+        }
+        // Ensure the entry is associated with the selected case ID
+        val entryWithCaseId = entry.copy(caseId = currentCase.id)
+        viewModelScope.launch {
+            try {
+                if (apiService.addFinancialEntryToCase(currentCase.spreadsheetId, entryWithCaseId)) {
+                    Log.d(TAG, "addFinancialEntry: Entry added for case ID ${currentCase.id}.")
+                    loadFinancialEntriesForSelectedCase(currentCase.spreadsheetId, currentCase.id)
+                } else {
+                    Log.w(TAG, "addFinancialEntry: Failed to add entry for case ID ${currentCase.id}.")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "addFinancialEntry: Error adding entry for case ID ${currentCase.id}", e)
+            }
+        }
     }
 
     private val _extractedText = MutableStateFlow("")
@@ -138,18 +317,21 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private suspend fun processImage(bitmap: android.graphics.Bitmap, context: Context) {
         Log.d(TAG, "processImage called")
-        selectedCase.value?.let { case ->
-            val apiService = googleApiService.value ?: return@let
-            val rootFolderId = apiService.getOrCreateAppRootFolder() ?: return@let
-            val caseFolderId = apiService.getOrCreateFolder(case.name, rootFolderId) ?: return@let
-            val rawEvidenceFolderId = apiService.getOrCreateFolder(RAW_EVIDENCE_FOLDER_NAME, caseFolderId) ?: return@let
+        val currentCase = _selectedCase.value
+        val apiService = _googleApiService.value
+
+        if (currentCase != null && apiService != null) {
+            val rootFolderId = apiService.getOrCreateAppRootFolder() ?: return
+            val caseFolderId = apiService.getOrCreateFolder(currentCase.name, rootFolderId) ?: return
+            val rawEvidenceFolderId = apiService.getOrCreateFolder(RAW_EVIDENCE_FOLDER_NAME, caseFolderId) ?: return
             val timestamp = System.currentTimeMillis()
             val file = java.io.File(context.cacheDir, "evidence-$timestamp.jpg")
             file.outputStream().use {
                 bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 100, it)
             }
-
             apiService.uploadFile(file, rawEvidenceFolderId, "image/jpeg")
+        } else {
+            Log.w(TAG, "processImage: Selected case or API service is null, skipping file upload.")
         }
 
         val image = com.google.mlkit.vision.common.InputImage.fromBitmap(bitmap, 0)
@@ -158,9 +340,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             .addOnSuccessListener { visionText ->
                 Log.d(TAG, "processImage: Text recognition successful")
                 _extractedText.value = visionText.text
-                val taggedData = DataParser.tagData(visionText.text)
-                Log.d(TAG, "processImage: taggedData: $taggedData")
-                storeTaggedData(taggedData)
+                val taggedDataMap = DataParser.tagData(visionText.text)
+                Log.d(TAG, "processImage: taggedData: $taggedDataMap")
+                storeTaggedData(taggedDataMap)
             }
             .addOnFailureListener { e ->
                 Log.e(TAG, "processImage: Text recognition failed", e)
@@ -169,44 +351,62 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private val _taggedData = MutableStateFlow<Map<String, List<String>>>(emptyMap())
-    val taggedData = _taggedData.asStateFlow()
+    val taggedData: StateFlow<Map<String, List<String>>> = _taggedData.asStateFlow()
 
-    private fun storeTaggedData(taggedData: Map<String, List<String>>) {
-        Log.d(TAG, "storeTaggedData called with: $taggedData")
-        _taggedData.value = taggedData
-            selectedCase.value?.let { case ->
-                val spreadsheetId = case.spreadsheetId
-                taggedData.forEach { (tag, data) ->
-                    if (data.isNotEmpty()) {
-                        googleApiService.value?.addSheet(spreadsheetId, tag)
-                        val values = data.map { listOf(it) }
-                        googleApiService.value?.appendData(spreadsheetId, tag, values)
-                    }
-                }
-            }
-        }
-    }
+    private fun storeTaggedData(newTaggedData: Map<String, List<String>>) {
+        Log.d(TAG, "storeTaggedData called with: $newTaggedData")
+        _taggedData.value = newTaggedData
+        
+        val currentCase = _selectedCase.value
+        val currentApiService = _googleApiService.value
 
-    fun importSpreadsheet(spreadsheetId: String) {
-        viewModelScope.launch {
-            val sheetsData = googleApiService.value?.readSpreadsheet(spreadsheetId)
-            if (sheetsData != null) {
-                val spreadsheetParser = SpreadsheetParser(caseDao, allegationDao, financialEntryDao)
-                spreadsheetParser.parseAndStore(sheetsData)
-            selectedCase.value?.let { case ->
-                val spreadsheetId = case.spreadsheetId
+        if (currentCase != null && currentApiService != null) {
+            viewModelScope.launch { 
+                val spreadsheetId = currentCase.spreadsheetId
                 Log.d(TAG, "storeTaggedData: Storing data to spreadsheet: $spreadsheetId")
-                taggedData.forEach { (tag, data) ->
+                newTaggedData.forEach { (tag, data) ->
                     if (data.isNotEmpty()) {
                         Log.d(TAG, "storeTaggedData: Adding sheet '$tag' with data: $data")
-                        googleApiService.value?.addSheet(spreadsheetId, tag)
+                        currentApiService.addSheet(spreadsheetId, tag)
                         val values = data.map { listOf(it) }
-                        googleApiService.value?.appendData(spreadsheetId, tag, values)
+                        currentApiService.appendData(spreadsheetId, tag, values)
                     }
                 }
             }
+        } else {
+            Log.w(TAG, "storeTaggedData: Selected case or API service is null, skipping sheet update.")
         }
     }
-}
 
-private const val RAW_EVIDENCE_FOLDER_NAME = "Raw Evidence"
+    fun importSpreadsheet(spreadsheetIdToImport: String) { 
+        viewModelScope.launch {
+            val currentApiService = _googleApiService.value
+            if (currentApiService == null) {
+                Log.w(TAG, "importSpreadsheet: GoogleApiService is null.")
+                return@launch
+            }
+
+            val sheetsData = currentApiService.readSpreadsheet(spreadsheetIdToImport)
+            if (sheetsData != null) {
+                val spreadsheetParser = SpreadsheetParser(currentApiService) // Pass GoogleApiService
+                val newCase = spreadsheetParser.parseAndStore(sheetsData)
+                if (newCase != null) {
+                    Log.i(TAG, "Spreadsheet data imported successfully. New case: ${newCase.name}")
+                    loadCasesFromRegistry() // Refresh the case list
+                } else {
+                    Log.w(TAG, "importSpreadsheet: Failed to parse and store spreadsheet data, or case already exists. Spreadsheet ID: $spreadsheetIdToImport")
+                    // In a real app, notify the user (e.g., Toast: "Import failed or case already exists.")
+                }
+            } else {
+                Log.w(TAG, "importSpreadsheet: Failed to read spreadsheet data for ID: $spreadsheetIdToImport")
+            }
+        }
+    }
+
+    companion object {
+        private const val FILTERS_SHEET_NAME = "Filters"
+        private const val RAW_EVIDENCE_FOLDER_NAME = "Raw Evidence"
+        // ALLEGATIONS_SHEET_NAME is in GoogleApiService.kt
+        // FINANCIAL_ENTRIES_SHEET_NAME is in GoogleApiService.kt
+    }
+}

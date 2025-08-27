@@ -1,34 +1,8 @@
 package com.hereliesaz.lexorcist.db
 
-import androidx.room.Entity
-import androidx.room.ForeignKey
-import androidx.room.PrimaryKey
-
-@Entity(
-    tableName = "financial_entries",
-    foreignKeys = [
-        ForeignKey(
-            entity = Case::class,
-            parentColumns = ["id"],
-            childColumns = ["caseId"],
-            onDelete = ForeignKey.CASCADE
-        ),
-        ForeignKey(
-            entity = Allegation::class,
-            parentColumns = ["id"],
-            childColumns = ["allegationId"],
-            onDelete = ForeignKey.SET_NULL
-        )
-    ]
-)
-data class FinancialEntry(
-    @PrimaryKey(autoGenerate = true)
-    val id: Int = 0,
-    val caseId: Int,
-    val allegationId: Int? = null,
-    val amount: String,
-    val timestamp: Long,
-    val sourceDocument: String,
-    val documentDate: Long,
-    val category: String = "Uncategorized"
+// Room annotations removed
+data class Allegation(
+    val id: Int = 0, // No longer an auto-generated PrimaryKey by Room. Consider its new role.
+    val caseId: Int, // No longer a Foreign Key managed by Room. Represents the link to a Case.
+    val text: String
 )

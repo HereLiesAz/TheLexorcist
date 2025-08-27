@@ -11,10 +11,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.hereliesaz.lexorcist.MainViewModel
-import com.hereliesaz.lexorcist.db.Filter
+import com.hereliesaz.lexorcist.model.SheetFilter // Changed import from db.Filter to model.SheetFilter
 
 @Composable
 fun SettingsScreen(viewModel: MainViewModel) {
+    // The type of filters will now be List<SheetFilter> from the ViewModel
     val filters by viewModel.filters.collectAsState()
     var showAddFilterDialog by remember { mutableStateOf(false) }
     var filterName by remember { mutableStateOf("") }
@@ -28,21 +29,10 @@ fun SettingsScreen(viewModel: MainViewModel) {
         verticalArrangement = Arrangement.Center
     ) {
         Text("Settings Screen")
-        // Text("Filters", style = androidx.compose.material3.MaterialTheme.typography.headlineMedium)
-        // Spacer(modifier = Modifier.height(16.dp))
-        // LazyColumn(modifier = Modifier.weight(1f)) {
-        //     items(filters) { filter ->
-        //         FilterItem(filter = filter)
-        //     }
-        // }
-        // Spacer(modifier = Modifier.height(16.dp))
-        // Button(onClick = { showAddFilterDialog = true }) {
-        //     Text("Add New Filter")
-        // }
         Text("Filters", style = androidx.compose.material3.MaterialTheme.typography.headlineMedium)
         Spacer(modifier = Modifier.height(16.dp))
         LazyColumn(modifier = Modifier.weight(1f)) {
-            items(filters) { filter ->
+            items(filters) { filter -> // filter is now SheetFilter
                 FilterItem(filter = filter)
             }
         }
@@ -52,48 +42,6 @@ fun SettingsScreen(viewModel: MainViewModel) {
         }
     }
 
-    // if (showAddFilterDialog) {
-    //     androidx.compose.material3.AlertDialog(
-    //         onDismissRequest = { showAddFilterDialog = false },
-    //         title = { Text("New Filter") },
-    //         text = {
-    //             Column {
-    //                 OutlinedTextField(
-    //                     value = filterName,
-    //                     onValueChange = { filterName = it },
-    //                     label = { Text("Filter Name") },
-    //                     singleLine = true
-    //                 )
-    //                 Spacer(modifier = Modifier.height(8.dp))
-    //                 OutlinedTextField(
-    //                     value = filterValue,
-    //                     onValueChange = { filterValue = it },
-    //                     label = { Text("Filter Value") },
-    //                     singleLine = true
-    //                 )
-    //             }
-    //         },
-    //         confirmButton = {
-    //             Button(
-    //                 onClick = {
-    //                     if (filterName.isNotBlank() && filterValue.isNotBlank()) {
-    //                         viewModel.addFilter(filterName, filterValue)
-    //                         showAddFilterDialog = false
-    //                         filterName = ""
-    //                         filterValue = ""
-    //                     }
-    //                 }
-    //             ) {
-    //                 Text("Add")
-    //             }
-    //         },
-    //         dismissButton = {
-    //             Button(onClick = { showAddFilterDialog = false }) {
-    //                 Text("Cancel")
-    //             }
-    //         }
-    //     )
-    // }
     if (showAddFilterDialog) {
         androidx.compose.material3.AlertDialog(
             onDismissRequest = { showAddFilterDialog = false },
@@ -118,7 +66,7 @@ fun SettingsScreen(viewModel: MainViewModel) {
             confirmButton = {
                 Button(
                     onClick = {
-                        if (filterName.isNotBlank() && filterValue.isNotBlank()) {
+                        if (filterName.isNotBlank() || filterValue.isNotBlank()) { // Allow adding if at least one field is not blank
                             viewModel.addFilter(filterName, filterValue)
                             showAddFilterDialog = false
                             filterName = ""
@@ -139,7 +87,7 @@ fun SettingsScreen(viewModel: MainViewModel) {
 }
 
 @Composable
-fun FilterItem(filter: Filter) {
+fun FilterItem(filter: SheetFilter) { // Changed parameter type to SheetFilter
     Row(
         modifier = Modifier
             .fillMaxWidth()

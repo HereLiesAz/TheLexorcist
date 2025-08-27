@@ -1,11 +1,8 @@
 package com.hereliesaz.lexorcist.db
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
-
-@Entity(tableName = "cases")
+// Room annotations removed
 data class Case(
-    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val id: Int = 0, // No longer an auto-generated PrimaryKey by Room. Consider its new role or removal later.
     val name: String,
     val spreadsheetId: String,
     val masterTemplateId: String

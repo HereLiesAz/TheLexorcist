@@ -2,39 +2,47 @@ package com.hereliesaz.lexorcist
 
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
 import com.google.api.client.http.ByteArrayContent
+import com.google.api.client.http.FileContent as GoogleFileContent
 import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.services.drive.Drive
+import com.google.api.services.drive.model.File as DriveFile
 import com.google.api.services.script.Script
-import com.google.api.services.script.model.Content
+import com.google.api.services.script.model.Content as ScriptContent 
 import com.google.api.services.script.model.CreateProjectRequest
-import com.google.api.services.script.model.File
-import com.google.api.services.script.model.Project
+import com.google.api.services.script.model.File as ScriptPlatformFile
 import com.google.api.services.sheets.v4.Sheets
 import com.google.api.services.sheets.v4.model.*
+import com.hereliesaz.lexorcist.db.Allegation
+import com.hereliesaz.lexorcist.db.Case
+import com.hereliesaz.lexorcist.db.FinancialEntry // Import FinancialEntry data class
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.IOException
 
 private const val APP_ROOT_FOLDER_NAME = "The Lexorcist"
+private const val CASE_REGISTRY_SPREADSHEET_NAME = "Lexorcist_Case_Registry"
+private const val CASE_REGISTRY_SHEET_NAME = "Cases"
+private const val ALLEGATIONS_SHEET_NAME = "Allegations"
+private const val FINANCIAL_ENTRIES_SHEET_NAME = "FinancialEntries"
 
-class GoogleApiService(credential: GoogleAccountCredential, applicationName: String) {
+class GoogleApiService(
+    private val credential: GoogleAccountCredential,
+    applicationName: String
+) {
 
     private val transport = NetHttpTransport()
     private val jsonFactory = JacksonFactory.getDefaultInstance()
-class GoogleApiService(
-    private val credential: GoogleAccountCredential,
-    private val sheetsService: Sheets,
-    private val driveService: Drive,
-    private val scriptService: Script
-) {
 
-    // ... (existing functions)
-
-    val sheets: Sheets = Sheets.Builder(transport, jsonFactory, credential)
+    val sheetsService: Sheets = Sheets.Builder(transport, jsonFactory, credential)
         .setApplicationName(applicationName)
         .build()
 
-    private val script: Script = Script.Builder(transport, jsonFactory, credential)
+    val driveService: Drive = Drive.Builder(transport, jsonFactory, credential)
+        .setApplicationName(applicationName)
+        .build()
+
+    val scriptService: Script = Script.Builder(transport, jsonFactory, credential)
         .setApplicationName(applicationName)
         .build()
 
@@ -45,20 +53,18 @@ class GoogleApiService(
             } else {
                 "mimeType='application/vnd.google-apps.folder' and name='${folderName}' and trashed=false"
             }
-
-            val files = drive.files().list().setQ(query).setSpaces("drive").execute().files
-            if (files != null && files.isNotEmpty()) {
-                return@withContext files[0].id
+            val fileListResult = driveService.files().list().setQ(query).setSpaces("drive").execute()
+            val actualFiles = fileListResult?.files
+            if (actualFiles != null && actualFiles.isNotEmpty()) {
+                return@withContext actualFiles[0].id
             }
-
-            val fileMetadata = com.google.api.services.drive.model.File()
+            val fileMetadata = DriveFile()
             fileMetadata.name = folderName
             fileMetadata.mimeType = "application/vnd.google-apps.folder"
             if (parentId != null) {
                 fileMetadata.parents = listOf(parentId)
             }
-
-            drive.files().create(fileMetadata).setFields("id").execute()?.id
+            driveService.files().create(fileMetadata).setFields("id").execute()?.id
         } catch (e: Exception) {
             e.printStackTrace()
             null
@@ -69,183 +75,214 @@ class GoogleApiService(
         return getOrCreateFolder(APP_ROOT_FOLDER_NAME)
     }
 
-    suspend fun createMasterTemplate(parentId: String? = null): String? = withContext(Dispatchers.IO) {
+    suspend fun getOrCreateCaseRegistrySpreadsheetId(appRootFolderId: String): String? = withContext(Dispatchers.IO) {
         try {
-            val templateContent = """
-                Cover Sheet
-                UNITED STATES DISTRICT COURT
-                EASTERN DISTRICT OF LOUISIANA
-
-
-                The following table:
-                "{{PLAINTIFFS}}",CIVIL ACTION v. NO: {{CASE_NUMBER}}
-                "{{DEFENDANTS}}",SECTION: {{SECTION}} ,JUDGE: {{JUDGE}}
-
-                ____________________________________________________
-                EXHIBIT {{EXHIBIT_NUMBER}}
-                ____________________________________________________
-                Description: {{EXHIBIT_NAME}}
-                Date: {{EXHIBIT_DATE}}
-                Metadata
-                UNITED STATES DISTRICT COURT
-                EASTERN DISTRICT OF LOUISIANA
-
-
-                The following table:
-                "{{PLAINTIFFS}}",CIVIL ACTION v. NO: {{CASE_NUMBER}}
-                "{{DEFENDANTS}}",SECTION: {{SECTION}} ,JUDGE: {{JUDGE}}
-
-                ____________________________________________________
-                EXHIBIT {{EXHIBIT_NUMBER}}
-                ____________________________________________________
-                File Name: {{FILE_NAME}}
-                File Type: {{FILE_TYPE}}
-                File Size: {{FILE_SIZE}}
-                Original Creation Date: {{CREATION_DATE}}
-                Last Modified Date: {{MODIFIED_DATE}}
-                File Owner: {{FILE_OWNER}}
-
-                Google Drive ID: {{FILE_ID}}
-                Chain of Custody
-                UNITED STATES DISTRICT COURT
-                EASTERN DISTRICT OF LOUISIANA
-
-
-                The following table:
-                "{{PLAINTIFFS}}",CIVIL ACTION v. NO: {{CASE_NUMBER}}
-                "{{DEFENDANTS}}",SECTION: {{SECTION}} ,JUDGE: {{JUDGE}}
-
-                ____________________________________________________
-                This document tracks the possession of the evidence associated with Exhibit {{EXHIBIT_NUMBER}}.
-                ____________________________________________________
-                Initial Collection:
-                - Item: {{EXHIBIT_NAME}}
-                - Collected By: {{COLLECTED_BY}}
-                - Date/Time of Collection: {{COLLECTION_DATE}}
-
-                Custody Log:
-                Affidavit
-                UNITED STATES DISTRICT COURT
-                EASTERN DISTRICT OF LOUISIANA
-
-
-                The following table:
-                "{{PLAINTIFFS}}",CIVIL ACTION v. NO: {{CASE_NUMBER}}
-                "{{DEFENDANTS}}",SECTION: {{SECTION}} ,JUDGE: {{JUDGE}}
-
-                ____________________________________________________
-                EXHIBIT {{EXHIBIT_NUMBER}}
-                ____________________________________________________
-
-                DECLARATION OF RECORDS CUSTODIAN
-                (Federal Rule of Evidence 902(11))
-
-                Exhibit Number: {{EXHIBIT_NUMBER}}
-                Exhibit Description: {{EXHIBIT_NAME}}
-
-                I, {{AFFIANT_NAME}}, hereby declare under penalty of perjury that the following is true and correct:
-                1. I am the {{AFFIANT_TITLE}} and am a custodian of records for the documents related to this matter.
-                I have personal knowledge of the facts stated herein.
-                2. The document attached hereto as Exhibit {{EXHIBIT_NUMBER}} is a true and correct copy of a record that was:
-                (a) made at or near the time of the occurrence of the matters set forth by, or from information transmitted by, a person with knowledge of those matters;
-                (b) kept in the course of a regularly conducted activity of the business; and
-                (c) made by the regularly conducted activity as a regular practice.
-
-                3. I am aware that this declaration is being provided in support of the authenticity of the aforementioned exhibit in the above-captioned legal proceeding.
-                I declare under penalty of perjury under the laws of the United States of America that the foregoing is true and correct.
-
-                Executed on: {{CURRENT_DATE}}
-
-
-
-                ___________________________________
-
-                {{AFFIANT_NAME}}
-                {{AFFIANT_TITLE}}
-                Table of Exhibits
-                UNITED STATES DISTRICT COURT
-                EASTERN DISTRICT OF LOUISIANA
-
-
-                The following table:
-                "{{PLAINTFFS}}",CIVIL ACTION v. NO: {{CASE_NUMBER}}
-                "{{DEFENDANTS}}",SECTION: {{SECTION}} ,JUDGE: {{JUDGE}}
-
-                ____________________________________________________
-                EXHIBIT {{EXHIBIT_NUMBER}}
-                ____________________________________________________
-
-                PLAINTIFFS' TABLE OF EXHIBITS
-
-                {{TABLE_OF_EXHIBITS}}
-            """.trimIndent()
-
-            val fileMetadata = com.google.api.services.drive.model.File()
-            fileMetadata.name = "Lexorcist Master Template"
-            fileMetadata.mimeType = "application/vnd.google-apps.document"
-            if (parentId != null) {
-                fileMetadata.parents = listOf(parentId)
+            val query = "'${appRootFolderId}' in parents and mimeType='application/vnd.google-apps.spreadsheet' and name='$CASE_REGISTRY_SPREADSHEET_NAME' and trashed=false"
+            val fileListResult = driveService.files().list().setQ(query).setSpaces("drive").execute()
+            val existingFiles = fileListResult?.files
+            var registrySpreadsheetId: String?
+            if (existingFiles != null && existingFiles.isNotEmpty()) {
+                registrySpreadsheetId = existingFiles[0].id
+            } else {
+                registrySpreadsheetId = createSpreadsheet(CASE_REGISTRY_SPREADSHEET_NAME, appRootFolderId)
+                if (registrySpreadsheetId == null) return@withContext null
+                addSheet(registrySpreadsheetId, CASE_REGISTRY_SHEET_NAME)
+                val header = listOf(listOf("Case Name", "Spreadsheet ID", "Master Template ID"))
+                appendData(registrySpreadsheetId, CASE_REGISTRY_SHEET_NAME, header)
             }
-            val content = ByteArrayContent.fromString("text/plain", templateContent)
-            drive.files().create(fileMetadata, content).setFields("id").execute()?.id
+            if (registrySpreadsheetId != null) {
+                addSheet(registrySpreadsheetId, CASE_REGISTRY_SHEET_NAME) // Ensure sheet exists
+                val range = "$CASE_REGISTRY_SHEET_NAME!A1:C1"
+                val currentHeader = sheetsService.spreadsheets().values().get(registrySpreadsheetId, range).execute()
+                if (currentHeader.getValues() == null || currentHeader.getValues().isEmpty()) {
+                    val header = listOf(listOf("Case Name", "Spreadsheet ID", "Master Template ID"))
+                    appendData(registrySpreadsheetId, CASE_REGISTRY_SHEET_NAME, header)
+                }
+            }
+            registrySpreadsheetId
         } catch (e: Exception) {
             e.printStackTrace()
             null
-    suspend fun readSpreadsheet(spreadsheetId: String): Map<String, List<List<Any>>>? {
-        return withContext(Dispatchers.IO) {
-            try {
-                val spreadsheet = sheetsService.spreadsheets().get(spreadsheetId).execute()
-                val sheetData = mutableMapOf<String, List<List<Any>>>()
-                spreadsheet.sheets.forEach { sheet ->
-                    val range = sheet.properties.title
-                    val response = sheetsService.spreadsheets().values().get(spreadsheetId, range).execute()
-                    sheetData[range] = response.getValues() ?: emptyList()
-                }
-                sheetData
-            } catch (e: Exception) {
-                e.printStackTrace()
-                null
-            }
         }
     }
 
-    suspend fun createSpreadsheet(title: String, caseInfo: Map<String, String>): String? {
-        return withContext(Dispatchers.IO) {
-            try {
-                val spreadsheet = Spreadsheet().setProperties(
-                    SpreadsheetProperties().setTitle(title)
-                )
-                val createdSpreadsheet = sheetsService.spreadsheets().create(spreadsheet).execute()
-                val spreadsheetId = createdSpreadsheet.spreadsheetId
-
-                // Now add the case info to a sheet
-                val sheetName = "Case Info"
-                val addSheetRequest = AddSheetRequest().setProperties(SheetProperties().setTitle(sheetName))
-                val batchUpdate = BatchUpdateSpreadsheetRequest().setRequests(listOf(Request().setAddSheet(addSheetRequest)))
-                sheetsService.spreadsheets().batchUpdate(spreadsheetId, batchUpdate).execute()
-
-                val values = caseInfo.map { (key, value) ->
-                    listOf(key, value)
+    suspend fun getAllCasesFromRegistry(registrySpreadsheetId: String): List<Case> = withContext(Dispatchers.IO) {
+        val cases = mutableListOf<Case>()
+        try {
+            val allSheetData = readSpreadsheet(registrySpreadsheetId)
+            val caseSheetValues = allSheetData?.get(CASE_REGISTRY_SHEET_NAME)
+            caseSheetValues?.drop(1)?.forEach { row ->
+                if (row.size >= 3) {
+                    val name = row.getOrNull(0)?.toString() ?: ""
+                    val spreadsheetId = row.getOrNull(1)?.toString() ?: ""
+                    val masterTemplateId = row.getOrNull(2)?.toString() ?: ""
+                    if (name.isNotBlank() && spreadsheetId.isNotBlank()) {
+                        cases.add(Case(name = name, spreadsheetId = spreadsheetId, masterTemplateId = masterTemplateId))
+                    }
                 }
-                val body = ValueRange().setValues(values)
-                sheetsService.spreadsheets().values().update(spreadsheetId, "$sheetName!A1", body)
-                    .setValueInputOption("RAW")
-                    .execute()
-
-                spreadsheetId
-            } catch (e: Exception) {
-                e.printStackTrace()
-                null
             }
+        } catch (e: Exception) { e.printStackTrace() }
+        cases
+    }
+
+    suspend fun addCaseToRegistry(registrySpreadsheetId: String, caseData: Case): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val values = listOf(listOf(caseData.name, caseData.spreadsheetId, caseData.masterTemplateId))
+            appendData(registrySpreadsheetId, CASE_REGISTRY_SHEET_NAME, values) != null
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
+
+    suspend fun getAllegationsForCase(caseSpreadsheetId: String, caseIdForAssociation: Int): List<Allegation> = withContext(Dispatchers.IO) {
+        val allegations = mutableListOf<Allegation>()
+        if (caseSpreadsheetId.isBlank()) return@withContext allegations
+        try {
+            val allSheetData = readSpreadsheet(caseSpreadsheetId)
+            val allegationSheetValues = allSheetData?.get(ALLEGATIONS_SHEET_NAME)
+            allegationSheetValues?.forEachIndexed { index, row ->
+                val text = row.getOrNull(0)?.toString() ?: ""
+                if (text.isNotBlank()) {
+                    allegations.add(Allegation(id = index, caseId = caseIdForAssociation, text = text))
+                }
+            }
+        } catch (e: Exception) { e.printStackTrace() }
+        allegations
+    }
+
+    suspend fun addAllegationToCase(caseSpreadsheetId: String, allegationText: String): Boolean = withContext(Dispatchers.IO) {
+        if (caseSpreadsheetId.isBlank() || allegationText.isBlank()) return@withContext false
+        try {
+            addSheet(caseSpreadsheetId, ALLEGATIONS_SHEET_NAME) // Ensure sheet exists
+            val values = listOf(listOf(allegationText))
+            appendData(caseSpreadsheetId, ALLEGATIONS_SHEET_NAME, values) != null
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
+
+    suspend fun getFinancialEntriesForCase(caseSpreadsheetId: String, caseIdForAssociation: Int): List<FinancialEntry> = withContext(Dispatchers.IO) {
+        val entries = mutableListOf<FinancialEntry>()
+        if (caseSpreadsheetId.isBlank()) return@withContext entries
+        try {
+            val allSheetData = readSpreadsheet(caseSpreadsheetId)
+            val sheetValues = allSheetData?.get(FINANCIAL_ENTRIES_SHEET_NAME)
+            sheetValues?.drop(1)?.forEachIndexed { index, row -> // drop(1) to skip header
+                try {
+                    val amount = row.getOrNull(0)?.toString() ?: "0"
+                    val timestamp = row.getOrNull(1)?.toString()?.toLongOrNull() ?: System.currentTimeMillis()
+                    val sourceDocument = row.getOrNull(2)?.toString() ?: ""
+                    val documentDate = row.getOrNull(3)?.toString()?.toLongOrNull() ?: System.currentTimeMillis()
+                    val category = row.getOrNull(4)?.toString() ?: "Uncategorized"
+                    val allegationId = row.getOrNull(5)?.toString()?.toIntOrNull()
+
+                    entries.add(FinancialEntry(
+                        id = index, // Using row index as a simple ID for now
+                        caseId = caseIdForAssociation,
+                        allegationId = allegationId,
+                        amount = amount,
+                        timestamp = timestamp,
+                        sourceDocument = sourceDocument,
+                        documentDate = documentDate,
+                        category = category
+                    ))
+                } catch (e: Exception) {
+                    e.printStackTrace() // Log error during row parsing
+                }
+            }
+        } catch (e: Exception) { e.printStackTrace() }
+        entries
+    }
+
+    suspend fun addFinancialEntryToCase(caseSpreadsheetId: String, entry: FinancialEntry): Boolean = withContext(Dispatchers.IO) {
+        if (caseSpreadsheetId.isBlank()) return@withContext false
+        try {
+            // Ensure sheet exists and add header if it's new
+            val sheetExists = sheetsService.spreadsheets().get(caseSpreadsheetId).execute().sheets?.any { it.properties?.title == FINANCIAL_ENTRIES_SHEET_NAME } == true
+            if (!sheetExists) {
+                addSheet(caseSpreadsheetId, FINANCIAL_ENTRIES_SHEET_NAME)
+                val header = listOf(listOf("Amount", "Timestamp", "Source Document", "Document Date", "Category", "Allegation ID"))
+                appendData(caseSpreadsheetId, FINANCIAL_ENTRIES_SHEET_NAME, header)
+            }            
+
+            val values = listOf(listOf(
+                entry.amount,
+                entry.timestamp.toString(),
+                entry.sourceDocument,
+                entry.documentDate.toString(),
+                entry.category,
+                entry.allegationId?.toString() ?: "" // Store Allegation ID as string, empty if null
+            ))
+            appendData(caseSpreadsheetId, FINANCIAL_ENTRIES_SHEET_NAME, values) != null
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
+
+    suspend fun createMasterTemplate(parentId: String? = null): String? = withContext(Dispatchers.IO) {
+        try {
+            val fileMetadata = DriveFile().setName("Lexorcist Master Template").setMimeType("application/vnd.google-apps.document")
+            if (parentId != null) fileMetadata.parents = listOf(parentId)
+            val content = ByteArrayContent.fromString("text/plain", "Placeholder for master template content.")
+            driveService.files().create(fileMetadata, content).setFields("id").execute()?.id
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+    
+    suspend fun readSpreadsheet(spreadsheetId: String): Map<String, List<List<Any>>>? = withContext(Dispatchers.IO) {
+        try {
+            val spreadsheet = sheetsService.spreadsheets().get(spreadsheetId).setIncludeGridData(false).execute()
+            val sheetData = mutableMapOf<String, List<List<Any>>>()
+            spreadsheet.sheets?.forEach { sheet ->
+                val range = sheet.properties?.title
+                if (range != null) {
+                    val response = sheetsService.spreadsheets().values().get(spreadsheetId, range).execute()
+                    sheetData[range] = response.getValues() ?: emptyList()
+                }
+            }
+            sheetData
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
     suspend fun createSpreadsheet(title: String, parentId: String? = null): String? = withContext(Dispatchers.IO) {
         try {
-            val fileMetadata = com.google.api.services.drive.model.File()
-            fileMetadata.name = title
-            fileMetadata.mimeType = "application/vnd.google-apps.spreadsheet"
-            if (parentId != null) {
-                fileMetadata.parents = listOf(parentId)
-            }
-            drive.files().create(fileMetadata).setFields("id").execute()?.id
+            val fileMetadata = DriveFile().setName(title).setMimeType("application/vnd.google-apps.spreadsheet")
+            if (parentId != null) fileMetadata.parents = listOf(parentId)
+            driveService.files().create(fileMetadata).setFields("id").execute()?.id
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+    
+    suspend fun addSheet(spreadsheetId: String, sheetTitle: String): BatchUpdateSpreadsheetResponse? = withContext(Dispatchers.IO) {
+        try {
+            val spreadsheet = sheetsService.spreadsheets().get(spreadsheetId).execute()
+            if (spreadsheet.sheets?.any { it.properties?.title == sheetTitle } == true) return@withContext null
+            val addSheetRequest = AddSheetRequest().setProperties(SheetProperties().setTitle(sheetTitle))
+            val batchUpdateRequest = BatchUpdateSpreadsheetRequest().setRequests(listOf(Request().setAddSheet(addSheetRequest)))
+            sheetsService.spreadsheets().batchUpdate(spreadsheetId, batchUpdateRequest).execute()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null 
+        }
+    }
+
+    suspend fun appendData(spreadsheetId: String, sheetTitle: String, values: List<List<Any>>): AppendValuesResponse? = withContext(Dispatchers.IO) {
+        try {
+            val body = ValueRange().setValues(values)
+            sheetsService.spreadsheets().values().append(spreadsheetId, "$sheetTitle!A1", body)
+                .setValueInputOption("USER_ENTERED") 
+                .setInsertDataOption("INSERT_ROWS")
+                .execute()
         } catch (e: Exception) {
             e.printStackTrace()
             null
@@ -254,111 +291,23 @@ class GoogleApiService(
 
     suspend fun attachScript(spreadsheetId: String, masterTemplateId: String, caseFolderId: String?) = withContext(Dispatchers.IO) {
         try {
-            val project = Project().setTitle("Case Tools Script").setParentId(spreadsheetId)
-            val createdProject = script.projects().create(project as CreateProjectRequest?).execute()
+            val createProjectRequest = CreateProjectRequest().setTitle("Case Tools Script").setParentId(spreadsheetId)
+            val createdProject = scriptService.projects().create(createProjectRequest).execute()
             val scriptId = createdProject.scriptId ?: return@withContext
-
-            val scriptContent = """
-                function onOpen() {
-                  SpreadsheetApp.getUi()
-                      .createMenu('Case Tools')
-                      .addItem('Generate Cover Sheet', 'generateCoverSheet')
-                      .addItem('Generate Metadata', 'generateMetadata')
-                      .addItem('Generate Chain of Custody', 'generateChainOfCustody')
-                      .addItem('Generate Affidavit', 'generateAffidavit')
-                      .addItem('Generate Table of Exhibits', 'generateTableOfExhibits')
-                      .addToUi();
-                }
-
-                function getTemplate(templateName) {
-                  var masterTemplateId = "$masterTemplateId";
-                  var templateFile = DriveApp.getFileById(masterTemplateId);
-                  var templateContent = templateFile.getBlob().getDataAsString();
-                  var templateRegex = new RegExp("(?<=" + templateName + ")[\\s\\S]*?(?=\\n[A-Z][a-z_ ']+|\$)");
-                  var match = templateContent.match(templateRegex);
-                  return match ? match[0].trim() : null;
-                }
-
-                function generateDocument(templateName, documentTitle) {
-                  var sheet = SpreadsheetApp.getActiveSheet();
-                  var range = sheet.getActiveRange();
-                  var row = range.getRow();
-                  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-                  var data = sheet.getRange(row, 1, 1, sheet.getLastColumn()).getValues()[0];
-                  var rowData = {};
-                  for (var i = 0; i < headers.length; i++) {
-                    rowData[headers[i]] = data[i];
-                  }
-
-                  var template = getTemplate(templateName);
-                  if (!template) {
-                    SpreadsheetApp.getUi().alert('Could not find the "' + templateName + '" template in the master document.');
-                    return;
-                  }
-
-                  for (var key in rowData) {
-                    var placeholder = new RegExp('{{' + key + '}}', 'g');
-                    template = template.replace(placeholder, rowData[key]);
-                  }
-
-                  var docName = documentTitle + ' - ' + (rowData['Exhibit Name'] || 'Exhibit ' + rowData['Exhibit No.']);
-                  var newDoc = DocumentApp.create(docName);
-                  newDoc.getBody().setText(template);
-
-                  var caseFolderId = "$caseFolderId";
-                  if (caseFolderId) {
-                    var file = DriveApp.getFileById(newDoc.getId());
-                    var caseFolder = DriveApp.getFolderById(caseFolderId);
-                    file.moveTo(caseFolder);
-                  }
-
-                  var url = newDoc.getUrl();
-                  SpreadsheetApp.getUi().alert('Document created: ' + newDoc.getName(), url, SpreadsheetApp.getUi().ButtonSet.OK);
-                }
-
-                function generateCoverSheet() { generateDocument('Cover Sheet', 'Cover Sheet'); }
-                function generateMetadata() { generateDocument('Metadata', 'Metadata'); }
-                function generateChainOfCustody() { generateDocument('Chain of Custody', 'Chain of Custody'); }
-                function generateAffidavit() { generateDocument('Affidavit', 'Affidavit'); }
-                function generateTableOfExhibits() { generateDocument('Table of Exhibits', 'Table of Exhibits'); }
-            """.trimIndent()
-
-            val codeFile = File().setName("Code").setType("SERVER_JS").setSource(scriptContent)
-            val content = Content().setFiles(listOf(codeFile))
-            script.projects().updateContent(scriptId, content).execute()
+            val scriptPlatformFile = ScriptPlatformFile().setSource("function onOpen() { /* Placeholder for script content */ }").setName("Code")
+            val scriptAPIContent = ScriptContent().setFiles(listOf(scriptPlatformFile)).setScriptId(scriptId)
+            scriptService.projects().updateContent(scriptId, scriptAPIContent).execute()
+        } catch (e: Exception) { e.printStackTrace() }
+    }
+    
+    suspend fun uploadFile(file: java.io.File, folderId: String, mimeType: String): DriveFile? = withContext(Dispatchers.IO) {
+        try {
+            val fileMetadata = DriveFile().apply { name = file.name; parents = listOf(folderId) }
+            val mediaContent = GoogleFileContent(mimeType, file)
+            driveService.files().create(fileMetadata, mediaContent).setFields("id, name, webViewLink, webContentLink").execute()
         } catch (e: Exception) {
             e.printStackTrace()
-    suspend fun addSheet(spreadsheetId: String, sheetTitle: String) {
-        withContext(Dispatchers.IO) {
-            try {
-                val addSheetRequest = AddSheetRequest().setProperties(SheetProperties().setTitle(sheetTitle))
-                val batchUpdate = BatchUpdateSpreadsheetRequest().setRequests(listOf(Request().setAddSheet(addSheetRequest)))
-                sheetsService.spreadsheets().batchUpdate(spreadsheetId, batchUpdate).execute()
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
+            null
         }
-    }
-
-    suspend fun appendData(spreadsheetId: String, sheetName: String, values: List<List<Any>>) {
-        withContext(Dispatchers.IO) {
-            try {
-                val body = ValueRange().setValues(values)
-                sheetsService.spreadsheets().values().append(spreadsheetId, sheetName, body)
-                    .setValueInputOption("RAW")
-                    .execute()
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
-    }
-
-    suspend fun createMasterTemplate(): String? {
-        // ... (implementation)
-        return null
-    }
-
-    suspend fun attachScript(spreadsheetId: String, masterTemplateId: String) {
-        // ... (implementation)
     }
 }

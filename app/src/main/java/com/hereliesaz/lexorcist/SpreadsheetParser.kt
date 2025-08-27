@@ -1,55 +1,114 @@
 package com.hereliesaz.lexorcist
 
+import android.util.Log
 import com.hereliesaz.lexorcist.db.Allegation
-import com.hereliesaz.lexorcist.db.AllegationDao
-import com.hereliesaz.lexorcist.db.CaseDao
+import com.hereliesaz.lexorcist.db.Case
 import com.hereliesaz.lexorcist.db.FinancialEntry
-import com.hereliesaz.lexorcist.db.FinancialEntryDao
-import java.text.SimpleDateFormat
-import java.util.*
+// DAOs are no longer used
 
 class SpreadsheetParser(
-    private val caseDao: CaseDao,
-    private val allegationDao: AllegationDao,
-    private val financialEntryDao: FinancialEntryDao
+    private val googleApiService: GoogleApiService
 ) {
-    suspend fun parseAndStore(sheetsData: Map<String, List<List<Any>>>) {
-        val caseData = sheetsData["Case Info"]
-        val caseName = caseData?.find { it.getOrNull(0) == "Case Name" }?.getOrNull(1)?.toString() ?: "Imported Case"
-        val spreadsheetId = caseData?.find { it.getOrNull(0) == "Spreadsheet ID" }?.getOrNull(1)?.toString() ?: ""
+    private val TAG = "SpreadsheetParser"
 
-        val caseId = caseDao.insert(com.hereliesaz.lexorcist.db.Case(name = caseName, spreadsheetId = spreadsheetId))
+    suspend fun parseAndStore(sheetsData: Map<String, List<List<Any>>>): Case? {
+        // 1. Get Root Folder and Registry IDs
+        val appRootFolderId = googleApiService.getOrCreateAppRootFolder()
+        if (appRootFolderId == null) {
+            Log.e(TAG, "parseAndStore: Failed to get or create app root folder.")
+            return null
+        }
+        val caseRegistrySpreadsheetId = googleApiService.getOrCreateCaseRegistrySpreadsheetId(appRootFolderId)
+        if (caseRegistrySpreadsheetId == null) {
+            Log.e(TAG, "parseAndStore: Failed to get or create case registry spreadsheet.")
+            return null
+        }
 
+        // 2. Extract Case Name from imported sheet
+        val caseInfoSheet = sheetsData["Case Info"]
+        val importedCaseName = caseInfoSheet?.find { it.getOrNull(0)?.toString()?.equals("Case Name", ignoreCase = true) == true }
+            ?.getOrNull(1)?.toString() ?: "Imported Case ${System.currentTimeMillis()}"
+        Log.d(TAG, "parseAndStore: Determined case name from import data: $importedCaseName")
+
+        // 2.1 Check for Existing Case with the same name in the registry
+        val existingCases = googleApiService.getAllCasesFromRegistry(caseRegistrySpreadsheetId)
+        val duplicateCase = existingCases.find { it.name.equals(importedCaseName, ignoreCase = true) }
+        if (duplicateCase != null) {
+            Log.w(TAG, "parseAndStore: Case with name '$importedCaseName' already exists in the registry. Import aborted. Spreadsheet ID: ${duplicateCase.spreadsheetId}")
+            return null // Indicate that import was skipped due to duplicate
+        }
+
+        // 3. Create New Case Structure (since no duplicate was found)
+        Log.d(TAG, "parseAndStore: No existing case found with name '$importedCaseName'. Proceeding to create new case structure.")
+        val masterTemplateId = googleApiService.createMasterTemplate(appRootFolderId)
+        if (masterTemplateId == null) {
+            Log.e(TAG, "parseAndStore: Failed to create master template.")
+            // Decide if this is a fatal error for import, or proceed without a template
+        }
+        val newCaseFolderId = googleApiService.getOrCreateFolder(importedCaseName, appRootFolderId)
+        if (newCaseFolderId == null) {
+            Log.e(TAG, "parseAndStore: Failed to create folder for new case: $importedCaseName")
+            return null
+        }
+        val newCaseSpreadsheetId = googleApiService.createSpreadsheet(importedCaseName, newCaseFolderId)
+        if (newCaseSpreadsheetId == null) {
+            Log.e(TAG, "parseAndStore: Failed to create spreadsheet for new case: $importedCaseName")
+            return null
+        }
+        masterTemplateId?.let {
+            googleApiService.attachScript(newCaseSpreadsheetId, it, newCaseFolderId)
+        }
+        Log.d(TAG, "parseAndStore: Created new case structure: Folder ID $newCaseFolderId, Spreadsheet ID $newCaseSpreadsheetId")
+
+        // 4. Add to Case Registry
+        val newCase = Case(name = importedCaseName, spreadsheetId = newCaseSpreadsheetId, masterTemplateId = masterTemplateId ?: "")
+        val addedToRegistry = googleApiService.addCaseToRegistry(caseRegistrySpreadsheetId, newCase)
+        if (!addedToRegistry) {
+            Log.w(TAG, "parseAndStore: Failed to add new case '$importedCaseName' to registry. Proceeding with data import to its sheet, but it won't be listed until registry issue is fixed.")
+            // This is a problematic state. The case files are created but not registered.
+            // For now, we continue to populate, but this might need better error handling or cleanup.
+        }
+
+        // 5. Parse and Store Allegations into the new case's spreadsheet
         val allegationsSheet = sheetsData["Exhibit Matrix - Allegations"]
-        allegationsSheet?.drop(1)?.forEach { row ->
-            val allegationText = row.getOrNull(3)?.toString() ?: ""
-            if (allegationText.isNotBlank()) {
-                val allegationId = allegationDao.insert(Allegation(caseId = caseId.toInt(), text = allegationText))
-
-                // Now you can parse other sheets and link them to this allegationId
+        allegationsSheet?.drop(1)?.forEach { row -> // Assuming first row is header
+            val allegationText = row.getOrNull(3)?.toString()
+            if (!allegationText.isNullOrBlank()) {
+                val success = googleApiService.addAllegationToCase(newCaseSpreadsheetId, allegationText)
+                if (!success) {
+                    Log.w(TAG, "parseAndStore: Failed to add allegation: '$allegationText' to $newCaseSpreadsheetId")
+                }
             }
         }
 
+        // 6. Parse and Store Financial Entries into the new case's spreadsheet
         val damagesSheet = sheetsData["Damages Analysis"]
-        damagesSheet?.drop(1)?.forEach { row ->
-            val plaintiff = row.getOrNull(0)?.toString()
-            val category = row.getOrNull(1)?.toString()
-            val amount = row.getOrNull(2)?.toString()
+        damagesSheet?.drop(1)?.forEach { row -> // Assuming first row is header
+            try {
+                val plaintiff = row.getOrNull(0)?.toString()
+                val category = row.getOrNull(1)?.toString()
+                val amountStr = row.getOrNull(2)?.toString()
 
-            if (plaintiff != null && category != null && amount != null) {
-                // Here you would ideally link this to a specific plaintiff entity
-                // For now, we'll just create a financial entry
-                financialEntryDao.insert(
-                    FinancialEntry(
-                        caseId = caseId.toInt(),
-                        amount = amount,
+                if (plaintiff != null && category != null && amountStr != null) {
+                    val financialEntry = FinancialEntry(
+                        caseId = newCase.id, // This id is local and not the primary key in Sheets
+                        amount = amountStr,
                         timestamp = System.currentTimeMillis(),
-                        sourceDocument = "Damages Analysis Sheet",
+                        sourceDocument = "Imported - Damages Analysis Sheet",
                         documentDate = System.currentTimeMillis(),
-                        category = category
+                        category = category,
+                        allegationId = null
                     )
-                )
+                    val success = googleApiService.addFinancialEntryToCase(newCaseSpreadsheetId, financialEntry)
+                    if (!success) {
+                        Log.w(TAG, "parseAndStore: Failed to add financial entry: $financialEntry to $newCaseSpreadsheetId")
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "parseAndStore: Error parsing financial entry row: $row", e)
             }
         }
+        Log.i(TAG, "parseAndStore: Finished importing data for case: $importedCaseName, Spreadsheet ID: $newCaseSpreadsheetId")
+        return newCase // Return the newly created Case object
     }
 }

@@ -1,14 +1,10 @@
 package com.hereliesaz.lexorcist.db
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
-
-@Entity(tableName = "financial_entries")
+// Room annotations removed
 data class FinancialEntry(
-    @PrimaryKey(autoGenerate = true)
-    val id: Int = 0,
-    val caseId: Int,
-    val allegationId: Int? = null, // Foreign key to Allegation
+    val id: Int = 0, // No longer an auto-generated PrimaryKey by Room.
+    val caseId: Int, // Represents the link to a Case.
+    val allegationId: Int? = null, // Represents the link to an Allegation.
     val amount: String,
     val timestamp: Long,
     val sourceDocument: String,
