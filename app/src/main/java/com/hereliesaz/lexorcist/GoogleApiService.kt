@@ -8,7 +8,7 @@ import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.services.drive.Drive
 import com.google.api.services.drive.model.File as DriveFile
 import com.google.api.services.script.Script
-import com.google.api.services.script.model.Content as ScriptContent 
+import com.google.api.services.script.model.Content as ScriptContent
 import com.google.api.services.script.model.CreateProjectRequest
 import com.google.api.services.script.model.File as ScriptPlatformFile
 import com.google.api.services.sheets.v4.Sheets
@@ -303,7 +303,7 @@ class GoogleApiService(
             false
         }
     }
-    
+
     suspend fun uploadFile(file: java.io.File, folderId: String, mimeType: String): DriveFile? = withContext(Dispatchers.IO) {
         try {
             val fileMetadata = DriveFile().apply { name = file.name; parents = listOf(folderId) }
