@@ -1,12 +1,6 @@
 package com.hereliesaz.lexorcist.components
 
 import androidx.compose.foundation.Image
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Timeline
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.painterResource
 import com.hereliesaz.aznavrail.model.NavItem
@@ -18,60 +12,65 @@ import com.hereliesaz.aznavrail.ui.AzNavRail
 import com.hereliesaz.lexorcist.R
 
 import androidx.compose.material3.Icon
+import androidx.compose.ui.platform.LocalContext
 
 @Composable
-fun AppNavRail(onNavigate: (String) -> Unit) {
+fun AppNavRail() {
+    val context = LocalContext.current
+    val appName = context.packageManager.getApplicationLabel(context.applicationInfo).toString()
     AzNavRail(
         appName = "The Lexorcist",
-        header = NavRailHeader {
-            Image(
-                painter = painterResource(id = R.mipmap.ic_launcher),
-                contentDescription = "App Icon"
-            )
-        },
-        menuSections = listOf(
-            NavRailMenuSection(
-                title = "Main",
-                items = listOf(
-                    NavItem(
-                        text = "Home",
-                        icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
-                        data = NavItemData.Action(predefinedAction = PredefinedAction.HOME),
-                        showOnRail = true
-                    ),
-                    NavItem(
-                        text = "Cases",
-                        icon = { Icon(Icons.Default.List, contentDescription = "Cases") },
-                        data = NavItemData.Action(onClick = { onNavigate("cases") }),
-                        showOnRail = true
-                    ),
-                    NavItem(
-                        text = "Add Evidence",
-                        icon = { Icon(Icons.Default.Add, contentDescription = "Add Evidence") },
-                        data = NavItemData.Action(onClick = { onNavigate("add_evidence") }),
-                        showOnRail = true
-                    ),
-//                    NavItem(
-//                        text = "Timeline",
-//                        icon = { Icon(Icons.Default.Timeline, contentDescription = "Timeline") },
-//                        data = NavItemData.Action(onClick = { onNavigate("timeline") }),
-//                        showOnRail = true
-//                    ),
-                    NavItem(
-                        text = "Settings",
-                        icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
-                        data = NavItemData.Action(predefinedAction = PredefinedAction.SETTINGS),
-                        showOnRail = true
-                    )
-                )
-            )
-        ),
+        useAppIconAsHeader = true,
+        header = NavRailHeader {        },
         onPredefinedAction = { action ->
             when (action) {
                 PredefinedAction.HOME -> onNavigate("home")
                 PredefinedAction.SETTINGS -> onNavigate("settings")
                 else -> {}
             }
-        }
+        },
+        menuSections = listOf(
+            NavRailMenuSection(
+                title = "",
+                items = listOf(
+
+                            NavItem(
+                        text = "Cases",
+                        data = NavItemData.Action(onClick = { onNavigate("cases") }),
+                        showOnRail = false
+                    ),
+                    NavItem(
+                        text = "Timeline",
+                        data = NavItemData.Action(onClick = { onNavigate("timeline") }),
+                        showOnRail = false
+                    ),
+                    NavItem(
+                        text = "Evidence",
+                        data = NavItemData.Action(onClick = { onNavigate("evidence") }),
+                        showOnRail = false
+                    ),
+                    NavItem(
+                        text = "Add",
+                        data = NavItemData.Action(onClick = { onNavigate("add_evidence") }),
+                        showOnRail = true
+                    ),
+                    NavItem(
+                        text = "Settings",
+                        data = NavItemData.Action(predefinedAction = PredefinedAction.SETTINGS),
+                        showOnRail = false
+                    )
+                )
+            )
+        ),
+        footerItems = listOf(
+            NavItem(
+                text = "About",
+                data = NavItemData.Action(predefinedAction = PredefinedAction.ABOUT)
+                ),
+            NavItem(
+                text = "Feedback",
+                data = NavItemData.Action(predefinedAction = PredefinedAction.FEEDBACK)
+        )
+    )
     )
 }

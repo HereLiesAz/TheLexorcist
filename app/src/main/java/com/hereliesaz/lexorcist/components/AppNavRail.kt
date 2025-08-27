@@ -1,46 +1,98 @@
 package com.hereliesaz.lexorcist.components
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationRail
-import androidx.compose.material3.NavigationRailItem
-import androidx.compose.material3.Text
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
+import com.hereliesaz.aznavrail.model.NavItem
+import com.hereliesaz.aznavrail.model.NavItemData
+import com.hereliesaz.aznavrail.model.NavRailHeader
+import com.hereliesaz.aznavrail.model.NavRailMenuSection
+import com.hereliesaz.aznavrail.model.PredefinedAction
+import com.hereliesaz.aznavrail.ui.AzNavRail
+import androidx.core.net.toUri
 
 @Composable
 fun AppNavRail(onNavigate: (String) -> Unit) {
-    var selectedItem by remember { mutableStateOf("home") }
-    val items = listOf("home", "cases", "add_evidence", "timeline", "settings")
-    val icons = listOf(
-        Icons.Default.Home,
-        Icons.Default.List,
-        Icons.Default.Add,
-        Icons.Default.Schedule,
+    val context = LocalContext.current
+    val appName = context.packageManager.getApplicationLabel(context.applicationInfo).toString()
 
-        Icons.Default.Settings
-    )
-    val labels = listOf("Home", "Cases", "Add Evidence", "Timeline", "Settings")
-
-    NavigationRail {
-        items.forEachIndexed { index, item ->
-            NavigationRailItem(
-                icon = { Icon(icons[index], contentDescription = labels[index]) },
-                label = { Text(labels[index]) },
-                selected = selectedItem == item,
-                onClick = {
-                    selectedItem = item
-                    onNavigate(item)
+    val items = listOf("home", "cases", "add_evidence", "", "")
+    // In your screen's Composable, e.g., inside a Row
+    AzNavRail(
+        appName = appName,
+        useAppIconAsHeader = true,
+        header = NavRailHeader { /* ... */ },
+        onPredefinedAction = { action ->
+            when (action) {
+                PredefinedAction.HOME -> { /* Navigate to Home */
                 }
+                PredefinedAction.ABOUT -> {
+                    val intent = Intent(
+                        Intent.ACTION_VIEW,
+                        "https://github.com/hereliesaz/$appName".toUri()
+                    )
+                    context.startActivity(intent)
+                }
+                PredefinedAction.FEEDBACK -> {
+                    val intent = Intent(Intent.ACTION_SENDTO).apply {
+                        data = "mailto:hereliesaz@gmail.com".toUri()
+                        putExtra(Intent.EXTRA_SUBJECT, "$appName - Feedback")
+                    }
+                    context.startActivity(intent)
+                }
+                else -> {}
+            }
+        },
+        menuSections = listOf(
+            NavRailMenuSection(
+                title = "",
+                items = listOf(
+                    NavItem(
+                        text = "Home",
+                        data = NavItemData.Action(predefinedAction = PredefinedAction.HOME),
+                        showOnRail = true
+                    ),
+                    NavItem(
+                        text = "Cases",
+                        data = NavItemData.Toggle(
+                            data = NavItemData.Action(predefinedAction = PredefinedAction.HOME),
+                            showOnRail = true
+                        ),
+                        NavItem(
+                            text = "Evidence",
+                            data = NavItemData.Action(predefinedAction = PredefinedAction.HOME),
+                            showOnRail = true
+                        ),
+                        NavItem(
+                            text = "Timeline",
+                            data = NavItemData.Action(predefinedAction = PredefinedAction.HOME),
+                            showOnRail = false
+                        ),
+                        NavItem(
+                            text = "settings",
+                            data = NavItemData.Action(predefinedAction = PredefinedAction.HOME),
+                            showOnRail = false
+                        ),
+                        showOnRail = true,
+                        railButtonText = "On"
+                    ),
+                )
             )
-        }
-    }
+        ),
+        footerItems = listOf(
+            NavItem(
+                text = "About",
+                data = NavItemData.Action(predefinedAction = PredefinedAction.ABOUT)
+            ),
+            NavItem(
+                text = "Feedback",
+                data = NavItemData.Action(predefinedAction = PredefinedAction.FEEDBACK)
+            )
+        )
+    )
 }
