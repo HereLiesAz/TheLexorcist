@@ -10,7 +10,7 @@ import androidx.lifecycle.viewModelScope
 // import com.hereliesaz.lexorcist.db.AppDatabase // Removed unused import
 import com.hereliesaz.lexorcist.db.Allegation
 import com.hereliesaz.lexorcist.db.Case
-import com.hereliesaz.lexorcist.db.FinancialEntry
+import com.hereliesaz.lexorcist.model.FinancialEntry
 import com.hereliesaz.lexorcist.model.SheetFilter
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -167,14 +167,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    private suspend fun loadFinancialEntriesForSelectedCase(spreadsheetId: String, caseIdForAssociation: Int) {
+    private suspend fun loadFinancialEntriesForSelectedCase(spreadsheetId: String) {
         val apiService = _googleApiService.value
         if (apiService == null || spreadsheetId.isBlank()) {
             _financialEntries.value = emptyList(); return
         }
         try {
-            _financialEntries.value = apiService.getFinancialEntriesForCase(spreadsheetId, caseIdForAssociation)
-            Log.d(TAG, "loadFinancialEntriesForSelectedCase: Loaded ${_financialEntries.value.size} financial entries for case ID $caseIdForAssociation.")
+            _financialEntries.value = apiService.getFinancialEntriesForCase(spreadsheetId)
+            Log.d(TAG, "loadFinancialEntriesForSelectedCase: Loaded ${_financialEntries.value.size} financial entries.")
         } catch (e: Exception) {
             Log.e(TAG, "loadFinancialEntriesForSelectedCase: Error loading financial entries for $spreadsheetId", e)
             _financialEntries.value = emptyList()
@@ -209,7 +209,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 if (currentCase.spreadsheetId.isNotBlank()) {
                     loadFiltersFromSheet(currentCase.spreadsheetId)
                     loadAllegationsForSelectedCase(currentCase.spreadsheetId, currentCase.id)
-                    loadFinancialEntriesForSelectedCase(currentCase.spreadsheetId, currentCase.id)
+                    loadFinancialEntriesForSelectedCase(currentCase.spreadsheetId)
                 }
             }
         }
@@ -287,7 +287,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             viewModelScope.launch {
                 loadFiltersFromSheet(case.spreadsheetId)
                 loadAllegationsForSelectedCase(case.spreadsheetId, case.id)
-                loadFinancialEntriesForSelectedCase(case.spreadsheetId, case.id)
+                loadFinancialEntriesForSelectedCase(case.spreadsheetId)
             }
         } else {
             _filters.value = emptyList()
@@ -343,13 +343,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             Log.w(TAG, "addFinancialEntry: Missing data for adding financial entry.")
             return
         }
-        // Ensure the entry is associated with the selected case ID
-        val entryWithCaseId = entry.copy(caseId = currentCase.id)
         viewModelScope.launch {
             try {
-                if (apiService.addFinancialEntryToCase(currentCase.spreadsheetId, entryWithCaseId)) {
+                if (apiService.addFinancialEntryToCase(currentCase.spreadsheetId, entry)) {
                     Log.d(TAG, "addFinancialEntry: Entry added for case ID ${currentCase.id}.")
-                    loadFinancialEntriesForSelectedCase(currentCase.spreadsheetId, currentCase.id)
+                    loadFinancialEntriesForSelectedCase(currentCase.spreadsheetId)
                 } else {
                     Log.w(TAG, "addFinancialEntry: Failed to add entry for case ID ${currentCase.id}.")
                 }

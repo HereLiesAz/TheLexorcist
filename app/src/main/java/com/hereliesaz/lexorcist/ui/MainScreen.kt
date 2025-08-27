@@ -42,7 +42,7 @@ fun MainScreen(
         }
         LazyColumn(modifier = Modifier.weight(1f)) {
             items(evidenceList) { evidence ->
-                Text(text = evidence.text, modifier = Modifier.padding(8.dp))
+                Text(text = evidence.content, modifier = Modifier.padding(8.dp))
             }
         }
     }

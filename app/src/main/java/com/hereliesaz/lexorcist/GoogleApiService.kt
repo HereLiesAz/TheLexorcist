@@ -15,7 +15,7 @@ import com.google.api.services.sheets.v4.Sheets
 import com.google.api.services.sheets.v4.model.*
 import com.hereliesaz.lexorcist.db.Allegation
 import com.hereliesaz.lexorcist.db.Case
-import com.hereliesaz.lexorcist.db.FinancialEntry // Import FinancialEntry data class
+import com.hereliesaz.lexorcist.model.FinancialEntry
 import com.hereliesaz.lexorcist.utils.FolderManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -159,31 +159,29 @@ class GoogleApiService(
         }
     }
 
-    suspend fun getFinancialEntriesForCase(caseSpreadsheetId: String, caseIdForAssociation: Int): List<FinancialEntry> = withContext(Dispatchers.IO) {
+    suspend fun getFinancialEntriesForCase(caseSpreadsheetId: String): List<FinancialEntry> = withContext(Dispatchers.IO) {
         val entries = mutableListOf<FinancialEntry>()
         if (caseSpreadsheetId.isBlank()) return@withContext entries
         try {
             val allSheetData = readSpreadsheet(caseSpreadsheetId)
             val sheetValues = allSheetData?.get(FINANCIAL_ENTRIES_SHEET_NAME)
-            sheetValues?.drop(1)?.forEachIndexed { index, row -> // drop(1) to skip header
+            sheetValues?.drop(1)?.forEach { row -> // drop(1) to skip header
                 try {
-                    val amount = row.getOrNull(0)?.toString() ?: "0"
+                    val amount = row.getOrNull(0)?.toString()?.toDoubleOrNull() ?: 0.0
                     val timestamp = row.getOrNull(1)?.toString()?.toLongOrNull() ?: System.currentTimeMillis()
                     val sourceDocument = row.getOrNull(2)?.toString() ?: ""
                     val documentDate = row.getOrNull(3)?.toString()?.toLongOrNull() ?: System.currentTimeMillis()
-                    val category = row.getOrNull(4)?.toString() ?: "Uncategorized"
-                    val allegationId = row.getOrNull(5)?.toString()?.toIntOrNull()
+                    val allegationId = row.getOrNull(4)?.toString() ?: ""
 
-                    entries.add(FinancialEntry(
-                        id = index, // Using row index as a simple ID for now
-                        caseId = caseIdForAssociation,
-                        allegationId = allegationId,
+                    entries.add(
+                        FinancialEntry(
                         amount = amount,
-                        timestamp = timestamp,
+                        timestamp = java.util.Date(timestamp),
                         sourceDocument = sourceDocument,
-                        documentDate = documentDate,
-                        category = category
-                    ))
+                        documentDate = java.util.Date(documentDate),
+                        allegationId = allegationId
+                    )
+                    )
                 } catch (e: Exception) {
                     e.printStackTrace() // Log error during row parsing
                 }
@@ -199,17 +197,16 @@ class GoogleApiService(
             val sheetExists = sheetsService.spreadsheets().get(caseSpreadsheetId).execute().sheets?.any { it.properties?.title == FINANCIAL_ENTRIES_SHEET_NAME } == true
             if (!sheetExists) {
                 addSheet(caseSpreadsheetId, FINANCIAL_ENTRIES_SHEET_NAME)
-                val header = listOf(listOf("Amount", "Timestamp", "Source Document", "Document Date", "Category", "Allegation ID"))
+                val header = listOf(listOf("Amount", "Timestamp", "Source Document", "Document Date", "Allegation ID"))
                 appendData(caseSpreadsheetId, FINANCIAL_ENTRIES_SHEET_NAME, header)
             }
 
             val values = listOf(listOf(
                 entry.amount,
-                entry.timestamp.toString(),
+                entry.timestamp.time,
                 entry.sourceDocument,
-                entry.documentDate.toString(),
-                entry.category,
-                entry.allegationId?.toString() ?: "" // Store Allegation ID as string, empty if null
+                entry.documentDate.time,
+                entry.allegationId
             ))
             appendData(caseSpreadsheetId, FINANCIAL_ENTRIES_SHEET_NAME, values) != null
         } catch (e: Exception) {

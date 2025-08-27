@@ -10,9 +10,9 @@ import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccoun
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
-import com.hereliesaz.lexorcist.data.Evidence
+import com.hereliesaz.lexorcist.model.Evidence
 import com.hereliesaz.lexorcist.data.EvidenceRepository
-import com.hereliesaz.lexorcist.data.TaggedEvidence
+import com.hereliesaz.lexorcist.model.TaggedEvidence
 import com.hereliesaz.lexorcist.service.GoogleApiService
 import com.hereliesaz.lexorcist.service.ScriptRunner
 import com.itextpdf.kernel.pdf.PdfDocument
@@ -21,6 +21,7 @@ import com.itextpdf.kernel.pdf.canvas.parser.PdfTextExtractor
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import java.util.Date
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.apache.poi.hwpf.HWPFDocument
 import org.apache.poi.hwpf.extractor.WordExtractor
@@ -57,7 +58,7 @@ class MainViewModel : ViewModel() {
         return try {
             context.contentResolver.openInputStream(uri)?.bufferedReader()?.use {
                 val text = it.readText()
-                Evidence(text)
+                Evidence(content = text, timestamp = Date().time, sourceDocument = uri.toString(), documentDate = Date().time)
             }
         } catch (e: Exception) {
             Log.e("MainViewModel", "Failed to parse text file", e)
@@ -77,7 +78,7 @@ class MainViewModel : ViewModel() {
                     }
                 }
                 pdfDocument.close()
-                Evidence(text)
+                Evidence(content = text, timestamp = Date().time, sourceDocument = uri.toString(), documentDate = Date().time)
             }
         } catch (e: Exception) {
             Log.e("MainViewModel", "Failed to parse PDF file", e)
@@ -92,7 +93,7 @@ class MainViewModel : ViewModel() {
             suspendCancellableCoroutine { continuation ->
                 recognizer.process(inputImage)
                     .addOnSuccessListener { visionText ->
-                        continuation.resume(Evidence(visionText.text))
+                        continuation.resume(Evidence(content = visionText.text, timestamp = Date().time, sourceDocument = uri.toString(), documentDate = Date().time))
                     }
                     .addOnFailureListener { e ->
                         Log.e("MainViewModel", "Failed to parse image file", e)
@@ -122,7 +123,7 @@ class MainViewModel : ViewModel() {
                     }
                 }
                 workbook.close()
-                Evidence(text)
+                Evidence(content = text, timestamp = Date().time, sourceDocument = uri.toString(), documentDate = Date().time)
             }
         } catch (e: Exception) {
             Log.e("MainViewModel", "Failed to parse spreadsheet file", e)
@@ -134,15 +135,15 @@ class MainViewModel : ViewModel() {
         return try {
             context.contentResolver.openInputStream(uri)?.let { inputStream ->
                 val text = if (context.contentResolver.getType(uri) == "application/msword") {
-                    val doc = HWPFDocument(inputStream)
-                    val extractor = WordExtractor(doc)
+                    val doc = org.apache.poi.hwpf.HWPFDocument(inputStream)
+                    val extractor = org.apache.poi.hwpf.extractor.WordExtractor(doc)
                     extractor.text
                 } else {
-                    val docx = XWPFDocument(inputStream)
-                    val extractor = XWPFWordExtractor(docx)
+                    val docx = org.apache.poi.xwpf.usermodel.XWPFDocument(inputStream)
+                    val extractor = org.apache.poi.xwpf.extractor.XWPFWordExtractor(docx)
                     extractor.text
                 }
-                Evidence(text)
+                Evidence(content = text, timestamp = Date().time, sourceDocument = uri.toString(), documentDate = Date().time)
             }
         } catch (e: Exception) {
             Log.e("MainViewModel", "Failed to parse document file", e)
@@ -165,7 +166,7 @@ class MainViewModel : ViewModel() {
                     val bodyIndex = it.getColumnIndex(android.provider.Telephony.Sms.BODY)
                     do {
                         val body = it.getString(bodyIndex)
-                        smsList.add(Evidence(body))
+                        smsList.add(Evidence(content = body, timestamp = Date().time, sourceDocument = "SMS", documentDate = Date().time))
                     } while (it.moveToNext())
                 }
             }
@@ -175,6 +176,7 @@ class MainViewModel : ViewModel() {
 
     private var googleApiService: GoogleApiService? = null
 
+    /*
     fun onSignInResult(account: GoogleSignInAccount, context: Context) {
         viewModelScope.launch {
             val credential = GoogleAccountCredential
@@ -190,9 +192,9 @@ class MainViewModel : ViewModel() {
                 val spreadsheetId = it.createSpreadsheet("Lexorcist Export")
                 spreadsheetId?.let { id ->
                     val data = _evidenceList.value.map { evidence ->
-                        listOf(evidence.text)
+                        listOf(evidence.content)
                     }
-                    it.writeData(id, data)
+                    it.appendData(id, "Sheet1", data)
                 }
             }
         }
@@ -209,9 +211,10 @@ class MainViewModel : ViewModel() {
         viewModelScope.launch {
             val taggedList = _evidenceList.value.map { evidence ->
                 val parser = scriptRunner.runScript(script, evidence)
-                TaggedEvidence(evidence, parser.getTags())
+                TaggedEvidence(id = evidence.id.toString(), tags = parser.getTags(), content = evidence.content)
             }
             EvidenceRepository.setTaggedEvidence(taggedList)
         }
     }
+    */
 }
