@@ -58,7 +58,7 @@ class MainViewModel : ViewModel() {
         return try {
             context.contentResolver.openInputStream(uri)?.bufferedReader()?.use {
                 val text = it.readText()
-                Evidence(content = text, timestamp = System.currentTimeMillis(), sourceDocument = uri.toString(), documentDate = System.currentTimeMillis())
+                Evidence(id = 0, caseId = 0, allegationId = 0, content = text, timestamp = System.currentTimeMillis(), sourceDocument = "", documentDate = System.currentTimeMillis(), tags = emptyList())
             }
         } catch (e: Exception) {
             Log.e("MainViewModel", "Failed to parse text file", e)
@@ -70,7 +70,7 @@ class MainViewModel : ViewModel() {
         return try {
             context.contentResolver.openInputStream(uri)?.let { inputStream ->
                 val pdfReader = PdfReader(inputStream)
-                val pdfDocument = PdfDocument(pdfDocument)
+                val pdfDocument = PdfDocument(pdfReader)
                 val text = buildString {
                     for (i in 1..pdfDocument.numberOfPages) {
                         val page = pdfDocument.getPage(i)
@@ -78,7 +78,7 @@ class MainViewModel : ViewModel() {
                     }
                 }
                 pdfDocument.close()
-                Evidence(content = text, timestamp = System.currentTimeMillis(), sourceDocument = uri.toString(), documentDate = System.currentTimeMillis())
+                Evidence(id = 0, caseId = 0, allegationId = 0, content = text, timestamp = System.currentTimeMillis(), sourceDocument = "", documentDate = System.currentTimeMillis(), tags = emptyList())
             }
         } catch (e: Exception) {
             Log.e("MainViewModel", "Failed to parse PDF file", e)
@@ -93,7 +93,7 @@ class MainViewModel : ViewModel() {
             suspendCancellableCoroutine { continuation ->
                 recognizer.process(inputImage)
                     .addOnSuccessListener { visionText ->
-                        continuation.resume(Evidence(content = visionText.text, timestamp = System.currentTimeMillis(), sourceDocument = uri.toString(), documentDate = System.currentTimeMillis()))
+                        continuation.resume(Evidence(id = 0, caseId = 0, allegationId = 0, content = visionText.text, timestamp = System.currentTimeMillis(), sourceDocument = "", documentDate = System.currentTimeMillis(), tags = emptyList()))
                     }
                     .addOnFailureListener { e ->
                         Log.e("MainViewModel", "Failed to parse image file", e)
@@ -123,7 +123,7 @@ class MainViewModel : ViewModel() {
                     }
                 }
                 workbook.close()
-                Evidence(content = text, timestamp = System.currentTimeMillis(), sourceDocument = uri.toString(), documentDate = System.currentTimeMillis())
+                Evidence(id = 0, caseId = 0, allegationId = 0, content = text, timestamp = System.currentTimeMillis(), sourceDocument = "", documentDate = System.currentTimeMillis(), tags = emptyList())
             }
         } catch (e: Exception) {
             Log.e("MainViewModel", "Failed to parse spreadsheet file", e)
@@ -143,7 +143,7 @@ class MainViewModel : ViewModel() {
                     val extractor = XWPFWordExtractor(docx)
                     extractor.text
                 }
-                Evidence(content = text, timestamp = System.currentTimeMillis(), sourceDocument = uri.toString(), documentDate = System.currentTimeMillis())
+                Evidence(id = 0, caseId = 0, allegationId = 0, content = text, timestamp = System.currentTimeMillis(), sourceDocument = "", documentDate = System.currentTimeMillis(), tags = emptyList())
             }
         } catch (e: Exception) {
             Log.e("MainViewModel", "Failed to parse document file", e)
@@ -166,7 +166,7 @@ class MainViewModel : ViewModel() {
                     val bodyIndex = it.getColumnIndex(android.provider.Telephony.Sms.BODY)
                     do {
                         val body = it.getString(bodyIndex)
-                        smsList.add(Evidence(content = body, timestamp = System.currentTimeMillis(), sourceDocument = "SMS", documentDate = System.currentTimeMillis()))
+                        smsList.add(Evidence(id = 0, caseId = 0, allegationId = 0, content = body, timestamp = System.currentTimeMillis(), sourceDocument = "", documentDate = System.currentTimeMillis(), tags = emptyList()))
                     } while (it.moveToNext())
                 }
             }
@@ -176,8 +176,7 @@ class MainViewModel : ViewModel() {
 
     private var googleApiService: GoogleApiService? = null
 
-    // Updated to accept idToken, email, and applicationName
-    fun onSignInResult(idToken: String?, email: String?, context: Context, applicationName: String) {
+    fun onSignInResult(account: GoogleSignInAccount, context: Context) {
         viewModelScope.launch {
             if (email != null) { // Or idToken, depending on GoogleAccountCredential needs
                 val credential = GoogleAccountCredential
@@ -196,14 +195,14 @@ class MainViewModel : ViewModel() {
     fun exportToSheet() {
         viewModelScope.launch {
             googleApiService?.let {
-                val spreadsheetId = it.createSpreadsheet("Lexorcist Export")
+                val spreadsheetId = it.createSpreadsheet("Lexorcist Export", null)
                 spreadsheetId?.let { id ->
                     val data = _evidenceList.value.map { evidence ->
-                        listOf(evidence.content) // Changed from evidence.text
+                        listOf(evidence.content)
                     }
                     // Assuming GoogleApiService has a method like writeData or similar
                     // This might need to be appendData or another specific method from GoogleApiService
-                    // For now, let's assume it.writeData(id, "Sheet1", data) or similar. 
+                    // For now, let's assume it.writeData(id, "Sheet1", data) or similar.
                     // If writeData is not a method, we might need to use appendData or clarify its signature.
                     // Checking GoogleApiService.kt, it has appendData(spreadsheetId, sheetTitle, values)
                     // and also createSpreadsheet which only returns an ID, not creating a default sheet.
@@ -228,8 +227,8 @@ class MainViewModel : ViewModel() {
             val taggedList = _evidenceList.value.map { evidence ->
                 val parserResult = scriptRunner.runScript(script, evidence) // parserResult is ScriptRunner.Parser
                 TaggedEvidence(
-                    id = evidence, 
-                    tags = parserResult.tags, 
+                    id = evidence,
+                    tags = parserResult.tags,
                     content = evidence.content // Using original evidence content for TaggedEvidence content
                 )
             }
