@@ -14,16 +14,18 @@ import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.Scope
 import com.hereliesaz.lexorcist.ui.theme.LexorcistTheme
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
+import com.hereliesaz.lexorcist.viewmodel.DataReviewViewModel // Added import
 
 class MainActivity : ComponentActivity() {
 
-    private val viewModel: MainViewModel by viewModels()
+    private val mainViewModel: MainViewModel by viewModels()
+    private val dataReviewViewModel: DataReviewViewModel by viewModels() // Added DataReviewViewModel instance
 
     private val signInLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
         try {
             val account = task.getResult(ApiException::class.java)!!
-            viewModel.onSignInResult(account, this)
+            mainViewModel.onSignInResult(account, this) // Assuming mainViewModel handles this
         } catch (e: ApiException) {
             // Handle sign in error
         }
@@ -39,13 +41,14 @@ class MainActivity : ComponentActivity() {
                     composable("main") {
                         MainScreen(
                             navController = navController,
-                            mainViewModel = viewModel,
+                            mainViewModel = mainViewModel,
                             onSignInClick = { signIn() },
-                            onExportClick = { viewModel.exportToSheet() }
+                            onExportClick = { mainViewModel.exportToSheet() }
                         )
                     }
                     composable("data_review") {
-                        DataReviewScreen()
+                        // Passed the dataReviewViewModel instance
+                        DataReviewScreen(viewModel = dataReviewViewModel) 
                     }
                 }
             }

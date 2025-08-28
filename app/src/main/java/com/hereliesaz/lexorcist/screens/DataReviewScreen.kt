@@ -45,8 +45,8 @@ fun TaggedEvidenceItem(
 ) {
     Card(modifier = Modifier.padding(8.dp)) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(text = "Evidence: ${evidence.evidence.text}")
-            Text(text = "Tags: ${evidence.tags}")
+            Text(text = "Evidence: ${evidence.id.content}") // Changed from evidence.evidence.text
+            Text(text = "Tags: ${evidence.tags.joinToString()}") // Added joinToString() for display
             Text(text = "Relevance: ${evidence.relevance}")
             Slider(
                 value = evidence.relevance.toFloat(),

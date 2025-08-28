@@ -58,7 +58,7 @@ class MainViewModel : ViewModel() {
         return try {
             context.contentResolver.openInputStream(uri)?.bufferedReader()?.use {
                 val text = it.readText()
-                Evidence(text)
+                Evidence(content = text, timestamp = System.currentTimeMillis(), sourceDocument = uri.toString(), documentDate = System.currentTimeMillis())
             }
         } catch (e: Exception) {
             Log.e("MainViewModel", "Failed to parse text file", e)
@@ -78,7 +78,7 @@ class MainViewModel : ViewModel() {
                     }
                 }
                 pdfDocument.close()
-                Evidence(text)
+                Evidence(content = text, timestamp = System.currentTimeMillis(), sourceDocument = uri.toString(), documentDate = System.currentTimeMillis())
             }
         } catch (e: Exception) {
             Log.e("MainViewModel", "Failed to parse PDF file", e)
@@ -93,7 +93,7 @@ class MainViewModel : ViewModel() {
             suspendCancellableCoroutine { continuation ->
                 recognizer.process(inputImage)
                     .addOnSuccessListener { visionText ->
-                        continuation.resume(Evidence(visionText.text))
+                        continuation.resume(Evidence(content = visionText.text, timestamp = System.currentTimeMillis(), sourceDocument = uri.toString(), documentDate = System.currentTimeMillis()))
                     }
                     .addOnFailureListener { e ->
                         Log.e("MainViewModel", "Failed to parse image file", e)
@@ -123,7 +123,7 @@ class MainViewModel : ViewModel() {
                     }
                 }
                 workbook.close()
-                Evidence(text)
+                Evidence(content = text, timestamp = System.currentTimeMillis(), sourceDocument = uri.toString(), documentDate = System.currentTimeMillis())
             }
         } catch (e: Exception) {
             Log.e("MainViewModel", "Failed to parse spreadsheet file", e)
@@ -143,7 +143,7 @@ class MainViewModel : ViewModel() {
                     val extractor = XWPFWordExtractor(docx)
                     extractor.text
                 }
-                Evidence(text)
+                Evidence(content = text, timestamp = System.currentTimeMillis(), sourceDocument = uri.toString(), documentDate = System.currentTimeMillis())
             }
         } catch (e: Exception) {
             Log.e("MainViewModel", "Failed to parse document file", e)
@@ -166,7 +166,7 @@ class MainViewModel : ViewModel() {
                     val bodyIndex = it.getColumnIndex(android.provider.Telephony.Sms.BODY)
                     do {
                         val body = it.getString(bodyIndex)
-                        smsList.add(Evidence(body))
+                        smsList.add(Evidence(content = body, timestamp = System.currentTimeMillis(), sourceDocument = "SMS", documentDate = System.currentTimeMillis()))
                     } while (it.moveToNext())
                 }
             }
@@ -191,7 +191,7 @@ class MainViewModel : ViewModel() {
                 val spreadsheetId = it.createSpreadsheet("Lexorcist Export")
                 spreadsheetId?.let { id ->
                     val data = _evidenceList.value.map { evidence ->
-                        listOf(evidence.text)
+                        listOf(evidence.content) // Changed from evidence.text
                     }
                     it.writeData(id, data)
                 }
@@ -209,10 +209,14 @@ class MainViewModel : ViewModel() {
     fun processEvidenceForReview() {
         viewModelScope.launch {
             val taggedList = _evidenceList.value.map { evidence ->
-                val parser = scriptRunner.runScript(script, evidence)
-                TaggedEvidence(evidence, parser.getTags())
+                val parserResult = scriptRunner.runScript(script, evidence) // parserResult is ScriptRunner.Parser
+                TaggedEvidence(
+                    id = evidence, 
+                    tags = parserResult.tags, 
+                    content = evidence.content // Using original evidence content for TaggedEvidence content
+                )
             }
-            EvidenceRepository.setTaggedEvidence(taggedList)
+            EvidenceRepository.setTaggedEvidence(taggedList) // Assuming EvidenceRepository can handle this
         }
     }
 }

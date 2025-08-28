@@ -4,7 +4,7 @@ import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccoun
 import com.google.api.client.http.ByteArrayContent
 import com.google.api.client.http.FileContent as GoogleFileContent
 import com.google.api.client.http.javanet.NetHttpTransport
-import com.google.api.client.json.jackson2.JacksonFactory
+import com.google.api.client.json.gson.GsonFactory // Changed from JacksonFactory
 import com.google.api.services.drive.Drive
 import com.google.api.services.docs.v1.Docs
 import com.google.api.services.docs.v1.model.BatchUpdateDocumentRequest
@@ -37,7 +37,7 @@ class GoogleApiService(
 ) {
 
     private val transport = NetHttpTransport()
-    private val jsonFactory = JacksonFactory.getDefaultInstance()
+    private val jsonFactory = GsonFactory.getDefaultInstance() // Changed from JacksonFactory
 
     val sheetsService: Sheets = Sheets.Builder(transport, jsonFactory, credential)
         .setApplicationName(applicationName)

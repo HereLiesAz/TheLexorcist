@@ -667,6 +667,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     */
 
+    // Commenting out this method as scriptRunner and script are not defined in this ViewModel
+    /*
     fun processEvidenceForReview() {
         viewModelScope.launch {
             val taggedList = _evidenceList.value.map { evidence ->
@@ -676,6 +678,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             EvidenceRepository.setTaggedEvidence(taggedList)
         }
     }
+    */
 
     companion object {
         private const val FILTERS_SHEET_NAME = "Filters"

@@ -1,26 +1,24 @@
 package com.hereliesaz.lexorcist
 
-import android.content.Context
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import android.graphics.ImageDecoder
 import android.net.Uri
-import android.os.Build
-import android.provider.MediaStore
 import androidx.activity.viewModels
-import androidx.compose.material3.MaterialTheme
-import androidx.lifecycle.lifecycleScope
+import androidx.compose.runtime.remember
+import androidx.navigation.compose.rememberNavController
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.Scope
-import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
+// import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential // No longer created here
+import com.hereliesaz.lexorcist.ui.MainScreen
 import com.hereliesaz.lexorcist.ui.theme.LexorcistTheme
-import kotlinx.coroutines.launch
+import com.hereliesaz.lexorcist.viewmodel.MainViewModel
+// import kotlinx.coroutines.launch // May not be needed anymore
 
 class MainActivity : ComponentActivity() {
 
@@ -32,32 +30,18 @@ class MainActivity : ComponentActivity() {
         try {
             val account = task.getResult(ApiException::class.java)
             Toast.makeText(this, "Signed in as ${account.email}", Toast.LENGTH_SHORT).show()
-            val credential = GoogleAccountCredential.usingOAuth2(
-                this, setOf(
-                    "https://www.googleapis.com/auth/drive.file",
-                    "https://www.googleapis.com/auth/spreadsheets",
-                    "https://www.googleapis.com/auth/script.projects",
-                    "https://www.googleapis.com/auth/documents"
-                )
-            )
-            credential.selectedAccountName = account.account?.name
-            val googleApiService = GoogleApiService(credential, getString(R.string.app_name))
-            viewModel.onSignInSuccess(googleApiService)
+            // ViewModel now handles GoogleApiService creation
+            account?.let { viewModel.onSignInResult(it, this) }
         } catch (e: ApiException) {
-            viewModel.onSignInFailed()
+            // viewModel.onSignInFailed() // Method no longer exists
             Toast.makeText(this, "Sign in failed: ${e.statusCode}", Toast.LENGTH_SHORT).show()
         }
     }
 
-    private val selectImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+    private val selectImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let {
-            val bitmap = if (Build.VERSION.SDK_INT < 28) {
-                MediaStore.Images.Media.getBitmap(this.contentResolver, uri)
-            } else {
-                val source = ImageDecoder.createSource(this.contentResolver, uri)
-                ImageDecoder.decodeBitmap(source)
-            }
-            viewModel.onImageSelected(bitmap, this)
+            // Pass URI directly to ViewModel
+            viewModel.addEvidence(it, this)
         }
     }
 
@@ -66,13 +50,8 @@ class MainActivity : ComponentActivity() {
     private val takePictureLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
         if (success) {
             imageUri?.let {
-                val bitmap = if (Build.VERSION.SDK_INT < 28) {
-                    MediaStore.Images.Media.getBitmap(this.contentResolver, it)
-                } else {
-                    val source = ImageDecoder.createSource(this.contentResolver, it)
-                    ImageDecoder.decodeBitmap(source)
-                }
-                viewModel.onImageSelected(bitmap, this)
+                // Pass URI directly to ViewModel
+                viewModel.addEvidence(it, this)
             }
         }
     }
@@ -87,18 +66,19 @@ class MainActivity : ComponentActivity() {
                 Scope("https://www.googleapis.com/auth/script.projects"),
                 Scope("https://www.googleapis.com/auth/documents")
             )
-            .requestEmail()
+            .requestEmail() // Requesting email, as ViewModel might use it via GoogleSignInAccount
             .build()
 
         googleSignInClient = GoogleSignIn.getClient(this, gso)
 
         setContent {
             LexorcistTheme {
+                val navController = rememberNavController()
                 MainScreen(
-                    viewModel = viewModel,
-                    onSignIn = { signIn() },
-                    onSelectImage = { selectImage() },
-                    onTakePicture = { takePicture() }
+                    navController = navController,
+                    mainViewModel = viewModel,
+                    onSignInClick = { signIn() },
+                    onExportClick = { viewModel.exportToSheet() } // Assuming MainViewModel has exportToSheet
                 )
             }
         }
@@ -106,7 +86,7 @@ class MainActivity : ComponentActivity() {
 
     private fun takePicture() {
         val file = java.io.File(filesDir, "new_image.jpg")
-        imageUri = androidx.core.content.FileProvider.getUriForFile(this, "com.hereliesaz.lexorcist.fileprovider", file)
+        imageUri = androidx.core.content.FileProvider.getUriForFile(this, "${packageName}.fileprovider", file)
         imageUri?.let { takePictureLauncher.launch(it) }
     }
 
@@ -114,18 +94,13 @@ class MainActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
         val account = GoogleSignIn.getLastSignedInAccount(this)
-        if (account != null && viewModel.googleApiService.value == null) {
-            val credential = GoogleAccountCredential.usingOAuth2(this, setOf(
-                "https://www.googleapis.com/auth/drive.file",
-                "https://www.googleapis.com/auth/spreadsheets",
-                "https://www.googleapis.com/auth/script.projects",
-                "https://www.googleapis.com/auth/documents"
-            ))
-            credential.selectedAccountName = account.account?.name
-            val googleApiService = GoogleApiService(credential, getString(R.string.app_name))
-            viewModel.onSignInSuccess(googleApiService)
-        } else if (account == null) {
-            viewModel.onSignOut()
+        if (account != null) {
+            // If account exists, ensure ViewModel is initialized with it
+            viewModel.onSignInResult(account, this)
+        } else {
+            // viewModel.onSignOut() // Method no longer exists in MainViewModel
+            // Handle sign-out UI or logic here if needed, or add a method to ViewModel
+            // For now, if no account, nothing specific is done with ViewModel onStart
         }
     }
 
@@ -134,6 +109,8 @@ class MainActivity : ComponentActivity() {
         signInLauncher.launch(signInIntent)
     }
 
+    // selectImage function seems to be unused now as MainScreen doesn't have a button for it directly.
+    // Keeping it for now in case it's called from elsewhere, but it could be removed if not.
     private fun selectImage() {
         selectImageLauncher.launch("image/*")
     }
