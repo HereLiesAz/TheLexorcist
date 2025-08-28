@@ -15,7 +15,6 @@ import androidx.navigation.compose.rememberNavController
 import com.google.android.gms.auth.api.identity.Identity
 import com.google.android.gms.auth.api.identity.SignInClient
 import com.google.android.gms.auth.api.identity.BeginSignInRequest
-import com.google.android.gms.auth.api.identity.SignInCredential
 import com.google.android.gms.common.api.ApiException
 // import com.google.android.gms.common.api.Scope // No longer needed for this type of sign-in request building
 import com.hereliesaz.lexorcist.R // For R.string.default_web_client_id

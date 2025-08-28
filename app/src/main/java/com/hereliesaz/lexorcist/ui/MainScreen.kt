@@ -61,7 +61,7 @@ fun MainScreen(
                     horizontalAlignment = Alignment.End
                 ) {
                     items(evidenceList) { evidence ->
-                        Text(text = evidence.text, modifier = Modifier.padding(8.dp))
+                        Text(text = evidence.content, modifier = Modifier.padding(8.dp)) // Changed evidence.text to evidence.content
                     }
                 }
             }

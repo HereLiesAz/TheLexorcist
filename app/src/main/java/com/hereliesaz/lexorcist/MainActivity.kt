@@ -10,12 +10,10 @@ import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import android.net.Uri
 import androidx.activity.viewModels
-import androidx.compose.runtime.remember
 import androidx.navigation.compose.rememberNavController
 import com.google.android.gms.auth.api.identity.Identity
 import com.google.android.gms.auth.api.identity.SignInClient
 import com.google.android.gms.auth.api.identity.BeginSignInRequest
-import com.google.android.gms.auth.api.identity.SignInCredential
 import com.google.android.gms.common.api.ApiException
 import com.hereliesaz.lexorcist.ui.MainScreen
 import com.hereliesaz.lexorcist.ui.theme.LexorcistTheme
