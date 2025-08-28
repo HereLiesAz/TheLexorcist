@@ -3,7 +3,7 @@ package com.hereliesaz.lexorcist
 import android.util.Log
 import com.hereliesaz.lexorcist.db.Allegation
 import com.hereliesaz.lexorcist.db.Case
-import com.hereliesaz.lexorcist.db.Evidence
+import com.hereliesaz.lexorcist.model.Evidence
 // DAOs are no longer used
 
 class SpreadsheetParser(

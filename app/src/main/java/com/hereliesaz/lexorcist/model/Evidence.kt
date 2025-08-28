@@ -9,4 +9,6 @@ data class Evidence(
     var id: Int = 0,
     var caseId: Int = 0,
     var allegationId: Int? = null
+
+
 )

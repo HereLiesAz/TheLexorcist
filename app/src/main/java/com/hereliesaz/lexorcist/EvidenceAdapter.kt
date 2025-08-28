@@ -8,7 +8,7 @@ import com.hereliesaz.lexorcist.R
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.hereliesaz.lexorcist.db.Evidence
+import com.hereliesaz.lexorcist.model.Evidence
 import java.text.SimpleDateFormat
 import java.util.*
 

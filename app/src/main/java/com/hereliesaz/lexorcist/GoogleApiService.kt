@@ -19,7 +19,7 @@ import com.google.api.services.sheets.v4.Sheets
 import com.google.api.services.sheets.v4.model.*
 import com.hereliesaz.lexorcist.db.Allegation
 import com.hereliesaz.lexorcist.db.Case
-import com.hereliesaz.lexorcist.db.Evidence // Import FinancialEntry data class
+import com.hereliesaz.lexorcist.model.Evidence // Import FinancialEntry data class
 import com.hereliesaz.lexorcist.utils.FolderManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

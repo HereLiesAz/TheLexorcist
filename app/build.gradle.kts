@@ -69,20 +69,20 @@ dependencies {
     implementation("com.google.android.gms:play-services-mlkit-text-recognition:19.0.1")
 
     // Room components
-    val room_version = "2.8.0-rc01"
+    val room_version = "2.8.0-rc02"
     implementation("androidx.room:room-runtime:$room_version")
     implementation("androidx.room:room-ktx:$room_version")
     ksp("androidx.room:room-compiler:$room_version") // Changed from kapt to ksp
 
     // Lifecycle components
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.9.2")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.2")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.9.2")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.9.3")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.3")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.9.3")
     implementation("androidx.compose.runtime:runtime-livedata:1.9.0")
 
     // Jetpack Compose
-    val compose_bom_version = "2025.08.00"
-    implementation(platform("androidx.compose:compose-bom:$compose_bom_version"))
+    val composeBom = "2025.08.01"
+    implementation(platform("androidx.compose:compose-bom:$composeBom"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
@@ -90,18 +90,17 @@ dependencies {
     implementation("androidx.activity:activity-compose:1.10.1")
 
     // Navigation Compose
-    implementation("androidx.navigation:navigation-compose:2.7.0")
-
+    implementation("androidx.navigation:navigation-compose:2.9.3")
     // iText and POI
-    implementation("com.itextpdf:itext7-core:7.2.5")
-    implementation("org.apache.poi:poi:5.2.3")
-    implementation("org.apache.poi:poi-ooxml:5.2.3")
+    implementation("com.itextpdf:itext7-core:9.2.0")
+    implementation("org.apache.poi:poi:5.4.1")
+    implementation("org.apache.poi:poi-ooxml:5.4.1")
 
     // Google Sign-In
     implementation("com.google.android.gms:play-services-auth:21.4.0")
 
     // Google APIs
-    implementation("com.google.api-client:google-api-client:2.0.0")
+    implementation("com.google.api-client:google-api-client:2.8.1")
     implementation("com.google.api-client:google-api-client-android:2.8.1")
     implementation("com.google.apis:google-api-services-drive:v3-rev20250819-2.0.0")
     implementation("com.google.apis:google-api-services-sheets:v4-rev20250616-2.0.0")
@@ -110,7 +109,8 @@ dependencies {
     implementation("com.github.HereLiesAz:AzNavRail:1.9")
     implementation(platform("com.google.firebase:firebase-bom:34.1.0"))
     implementation("com.google.firebase:firebase-analytics")
-
+    implementation("org.apache.poi:poi-scratchpad:5.4.1")
+    implementation("com.google.apis:google-api-services-drive:v3-rev197-1.25.0")
 }
 
 // Removed kapt block entirely

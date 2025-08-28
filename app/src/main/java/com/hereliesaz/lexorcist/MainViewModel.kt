@@ -2,15 +2,19 @@ package com.hereliesaz.lexorcist
 
 import android.app.Application
 import android.content.Context
+import android.net.Uri
+import android.provider.OpenableColumns
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.hereliesaz.lexorcist.data.EvidenceRepository
 // import com.hereliesaz.lexorcist.db.AppDatabase // Removed unused import
 import com.hereliesaz.lexorcist.db.Allegation
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.db.Case
-import com.hereliesaz.lexorcist.db.Evidence
+import com.hereliesaz.lexorcist.model.Evidence
 import com.hereliesaz.lexorcist.model.SheetFilter
+import com.hereliesaz.lexorcist.model.TaggedEvidence
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import java.io.InputStreamReader
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -57,6 +61,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _allegations = MutableStateFlow<List<Allegation>>(emptyList())
     val allegations: StateFlow<List<Allegation>> = _allegations.asStateFlow()
 
+    private val _evidenceList = MutableStateFlow<List<Evidence>>(emptyList())
+    val evidenceList: StateFlow<List<Evidence>> = _evidenceList
+
     init {
         loadCaseInfo()
         viewModelScope.launch {
@@ -77,6 +84,35 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     _allegations.value = emptyList()
                     _evidence.value = emptyList()
                 }
+            }
+        }
+    }
+
+    fun addFileEvidence(uri: Uri, context: Context) {
+        viewModelScope.launch {
+            val currentCase = _selectedCase.value
+            val apiService = _googleApiService.value
+
+            if (currentCase != null && apiService != null) {
+                val rawEvidenceFolderId = apiService.getOrCreateEvidenceFolder(currentCase.name) ?: return@launch
+
+                context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                    val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                    cursor.moveToFirst()
+                    val fileName = cursor.getString(nameIndex)
+                    val mimeType = context.contentResolver.getType(uri)
+
+                    val inputStream = context.contentResolver.openInputStream(uri)
+                    if (inputStream != null) {
+                        val file = java.io.File(context.cacheDir, fileName)
+                        file.outputStream().use {
+                            inputStream.copyTo(it)
+                        }
+                        apiService.uploadFile(file, rawEvidenceFolderId, mimeType ?: "application/octet-stream")
+                    }
+                }
+            } else {
+                Log.w(TAG, "addFileEvidence: Selected case or API service is null, skipping file upload.")
             }
         }
     }
@@ -458,11 +494,201 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun addEvidence(uri: Uri, context: Context) {
+        viewModelScope.launch {
+            val mimeType = context.contentResolver.getType(uri)
+            val evidence = when (mimeType) {
+                "text/plain" -> parseTextFile(uri, context)
+                "application/pdf" -> parsePdfFile(uri, context)
+                "image/jpeg", "image/png" -> parseImageFile(uri, context)
+                "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" -> parseSpreadsheetFile(uri, context)
+                "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document" -> parseDocFile(uri, context)
+                else -> {
+                    Log.w("MainViewModel", "Unsupported file type: $mimeType")
+                    null
+                }
+            }
+            evidence?.let {
+                _evidenceList.value = _evidenceList.value + it
+            }
+        }
+    }
+
+    private suspend fun parseTextFile(uri: Uri, context: Context): Evidence? {
+        return try {
+            context.contentResolver.openInputStream(uri)?.bufferedReader()?.use {
+                val text = it.readText()
+                Evidence(content = text, timestamp = java.util.Date().time, sourceDocument = uri.toString(), documentDate = java.util.Date().time)
+            }
+        } catch (e: Exception) {
+            Log.e("MainViewModel", "Failed to parse text file", e)
+            null
+        }
+    }
+
+    private suspend fun parsePdfFile(uri: Uri, context: Context): Evidence? {
+        return try {
+            context.contentResolver.openInputStream(uri)?.let { inputStream ->
+                val pdfReader = com.itextpdf.kernel.pdf.PdfReader(inputStream)
+                val pdfDocument = com.itextpdf.kernel.pdf.PdfDocument(pdfReader)
+                val text = buildString {
+                    for (i in 1..pdfDocument.numberOfPages) {
+                        val page = pdfDocument.getPage(i)
+                        append(com.itextpdf.kernel.pdf.canvas.parser.PdfTextExtractor.getTextFromPage(page))
+                    }
+                }
+                pdfDocument.close()
+                Evidence(content = text, timestamp = java.util.Date().time, sourceDocument = uri.toString(), documentDate = java.util.Date().time)
+            }
+        } catch (e: Exception) {
+            Log.e("MainViewModel", "Failed to parse PDF file", e)
+            null
+        }
+    }
+
+    private suspend fun parseImageFile(uri: Uri, context: Context): Evidence? {
+        return try {
+            val inputImage = com.google.mlkit.vision.common.InputImage.fromFilePath(context, uri)
+            val recognizer = com.google.mlkit.vision.text.TextRecognition.getClient(com.google.mlkit.vision.text.latin.TextRecognizerOptions.DEFAULT_OPTIONS)
+            kotlinx.coroutines.suspendCancellableCoroutine { continuation ->
+                recognizer.process(inputImage)
+                    .addOnSuccessListener { visionText ->
+                        continuation.resume(Evidence(content = visionText.text, timestamp = java.util.Date().time, sourceDocument = uri.toString(), documentDate = java.util.Date().time), null)
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e("MainViewModel", "Failed to parse image file", e)
+                        continuation.resume(null, null)
+                    }
+            }
+        } catch (e: Exception) {
+            Log.e("MainViewModel", "Failed to parse image file", e)
+            null
+        }
+    }
+
+    private suspend fun parseSpreadsheetFile(uri: Uri, context: Context): Evidence? {
+        return try {
+            context.contentResolver.openInputStream(uri)?.let { inputStream ->
+                val workbook = org.apache.poi.ss.usermodel.WorkbookFactory.create(inputStream)
+                val text = buildString {
+                    for (i in 0 until workbook.numberOfSheets) {
+                        val sheet = workbook.getSheetAt(i)
+                        for (row in sheet) {
+                            for (cell in row) {
+                                append(cell.toString())
+                                append("\t")
+                            }
+                            appendLine()
+                        }
+                    }
+                }
+                workbook.close()
+                Evidence(content = text, timestamp = java.util.Date().time, sourceDocument = uri.toString(), documentDate = java.util.Date().time)
+            }
+        } catch (e: Exception) {
+            Log.e("MainViewModel", "Failed to parse spreadsheet file", e)
+            null
+        }
+    }
+
+    private suspend fun parseDocFile(uri: Uri, context: Context): Evidence? {
+        return try {
+            context.contentResolver.openInputStream(uri)?.let { inputStream ->
+                val text = if (context.contentResolver.getType(uri) == "application/msword") {
+                    val doc = org.apache.poi.hwpf.HWPFDocument(inputStream)
+                    val extractor = org.apache.poi.hwpf.extractor.WordExtractor(doc)
+                    extractor.text
+                } else {
+                    val docx = org.apache.poi.xwpf.usermodel.XWPFDocument(inputStream)
+                    val extractor = org.apache.poi.xwpf.extractor.XWPFWordExtractor(docx)
+                    extractor.text
+                }
+                Evidence(content = text, timestamp = java.util.Date().time, sourceDocument = uri.toString(), documentDate = java.util.Date().time)
+            }
+        } catch (e: Exception) {
+            Log.e("MainViewModel", "Failed to parse document file", e)
+            null
+        }
+    }
+
+    fun importSmsMessages(context: Context) {
+        viewModelScope.launch {
+            val smsList = mutableListOf<Evidence>()
+            val cursor = context.contentResolver.query(
+                android.provider.Telephony.Sms.CONTENT_URI,
+                null,
+                null,
+                null,
+                null
+            )
+            cursor?.use {
+                if (it.moveToFirst()) {
+                    val bodyIndex = it.getColumnIndex(android.provider.Telephony.Sms.BODY)
+                    do {
+                        val body = it.getString(bodyIndex)
+                        smsList.add(Evidence(content = body, timestamp = java.util.Date().time, sourceDocument = "SMS", documentDate = java.util.Date().time))
+                    } while (it.moveToNext())
+                }
+            }
+            _evidenceList.value = _evidenceList.value + smsList
+        }
+    }
+
+    /*
+    fun onSignInResult(account: com.google.android.gms.auth.api.signin.GoogleSignInAccount, context: Context) {
+        viewModelScope.launch {
+            val credential = com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
+                .usingOAuth2(context, setOf("https://www.googleapis.com/auth/spreadsheets"))
+            credential.selectedAccount = account.account
+            _googleApiService.value = GoogleApiService(credential, getApplication<Application>().applicationInfo.name)
+        }
+    }
+
+    fun exportToSheet() {
+        viewModelScope.launch {
+            _googleApiService.value?.let {
+                val spreadsheetId = it.createSpreadsheet("Lexorcist Export")
+                spreadsheetId?.let { id ->
+                    val data = _evidenceList.value.map { evidence ->
+                        listOf(evidence.content)
+                    }
+                    it.appendData(id, "Sheet1", data)
+                }
+            }
+        }
+    }
+
+    private val scriptRunner = com.hereliesaz.lexorcist.service.ScriptRunner()
+    private var script: String = ""
+
+    fun setScript(script: String) {
+        this.script = script
+    }
+
+    */
+
+    fun processEvidenceForReview() {
+        viewModelScope.launch {
+            val taggedList = _evidenceList.value.map { evidence ->
+                val parser = scriptRunner.runScript(script, evidence)
+                TaggedEvidence(evidence, parser.getTags())
+            }
+            EvidenceRepository.setTaggedEvidence(taggedList)
+        }
+    }
+
     companion object {
         private const val FILTERS_SHEET_NAME = "Filters"
         private const val RAW_EVIDENCE_FOLDER_NAME = "Raw Evidence"
         private const val MASTER_TEMPLATE_ID = "1Ux9i8GSJ3qJjYqO5ngXMIgCE94LCDkBwfCv0ReJA5eg"
         // ALLEGATIONS_SHEET_NAME is in GoogleApiService.kt
         // FINANCIAL_ENTRIES_SHEET_NAME is in GoogleApiService.kt
+        private const val KEY_CASE_NUMBER = "Case Number"
+        private const val KEY_SECTION = "Section"
+        private const val KEY_JUDGE = "Judge"
+        private const val KEY_PLAINTIFFS = "Plaintiffs"
+        private const val KEY_DEFENDANTS = "Defendants"
+        private const val KEY_COURT_NAME = "Court Name"
+        private const val KEY_COURT_DISTRICT = "Court District"
     }
 }

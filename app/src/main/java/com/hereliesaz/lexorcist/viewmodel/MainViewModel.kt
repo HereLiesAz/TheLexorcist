@@ -10,9 +10,9 @@ import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccoun
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
-import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.data.EvidenceRepository
-import com.hereliesaz.lexorcist.data.TaggedEvidence
+import com.hereliesaz.lexorcist.model.Evidence
+import com.hereliesaz.lexorcist.model.TaggedEvidence
 import com.hereliesaz.lexorcist.service.GoogleApiService
 import com.hereliesaz.lexorcist.service.ScriptRunner
 import com.itextpdf.kernel.pdf.PdfDocument
@@ -27,6 +27,7 @@ import org.apache.poi.hwpf.extractor.WordExtractor
 import org.apache.poi.ss.usermodel.WorkbookFactory
 import org.apache.poi.xwpf.usermodel.XWPFDocument
 import org.apache.poi.xwpf.extractor.XWPFWordExtractor
+import kotlin.coroutines.resume
 
 class MainViewModel : ViewModel() {
 

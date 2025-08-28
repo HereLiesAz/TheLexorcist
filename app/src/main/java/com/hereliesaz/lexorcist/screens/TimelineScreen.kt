@@ -14,8 +14,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.hereliesaz.lexorcist.MainViewModel
-import com.hereliesaz.lexorcist.db.Evidence
-import com.hereliesaz.lexorcist.models.TimelineEvent // Added import
+import com.hereliesaz.lexorcist.model.Evidence
+import com.hereliesaz.lexorcist.model.TimelineEvent // Added import
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.coroutines.EmptyCoroutineContext

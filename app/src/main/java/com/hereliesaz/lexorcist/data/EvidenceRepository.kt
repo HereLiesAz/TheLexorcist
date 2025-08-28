@@ -1,5 +1,6 @@
 package com.hereliesaz.lexorcist.data
 
+import com.hereliesaz.lexorcist.model.TaggedEvidence
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
