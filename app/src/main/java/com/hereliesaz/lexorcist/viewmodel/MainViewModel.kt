@@ -5,7 +5,7 @@ import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount
+// import com.google.android.gms.auth.api.signin.GoogleSignInAccount // No longer used
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
@@ -70,7 +70,7 @@ class MainViewModel : ViewModel() {
         return try {
             context.contentResolver.openInputStream(uri)?.let { inputStream ->
                 val pdfReader = PdfReader(inputStream)
-                val pdfDocument = PdfDocument(pdfReader)
+                val pdfDocument = PdfDocument(pdfDocument)
                 val text = buildString {
                     for (i in 1..pdfDocument.numberOfPages) {
                         val page = pdfDocument.getPage(i)
@@ -176,12 +176,20 @@ class MainViewModel : ViewModel() {
 
     private var googleApiService: GoogleApiService? = null
 
-    fun onSignInResult(account: GoogleSignInAccount, context: Context) {
+    // Updated to accept idToken, email, and applicationName
+    fun onSignInResult(idToken: String?, email: String?, context: Context, applicationName: String) {
         viewModelScope.launch {
-            val credential = GoogleAccountCredential
-                .usingOAuth2(context, setOf("https://www.googleapis.com/auth/spreadsheets"))
-            credential.selectedAccount = account.account
-            googleApiService = GoogleApiService(credential)
+            if (email != null) { // Or idToken, depending on GoogleAccountCredential needs
+                val credential = GoogleAccountCredential
+                    .usingOAuth2(context, setOf("https://www.googleapis.com/auth/spreadsheets"))
+                credential.selectedAccountName = email // Use email for selected account
+                // It's also possible to use credential.setToken(idToken) if that's more direct for your needs
+                googleApiService = GoogleApiService(credential, applicationName)
+                Log.d("MainViewModel", "GoogleApiService initialized for $email")
+            } else {
+                Log.w("MainViewModel", "Sign-in result missing email or ID token.")
+                // Handle cases where sign-in might not have provided enough info
+            }
         }
     }
 
@@ -193,7 +201,16 @@ class MainViewModel : ViewModel() {
                     val data = _evidenceList.value.map { evidence ->
                         listOf(evidence.content) // Changed from evidence.text
                     }
-                    it.writeData(id, data)
+                    // Assuming GoogleApiService has a method like writeData or similar
+                    // This might need to be appendData or another specific method from GoogleApiService
+                    // For now, let's assume it.writeData(id, "Sheet1", data) or similar. 
+                    // If writeData is not a method, we might need to use appendData or clarify its signature.
+                    // Checking GoogleApiService.kt, it has appendData(spreadsheetId, sheetTitle, values)
+                    // and also createSpreadsheet which only returns an ID, not creating a default sheet.
+                    // We might need to add a default sheet first, or appendData creates it.
+                    // The original GoogleApiService code suggests appendData is used. Let's use that.
+                    it.addSheet(id, "Sheet1") // Ensure Sheet1 exists
+                    it.appendData(id, "Sheet1", data)
                 }
             }
         }

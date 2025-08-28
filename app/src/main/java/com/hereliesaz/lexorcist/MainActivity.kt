@@ -1,46 +1,63 @@
 package com.hereliesaz.lexorcist
 
+import android.app.Activity
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import android.net.Uri
 import androidx.activity.viewModels
 import androidx.compose.runtime.remember
 import androidx.navigation.compose.rememberNavController
-import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInClient
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.auth.api.identity.Identity
+import com.google.android.gms.auth.api.identity.SignInClient
+import com.google.android.gms.auth.api.identity.BeginSignInRequest
+import com.google.android.gms.auth.api.identity.SignInCredential
 import com.google.android.gms.common.api.ApiException
-import com.google.android.gms.common.api.Scope
-// import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential // No longer created here
 import com.hereliesaz.lexorcist.ui.MainScreen
 import com.hereliesaz.lexorcist.ui.theme.LexorcistTheme
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
-// import kotlinx.coroutines.launch // May not be needed anymore
 
 class MainActivity : ComponentActivity() {
 
     private val viewModel: MainViewModel by viewModels()
-    private lateinit var googleSignInClient: GoogleSignInClient
+    private lateinit var oneTapClient: SignInClient
+    private lateinit var signUpRequest: BeginSignInRequest
+    private lateinit var signInRequest: BeginSignInRequest
 
-    private val signInLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
-        try {
-            val account = task.getResult(ApiException::class.java)
-            Toast.makeText(this, "Signed in as ${account.email}", Toast.LENGTH_SHORT).show()
-            // ViewModel now handles GoogleApiService creation
-            account?.let { viewModel.onSignInResult(it, this) }
-        } catch (e: ApiException) {
-            // viewModel.onSignInFailed() // Method no longer exists
-            Toast.makeText(this, "Sign in failed: ${e.statusCode}", Toast.LENGTH_SHORT).show()
+    private val APP_TAG = "MainActivity"
+
+    // Updated signInLauncher for the new Identity SDK
+    private val signInLauncher = registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            try {
+                val credential = oneTapClient.getSignInCredentialFromIntent(result.data)
+                val idToken = credential.googleIdToken
+                val email = credential.id // Or credential.email if available and preferred
+                val displayName = credential.displayName
+
+                Toast.makeText(this, "Signed in as ${email ?: displayName}", Toast.LENGTH_SHORT).show()
+
+                // Pass idToken and email to ViewModel
+                // Also pass application name for GoogleApiService
+                val applicationName = applicationInfo.loadLabel(packageManager).toString()
+                viewModel.onSignInResult(idToken, email, this, applicationName)
+
+            } catch (e: ApiException) {
+                Log.e(APP_TAG, "Sign-in failed after result: ${e.statusCode}", e)
+                Toast.makeText(this, "Sign in failed: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+            }
+        } else {
+            Log.w(APP_TAG, "Sign-in flow was cancelled or failed. Result code: ${result.resultCode}")
+            Toast.makeText(this, "Sign in cancelled or failed", Toast.LENGTH_SHORT).show()
         }
     }
 
     private val selectImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let {
-            // Pass URI directly to ViewModel
             viewModel.addEvidence(it, this)
         }
     }
@@ -50,7 +67,6 @@ class MainActivity : ComponentActivity() {
     private val takePictureLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
         if (success) {
             imageUri?.let {
-                // Pass URI directly to ViewModel
                 viewModel.addEvidence(it, this)
             }
         }
@@ -59,17 +75,32 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestScopes(
-                Scope("https://www.googleapis.com/auth/drive.file"),
-                Scope("https://www.googleapis.com/auth/spreadsheets"),
-                Scope("https://www.googleapis.com/auth/script.projects"),
-                Scope("https://www.googleapis.com/auth/documents")
+        oneTapClient = Identity.getSignInClient(this)
+
+        // IMPORTANT: Replace R.string.default_web_client_id with your actual Web Client ID from Google Cloud Console
+        // This is necessary for Google Sign-In to work correctly.
+        val serverClientId = getString(R.string.default_web_client_id) 
+
+        signUpRequest = BeginSignInRequest.builder()
+            .setGoogleIdTokenRequestOptions(
+                BeginSignInRequest.GoogleIdTokenRequestOptions.builder()
+                    .setSupported(true)
+                    .setServerClientId(serverClientId)
+                    .setFilterByAuthorizedAccounts(false)
+                    .build()
             )
-            .requestEmail() // Requesting email, as ViewModel might use it via GoogleSignInAccount
             .build()
 
-        googleSignInClient = GoogleSignIn.getClient(this, gso)
+        signInRequest = BeginSignInRequest.builder()
+            .setGoogleIdTokenRequestOptions(
+                BeginSignInRequest.GoogleIdTokenRequestOptions.builder()
+                    .setSupported(true)
+                    .setServerClientId(serverClientId)
+                    .setFilterByAuthorizedAccounts(true) // Attempt to sign in with existing accounts first
+                    .build()
+            )
+            .setAutoSelectEnabled(true) // Allows for one-tap sign-in if possible
+            .build()
 
         setContent {
             LexorcistTheme {
@@ -78,7 +109,7 @@ class MainActivity : ComponentActivity() {
                     navController = navController,
                     mainViewModel = viewModel,
                     onSignInClick = { signIn() },
-                    onExportClick = { viewModel.exportToSheet() } // Assuming MainViewModel has exportToSheet
+                    onExportClick = { viewModel.exportToSheet() }
                 )
             }
         }
@@ -93,24 +124,45 @@ class MainActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
-        val account = GoogleSignIn.getLastSignedInAccount(this)
-        if (account != null) {
-            // If account exists, ensure ViewModel is initialized with it
-            viewModel.onSignInResult(account, this)
-        } else {
-            // viewModel.onSignOut() // Method no longer exists in MainViewModel
-            // Handle sign-out UI or logic here if needed, or add a method to ViewModel
-            // For now, if no account, nothing specific is done with ViewModel onStart
-        }
+        // The old GoogleSignIn.getLastSignedInAccount(this) is deprecated.
+        // Silent sign-in or checking a stored token would be the new approach.
+        // For this migration, we'll rely on the user clicking the sign-in button.
+        // You can implement silent sign-in by calling oneTapClient.beginSignIn with signInRequest
+        // and handling the result, potentially without launching the IntentSender if already signed in.
     }
 
     private fun signIn() {
-        val signInIntent = googleSignInClient.signInIntent
-        signInLauncher.launch(signInIntent)
+        oneTapClient.beginSignIn(signInRequest) // Prioritize signing in with existing accounts / one-tap
+            .addOnSuccessListener { result ->
+                try {
+                    val intentSenderRequest = IntentSenderRequest.Builder(result.pendingIntent.intentSender).build()
+                    signInLauncher.launch(intentSenderRequest)
+                } catch (e: Exception) {
+                    Log.e(APP_TAG, "Couldn't start One Tap UI: ${e.localizedMessage}", e)
+                    Toast.makeText(this, "Sign in failed: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .addOnFailureListener { e ->
+                Log.e(APP_TAG, "Google Sign-In 'beginSignIn' (attempting one-tap/existing) failed: ${e.localizedMessage}", e)
+                // If sign-in with existing accounts fails (e.g., no accounts or user cancelled one-tap), 
+                // try the sign-up request which is more explicit.
+                oneTapClient.beginSignIn(signUpRequest) // Fallback to a more general sign-in/sign-up flow
+                    .addOnSuccessListener { result ->
+                         try {
+                            val intentSenderRequest = IntentSenderRequest.Builder(result.pendingIntent.intentSender).build()
+                            signInLauncher.launch(intentSenderRequest)
+                        } catch (e: Exception) {
+                            Log.e(APP_TAG, "Couldn't start One Tap UI (sign-up flow): ${e.localizedMessage}", e)
+                            Toast.makeText(this, "Sign in failed: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                    .addOnFailureListener { e2 ->
+                        Log.e(APP_TAG, "Google Sign-In 'beginSignIn' (sign-up/general) failed: ${e2.localizedMessage}", e2)
+                        Toast.makeText(this, "Sign in failed completely: ${e2.localizedMessage}", Toast.LENGTH_SHORT).show()
+                    }
+            }
     }
 
-    // selectImage function seems to be unused now as MainScreen doesn't have a button for it directly.
-    // Keeping it for now in case it's called from elsewhere, but it could be removed if not.
     private fun selectImage() {
         selectImageLauncher.launch("image/*")
     }
