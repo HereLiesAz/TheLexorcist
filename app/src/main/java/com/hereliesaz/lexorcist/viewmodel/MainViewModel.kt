@@ -10,9 +10,7 @@ import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccoun
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
-import com.hereliesaz.lexorcist.data.EvidenceRepository
 import com.hereliesaz.lexorcist.model.Evidence
-import com.hereliesaz.lexorcist.model.TaggedEvidence
 import com.hereliesaz.lexorcist.service.GoogleApiService
 import com.hereliesaz.lexorcist.service.ScriptRunner
 import com.itextpdf.kernel.pdf.PdfDocument
@@ -58,7 +56,7 @@ class MainViewModel : ViewModel() {
         return try {
             context.contentResolver.openInputStream(uri)?.bufferedReader()?.use {
                 val text = it.readText()
-                Evidence(text)
+                Evidence(id = 0, caseId = 0, allegationId = 0, content = text, timestamp = System.currentTimeMillis(), sourceDocument = "", documentDate = System.currentTimeMillis(), tags = emptyList())
             }
         } catch (e: Exception) {
             Log.e("MainViewModel", "Failed to parse text file", e)
@@ -78,7 +76,7 @@ class MainViewModel : ViewModel() {
                     }
                 }
                 pdfDocument.close()
-                Evidence(text)
+                Evidence(id = 0, caseId = 0, allegationId = 0, content = text, timestamp = System.currentTimeMillis(), sourceDocument = "", documentDate = System.currentTimeMillis(), tags = emptyList())
             }
         } catch (e: Exception) {
             Log.e("MainViewModel", "Failed to parse PDF file", e)
@@ -93,7 +91,7 @@ class MainViewModel : ViewModel() {
             suspendCancellableCoroutine { continuation ->
                 recognizer.process(inputImage)
                     .addOnSuccessListener { visionText ->
-                        continuation.resume(Evidence(visionText.text))
+                        continuation.resume(Evidence(id = 0, caseId = 0, allegationId = 0, content = visionText.text, timestamp = System.currentTimeMillis(), sourceDocument = "", documentDate = System.currentTimeMillis(), tags = emptyList()))
                     }
                     .addOnFailureListener { e ->
                         Log.e("MainViewModel", "Failed to parse image file", e)
@@ -123,7 +121,7 @@ class MainViewModel : ViewModel() {
                     }
                 }
                 workbook.close()
-                Evidence(text)
+                Evidence(id = 0, caseId = 0, allegationId = 0, content = text, timestamp = System.currentTimeMillis(), sourceDocument = "", documentDate = System.currentTimeMillis(), tags = emptyList())
             }
         } catch (e: Exception) {
             Log.e("MainViewModel", "Failed to parse spreadsheet file", e)
@@ -143,7 +141,7 @@ class MainViewModel : ViewModel() {
                     val extractor = XWPFWordExtractor(docx)
                     extractor.text
                 }
-                Evidence(text)
+                Evidence(id = 0, caseId = 0, allegationId = 0, content = text, timestamp = System.currentTimeMillis(), sourceDocument = "", documentDate = System.currentTimeMillis(), tags = emptyList())
             }
         } catch (e: Exception) {
             Log.e("MainViewModel", "Failed to parse document file", e)
@@ -166,7 +164,7 @@ class MainViewModel : ViewModel() {
                     val bodyIndex = it.getColumnIndex(android.provider.Telephony.Sms.BODY)
                     do {
                         val body = it.getString(bodyIndex)
-                        smsList.add(Evidence(body))
+                        smsList.add(Evidence(id = 0, caseId = 0, allegationId = 0, content = body, timestamp = System.currentTimeMillis(), sourceDocument = "", documentDate = System.currentTimeMillis(), tags = emptyList()))
                     } while (it.moveToNext())
                 }
             }
@@ -181,19 +179,19 @@ class MainViewModel : ViewModel() {
             val credential = GoogleAccountCredential
                 .usingOAuth2(context, setOf("https://www.googleapis.com/auth/spreadsheets"))
             credential.selectedAccount = account.account
-            googleApiService = GoogleApiService(credential)
+            googleApiService = GoogleApiService(credential, "Lexorcist")
         }
     }
 
     fun exportToSheet() {
         viewModelScope.launch {
             googleApiService?.let {
-                val spreadsheetId = it.createSpreadsheet("Lexorcist Export")
+                val spreadsheetId = it.createSpreadsheet("Lexorcist Export", null)
                 spreadsheetId?.let { id ->
                     val data = _evidenceList.value.map { evidence ->
-                        listOf(evidence.text)
+                        listOf(evidence.content)
                     }
-                    it.writeData(id, data)
+                    it.appendData(id, "Sheet1", data)
                 }
             }
         }
@@ -208,11 +206,11 @@ class MainViewModel : ViewModel() {
 
     fun processEvidenceForReview() {
         viewModelScope.launch {
-            val taggedList = _evidenceList.value.map { evidence ->
-                val parser = scriptRunner.runScript(script, evidence)
-                TaggedEvidence(evidence, parser.getTags())
-            }
-            EvidenceRepository.setTaggedEvidence(taggedList)
+//            val taggedList = _evidenceList.value.map { evidence ->
+//                val entries = scriptRunner.runScript(script, evidence)
+//                TaggedEvidence(evidence, entries)
+//            }
+//            EvidenceRepository.setTaggedEvidence(taggedList)
         }
     }
 }

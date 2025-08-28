@@ -105,12 +105,14 @@ dependencies {
     implementation("com.google.apis:google-api-services-drive:v3-rev20250819-2.0.0")
     implementation("com.google.apis:google-api-services-sheets:v4-rev20250616-2.0.0")
     implementation("com.google.apis:google-api-services-script:v1-rev20250623-2.0.0")
+    implementation("com.google.apis:google-api-services-docs:v1-rev20220609-1.32.1")
     implementation("com.google.http-client:google-http-client-jackson2:2.0.0")
     implementation("com.github.HereLiesAz:AzNavRail:1.9")
     implementation(platform("com.google.firebase:firebase-bom:34.1.0"))
     implementation("com.google.firebase:firebase-analytics")
     implementation("org.apache.poi:poi-scratchpad:5.4.1")
     implementation("com.google.apis:google-api-services-drive:v3-rev197-1.25.0")
+    implementation("cat.inspiracio:rhino-js-engine:1.7.14")
 }
 
 // Removed kapt block entirely
