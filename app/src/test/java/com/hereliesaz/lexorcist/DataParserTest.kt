@@ -44,7 +44,9 @@ class DataParserTest {
     fun `test tagData`() {
         val text = "John Doe lives at 123 Main St, Anytown, CA 12345. His birthday is 1990-01-01."
         val taggedData = DataParser.tagData(text)
-        assertEquals(listOf("1990-01-01"), taggedData["dates"]?.map { it.substring(0, 10) })
+        val expectedDate = "1990-01-01"
+        val actualDate = taggedData["dates"]?.firstOrNull()
+        assertEquals(expectedDate, actualDate)
         assertEquals(listOf("John Doe"), taggedData["names"])
         assertEquals(listOf("123 Main St, Anytown, CA 12345"), taggedData["addresses"])
     }
