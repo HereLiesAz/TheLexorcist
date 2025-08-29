@@ -4,7 +4,7 @@ import android.app.Application
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.data.EvidenceRepository
-import com.hereliesaz.lexorcist.model.Evidence
+importcom.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
 import io.mockk.coEvery
 import io.mockk.coVerify

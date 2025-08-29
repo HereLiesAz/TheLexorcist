@@ -14,6 +14,10 @@ import com.hereliesaz.lexorcist.ui.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.platform.LocalContext // Added import
+import com.hereliesaz.lexorcist.viewmodel.AuthViewModel
+import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
+import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
+import com.hereliesaz.lexorcist.viewmodel.OcrViewModel
 import kotlinx.coroutines.launch // Already present, ensure viewModelScope is used if needed from MainViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -77,7 +81,7 @@ fun MainScreen(
                                 currentScreen = R.string.nav_cases
                             })
                         }
-                        R.string.nav_timeline -> TimelineScreen(viewModel = viewModel)
+                        R.string.nav_timeline -> TimelineScreen(viewModel = viewModel())
                         R.string.nav_data_review -> DataReviewScreen(evidenceViewModel = evidenceViewModel)
                         R.string.nav_settings -> SettingsScreen(caseViewModel = caseViewModel)
                     }

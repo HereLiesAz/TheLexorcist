@@ -99,6 +99,7 @@ dependencies {
     implementation("androidx.navigation:navigation-runtime-ktx:2.9.3")
     implementation("androidx.compose.ui:ui:1.9.0")
     implementation("androidx.compose.foundation:foundation:1.9.0")
+    implementation("androidx.room:room-ktx:2.7.2")
     testImplementation("junit:junit:4.13.2")
     testImplementation("io.mockk:mockk:1.14.5")
     androidTestImplementation("androidx.test.ext:junit:1.3.0")

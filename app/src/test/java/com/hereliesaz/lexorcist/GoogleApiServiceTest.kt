@@ -2,7 +2,7 @@ package com.hereliesaz.lexorcist
 
 import com.google.api.services.sheets.v4.Sheets
 import com.google.api.services.sheets.v4.model.ValueRange
-import com.hereliesaz.lexorcist.model.Evidence
+import com.hereliesaz.lexorcist.data.Evidence
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking

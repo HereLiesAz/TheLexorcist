@@ -1,7 +1,6 @@
 package com.hereliesaz.lexorcist.data
 
 import com.hereliesaz.lexorcist.GoogleApiService
-import com.hereliesaz.lexorcist.data.Evidence // Corrected import
 import kotlinx.coroutines.flow.Flow
 import java.lang.Exception
 
@@ -17,7 +16,7 @@ class EvidenceRepositoryImpl(
     override fun getEvidenceForCase(caseId: Long): Flow<List<Evidence>> {
         // Assuming EvidenceDao.getEvidenceForCase expects a Long and handles mapping to Evidence.caseId (Int) if necessary internally or via query conversion.
         // Or, that the Case ID in the database is indeed stored as Long and Evidence.caseId (Int) is for the model object after retrieval.
-        return evidenceDao.getEvidenceForCase(caseId)
+        return evidenceDao.getEvidenceForCase(caseId.toLong())
     }
 
     override suspend fun refreshEvidenceForCase(spreadsheetId: String, caseId: Int) {

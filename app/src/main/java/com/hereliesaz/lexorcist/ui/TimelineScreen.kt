@@ -8,12 +8,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Article
+import androidx.compose.material.icons.automirrored.filled.Article
+import androidx.compose.material.icons.automirrored.filled.Message
 import androidx.compose.material.icons.filled.Audiotrack
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Mail
-import androidx.compose.material.icons.filled.Message
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material.icons.filled.Work
@@ -25,6 +25,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ExperimentalComposeApi
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -38,19 +39,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
-import com.pushpal.jetlime.EventPointType
+// import com.pushpal.jetlime.EventPointType // Removed import as it's causing unresolved references
 import com.pushpal.jetlime.JetLimeColumn
 import com.pushpal.jetlime.JetLimeEventDefaults
 import com.pushpal.jetlime.JetLimeExtendedEvent
 import com.pushpal.jetlime.ItemsList
 import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
 
-/**
- * A screen that displays a timeline of evidence for a selected case.
- *
- * @param viewModel The [MainViewModel] that holds the state for this screen.
- */
+@OptIn(ExperimentalComposeApi::class)
 @Composable
 fun TimelineScreen(viewModel: MainViewModel) {
     val evidenceList by viewModel.selectedCaseEvidenceList.collectAsState()
@@ -68,27 +66,27 @@ fun TimelineScreen(viewModel: MainViewModel) {
         } else {
             JetLimeColumn(
                 modifier = Modifier.padding(horizontal = 12.dp),
-                itemsList = ItemsList(evidenceList),
-                key = { _, item -> item.id },
-            ) { _, item, position ->
+                itemsList = ItemsList(evidenceList), 
+                key = { _, item -> item.id }, 
+            ) { _, item, position -> 
                 JetLimeExtendedEvent(
                     style = JetLimeEventDefaults.eventStyle(
                         position = position,
-                        pointType = EventPointType.Filled,
-                        pointColor = MaterialTheme.colorScheme.primary,
-                        pointAnimation = JetLimeEventDefaults.pointAnimation(),
-                        pointIcon = getIconForCategory(item.category)
+                        // pointType = EventPointType.POINT, // Removed pointType
+                        pointColor = MaterialTheme.colorScheme.primary, 
+                        pointAnimation = JetLimeEventDefaults.pointAnimation()
+                        // pointIcon removed
                     ),
                     additionalContent = {
                         Column(horizontalAlignment = Alignment.End) {
                             Text(
-                                text = SimpleDateFormat("MMM dd", Locale.getDefault()).format(item.documentDate),
+                                text = SimpleDateFormat("MMM dd", Locale.getDefault()).format(Date(item.documentDate ?: System.currentTimeMillis())),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 textAlign = TextAlign.End
                             )
                             Text(
-                                text = SimpleDateFormat("yyyy", Locale.getDefault()).format(item.documentDate),
+                                text = SimpleDateFormat("yyyy", Locale.getDefault()).format(Date(item.documentDate ?: System.currentTimeMillis())),
                                 style = MaterialTheme.typography.bodySmall,
                                 textAlign = TextAlign.End
                             )
@@ -107,7 +105,7 @@ fun TimelineScreen(viewModel: MainViewModel) {
                             verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
                             Text(
-                                text = item.sourceDocument,
+                                text = item.sourceDocument ?: "Unknown Source",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold
                             )
@@ -116,7 +114,7 @@ fun TimelineScreen(viewModel: MainViewModel) {
                                 style = MaterialTheme.typography.bodyMedium,
                                 maxLines = 3
                             )
-                            if (item.category.isNotBlank()) {
+                            if (item.category?.isNotBlank() == true) { 
                                 Text(
                                     text = "Category: ${item.category}",
                                     style = MaterialTheme.typography.bodySmall,
@@ -136,54 +134,52 @@ fun TimelineScreen(viewModel: MainViewModel) {
         }
     }
 
-    selectedEvidence?.let {
-        EvidenceDetailsDialog(evidence = it, onDismiss = { selectedEvidence = null })
+    selectedEvidence?.let { evidence ->
+        EvidenceDetailsDialog(evidence = evidence, onDismiss = { selectedEvidence = null })
     }
 }
 
-/**
- * Returns an [ImageVector] based on the evidence category.
- *
- * @param category The category of the evidence.
- * @return An [ImageVector] that represents the category.
- */
 @Composable
 fun getIconForCategory(category: String?): ImageVector {
-    return when (category?.lowercase()) {
-        "email" -> Icons.Default.Mail
-        "message" -> Icons.Default.Message
-        "image" -> Icons.Default.Image
-        "video" -> Icons.Default.Videocam
-        "audio" -> Icons.Default.Audiotrack
-        "document" -> Icons.Default.Article
-        "location" -> Icons.Default.LocationOn
-        "call" -> Icons.Default.Phone
-        else -> Icons.Default.Work
+    return when (category?.lowercase(Locale.getDefault())) {
+        "email" -> Icons.Filled.Mail
+        "message" -> Icons.AutoMirrored.Filled.Message
+        "image" -> Icons.Filled.Image
+        "video" -> Icons.Filled.Videocam
+        "audio" -> Icons.Filled.Audiotrack
+        "document" -> Icons.AutoMirrored.Filled.Article
+        "location" -> Icons.Filled.LocationOn
+        "call" -> Icons.Filled.Phone
+        "ocr image" -> Icons.Filled.Image
+        "text file" -> Icons.AutoMirrored.Filled.Article
+        "pdf file" -> Icons.AutoMirrored.Filled.Article
+        "spreadsheet file" -> Icons.AutoMirrored.Filled.Article
+        "document file" -> Icons.AutoMirrored.Filled.Article
+        "sms" -> Icons.AutoMirrored.Filled.Message
+        "text upload" -> Icons.AutoMirrored.Filled.Article
+        "local text" -> Icons.AutoMirrored.Filled.Article
+        "drive_upload" -> Icons.Filled.Work
+        "file" -> Icons.AutoMirrored.Filled.Article
+        else -> Icons.Filled.Work
     }
 }
 
-/**
- * A dialog that shows the details of a selected piece of evidence.
- *
- * @param evidence The evidence to display.
- * @param onDismiss The action to perform when the dialog is dismissed.
- */
 @Composable
 fun EvidenceDetailsDialog(evidence: Evidence, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(evidence.sourceDocument) },
+        title = { Text(evidence.sourceDocument ?: "Details") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("Content: ${evidence.content}", style = MaterialTheme.typography.bodyMedium)
                 Text("Category: ${evidence.category ?: "N/A"}", style = MaterialTheme.typography.bodyMedium)
-                Text("Tags: ${evidence.tags?.joinToString() ?: "N/A"}", style = MaterialTheme.typography.bodyMedium)
+                Text("Tags: ${evidence.tags.joinToString().ifEmpty { "N/A" }}", style = MaterialTheme.typography.bodyMedium) // Corrected typo
                 Text(
                     text = "Date: ${
                         SimpleDateFormat(
                             "yyyy-MM-dd HH:mm",
                             Locale.getDefault()
-                        ).format(evidence.documentDate)
+                        ).format(Date(evidence.documentDate ?: System.currentTimeMillis()))
                     }",
                     style = MaterialTheme.typography.bodySmall
                 )

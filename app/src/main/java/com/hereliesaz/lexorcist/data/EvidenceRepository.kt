@@ -1,6 +1,5 @@
 package com.hereliesaz.lexorcist.data
 
-import com.hereliesaz.lexorcist.data.Evidence
 import kotlinx.coroutines.flow.Flow
 
 interface EvidenceRepository {

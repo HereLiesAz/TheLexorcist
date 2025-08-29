@@ -11,6 +11,7 @@ import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import android.net.Uri
 import androidx.activity.viewModels
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable // Keep: General Compose import
 import androidx.navigation.NavController // Keep: MainScreen might use it internally
 import androidx.navigation.compose.rememberNavController // Keep: MainScreen or theme might use it
@@ -33,8 +34,6 @@ import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModelFactory
 import com.hereliesaz.lexorcist.viewmodel.OcrViewModel
 import com.hereliesaz.lexorcist.viewmodel.OcrViewModelFactory
 
-// Removed DataReviewViewModel and placeholder/settings screen imports as they belonged to the NavHost block
-
 class MainActivity : ComponentActivity() {
 
     private val appDatabase by lazy { AppDatabase.getDatabase(this) }
@@ -54,15 +53,12 @@ class MainActivity : ComponentActivity() {
         OcrViewModelFactory(application)
     }
     
-    // These are the "top" block client/request declarations
     private lateinit var oneTapClient: SignInClient 
     private lateinit var signUpRequest: BeginSignInRequest
     private lateinit var signInRequest: BeginSignInRequest
 
-    // This is the "top" block APP_TAG
     private val APP_TAG = "MainActivity"
 
-    // This is the "top" block signInLauncher
     private val signInLauncher = registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             try {
@@ -83,17 +79,14 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    // Kept from "top" block
     private val selectImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let {
             ocrViewModel.startImageReview(it, this)
         }
     }
 
-    // Kept from "top" block
     private var imageUri: Uri? = null
 
-    // Kept from "top" block
     private val takePictureLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
         if (success) {
             imageUri?.let {
@@ -102,20 +95,26 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private val selectDocumentLauncher = registerForActivityResult(GetContentWithMultiFilter()) { uri: Uri? ->
+    // Corrected: Provide the mimeTypes array to the constructor
+    private val selectDocumentLauncher = registerForActivityResult(
+        GetContentWithMultiFilter(arrayOf("application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"))
+    ) { uri: Uri? ->
         uri?.let {
             evidenceViewModel.addDocumentEvidence(it, this)
         }
     }
 
-    private val selectSpreadsheetLauncher = registerForActivityResult(GetContentWithMultiFilter()) { uri: Uri? ->
+    // Corrected: Provide the mimeTypes array to the constructor
+    private val selectSpreadsheetLauncher = registerForActivityResult(
+        GetContentWithMultiFilter(arrayOf("application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+    ) { uri: Uri? ->
         uri?.let {
             evidenceViewModel.addSpreadsheetEvidence(it, this)
         }
     }
 
-    // This is the "top" block onCreate
-    override fun onCreate(savedInstanceState: Bundle?) { 
+    @OptIn(ExperimentalMaterial3Api::class)
+    override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         oneTapClient = Identity.getSignInClient(this)
         val serverClientId = getString(R.string.default_web_client_id) 
@@ -141,7 +140,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             LexorcistTheme {
-                val navController = rememberNavController()
+                // val navController = rememberNavController() // Commented out as MainScreen doesn't take navController
                 MainScreen(
                     authViewModel = authViewModel,
                     caseViewModel = caseViewModel,
@@ -157,24 +156,17 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    // Kept from "top" block
     private fun takePicture() {
-        val file = java.io.File(filesDir, "new_image.jpg")
+        val file = java.io.File(filesDir, "new_image.jpg") // Consider using getExternalFilesDir for broader access if needed
         imageUri = androidx.core.content.FileProvider.getUriForFile(this, "${packageName}.fileprovider", file)
         imageUri?.let { takePictureLauncher.launch(it) }
     }
 
-    // Kept from "top" block
     override fun onStart() {
         super.onStart()
-        // The old GoogleSignIn.getLastSignedInAccount(this) is deprecated.
-        // Silent sign-in or checking a stored token would be the new approach.
-        // For this migration, we'll rely on the user clicking the sign-in button.
-        // You can implement silent sign-in by calling oneTapClient.beginSignIn with signInRequest
-        // and handling the result, potentially without launching the IntentSender if already signed in.
+        // Silent sign-in logic can be added here if desired
     }
 
-    // This is the "top" block signIn method
     private fun signIn() { 
         oneTapClient.beginSignIn(signInRequest) 
             .addOnSuccessListener { result ->
@@ -182,19 +174,20 @@ class MainActivity : ComponentActivity() {
                     val intentSenderRequest = IntentSenderRequest.Builder(result.pendingIntent.intentSender).build()
                     signInLauncher.launch(intentSenderRequest)
                 } catch (e: Exception) {
-                    Log.e(APP_TAG, "Couldn't start One Tap UI: ${e.localizedMessage}", e)
+                    Log.e(APP_TAG, "Couldn\'t start One Tap UI: ${e.localizedMessage}", e)
                     Toast.makeText(this, "Sign in failed: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
                 }
             }
             .addOnFailureListener { e ->
                 Log.e(APP_TAG, "Google Sign-In 'beginSignIn' (attempting one-tap/existing) failed: ${e.localizedMessage}", e)
+                // Fall back to sign-up flow if sign-in fails (e.g., no authorized accounts)
                 oneTapClient.beginSignIn(signUpRequest) 
                     .addOnSuccessListener { result ->
                          try {
                             val intentSenderRequest = IntentSenderRequest.Builder(result.pendingIntent.intentSender).build()
                             signInLauncher.launch(intentSenderRequest)
                         } catch (e: Exception) {
-                            Log.e(APP_TAG, "Couldn't start One Tap UI (sign-up flow): ${e.localizedMessage}", e)
+                            Log.e(APP_TAG, "Couldn\'t start One Tap UI (sign-up flow): ${e.localizedMessage}", e)
                             Toast.makeText(this, "Sign in failed: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
                         }
                     }
@@ -205,18 +198,18 @@ class MainActivity : ComponentActivity() {
             }
     }
 
-    // Kept from "top" block
     private fun selectImage() {
         selectImageLauncher.launch("image/*")
     }
 
     private fun selectDocument() {
-        selectDocumentLauncher.launch(arrayOf("application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"))
+        // Corrected: Launch with a single primary MIME type string. 
+        // The GetContentWithMultiFilter contract will use this and also apply the mimeTypes from its constructor.
+        selectDocumentLauncher.launch("*/*") // Or a more specific primary type like "application/pdf"
     }
 
     private fun selectSpreadsheet() {
-        selectSpreadsheetLauncher.launch(arrayOf("application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+        // Corrected: Launch with a single primary MIME type string.
+        selectSpreadsheetLauncher.launch("*/*") // Or a more specific primary type like "application/vnd.ms-excel"
     }
-
-    // The "bottom" block of code (with NavHost and placeholder screens) has been removed.
 }
