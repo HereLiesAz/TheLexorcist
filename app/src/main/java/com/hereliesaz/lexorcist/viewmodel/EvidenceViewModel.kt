@@ -16,15 +16,11 @@ import kotlinx.coroutines.launch
 
 class EvidenceViewModel(
     application: Application,
-    private val evidenceRepository: EvidenceRepository,
-    private val selectedCase: Case?
+    private val evidenceRepository: EvidenceRepository
 ) : AndroidViewModel(application) {
 
     private val _evidenceList = MutableStateFlow<List<Evidence>>(emptyList())
     val evidenceList: StateFlow<List<Evidence>> = _evidenceList.asStateFlow()
-
-    private val _uiEvidenceList = MutableStateFlow<List<Evidence>>(emptyList())
-    val uiEvidenceList: StateFlow<List<Evidence>> = _uiEvidenceList.asStateFlow()
 
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
@@ -33,17 +29,7 @@ class EvidenceViewModel(
         _errorMessage.value = null
     }
 
-    init {
-        selectedCase?.let {
-            loadEvidenceForCase(it.id.toLong()) // Corrected: Convert Int to Long
-        }
-    }
-
-    fun addEvidenceToUiList(evidence: Evidence) {
-        _uiEvidenceList.value = _uiEvidenceList.value + evidence
-    }
-
-    private fun loadEvidenceForCase(caseId: Long) {
+    fun loadEvidenceForCase(caseId: Long) {
         viewModelScope.launch {
             evidenceRepository.getEvidenceForCase(caseId).collect {
                 _evidenceList.value = it
@@ -51,51 +37,37 @@ class EvidenceViewModel(
         }
     }
 
-    fun addEvidenceToUiList(uri: Uri, context: Context) {
-        // This function needs more logic from MainViewModel, including parsing different file types.
-        // For now, it's a placeholder.
-    }
-
-    fun addEvidenceToSelectedCase(evidence: Evidence) {
-        selectedCase?.let {
-            viewModelScope.launch {
-                evidenceRepository.addEvidence(it.spreadsheetId, evidence)
-            }
+    fun addEvidence(evidence: Evidence) {
+        viewModelScope.launch {
+            evidenceRepository.addEvidence(evidence)
         }
     }
 
     fun updateEvidence(evidence: Evidence) {
-        selectedCase?.let {
-            viewModelScope.launch {
-                evidenceRepository.updateEvidence(it.spreadsheetId, evidence)
-            }
+        viewModelScope.launch {
+            evidenceRepository.updateEvidence(evidence)
         }
     }
 
     fun deleteEvidence(evidence: Evidence) {
-        selectedCase?.let {
-            viewModelScope.launch {
-                evidenceRepository.deleteEvidence(it.spreadsheetId, evidence)
-            }
+        viewModelScope.launch {
+            evidenceRepository.deleteEvidence(evidence)
         }
     }
 
-    fun addEvidenceToSelectedCase(text: String, context: Context) {
-        selectedCase?.let { case ->
-            val newEvidence = Evidence(
-                id = 0, // Placeholder ID for new evidence, repository should handle actual ID generation
-                caseId = case.id, // Use selectedCase.id
-                content = text,
-                // amount = null, // Removed amount
-                timestamp = System.currentTimeMillis(), // Changed to Long
-                sourceDocument = "Text Input",
-                documentDate = System.currentTimeMillis(), // Changed to Long
-                allegationId = null, // Int? is fine with null
-                category = "Text Input", // String is fine
-                tags = emptyList() // List<String> is fine
-            )
-            addEvidenceToSelectedCase(newEvidence)
-        }    
+    fun addTextEvidence(caseId: Int, text: String) {
+        val newEvidence = Evidence(
+            id = 0,
+            caseId = caseId,
+            content = text,
+            timestamp = System.currentTimeMillis(),
+            sourceDocument = "Text Input",
+            documentDate = System.currentTimeMillis(),
+            allegationId = null,
+            category = "Text Input",
+            tags = emptyList()
+        )
+        addEvidence(newEvidence)
     }
 
     /**
@@ -104,7 +76,7 @@ class EvidenceViewModel(
      * @param uri The URI of the PDF document.
      * @param context The context.
      */
-    fun addDocumentEvidence(uri: Uri, context: Context) {
+    fun addDocumentEvidence(caseId: Int, uri: Uri, context: Context) {
         viewModelScope.launch {
             try {
                 val inputStream = context.contentResolver.openInputStream(uri)
@@ -117,20 +89,18 @@ class EvidenceViewModel(
                 }
                 pdfDocument.close()
 
-                selectedCase?.let { case ->
-                    val newEvidence = Evidence(
-                        id = 0,
-                        caseId = case.id,
-                        content = text,
-                        timestamp = System.currentTimeMillis(),
-                        sourceDocument = "PDF Document",
-                        documentDate = System.currentTimeMillis(),
-                        allegationId = null,
-                        category = "Document",
-                        tags = emptyList()
-                    )
-                    addEvidenceToSelectedCase(newEvidence)
-                }
+                val newEvidence = Evidence(
+                    id = 0,
+                    caseId = caseId,
+                    content = text,
+                    timestamp = System.currentTimeMillis(),
+                    sourceDocument = "PDF Document",
+                    documentDate = System.currentTimeMillis(),
+                    allegationId = null,
+                    category = "Document",
+                    tags = emptyList()
+                )
+                addEvidence(newEvidence)
             } catch (e: Exception) {
                 _errorMessage.value = "Failed to parse document: ${e.message}"
             }
@@ -143,7 +113,7 @@ class EvidenceViewModel(
      * @param uri The URI of the spreadsheet.
      * @param context The context.
      */
-    fun addSpreadsheetEvidence(uri: Uri, context: Context) {
+    fun addSpreadsheetEvidence(caseId: Int, uri: Uri, context: Context) {
         viewModelScope.launch {
             try {
                 context.contentResolver.openInputStream(uri)?.let { inputStream ->
@@ -162,20 +132,18 @@ class EvidenceViewModel(
                     workbook.close()
                     val text = stringBuilder.toString()
 
-                    selectedCase?.let { case ->
-                        val newEvidence = Evidence(
-                            id = 0,
-                            caseId = case.id,
-                            content = text,
-                            timestamp = System.currentTimeMillis(),
-                            sourceDocument = "Spreadsheet",
-                            documentDate = System.currentTimeMillis(),
-                            allegationId = null,
-                            category = "Spreadsheet",
-                            tags = emptyList()
-                        )
-                        addEvidenceToSelectedCase(newEvidence)
-                    }
+                    val newEvidence = Evidence(
+                        id = 0,
+                        caseId = caseId,
+                        content = text,
+                        timestamp = System.currentTimeMillis(),
+                        sourceDocument = "Spreadsheet",
+                        documentDate = System.currentTimeMillis(),
+                        allegationId = null,
+                        category = "Spreadsheet",
+                        tags = emptyList()
+                    )
+                    addEvidence(newEvidence)
                 }
             } catch (e: Exception) {
                 _errorMessage.value = "Failed to parse spreadsheet: ${e.message}"

@@ -12,24 +12,22 @@ import java.io.InputStreamReader
 
 class CaseRepositoryImpl(
     private val applicationContext: Context,
+    private val caseDao: CaseDao,
     private var googleApiService: GoogleApiService?
 ) : CaseRepository {
 
-    fun setGoogleApiService(googleApiService: GoogleApiService?) {
+    override fun setGoogleApiService(googleApiService: GoogleApiService?) {
         this.googleApiService = googleApiService
     }
 
-    private val _cases = MutableStateFlow<List<Case>>(emptyList())
-    private val _htmlTemplates = MutableStateFlow<List<DriveFile>>(emptyList())
     private val _sheetFilters = MutableStateFlow<List<SheetFilter>>(emptyList())
     private val _allegations = MutableStateFlow<List<Allegation>>(emptyList())
 
-    override fun getCases(): Flow<List<Case>> = _cases.asStateFlow()
+    override fun getCases(): Flow<List<Case>> = caseDao.getAllCases()
 
     override suspend fun refreshCases() {
-        val appRootFolderId = googleApiService?.getOrCreateAppRootFolder() ?: return
-        val registryId = googleApiService?.getOrCreateCaseRegistrySpreadsheetId(appRootFolderId) ?: return
-        _cases.value = googleApiService?.getAllCasesFromRegistry(registryId) ?: emptyList()
+        // Data is now loaded from Room, so this function can be left empty
+        // or used to sync with a remote source in the future.
     }
 
     override suspend fun createCase(
@@ -40,62 +38,23 @@ class CaseRepositoryImpl(
         caseJudge: String,
         plaintiffs: String,
         defendants: String,
-        court: String,
-        selectedMasterHtmlTemplateId: String
+        court: String
     ) {
         val rootFolderId = googleApiService?.getOrCreateAppRootFolder() ?: return
-        val caseRegistryId = googleApiService?.getOrCreateCaseRegistrySpreadsheetId(rootFolderId) ?: return
         val caseFolderId = googleApiService?.getOrCreateCaseFolder(caseName) ?: return
         googleApiService?.getOrCreateEvidenceFolder(caseName)
-
-        val htmlTemplateContent = googleApiService?.downloadFileAsString(selectedMasterHtmlTemplateId) ?: return
-
-        var processedHtml = htmlTemplateContent
-            .replace("{{CASE_NAME}}", caseName)
-            .replace("{{CASE_NUMBER}}", caseNumber)
-            .replace("{{CASE_SECTION}}", caseSection)
-            .replace("{{JUDGE}}", caseJudge)
-        processedHtml = processedHtml
-            .replace("{{PLAINTIFFS}}", plaintiffs)
-            .replace("{{DEFENDANTS}}", defendants)
-            .replace("{{COURT}}", court)
-
-        val snapshotHtmlFileName = "${caseName}_Snapshot.html"
-        val uploadedHtmlSnapshot = googleApiService?.uploadStringAsFile(processedHtml, "text/html", snapshotHtmlFileName, caseFolderId)
-        val snapshotHtmlId = uploadedHtmlSnapshot?.id
-
-        // PDF generation logic is complex and involves UI components (WebView),
-        // which should not be in a repository. This needs to be handled in the ViewModel.
-        // For now, I will skip the PDF generation part.
-        val generatedPdfId: String? = null
-
         val caseSpreadsheetId = googleApiService?.createSpreadsheet(caseName, caseFolderId) ?: return
-
-        val scriptTemplate = applicationContext.resources.openRawResource(R.raw.apps_script_template).use { InputStreamReader(it).readText() }
-        val scriptContent = scriptTemplate
-            .replace("{{EXHIBIT_SHEET_NAME}}", exhibitSheetName)
-            .replace("{{CASE_NUMBER}}", caseNumber)
-            .replace("{{CASE_SECTION}}", caseSection)
-            .replace("{{CASE_JUDGE}}", caseJudge)
-
-        googleApiService?.attachScript(caseSpreadsheetId, scriptContent, generatedPdfId ?: "")
 
         val newCase = Case(
             name = caseName,
-            spreadsheetId = caseSpreadsheetId,
-            generatedPdfId = generatedPdfId,
-            sourceHtmlSnapshotId = snapshotHtmlId,
-            originalMasterHtmlTemplateId = selectedMasterHtmlTemplateId
+            spreadsheetId = caseSpreadsheetId
         )
-        if (googleApiService?.addCaseToRegistry(caseRegistryId, newCase) == true) {
-            refreshCases()
-        }
+        caseDao.insert(newCase)
     }
 
-    override fun getHtmlTemplates(): Flow<List<DriveFile>> = _htmlTemplates.asStateFlow()
-
-    override suspend fun refreshHtmlTemplates() {
-        _htmlTemplates.value = googleApiService?.listHtmlTemplatesInAppRootFolder() ?: emptyList()
+    override suspend fun deleteCase(case: Case) {
+        caseDao.deleteCaseById(case.id)
+        // I will add the Google Drive deletion logic here later
     }
 
     override fun getSheetFilters(spreadsheetId: String): Flow<List<SheetFilter>> = _sheetFilters.asStateFlow()

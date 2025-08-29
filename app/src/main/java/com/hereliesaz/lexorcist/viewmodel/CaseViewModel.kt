@@ -26,9 +26,6 @@ class CaseViewModel(application: Application, private val caseRepository: CaseRe
     private val _selectedCase = MutableStateFlow<Case?>(null)
     val selectedCase: StateFlow<Case?> = _selectedCase.asStateFlow()
 
-    val htmlTemplates: StateFlow<List<DriveFile>> = caseRepository.getHtmlTemplates()
-        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
-
     private val _sheetFilters = MutableStateFlow<List<SheetFilter>>(emptyList())
     val sheetFilters: StateFlow<List<SheetFilter>> = _sheetFilters.asStateFlow()
 
@@ -49,7 +46,6 @@ class CaseViewModel(application: Application, private val caseRepository: CaseRe
 
     init {
         loadCases()
-        loadHtmlTemplates()
         loadDarkModePreference()
     }
 
@@ -81,9 +77,9 @@ class CaseViewModel(application: Application, private val caseRepository: CaseRe
         }
     }
 
-    fun loadHtmlTemplates() {
+    fun deleteCase(case: Case) {
         viewModelScope.launch {
-            caseRepository.refreshHtmlTemplates()
+            caseRepository.deleteCase(case)
         }
     }
 
@@ -92,8 +88,7 @@ class CaseViewModel(application: Application, private val caseRepository: CaseRe
         exhibitSheetName: String,
         caseNumber: String,
         caseSection: String,
-        caseJudge: String,
-        selectedMasterHtmlTemplateId: String
+        caseJudge: String
     ) {
         viewModelScope.launch {
             caseRepository.createCase(
@@ -104,8 +99,7 @@ class CaseViewModel(application: Application, private val caseRepository: CaseRe
                 caseJudge,
                 plaintiffs.value,
                 defendants.value,
-                court.value,
-                selectedMasterHtmlTemplateId
+                court.value
             )
         }
     }

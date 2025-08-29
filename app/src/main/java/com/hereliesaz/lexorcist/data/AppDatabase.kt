@@ -7,11 +7,12 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.hereliesaz.lexorcist.data.Evidence // Corrected import
 
-@Database(entities = [Evidence::class], version = 1, exportSchema = false)
+@Database(entities = [Evidence::class, Case::class], version = 1, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun evidenceDao(): EvidenceDao
+    abstract fun caseDao(): CaseDao
 
     companion object {
         @Volatile
