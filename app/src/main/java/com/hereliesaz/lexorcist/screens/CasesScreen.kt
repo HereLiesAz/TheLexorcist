@@ -4,168 +4,56 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-// Corrected import for the MainViewModel
-import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 import com.hereliesaz.lexorcist.db.Case
+import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CasesScreen(viewModel: MainViewModel) { // ViewModel type now correctly refers to the one in .viewmodel package
+fun CasesScreen(viewModel: MainViewModel) {
     val cases by viewModel.cases.collectAsState()
     val selectedCase by viewModel.selectedCase.collectAsState()
     var showCreateCaseDialog by remember { mutableStateOf(false) }
-    var caseName by remember { mutableStateOf("") }
-    var exhibitSheetName by remember { mutableStateOf("Exhibit Matrix - Exhibit List") }
-    var caseNumber by remember { mutableStateOf("") }
-    var caseSection by remember { mutableStateOf("") }
-    var caseJudge by remember { mutableStateOf("") }
 
-    var showLoadCaseDialog by remember { mutableStateOf(false) }
-    var spreadsheetIdToLoad by remember { mutableStateOf("") }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.End, // Align children to the End (right)
-        verticalArrangement = Arrangement.Center // Center children vertically as a group
-    ) {
-        Text("Cases", style = androidx.compose.material3.MaterialTheme.typography.headlineMedium)
-        Spacer(modifier = Modifier.height(16.dp))
-        LazyColumn(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth() // LazyColumn itself should span width to allow items to align within it
-        ) {
-            items(cases) { case ->
-                CaseItem(case = case, isSelected = case.id == selectedCase?.id) {
-                    viewModel.selectCase(case)
-                }
+    Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(onClick = { showCreateCaseDialog = true }) {
+                Icon(Icons.Default.Add, contentDescription = "Add Case")
             }
         }
-        Spacer(modifier = Modifier.height(16.dp))
-        // Column for buttons to stack them and ensure they are part of the right-alignment
-        Column(horizontalAlignment = Alignment.End) {
-            Button(onClick = { showCreateCaseDialog = true }) {
-                Text("Create New Case")
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = { showLoadCaseDialog = true }) {
-                Text("Load Case from Sheet")
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(16.dp)
+        ) {
+            Text("Cases", style = MaterialTheme.typography.headlineMedium)
+            Spacer(modifier = Modifier.height(16.dp))
+            LazyColumn(modifier = Modifier.fillMaxSize()) {
+                items(cases) { case ->
+                    CaseItem(
+                        case = case,
+                        isSelected = case.id == selectedCase?.id,
+                        onClick = { viewModel.selectCase(case) }
+                    )
+                }
             }
         }
     }
 
     if (showCreateCaseDialog) {
-        AlertDialog(
-            onDismissRequest = { showCreateCaseDialog = false },
-            title = { Text("New Case Details") },
-            text = {
-                Column {
-                    OutlinedTextField(
-                        value = caseName,
-                        onValueChange = { caseName = it },
-                        label = { Text("Case Name") },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = exhibitSheetName,
-                        onValueChange = { exhibitSheetName = it },
-                        label = { Text("Exhibit Sheet Name") },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = caseNumber,
-                        onValueChange = { caseNumber = it },
-                        label = { Text("Case Number") },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = caseSection,
-                        onValueChange = { caseSection = it },
-                        label = { Text("Case Section") },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = caseJudge,
-                        onValueChange = { caseJudge = it },
-                        label = { Text("Case Judge") },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        if (caseName.isNotBlank()) {
-                            viewModel.createCase(caseName, exhibitSheetName, caseNumber, caseSection, caseJudge)
-                            showCreateCaseDialog = false
-                            caseName = ""
-                        }
-                    }
-                ) {
-                    Text("Create")
-                }
-            },
-            dismissButton = {
-                Button(onClick = { showCreateCaseDialog = false }) {
-                    Text("Cancel")
-                }
-            }
-        )
-    }
-
-    if (showLoadCaseDialog) {
-        AlertDialog(
-            onDismissRequest = { showLoadCaseDialog = false },
-            title = { Text("Load Case from Spreadsheet") },
-            text = {
-                OutlinedTextField(
-                    value = spreadsheetIdToLoad,
-                    onValueChange = { spreadsheetIdToLoad = it },
-                    label = { Text("Spreadsheet ID") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        if (spreadsheetIdToLoad.isNotBlank()) {
-                            viewModel.importSpreadsheet(spreadsheetIdToLoad)
-                            showLoadCaseDialog = false
-                            spreadsheetIdToLoad = ""
-                        }
-                    }
-                ) {
-                    Text("Load")
-                }
-            },
-            dismissButton = {
-                Button(onClick = { showLoadCaseDialog = false }) {
-                    Text("Cancel")
-                }
+        CreateCaseDialog(
+            onDismiss = { showCreateCaseDialog = false },
+            onCreate = { caseName, exhibitSheetName, caseNumber, caseSection, caseJudge ->
+                viewModel.createCase(caseName, exhibitSheetName, caseNumber, caseSection, caseJudge)
+                showCreateCaseDialog = false
             }
         )
     }
@@ -173,24 +61,81 @@ fun CasesScreen(viewModel: MainViewModel) { // ViewModel type now correctly refe
 
 @Composable
 fun CaseItem(case: Case, isSelected: Boolean, onClick: () -> Unit) {
-    Row(
+    Card(
         modifier = Modifier
-            .fillMaxWidth() // Row still fills width to be clickable across the line
-            .clickable(onClick = onClick)
-            .padding(8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.End // Align text to the end (right) of the Row
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
+        )
     ) {
         Text(
             text = case.name,
-            // modifier = Modifier.weight(1f), // Removed weight so horizontalArrangement can take effect
-            style = if (isSelected) {
-                androidx.compose.material3.MaterialTheme.typography.bodyLarge.copy(
-                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
-                )
-            } else {
-                androidx.compose.material3.MaterialTheme.typography.bodyLarge
-            }
+            modifier = Modifier.padding(16.dp),
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
         )
     }
+}
+
+@Composable
+fun CreateCaseDialog(
+    onDismiss: () -> Unit,
+    onCreate: (String, String, String, String, String) -> Unit
+) {
+    var caseName by remember { mutableStateOf("") }
+    var exhibitSheetName by remember { mutableStateOf("Exhibit Matrix - Exhibit List") }
+    var caseNumber by remember { mutableStateOf("") }
+    var caseSection by remember { mutableStateOf("") }
+    var caseJudge by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Create New Case") },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = caseName,
+                    onValueChange = { caseName = it },
+                    label = { Text("Case Name") }
+                )
+                OutlinedTextField(
+                    value = exhibitSheetName,
+                    onValueChange = { exhibitSheetName = it },
+                    label = { Text("Exhibit Sheet Name") }
+                )
+                OutlinedTextField(
+                    value = caseNumber,
+                    onValueChange = { caseNumber = it },
+                    label = { Text("Case Number") }
+                )
+                OutlinedTextField(
+                    value = caseSection,
+                    onValueChange = { caseSection = it },
+                    label = { Text("Case Section") }
+                )
+                OutlinedTextField(
+                    value = caseJudge,
+                    onValueChange = { caseJudge = it },
+                    label = { Text("Case Judge") }
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (caseName.isNotBlank()) {
+                        onCreate(caseName, exhibitSheetName, caseNumber, caseSection, caseJudge)
+                    }
+                }
+            ) {
+                Text("Create")
+            }
+        },
+        dismissButton = {
+            Button(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
 }

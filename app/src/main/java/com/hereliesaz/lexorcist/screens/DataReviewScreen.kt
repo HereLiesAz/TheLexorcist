@@ -1,4 +1,4 @@
-package com.hereliesaz.lexorcist.ui
+package com.hereliesaz.lexorcist.screens
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -45,8 +45,8 @@ fun TaggedEvidenceItem(
 ) {
     Card(modifier = Modifier.padding(8.dp)) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(text = "Evidence: ${evidence.id.content}") // Changed from evidence.evidence.text
-            Text(text = "Tags: ${evidence.tags.joinToString()}") // Added joinToString() for display
+            Text(text = "Evidence: ${evidence.id.content}")
+            Text(text = "Tags: ${evidence.tags.joinToString()}")
             Text(text = "Relevance: ${evidence.relevance}")
             Slider(
                 value = evidence.relevance.toFloat(),

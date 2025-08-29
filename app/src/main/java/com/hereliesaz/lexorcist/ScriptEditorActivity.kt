@@ -1,42 +1,44 @@
 package com.hereliesaz.lexorcist
 
 import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
-import android.widget.Button
-import android.widget.EditText
-import android.widget.Toast
-//import com.google.api.services.script.v1.model.Content
-//import com.google.api.services.script.v1.model.File
-//import com.google.api.services.script.v1.model.Project
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.viewModels
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.ui.Modifier
+import com.hereliesaz.lexorcist.ui.ScriptEditorScreen
+import com.hereliesaz.lexorcist.ui.theme.TheLexorcistTheme
+import com.hereliesaz.lexorcist.utils.GoogleApiServiceHolder
+import com.hereliesaz.lexorcist.viewmodel.ScriptEditorViewModel
 
-class ScriptEditorActivity : AppCompatActivity() {
+class ScriptEditorActivity : ComponentActivity() {
 
-    private lateinit var scriptEditText: EditText
-    private lateinit var saveScriptButton: Button
-    private var spreadsheetId: String? = null
+    private val viewModel: ScriptEditorViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_script_editor)
 
-        scriptEditText = findViewById(R.id.script_edit_text)
-        saveScriptButton = findViewById(R.id.save_script_button)
+        val scriptId = intent.getStringExtra("scriptId")
+        val googleApiService = GoogleApiServiceHolder.googleApiService
 
-        spreadsheetId = intent.getStringExtra("spreadsheetId")
-
-        if (spreadsheetId == null) {
-            Toast.makeText(this, "Spreadsheet ID not found.", Toast.LENGTH_LONG).show()
+        if (scriptId == null || googleApiService == null) {
+            // Handle error, maybe show a toast and finish
             finish()
             return
         }
 
-        // TODO: Initialize the Script API service
-        // and fetch the script content.
+        viewModel.initialize(googleApiService, scriptId)
 
-        saveScriptButton.setOnClickListener {
-            val scriptContent = scriptEditText.text.toString()
-            if (scriptContent.isNotEmpty()) {
-                // TODO: Save the script using the Script API.
+        setContent {
+            TheLexorcistTheme {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    ScriptEditorScreen(viewModel)
+                }
             }
         }
     }

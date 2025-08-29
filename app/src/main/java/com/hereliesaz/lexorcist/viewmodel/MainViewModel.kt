@@ -22,6 +22,7 @@ import com.hereliesaz.lexorcist.model.Evidence
 import com.hereliesaz.lexorcist.model.SheetFilter
 import com.hereliesaz.lexorcist.model.TaggedEvidence
 import com.hereliesaz.lexorcist.service.ScriptRunner
+import com.hereliesaz.lexorcist.utils.GoogleApiServiceHolder
 import com.itextpdf.kernel.pdf.PdfDocument
 import com.itextpdf.kernel.pdf.PdfReader
 import com.itextpdf.kernel.pdf.canvas.parser.PdfTextExtractor
@@ -52,6 +53,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val defendants: StateFlow<String> = _defendants.asStateFlow()
     private val _court = MutableStateFlow(sharedPref.getString("court", "") ?: "")
     val court: StateFlow<String> = _court.asStateFlow()
+
+    private val _isDarkMode = MutableStateFlow(false)
+    val isDarkMode: StateFlow<Boolean> = _isDarkMode.asStateFlow()
 
     // --- Google API Service and Sign-In State ---
     private val _googleApiService = MutableStateFlow<GoogleApiService?>(null)
@@ -97,6 +101,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     init {
         loadCaseInfo() // Load plaintiffs, defendants, court from SharedPreferences
+        loadDarkModePreference()
         viewModelScope.launch {
             _googleApiService.collect { apiService ->
                 if (apiService != null && _isSignedIn.value) {
@@ -142,6 +147,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private fun onSignInSuccess(apiService: GoogleApiService) {
         _googleApiService.value = apiService
         _isSignedIn.value = true
+        GoogleApiServiceHolder.googleApiService = apiService
         Log.d(TAG, "onSignInSuccess: Signed in.")
         viewModelScope.launch { // Ensure these are launched in viewModelScope
             loadCasesFromRegistry()
@@ -171,6 +177,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun onSignOut() {
         _googleApiService.value = null // This will trigger the collector in init to clear data
         _isSignedIn.value = false
+        GoogleApiServiceHolder.googleApiService = null
         Log.d(TAG, "onSignOut: Signed out.")
         // Explicitly clear other states if needed, though the collector should handle most
         _plaintiffs.value = ""
@@ -200,6 +207,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _plaintiffs.value = sharedPref.getString("plaintiffs", "") ?: ""
         _defendants.value = sharedPref.getString("defendants", "") ?: ""
         _court.value = sharedPref.getString("court", "") ?: ""
+    }
+
+    private fun loadDarkModePreference() {
+        _isDarkMode.value = sharedPref.getBoolean("is_dark_mode", false)
+    }
+
+    fun setDarkMode(isDark: Boolean) {
+        _isDarkMode.value = isDark
+        with(sharedPref.edit()) {
+            putBoolean("is_dark_mode", isDark)
+            apply()
+        }
     }
 
     // --- Case Management & Google Drive/Sheets ---

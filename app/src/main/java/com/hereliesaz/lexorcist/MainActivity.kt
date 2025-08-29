@@ -1,7 +1,8 @@
-@file:Suppress("deprecation") // Using lowercase "deprecation"
+@file:Suppress("deprecation")
 package com.hereliesaz.lexorcist
 
 import android.app.Activity
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
@@ -9,15 +10,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import android.net.Uri
 import androidx.activity.viewModels
-import androidx.navigation.compose.rememberNavController
+import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.auth.api.identity.Identity
 import com.google.android.gms.auth.api.identity.SignInClient
-import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.common.api.ApiException
-import com.hereliesaz.lexorcist.ui.MainScreen
-import com.hereliesaz.lexorcist.ui.theme.LexorcistTheme
+import com.hereliesaz.lexorcist.ui.theme.TheLexorcistTheme
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 
 class MainActivity : ComponentActivity() {
@@ -29,19 +27,16 @@ class MainActivity : ComponentActivity() {
 
     private val APP_TAG = "MainActivity"
 
-    // Updated signInLauncher for the new Identity SDK
     private val signInLauncher = registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             try {
                 val credential = oneTapClient.getSignInCredentialFromIntent(result.data)
                 val idToken = credential.googleIdToken
-                val email = credential.id // Or credential.email if available and preferred
+                val email = credential.id
                 val displayName = credential.displayName
 
                 Toast.makeText(this, "Signed in as ${email ?: displayName}", Toast.LENGTH_SHORT).show()
 
-                // Pass idToken and email to ViewModel
-                // Also pass application name for GoogleApiService
                 val applicationName = applicationInfo.loadLabel(packageManager).toString()
                 viewModel.onSignInResult(idToken, email, this, applicationName)
 
@@ -57,7 +52,6 @@ class MainActivity : ComponentActivity() {
 
     private val selectImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let {
-            // Corrected method name
             viewModel.addEvidenceToUiList(it, this)
         }
     }
@@ -67,7 +61,6 @@ class MainActivity : ComponentActivity() {
     private val takePictureLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
         if (success) {
             imageUri?.let {
-                // Corrected method name
                 viewModel.addEvidenceToUiList(it, this)
             }
         }
@@ -78,9 +71,7 @@ class MainActivity : ComponentActivity() {
 
         oneTapClient = Identity.getSignInClient(this)
 
-        // IMPORTANT: Replace R.string.default_web_client_id with your actual Web Client ID from Google Cloud Console
-        // This is necessary for Google Sign-In to work correctly.
-        val serverClientId = getString(R.string.default_web_client_id) 
+        val serverClientId = getString(R.string.default_web_client_id)
 
         signUpRequest = BeginSignInRequest.builder()
             .setGoogleIdTokenRequestOptions(
@@ -97,23 +88,28 @@ class MainActivity : ComponentActivity() {
                 BeginSignInRequest.GoogleIdTokenRequestOptions.builder()
                     .setSupported(true)
                     .setServerClientId(serverClientId)
-                    .setFilterByAuthorizedAccounts(true) // Attempt to sign in with existing accounts first
+                    .setFilterByAuthorizedAccounts(true)
                     .build()
             )
-            .setAutoSelectEnabled(true) // Allows for one-tap sign-in if possible
+            .setAutoSelectEnabled(true)
             .build()
 
         setContent {
-            LexorcistTheme {
-                val navController = rememberNavController()
+            TheLexorcistTheme {
                 MainScreen(
-                    navController = navController,
-                    mainViewModel = viewModel,
-                    onSignInClick = { signIn() },
-                    onExportClick = { viewModel.exportToSheet() }
+                    viewModel = viewModel,
+                    onSignIn = { signIn() },
+                    onSelectImage = { selectImage() },
+                    onTakePicture = { takePicture() },
+                    onAddDocument = { /* TODO */ },
+                    onAddSpreadsheet = { /* TODO */ }
                 )
             }
         }
+    }
+
+    private fun selectImage() {
+        selectImageLauncher.launch("image/*")
     }
 
     private fun takePicture() {
@@ -122,18 +118,8 @@ class MainActivity : ComponentActivity() {
         imageUri?.let { takePictureLauncher.launch(it) }
     }
 
-
-    override fun onStart() {
-        super.onStart()
-        // The old GoogleSignIn.getLastSignedInAccount(this) is deprecated.
-        // Silent sign-in or checking a stored token would be the new approach.
-        // For this migration, we'll rely on the user clicking the sign-in button.
-        // You can implement silent sign-in by calling oneTapClient.beginSignIn with signInRequest
-        // and handling the result, potentially without launching the IntentSender if already signed in.
-    }
-
     private fun signIn() {
-        oneTapClient.beginSignIn(signInRequest) // Prioritize signing in with existing accounts / one-tap
+        oneTapClient.beginSignIn(signInRequest)
             .addOnSuccessListener { result ->
                 try {
                     val intentSenderRequest = IntentSenderRequest.Builder(result.pendingIntent.intentSender).build()
@@ -145,11 +131,9 @@ class MainActivity : ComponentActivity() {
             }
             .addOnFailureListener { e ->
                 Log.e(APP_TAG, "Google Sign-In 'beginSignIn' (attempting one-tap/existing) failed: ${e.localizedMessage}", e)
-                // If sign-in with existing accounts fails (e.g., no accounts or user cancelled one-tap), 
-                // try the sign-up request which is more explicit.
-                oneTapClient.beginSignIn(signUpRequest) // Fallback to a more general sign-in/sign-up flow
+                oneTapClient.beginSignIn(signUpRequest)
                     .addOnSuccessListener { result ->
-                         try {
+                        try {
                             val intentSenderRequest = IntentSenderRequest.Builder(result.pendingIntent.intentSender).build()
                             signInLauncher.launch(intentSenderRequest)
                         } catch (e: Exception) {
@@ -163,9 +147,4 @@ class MainActivity : ComponentActivity() {
                     }
             }
     }
-
-    private fun selectImage() {
-        selectImageLauncher.launch("image/*")
-    }
-
 }
