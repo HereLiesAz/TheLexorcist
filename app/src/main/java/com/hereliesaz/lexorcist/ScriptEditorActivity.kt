@@ -9,7 +9,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import com.hereliesaz.lexorcist.ui.ScriptEditorScreen
-import com.hereliesaz.lexorcist.ui.theme.TheLexorcistTheme
+import com.hereliesaz.lexorcist.ui.theme.LexorcistTheme
 import com.hereliesaz.lexorcist.utils.GoogleApiServiceHolder
 import com.hereliesaz.lexorcist.viewmodel.ScriptEditorViewModel
 
@@ -32,7 +32,7 @@ class ScriptEditorActivity : ComponentActivity() {
         viewModel.initialize(googleApiService, scriptId)
 
         setContent {
-            TheLexorcistTheme {
+            LexorcistTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background

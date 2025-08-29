@@ -3,9 +3,10 @@ package com.hereliesaz.lexorcist.service
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
 import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.gson.GsonFactory
-import com.google.api.services.drive.model.File
+// import com.google.api.services.drive.model.File // Removed to avoid conflict, assuming it's not used for Drive operations here
 import com.google.api.services.script.Script
 import com.google.api.services.script.model.Content
+import com.google.api.services.script.model.File as ScriptFile // Using an alias in case Drive File is needed elsewhere
 import com.google.api.services.sheets.v4.Sheets
 import com.google.api.services.sheets.v4.model.Spreadsheet
 import com.google.api.services.sheets.v4.model.ValueRange
@@ -27,14 +28,20 @@ class GoogleApiService(credential: GoogleAccountCredential) {
         .build()
 
     fun getScript(scriptId: String): String? {
-        val project = scriptService.projects().get(scriptId).execute()
-        val scriptFile = project.files.find { it.type == "SERVER_JS" }
+        // Corrected way to get script content
+        val content = scriptService.projects().getContent(scriptId).execute()
+        val scriptFile = content?.files?.find { it.type == "SERVER_JS" } // content can be null
         return scriptFile?.source
     }
 
     fun updateScript(scriptId: String, scriptContent: String) {
-        val newFile = File().setSource(scriptContent).setName("Code")
-        val content = Content().setFiles(listOf(newFile))
+        // Use com.google.api.services.script.model.File
+        val newScriptFile = ScriptFile()
+            .setName("Code") // Or the actual filename if known, ensure it matches an existing file to update
+            .setType("SERVER_JS") // Typically you update an existing file, ensure type is correct
+            .setSource(scriptContent)
+        
+        val content = Content().setFiles(listOf(newScriptFile))
         scriptService.projects().updateContent(scriptId, content).execute()
     }
 

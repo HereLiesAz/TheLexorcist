@@ -59,7 +59,7 @@ fun MainScreen(
                         }
                         "timeline" -> TimelineScreen(viewModel = viewModel)
                         // Now viewModel is of the correct type for SettingsScreen
-                        "settings" -> SettingsScreen()
+                        "settings" -> SettingsScreen(viewModel = viewModel)
                     }
                 }
             }
