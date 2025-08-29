@@ -134,7 +134,7 @@ class MainViewModel(application: Application, private val evidenceRepository: co
     private val _imageBitmapForReview = MutableStateFlow<Bitmap?>(null)
     val imageBitmapForReview: StateFlow<Bitmap?> = _imageBitmapForReview.asStateFlow()
     private var imageUriForReview: Uri? = null
-
+    
     // --- Tagged Data for Scripting ---
     private val _taggedData = MutableStateFlow<Map<String, List<String>>>(emptyMap())
     val taggedData: StateFlow<Map<String, List<String>>> = _taggedData.asStateFlow()
@@ -188,7 +188,7 @@ class MainViewModel(application: Application, private val evidenceRepository: co
                 val credential = GoogleAccountCredential
                     .usingOAuth2(context, setOf("https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive.file"))
                 credential.selectedAccountName = email
-
+                
                 val service = GoogleApiService(credential, applicationName)
                 Log.d(TAG, "GoogleApiService potentially initialized for $email.")
                 onSignInSuccess(service)
@@ -326,7 +326,7 @@ class MainViewModel(application: Application, private val evidenceRepository: co
                             if (continuation.isActive) continuation.resume(null)
                             return
                         }
-
+                        
                         val printManager = context.getSystemService(Context.PRINT_SERVICE) as? PrintManager
                         if (printManager == null) {
                             Log.e(TAG, "Could not get PrintManager service.")
@@ -384,7 +384,7 @@ class MainViewModel(application: Application, private val evidenceRepository: co
         }
     }
 
-    private suspend fun loadSelectedCaseSheetFilters(spreadsheetId: String) {
+    private suspend fun loadSelectedCaseSheetFilters(spreadsheetId: String) { 
         val apiService = _googleApiService.value ?: return Unit.also { Log.w(TAG, "loadSelectedCaseSheetFilters: No API service.") }
         if (spreadsheetId.isBlank()) {
             _selectedCaseSheetFilters.value = emptyList(); return
@@ -401,8 +401,8 @@ class MainViewModel(application: Application, private val evidenceRepository: co
             _selectedCaseSheetFilters.value = emptyList()
         }
     }
-
-    fun addSelectedCaseSheetFilter(name: String, value: String) {
+    
+    fun addSelectedCaseSheetFilter(name: String, value: String) { 
         val currentCase = _selectedCase.value
         val apiService = _googleApiService.value
         if (currentCase == null || currentCase.spreadsheetId.isBlank() || apiService == null) {
@@ -411,9 +411,9 @@ class MainViewModel(application: Application, private val evidenceRepository: co
         }
         viewModelScope.launch {
             try {
-                apiService.addSheet(currentCase.spreadsheetId, FILTERS_SHEET_NAME)
+                apiService.addSheet(currentCase.spreadsheetId, FILTERS_SHEET_NAME) 
                 if (apiService.appendData(currentCase.spreadsheetId, FILTERS_SHEET_NAME, listOf(listOf(name, value))) != null) {
-                    loadSelectedCaseSheetFilters(currentCase.spreadsheetId)
+                    loadSelectedCaseSheetFilters(currentCase.spreadsheetId) 
                 } else {
                     Log.w(TAG, "Failed to add sheet filter '$name' to sheet.")
                 }
@@ -425,7 +425,7 @@ class MainViewModel(application: Application, private val evidenceRepository: co
 
     private suspend fun loadAllegationsForSelectedCase(spreadsheetId: String, caseIdForAssociation: Int) {
         val apiService = _googleApiService.value ?: return Unit.also { Log.w(TAG, "loadAllegations: No API service.") }
-        if (spreadsheetId.isBlank()) {
+         if (spreadsheetId.isBlank()) {
             _allegations.value = emptyList(); return
         }
         try {
@@ -437,7 +437,7 @@ class MainViewModel(application: Application, private val evidenceRepository: co
         }
     }
 
-    fun addAllegationToSelectedCase(allegationText: String) {
+    fun addAllegationToSelectedCase(allegationText: String) { 
         val currentCase = _selectedCase.value
         val apiService = _googleApiService.value
         if (currentCase == null || currentCase.spreadsheetId.isBlank() || allegationText.isBlank() || apiService == null) {
@@ -447,7 +447,7 @@ class MainViewModel(application: Application, private val evidenceRepository: co
         viewModelScope.launch {
             try {
                 if (apiService.addAllegationToCase(currentCase.spreadsheetId, allegationText)) {
-                    loadAllegationsForSelectedCase(currentCase.spreadsheetId, currentCase.id)
+                    loadAllegationsForSelectedCase(currentCase.spreadsheetId, currentCase.id) 
                 } else {
                     Log.w(TAG, "Failed to add allegation to case ${currentCase.id}.")
                 }
@@ -469,7 +469,7 @@ class MainViewModel(application: Application, private val evidenceRepository: co
             evidenceRepository.addEvidence(currentCase.spreadsheetId, entryWithCaseId)
         }
     }
-
+    
     fun addEvidenceToUiList(uri: Uri, context: Context) {
         viewModelScope.launch {
             val mimeType = context.contentResolver.getType(uri)
@@ -544,11 +544,11 @@ class MainViewModel(application: Application, private val evidenceRepository: co
                 val preprocessedBitmap = preprocessImageForOcr(reviewedBitmap)
                 val inputImage = InputImage.fromBitmap(preprocessedBitmap, 0)
                 val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
-
+                
                 val visionText = suspendCancellableCoroutine<com.google.mlkit.vision.text.Text> { continuation ->
                     recognizer.process(inputImage)
-                        .addOnSuccessListener { text ->
-                            if (continuation.isActive) continuation.resume(text)
+                        .addOnSuccessListener { text -> 
+                            if (continuation.isActive) continuation.resume(text) 
                         }
                         .addOnFailureListener { e ->
                             showError("Failed to recognize text.")
@@ -629,7 +629,7 @@ class MainViewModel(application: Application, private val evidenceRepository: co
             }
         } catch (e: Exception) { Log.e(TAG, "Failed to parse document file", e); null }
     }
-
+    
     fun importSmsMessages(context: Context) {
         viewModelScope.launch {
             val smsList = mutableListOf<com.hereliesaz.lexorcist.model.Evidence>()
@@ -652,8 +652,8 @@ class MainViewModel(application: Application, private val evidenceRepository: co
             _uiEvidenceList.value = _uiEvidenceList.value + smsList
         }
     }
-
-    fun exportToSheet() {
+    
+    fun exportToSheet() { 
         viewModelScope.launch {
             _googleApiService.value?.let { apiService ->
                 val spreadsheetId = apiService.createSpreadsheet("Lexorcist Export")
@@ -676,8 +676,8 @@ class MainViewModel(application: Application, private val evidenceRepository: co
             TaggedEvidenceRepository.setTaggedEvidence(taggedList)
         }
     }
-
-    fun addSettingScreenFilter(name: String, value: String) {
+    
+    fun addSettingScreenFilter(name: String, value: String) { 
         val newFilter = SheetFilter(name = name, value = value)
         _settingScreenFilters.value = _settingScreenFilters.value + newFilter
         Log.d(TAG, "Added setting screen filter: $newFilter. Current setting filters: ${_settingScreenFilters.value}")
@@ -703,7 +703,7 @@ class MainViewModel(application: Application, private val evidenceRepository: co
                 }
             } else {
                 Log.w(TAG, "addTextEvidenceToSelectedCase: No case or API service.")
-                _uiEvidenceList.value = _uiEvidenceList.value + com.hereliesaz.lexorcist.model.Evidence(
+                 _uiEvidenceList.value = _uiEvidenceList.value + com.hereliesaz.lexorcist.model.Evidence(
                     caseId = 0,
                     content = text, timestamp = System.currentTimeMillis(), sourceDocument = "Text Input (No Case)", documentDate = System.currentTimeMillis(),
                     allegationId = null, category = ""
@@ -711,7 +711,7 @@ class MainViewModel(application: Application, private val evidenceRepository: co
             }
         }
     }
-
+    
     fun importSpreadsheet(spreadsheetIdToImport: String) {
         viewModelScope.launch {
             val apiService = _googleApiService.value ?: return@launch Unit.also { Log.w(TAG, "importSpreadsheet: No API service.") }
@@ -736,9 +736,9 @@ class MainViewModel(application: Application, private val evidenceRepository: co
         }
     }
 
-    fun storeTaggedDataToSheet(newTaggedData: Map<String, List<String>>) {
+    fun storeTaggedDataToSheet(newTaggedData: Map<String, List<String>>) { 
         Log.d(TAG, "storeTaggedDataToSheet called with: $newTaggedData")
-        _taggedData.value = newTaggedData
+        _taggedData.value = newTaggedData 
 
         val currentCase = _selectedCase.value
         val apiService = _googleApiService.value
@@ -749,7 +749,7 @@ class MainViewModel(application: Application, private val evidenceRepository: co
                 newTaggedData.forEach { (tag, data) ->
                     if (data.isNotEmpty()) {
                         Log.d(TAG, "Adding sheet '$tag' with data: $data")
-                        apiService.addSheet(spreadsheetId, tag)
+                        apiService.addSheet(spreadsheetId, tag) 
                         val values = data.map { listOf(it) }
                         apiService.appendData(spreadsheetId, tag, values)
                     }
@@ -760,7 +760,7 @@ class MainViewModel(application: Application, private val evidenceRepository: co
         }
     }
 
-    fun addDriveFileEvidenceToSelectedCase(uri: Uri, context: Context) {
+    fun addDriveFileEvidenceToSelectedCase(uri: Uri, context: Context) { 
         viewModelScope.launch {
             val currentCase = _selectedCase.value
             val apiService = _googleApiService.value
@@ -788,18 +788,18 @@ class MainViewModel(application: Application, private val evidenceRepository: co
         _extractedText.value = text
     }
 
-    private val _evidenceToEdit = MutableStateFlow<Evidence?>(null)
-    val evidenceToEdit: StateFlow<Evidence?> = _evidenceToEdit.asStateFlow()
+    private val _evidenceToEdit = MutableStateFlow<com.hereliesaz.lexorcist.model.Evidence?>(null)
+    val evidenceToEdit: StateFlow<com.hereliesaz.lexorcist.model.Evidence?> = _evidenceToEdit.asStateFlow()
 
-    fun prepareEvidenceForEditing(evidence: Evidence) {
+    fun prepareEvidenceForEditing(evidence: com.hereliesaz.lexorcist.model.Evidence) {
         _evidenceToEdit.value = evidence
     }
 
     fun clearEvidenceToEdit() {
         _evidenceToEdit.value = null
     }
-
+    
     companion object {
-        private const val FILTERS_SHEET_NAME = "Filters"
+        private const val FILTERS_SHEET_NAME = "Filters" 
     }
 }
