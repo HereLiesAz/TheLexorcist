@@ -5,9 +5,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import com.materialkolor.DynamicMaterialExpressiveTheme
 import kotlin.random.Random
-@ExperimentalMaterial3Api
+
 @Composable
-fun LexorcistTheme(content: @Composable () -> Unit) {
+@OptIn(ExperimentalMaterial3Api::class)
+
+fun LexorcistTheme(content: @Composable()
+() -> Unit) {
     val randomColor = Color(
         red = Random.nextInt(256),
         green = Random.nextInt(256),
@@ -20,3 +23,4 @@ fun LexorcistTheme(content: @Composable () -> Unit) {
         content = content
     )
 }
+

@@ -837,10 +837,10 @@ class MainViewModel(application: Application, private val evidenceRepository: co
 
     fun addDriveFileEvidenceToSelectedCase(uri: Uri, context: Context) { 
         viewModelScope.launch {
-            val currentCase = _selectedLiesAz.value
+            val currentCase = _selectedCase.value // Corrected _selectedLiesAz to _selectedCase
             val apiService = _googleApiService.value
             if (currentCase != null && apiService != null) {
-                val rawEvidenceFolderId = apiService.getOrCreateEvidenceFolder(currentCase.name) ?: return@launch
+                val rawEvidenceFolderId = apiService.getOrCreateEvidenceFolder(currentCase?.name ?: "Unknown Case") ?: return@launch // Added safe call and default
                 context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
                     val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
                     cursor.moveToFirst()
@@ -850,14 +850,14 @@ class MainViewModel(application: Application, private val evidenceRepository: co
                         val file = File(context.cacheDir, fileName)
                         file.outputStream().use { outputStream -> inputStream.copyTo(outputStream) }
                         val uploadedDriveFile = apiService.uploadFile(file, rawEvidenceFolderId, mimeType ?: "application/octet-stream")
-                        Log.d(tag, "File $fileName uploaded to Drive for case ${currentCase.name}")
+                        Log.d(tag, "File $fileName uploaded to Drive for case ${currentCase?.name ?: "Unknown Case"}") // Added safe call and default
                         if (uploadedDriveFile != null) {
                              val newEvidenceEntry = Evidence(
                                  id = 0, // DB will assign ID
-                                 caseId = currentCase.id,
+                                 caseId = currentCase?.id ?: 0, // Added safe call and default
                                  content = "Uploaded file: $fileName (Content not extracted for preview)",
                                  timestamp = System.currentTimeMillis(),
-                                 sourceDocument = uploadedDriveFile.name ?: fileName,
+                                 sourceDocument = uploadedDriveFile?.name ?: fileName, // Added safe call
                                  documentDate = System.currentTimeMillis(),
                                  allegationId = null,
                                  category = mimeType ?: "file",
