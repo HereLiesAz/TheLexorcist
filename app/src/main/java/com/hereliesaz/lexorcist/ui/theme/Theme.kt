@@ -2,7 +2,7 @@ package com.hereliesaz.lexorcist.ui.theme
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import com.materialkolor.DynamicMaterialTheme
+import com.materialkolor.DynamicMaterialExpressiveTheme
 import kotlin.random.Random
 
 @Composable
@@ -13,7 +13,7 @@ fun LexorcistTheme(content: @Composable () -> Unit) {
         blue = Random.nextInt(256)
     )
 
-    DynamicMaterialTheme(
+    DynamicMaterialExpressiveTheme(
         seedColor = randomColor,
         typography = Typography,
         shapes = Shapes,
