@@ -13,8 +13,8 @@ import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 import com.hereliesaz.lexorcist.ui.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.launch
+import androidx.compose.ui.platform.LocalContext // Added import
+import kotlinx.coroutines.launch // Already present, ensure viewModelScope is used if needed from MainViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,6 +32,8 @@ fun MainScreen(
     var currentScreen by remember { mutableStateOf(R.string.nav_home) }
     var showCreateCaseDialog by remember { mutableStateOf(false) }
 
+    val localContext = LocalContext.current // Get context for onNavigate
+
     LaunchedEffect(errorMessage) {
         errorMessage?.let {
             snackbarHostState.showSnackbar(it)
@@ -48,11 +50,11 @@ fun MainScreen(
                     .fillMaxSize()
                     .padding(paddingValues)
             ) {
-                AppNavRail(onNavigate = { screen -> currentScreen = context.resources.getIdentifier(screen, "string", context.packageName) })
+                // Use localContext for getIdentifier
+                AppNavRail(onNavigate = { screen -> currentScreen = localContext.resources.getIdentifier(screen, "string", localContext.packageName) })
                 Box(modifier = Modifier.weight(1f)) {
                     when (currentScreen) {
                         R.string.nav_home -> AuthenticatedView(
-                            // onCreateMasterTemplate parameter removed
                             onCreateCase = { showCreateCaseDialog = true }
                         )
                         R.string.nav_cases -> CasesScreen(viewModel = viewModel)
@@ -60,12 +62,12 @@ fun MainScreen(
                             viewModel = viewModel,
                             onSelectImage = onSelectImage,
                             onTakePicture = onTakePicture,
-                            onAddTextEvidence = { currentScreen = R.string.nav_add_text_evidence },
+                            onAddTextEvidence = { currentScreen = R.string.add_text_evidence }, // Corrected: R.string.add_text_evidence
                             onAddDocument = onAddDocument,
                             onAddSpreadsheet = onAddSpreadsheet
                         )
-                        R.string.nav_add_text_evidence -> {
-                            val context = androidx.compose.ui.platform.LocalContext.current
+                        R.string.add_text_evidence -> { // Corrected: R.string.add_text_evidence
+                            val context = LocalContext.current // This context is fine for AddTextEvidenceScreen
                             AddTextEvidenceScreen(viewModel = viewModel, onSave = { text ->
                                 viewModel.addTextEvidenceToSelectedCase(text, context)
                                 currentScreen = R.string.nav_cases
@@ -104,14 +106,13 @@ fun MainScreen(
 
 @Composable
 fun AuthenticatedView(
-    // onCreateMasterTemplate parameter removed
     onCreateCase: () -> Unit
 ) {
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally, // Centered for buttons
+        horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         Text(
@@ -131,7 +132,6 @@ fun AuthenticatedView(
         Button(onClick = onCreateCase) {
             Text(stringResource(R.string.create_new_case))
         }
-        // Spacer and "Create New Master HTML Template" Button removed
     }
 }
 
@@ -141,28 +141,42 @@ fun CreateCaseDialog(
     viewModel: MainViewModel,
     onDismiss: () -> Unit
 ) {
+    val context = LocalContext.current // Get context for getString calls
     val templates by viewModel.htmlTemplates.collectAsState()
     var caseName by remember { mutableStateOf("") }
-    var exhibitSheetName by remember { mutableStateOf(stringResource(R.string.default_exhibit_sheet_name)) } // Default
+
+    // Hoist stringResource calls for remember initializers
+    val defaultExhibitSheetNameStr = stringResource(R.string.default_exhibit_sheet_name)
+    var exhibitSheetName by remember { mutableStateOf(defaultExhibitSheetNameStr) }
+
     var caseNumber by remember { mutableStateOf("") }
     var caseSection by remember { mutableStateOf("") }
     var caseJudge by remember { mutableStateOf("") }
 
     var expanded by remember { mutableStateOf(false) }
     var selectedTemplateId by remember { mutableStateOf<String?>(null) }
-    // Initialize with a placeholder or the first template if available
-    var selectedTemplateName by remember {
-        mutableStateOf(templates.firstOrNull()?.name ?: stringResource(R.string.select_a_template))
+
+    val selectATemplateStr = stringResource(R.string.select_a_template)
+    var selectedTemplateName by remember(templates) { // Re-evaluate if templates change
+        mutableStateOf(templates.firstOrNull()?.name ?: selectATemplateStr)
     }
-    // Effect to update selectedTemplateName if the first template becomes available later
-    LaunchedEffect(templates) {
-        if (selectedTemplateId == null && templates.isNotEmpty()) {
-            templates.firstOrNull()?.let {
-                // selectedTemplateId = it.id // Optionally pre-select the first one
-                // selectedTemplateName = it.name ?: "Unnamed Template"
+
+    LaunchedEffect(templates, selectedTemplateId) { // Adjusted key for LaunchedEffect
+        if (selectedTemplateId == null) {
+            if (templates.isNotEmpty()) {
+                // Update selectedTemplateName based on templates, not just setting to "select a template"
+                // This logic might need further refinement based on desired UX for initial state.
+                // For now, if no template is selected and templates are available, keep the "Select a Template" or first template name.
+                 if (selectedTemplateName == context.getString(R.string.no_templates_found) || selectedTemplateName == selectATemplateStr) {
+                     // If it was "no templates found" or the generic "select a template", and now templates are available,
+                     // update to the generic "select a template" or first available template name.
+                     // templates.firstOrNull()?.let { selectedTemplateName = it.name ?: context.getString(R.string.unnamed_template, it.id.take(8)) }
+                     // For simplicity, let's ensure it's "Select a Template" if nothing is picked yet and templates exist.
+                     // The remember block for selectedTemplateName handles initial value better.
+                 }
+            } else { // templates are empty
+                selectedTemplateName = context.getString(R.string.no_templates_found)
             }
-        } else if (selectedTemplateId == null && templates.isEmpty()) {
-            selectedTemplateName = stringResource(R.string.no_templates_found)
         }
     }
 
@@ -172,7 +186,7 @@ fun CreateCaseDialog(
         title = { Text(stringResource(R.string.create_new_case)) },
         text = {
             Column(
-                modifier = Modifier.verticalScroll(rememberScrollState()), // Make column scrollable
+                modifier = Modifier.verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 TextField(
@@ -221,17 +235,18 @@ fun CreateCaseDialog(
                     ) {
                         if (templates.isEmpty()) {
                             DropdownMenuItem(
-                                text = { Text(stringResource(R.string.no_templates_found_create_one)) }, // Text can be updated as the button is removed
+                                text = { Text(stringResource(R.string.no_templates_found_create_one)) },
                                 onClick = { expanded = false },
                                 enabled = false
                             )
                         }
                         templates.forEach { template ->
+                            val unnamedTemplateString = stringResource(R.string.unnamed_template, template.id.take(8))
                             DropdownMenuItem(
-                                text = { Text(template.name ?: stringResource(R.string.unnamed_template, template.id.take(8))) },
+                                text = { Text(template.name ?: unnamedTemplateString) },
                                 onClick = {
                                     selectedTemplateId = template.id
-                                    selectedTemplateName = template.name ?: stringResource(R.string.unnamed_template, template.id.take(8))
+                                    selectedTemplateName = template.name ?: context.getString(R.string.unnamed_template, template.id.take(8)) // Use context.getString
                                     expanded = false
                                 }
                             )
@@ -246,15 +261,15 @@ fun CreateCaseDialog(
                     if (caseName.isNotBlank() && selectedTemplateId != null) {
                         viewModel.createCase(
                             caseName = caseName,
-                            exhibitSheetName = exhibitSheetName.ifBlank { stringResource(R.string.default_exhibit_sheet_name) },
+                            // Use context.getString for ifBlank
+                            exhibitSheetName = exhibitSheetName.ifBlank { context.getString(R.string.default_exhibit_sheet_name) },
                             caseNumber = caseNumber,
                             caseSection = caseSection,
                             caseJudge = caseJudge,
                             selectedMasterHtmlTemplateId = selectedTemplateId!!
                         )
                         onDismiss()
-                    } 
-                    // Basic validation handled by enabling/disabling button and isError on fields
+                    }
                 },
                 enabled = caseName.isNotBlank() && selectedTemplateId != null
             ) {

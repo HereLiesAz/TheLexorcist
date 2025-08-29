@@ -2,6 +2,21 @@
 
 This file contains instructions for AI agents working on this codebase.
 
+### Before you begin...
+
+Analyze this project to understand it. It is an app for digitally importing, maintaining, visualizing, and tracking legal evidence. 
+Make sure you read all documentation first, and do not change anything without me explicitly telling you to. 
+Commit your changes after each step. 
+Do NOT bother getting the app to compile unless I tell you to do so.
+
+## Design
+This app uses Jetpack Compose for UI development. 
+Aside from the AzNavRail, all elements should be horizontally aligned right and vertically aligned center.
+The color scheme is designed to use a random seed color to generate the color palette using the Material 3 Theme Builder.
+Buttons should be outlined with no fill. 
+
+If any of these things are found to not be so, inform the user and correct the issue. 
+
 ## Documentation
 
 It is crucial to keep the documentation up-to-date with any code changes. When you modify any part of the source code, you **must** also update the corresponding documentation.

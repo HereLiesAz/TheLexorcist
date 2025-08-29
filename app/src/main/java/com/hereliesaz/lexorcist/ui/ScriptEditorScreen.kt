@@ -19,6 +19,12 @@ fun ScriptEditorScreen(viewModel: ScriptEditorViewModel) {
     val saveState by viewModel.saveState.collectAsState()
     val context = LocalContext.current
 
+    // Resolve strings for lambdas in the Composable scope
+    val snippetTextIncludesStr = stringResource(R.string.script_snippet_text_includes)
+    val snippetTagsIncludesStr = stringResource(R.string.script_snippet_tags_includes)
+    val snippetDateGreaterStr = stringResource(R.string.script_snippet_date_greater)
+    val snippetDateLessStr = stringResource(R.string.script_snippet_date_less)
+
     LaunchedEffect(saveState) {
         when (saveState) {
             is SaveState.Success -> {
@@ -67,19 +73,19 @@ fun ScriptEditorScreen(viewModel: ScriptEditorViewModel) {
         ) {
             Text(stringResource(R.string.script_builder), style = MaterialTheme.typography.headlineSmall)
             Spacer(modifier = Modifier.height(16.dp))
-            Button(onClick = { viewModel.insertText(stringResource(R.string.script_snippet_text_includes)) }) {
+            Button(onClick = { viewModel.insertText(snippetTextIncludesStr) }) {
                 Text(stringResource(R.string.script_snippet_text_includes_label))
             }
             Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = { viewModel.insertText(stringResource(R.string.script_snippet_tags_includes)) }) {
+            Button(onClick = { viewModel.insertText(snippetTagsIncludesStr) }) {
                 Text(stringResource(R.string.script_snippet_tags_includes_label))
             }
             Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = { viewModel.insertText(stringResource(R.string.script_snippet_date_greater)) }) {
+            Button(onClick = { viewModel.insertText(snippetDateGreaterStr) }) {
                 Text(stringResource(R.string.script_snippet_date_greater_label))
             }
             Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = { viewModel.insertText(stringResource(R.string.script_snippet_date_less)) }) {
+            Button(onClick = { viewModel.insertText(snippetDateLessStr) }) {
                 Text(stringResource(R.string.script_snippet_date_less_label))
             }
         }

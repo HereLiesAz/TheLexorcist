@@ -16,25 +16,52 @@ import com.hereliesaz.lexorcist.R
 @Composable
 fun AppNavRail(onNavigate: (String) -> Unit) {
     val context = LocalContext.current
+
+    // Resolve strings for lambdas in the Composable scope
+    val appNameStr = stringResource(R.string.app_name)
+    val navHomeStr = stringResource(R.string.nav_home)
+    val navSettingsStr = stringResource(R.string.nav_settings)
+    val githubUrlStr = stringResource(R.string.github_url)
+    val feedbackEmailStr = stringResource(R.string.feedback_email)
+    val feedbackSubjectStr = stringResource(R.string.feedback_subject)
+
+    val navCasesStr = stringResource(R.string.nav_cases)
+    val navTimelineStr = stringResource(R.string.nav_timeline)
+    val navDataReviewStr = stringResource(R.string.nav_data_review)
+    val navVisualizationStr = stringResource(R.string.nav_visualization)
+    val navEvidenceStr = stringResource(R.string.nav_evidence)
+    val navAddEvidenceStr = stringResource(R.string.nav_add_evidence)
+
+    // NavItem texts (these were likely fine as they are resolved in Composable scope before being passed)
+    val casesText = stringResource(R.string.cases)
+    val timelineText = stringResource(R.string.timeline)
+    val dataReviewText = stringResource(R.string.data_review)
+    val visualizationText = stringResource(R.string.visualization)
+    val evidenceText = stringResource(R.string.evidence)
+    val addText = stringResource(R.string.add)
+    val settingsText = stringResource(R.string.settings)
+    val aboutText = stringResource(R.string.about)
+    val feedbackText = stringResource(R.string.feedback)
+
     AzNavRail(
-        appName = stringResource(R.string.app_name),
+        appName = appNameStr,
         useAppIconAsHeader = true,
-        header = NavRailHeader {        },
+        header = NavRailHeader { /* ... */ },
         onPredefinedAction = { action ->
             when (action) {
-                PredefinedAction.HOME -> onNavigate(stringResource(R.string.nav_home))
-                PredefinedAction.SETTINGS -> onNavigate(stringResource(R.string.nav_settings))
+                PredefinedAction.HOME -> onNavigate(navHomeStr)
+                PredefinedAction.SETTINGS -> onNavigate(navSettingsStr)
                 PredefinedAction.ABOUT -> {
                     val intent = Intent(
                         Intent.ACTION_VIEW,
-                        Uri.parse(stringResource(R.string.github_url))
+                        Uri.parse(githubUrlStr)
                     )
                     context.startActivity(intent)
                 }
                 PredefinedAction.FEEDBACK -> {
                     val intent = Intent(Intent.ACTION_SENDTO).apply {
-                        data = Uri.parse(stringResource(R.string.feedback_email))
-                        putExtra(Intent.EXTRA_SUBJECT, stringResource(R.string.feedback_subject))
+                        data = Uri.parse(feedbackEmailStr)
+                        putExtra(Intent.EXTRA_SUBJECT, feedbackSubjectStr)
                     }
                     context.startActivity(intent)
                 }
@@ -43,41 +70,40 @@ fun AppNavRail(onNavigate: (String) -> Unit) {
         },
         menuSections = listOf(
             NavRailMenuSection(
-                title = "",
+                title = "", // Assuming empty title is intentional
                 items = listOf(
-
-                            NavItem(
-                        text = stringResource(R.string.cases),
-                        data = NavItemData.Action(onClick = { onNavigate(stringResource(R.string.nav_cases)) }),
+                    NavItem(
+                        text = casesText,
+                        data = NavItemData.Action(onClick = { onNavigate(navCasesStr) }),
                         showOnRail = true
                     ),
                     NavItem(
-                        text = stringResource(R.string.timeline),
-                        data = NavItemData.Action(onClick = { onNavigate(stringResource(R.string.nav_timeline)) }),
+                        text = timelineText,
+                        data = NavItemData.Action(onClick = { onNavigate(navTimelineStr) }),
                         showOnRail = false
                     ),
                     NavItem(
-                        text = stringResource(R.string.data_review),
-                        data = NavItemData.Action(onClick = { onNavigate(stringResource(R.string.nav_data_review)) }),
+                        text = dataReviewText,
+                        data = NavItemData.Action(onClick = { onNavigate(navDataReviewStr) }),
                         showOnRail = false
                     ),
                     NavItem(
-                        text = stringResource(R.string.visualization),
-                        data = NavItemData.Action(onClick = { onNavigate(stringResource(R.string.nav_visualization)) }),
+                        text = visualizationText,
+                        data = NavItemData.Action(onClick = { onNavigate(navVisualizationStr) }),
                         showOnRail = false
                     ),
                     NavItem(
-                        text = stringResource(R.string.evidence),
-                        data = NavItemData.Action(onClick = { onNavigate(stringResource(R.string.nav_evidence)) }),
+                        text = evidenceText,
+                        data = NavItemData.Action(onClick = { onNavigate(navEvidenceStr) }),
                         showOnRail = false
                     ),
                     NavItem(
-                        text = stringResource(R.string.add),
-                        data = NavItemData.Action(onClick = { onNavigate(stringResource(R.string.nav_add_evidence)) }),
+                        text = addText,
+                        data = NavItemData.Action(onClick = { onNavigate(navAddEvidenceStr) }),
                         showOnRail = true
                     ),
                     NavItem(
-                        text = stringResource(R.string.settings),
+                        text = settingsText,
                         data = NavItemData.Action(predefinedAction = PredefinedAction.SETTINGS),
                         showOnRail = false
                     )
@@ -86,13 +112,13 @@ fun AppNavRail(onNavigate: (String) -> Unit) {
         ),
         footerItems = listOf(
             NavItem(
-                text = stringResource(R.string.about),
+                text = aboutText,
                 data = NavItemData.Action(predefinedAction = PredefinedAction.ABOUT)
-                ),
+            ),
             NavItem(
-                text = stringResource(R.string.feedback),
+                text = feedbackText,
                 data = NavItemData.Action(predefinedAction = PredefinedAction.FEEDBACK)
+            )
         )
-    )
     )
 }

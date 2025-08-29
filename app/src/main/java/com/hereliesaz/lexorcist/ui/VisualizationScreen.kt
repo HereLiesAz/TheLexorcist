@@ -10,7 +10,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource // Added for Text
 import androidx.compose.ui.unit.dp
+import com.hereliesaz.lexorcist.R // Added for stringResource
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 import com.patrykandpatrick.vico.compose.axis.horizontal.rememberBottomAxis
 import com.patrykandpatrick.vico.compose.axis.vertical.rememberStartAxis
@@ -23,11 +25,12 @@ import com.patrykandpatrick.vico.core.entry.pie.PieEntry
 fun VisualizationScreen(viewModel: MainViewModel) {
     val evidenceList by viewModel.selectedCaseEvidenceList.collectAsState()
 
-    val chartEntryModelProducer = ChartEntryModelProducer()
-    val entries = evidenceList
-        .groupBy { it.category }
-        .map { (category, evidence) ->
-            PieEntry(evidence.size.toFloat(), category)
+    // Explicitly type the producer and entries list for clarity and to help inference
+    val chartEntryModelProducer = ChartEntryModelProducer<PieEntry>()
+    val entries: List<PieEntry> = evidenceList
+        .groupBy { it.category } // Assuming it.category is a String
+        .map { (category, evidenceInGroup) ->
+            PieEntry(evidenceInGroup.size.toFloat(), category)
         }
     chartEntryModelProducer.setEntries(entries)
 
@@ -37,7 +40,7 @@ fun VisualizationScreen(viewModel: MainViewModel) {
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("Evidence by Category", style = MaterialTheme.typography.headlineMedium)
+        Text(stringResource(R.string.evidence_by_category), style = MaterialTheme.typography.headlineMedium)
         Chart(
             chart = rememberPieChart(),
             chartModelProducer = chartEntryModelProducer,
