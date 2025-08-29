@@ -91,11 +91,11 @@ object DataParser {
             entries.add(
                 Evidence(
                     caseId = caseId.toLong(),
-                    allegationId = linkedAllegation?.id.toString(),
-                    amount = null,
-                    timestamp = Date(System.currentTimeMillis()),
+                    allegationId = linkedAllegation?.id,
+                    content = sentence,
+                    timestamp = System.currentTimeMillis(),
                     sourceDocument = "Parsed from text",
-                    documentDate = Date(date),
+                    documentDate = date,
                     category = category
                 )
             )

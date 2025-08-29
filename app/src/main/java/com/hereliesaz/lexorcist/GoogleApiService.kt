@@ -282,12 +282,13 @@ class GoogleApiService(
                     entries.add(
                         Evidence(
                             caseId = caseIdForAssociation.toLong(),
-                            allegationId = allegationId,
-                            amount = amount,
-                            timestamp = java.util.Date(timestamp),
+                            allegationId = allegationId.toIntOrNull(),
+                            content = row.getOrNull(0)?.toString() ?: "",
+                            timestamp = timestamp,
                             sourceDocument = sourceDocument,
-                            documentDate = java.util.Date(documentDate),
-                            category = category
+                            documentDate = documentDate,
+                            category = category,
+                            tags = row.getOrNull(4)?.toString()?.split(",")?.map { it.trim() } ?: emptyList()
                         )
                     )
                 } catch (e: Exception) {
@@ -302,6 +303,18 @@ class GoogleApiService(
         entries
     }
 
+    suspend fun getRawEvidenceForCase(caseSpreadsheetId: String): List<List<Any>>? = withContext(Dispatchers.IO) {
+        if (caseSpreadsheetId.isBlank()) return@withContext null
+        try {
+            val allSheetData = readSpreadsheet(caseSpreadsheetId)
+            allSheetData?.get(EVIDENCE_SHEET_NAME)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Log.e("GoogleApiService", "Error in getRawEvidenceForCase for $caseSpreadsheetId", e)
+            null
+        }
+    }
+
     suspend fun addEvidenceToCase(caseSpreadsheetId: String, entry: Evidence): Boolean = withContext(Dispatchers.IO) {
         if (caseSpreadsheetId.isBlank()) return@withContext false
         try {
@@ -309,17 +322,17 @@ class GoogleApiService(
             val sheetExists = sheetsService.spreadsheets().get(caseSpreadsheetId).execute().sheets?.any { it.properties?.title == EVIDENCE_SHEET_NAME } == true
             if (!sheetExists) {
                 addSheet(caseSpreadsheetId, EVIDENCE_SHEET_NAME)
-                val header = listOf(listOf("Source Document", "Timestamp", "Document Date", "Allegation ID", "Category", "Amount"))
+                val header = listOf(listOf<Any>("Source Document", "Timestamp", "Document Date", "Allegation ID", "Category", "Amount"))
                 appendData(caseSpreadsheetId, EVIDENCE_SHEET_NAME, header)
             }
 
             val values = listOf(listOf(
                 entry.sourceDocument,
-                entry.timestamp.time.toString(),
-                entry.documentDate.time.toString(),
+                entry.timestamp.toString(),
+                entry.documentDate.toString(),
                 entry.allegationId,
                 entry.category,
-                entry.amount?.toString() ?: ""
+                ""
             ))
             appendData(caseSpreadsheetId, EVIDENCE_SHEET_NAME, values as List<List<Any>>) != null
         } catch (e: Exception) {
@@ -335,13 +348,13 @@ class GoogleApiService(
             val range = "$EVIDENCE_SHEET_NAME!A${evidence.id + 2}" // +2 because sheet is 1-indexed and there's a header
             val values = listOf(listOf(
                 evidence.sourceDocument,
-                evidence.timestamp.time.toString(),
-                evidence.documentDate.time.toString(),
+                evidence.timestamp.toString(),
+                evidence.documentDate.toString(),
                 evidence.allegationId,
                 evidence.category,
-                evidence.amount?.toString() ?: ""
+                ""
             ))
-            val body = ValueRange().setValues(values)
+            val body = ValueRange().setValues(values as List<List<Any>>)
             sheetsService.spreadsheets().values().update(spreadsheetId, range, body)
                 .setValueInputOption("USER_ENTERED")
                 .execute()

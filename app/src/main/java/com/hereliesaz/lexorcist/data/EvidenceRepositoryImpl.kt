@@ -22,6 +22,7 @@ class EvidenceRepositoryImpl(
         try {
             googleApiService?.let {
                 val evidence = it.getEvidenceForCase(spreadsheetId, caseId)
+                evidenceDao.deleteAll()
                 evidenceDao.insertAll(evidence)
             }
         } catch (e: Exception) {

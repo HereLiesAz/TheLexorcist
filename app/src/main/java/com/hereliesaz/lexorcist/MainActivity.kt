@@ -19,6 +19,7 @@ import com.google.android.gms.auth.api.identity.SignInClient
 import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.common.api.ApiException
 import com.hereliesaz.lexorcist.MainScreen
+import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.ui.theme.LexorcistTheme
 import com.hereliesaz.lexorcist.data.AppDatabase
 import com.hereliesaz.lexorcist.data.EvidenceRepositoryImpl

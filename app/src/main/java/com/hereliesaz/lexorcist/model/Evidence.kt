@@ -20,11 +20,12 @@ import java.util.Date
 data class Evidence(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
-    var caseId: Long = 0, // Added this line
-    val amount: Double?,
-    val timestamp: Date,
+    val caseId: Long,
+    val allegationId: Int? = null,
+    val content: String,
+    val timestamp: Long,
     val sourceDocument: String,
-    val documentDate: Date,
-    val allegationId: String,
-    val category: String? = null
+    val documentDate: Long,
+    val tags: List<String> = emptyList(),
+    val category: String = ""
 )
