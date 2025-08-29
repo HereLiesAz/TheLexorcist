@@ -105,6 +105,16 @@
     <string name="script_snippet_date_less_label">date &lt; …</string>
     <string name="evidence_by_category">Evidence by Category</string>
 
+    <string name="select_image_to_scan">Select Image to Scan</string>
+    <string name="load_case">Load Case</string>
+    <string name="save_to_sheet">Save to Sheet</string>
+    <string name="edit_app_script">Edit App Script</string>
+    <string name="selected_image_for_scanning">Selected image for scanning</string>
+    <string name="all_entries">All Entries</string>
+    <string name="filter">Filter</string>
+    <string name="total">Total</string>
+    <string name="enter_your_app_script_here">Enter your app script here</string>
+
     <string-array name="sort_options">
         <item>Sort by Date (Newest)</item>
         <item>Sort by Date (Oldest)</item>

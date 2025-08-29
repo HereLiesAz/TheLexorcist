@@ -13,7 +13,8 @@ Do NOT bother getting the app to compile unless I tell you to do so.
 This app uses Jetpack Compose for UI development. 
 Aside from the AzNavRail, all elements should be horizontally aligned right and vertically aligned center.
 The color scheme is designed to use a random seed color to generate the color palette using the Material 3 Theme Builder.
-Buttons should be outlined with no fill. 
+Buttons should be outlined with no fill.
+Use the experimental Material 3 Expressive design system.
 
 If any of these things are found to not be so, inform the user and correct the issue. 
 
