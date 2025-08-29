@@ -19,48 +19,42 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.hereliesaz.lexorcist.model.Evidence
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
-import com.pushpal.jetlime.JetLimeEvent
-import com.pushpal.jetlime.JetLimeColumn
-import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
 import io.github.pushpalroy.jetlime.Event
 import io.github.pushpalroy.jetlime.JetLime
 import java.text.SimpleDateFormat
 import java.util.*
 
 @Composable
-fun TimelineScreen(evidenceViewModel: EvidenceViewModel) {
-    val evidenceList by evidenceViewModel.evidenceList.collectAsState()
 fun TimelineScreen(viewModel: MainViewModel) {
     val evidenceList by viewModel.selectedCaseEvidenceList.collectAsState()
     var selectedEvidence by remember { mutableStateOf<Evidence?>(null) }
 
-    val events = evidenceList.map { evidence ->
-        JetLimeEvent {
-            onClick = { selectedEvidence = evidence },
-            title = {
-                Text(
-                    text = evidence.sourceDocument,
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(bottom = 4.dp)
-                )
-            },
-            subtitle = {
-                Text(
-                    text = SimpleDateFormat(
-                        "yyyy-MM-dd",
-                        Locale.getDefault()
-                    ).format(evidence.documentDate),
-                    style = MaterialTheme.typography.bodySmall
-                )
-            }
-        }
-    }
-
-    JetLimeColumn {
+    JetLime(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
-        events = events
+    ) {
+        evidenceList.forEach { evidence ->
+            Event(
+                onClick = { selectedEvidence = evidence },
+                title = {
+                    Text(
+                        text = evidence.sourceDocument,
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    )
+                },
+                subtitle = {
+                    Text(
+                        text = SimpleDateFormat(
+                            "yyyy-MM-dd",
+                            Locale.getDefault()
+                        ).format(evidence.documentDate),
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            )
+        }
     }
 
     selectedEvidence?.let {
