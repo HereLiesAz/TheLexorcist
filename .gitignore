@@ -15,6 +15,7 @@
 
 # Environment files
 /.env
+buildOutputCleanup.lock
 
 # Angular CLI and build artefacts
 /.angular-cli.json

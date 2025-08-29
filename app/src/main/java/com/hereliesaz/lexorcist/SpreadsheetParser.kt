@@ -40,11 +40,10 @@ class SpreadsheetParser(
 
         // 3. Create New Case Structure (since no duplicate was found)
         Log.d(TAG, "parseAndStore: No existing case found with name '$importedCaseName'. Proceeding to create new case structure.")
-        val masterTemplateId = googleApiService.createMasterTemplate(appRootFolderId)
-        if (masterTemplateId == null) {
-            Log.e(TAG, "parseAndStore: Failed to create master template.")
-            // Decide if this is a fatal error for import, or proceed without a template
-        }
+        
+        // val masterTemplateId = googleApiService.createMasterTemplate(appRootFolderId) // Removed call
+        val originalMasterHtmlTemplateIdForCaseRecord: String? = null // This will be null for imported cases now
+
         val newCaseFolderId = googleApiService.getOrCreateFolder(importedCaseName, appRootFolderId)
         if (newCaseFolderId == null) {
             Log.e(TAG, "parseAndStore: Failed to create folder for new case: $importedCaseName")
@@ -55,13 +54,18 @@ class SpreadsheetParser(
             Log.e(TAG, "parseAndStore: Failed to create spreadsheet for new case: $importedCaseName")
             return null
         }
-        masterTemplateId?.let {
-            googleApiService.attachScript(newCaseSpreadsheetId, it, newCaseFolderId)
-        }
+        
+        // Corrected attachScript call for imported cases
+        // For now, using placeholder script content. Ideally, this would load a suitable script template.
+        val placeholderScriptContent = "// Default script for imported case\nfunction onOpen() {}\n"
+        val masterIdForScriptConfig = "" // No specific PDF/Doc template for imported cases initially
+        googleApiService.attachScript(newCaseSpreadsheetId, placeholderScriptContent, masterIdForScriptConfig)
+        
         Log.d(TAG, "parseAndStore: Created new case structure: Folder ID $newCaseFolderId, Spreadsheet ID $newCaseSpreadsheetId")
 
         // 4. Add to Case Registry
-        val newCase = Case(name = importedCaseName, spreadsheetId = newCaseSpreadsheetId, originalMasterHtmlTemplateId = masterTemplateId)
+        // originalMasterHtmlTemplateId will be null for this newly imported case
+        val newCase = Case(name = importedCaseName, spreadsheetId = newCaseSpreadsheetId, originalMasterHtmlTemplateId = originalMasterHtmlTemplateIdForCaseRecord)
         val addedToRegistry = googleApiService.addCaseToRegistry(caseRegistrySpreadsheetId, newCase)
         if (!addedToRegistry) {
             Log.w(TAG, "parseAndStore: Failed to add new case '$importedCaseName' to registry. Proceeding with data import to its sheet, but it won't be listed until registry issue is fixed.")

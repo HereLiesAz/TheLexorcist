@@ -40,12 +40,7 @@ fun MainScreen(
                 Box(modifier = Modifier.weight(1f)) {
                     when (currentScreen) {
                         "home" -> AuthenticatedView(
-                            onCreateMasterTemplate = {
-                                // TODO: Implement Master Template Creation UI/Flow
-                                viewModel.viewModelScope.launch {
-                                    viewModel.googleApiService.value?.createMasterTemplate()
-                                }
-                            },
+                            // onCreateMasterTemplate parameter removed
                             onCreateCase = { showCreateCaseDialog = true }
                         )
                         "cases" -> CasesScreen(viewModel = viewModel)
@@ -95,7 +90,7 @@ fun MainScreen(
 
 @Composable
 fun AuthenticatedView(
-    onCreateMasterTemplate: () -> Unit,
+    // onCreateMasterTemplate parameter removed
     onCreateCase: () -> Unit
 ) {
     Column(
@@ -122,10 +117,7 @@ fun AuthenticatedView(
         Button(onClick = onCreateCase) {
             Text("Create New Case")
         }
-        Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = onCreateMasterTemplate) {
-            Text("Create New Master HTML Template")
-        }
+        // Spacer and "Create New Master HTML Template" Button removed
     }
 }
 
@@ -215,7 +207,7 @@ fun CreateCaseDialog(
                     ) {
                         if (templates.isEmpty()) {
                             DropdownMenuItem(
-                                text = { Text("No templates found. Create one via Home screen.") },
+                                text = { Text("No templates found. Create one via Home screen.") }, // Text can be updated as the button is removed
                                 onClick = { expanded = false },
                                 enabled = false
                             )

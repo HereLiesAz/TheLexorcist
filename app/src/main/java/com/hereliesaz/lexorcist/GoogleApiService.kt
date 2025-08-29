@@ -183,48 +183,7 @@ class GoogleApiService(
         }
     }
 
-    suspend fun createMasterTemplate(parentId: String? = null, templateName: String = "Lexorcist Master HTML Template"): String? = withContext(Dispatchers.IO) {
-        try {
-            val fileMetadata = DriveFile()
-                .setName(templateName)
-                .setMimeType("text/html") // Correct MimeType for HTML
-            if (parentId != null) {
-                 fileMetadata.parents = listOf(parentId)
-            } else {
-                // If no parentId is specified, create it in the app root folder by default.
-                val appRootFolderId = getOrCreateAppRootFolder()
-                if (appRootFolderId != null) {
-                    fileMetadata.parents = listOf(appRootFolderId)
-                } else {
-                    Log.e("GoogleApiService", "Failed to get/create app root folder for master template. Template will be in Drive root.")
-                    // Optionally, don't set parents if appRootFolderId is null, placing it in user's Drive root.
-                }
-            }
-            val content = ByteArrayContent.fromString("text/html", 
-                """<html>
-                    |<head>
-                    |    <title>Master Template</title>
-                    |</head>
-                    |<body>
-                    |    <h1>Case: {{CASE_NAME}}</h1>
-                    |    <p>Court: {{COURT}}</p>
-                    |    <p>Plaintiffs: {{PLAINTIFFS}}</p>
-                    |    <p>Defendants: {{DEFENDANTS}}</p>
-                    |    <p>Case Number: {{CASE_NUMBER}}</p>
-                    |    <p>Section: {{CASE_SECTION}}</p>
-                    |    <p>Judge: {{JUDGE}}</p>
-                    |    <!-- Add more placeholders as needed -->
-                    |</body>
-                    |</html>
-                """.trimMargin()
-            )
-            driveService.files().create(fileMetadata, content).setFields("id").execute()?.id
-        } catch (e: Exception) {
-            e.printStackTrace()
-            Log.e("GoogleApiService", "Error in createMasterTemplate", e)
-            null
-        }
-    }
+    // createMasterTemplate function removed
 
     suspend fun listHtmlTemplatesInAppRootFolder(): List<DriveFile> = withContext(Dispatchers.IO) {
         try {
