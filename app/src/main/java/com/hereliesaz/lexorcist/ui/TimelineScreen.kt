@@ -19,8 +19,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.hereliesaz.lexorcist.model.Evidence
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
-import com.pushpal.jetlime.Event
-import com.pushpal.jetlime.JetLime
+import com.pushpal.jetlime.JetLimeEvent
+import com.pushpal.jetlime.JetLimeColumn
 import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
 import io.github.pushpalroy.jetlime.Event
 import io.github.pushpalroy.jetlime.JetLime
@@ -35,7 +35,7 @@ fun TimelineScreen(viewModel: MainViewModel) {
     var selectedEvidence by remember { mutableStateOf<Evidence?>(null) }
 
     val events = evidenceList.map { evidence ->
-        Event(
+        JetLimeEvent {
             onClick = { selectedEvidence = evidence },
             title = {
                 Text(
@@ -46,19 +46,22 @@ fun TimelineScreen(viewModel: MainViewModel) {
             },
             subtitle = {
                 Text(
-                    text = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(evidence.documentDate),
+                    text = SimpleDateFormat(
+                        "yyyy-MM-dd",
+                        Locale.getDefault()
+                    ).format(evidence.documentDate),
                     style = MaterialTheme.typography.bodySmall
                 )
             }
-        )
+        }
     }
 
-    JetLime(
+    JetLimeColumn {
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
         events = events
-    )
+    }
 
     selectedEvidence?.let {
         EvidenceDetailsDialog(evidence = it, onDismiss = { selectedEvidence = null })

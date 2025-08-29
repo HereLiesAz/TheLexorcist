@@ -158,6 +158,7 @@ dependencies {
     implementation("com.materialkolor:material-kolor:3.0.1")
     implementation("com.patrykandpatrick.vico:compose:2.1.3")
     implementation("io.github.pushpalroy:jetlime:4.0.0")
+    implementation("io.github.pushpalroy:jetlime-android:4.0.0")
 }
 
 // Removed kapt block entirely
