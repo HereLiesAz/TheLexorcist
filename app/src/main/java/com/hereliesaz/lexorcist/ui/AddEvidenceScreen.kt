@@ -17,9 +17,12 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.lazy.items
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.hereliesaz.lexorcist.viewmodel.MainViewModel
+import com.hereliesaz.lexorcist.ui.TaggedDataItem
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -100,6 +103,16 @@ fun AddEvidenceScreen(
                     }
                 }
 
+            // LazyColumn for tagged data - shown when no image is under review
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f) // Allow LazyColumn to take available space
+            ) {
+                items(taggedData.toList()) { item ->
+                    TaggedDataItem(item = item)
+                }
+            }
 
             } else {
                 // Image Review UI - shown when an image is selected/taken
