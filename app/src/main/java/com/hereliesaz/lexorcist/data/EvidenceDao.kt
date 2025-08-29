@@ -4,7 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.hereliesaz.lexorcist.model.Evidence
+import com.hereliesaz.lexorcist.data.Evidence // Corrected import
 import kotlinx.coroutines.flow.Flow
 
 @Dao

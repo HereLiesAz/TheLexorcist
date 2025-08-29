@@ -7,11 +7,12 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.data.EvidenceRepository
-import com.hereliesaz.lexorcist.model.Evidence
+import com.hereliesaz.lexorcist.data.Evidence // Correct import
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+// import java.util.Date // Removed import
 
 class EvidenceViewModel(
     application: Application,
@@ -27,7 +28,7 @@ class EvidenceViewModel(
 
     init {
         selectedCase?.let {
-            loadEvidenceForCase(it.id)
+            loadEvidenceForCase(it.id.toLong()) // Corrected: Convert Int to Long
         }
     }
 
@@ -73,12 +74,20 @@ class EvidenceViewModel(
     }
 
     fun addEvidenceToSelectedCase(text: String, context: Context) {
-        val newEvidence = Evidence(
-            content = text,
-            timestamp = System.currentTimeMillis(),
-            sourceDocument = "Text Input",
-            documentDate = System.currentTimeMillis()
-        )
-        addEvidenceToSelectedCase(newEvidence)
+        selectedCase?.let { case ->
+            val newEvidence = Evidence(
+                id = 0, // Placeholder ID for new evidence, repository should handle actual ID generation
+                caseId = case.id, // Use selectedCase.id
+                content = text,
+                // amount = null, // Removed amount
+                timestamp = System.currentTimeMillis(), // Changed to Long
+                sourceDocument = "Text Input",
+                documentDate = System.currentTimeMillis(), // Changed to Long
+                allegationId = null, // Int? is fine with null
+                category = "Text Input", // String is fine
+                tags = emptyList() // List<String> is fine
+            )
+            addEvidenceToSelectedCase(newEvidence)
+        }    
     }
 }

@@ -157,28 +157,16 @@ dependencies {
     // Mozilla Rhino for JavaScript execution
     implementation("org.mozilla:rhino:1.8.0")
     implementation("com.materialkolor:material-kolor:3.0.1")
+    
+    // Vico Charting Library
     implementation("com.patrykandpatrick.vico:compose:2.1.3")
+    implementation("com.patrykandpatrick.vico:core:2.1.3") // Added Vico core
+
+    // JetLime Timeline Library
     implementation("io.github.pushpalroy:jetlime:4.0.0")
     implementation("io.github.pushpalroy:jetlime-android:4.0.0")
 }
 
-// Removed kapt block entirely
-/*
-kapt {
-    arguments {
-        arg("kapt.jvm.args", "-J--add-opens=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED " +
-                            "-J--add-opens=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED " +
-                            "-J--add-opens=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED " +
-                            "-J--add-opens=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED " +
-                            "-J--add-opens=jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED " +
-                            "-J--add-opens=jdk.compiler/com.sun.tools.javac.model=ALL-UNNAMED " +
-                            "-J--add-opens=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED " +
-                            "-J--add-opens=jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED " +
-                            "-J--add-opens=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED " +
-                            "-J--add-opens=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED")
-    }
-}
-*/
 kotlin {
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_17)

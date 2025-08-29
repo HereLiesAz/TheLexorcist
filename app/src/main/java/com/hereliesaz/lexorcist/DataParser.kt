@@ -1,7 +1,7 @@
 package com.hereliesaz.lexorcist
 
 import com.hereliesaz.lexorcist.data.Allegation
-import com.hereliesaz.lexorcist.model.Evidence
+import com.hereliesaz.lexorcist.data.Evidence
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -93,14 +93,13 @@ object DataParser {
                 Evidence(
                     id = entries.size, 
                     caseId = caseId, 
-                    allegationId = linkedAllegation?.id?.toString(),
+                    allegationId = linkedAllegation?.id,
                     content = sentence,
-                    amount = null, 
-                    timestamp = Date(System.currentTimeMillis()), 
+                    timestamp = System.currentTimeMillis(), 
                     sourceDocument = "Parsed from text",
-                    documentDate = Date(date), 
+                    documentDate = date, 
                     category = category,
-                    tags = null 
+                    tags = emptyList() 
                 )
             )
         }

@@ -1,7 +1,7 @@
 package com.hereliesaz.lexorcist.data
 
 import com.hereliesaz.lexorcist.GoogleApiService
-import com.hereliesaz.lexorcist.model.Evidence
+import com.hereliesaz.lexorcist.data.Evidence // Corrected import
 import kotlinx.coroutines.flow.Flow
 import java.lang.Exception
 
@@ -23,7 +23,7 @@ class EvidenceRepositoryImpl(
     override suspend fun refreshEvidenceForCase(spreadsheetId: String, caseId: Int) {
         try {
             googleApiService?.let {
-                val evidenceList = it.getEvidenceForCase(spreadsheetId, caseId) // This now returns List<model.Evidence>
+                val evidenceList = it.getEvidenceForCase(spreadsheetId, caseId) // This now returns List<data.Evidence>
                 evidenceDao.deleteAll() // Consider deleting only for the specific caseId if applicable
                 evidenceDao.insertAll(evidenceList)
             }

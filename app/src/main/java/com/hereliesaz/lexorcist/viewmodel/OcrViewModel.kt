@@ -10,7 +10,7 @@ import androidx.lifecycle.viewModelScope
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
-import com.hereliesaz.lexorcist.model.Evidence
+import com.hereliesaz.lexorcist.data.Evidence // Correct import
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,6 +19,7 @@ import org.opencv.android.Utils
 import org.opencv.core.Mat
 import org.opencv.imgproc.Imgproc
 import java.util.ArrayList
+// import java.util.Date // Removed import
 
 class OcrViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -83,24 +84,29 @@ class OcrViewModel(application: Application) : AndroidViewModel(application) {
                     .addOnSuccessListener { visionText ->
                         _extractedText.value = visionText.text
                         val newEvidence = Evidence(
+                            id = 0, // Placeholder ID for newly created evidence via OCR
+                            caseId = 0, // Placeholder caseId, to be set by the consuming ViewModel if needed
                             content = visionText.text,
-                            timestamp = System.currentTimeMillis(),
+                            timestamp = System.currentTimeMillis(), // Changed to Long
                             sourceDocument = reviewedUri.toString(),
-                            documentDate = System.currentTimeMillis()
+                            documentDate = System.currentTimeMillis(), // Changed to Long
+                            allegationId = null, // Int? is fine with null
+                            category = "OCR Image", // String is fine
+                            tags = emptyList() // List<String> is fine
                         )
                         _newlyCreatedEvidence.value = newEvidence
                         _isOcrInProgress.value = false
-                        cancelImageReview()
+                        cancelImageReview() // Clear review state after processing
                     }
                     .addOnFailureListener { e ->
-                        // Handle error
+                        // Handle error, e.g., show a message to the user
                         _isOcrInProgress.value = false
-                        cancelImageReview()
+                        cancelImageReview() // Clear review state on failure
                     }
             } catch (e: Exception) {
-                // Handle error
+                // Handle other exceptions during processing
                 _isOcrInProgress.value = false
-                cancelImageReview()
+                cancelImageReview() // Clear review state on exception
             }
         }
     }

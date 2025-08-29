@@ -1,5 +1,7 @@
 package com.hereliesaz.lexorcist.model
 
+import com.hereliesaz.lexorcist.data.Evidence // Added import
+
 /**
  * Represents a piece of evidence that has been tagged and annotated.
  *

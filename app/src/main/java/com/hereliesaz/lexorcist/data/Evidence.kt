@@ -1,5 +1,8 @@
 package com.hereliesaz.lexorcist.data
 
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+
 /**
  * Represents a single piece of evidence in a legal case.
  *
@@ -15,9 +18,12 @@ package com.hereliesaz.lexorcist.data
  * @property documentDate The date of the source document.
  * @property tags A list of tags associated with the evidence for categorization and filtering.
  */
+
+@Entity(tableName = "evidence")
 data class Evidence(
+    @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
-    val caseId: Int,
+    val caseId: Int = 0,
     val allegationId: Int? = null,
     val content: String,
     val timestamp: Long,

@@ -1,11 +1,10 @@
 package com.hereliesaz.lexorcist
 
 import android.util.Log
-import com.hereliesaz.lexorcist.data.Allegation
 import com.hereliesaz.lexorcist.data.Case
-import com.hereliesaz.lexorcist.model.Evidence
+import com.hereliesaz.lexorcist.data.Evidence // Corrected import
 import com.hereliesaz.lexorcist.model.SpreadsheetSchema
-import java.util.Date // Added for Date objects
+// import java.util.Date // Removed import
 
 class SpreadsheetParser(
     private val googleApiService: GoogleApiService,
@@ -87,7 +86,7 @@ class SpreadsheetParser(
         // 6. Parse and Store Evidence into the new case's spreadsheet
         val evidenceSheetName = schema.evidenceSheet.name
         googleApiService.addSheet(newCaseSpreadsheetId, evidenceSheetName) // Ensure sheet exists
-        val evidenceHeader = listOf(listOf("Content", "Timestamp", "Source Document", "Document Date", "Tags", "Allegation ID", "Category", "Amount"))
+        val evidenceHeader = listOf(listOf("Content", "Timestamp", "Source Document", "Document Date", "Tags", "Allegation ID", "Category")) // Amount removed from header
         googleApiService.appendData(newCaseSpreadsheetId, evidenceSheetName, evidenceHeader) // Add header row
 
         val evidenceSheetData = sheetsData[evidenceSheetName]
@@ -104,11 +103,11 @@ class SpreadsheetParser(
                         id = evidenceCounter++, 
                         caseId = newCase.id, // newCase.id is Int from Case data class definition
                         content = content,
-                        amount = null, // Defaulting to null
-                        timestamp = Date(System.currentTimeMillis()), // Defaulting to current time
+                        // amount = null, // Removed amount
+                        timestamp = System.currentTimeMillis(), // Changed to Long
                         sourceDocument = "Imported from spreadsheet", // Default source
-                        documentDate = Date(System.currentTimeMillis()), // Defaulting to current time
-                        allegationId = null, // Defaulting to null
+                        documentDate = System.currentTimeMillis(), // Changed to Long
+                        allegationId = null, // Defaulting to null (Int?)
                         category = "Imported", // Default category
                         tags = tagsStr?.split(",")?.map { it.trim() } ?: emptyList()
                     )

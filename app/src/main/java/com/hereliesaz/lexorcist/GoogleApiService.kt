@@ -19,7 +19,7 @@ import com.google.api.services.sheets.v4.Sheets
 import com.google.api.services.sheets.v4.model.*
 import com.hereliesaz.lexorcist.data.Allegation
 import com.hereliesaz.lexorcist.data.Case
-import com.hereliesaz.lexorcist.model.Evidence // Import model.Evidence
+import com.hereliesaz.lexorcist.data.Evidence // Corrected import
 import com.hereliesaz.lexorcist.utils.FolderManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -27,7 +27,7 @@ import java.io.BufferedReader // Added for reading InputStream
 import java.io.IOException
 import java.io.InputStreamReader // Added for reading InputStream
 import android.util.Log // Added for logging
-import java.util.Date // Added for Evidence model
+// import java.util.Date // Removed as Evidence fields are Long
 
 private const val APP_ROOT_FOLDER_NAME = "The Lexorcist"
 private const val CASE_REGISTRY_SPREADSHEET_NAME = "Lexorcist_Case_Registry"
@@ -275,20 +275,19 @@ class GoogleApiService(
                     val sourceDocument = row.getOrNull(2)?.toString() ?: ""
                     val documentDateLong = row.getOrNull(3)?.toString()?.toLongOrNull() ?: System.currentTimeMillis()
                     val tagsString = row.getOrNull(4)?.toString() ?: ""
-                    val allegationIdStr = row.getOrNull(5)?.toString() 
+                    val allegationIdStr = row.getOrNull(5)?.toString()
                     val category = row.getOrNull(6)?.toString() ?: ""
-                    val amountDouble = row.getOrNull(7)?.toString()?.toDoubleOrNull()
+                    // val amountDouble = row.getOrNull(7)?.toString()?.toDoubleOrNull() // Amount removed
 
                     entries.add(
                         Evidence(
                             id = index,                            
                             caseId = caseIdForAssociation,       
                             content = content,                     
-                            amount = amountDouble,              
-                            timestamp = Date(timestampLong),      
+                            timestamp = timestampLong,      
                             sourceDocument = sourceDocument,       
-                            documentDate = Date(documentDateLong), 
-                            allegationId = allegationIdStr,       
+                            documentDate = documentDateLong, 
+                            allegationId = allegationIdStr?.toIntOrNull(),       
                             category = category,                   
                             tags = if (tagsString.isNotBlank()) tagsString.split(",").map { it.trim() } else emptyList() 
                         )
@@ -324,20 +323,20 @@ class GoogleApiService(
             if (!sheetExists) {
                 addSheet(caseSpreadsheetId, EVIDENCE_SHEET_NAME)
                 val header: List<List<Any>> = listOf(listOf(
-                    "Content", "Timestamp", "Source Document", "Document Date", "Tags", "Allegation ID", "Category", "Amount"
+                    "Content", "Timestamp", "Source Document", "Document Date", "Tags", "Allegation ID", "Category" // Amount removed
                 ))
                 appendData(caseSpreadsheetId, EVIDENCE_SHEET_NAME, header)
             }
 
             val values = listOf(listOf(
                 entry.content,
-                entry.timestamp.time.toString(), 
+                entry.timestamp.toString(), 
                 entry.sourceDocument,
-                entry.documentDate.time.toString(), 
-                entry.tags?.joinToString(",") ?: "",
-                entry.allegationId ?: "",
-                entry.category ?: "",
-                entry.amount?.toString() ?: ""
+                entry.documentDate.toString(), 
+                entry.tags.joinToString(","),
+                entry.allegationId?.toString() ?: "",
+                entry.category
+                // entry.amount?.toString() ?: "" // Amount removed
             ))
             appendData(caseSpreadsheetId, EVIDENCE_SHEET_NAME, values) != null
         } catch (e: Exception) {
@@ -350,16 +349,16 @@ class GoogleApiService(
     suspend fun updateEvidenceInCase(spreadsheetId: String, evidence: Evidence): Boolean = withContext(Dispatchers.IO) {
         if (spreadsheetId.isBlank()) return@withContext false
         try {
-            val range = "$EVIDENCE_SHEET_NAME!A${evidence.id + 2}:H${evidence.id + 2}" 
+            val range = "$EVIDENCE_SHEET_NAME!A${evidence.id + 2}:G${evidence.id + 2}" // Range updated to G
             val values = listOf(listOf(
                 evidence.content,
-                evidence.timestamp.time.toString(),
+                evidence.timestamp.toString(),
                 evidence.sourceDocument,
-                evidence.documentDate.time.toString(),
-                evidence.tags?.joinToString(",") ?: "",
-                evidence.allegationId ?: "",
-                evidence.category ?: "",
-                evidence.amount?.toString() ?: ""
+                evidence.documentDate.toString(),
+                evidence.tags.joinToString(","),
+                evidence.allegationId?.toString() ?: "",
+                evidence.category
+                // evidence.amount?.toString() ?: "" // Amount removed
             ))
             val body = ValueRange().setValues(values)
             sheetsService.spreadsheets().values().update(spreadsheetId, range, body)

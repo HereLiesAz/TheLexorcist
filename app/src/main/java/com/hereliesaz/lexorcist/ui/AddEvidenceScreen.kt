@@ -18,19 +18,22 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.items // Keep this for LazyColumn
+// import androidx.compose.material.icons.automirrored.filled.RotateLeft // Not used in the first composable
+// import androidx.compose.material.icons.automirrored.filled.RotateRight // Not used in the first composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.hereliesaz.lexorcist.viewmodel.MainViewModel
-import com.hereliesaz.lexorcist.ui.TaggedDataItem
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
+// import com.hereliesaz.lexorcist.viewmodel.MainViewModel // Not used in the first composable
+import com.hereliesaz.lexorcist.ui.TaggedDataItem // Ensure this is present
 import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
 import com.hereliesaz.lexorcist.viewmodel.OcrViewModel
-import com.hereliesaz.lexorcist.TaggedDataAdapter
+import com.hereliesaz.lexorcist.R // For stringResource
+import com.hereliesaz.lexorcist.data.Evidence // Ensure Evidence model is imported
+import java.text.SimpleDateFormat // For date formatting
+import java.util.Locale // For date formatting
 
 @Composable
 fun AddEvidenceScreen(
@@ -44,13 +47,13 @@ fun AddEvidenceScreen(
 ) {
     val imageBitmapForReview by ocrViewModel.imageBitmapForReview.collectAsState()
     val isOcrInProgress by ocrViewModel.isOcrInProgress.collectAsState()
-    val newlyCreatedEvidence by ocrViewModel.newlyCreatedEvidence.collectAsState()
-    val uiEvidenceList by evidenceViewModel.uiEvidenceList.collectAsState()
+    val newlyCreatedEvidence by ocrViewModel.newlyCreatedEvidence.collectAsState() // This is StateFlow<Evidence?>
+    val uiEvidenceList by evidenceViewModel.uiEvidenceList.collectAsState() // This is StateFlow<List<Evidence>>
     val context = LocalContext.current
 
     LaunchedEffect(newlyCreatedEvidence) {
         newlyCreatedEvidence?.let {
-            evidenceViewModel.addEvidenceToUiList(it)
+            evidenceViewModel.addEvidenceToUiList(it) // addEvidenceToUiList should expect data.Evidence
         }
     }
 
@@ -69,13 +72,12 @@ fun AddEvidenceScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(16.dp),
-            horizontalAlignment = Alignment.End,
+            horizontalAlignment = Alignment.End, 
             verticalArrangement = Arrangement.Center
         ) {
             if (imageBitmapForReview == null) {
-                // Buttons for adding new evidence - shown when no image is under review
                 Column(
-                    horizontalAlignment = Alignment.End, // Center buttons in this column
+                    horizontalAlignment = Alignment.End, 
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Button(onClick = onSelectImage) {
@@ -97,29 +99,23 @@ fun AddEvidenceScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // TODO: Re-implement this with a Composable, not RecyclerView
-                // For now, just display the list of evidence content
                 LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f)) {
-                    items(uiEvidenceList) { evidence ->
-                        Text(evidence.content)
+                    items(uiEvidenceList) { evidence -> // evidence is data.Evidence
+                        val displayContent = if (evidence.content.length > 100) evidence.content.substring(0, 100) + "..." else evidence.content
+                        val detailsList = listOfNotNull(
+                            displayContent,
+                            if (evidence.category.isNotBlank()) "Category: ${evidence.category}" else null, // Corrected for non-nullable String
+                            evidence.tags.takeIf { it.isNotEmpty() }?.let { "Tags: ${it.joinToString(", ")}" }, // Corrected for non-nullable List
+                            "Date: ${SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(evidence.documentDate)}"
+                        )
+                        TaggedDataItem(item = Pair(evidence.sourceDocument, detailsList))
                     }
                 }
 
-            // LazyColumn for tagged data - shown when no image is under review
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f) // Allow LazyColumn to take available space
-            ) {
-                items(taggedData.toList()) { item ->
-                    TaggedDataItem(item = item)
-                }
-            }
-
             } else {
-                // Image Review UI - shown when an image is selected/taken
+                // Image Review UI
                 Column(
-                    modifier = Modifier.fillMaxSize(), // Take full screen for review
+                    modifier = Modifier.fillMaxSize(), 
                     horizontalAlignment = Alignment.End,
                     verticalArrangement = Arrangement.Center
                 ) {
@@ -128,12 +124,12 @@ fun AddEvidenceScreen(
                         contentDescription = "Image for review",
                         modifier = Modifier
                             .fillMaxWidth()
-                            .weight(1f) // Image takes most of the space
+                            .weight(1f) 
                             .padding(bottom = 16.dp)
                     )
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End,
+                        horizontalArrangement = Arrangement.End, 
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         IconButton(onClick = { ocrViewModel.rotateImageBeingReviewed(-90f) }) {
@@ -154,4 +150,3 @@ fun AddEvidenceScreen(
         }
     }
 }
-

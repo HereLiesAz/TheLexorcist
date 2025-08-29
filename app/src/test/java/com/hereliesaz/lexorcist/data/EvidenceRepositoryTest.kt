@@ -2,7 +2,6 @@ package com.hereliesaz.lexorcist.data
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.hereliesaz.lexorcist.GoogleApiService
-import com.hereliesaz.lexorcist.model.Evidence
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
