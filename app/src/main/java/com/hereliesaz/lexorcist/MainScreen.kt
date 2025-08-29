@@ -19,15 +19,18 @@ import kotlinx.coroutines.launch // Already present, ensure viewModelScope is us
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
-    viewModel: MainViewModel = viewModel(),
+    authViewModel: AuthViewModel = viewModel(),
+    caseViewModel: CaseViewModel = viewModel(),
+    evidenceViewModel: EvidenceViewModel = viewModel(),
+    ocrViewModel: OcrViewModel = viewModel(),
     onSignIn: () -> Unit,
     onSelectImage: () -> Unit,
     onTakePicture: () -> Unit,
     onAddDocument: () -> Unit,
     onAddSpreadsheet: () -> Unit
 ) {
-    val isSignedIn by viewModel.isSignedIn.collectAsState()
-    val errorMessage by viewModel.errorMessage.collectAsState()
+    val isSignedIn by authViewModel.isSignedIn.collectAsState()
+    val errorMessage by caseViewModel.errorMessage.collectAsState() // Assuming CaseViewModel will have error messages
     val snackbarHostState = remember { SnackbarHostState() }
     var currentScreen by remember { mutableStateOf(R.string.nav_home) }
     var showCreateCaseDialog by remember { mutableStateOf(false) }
@@ -37,7 +40,7 @@ fun MainScreen(
     LaunchedEffect(errorMessage) {
         errorMessage?.let {
             snackbarHostState.showSnackbar(it)
-            viewModel.clearError()
+            caseViewModel.clearError()
         }
     }
 
@@ -57,9 +60,10 @@ fun MainScreen(
                         R.string.nav_home -> AuthenticatedView(
                             onCreateCase = { showCreateCaseDialog = true }
                         )
-                        R.string.nav_cases -> CasesScreen(viewModel = viewModel)
+                        R.string.nav_cases -> CasesScreen(caseViewModel = caseViewModel)
                         R.string.nav_add_evidence -> AddEvidenceScreen(
-                            viewModel = viewModel,
+                            evidenceViewModel = evidenceViewModel,
+                            ocrViewModel = ocrViewModel,
                             onSelectImage = onSelectImage,
                             onTakePicture = onTakePicture,
                             onAddTextEvidence = { currentScreen = R.string.add_text_evidence }, // Corrected: R.string.add_text_evidence
@@ -68,15 +72,15 @@ fun MainScreen(
                         )
                         R.string.add_text_evidence -> { // Corrected: R.string.add_text_evidence
                             val context = LocalContext.current // This context is fine for AddTextEvidenceScreen
-                            AddTextEvidenceScreen(viewModel = viewModel, onSave = { text ->
-                                viewModel.addTextEvidenceToSelectedCase(text, context)
+                            AddTextEvidenceScreen(evidenceViewModel = evidenceViewModel, onSave = { text ->
+                                evidenceViewModel.addEvidenceToSelectedCase(text, context)
                                 currentScreen = R.string.nav_cases
                             })
                         }
-                        R.string.nav_timeline -> TimelineScreen(viewModel = viewModel)
-                        R.string.nav_visualization -> VisualizationScreen(viewModel = viewModel)
-                        R.string.nav_data_review -> DataReviewScreen(viewModel = viewModel)
-                        R.string.nav_settings -> SettingsScreen(viewModel = viewModel)
+                        R.string.nav_timeline -> TimelineScreen(evidenceViewModel = evidenceViewModel)
+                        R.string.nav_visualization -> VisualizationScreen(evidenceViewModel = evidenceViewModel)
+                        R.string.nav_data_review -> DataReviewScreen(evidenceViewModel = evidenceViewModel)
+                        R.string.nav_settings -> SettingsScreen(caseViewModel = caseViewModel)
                     }
                 }
             }
@@ -97,7 +101,7 @@ fun MainScreen(
 
         if (showCreateCaseDialog) {
             CreateCaseDialog(
-                viewModel = viewModel,
+                caseViewModel = caseViewModel,
                 onDismiss = { showCreateCaseDialog = false }
             )
         }
@@ -138,11 +142,11 @@ fun AuthenticatedView(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateCaseDialog(
-    viewModel: MainViewModel,
+    caseViewModel: CaseViewModel,
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current // Get context for getString calls
-    val templates by viewModel.htmlTemplates.collectAsState()
+    val templates by caseViewModel.htmlTemplates.collectAsState()
     var caseName by remember { mutableStateOf("") }
 
     // Hoist stringResource calls for remember initializers
@@ -259,7 +263,7 @@ fun CreateCaseDialog(
             Button(
                 onClick = {
                     if (caseName.isNotBlank() && selectedTemplateId != null) {
-                        viewModel.createCase(
+                        caseViewModel.createCase(
                             caseName = caseName,
                             // Use context.getString for ifBlank
                             exhibitSheetName = exhibitSheetName.ifBlank { context.getString(R.string.default_exhibit_sheet_name) },

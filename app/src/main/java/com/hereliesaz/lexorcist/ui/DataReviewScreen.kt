@@ -13,14 +13,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.hereliesaz.lexorcist.model.Evidence
-import com.hereliesaz.lexorcist.viewmodel.MainViewModel
+import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DataReviewScreen(
-    viewModel: MainViewModel
+    evidenceViewModel: EvidenceViewModel
 ) {
-    val evidenceList by viewModel.selectedCaseEvidenceList.collectAsState()
+    val evidenceList by evidenceViewModel.evidenceList.collectAsState()
 
     var showEditDialog by remember { mutableStateOf(false) }
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
@@ -62,7 +62,7 @@ fun DataReviewScreen(
             evidence = evidenceToEdit!!,
             onDismiss = { showEditDialog = false },
             onSave = { updatedEvidence ->
-                viewModel.updateEvidence(updatedEvidence)
+                evidenceViewModel.updateEvidence(updatedEvidence)
                 showEditDialog = false
             }
         )
@@ -75,7 +75,7 @@ fun DataReviewScreen(
             text = { Text("Are you sure you want to delete this evidence?") },
             confirmButton = {
                 Button(onClick = {
-                    viewModel.deleteEvidence(evidenceToDelete!!)
+                    evidenceViewModel.deleteEvidence(evidenceToDelete!!)
                     showDeleteConfirmDialog = false
                 }) {
                     Text("Delete")

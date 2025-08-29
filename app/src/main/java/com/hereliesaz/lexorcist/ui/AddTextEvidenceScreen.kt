@@ -9,12 +9,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 // Corrected import for the MainViewModel
-import com.hereliesaz.lexorcist.viewmodel.MainViewModel
+import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
 
 @Composable
 fun AddTextEvidenceScreen(
-    // ViewModel type now correctly refers to the one in .viewmodel package
-    viewModel: MainViewModel,
+    evidenceViewModel: EvidenceViewModel,
     onSave: (String) -> Unit
 ) {
     var text by remember { mutableStateOf("") }

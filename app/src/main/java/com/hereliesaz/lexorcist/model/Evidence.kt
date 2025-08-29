@@ -19,13 +19,12 @@ import java.util.Date
 @Entity(tableName = "evidence")
 data class Evidence(
     @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
-    val caseId: Long,
-    val allegationId: Int? = null,
-    val content: String,
-    val timestamp: Long,
+    val id: Int = 0,
+    var caseId: Int = 0, // Added this line
+    val amount: Double?,
+    val timestamp: Date,
     val sourceDocument: String,
-    val documentDate: Long,
-    val tags: List<String> = emptyList(),
-    val category: String = ""
+    val documentDate: Date,
+    val allegationId: String,
+    val category: String? = null
 )

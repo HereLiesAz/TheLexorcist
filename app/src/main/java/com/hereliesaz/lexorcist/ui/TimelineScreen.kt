@@ -21,10 +21,15 @@ import com.hereliesaz.lexorcist.model.Evidence
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 import com.pushpal.jetlime.Event
 import com.pushpal.jetlime.JetLime
+import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
+import io.github.pushpalroy.jetlime.Event
+import io.github.pushpalroy.jetlime.JetLime
 import java.text.SimpleDateFormat
 import java.util.*
 
 @Composable
+fun TimelineScreen(evidenceViewModel: EvidenceViewModel) {
+    val evidenceList by evidenceViewModel.evidenceList.collectAsState()
 fun TimelineScreen(viewModel: MainViewModel) {
     val evidenceList by viewModel.selectedCaseEvidenceList.collectAsState()
     var selectedEvidence by remember { mutableStateOf<Evidence?>(null) }

@@ -13,7 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource // Added for Text
 import androidx.compose.ui.unit.dp
 import com.hereliesaz.lexorcist.R // Added for stringResource
-import com.hereliesaz.lexorcist.viewmodel.MainViewModel
+import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
 import com.patrykandpatrick.vico.compose.axis.horizontal.rememberBottomAxis
 import com.patrykandpatrick.vico.compose.axis.vertical.rememberStartAxis
 import com.patrykandpatrick.vico.compose.chart.Chart
@@ -26,8 +26,8 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 
 @Composable
-fun VisualizationScreen(viewModel: MainViewModel) {
-    val evidenceList by viewModel.selectedCaseEvidenceList.collectAsState()
+fun VisualizationScreen(evidenceViewModel: EvidenceViewModel) {
+    val evidenceList by evidenceViewModel.evidenceList.collectAsState()
 
     // Data for Pie Chart
     val pieChartEntryModelProducer = ChartEntryModelProducer<PieEntry>()

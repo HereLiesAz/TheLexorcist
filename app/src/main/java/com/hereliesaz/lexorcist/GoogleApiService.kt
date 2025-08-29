@@ -323,6 +323,7 @@ class GoogleApiService(
             if (!sheetExists) {
                 addSheet(caseSpreadsheetId, EVIDENCE_SHEET_NAME)
                 val header = listOf(listOf<Any>("Source Document", "Timestamp", "Document Date", "Allegation ID", "Category", "Amount"))
+                val header: List<List<Any>> = listOf(listOf("Source Document", "Timestamp", "Document Date", "Allegation ID", "Category", "Amount"))
                 appendData(caseSpreadsheetId, EVIDENCE_SHEET_NAME, header)
             }
 
