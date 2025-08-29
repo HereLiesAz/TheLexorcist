@@ -3,7 +3,7 @@ package com.hereliesaz.lexorcist.ui
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -80,19 +80,19 @@ fun AddEvidenceScreen(
                     horizontalAlignment = Alignment.End, 
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Button(onClick = onSelectImage) {
+                    OutlinedButton(onClick = onSelectImage) {
                         Text("Select Image")
                     }
-                    Button(onClick = onTakePicture) {
+                    OutlinedButton(onClick = onTakePicture) {
                         Text("Take Picture")
                     }
-                    Button(onClick = onAddTextEvidence) {
+                    OutlinedButton(onClick = onAddTextEvidence) {
                         Text("Add Text Evidence")
                     }
-                    Button(onClick = onAddDocument) {
+                    OutlinedButton(onClick = onAddDocument) {
                         Text("Add Document")
                     }
-                    Button(onClick = onAddSpreadsheet) {
+                    OutlinedButton(onClick = onAddSpreadsheet) {
                         Text("Add Spreadsheet")
                     }
                 }

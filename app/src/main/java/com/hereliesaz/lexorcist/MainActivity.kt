@@ -102,6 +102,18 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private val selectDocumentLauncher = registerForActivityResult(GetContentWithMultiFilter()) { uri: Uri? ->
+        uri?.let {
+            evidenceViewModel.addDocumentEvidence(it, this)
+        }
+    }
+
+    private val selectSpreadsheetLauncher = registerForActivityResult(GetContentWithMultiFilter()) { uri: Uri? ->
+        uri?.let {
+            evidenceViewModel.addSpreadsheetEvidence(it, this)
+        }
+    }
+
     // This is the "top" block onCreate
     override fun onCreate(savedInstanceState: Bundle?) { 
         super.onCreate(savedInstanceState)
@@ -138,8 +150,8 @@ class MainActivity : ComponentActivity() {
                     onSignIn = { signIn() },
                     onSelectImage = { selectImage() },
                     onTakePicture = { takePicture() },
-                    onAddDocument = { /*TODO*/ },
-                    onAddSpreadsheet = { /*TODO*/ }
+                    onAddDocument = { selectDocument() },
+                    onAddSpreadsheet = { selectSpreadsheet() }
                 )
             }
         }
@@ -196,6 +208,14 @@ class MainActivity : ComponentActivity() {
     // Kept from "top" block
     private fun selectImage() {
         selectImageLauncher.launch("image/*")
+    }
+
+    private fun selectDocument() {
+        selectDocumentLauncher.launch(arrayOf("application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"))
+    }
+
+    private fun selectSpreadsheet() {
+        selectSpreadsheetLauncher.launch(arrayOf("application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
     }
 
     // The "bottom" block of code (with NavHost and placeholder screens) has been removed.

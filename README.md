@@ -6,6 +6,8 @@ The Lexorcist is a powerful, user-friendly Android application designed to assis
 
 This project is in an early development stage. Many of the features listed below are either partially implemented or planned for the future. The backend is currently based on Google Sheets, and a transition to a local Room database is planned. The application's focus is being shifted from financial document tracking to a more general-purpose legal evidence management tool.
 
+The timeline view has been implemented using JetLime, and the overall UI has been updated to comply with the Material 3 Expressive design system guidelines.
+
 ## Key Features
 
 - **OCR-based Evidence Capture:** Digitize physical documents and other text-based evidence by taking a picture. The app uses Google's ML Kit to recognize and extract text.

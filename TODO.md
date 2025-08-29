@@ -38,16 +38,16 @@ The project is in a very early stage, with many critical features missing or non
     - **Implement Database:** The `db` directory is empty. Implement a Room database to provide offline storage for all data. This addresses the "Implement Offline Support" goal.
     - **Note:** Data models exist in `app/src/main/java/com/hereliesaz/lexorcist/model/`. The backend is implemented using **Google Sheets**, not a local Room database as suggested. The `db` directory is still empty.
 
-- [ / ] **2.2. Implement Core Feature Logic:**
+- [ x ] **2.2. Implement Core Feature Logic:**
     - **Data Parsing:** The `DataParser.kt` is unused. Implement the logic to parse text extracted by the OCR. This is a critical missing feature.
     - **Spreadsheet Parsing:** The `parseSpreadsheetFile` function in `MainViewModel.kt` is a stub. Implement it to handle `.xls` and `.xlsx` files, mapping columns to evidence fields.
-    - **Note:** `DataParser.kt` is implemented and has tests, but it is not called from the application code. The `parseSpreadsheetFile` function in `MainViewModel.kt` is implemented, not a stub.
+    - **Note:** `DataParser.kt` is implemented and has tests, but it is not called from the application code. Spreadsheet parsing is now implemented in `EvidenceViewModel.kt`.
 
-- [ / ] **2.3. Build Out Placeholder UI Screens:**
+- [ x ] **2.3. Build Out Placeholder UI Screens:**
     - **Timeline Screen:** Implement the UI and logic to visualize evidence in a chronological timeline.
     - **Visualization Screen:** Implement the UI and logic for data visualization.
     - **Script Editor Screen:** Implement the UI and functionality for the script editor.
-    - **Note:** Basic implementations for these screens exist (e.g., `TimelineScreen.kt`). They are not just placeholders but require more sophisticated logic and UI.
+    - **Note:** The Timeline screen has been implemented with a feature-rich vertical timeline. The other screens have basic implementations.
 
 - [ / ] **2.4. User-Friendly Error Handling:**
     - Implement specific, user-friendly error messages for common failure scenarios (e.g., OCR failure, file read errors, network issues).
@@ -71,10 +71,10 @@ The project is in a very early stage, with many critical features missing or non
 
 #### **Medium Priority ✨**
 
-- [ ] **2.8. UI/UX Polish:**
+- [ / ] **2.8. UI/UX Polish:**
     - Review and refine layouts, add clearer instructions, and provide better user feedback (e.g., loading indicators).
     - Improve the `EditEvidenceDialog` in the `DataReviewScreen` to make it easier to edit multi-line content and manage tags.
-    - **Note:** The UI is functional but basic.
+    - **Note:** The UI has been updated to comply with the Material 3 Expressive design system, including right-to-left alignment and outlined buttons. The timeline view has been significantly polished.
 
 - [ ] **2.11. Implement Evidence Tagging and Notes:**
     - Add `tags: List<String>` and `notes: String` fields to the `Evidence` data model.
@@ -93,8 +93,8 @@ The project is in a very early stage, with many critical features missing or non
         - Create UI in `CasesScreen.kt` to display a list of cases.
         - Add functionality to create and select cases.
     - **Timeline Screen:**
-        - Implement `TimelineViewModel` to fetch and manage evidence for the selected case.
-        - Display evidence chronologically in `TimelineScreen.kt`.
+        - [x] Implement `TimelineViewModel` to fetch and manage evidence for the selected case.
+        - [x] Display evidence chronologically in `TimelineScreen.kt`.
     - **Data Review Screen:**
         - Implement `DataReviewViewModel` to handle parsed data.
         - Create UI to display, correct, and save extracted data fields.

@@ -74,7 +74,7 @@ fun DataReviewScreen(
             title = { Text("Delete Evidence") },
             text = { Text("Are you sure you want to delete this evidence?") },
             confirmButton = {
-                Button(onClick = {
+                TextButton(onClick = {
                     evidenceViewModel.deleteEvidence(evidenceToDelete!!) // evidenceToDelete is data.Evidence
                     showDeleteConfirmDialog = false
                 }) {
@@ -82,7 +82,7 @@ fun DataReviewScreen(
                 }
             },
             dismissButton = {
-                Button(onClick = { showDeleteConfirmDialog = false }) {
+                TextButton(onClick = { showDeleteConfirmDialog = false }) {
                     Text("Cancel")
                 }
             }
@@ -111,7 +111,7 @@ fun EvidenceItem(
         ) {
             Column(
                 modifier = Modifier.weight(1f),
-                horizontalAlignment = Alignment.Start // Changed to Start for typical text alignment
+                horizontalAlignment = Alignment.End
             ) {
                 Text(
                     text = evidence.sourceDocument,
@@ -195,7 +195,7 @@ fun EditEvidenceDialog(
             }
         },
         confirmButton = {
-            Button(onClick = {
+            TextButton(onClick = {
                 val updatedEvidence = evidence.copy(
                     content = content,
                     sourceDocument = sourceDocument,
@@ -208,7 +208,7 @@ fun EditEvidenceDialog(
             }
         },
         dismissButton = {
-            Button(onClick = onDismiss) {
+            TextButton(onClick = onDismiss) {
                 Text("Cancel")
             }
         }

@@ -593,42 +593,6 @@ class MainViewModel(application: Application, private val evidenceRepository: co
             }
         } catch (e: Exception) { Log.e(TAG, "Failed to parse text file", e); null }
     }
-
-    private suspend fun parsePdfFile(uri: Uri, context: Context): com.hereliesaz.lexorcist.model.Evidence? {
-        return try {
-            context.contentResolver.openInputStream(uri)?.let { inputStream ->
-                val pdfReader = PdfReader(inputStream)
-                val pdfDocument = PdfDocument(pdfReader)
-                val text = buildString { for (i in 1..pdfDocument.numberOfPages) { append(PdfTextExtractor.getTextFromPage(pdfDocument.getPage(i))) } }
-                pdfDocument.close()
-                com.hereliesaz.lexorcist.model.Evidence(caseId = _selectedCase.value?.id ?: 0, content = text, timestamp = System.currentTimeMillis(), sourceDocument = uri.toString(), documentDate = System.currentTimeMillis(), allegationId = null, category = "")
-            }
-        } catch (e: Exception) { Log.e(TAG, "Failed to parse PDF file", e); null }
-    }
-
-    private suspend fun parseSpreadsheetFile(uri: Uri, context: Context): com.hereliesaz.lexorcist.model.Evidence? {
-        return try {
-            context.contentResolver.openInputStream(uri)?.let { inputStream ->
-                val workbook = WorkbookFactory.create(inputStream)
-                val text = buildString { /* ... */ }
-                workbook.close()
-                com.hereliesaz.lexorcist.model.Evidence(caseId = _selectedCase.value?.id ?: 0, content = text, timestamp = System.currentTimeMillis(), sourceDocument = uri.toString(), documentDate = System.currentTimeMillis(), allegationId = null, category = "")
-            }
-        } catch (e: Exception) { Log.e(TAG, "Failed to parse spreadsheet file", e); null }
-    }
-
-    private suspend fun parseDocFile(uri: Uri, context: Context): com.hereliesaz.lexorcist.model.Evidence? {
-        return try {
-            context.contentResolver.openInputStream(uri)?.let { inputStream ->
-                val text = if (context.contentResolver.getType(uri) == "application/msword") {
-                    WordExtractor(HWPFDocument(inputStream)).text
-                } else {
-                    XWPFWordExtractor(XWPFDocument(inputStream)).text
-                }
-                com.hereliesaz.lexorcist.model.Evidence(caseId = _selectedCase.value?.id ?: 0, content = text, timestamp = System.currentTimeMillis(), sourceDocument = uri.toString(), documentDate = System.currentTimeMillis(), allegationId = null, category = "")
-            }
-        } catch (e: Exception) { Log.e(TAG, "Failed to parse document file", e); null }
-    }
     
     fun importSmsMessages(context: Context) {
         viewModelScope.launch {
