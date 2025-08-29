@@ -123,13 +123,6 @@ class MainViewModel(application: Application, private val evidenceRepository: co
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
-    fun showError(message: String) {
-        _errorMessage.value = message
-    }
-
-    fun clearError() {
-        _errorMessage.value = null
-    }
 
     // --- Image Processing & Text Extraction ---
     private val _extractedText = MutableStateFlow("")
@@ -187,27 +180,6 @@ class MainViewModel(application: Application, private val evidenceRepository: co
         }
     }
 
-    fun updateEvidence(evidence: com.hereliesaz.lexorcist.model.Evidence) {
-        viewModelScope.launch {
-            val currentCase = _selectedCase.value
-            if (currentCase != null) {
-                evidenceRepository.updateEvidence(currentCase.spreadsheetId, evidence)
-            } else {
-                Log.w(TAG, "updateEvidence: Missing data.")
-            }
-        }
-    }
-
-    fun deleteEvidence(evidence: com.hereliesaz.lexorcist.model.Evidence) {
-        viewModelScope.launch {
-            val currentCase = _selectedCase.value
-            if (currentCase != null) {
-                evidenceRepository.deleteEvidence(currentCase.spreadsheetId, evidence)
-            } else {
-                Log.w(TAG, "deleteEvidence: Missing data.")
-            }
-        }
-    }
 
     // --- Sign-In Logic ---
     fun onSignInResult(idToken: String?, email: String?, context: Context, applicationName: String) {
@@ -397,106 +369,6 @@ class MainViewModel(application: Application, private val evidenceRepository: co
         }
     }
 
-    fun createCase(
-        caseName: String, 
-        exhibitSheetName: String, 
-        caseNumber: String, 
-        caseSection: String, 
-        caseJudge: String,
-        selectedMasterHtmlTemplateId: String // Added new parameter
-    ) {
-        viewModelScope.launch {
-            val apiService = _googleApiService.value ?: return@launch Unit.also { Log.w(TAG, "createCase: No API service.") }
-            val applicationContext = getApplication<Application>().applicationContext
-
-            val rootFolderId = apiService.getOrCreateAppRootFolder() ?: return@launch Unit.also { Log.e(TAG, "createCase: Failed to get app root folder.") }
-            val caseRegistryId = apiService.getOrCreateCaseRegistrySpreadsheetId(rootFolderId) ?: return@launch Unit.also { Log.e(TAG, "createCase: Failed to get case registry.") }
-            val caseFolderId = apiService.getOrCreateCaseFolder(caseName) ?: return@launch Unit.also { Log.e(TAG, "createCase: Failed to create case folder for '$caseName'.") }
-            apiService.getOrCreateEvidenceFolder(caseName) // Create evidence sub-folder
-
-            // 1. Download HTML Template using selectedMasterHtmlTemplateId
-            val htmlTemplateContent = apiService.downloadFileAsString(selectedMasterHtmlTemplateId)
-            if (htmlTemplateContent == null) {
-                Log.e(TAG, "createCase: Failed to download HTML template (ID: $selectedMasterHtmlTemplateId).")
-                return@launch
-            }
-            Log.d(TAG, "createCase: HTML template (ID: $selectedMasterHtmlTemplateId) downloaded successfully.")
-
-            // 2. Replace Placeholders in HTML
-            var processedHtml = htmlTemplateContent
-                .replace("{{CASE_NAME}}", caseName) 
-                .replace("{{CASE_NUMBER}}", caseNumber)
-                .replace("{{CASE_SECTION}}", caseSection)
-                .replace("{{JUDGE}}", caseJudge)
-            processedHtml = processedHtml
-                .replace("{{PLAINTIFFS}}", _plaintiffs.value)
-                .replace("{{DEFENDANTS}}", _defendants.value)
-                .replace("{{COURT}}", _court.value)
-            Log.d(TAG, "createCase: Placeholders replaced in HTML.")
-
-            // 2.5 Upload Processed HTML as a Snapshot
-            val snapshotHtmlFileName = "${caseName}_Snapshot.html"
-            val uploadedHtmlSnapshot = apiService.uploadStringAsFile(processedHtml, "text/html", snapshotHtmlFileName, caseFolderId)
-            val snapshotHtmlId = uploadedHtmlSnapshot?.id
-            if (snapshotHtmlId == null) {
-                Log.w(TAG, "createCase: Failed to upload HTML snapshot for case '$caseName'. Proceeding without it.")
-            } else {
-                Log.d(TAG, "createCase: HTML snapshot uploaded successfully. ID: $snapshotHtmlId")
-            }
-
-            // 3. Convert Processed HTML to PDF (locally)
-            val outputPdfName = "$caseName.pdf"
-            val localPdfFile = generatePdfFromHtmlString(processedHtml, outputPdfName, applicationContext)
-            
-            if (localPdfFile == null) {
-                Log.e(TAG, "createCase: Failed to generate local PDF from HTML.")
-            }
-            Log.d(TAG, "createCase: Local PDF generation completed. File: ${localPdfFile?.absolutePath ?: "null"}")
-
-            // 4. Upload the generated PDF to Google Drive
-            var generatedPdfId: String? = null
-            if (localPdfFile != null && localPdfFile.exists()) {
-                val uploadedPdfDriveFile = apiService.uploadFile(localPdfFile, caseFolderId, "application/pdf")
-                if (uploadedPdfDriveFile == null) {
-                    Log.e(TAG, "createCase: Failed to upload generated PDF to Drive folder $caseFolderId.")
-                } else {
-                    generatedPdfId = uploadedPdfDriveFile.id
-                    Log.d(TAG, "createCase: Generated PDF uploaded successfully. ID: $generatedPdfId")
-                    localPdfFile.delete() // Clean up local cache
-                }
-            } else {
-                Log.w(TAG, "createCase: Local PDF file is null or does not exist, skipping PDF upload.")
-            }
-
-            // 5. Create Case Spreadsheet
-            val caseSpreadsheetId = apiService.createSpreadsheet(caseName, caseFolderId) ?: return@launch Unit.also { Log.e(TAG, "createCase: Failed to create case spreadsheet for '$caseName'.") }
-            Log.d(TAG, "createCase: Case spreadsheet created. ID: $caseSpreadsheetId")
-            
-            val scriptTemplate = getApplication<Application>().resources.openRawResource(R.raw.apps_script_template).use { InputStreamReader(it).readText() }
-            val scriptContent = scriptTemplate
-                .replace("{{EXHIBIT_SHEET_NAME}}", exhibitSheetName)
-                .replace("{{CASE_NUMBER}}", caseNumber)
-                .replace("{{CASE_SECTION}}", caseSection)
-                .replace("{{CASE_JUDGE}}", caseJudge)
-            
-            apiService.attachScript(caseSpreadsheetId, scriptContent, generatedPdfId ?: "") 
-            Log.d(TAG, "createCase: Script attached to spreadsheet. Master Doc ID used for script: ${generatedPdfId ?: "(none)"}")
-
-            val newCase = Case(
-                name = caseName,
-                spreadsheetId = caseSpreadsheetId,
-                generatedPdfId = generatedPdfId,
-                sourceHtmlSnapshotId = snapshotHtmlId,
-                originalMasterHtmlTemplateId = selectedMasterHtmlTemplateId
-            )
-            if (apiService.addCaseToRegistry(caseRegistryId, newCase)) {
-                Log.d(TAG, "Case '${newCase.name}' added to registry. PDF ID: ${newCase.generatedPdfId}, HTML Snapshot ID: ${newCase.sourceHtmlSnapshotId}, Original Template: ${newCase.originalMasterHtmlTemplateId}.")
-                loadCasesFromRegistry() 
-            } else {
-                Log.w(TAG, "Failed to add case '${newCase.name}' to registry.")
-            }
-        }
-    }
 
     fun selectCase(case: Case?) {
         _selectedCase.value = case
@@ -921,10 +793,6 @@ class MainViewModel(application: Application, private val evidenceRepository: co
 
     fun prepareEvidenceForEditing(evidence: com.hereliesaz.lexorcist.model.Evidence) {
         _evidenceToEdit.value = evidence
-    }
-
-    fun clearEvidenceToEdit() {
-        _evidenceToEdit.value = null
     }
 
     fun clearEvidenceToEdit() {
