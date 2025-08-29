@@ -1,70 +1,45 @@
 package com.hereliesaz.lexorcist
 
 import android.os.Bundle
-import android.widget.Toast
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
-import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
-import com.google.api.services.drive.DriveScopes
-import com.google.api.services.sheets.v4.SheetsScopes
-import com.hereliesaz.lexorcist.service.GoogleApiService
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.ui.Modifier
 import com.hereliesaz.lexorcist.ui.ScriptEditorScreen
+import com.hereliesaz.lexorcist.ui.theme.TheLexorcistTheme
+import com.hereliesaz.lexorcist.utils.GoogleApiServiceHolder
 import com.hereliesaz.lexorcist.viewmodel.ScriptEditorViewModel
 
-class ScriptEditorActivity : AppCompatActivity() {
+class ScriptEditorActivity : ComponentActivity() {
 
-    private var spreadsheetId: String? = null
-
-    private val viewModel: ScriptEditorViewModel by viewModels {
-        val credential = GoogleAccountCredential.usingOAuth2(
-            this, listOf(
-                DriveScopes.DRIVE_FILE,
-                SheetsScopes.SPREADSHEETS,
-                "https://www.googleapis.com/auth/script.projects"
-            )
-        )
-        // TODO: Replace with actual account name
-        credential.selectedAccountName = "user@example.com"
-        val googleApiService = GoogleApiService(credential)
-        ScriptEditorViewModelFactory(googleApiService)
-    }
-
+    private val viewModel: ScriptEditorViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        spreadsheetId = intent.getStringExtra("spreadsheetId")
+        val scriptId = intent.getStringExtra("scriptId")
+        val googleApiService = GoogleApiServiceHolder.googleApiService
 
-        if (spreadsheetId == null) {
-            Toast.makeText(this, "Spreadsheet ID not found.", Toast.LENGTH_LONG).show()
+        if (scriptId == null || googleApiService == null) {
+            // Handle error, maybe show a toast and finish
             finish()
             return
         }
 
-        viewModel.loadScript(spreadsheetId!!)
+        viewModel.initialize(googleApiService, scriptId)
 
         setContent {
-            val scriptContent by viewModel.scriptContent.collectAsState()
-            ScriptEditorScreen(
-                scriptContent = scriptContent,
-                onScriptContentChange = { viewModel.onScriptContentChange(it) },
-                onSaveClick = { viewModel.saveScript(spreadsheetId!!) }
-            )
+            TheLexorcistTheme {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    ScriptEditorScreen(viewModel)
+                }
+            }
         }
-    }
-}
-
-class ScriptEditorViewModelFactory(private val googleApiService: GoogleApiService) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(ScriptEditorViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return ScriptEditorViewModel(googleApiService) as T
-        }
-        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

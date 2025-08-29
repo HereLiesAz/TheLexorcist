@@ -347,4 +347,28 @@ class GoogleApiService(
             e.printStackTrace()
         }
     }
+
+    suspend fun getScript(scriptId: String): com.google.api.services.script.model.Content? = withContext(Dispatchers.IO) {
+        try {
+            scriptService.projects().getContent(scriptId).execute()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    suspend fun updateScript(scriptId: String, scriptContent: String): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val newContent = com.google.api.services.script.model.Content().setFiles(
+                listOf(
+                    com.google.api.services.script.model.File().setName("Code").setSource(scriptContent)
+                )
+            )
+            scriptService.projects().updateContent(scriptId, newContent).execute()
+            true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
 }

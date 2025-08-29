@@ -1,6 +1,13 @@
 # Future Plans
 
 This document outlines the long-term vision for the Lexorcist application. These are features and enhancements that can be considered after the items in the `TODO.md` file have been addressed.
+
+- **Completing Core UI:**
+  - **Cases Screen:** Implement the UI to display a list of cases and allow users to create and select cases.
+  - **Timeline Screen:** Implement the UI to display a timeline of events for a selected case.
+  - **Data Review Screen:** Implement the UI for reviewing and editing extracted data.
+  - **Settings Screen:** Implement the UI for application settings.
+  - **Script Editor:** Implement the UI and functionality for the script editor, including the activity, screen, and view model.
 - 
 - **ML-based Evidence Categorization:** Use machine learning to automatically categorize financial documents based on their content, helping to identify relevant evidence more quickly.
 - **Financial Analysis for Legal Cases:** Introduce features for analyzing financial data in the context of a legal case, such as identifying patterns, flagging suspicious transactions, and generating summary reports.

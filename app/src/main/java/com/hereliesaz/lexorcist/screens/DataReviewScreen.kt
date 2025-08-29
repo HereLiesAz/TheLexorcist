@@ -1,52 +1,63 @@
 package com.hereliesaz.lexorcist.screens
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Card
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import com.hereliesaz.lexorcist.model.TaggedEvidence
 import com.hereliesaz.lexorcist.viewmodel.DataReviewViewModel
-import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 
 @Composable
 fun DataReviewScreen(
-    mainViewModel: MainViewModel,
-    dataReviewViewModel: DataReviewViewModel = viewModel(),
+    viewModel: DataReviewViewModel
 ) {
-    val extractedText by mainViewModel.extractedText.collectAsState()
-    val reviewedText by dataReviewViewModel.reviewedText.collectAsState()
+    val taggedEvidenceList by viewModel.taggedEvidenceList.collectAsState()
 
-    LaunchedEffect(extractedText) {
-        dataReviewViewModel.onTextChange(extractedText)
+    LazyColumn(modifier = Modifier.padding(16.dp)) {
+        items(taggedEvidenceList) { evidence ->
+            TaggedEvidenceItem(
+                evidence = evidence,
+                onRelevanceChange = { newRelevance ->
+                    viewModel.updateRelevance(evidence, newRelevance.toInt())
+                },
+                onNotesChange = { newNotes ->
+                    viewModel.updateNotes(evidence, newNotes)
+                }
+            )
+        }
     }
+}
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        OutlinedTextField(
-            value = reviewedText,
-            onValueChange = { dataReviewViewModel.onTextChange(it) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f),
-            label = { Text("Extracted Text") }
-        )
-        Button(
-            onClick = { mainViewModel.updateExtractedText(reviewedText) },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Save")
+@Composable
+fun TaggedEvidenceItem(
+    evidence: TaggedEvidence,
+    onRelevanceChange: (Float) -> Unit,
+    onNotesChange: (String) -> Unit
+) {
+    Card(modifier = Modifier.padding(8.dp)) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(text = "Evidence: ${evidence.id.content}")
+            Text(text = "Tags: ${evidence.tags.joinToString()}")
+            Text(text = "Relevance: ${evidence.relevance}")
+            Slider(
+                value = evidence.relevance.toFloat(),
+                onValueChange = onRelevanceChange,
+                valueRange = 0f..10f
+            )
+            TextField(
+                value = evidence.notes,
+                onValueChange = onNotesChange,
+                label = { Text("Notes") }
+            )
         }
     }
 }
