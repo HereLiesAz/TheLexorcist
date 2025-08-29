@@ -1,5 +1,5 @@
-
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import com.palantir.gradle.gitversion.VersionDetails
 
 plugins {
     id("com.android.application")
@@ -8,8 +8,11 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose") version "2.2.10"
     id("com.google.devtools.ksp") version "2.2.10-2.0.2" // Added KSP plugin
     id("com.google.gms.google-services") // Add this line at the end of the plugins block
-
+    id("com.palantir.git-version")
 }
+
+val versionDetails: groovy.lang.Closure<VersionDetails> by extra
+val gitVersion = versionDetails.call().version
 
 android {
     namespace = "com.hereliesaz.lexorcist"
@@ -19,8 +22,8 @@ android {
         applicationId = "com.hereliesaz.lexorcist"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = (System.currentTimeMillis() / 1000).toInt()
+        versionName = gitVersion
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

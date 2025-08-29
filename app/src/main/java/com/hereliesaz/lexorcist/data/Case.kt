@@ -1,11 +1,23 @@
 package com.hereliesaz.lexorcist.data
 
-// Room annotations removed
+/**
+ * Represents a legal case within the Lexorcist application.
+ *
+ * This data class holds the essential information for a case, including its name,
+ * associated Google Sheets spreadsheet ID, and IDs for various generated documents.
+ *
+ * @property id The unique identifier for the case.
+ * @property name The name of the case.
+ * @property spreadsheetId The ID of the Google Sheets spreadsheet containing the case data.
+ * @property generatedPdfId The ID of the generated PDF document for the case.
+ * @property sourceHtmlSnapshotId The ID of the HTML snapshot used as the source for the generated PDF.
+ * @property originalMasterHtmlTemplateId The ID of the original master HTML template used for the case.
+ */
 data class Case(
-    val id: Int = 0, // No longer an auto-generated PrimaryKey by Room. Consider its new role or removal later.
+    val id: Int = 0,
     val name: String,
     val spreadsheetId: String,
-    val generatedPdfId: String? = null, // Renamed from masterTemplateId and made nullable
-    val sourceHtmlSnapshotId: String? = null, // New field for the processed HTML snapshot ID
-    val originalMasterHtmlTemplateId: String? = null // New field for the original HTML template ID used
+    val generatedPdfId: String? = null,
+    val sourceHtmlSnapshotId: String? = null,
+    val originalMasterHtmlTemplateId: String? = null
 )

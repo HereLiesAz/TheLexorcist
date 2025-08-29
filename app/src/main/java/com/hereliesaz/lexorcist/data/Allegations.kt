@@ -1,8 +1,17 @@
 package com.hereliesaz.lexorcist.data
 
-// Room annotations removed
+/**
+ * Represents a single allegation within a legal case.
+ *
+ * This data class stores the details of an allegation, including its text and
+ * the case it belongs to.
+ *
+ * @property id The unique identifier for the allegation.
+ * @property caseId The ID of the case this allegation belongs to.
+ * @property text The text of the allegation.
+ */
 data class Allegation(
-    val id: Int = 0, // No longer an auto-generated PrimaryKey by Room. Consider its new role.
-    val caseId: Int, // No longer a Foreign Key managed by Room. Represents the link to a Case.
+    val id: Int = 0,
+    val caseId: Int,
     val text: String
 )
