@@ -101,19 +101,8 @@ class MainActivity : ComponentActivity() {
             .setAutoSelectEnabled(true)
             .build()
 
-        setContent { 
-            // The SettingsManager and theme logic from the "top" block's setContent is used here.
-            val settingsManager = com.hereliesaz.lexorcist.data.SettingsManager(this)
-            val theme = settingsManager.getTheme()
-            val darkTheme = when (theme) {
-                "Dark" -> true
-                "Light" -> false
-                else -> androidx.compose.foundation.isSystemInDarkTheme()
-            }
-            LexorcistTheme(darkTheme = darkTheme) {
-                // The navController declared here was not used in the original MainScreen call from the "top" block.
-                // If MainScreen does not actually require a NavController, this line and the rememberNavController import might be removable.
-                // For now, it's kept as it was in the "top" block's setContent.
+        setContent {
+            LexorcistTheme {
                 val navController = rememberNavController()
                 MainScreen(
                     viewModel = viewModel,

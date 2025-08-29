@@ -116,6 +116,7 @@ dependencies {
     implementation("com.google.guava:guava:33.4.8-android")
     // Mozilla Rhino for JavaScript execution
     implementation("org.mozilla:rhino:1.8.0")
+    implementation("com.materialkolor:material-kolor:3.0.0")
 }
 
 // Removed kapt block entirely
