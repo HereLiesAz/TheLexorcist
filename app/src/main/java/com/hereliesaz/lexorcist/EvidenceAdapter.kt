@@ -30,9 +30,9 @@ class EvidenceAdapter : ListAdapter<Evidence, EvidenceAdapter.EvidenceViewHolder
         private val tagsTextView: TextView = itemView.findViewById(R.id.tags_textview)
 
         fun bind(entry: Evidence) {
-            contentTextView.text = entry.content
-            dateTextView.text = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(entry.documentDate))
-            tagsTextView.text = entry.tags.joinToString(", ")
+            contentTextView.text = entry.sourceDocument
+            dateTextView.text = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(entry.documentDate)
+            tagsTextView.text = ""
         }
     }
 }

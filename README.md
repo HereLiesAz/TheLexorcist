@@ -4,10 +4,10 @@ The Lexorcist is a powerful, user-friendly Android application designed to assis
 
 ## Key Features
 
-- **OCR-based Evidence Tracking:** Automatically digitize receipts and other financial documents by taking a picture. The app uses Google's ML Kit to recognize and extract text.
-- **Data Parsing:** Intelligently parses recognized text to identify key information such as the total amount, date, and vendor, which can be used as evidence.
-- **Local Storage:** Securely stores all extracted financial data on the device using a Room database, ensuring the integrity of the evidence.
-- **Evidence History:** View a list of all saved financial entries, which can be used as a chain of custody for the evidence.
+- **OCR-based Evidence Tracking:** Automatically digitize evidence and other legal documents by taking a picture. The app uses Google's ML Kit to recognize and extract text.
+- **Data Parsing:** Intelligently parses recognized text to identify key information such as the total amount, date, and source, which can be used as evidence.
+- **Local Storage:** Securely stores all extracted data on the device using a Room database, ensuring the integrity of the evidence.
+- **Evidence History:** View a list of all saved entries, which can be used as a chain of custody for the evidence.
 - **Case Management**: Create and manage multiple cases, each with its own set of evidence and notes.
 - **Advanced Filtering and Sorting**: Quickly find relevant information with robust filtering and sorting capabilities.
 - **Custom Tagging**: Apply custom tags to evidence for easy identification and grouping.

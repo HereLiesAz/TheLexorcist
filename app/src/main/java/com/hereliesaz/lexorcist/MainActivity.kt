@@ -20,13 +20,20 @@ import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.common.api.ApiException
 import com.hereliesaz.lexorcist.MainScreen
 import com.hereliesaz.lexorcist.ui.theme.LexorcistTheme
+import com.hereliesaz.lexorcist.data.AppDatabase
+import com.hereliesaz.lexorcist.data.EvidenceRepositoryImpl
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
+import com.hereliesaz.lexorcist.viewmodel.MainViewModelFactory
+
 // Removed DataReviewViewModel and placeholder/settings screen imports as they belonged to the NavHost block
 
 class MainActivity : ComponentActivity() {
 
-    // This is the "top" block viewModel
-    private val viewModel: MainViewModel by viewModels()
+    private val appDatabase by lazy { AppDatabase.getDatabase(this) }
+    private val evidenceRepository by lazy { EvidenceRepositoryImpl(appDatabase.evidenceDao(), null) }
+    private val viewModel: MainViewModel by viewModels {
+        MainViewModelFactory(application, evidenceRepository)
+    }
     
     // These are the "top" block client/request declarations
     private lateinit var oneTapClient: SignInClient 
