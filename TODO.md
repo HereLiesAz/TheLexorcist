@@ -77,9 +77,34 @@ The project is in a very early stage, with many critical features missing or non
     - Improve the `EditEvidenceDialog` in the `DataReviewScreen` to make it easier to edit multi-line content and manage tags.
     - **Note:** The UI is functional but basic.
 
+- [ ] **2.11. Implement Evidence Tagging and Notes:**
+    - Add `tags: List<String>` and `notes: String` fields to the `Evidence` data model.
+    - Update the database schema to include these new fields.
+    - In the `DataReviewScreen` and `EditEvidenceDialog`, add UI elements for adding/removing tags and a text field for notes.
+    - Display tags and notes when viewing evidence details.
+    - Add functionality to search or filter evidence by tags.
+
 - [ / ] **2.9. Refactor Hardcoded Strings:**
     - Move hardcoded strings (folder names, sheet names, UI text) to `strings.xml` to improve maintainability and prepare for localization.
     - **Note:** Many strings are externalized in `strings.xml`, but many others (especially for SharedPreferences keys, logging, and error messages) are still hardcoded in `MainViewModel.kt` and other files.
+
+- [ ] **2.10. Complete Core UI Screens:**
+    - **Cases Screen:**
+        - Implement `CasesViewModel` to manage case data.
+        - Create UI in `CasesScreen.kt` to display a list of cases.
+        - Add functionality to create and select cases.
+    - **Timeline Screen:**
+        - Implement `TimelineViewModel` to fetch and manage evidence for the selected case.
+        - Display evidence chronologically in `TimelineScreen.kt`.
+    - **Data Review Screen:**
+        - Implement `DataReviewViewModel` to handle parsed data.
+        - Create UI to display, correct, and save extracted data fields.
+    - **Settings Screen:**
+        - Implement `SettingsScreen.kt` and `SettingsViewModel`.
+        - Add UI for managing settings (e.g., cloud storage, user preferences).
+    - **Script Editor Screen:**
+        - Implement `ScriptEditorViewModel`.
+        - Build UI in `ScriptEditorScreen.kt` with a text editor for writing and managing scripts.
 
 #### **Low Priority / Future Vision 🔭**
 
@@ -92,11 +117,30 @@ The project is in a very early stage, with many critical features missing or non
 - [ ] **3.3. Collaboration Features:**
     - Allow multiple users to collaborate on a single case.
 
-- [ ] **3.4. Advanced Reporting:**
-    - Generate detailed reports and visualizations from the collected evidence.
+- [ ] **3.4. Advanced Reporting and Export:**
+    - **Secure, Auditable Export:**
+        - Implement logic to generate a PDF document for a selection of evidence.
+        - Generate a chain of custody report detailing the history of each evidence item.
+        - Apply a digital signature to the exported PDF to ensure integrity.
+    - **Summary Reports:**
+        - Generate reports that summarize the evidence for a case (e.g., number of documents, key entities, timeline summary).
 
-- [ ] **3.5. AI-Powered Analysis:**
-    - Use AI to analyze evidence, identify patterns, and suggest connections.
+- [ ] **3.5. AI-Powered Analysis and Categorization:**
+    - **ML-based Evidence Categorization:**
+        - Research and integrate an on-device text classification model (e.g., via TensorFlow Lite).
+        - Add a "category" field to the `Evidence` model and UI to confirm or change suggested categories.
+    - **Data Analysis for Legal Cases:**
+        - Develop algorithms to detect patterns and connections between evidence items (e.g., co-occurrence of names, places).
+        - Create a UI to visualize these connections (e.g., a graph view).
+        - Implement a user-defined rules engine for anomaly detection.
 
-- [ ] **3.6. Multi-Platform Support:**
-    - Develop a web or desktop version of the app for a more powerful evidence management experience.
+- [ ] **3.6. Multi-Platform Support (Web App):**
+    - **Technology Stack Research:** Evaluate web frameworks and back-end technologies.
+    - **API Design:** Design a robust API for communication between web and mobile clients.
+    - **Syncing Logic:** Implement a synchronization mechanism to ensure data consistency.
+    - **Development:** Plan and develop a web application with feature parity to the mobile app.
+
+- [ ] **3.7. Integration with Legal Software:**
+    - **Market Research:** Identify popular legal practice management software (e.g., Clio, MyCase).
+    - **API Investigation:** Investigate the availability of public APIs for integration.
+    - **Proof of Concept:** Develop a PoC integration with one platform to export case data.
