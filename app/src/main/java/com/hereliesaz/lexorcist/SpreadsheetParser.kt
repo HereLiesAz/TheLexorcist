@@ -4,10 +4,11 @@ import android.util.Log
 import com.hereliesaz.lexorcist.data.Allegation
 import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.model.Evidence
-// DAOs are no longer used
+import com.hereliesaz.lexorcist.model.SpreadsheetSchema
 
 class SpreadsheetParser(
-    private val googleApiService: GoogleApiService
+    private val googleApiService: GoogleApiService,
+    private val schema: SpreadsheetSchema
 ) {
     private val TAG = "SpreadsheetParser"
 
@@ -25,9 +26,9 @@ class SpreadsheetParser(
         }
 
         // 2. Extract Case Name from imported sheet
-        val caseInfoSheet = sheetsData["Case Info"]
-        val importedCaseName = caseInfoSheet?.find { it.getOrNull(0)?.toString()?.equals("Case Name", ignoreCase = true) == true }
-            ?.getOrNull(1)?.toString() ?: "Imported Case ${System.currentTimeMillis()}"
+        val caseInfoSheet = sheetsData[schema.caseInfoSheet.name]
+        val importedCaseName = caseInfoSheet?.find { it.getOrNull(0)?.toString()?.equals(schema.caseInfoSheet.caseNameLabel, ignoreCase = true) == true }
+            ?.getOrNull(schema.caseInfoSheet.caseNameColumn)?.toString() ?: "Imported Case ${System.currentTimeMillis()}"
         Log.d(TAG, "parseAndStore: Determined case name from import data: $importedCaseName")
 
         // 2.1 Check for Existing Case with the same name in the registry
@@ -74,9 +75,9 @@ class SpreadsheetParser(
         }
 
         // 5. Parse and Store Allegations into the new case's spreadsheet
-        val allegationsSheet = sheetsData["Exhibit Matrix - Allegations"]
+        val allegationsSheet = sheetsData[schema.allegationsSheet.name]
         allegationsSheet?.drop(1)?.forEach { row -> // Assuming first row is header
-            val allegationText = row.getOrNull(3)?.toString()
+            val allegationText = row.getOrNull(schema.allegationsSheet.allegationColumn)?.toString()
             if (!allegationText.isNullOrBlank()) {
                 val success = googleApiService.addAllegationToCase(newCaseSpreadsheetId, allegationText)
                 if (!success) {
@@ -86,11 +87,11 @@ class SpreadsheetParser(
         }
 
         // 6. Parse and Store Evidence into the new case's spreadsheet
-        val evidenceSheet = sheetsData["Evidence"]
+        val evidenceSheet = sheetsData[schema.evidenceSheet.name]
         evidenceSheet?.drop(1)?.forEach { row -> // Assuming first row is header
             try {
-                val content = row.getOrNull(0)?.toString()
-                val tagsStr = row.getOrNull(1)?.toString()
+                val content = row.getOrNull(schema.evidenceSheet.contentColumn)?.toString()
+                val tagsStr = row.getOrNull(schema.evidenceSheet.tagsColumn)?.toString()
 
                 if (content != null) {
                     val evidence = Evidence(
