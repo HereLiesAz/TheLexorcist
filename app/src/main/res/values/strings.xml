@@ -104,6 +104,7 @@
     <string name="script_snippet_date_less">evidence.documentDate &lt; new Date("YYYY-MM-DD").getTime()</string>
     <string name="script_snippet_date_less_label">date &lt; …</string>
     <string name="evidence_by_category">Evidence by Category</string>
+    <string name="evidence_by_month">Evidence by Month</string>
 
     <string name="select_image_to_scan">Select Image to Scan</string>
     <string name="load_case">Load Case</string>
