@@ -182,7 +182,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 if (apiService.updateEvidenceInCase(currentCase.spreadsheetId, evidence)) {
                     loadSelectedCaseEvidence(currentCase.spreadsheetId, currentCase.id) // Reload
                 } else {
-                    showError("Failed to update evidence.")
+                    showError("Failed to update evidence in the database.")
                     Log.w(TAG, "updateEvidence: Failed to update evidence in sheet.")
                 }
             } else {
@@ -199,7 +199,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 if (apiService.deleteEvidenceFromCase(currentCase.spreadsheetId, evidence.id)) {
                     loadSelectedCaseEvidence(currentCase.spreadsheetId, currentCase.id) // Reload
                 } else {
-                    showError("Failed to delete evidence.")
+                    showError("Failed to delete evidence from the database.")
                     Log.w(TAG, "deleteEvidence: Failed to delete evidence from sheet.")
                 }
             } else {
@@ -574,9 +574,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 if (apiService.addAllegationToCase(currentCase.spreadsheetId, allegationText)) {
                     loadAllegationsForSelectedCase(currentCase.spreadsheetId, currentCase.id) 
                 } else {
+                    showError("Failed to add allegation to the database.")
                     Log.w(TAG, "Failed to add allegation to case ${currentCase.id}.")
                 }
             } catch (e: Exception) {
+                showError("An error occurred while adding the allegation.")
                 Log.e(TAG, "Error adding allegation to case ${currentCase.id}", e)
             }
         }
@@ -609,10 +611,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 if (apiService.addEvidenceToCase(currentCase.spreadsheetId, entryWithCaseId)) {
                     loadSelectedCaseEvidence(currentCase.spreadsheetId, currentCase.id)
                 } else {
-                    showError("Failed to add evidence.")
+                    showError("Failed to add evidence to the database.")
                     Log.w(TAG, "Failed to add evidence to case ${currentCase.id}.")
                 }
             } catch (e: Exception) {
+                showError("An error occurred while adding the evidence.")
                 Log.e(TAG, "Error adding evidence to case ${currentCase.id}", e)
             }
         }
@@ -722,15 +725,37 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 
                 val visionText = suspendCancellableCoroutine<com.google.mlkit.vision.text.Text> { continuation ->
                     recognizer.process(inputImage)
-                        .addOnSuccessListener { text -> 
-                            if (continuation.isActive) continuation.resume(text) 
+                        .addOnSuccessListener { text ->
+                            if (continuation.isActive) continuation.resume(text)
                         }
                         .addOnFailureListener { e ->
-                            showError("Failed to recognize text.")
+                            val errorMessage = if (e is com.google.mlkit.common.MlKitException) {
+                                when (e.errorCode) {
+                                    com.google.mlkit.common.MlKitException.UNAVAILABLE ->
+                                        "Text recognition service is unavailable. Please check your connection or try again later."
+                                    com.google.mlkit.common.MlKitException.NOT_FOUND ->
+                                        "The required recognition model is not found. It might be downloading."
+                                    com.google.mlkit.common.MlKitException.INTERNAL ->
+                                        "An internal error occurred in the text recognition service."
+                                    com.google.mlkit.common.MlKitException.PERMISSION_DENIED ->
+                                        "Permission to use the text recognition service was denied."
+                                    com.google.mlkit.common.MlKitException.RESOURCE_EXHAUSTED ->
+                                        "Text recognition resources are exhausted. Please try again later."
+                                    else -> "Failed to recognize text. Error code: ${e.errorCode}"
+                                }
+                            } else {
+                                "Failed to recognize text due to an unexpected error."
+                            }
+                            showError(errorMessage)
                             Log.e(TAG, "ML Kit text recognition failed during review confirmation", e)
                             if (continuation.isActive) continuation.resumeWithException(e)
                         }
                 } ?: return@launch
+
+                if (visionText.text.isBlank()) {
+                    showError("No text could be detected in the image.")
+                    return@launch
+                }
 
                 val newEvidence = Evidence(
                     content = visionText.text,
@@ -763,7 +788,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 val text = it.readText()
                 Evidence(content = text, timestamp = System.currentTimeMillis(), sourceDocument = uri.toString(), documentDate = System.currentTimeMillis())
             }
-        } catch (e: Exception) { Log.e(TAG, "Failed to parse text file", e); null }
+        } catch (e: Exception) {
+            showError("Failed to parse text file.")
+            Log.e(TAG, "Failed to parse text file", e)
+            null
+        }
     }
 
     private suspend fun parsePdfFile(uri: Uri, context: Context): Evidence? { 
@@ -775,7 +804,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 pdfDocument.close()
                 Evidence(content = text, timestamp = System.currentTimeMillis(), sourceDocument = uri.toString(), documentDate = System.currentTimeMillis())
             }
-        } catch (e: Exception) { Log.e(TAG, "Failed to parse PDF file", e); null }
+        } catch (e: Exception) {
+            showError("Failed to parse PDF file.")
+            Log.e(TAG, "Failed to parse PDF file", e)
+            null
+        }
     }
 
     private suspend fun parseSpreadsheetFile(uri: Uri, context: Context): Evidence? { 
@@ -786,7 +819,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 workbook.close()
                 Evidence(content = text, timestamp = System.currentTimeMillis(), sourceDocument = uri.toString(), documentDate = System.currentTimeMillis())
             }
-        } catch (e: Exception) { Log.e(TAG, "Failed to parse spreadsheet file", e); null }
+        } catch (e: Exception) {
+            showError("Failed to parse spreadsheet file.")
+            Log.e(TAG, "Failed to parse spreadsheet file", e)
+            null
+        }
     }
 
     private suspend fun parseDocFile(uri: Uri, context: Context): Evidence? { 
@@ -799,7 +836,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 }
                 Evidence(content = text, timestamp = System.currentTimeMillis(), sourceDocument = uri.toString(), documentDate = System.currentTimeMillis())
             }
-        } catch (e: Exception) { Log.e(TAG, "Failed to parse document file", e); null }
+        } catch (e: Exception) {
+            showError("Failed to parse document file.")
+            Log.e(TAG, "Failed to parse document file", e)
+            null
+        }
     }
     
     fun importSmsMessages(context: Context) {

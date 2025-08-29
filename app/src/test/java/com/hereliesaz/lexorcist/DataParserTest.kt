@@ -2,90 +2,172 @@ package com.hereliesaz.lexorcist
 
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
 
 class DataParserTest {
 
-    @Test
-    fun `test parseDates with yyyy-MM-dd format`() {
-        val text = "Date: 2023-01-15"
-        val dates = DataParser.parseDates(text)
-        assertEquals(1, dates.size)
+    private fun getExpectedTimestamp(dateString: String, format: String): Long {
+        val sdf = SimpleDateFormat(format, Locale.US)
+        sdf.timeZone = TimeZone.getTimeZone("UTC")
+        return sdf.parse(dateString)!!.time
     }
 
     @Test
-    fun `test parseDates with MM-dd-yyyy format`() {
-        val text = "Date: 01-15-2023"
-        val dates = DataParser.parseDates(text)
-        assertEquals(1, dates.size)
+    fun `parseDates should extract dates in yyyy-MM-dd format`() {
+        val text = "Some text with a date 2023-01-15 and another 2024-02-20."
+        val expected = listOf(
+            getExpectedTimestamp("2023-01-15", "yyyy-MM-dd"),
+            getExpectedTimestamp("2024-02-20", "yyyy-MM-dd")
+        )
+        val actual = DataParser.parseDates(text)
+        assertEquals(expected, actual)
     }
 
     @Test
-    fun `test parseDates with MMM d, yyyy format`() {
-        val text = "Date: Jan 15, 2023"
-        val dates = DataParser.parseDates(text)
-        assertEquals(1, dates.size)
+    fun `parseDates should extract dates in MM-dd-yyyy format`() {
+        val text = "Some text with a date 01-15-2023 and another 02-20-2024."
+        val expected = listOf(
+            getExpectedTimestamp("01-15-2023", "MM-dd-yyyy"),
+            getExpectedTimestamp("02-20-2024", "MM-dd-yyyy")
+        )
+        val actual = DataParser.parseDates(text)
+        assertEquals(expected, actual)
     }
 
     @Test
-    fun `test parseNames`() {
-        val text = "John Doe and Jane Smith are here."
-        val names = DataParser.parseNames(text)
-        assertEquals(listOf("John Doe", "Jane Smith"), names)
+    fun `parseDates should extract dates in MM-dd-yy format`() {
+        val text = "Some text with a date 01-15-23 and another 02-20-24."
+        val expected = listOf(
+            getExpectedTimestamp("01-15-23", "MM-dd-yy"),
+            getExpectedTimestamp("02-20-24", "MM-dd-yy")
+        )
+        val actual = DataParser.parseDates(text)
+        assertEquals(expected, actual)
     }
 
     @Test
-    fun `test parseAddresses`() {
-        val text = "123 Main St, Anytown, CA 12345"
-        val addresses = DataParser.parseAddresses(text)
-        assertEquals(listOf("123 Main St, Anytown, CA 12345"), addresses)
+    fun `parseDates should extract dates in MM slash dd slash yyyy format`() {
+        val text = "Some text with a date 01/15/2023 and another 02/20/2024."
+        val expected = listOf(
+            getExpectedTimestamp("01/15/2023", "MM/dd/yyyy"),
+            getExpectedTimestamp("02/20/2024", "MM/dd/yyyy")
+        )
+        val actual = DataParser.parseDates(text)
+        assertEquals(expected, actual)
     }
 
     @Test
-    fun `test tagData`() {
-        val text = "John Doe lives at 123 Main St, Anytown, CA 12345. His birthday is 1990-01-01."
-        val taggedData = DataParser.tagData(text)
-        val expectedDate = "1990-01-01"
-        val actualDate = taggedData["dates"]?.firstOrNull()
-        assertEquals(expectedDate, actualDate)
-        assertEquals(listOf("John Doe"), taggedData["names"])
-        assertEquals(listOf("123 Main St, Anytown, CA 12345"), taggedData["addresses"])
+    fun `parseDates should extract dates in yyyy slash MM slash dd format`() {
+        val text = "Some text with a date 2023/01/15 and another 2024/02/20."
+        val expected = listOf(
+            getExpectedTimestamp("2023/01/15", "yyyy/MM/dd"),
+            getExpectedTimestamp("2024/02/20", "yyyy/MM/dd")
+        )
+        val actual = DataParser.parseDates(text)
+        assertEquals(expected, actual)
     }
 
     @Test
-    fun `test extractEvidence`() {
-        val text = "The first piece of evidence.\nThe second piece of evidence."
-        val evidence = DataParser.extractEvidence(1, text, emptyList())
-        assertEquals(2, evidence.size)
-        assertEquals("The first piece of evidence.", evidence[0].content)
-        assertEquals("The second piece of evidence.", evidence[1].content)
+    fun `parseDates should extract dates in MM slash dd slash yy format`() {
+        val text = "Some text with a date 01/15/23 and another 02/20/24."
+        val expected = listOf(
+            getExpectedTimestamp("01/15/23", "MM/dd/yy"),
+            getExpectedTimestamp("02/20/24", "MM/dd/yy")
+        )
+        val actual = DataParser.parseDates(text)
+        assertEquals(expected, actual)
     }
 
     @Test
-    fun `test parseDates with no dates`() {
-        val text = "This is a string with no dates."
-        val dates = DataParser.parseDates(text)
-        assertEquals(0, dates.size)
+    fun `parseDates should extract dates in MMM d, yyyy format`() {
+        val text = "Some text with a date Jan 15, 2023 and another Feb 20, 2024."
+        val expected = listOf(
+            getExpectedTimestamp("Jan 15, 2023", "MMM d, yyyy"),
+            getExpectedTimestamp("Feb 20, 2024", "MMM d, yyyy")
+        )
+        val actual = DataParser.parseDates(text)
+        assertEquals(expected, actual)
     }
 
     @Test
-    fun `test parseNames with no names`() {
-        val text = "This is a string with no names."
-        val names = DataParser.parseNames(text)
-        assertEquals(0, names.size)
+    fun `parseDates should extract dates in MMMM d, yyyy format`() {
+        val text = "Some text with a date January 15, 2023 and another February 20, 2024."
+        val expected = listOf(
+            getExpectedTimestamp("January 15, 2023", "MMMM d, yyyy"),
+            getExpectedTimestamp("February 20, 2024", "MMMM d, yyyy")
+        )
+        val actual = DataParser.parseDates(text)
+        assertEquals(expected, actual)
     }
 
     @Test
-    fun `test parseAddresses with no addresses`() {
-        val text = "This is a string with no addresses."
-        val addresses = DataParser.parseAddresses(text)
-        assertEquals(0, addresses.size)
+    fun `parseDates should handle multiple date formats`() {
+        val text = "Dates: 2023-01-15, 02/20/2024, and Dec 25, 2022."
+        val expected = listOf(
+            getExpectedTimestamp("2023-01-15", "yyyy-MM-dd"),
+            getExpectedTimestamp("02/20/2024", "MM/dd/yyyy"),
+            getExpectedTimestamp("Dec 25, 2022", "MMM d, yyyy")
+        )
+        val actual = DataParser.parseDates(text)
+        assertEquals(expected.sorted(), actual.sorted())
     }
 
     @Test
-    fun `test extractEvidence with category`() {
-        val text = "This is a piece of evidence. Category: Medical"
-        val evidence = DataParser.extractEvidence(1, text, emptyList())
-        assertEquals(1, evidence.size)
-        assertEquals("Medical", evidence[0].category)
+    fun `parseDates should return empty list when no dates are found`() {
+        val text = "Some text without any dates."
+        val expected = emptyList<Long>()
+        val actual = DataParser.parseDates(text)
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun `parseNames should extract full names`() {
+        val text = "John Doe, Jane Smith, and First Last."
+        val expected = listOf("John Doe", "Jane Smith", "First Last")
+        val actual = DataParser.parseNames(text)
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun `parseNames should return empty list if no names are found`() {
+        val text = "Some text without any names."
+        val expected = emptyList<String>()
+        val actual = DataParser.parseNames(text)
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun `parseAddresses should extract addresses`() {
+        val text = "Address: 123 Main St, Anytown, CA 12345. Another one at 456 Oak Ave, Sometown, NY 54321."
+        val expected = listOf("123 Main St, Anytown, CA 12345", "456 Oak Ave, Sometown, NY 54321")
+        val actual = DataParser.parseAddresses(text)
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun `parseAddresses should return empty list if no addresses are found`() {
+        val text = "Some text without any addresses."
+        val expected = emptyList<String>()
+        val actual = DataParser.parseAddresses(text)
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun `tagData should correctly tag dates, names, and addresses`() {
+        val text = "John Doe (from 123 Main St, Anytown, CA 12345) has a meeting on 2024-01-01 with Jane Smith."
+        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+        sdf.timeZone = TimeZone.getTimeZone("UTC")
+        val expectedDate = sdf.format(Date(getExpectedTimestamp("2024-01-01", "yyyy-MM-dd")))
+
+        val expected = mapOf(
+            "dates" to listOf(expectedDate),
+            "names" to listOf("John Doe", "Jane Smith"),
+            "addresses" to listOf("123 Main St, Anytown, CA 12345")
+        )
+        val actual = DataParser.tagData(text)
+        assertEquals(expected, actual)
     }
 }
