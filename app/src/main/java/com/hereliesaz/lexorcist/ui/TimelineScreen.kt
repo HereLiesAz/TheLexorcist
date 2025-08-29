@@ -1,4 +1,4 @@
-package com.hereliesaz.lexorcist.screens
+package com.hereliesaz.lexorcist.ui
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -11,7 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.hereliesaz.lexorcist.models.TimelineEvent
+import com.hereliesaz.lexorcist.model.TimelineEvent
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 import java.text.SimpleDateFormat
 import java.util.*

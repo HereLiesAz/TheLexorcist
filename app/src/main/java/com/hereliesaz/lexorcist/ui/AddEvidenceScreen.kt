@@ -1,4 +1,4 @@
-package com.hereliesaz.lexorcist.screens
+package com.hereliesaz.lexorcist.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*

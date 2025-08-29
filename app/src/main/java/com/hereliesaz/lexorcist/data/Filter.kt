@@ -1,4 +1,4 @@
-package com.hereliesaz.lexorcist.db
+package com.hereliesaz.lexorcist.data
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

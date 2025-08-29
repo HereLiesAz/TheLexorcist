@@ -9,7 +9,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hereliesaz.lexorcist.components.AppNavRail
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
-import com.hereliesaz.lexorcist.screens.*
+import com.hereliesaz.lexorcist.ui.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.lifecycle.viewModelScope

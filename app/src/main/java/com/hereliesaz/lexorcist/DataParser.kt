@@ -1,6 +1,6 @@
 package com.hereliesaz.lexorcist
 
-import com.hereliesaz.lexorcist.db.Allegation
+import com.hereliesaz.lexorcist.data.Allegation
 import com.hereliesaz.lexorcist.model.Evidence
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -25,7 +25,7 @@ object DataParser {
             regex.findAll(text).forEach { matchResult ->
                 try {
                     format.timeZone = TimeZone.getTimeZone("UTC")
-                    format.isLenient = true
+                    format.isLenient = false
                     dates.add(format.parse(matchResult.value.trim())!!.time)
                 } catch (e: Exception) {
                     // Ignore and continue
@@ -46,7 +46,11 @@ object DataParser {
     }
 
     fun tagData(text: String): Map<String, List<String>> {
-        val dates = parseDates(text).map { Date(it).toString() }
+        val dates = parseDates(text).map {
+            val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+            sdf.timeZone = TimeZone.getTimeZone("UTC")
+            sdf.format(Date(it))
+        }
         val names = parseNames(text)
         val addresses = parseAddresses(text)
 

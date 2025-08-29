@@ -1,8 +1,8 @@
 package com.hereliesaz.lexorcist
 
 import android.util.Log
-import com.hereliesaz.lexorcist.db.Allegation
-import com.hereliesaz.lexorcist.db.Case
+import com.hereliesaz.lexorcist.data.Allegation
+import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.model.Evidence
 // DAOs are no longer used
 

@@ -1,4 +1,4 @@
-package com.hereliesaz.lexorcist.screens
+package com.hereliesaz.lexorcist.ui
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -12,7 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.hereliesaz.lexorcist.db.Case
+import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 import com.hereliesaz.lexorcist.CreateCaseDialog // Import the dialog from the parent package
 
