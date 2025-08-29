@@ -10,8 +10,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.model.Evidence
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 
@@ -30,7 +32,7 @@ fun DataReviewScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Data Review") },
+                title = { Text(stringResource(R.string.data_review)) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.primary,
@@ -71,19 +73,19 @@ fun DataReviewScreen(
     if (showDeleteConfirmDialog && evidenceToDelete != null) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirmDialog = false },
-            title = { Text("Delete Evidence") },
-            text = { Text("Are you sure you want to delete this evidence?") },
+            title = { Text(stringResource(R.string.delete_evidence)) },
+            text = { Text(stringResource(R.string.delete_evidence_confirmation)) },
             confirmButton = {
                 Button(onClick = {
                     viewModel.deleteEvidence(evidenceToDelete!!)
                     showDeleteConfirmDialog = false
                 }) {
-                    Text("Delete")
+                    Text(stringResource(R.string.delete))
                 }
             },
             dismissButton = {
                 Button(onClick = { showDeleteConfirmDialog = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )
@@ -138,10 +140,10 @@ fun EvidenceItem(
             }
             Row {
                 IconButton(onClick = { onEditClick(evidence) }) {
-                    Icon(Icons.Default.Edit, contentDescription = "Edit")
+                    Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.edit))
                 }
                 IconButton(onClick = { onDeleteClick(evidence) }) {
-                    Icon(Icons.Default.Delete, contentDescription = "Delete")
+                    Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.delete))
                 }
             }
         }
@@ -160,26 +162,26 @@ fun EditEvidenceDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Edit Evidence") },
+        title = { Text(stringResource(R.string.edit_evidence)) },
         text = {
             Column(horizontalAlignment = Alignment.End) {
                 OutlinedTextField(
                     value = content,
                     onValueChange = { content = it },
-                    label = { Text("Content") },
-                    placeholder = { Text("Enter the evidence content") }
+                    label = { Text(stringResource(R.string.content)) },
+                    placeholder = { Text(stringResource(R.string.enter_evidence_content)) }
                 )
                 OutlinedTextField(
                     value = tags,
                     onValueChange = { tags = it },
-                    label = { Text("Tags") },
-                    placeholder = { Text("Enter tags, separated by commas") }
+                    label = { Text(stringResource(R.string.tags)) },
+                    placeholder = { Text(stringResource(R.string.enter_tags)) }
                 )
                 OutlinedTextField(
                     value = category,
                     onValueChange = { category = it },
-                    label = { Text("Category") },
-                    placeholder = { Text("Enter a category for this evidence") }
+                    label = { Text(stringResource(R.string.category)) },
+                    placeholder = { Text(stringResource(R.string.enter_category)) }
                 )
             }
         },
@@ -192,12 +194,12 @@ fun EditEvidenceDialog(
                 )
                 onSave(updatedEvidence)
             }) {
-                Text("Save")
+                Text(stringResource(R.string.save))
             }
         },
         dismissButton = {
             Button(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(R.string.cancel))
             }
         }
     )

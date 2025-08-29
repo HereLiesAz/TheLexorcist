@@ -10,8 +10,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 import com.hereliesaz.lexorcist.CreateCaseDialog // Import the dialog from the parent package
@@ -26,7 +28,7 @@ fun CasesScreen(viewModel: MainViewModel) {
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(onClick = { showCreateCaseDialog = true }) {
-                Icon(Icons.Filled.Add, contentDescription = "Create New Case")
+                Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.create_new_case))
             }
         }
     ) { paddingValues ->
@@ -38,10 +40,10 @@ fun CasesScreen(viewModel: MainViewModel) {
             horizontalAlignment = Alignment.End,
             verticalArrangement = Arrangement.Center
         ) {
-            Text("Cases", style = MaterialTheme.typography.headlineMedium)
+            Text(stringResource(R.string.cases), style = MaterialTheme.typography.headlineMedium)
             Spacer(modifier = Modifier.height(16.dp))
             if (cases.isEmpty()) {
-                Text("No cases found. Click the '+' button to create a new case.")
+                Text(stringResource(R.string.no_cases_found))
             } else {
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
                     items(cases) { case ->

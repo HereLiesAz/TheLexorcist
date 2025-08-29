@@ -2,6 +2,7 @@ package com.hereliesaz.lexorcist.data
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.hereliesaz.lexorcist.R
 
 /**
  * Manages application settings using [SharedPreferences].
@@ -11,17 +12,10 @@ import android.content.SharedPreferences
  *
  * @param context The application context, used to access [SharedPreferences].
  */
-class SettingsManager(context: Context) {
+class SettingsManager(private val context: Context) {
 
     private val sharedPreferences: SharedPreferences =
-        context.getSharedPreferences("lexorcist_settings", Context.MODE_PRIVATE)
-
-    companion object {
-        /** The key for storing the application theme preference. */
-        const val KEY_THEME = "theme"
-        /** The key for storing the export format preference. */
-        const val KEY_EXPORT_FORMAT = "export_format"
-    }
+        context.getSharedPreferences(context.getString(R.string.settings_preferences_name), Context.MODE_PRIVATE)
 
     /**
      * Saves the selected application theme.
@@ -29,7 +23,7 @@ class SettingsManager(context: Context) {
      * @param theme The theme to save (e.g., "Light", "Dark", "System").
      */
     fun saveTheme(theme: String) {
-        sharedPreferences.edit().putString(KEY_THEME, theme).apply()
+        sharedPreferences.edit().putString(context.getString(R.string.settings_key_theme), theme).apply()
     }
 
     /**
@@ -38,7 +32,8 @@ class SettingsManager(context: Context) {
      * @return The saved theme, or "System" if no theme is set.
      */
     fun getTheme(): String {
-        return sharedPreferences.getString(KEY_THEME, "System") ?: "System"
+        val defaultTheme = context.getString(R.string.settings_theme_system)
+        return sharedPreferences.getString(context.getString(R.string.settings_key_theme), defaultTheme) ?: defaultTheme
     }
 
     /**
@@ -47,7 +42,7 @@ class SettingsManager(context: Context) {
      * @param format The export format to save (e.g., "PDF", "CSV").
      */
     fun saveExportFormat(format: String) {
-        sharedPreferences.edit().putString(KEY_EXPORT_FORMAT, format).apply()
+        sharedPreferences.edit().putString(context.getString(R.string.settings_key_export_format), format).apply()
     }
 
     /**
@@ -56,6 +51,7 @@ class SettingsManager(context: Context) {
      * @return The saved export format, or "PDF" if no format is set.
      */
     fun getExportFormat(): String {
-        return sharedPreferences.getString(KEY_EXPORT_FORMAT, "PDF") ?: "PDF"
+        val defaultFormat = context.getString(R.string.settings_export_format_pdf)
+        return sharedPreferences.getString(context.getString(R.string.settings_key_export_format), defaultFormat) ?: defaultFormat
     }
 }

@@ -5,6 +5,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hereliesaz.lexorcist.components.AppNavRail
@@ -28,7 +29,7 @@ fun MainScreen(
     val isSignedIn by viewModel.isSignedIn.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
-    var currentScreen by remember { mutableStateOf("home") }
+    var currentScreen by remember { mutableStateOf(R.string.nav_home) }
     var showCreateCaseDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(errorMessage) {
@@ -47,33 +48,33 @@ fun MainScreen(
                     .fillMaxSize()
                     .padding(paddingValues)
             ) {
-                AppNavRail(onNavigate = { screen -> currentScreen = screen })
+                AppNavRail(onNavigate = { screen -> currentScreen = context.resources.getIdentifier(screen, "string", context.packageName) })
                 Box(modifier = Modifier.weight(1f)) {
                     when (currentScreen) {
-                        "home" -> AuthenticatedView(
+                        R.string.nav_home -> AuthenticatedView(
                             // onCreateMasterTemplate parameter removed
                             onCreateCase = { showCreateCaseDialog = true }
                         )
-                        "cases" -> CasesScreen(viewModel = viewModel)
-                        "add_evidence" -> AddEvidenceScreen(
+                        R.string.nav_cases -> CasesScreen(viewModel = viewModel)
+                        R.string.nav_add_evidence -> AddEvidenceScreen(
                             viewModel = viewModel,
                             onSelectImage = onSelectImage,
                             onTakePicture = onTakePicture,
-                            onAddTextEvidence = { currentScreen = "add_text_evidence" },
+                            onAddTextEvidence = { currentScreen = R.string.nav_add_text_evidence },
                             onAddDocument = onAddDocument,
                             onAddSpreadsheet = onAddSpreadsheet
                         )
-                        "add_text_evidence" -> {
+                        R.string.nav_add_text_evidence -> {
                             val context = androidx.compose.ui.platform.LocalContext.current
                             AddTextEvidenceScreen(viewModel = viewModel, onSave = { text ->
                                 viewModel.addTextEvidenceToSelectedCase(text, context)
-                                currentScreen = "cases"
+                                currentScreen = R.string.nav_cases
                             })
                         }
-                        "timeline" -> TimelineScreen(viewModel = viewModel)
-                        "visualization" -> VisualizationScreen(viewModel = viewModel)
-                        "data_review" -> DataReviewScreen(viewModel = viewModel)
-                        "settings" -> SettingsScreen(viewModel = viewModel)
+                        R.string.nav_timeline -> TimelineScreen(viewModel = viewModel)
+                        R.string.nav_visualization -> VisualizationScreen(viewModel = viewModel)
+                        R.string.nav_data_review -> DataReviewScreen(viewModel = viewModel)
+                        R.string.nav_settings -> SettingsScreen(viewModel = viewModel)
                     }
                 }
             }
@@ -87,7 +88,7 @@ fun MainScreen(
                 verticalArrangement = Arrangement.Center
             ) {
                 Button(onClick = onSignIn) {
-                    Text("Sign in with Google")
+                    Text(stringResource(R.string.sign_in_with_google))
                 }
             }
         }
@@ -114,21 +115,21 @@ fun AuthenticatedView(
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "The Lexorcist",
+            text = stringResource(R.string.app_name),
             style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.padding(bottom = 16.dp)
         )
         Text(
-            text = "Use the navigation rail to get started.",
+            text = stringResource(R.string.use_navigation_rail),
             style = MaterialTheme.typography.bodyLarge
         )
         Text(
-            text = "Tap the icon at the top to open the menu.",
+            text = stringResource(R.string.tap_icon_to_open_menu),
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.padding(bottom = 32.dp)
         )
         Button(onClick = onCreateCase) {
-            Text("Create New Case")
+            Text(stringResource(R.string.create_new_case))
         }
         // Spacer and "Create New Master HTML Template" Button removed
     }
@@ -142,7 +143,7 @@ fun CreateCaseDialog(
 ) {
     val templates by viewModel.htmlTemplates.collectAsState()
     var caseName by remember { mutableStateOf("") }
-    var exhibitSheetName by remember { mutableStateOf("Exhibits") } // Default
+    var exhibitSheetName by remember { mutableStateOf(stringResource(R.string.default_exhibit_sheet_name)) } // Default
     var caseNumber by remember { mutableStateOf("") }
     var caseSection by remember { mutableStateOf("") }
     var caseJudge by remember { mutableStateOf("") }
@@ -151,7 +152,7 @@ fun CreateCaseDialog(
     var selectedTemplateId by remember { mutableStateOf<String?>(null) }
     // Initialize with a placeholder or the first template if available
     var selectedTemplateName by remember {
-        mutableStateOf(templates.firstOrNull()?.name ?: "Select a Template")
+        mutableStateOf(templates.firstOrNull()?.name ?: stringResource(R.string.select_a_template))
     }
     // Effect to update selectedTemplateName if the first template becomes available later
     LaunchedEffect(templates) {
@@ -161,14 +162,14 @@ fun CreateCaseDialog(
                 // selectedTemplateName = it.name ?: "Unnamed Template"
             }
         } else if (selectedTemplateId == null && templates.isEmpty()) {
-            selectedTemplateName = "No templates found"
+            selectedTemplateName = stringResource(R.string.no_templates_found)
         }
     }
 
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Create New Case") },
+        title = { Text(stringResource(R.string.create_new_case)) },
         text = {
             Column(
                 modifier = Modifier.verticalScroll(rememberScrollState()), // Make column scrollable
@@ -177,28 +178,28 @@ fun CreateCaseDialog(
                 TextField(
                     value = caseName,
                     onValueChange = { caseName = it },
-                    label = { Text("Case Name*") },
+                    label = { Text(stringResource(R.string.case_name_required)) },
                     isError = caseName.isBlank()
                 )
                 TextField(
                     value = exhibitSheetName,
                     onValueChange = { exhibitSheetName = it },
-                    label = { Text("Exhibit Sheet Name") }
+                    label = { Text(stringResource(R.string.exhibit_sheet_name)) }
                 )
                 TextField(
                     value = caseNumber,
                     onValueChange = { caseNumber = it },
-                    label = { Text("Case Number") }
+                    label = { Text(stringResource(R.string.case_number)) }
                 )
                 TextField(
                     value = caseSection,
                     onValueChange = { caseSection = it },
-                    label = { Text("Case Section") }
+                    label = { Text(stringResource(R.string.case_section)) }
                 )
                 TextField(
                     value = caseJudge,
                     onValueChange = { caseJudge = it },
-                    label = { Text("Judge") }
+                    label = { Text(stringResource(R.string.judge)) }
                 )
 
                 ExposedDropdownMenuBox(
@@ -209,7 +210,7 @@ fun CreateCaseDialog(
                         value = selectedTemplateName,
                         onValueChange = {},
                         readOnly = true,
-                        label = { Text("Master Template*") },
+                        label = { Text(stringResource(R.string.master_template_required)) },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                         modifier = Modifier.menuAnchor(androidx.compose.material3.ExposedDropdownMenuAnchorType.PrimaryNotEditable),
                         isError = selectedTemplateId == null
@@ -220,17 +221,17 @@ fun CreateCaseDialog(
                     ) {
                         if (templates.isEmpty()) {
                             DropdownMenuItem(
-                                text = { Text("No templates found. Create one via Home screen.") }, // Text can be updated as the button is removed
+                                text = { Text(stringResource(R.string.no_templates_found_create_one)) }, // Text can be updated as the button is removed
                                 onClick = { expanded = false },
                                 enabled = false
                             )
                         }
                         templates.forEach { template ->
                             DropdownMenuItem(
-                                text = { Text(template.name ?: "Unnamed Template (ID: ${template.id.take(8)}...)") },
+                                text = { Text(template.name ?: stringResource(R.string.unnamed_template, template.id.take(8))) },
                                 onClick = {
                                     selectedTemplateId = template.id
-                                    selectedTemplateName = template.name ?: "Unnamed Template (ID: ${template.id.take(8)}...)"
+                                    selectedTemplateName = template.name ?: stringResource(R.string.unnamed_template, template.id.take(8))
                                     expanded = false
                                 }
                             )
@@ -245,7 +246,7 @@ fun CreateCaseDialog(
                     if (caseName.isNotBlank() && selectedTemplateId != null) {
                         viewModel.createCase(
                             caseName = caseName,
-                            exhibitSheetName = exhibitSheetName.ifBlank { "Exhibits" },
+                            exhibitSheetName = exhibitSheetName.ifBlank { stringResource(R.string.default_exhibit_sheet_name) },
                             caseNumber = caseNumber,
                             caseSection = caseSection,
                             caseJudge = caseJudge,
@@ -257,12 +258,12 @@ fun CreateCaseDialog(
                 },
                 enabled = caseName.isNotBlank() && selectedTemplateId != null
             ) {
-                Text("Create")
+                Text(stringResource(R.string.create))
             }
         },
         dismissButton = {
             Button(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(R.string.cancel))
             }
         }
     )

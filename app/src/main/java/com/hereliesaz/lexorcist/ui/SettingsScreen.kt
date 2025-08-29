@@ -9,7 +9,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 
 @Composable
@@ -28,7 +30,7 @@ fun SettingsScreen(viewModel: MainViewModel) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.End
         ) {
-            Text("Dark Mode", style = MaterialTheme.typography.bodyLarge)
+        Text(stringResource(R.string.dark_mode), style = MaterialTheme.typography.bodyLarge)
             Switch(
                 checked = isDarkMode,
                 onCheckedChange = { viewModel.setDarkMode(it) }

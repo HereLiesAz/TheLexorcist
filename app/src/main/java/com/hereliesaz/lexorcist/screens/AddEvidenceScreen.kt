@@ -19,10 +19,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 import com.hereliesaz.lexorcist.TaggedDataAdapter
 
@@ -53,19 +55,19 @@ fun AddEvidenceScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Button(onClick = onSelectImage) {
-                    Text("Select Image")
+                    Text(stringResource(R.string.select_image))
                 }
                 Button(onClick = onTakePicture) {
-                    Text("Take Picture")
+                    Text(stringResource(R.string.take_picture))
                 }
                 Button(onClick = onAddTextEvidence) {
-                    Text("Add Text Evidence")
+                    Text(stringResource(R.string.add_text_evidence))
                 }
                 Button(onClick = onAddDocument) {
-                    Text("Add Document")
+                    Text(stringResource(R.string.add_document))
                 }
                 Button(onClick = onAddSpreadsheet) {
-                    Text("Add Spreadsheet")
+                    Text(stringResource(R.string.add_spreadsheet))
                 }
             }
 
@@ -95,7 +97,7 @@ fun AddEvidenceScreen(
             ) {
                 Image(
                     bitmap = imageBitmapForReview!!.asImageBitmap(),
-                    contentDescription = "Image for review",
+                    contentDescription = stringResource(R.string.image_for_review),
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f) 
@@ -107,16 +109,16 @@ fun AddEvidenceScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     IconButton(onClick = { viewModel.rotateImageBeingReviewed(-90f) }) {
-                        Icon(Icons.AutoMirrored.Filled.RotateLeft, contentDescription = "Rotate Left") // Updated Icon
+                        Icon(Icons.AutoMirrored.Filled.RotateLeft, contentDescription = stringResource(R.string.rotate_left)) // Updated Icon
                     }
                     IconButton(onClick = { viewModel.rotateImageBeingReviewed(90f) }) {
-                        Icon(Icons.AutoMirrored.Filled.RotateRight, contentDescription = "Rotate Right") // Updated Icon
+                        Icon(Icons.AutoMirrored.Filled.RotateRight, contentDescription = stringResource(R.string.rotate_right)) // Updated Icon
                     }
                     IconButton(onClick = { viewModel.confirmImageReview(context) }) {
-                        Icon(Icons.Filled.Done, contentDescription = "Approve Image")
+                        Icon(Icons.Filled.Done, contentDescription = stringResource(R.string.approve_image))
                     }
                     IconButton(onClick = { viewModel.cancelImageReview() }) {
-                        Icon(Icons.Filled.Cancel, contentDescription = "Cancel Review")
+                        Icon(Icons.Filled.Cancel, contentDescription = stringResource(R.string.cancel_review))
                     }
                 }
             }
