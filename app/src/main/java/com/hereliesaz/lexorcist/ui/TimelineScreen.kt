@@ -10,8 +10,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
-import io.github.pushpalroy.jetlime.Event
-import io.github.pushpalroy.jetlime.JetLime
+import com.pushpal.jetlime.Event
+import com.pushpal.jetlime.JetLime
 import java.text.SimpleDateFormat
 import java.util.*
 

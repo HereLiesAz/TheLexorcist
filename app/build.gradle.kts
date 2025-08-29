@@ -152,6 +152,7 @@ dependencies {
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.guava:guava:33.4.8-android")
     implementation("com.quickbirdstudios:opencv:4.5.3")
+
     // Mozilla Rhino for JavaScript execution
     implementation("org.mozilla:rhino:1.8.0")
     implementation("com.materialkolor:material-kolor:3.0.1")
