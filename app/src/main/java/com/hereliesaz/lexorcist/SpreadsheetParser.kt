@@ -95,12 +95,13 @@ class SpreadsheetParser(
                 if (content != null) {
                     val evidence = Evidence(
                         caseId = newCase.id.toLong(),
-                        allegationId = "",
-                        amount = null,
-                        timestamp = java.util.Date(System.currentTimeMillis()),
-                        sourceDocument = content,
-                        documentDate = java.util.Date(System.currentTimeMillis()),
-                        category = null
+                        allegationId = null,
+                        content = content,
+                        timestamp = System.currentTimeMillis(),
+                        sourceDocument = "Imported from spreadsheet",
+                        documentDate = System.currentTimeMillis(),
+                        tags = tagsStr?.split(",")?.map { it.trim() } ?: emptyList(),
+                        category = ""
                     )
                     val success = googleApiService.addEvidenceToCase(newCaseSpreadsheetId, evidence)
                     if (!success) {

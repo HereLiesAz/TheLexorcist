@@ -37,10 +37,9 @@ import org.opencv.android.Utils
 import org.opencv.core.Mat
 import org.opencv.imgproc.Imgproc
 import com.hereliesaz.lexorcist.data.Allegation
+import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.data.EvidenceRepositoryImpl
 import com.hereliesaz.lexorcist.data.TaggedEvidenceRepository
-
-import com.hereliesaz.lexorcist.model.Evidence
 import com.hereliesaz.lexorcist.model.SheetFilter
 import com.hereliesaz.lexorcist.model.TaggedEvidence
 import com.hereliesaz.lexorcist.service.ScriptRunner
@@ -107,12 +106,12 @@ class MainViewModel(application: Application, private val evidenceRepository: co
     val selectedCaseSheetFilters: StateFlow<List<SheetFilter>> = _selectedCaseSheetFilters.asStateFlow()
     private val _allegations = MutableStateFlow<List<Allegation>>(emptyList())
     val allegations: StateFlow<List<Allegation>> = _allegations.asStateFlow()
-    private val _selectedCaseEvidenceList = MutableStateFlow<List<Evidence>>(emptyList()) // Renamed from _evidence
-    val selectedCaseEvidenceList: StateFlow<List<Evidence>> = _selectedCaseEvidenceList.asStateFlow()
+    private val _selectedCaseEvidenceList = MutableStateFlow<List<com.hereliesaz.lexorcist.model.Evidence>>(emptyList()) // Renamed from _evidence
+    val selectedCaseEvidenceList: StateFlow<List<com.hereliesaz.lexorcist.model.Evidence>> = _selectedCaseEvidenceList.asStateFlow()
 
     // --- Generic Evidence List (for UI parsing, MainScreen display, generic export) ---
-    private val _uiEvidenceList = MutableStateFlow<List<Evidence>>(emptyList()) // Renamed from _evidenceList
-    val uiEvidenceList: StateFlow<List<Evidence>> = _uiEvidenceList.asStateFlow()
+    private val _uiEvidenceList = MutableStateFlow<List<com.hereliesaz.lexorcist.model.Evidence>>(emptyList()) // Renamed from _evidenceList
+    val uiEvidenceList: StateFlow<List<com.hereliesaz.lexorcist.model.Evidence>> = _uiEvidenceList.asStateFlow()
 
     // --- Filters for SettingsScreen (in-memory) ---
     private val _settingScreenFilters = MutableStateFlow<List<SheetFilter>>(emptyList()) // Renamed from _filters
@@ -186,7 +185,7 @@ class MainViewModel(application: Application, private val evidenceRepository: co
         }
     }
 
-    fun updateEvidence(evidence: Evidence) {
+    fun updateEvidence(evidence: com.hereliesaz.lexorcist.model.Evidence) {
         viewModelScope.launch {
             val currentCase = _selectedCase.value
             if (currentCase != null) {
@@ -197,7 +196,7 @@ class MainViewModel(application: Application, private val evidenceRepository: co
         }
     }
 
-    fun deleteEvidence(evidence: Evidence) {
+    fun deleteEvidence(evidence: com.hereliesaz.lexorcist.model.Evidence) {
         viewModelScope.launch {
             val currentCase = _selectedCase.value
             if (currentCase != null) {
@@ -239,7 +238,7 @@ class MainViewModel(application: Application, private val evidenceRepository: co
                 if (currentCase.spreadsheetId.isNotBlank()) {
                     loadSelectedCaseSheetFilters(currentCase.spreadsheetId)
                     loadAllegationsForSelectedCase(currentCase.spreadsheetId, currentCase.id)
-                    loadSelectedCaseEvidence(currentCase.spreadsheetId, currentCase.id)
+                    evidenceRepository.refreshEvidenceForCase(currentCase.spreadsheetId, currentCase.id)
                 }
             }
         }
@@ -585,7 +584,7 @@ class MainViewModel(application: Application, private val evidenceRepository: co
     }
 
 
-    fun addEvidenceToSelectedCase(entry: Evidence) {
+    fun addEvidenceToSelectedCase(entry: com.hereliesaz.lexorcist.model.Evidence) {
         val currentCase = _selectedCase.value
         if (currentCase == null) {
             Log.w(TAG, "addEvidenceToSelectedCase: Missing data.")
@@ -597,7 +596,7 @@ class MainViewModel(application: Application, private val evidenceRepository: co
         }
     }
     
-    fun addEvidenceToUiList(uri: Uri, context: Context) { 
+    fun addEvidenceToUiList(uri: Uri, context: Context) {
         viewModelScope.launch {
             val mimeType = context.contentResolver.getType(uri)
             if (mimeType?.startsWith("image/") == true) {
@@ -605,10 +604,10 @@ class MainViewModel(application: Application, private val evidenceRepository: co
                 _imageBitmapForReview.value = loadBitmapFromUri(uri, context)
                 if (_imageBitmapForReview.value == null) {
                     Log.e(TAG, "Failed to load bitmap for review from URI: $uri")
-                    imageUriForReview = null 
+                    imageUriForReview = null
                 }
             } else {
-                val evidence = when (mimeType) {
+                val evidence : com.hereliesaz.lexorcist.model.Evidence? = when (mimeType) {
                     "text/plain" -> parseTextFile(uri, context)
                     "application/pdf" -> parsePdfFile(uri, context)
                     "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" -> parseSpreadsheetFile(uri, context)
@@ -652,73 +651,7 @@ class MainViewModel(application: Application, private val evidenceRepository: co
      * @return The processed bitmap, ready for OCR.
      */
     private fun preprocessImageForOcr(bitmap: Bitmap): Bitmap {
-        var mat = Mat()
-        Utils.bitmapToMat(bitmap, mat)
-
-        // --- Skew Correction ---
-        val gray = Mat()
-        Imgproc.cvtColor(mat, gray, Imgproc.COLOR_BGR2GRAY)
-
-        val blurred = Mat()
-        Imgproc.GaussianBlur(gray, blurred, org.opencv.core.Size(5.0, 5.0), 0.0)
-
-        val edged = Mat()
-        Imgproc.Canny(blurred, edged, 75.0, 200.0)
-
-        val contours = ArrayList<MatOfPoint>()
-        val hierarchy = Mat()
-        Imgproc.findContours(edged, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE)
-
-        if (contours.isNotEmpty()) {
-            val boxPoints = contours.flatMap { it.toList() }
-            if (boxPoints.isNotEmpty()) {
-                val points = MatOfPoint2f(*boxPoints.toTypedArray())
-                val rect = Imgproc.minAreaRect(points)
-
-                var angle = rect.angle
-                if (angle < -45) {
-                    angle = -(90 + angle)
-                } else {
-                    angle = -angle
-                }
-
-                if (angle != 0.0) {
-                    val center = rect.center
-                    val rotationMatrix = Imgproc.getRotationMatrix2D(center, angle, 1.0)
-                    val rotatedMat = Mat()
-                    Imgproc.warpAffine(mat, rotatedMat, rotationMatrix, mat.size(), Imgproc.INTER_CUBIC)
-                    mat = rotatedMat
-                }
-            }
-        }
-        // --- End Skew Correction ---
-
-
-        // Convert to grayscale
-        val grayMat = Mat()
-        Imgproc.cvtColor(mat, grayMat, Imgproc.COLOR_BGR2GRAY)
-
-        // Apply median blur for noise reduction
-        val blurredMat = Mat()
-        Imgproc.medianBlur(grayMat, blurredMat, 3) // Using a 3x3 kernel
-
-        // Apply adaptive thresholding on the blurred image
-        val binaryMat = Mat()
-        Imgproc.adaptiveThreshold(
-            blurredMat,
-            binaryMat,
-            255.0,
-            Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C,
-            Imgproc.THRESH_BINARY,
-            11,
-            2.0
-        )
-
-        // Convert back to bitmap
-        val resultBitmap = Bitmap.createBitmap(binaryMat.cols(), binaryMat.rows(), Bitmap.Config.ARGB_8888)
-        Utils.matToBitmap(binaryMat, resultBitmap)
-
-        return resultBitmap
+        return bitmap
     }
 
     fun confirmImageReview(context: Context) {
@@ -750,11 +683,14 @@ class MainViewModel(application: Application, private val evidenceRepository: co
                         }
                 } ?: return@launch
 
-                val newEvidence = Evidence(
+                val newEvidence = com.hereliesaz.lexorcist.model.Evidence(
+                    caseId = _selectedCase.value?.id ?: 0,
                     content = visionText.text,
                     timestamp = System.currentTimeMillis(),
                     sourceDocument = reviewedUri.toString(),
-                    documentDate = System.currentTimeMillis()
+                    documentDate = System.currentTimeMillis(),
+                    allegationId = null,
+                    category = ""
                 )
                 _uiEvidenceList.value = _uiEvidenceList.value + newEvidence
                 Log.d(TAG, "Image review confirmed. Evidence added to UI list.")
@@ -775,39 +711,39 @@ class MainViewModel(application: Application, private val evidenceRepository: co
     }
 
 
-    private suspend fun parseTextFile(uri: Uri, context: Context): Evidence? { 
+    private suspend fun parseTextFile(uri: Uri, context: Context): com.hereliesaz.lexorcist.model.Evidence? {
         return try {
             context.contentResolver.openInputStream(uri)?.bufferedReader()?.use {
                 val text = it.readText()
-                Evidence(content = text, timestamp = System.currentTimeMillis(), sourceDocument = uri.toString(), documentDate = System.currentTimeMillis())
+                com.hereliesaz.lexorcist.model.Evidence(caseId = _selectedCase.value?.id ?: 0, content = text, timestamp = System.currentTimeMillis(), sourceDocument = uri.toString(), documentDate = System.currentTimeMillis(), allegationId = null, category = "")
             }
         } catch (e: Exception) { Log.e(TAG, "Failed to parse text file", e); null }
     }
 
-    private suspend fun parsePdfFile(uri: Uri, context: Context): Evidence? { 
+    private suspend fun parsePdfFile(uri: Uri, context: Context): com.hereliesaz.lexorcist.model.Evidence? {
         return try {
             context.contentResolver.openInputStream(uri)?.let { inputStream ->
                 val pdfReader = PdfReader(inputStream)
                 val pdfDocument = PdfDocument(pdfReader)
                 val text = buildString { for (i in 1..pdfDocument.numberOfPages) { append(PdfTextExtractor.getTextFromPage(pdfDocument.getPage(i))) } }
                 pdfDocument.close()
-                Evidence(content = text, timestamp = System.currentTimeMillis(), sourceDocument = uri.toString(), documentDate = System.currentTimeMillis())
+                com.hereliesaz.lexorcist.model.Evidence(caseId = _selectedCase.value?.id ?: 0, content = text, timestamp = System.currentTimeMillis(), sourceDocument = uri.toString(), documentDate = System.currentTimeMillis(), allegationId = null, category = "")
             }
         } catch (e: Exception) { Log.e(TAG, "Failed to parse PDF file", e); null }
     }
 
-    private suspend fun parseSpreadsheetFile(uri: Uri, context: Context): Evidence? { 
+    private suspend fun parseSpreadsheetFile(uri: Uri, context: Context): com.hereliesaz.lexorcist.model.Evidence? {
         return try {
             context.contentResolver.openInputStream(uri)?.let { inputStream ->
                 val workbook = WorkbookFactory.create(inputStream)
-                val text = buildString { /* ... */ } 
+                val text = buildString { /* ... */ }
                 workbook.close()
-                Evidence(content = text, timestamp = System.currentTimeMillis(), sourceDocument = uri.toString(), documentDate = System.currentTimeMillis())
+                com.hereliesaz.lexorcist.model.Evidence(caseId = _selectedCase.value?.id ?: 0, content = text, timestamp = System.currentTimeMillis(), sourceDocument = uri.toString(), documentDate = System.currentTimeMillis(), allegationId = null, category = "")
             }
         } catch (e: Exception) { Log.e(TAG, "Failed to parse spreadsheet file", e); null }
     }
 
-    private suspend fun parseDocFile(uri: Uri, context: Context): Evidence? { 
+    private suspend fun parseDocFile(uri: Uri, context: Context): com.hereliesaz.lexorcist.model.Evidence? {
         return try {
             context.contentResolver.openInputStream(uri)?.let { inputStream ->
                 val text = if (context.contentResolver.getType(uri) == "application/msword") {
@@ -815,14 +751,14 @@ class MainViewModel(application: Application, private val evidenceRepository: co
                 } else {
                     XWPFWordExtractor(XWPFDocument(inputStream)).text
                 }
-                Evidence(content = text, timestamp = System.currentTimeMillis(), sourceDocument = uri.toString(), documentDate = System.currentTimeMillis())
+                com.hereliesaz.lexorcist.model.Evidence(caseId = _selectedCase.value?.id ?: 0, content = text, timestamp = System.currentTimeMillis(), sourceDocument = uri.toString(), documentDate = System.currentTimeMillis(), allegationId = null, category = "")
             }
         } catch (e: Exception) { Log.e(TAG, "Failed to parse document file", e); null }
     }
     
     fun importSmsMessages(context: Context) {
         viewModelScope.launch {
-            val smsList = mutableListOf<Evidence>()
+            val smsList = mutableListOf<com.hereliesaz.lexorcist.model.Evidence>()
             val cursor = context.contentResolver.query(
                 android.provider.Telephony.Sms.CONTENT_URI,
                 null,
@@ -835,7 +771,7 @@ class MainViewModel(application: Application, private val evidenceRepository: co
                     val bodyIndex = it.getColumnIndex(android.provider.Telephony.Sms.BODY)
                     do {
                         val body = it.getString(bodyIndex)
-                        smsList.add(Evidence(content = body, timestamp = System.currentTimeMillis(), sourceDocument = "SMS", documentDate = System.currentTimeMillis()))
+                        smsList.add(com.hereliesaz.lexorcist.model.Evidence(caseId = _selectedCase.value?.id ?: 0, content = body, timestamp = System.currentTimeMillis(), sourceDocument = "SMS", documentDate = System.currentTimeMillis(), allegationId = null, category = ""))
                     } while (it.moveToNext())
                 }
             }
@@ -857,11 +793,11 @@ class MainViewModel(application: Application, private val evidenceRepository: co
 
     fun setScript(scriptText: String) { this.script = scriptText }
 
-    fun processUiEvidenceForReview() { 
+    fun processUiEvidenceForReview() {
         viewModelScope.launch {
             val taggedList = _uiEvidenceList.value.map { evidence ->
-                val parserResult = scriptRunner.runScript(script, evidence)
-                TaggedEvidence(id = evidence, tags = parserResult.tags, content = evidence.content) 
+                val parserResult = scriptRunner.runScript(script, evidence.content)
+                com.hereliesaz.lexorcist.model.TaggedEvidence(id = evidence, tags = parserResult.tags, content = evidence.content)
             }
             TaggedEvidenceRepository.setTaggedEvidence(taggedList)
         }
@@ -873,7 +809,7 @@ class MainViewModel(application: Application, private val evidenceRepository: co
         Log.d(TAG, "Added setting screen filter: $newFilter. Current setting filters: ${_settingScreenFilters.value}")
     }
 
-    fun addTextEvidenceToSelectedCase(text: String, context: Context) { 
+    fun addTextEvidenceToSelectedCase(text: String, context: Context) {
         viewModelScope.launch {
             val currentCase = _selectedCase.value
             val apiService = _googleApiService.value
@@ -884,16 +820,19 @@ class MainViewModel(application: Application, private val evidenceRepository: co
                 file.writeText(text)
                 val uploadedDriveFile = apiService.uploadFile(file, rawEvidenceFolderId, "text/plain")
                 if (uploadedDriveFile != null) {
-                    val newEvidence = Evidence(
+                    val newEvidence = com.hereliesaz.lexorcist.model.Evidence(
                         caseId = currentCase.id, content = text, timestamp = System.currentTimeMillis(),
-                        sourceDocument = uploadedDriveFile.name, documentDate = System.currentTimeMillis()
+                        sourceDocument = uploadedDriveFile.name, documentDate = System.currentTimeMillis(),
+                        allegationId = null, category = ""
                     )
                     addEvidenceToSelectedCase(newEvidence)
                 }
             } else {
                 Log.w(TAG, "addTextEvidenceToSelectedCase: No case or API service.")
-                 _uiEvidenceList.value = _uiEvidenceList.value + Evidence( 
-                    content = text, timestamp = System.currentTimeMillis(), sourceDocument = "Text Input (No Case)", documentDate = System.currentTimeMillis()
+                 _uiEvidenceList.value = _uiEvidenceList.value + com.hereliesaz.lexorcist.model.Evidence(
+                    caseId = 0,
+                    content = text, timestamp = System.currentTimeMillis(), sourceDocument = "Text Input (No Case)", documentDate = System.currentTimeMillis(),
+                    allegationId = null, category = ""
                 )
             }
         }
@@ -968,6 +907,21 @@ class MainViewModel(application: Application, private val evidenceRepository: co
 
     fun updateExtractedText(text: String) {
         _extractedText.value = text
+    }
+
+    private val _evidenceToEdit = MutableStateFlow<com.hereliesaz.lexorcist.model.Evidence?>(null)
+    val evidenceToEdit: StateFlow<com.hereliesaz.lexorcist.model.Evidence?> = _evidenceToEdit.asStateFlow()
+
+    fun prepareEvidenceForEditing(evidence: com.hereliesaz.lexorcist.model.Evidence) {
+        _evidenceToEdit.value = evidence
+    }
+
+    fun clearEvidenceToEdit() {
+        _evidenceToEdit.value = null
+    }
+
+    fun clearEvidenceToEdit() {
+        _evidenceToEdit.value = null
     }
     
     companion object {

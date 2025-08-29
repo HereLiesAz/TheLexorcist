@@ -22,6 +22,7 @@ class EvidenceRepositoryImpl(
         try {
             googleApiService?.let {
                 val evidence = it.getEvidenceForCase(spreadsheetId, caseId)
+                evidenceDao.deleteAll()
                 evidenceDao.insertAll(evidence)
             }
         } catch (e: Exception) {
@@ -40,7 +41,7 @@ class EvidenceRepositoryImpl(
     }
 
     override suspend fun deleteEvidence(spreadsheetId: String, evidence: Evidence) {
-        googleApiService?.deleteEvidenceFromCase(spreadsheetId, evidence.id)
+        googleApiService?.deleteEvidenceFromCase(spreadsheetId, evidence.id.toInt())
         refreshEvidenceForCase(spreadsheetId, evidence.caseId.toInt())
     }
 }
