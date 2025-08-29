@@ -17,8 +17,8 @@ import com.google.api.services.script.model.CreateProjectRequest
 import com.google.api.services.script.model.File as ScriptPlatformFile
 import com.google.api.services.sheets.v4.Sheets
 import com.google.api.services.sheets.v4.model.*
-import com.hereliesaz.lexorcist.db.Allegation
-import com.hereliesaz.lexorcist.db.Case
+import com.hereliesaz.lexorcist.data.Allegation
+import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.model.Evidence // Import FinancialEntry data class
 import com.hereliesaz.lexorcist.utils.FolderManager
 import kotlinx.coroutines.Dispatchers

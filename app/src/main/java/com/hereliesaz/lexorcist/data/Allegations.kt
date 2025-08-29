@@ -1,4 +1,4 @@
-package com.hereliesaz.lexorcist.db
+package com.hereliesaz.lexorcist.data
 
 // Room annotations removed
 data class Allegation(

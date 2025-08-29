@@ -30,8 +30,8 @@ import com.hereliesaz.lexorcist.GoogleApiService
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.SpreadsheetParser
 import com.hereliesaz.lexorcist.data.EvidenceRepository
-import com.hereliesaz.lexorcist.db.Allegation
-import com.hereliesaz.lexorcist.db.Case
+import com.hereliesaz.lexorcist.data.Allegation
+import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.model.Evidence
 import com.hereliesaz.lexorcist.model.SheetFilter
 import com.hereliesaz.lexorcist.model.TaggedEvidence

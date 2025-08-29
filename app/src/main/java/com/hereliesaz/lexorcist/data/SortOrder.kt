@@ -1,4 +1,4 @@
-package com.hereliesaz.lexorcist.db
+package com.hereliesaz.lexorcist.data
 
 enum class SortOrder {
     DATE_ASC,
