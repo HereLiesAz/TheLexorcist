@@ -9,18 +9,17 @@ import java.util.TimeZone
 
 object DataParser {
     fun parseDates(text: String): List<Long> {
-        val dateRegex = """(?i)(?:\d{1,4}[/-]\d{1,2}[/-]\d{2,4})|(?:\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b\s\d{1,2},?\s\d{4})""".toRegex()
+        val dateRegex = """(?i)(?:\d{1,4}[-/]\d{1,2}[-/]\d{2,4})|(?:\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b\s\d{1,2},?\s\d{4})""".toRegex()
         val matches = dateRegex.findAll(text)
         val dateFormats = listOf(
             SimpleDateFormat("yyyy-MM-dd", Locale.US),
             SimpleDateFormat("MM/dd/yyyy", Locale.US),
             SimpleDateFormat("MM-dd-yyyy", Locale.US),
             SimpleDateFormat("MM/dd/yy", Locale.US),
-            SimpleDateFormat("MM-dd-yy", Locale.US),
             SimpleDateFormat("yyyy/MM/dd", Locale.US),
             SimpleDateFormat("MMM d, yyyy", Locale.US),
             SimpleDateFormat("MMMM d, yyyy", Locale.US)
-        ).onEach {
+        ).distinctBy { it.toPattern() }.onEach {
             it.timeZone = TimeZone.getTimeZone("UTC")
             it.isLenient = true // Set to true to allow for more flexible parsing
         }
@@ -43,7 +42,7 @@ object DataParser {
     }
 
     fun parseAddresses(text: String): List<String> {
-        val addressRegex = """\d+\s+([a-zA-Z]+\s+)+[a-zA-Z]+,\s+[A-Z]{2}\s+\d{5}""".toRegex()
+        val addressRegex = """\d+\s+([a-zA-Z.]+\s+)+[a-zA-Z.]+(?:,\s+[A-Z]{2}\s+\d{5})?""".toRegex()
         return addressRegex.findAll(text).map { it.value }.toList()
     }
 
@@ -74,7 +73,7 @@ object DataParser {
         }.toList()
     }
 
-    private fun extractEvidence(caseId: Int, text: String, allegations: List<Allegation>): List<Evidence> {
+    internal fun extractEvidence(caseId: Int, text: String, allegations: List<Allegation>): List<Evidence> {
         val dateRegex = """(?i)(?:\d{1,4}[/-]\d{1,2}[/-]\d{2,4})|(?:\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b\s\d{1,2},?\s\d{4})""".toRegex()
         val dateFormats = listOf(
             SimpleDateFormat("yyyy-MM-dd", Locale.US),
