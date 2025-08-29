@@ -3,9 +3,9 @@ package com.hereliesaz.lexorcist.service
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
 import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.gson.GsonFactory
-import com.google.api.services.script.v1.Script
-import com.google.api.services.script.v1.model.Content
-import com.google.api.services.script.v1.model.File
+import com.google.api.services.drive.model.File
+import com.google.api.services.script.Script
+import com.google.api.services.script.model.Content
 import com.google.api.services.sheets.v4.Sheets
 import com.google.api.services.sheets.v4.model.Spreadsheet
 import com.google.api.services.sheets.v4.model.ValueRange
