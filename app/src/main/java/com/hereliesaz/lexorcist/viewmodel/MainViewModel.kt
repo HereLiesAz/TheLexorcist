@@ -606,16 +606,6 @@ class MainViewModel(application: Application, private val evidenceRepository: co
         } catch (e: Exception) { Log.e(TAG, "Failed to parse PDF file", e); null }
     }
 
-    private suspend fun parseSpreadsheetFile(uri: Uri, context: Context): com.hereliesaz.lexorcist.model.Evidence? {
-        return try {
-            context.contentResolver.openInputStream(uri)?.let { inputStream ->
-                val workbook = WorkbookFactory.create(inputStream)
-                val text = buildString { /* ... */ }
-                workbook.close()
-                com.hereliesaz.lexorcist.model.Evidence(caseId = _selectedCase.value?.id ?: 0, content = text, timestamp = System.currentTimeMillis(), sourceDocument = uri.toString(), documentDate = System.currentTimeMillis(), allegationId = null, category = "")
-            }
-        } catch (e: Exception) { Log.e(TAG, "Failed to parse spreadsheet file", e); null }
-    }
 
     private suspend fun parseDocFile(uri: Uri, context: Context): com.hereliesaz.lexorcist.model.Evidence? {
         return try {

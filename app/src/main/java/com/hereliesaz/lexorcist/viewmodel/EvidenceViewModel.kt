@@ -90,4 +90,89 @@ class EvidenceViewModel(
             addEvidenceToSelectedCase(newEvidence)
         }    
     }
+
+    /**
+     * Extracts text from a PDF document and adds it as evidence to the selected case.
+     *
+     * @param uri The URI of the PDF document.
+     * @param context The context.
+     */
+    fun addDocumentEvidence(uri: Uri, context: Context) {
+        viewModelScope.launch {
+            try {
+                val inputStream = context.contentResolver.openInputStream(uri)
+                val pdfReader = com.itextpdf.kernel.pdf.PdfReader(inputStream)
+                val pdfDocument = com.itextpdf.kernel.pdf.PdfDocument(pdfReader)
+                var text = ""
+                for (i in 1..pdfDocument.numberOfPages) {
+                    val page = pdfDocument.getPage(i)
+                    text += com.itextpdf.kernel.pdf.canvas.parser.PdfTextExtractor.getTextFromPage(page)
+                }
+                pdfDocument.close()
+
+                selectedCase?.let { case ->
+                    val newEvidence = Evidence(
+                        id = 0,
+                        caseId = case.id,
+                        content = text,
+                        timestamp = System.currentTimeMillis(),
+                        sourceDocument = "PDF Document",
+                        documentDate = System.currentTimeMillis(),
+                        allegationId = null,
+                        category = "Document",
+                        tags = emptyList()
+                    )
+                    addEvidenceToSelectedCase(newEvidence)
+                }
+            } catch (e: Exception) {
+                // TODO: Handle exception
+            }
+        }
+    }
+
+    /**
+     * Extracts text from a spreadsheet and adds it as evidence to the selected case.
+     *
+     * @param uri The URI of the spreadsheet.
+     * @param context The context.
+     */
+    fun addSpreadsheetEvidence(uri: Uri, context: Context) {
+        viewModelScope.launch {
+            try {
+                context.contentResolver.openInputStream(uri)?.let { inputStream ->
+                    val workbook = org.apache.poi.ss.usermodel.WorkbookFactory.create(inputStream)
+                    val stringBuilder = StringBuilder()
+                    for (i in 0 until workbook.numberOfSheets) {
+                        val sheet = workbook.getSheetAt(i)
+                        stringBuilder.append("Sheet: ${sheet.sheetName}\n")
+                        for (row in sheet) {
+                            for (cell in row) {
+                                stringBuilder.append(cell.toString()).append("\t")
+                            }
+                            stringBuilder.append("\n")
+                        }
+                    }
+                    workbook.close()
+                    val text = stringBuilder.toString()
+
+                    selectedCase?.let { case ->
+                        val newEvidence = Evidence(
+                            id = 0,
+                            caseId = case.id,
+                            content = text,
+                            timestamp = System.currentTimeMillis(),
+                            sourceDocument = "Spreadsheet",
+                            documentDate = System.currentTimeMillis(),
+                            allegationId = null,
+                            category = "Spreadsheet",
+                            tags = emptyList()
+                        )
+                        addEvidenceToSelectedCase(newEvidence)
+                    }
+                }
+            } catch (e: Exception) {
+                // TODO: Handle exception
+            }
+        }
+    }
 }
