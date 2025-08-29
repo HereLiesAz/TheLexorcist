@@ -2,6 +2,9 @@ package com.hereliesaz.lexorcist
 
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class DataParserTest {
 
@@ -44,7 +47,11 @@ class DataParserTest {
     fun `test tagData`() {
         val text = "John Doe lives at 123 Main St, Anytown, CA 12345. His birthday is 1990-01-01."
         val taggedData = DataParser.tagData(text)
-        assertEquals(listOf("1990-01-01"), taggedData["dates"]?.map { it.substring(0, 10) })
+        val expectedDate = SimpleDateFormat("yyyy-MM-dd", Locale.US).parse("1990-01-01")?.time
+        val actualDate = taggedData["dates"]?.firstOrNull()?.let { dateString ->
+            SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy", Locale.US).parse(dateString)?.time
+        }
+        assertEquals(expectedDate, actualDate)
         assertEquals(listOf("John Doe"), taggedData["names"])
         assertEquals(listOf("123 Main St, Anytown, CA 12345"), taggedData["addresses"])
     }

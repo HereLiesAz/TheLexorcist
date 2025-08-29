@@ -22,6 +22,7 @@ import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.common.api.ApiException
 import com.hereliesaz.lexorcist.R // For R.string.default_web_client_id
 import com.hereliesaz.lexorcist.screens.SettingsScreen // Correct import is already here
+import com.hereliesaz.lexorcist.screens.DataReviewScreen
 import com.hereliesaz.lexorcist.ui.theme.LexorcistTheme
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 import com.hereliesaz.lexorcist.viewmodel.DataReviewViewModel
@@ -122,7 +123,7 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                     composable("data_review") {
-                        DataReviewScreen(viewModel = dataReviewViewModel)
+                        DataReviewScreen(mainViewModel = mainViewModel, dataReviewViewModel = dataReviewViewModel)
                     }
                     composable("cases") { PlaceholderCasesScreen(navController) }
                     composable("timeline") { PlaceholderTimelineScreen(navController) }

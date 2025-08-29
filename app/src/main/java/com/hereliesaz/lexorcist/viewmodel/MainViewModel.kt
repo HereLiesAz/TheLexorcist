@@ -656,6 +656,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
     }
+
+    fun updateExtractedText(text: String) {
+        _extractedText.value = text
+    }
     
     companion object {
         private const val FILTERS_SHEET_NAME = "Filters" // For case-specific filters in sheet
