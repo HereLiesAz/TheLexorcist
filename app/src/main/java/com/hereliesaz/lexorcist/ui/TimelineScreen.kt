@@ -19,8 +19,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.hereliesaz.lexorcist.model.Evidence
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
-import io.github.pushpalroy.jetlime.Event
-import io.github.pushpalroy.jetlime.JetLime
+import com.pushpal.jetlime.JetLimeColumn
+import com.pushpal.jetlime.JetLimeEvent
+import com.pushpal.jetlime.JetLimeEventDefaults
+import com.pushpal.jetlime.ItemsList
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -29,31 +31,31 @@ fun TimelineScreen(viewModel: MainViewModel) {
     val evidenceList by viewModel.selectedCaseEvidenceList.collectAsState()
     var selectedEvidence by remember { mutableStateOf<Evidence?>(null) }
 
-    JetLime(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-    ) {
-        evidenceList.forEach { evidence ->
-            Event(
-                onClick = { selectedEvidence = evidence },
-                title = {
-                    Text(
-                        text = evidence.sourceDocument,
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(bottom = 4.dp)
-                    )
-                },
-                subtitle = {
-                    Text(
-                        text = SimpleDateFormat(
-                            "yyyy-MM-dd",
-                            Locale.getDefault()
-                        ).format(evidence.documentDate),
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-            )
+    JetLimeColumn(
+        modifier = Modifier.padding(16.dp),
+        itemsList = ItemsList(evidenceList),
+        key = { _, item -> item.id },
+    ) { _, item, position ->
+        JetLimeEvent(
+            style = JetLimeEventDefaults.eventStyle(
+                position = position
+            ),
+            onClick = { selectedEvidence = item }
+        ) {
+            Column(modifier = Modifier.padding(start = 12.dp)) {
+                Text(
+                    text = item.sourceDocument,
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(bottom = 4.dp)
+                )
+                Text(
+                    text = SimpleDateFormat(
+                        "yyyy-MM-dd",
+                        Locale.getDefault()
+                    ).format(item.documentDate),
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
         }
     }
 
