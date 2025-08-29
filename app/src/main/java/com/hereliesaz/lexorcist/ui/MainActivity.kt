@@ -1,3 +1,4 @@
+@file:Suppress("DEPRECATION")
 package com.hereliesaz.lexorcist.ui
 
 import android.app.Activity
@@ -9,6 +10,9 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -16,15 +20,36 @@ import com.google.android.gms.auth.api.identity.Identity
 import com.google.android.gms.auth.api.identity.SignInClient
 import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.common.api.ApiException
-// import com.google.android.gms.common.api.Scope // No longer needed for this type of sign-in request building
 import com.hereliesaz.lexorcist.R // For R.string.default_web_client_id
+import com.hereliesaz.lexorcist.screens.SettingsScreen // Correct import is already here
 import com.hereliesaz.lexorcist.ui.theme.LexorcistTheme
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 import com.hereliesaz.lexorcist.viewmodel.DataReviewViewModel
 
+// Placeholder screens
+@Composable
+fun PlaceholderCasesScreen(navController: NavController) {
+    Text("Cases Screen - Placeholder")
+}
+
+@Composable
+fun PlaceholderTimelineScreen(navController: NavController) {
+    Text("Timeline Screen - Placeholder")
+}
+
+@Composable
+fun PlaceholderEvidenceScreen(navController: NavController) {
+    Text("Evidence Screen - Placeholder")
+}
+
+@Composable
+fun PlaceholderAddEvidenceScreen(navController: NavController) {
+    Text("Add Evidence Screen - Placeholder")
+}
+
 class MainActivity : ComponentActivity() {
 
-    private val mainViewModel: MainViewModel by viewModels()
+    private val mainViewModel: MainViewModel by viewModels() // This is com.hereliesaz.lexorcist.viewmodel.MainViewModel
     private val dataReviewViewModel: DataReviewViewModel by viewModels()
 
     private lateinit var oneTapClient: SignInClient
@@ -61,7 +86,6 @@ class MainActivity : ComponentActivity() {
 
         oneTapClient = Identity.getSignInClient(this)
 
-        // IMPORTANT: Replace R.string.default_web_client_id with your actual Web Client ID from Google Cloud Console
         val serverClientId = getString(R.string.default_web_client_id)
 
         signUpRequest = BeginSignInRequest.builder()
@@ -69,7 +93,7 @@ class MainActivity : ComponentActivity() {
                 BeginSignInRequest.GoogleIdTokenRequestOptions.builder()
                     .setSupported(true)
                     .setServerClientId(serverClientId)
-                    .setFilterByAuthorizedAccounts(false) // For sign-UP, don't filter by existing accounts
+                    .setFilterByAuthorizedAccounts(false)
                     .build()
             )
             .build()
@@ -79,10 +103,10 @@ class MainActivity : ComponentActivity() {
                 BeginSignInRequest.GoogleIdTokenRequestOptions.builder()
                     .setSupported(true)
                     .setServerClientId(serverClientId)
-                    .setFilterByAuthorizedAccounts(true) // For sign-IN, filter by existing accounts
+                    .setFilterByAuthorizedAccounts(true)
                     .build()
             )
-            .setAutoSelectEnabled(true) // Enable One Tap
+            .setAutoSelectEnabled(true)
             .build()
 
         setContent {
@@ -100,13 +124,19 @@ class MainActivity : ComponentActivity() {
                     composable("data_review") {
                         DataReviewScreen(viewModel = dataReviewViewModel)
                     }
+                    composable("cases") { PlaceholderCasesScreen(navController) }
+                    composable("timeline") { PlaceholderTimelineScreen(navController) }
+                    composable("evidence") { PlaceholderEvidenceScreen(navController) }
+                    composable("add_evidence") { PlaceholderAddEvidenceScreen(navController) }
+                    // Corrected: Pass mainViewModel to SettingsScreen
+                    composable("settings") { SettingsScreen(viewModel = mainViewModel) } 
                 }
             }
         }
     }
 
     private fun signIn() {
-        oneTapClient.beginSignIn(signInRequest) // Try one-tap sign-in first
+        oneTapClient.beginSignIn(signInRequest)
             .addOnSuccessListener { result ->
                 try {
                     val intentSenderRequest = IntentSenderRequest.Builder(result.pendingIntent.intentSender).build()
@@ -118,7 +148,6 @@ class MainActivity : ComponentActivity() {
             }
             .addOnFailureListener { e ->
                 Log.w(APP_TAG, "beginSignIn (signInRequest) failed: ${e.localizedMessage}. Trying signUpRequest.", e)
-                // Fallback to a more general sign-in/sign-up flow if one-tap/existing account fails
                 oneTapClient.beginSignIn(signUpRequest)
                     .addOnSuccessListener { result ->
                         try {

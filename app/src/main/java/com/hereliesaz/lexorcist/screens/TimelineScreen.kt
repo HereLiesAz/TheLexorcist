@@ -13,7 +13,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.hereliesaz.lexorcist.MainViewModel
+// Corrected import for the MainViewModel
+import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 import com.hereliesaz.lexorcist.model.Evidence
 import com.hereliesaz.lexorcist.model.TimelineEvent // Added import
 import java.text.SimpleDateFormat
@@ -23,8 +24,9 @@ import kotlin.coroutines.EmptyCoroutineContext
 // Removed TimelineEvent data class from here
 
 @Composable
-fun TimelineScreen(viewModel: MainViewModel) {
-    val evidence by viewModel.evidence.collectAsState(
+fun TimelineScreen(viewModel: MainViewModel) { // ViewModel type now correctly refers to the one in .viewmodel package
+    // Corrected to use selectedCaseEvidenceList from the merged ViewModel
+    val evidence by viewModel.selectedCaseEvidenceList.collectAsState(
         initial = emptyList(),
         context = EmptyCoroutineContext // Or remove this line to use the default
     )

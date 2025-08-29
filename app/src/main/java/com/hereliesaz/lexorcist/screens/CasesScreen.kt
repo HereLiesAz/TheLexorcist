@@ -17,11 +17,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.hereliesaz.lexorcist.MainViewModel
+// Corrected import for the MainViewModel
+import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 import com.hereliesaz.lexorcist.db.Case
 
 @Composable
-fun CasesScreen(viewModel: MainViewModel) {
+fun CasesScreen(viewModel: MainViewModel) { // ViewModel type now correctly refers to the one in .viewmodel package
     val cases by viewModel.cases.collectAsState()
     val selectedCase by viewModel.selectedCase.collectAsState()
     var showCreateCaseDialog by remember { mutableStateOf(false) }

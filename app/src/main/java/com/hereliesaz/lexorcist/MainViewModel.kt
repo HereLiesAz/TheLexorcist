@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlin.coroutines.resume // Added import for resume
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MainViewModel(application: Application) : AndroidViewModel(application) {
@@ -553,11 +554,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             kotlinx.coroutines.suspendCancellableCoroutine { continuation ->
                 recognizer.process(inputImage)
                     .addOnSuccessListener { visionText ->
-                        continuation.resume(Evidence(content = visionText.text, timestamp = java.util.Date().time, sourceDocument = uri.toString(), documentDate = java.util.Date().time), null)
+                        continuation.resume(Evidence(content = visionText.text, timestamp = java.util.Date().time, sourceDocument = uri.toString(), documentDate = java.util.Date().time)) // Fixed
                     }
                     .addOnFailureListener { e ->
                         Log.e("MainViewModel", "Failed to parse image file", e)
-                        continuation.resume(null, null)
+                        continuation.resume(null) // Fixed
                     }
             }
         } catch (e: Exception) {

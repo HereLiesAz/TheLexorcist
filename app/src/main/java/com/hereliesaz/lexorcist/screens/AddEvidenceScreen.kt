@@ -15,12 +15,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.hereliesaz.lexorcist.MainViewModel
+// Corrected import for the MainViewModel
+import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.TaggedDataAdapter
 
 @Composable
 fun AddEvidenceScreen(
+    // ViewModel type now correctly refers to the one in .viewmodel package
     viewModel: MainViewModel,
     onSelectImage: () -> Unit,
     onTakePicture: () -> Unit,

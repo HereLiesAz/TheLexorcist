@@ -19,7 +19,8 @@ class ScriptRunner {
 
     fun runScript(script: String, evidence: Evidence): Parser { // Changed return type
         val rhino = org.mozilla.javascript.Context.enter()
-        rhino.optimizationLevel = -1 // Required for Android
+        @Suppress("deprecation") // Using lowercase "deprecation"
+        rhino.setOptimizationLevel(-1) // Required for Android 
         try {
             val scope: Scriptable = rhino.initStandardObjects()
             

@@ -8,12 +8,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hereliesaz.lexorcist.components.AppNavRail
+// Corrected import for the MainViewModel
+import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 import com.hereliesaz.lexorcist.screens.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
-    viewModel: MainViewModel = viewModel(),
+    // Explicitly type viewModel to the one from .viewmodel package
+    viewModel: com.hereliesaz.lexorcist.viewmodel.MainViewModel = viewModel(),
     onSignIn: () -> Unit,
     onSelectImage: () -> Unit,
     onTakePicture: () -> Unit,
@@ -49,11 +52,13 @@ fun MainScreen(
                         "add_text_evidence" -> {
                             val context = androidx.compose.ui.platform.LocalContext.current
                             AddTextEvidenceScreen(viewModel = viewModel, onSave = { text ->
-                                viewModel.addTextEvidence(text, context)
+                                // Corrected method call to the one in the merged ViewModel
+                                viewModel.addTextEvidenceToSelectedCase(text, context)
                                 currentScreen = "cases"
                             })
                         }
                         "timeline" -> TimelineScreen(viewModel = viewModel)
+                        // Now viewModel is of the correct type for SettingsScreen
                         "settings" -> SettingsScreen(viewModel = viewModel)
                     }
                 }

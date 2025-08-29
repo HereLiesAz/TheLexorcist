@@ -112,9 +112,9 @@ dependencies {
     implementation("com.github.HereLiesAz:AzNavRail:1.9")
     implementation(platform("com.google.firebase:firebase-bom:34.1.0"))
     implementation("com.google.firebase:firebase-analytics")
-
+    implementation("com.google.guava:guava:33.4.8-android")
     // Mozilla Rhino for JavaScript execution
-    implementation("org.mozilla:rhino:1.7.15")
+    implementation("org.mozilla:rhino:1.8.0")
 }
 
 // Removed kapt block entirely

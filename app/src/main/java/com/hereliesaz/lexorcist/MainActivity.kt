@@ -1,3 +1,4 @@
+@file:Suppress("deprecation") // Using lowercase "deprecation"
 package com.hereliesaz.lexorcist
 
 import android.app.Activity
@@ -56,7 +57,8 @@ class MainActivity : ComponentActivity() {
 
     private val selectImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let {
-            viewModel.addEvidence(it, this)
+            // Corrected method name
+            viewModel.addEvidenceToUiList(it, this)
         }
     }
 
@@ -65,7 +67,8 @@ class MainActivity : ComponentActivity() {
     private val takePictureLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
         if (success) {
             imageUri?.let {
-                viewModel.addEvidence(it, this)
+                // Corrected method name
+                viewModel.addEvidenceToUiList(it, this)
             }
         }
     }

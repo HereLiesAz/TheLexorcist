@@ -8,10 +8,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.hereliesaz.lexorcist.MainViewModel
+// Corrected import for the MainViewModel
+import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 
 @Composable
 fun AddTextEvidenceScreen(
+    // ViewModel type now correctly refers to the one in .viewmodel package
     viewModel: MainViewModel,
     onSave: (String) -> Unit
 ) {

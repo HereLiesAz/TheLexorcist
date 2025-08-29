@@ -10,13 +10,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.hereliesaz.lexorcist.MainViewModel
-import com.hereliesaz.lexorcist.model.SheetFilter // Changed import from db.Filter to model.SheetFilter
+// Corrected import to use the combined ViewModel from the .viewmodel package
+import com.hereliesaz.lexorcist.viewmodel.MainViewModel 
+import com.hereliesaz.lexorcist.model.SheetFilter
 
 @Composable
-fun SettingsScreen(viewModel: MainViewModel) {
-    // The type of filters will now be List<SheetFilter> from the ViewModel
-    val filters by viewModel.filters.collectAsState()
+fun SettingsScreen(viewModel: MainViewModel) { // ViewModel type is now com.hereliesaz.lexorcist.viewmodel.MainViewModel
+    // Use the renamed state flow for settings screen filters
+    val filters by viewModel.settingScreenFilters.collectAsState()
     var showAddFilterDialog by remember { mutableStateOf(false) }
     var filterName by remember { mutableStateOf("") }
     var filterValue by remember { mutableStateOf("") }
@@ -25,31 +26,31 @@ fun SettingsScreen(viewModel: MainViewModel) {
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
-        horizontalAlignment = Alignment.End, // Changed to End
+        horizontalAlignment = Alignment.End,
         verticalArrangement = Arrangement.Center
     ) {
         Text("Settings Screen")
-        Text("Filters", style = androidx.compose.material3.MaterialTheme.typography.headlineMedium)
+        Text("Filters (In-Memory for UI)", style = androidx.compose.material3.MaterialTheme.typography.headlineMedium)
         Spacer(modifier = Modifier.height(16.dp))
         LazyColumn(
             modifier = Modifier
                 .weight(1f)
-                .fillMaxWidth() // Ensure LazyColumn takes full width for item alignment
+                .fillMaxWidth()
         ) {
-            items(filters) { filter -> // filter is now SheetFilter
+            items(filters) { filter ->
                 FilterItem(filter = filter)
             }
         }
         Spacer(modifier = Modifier.height(16.dp))
         Button(onClick = { showAddFilterDialog = true }) {
-            Text("Add New Filter")
+            Text("Add New UI Filter")
         }
     }
 
     if (showAddFilterDialog) {
         androidx.compose.material3.AlertDialog(
             onDismissRequest = { showAddFilterDialog = false },
-            title = { Text("New Filter") },
+            title = { Text("New UI Filter") },
             text = {
                 Column {
                     OutlinedTextField(
@@ -70,8 +71,9 @@ fun SettingsScreen(viewModel: MainViewModel) {
             confirmButton = {
                 Button(
                     onClick = {
-                        if (filterName.isNotBlank() || filterValue.isNotBlank()) { // Allow adding if at least one field is not blank
-                            viewModel.addFilter(filterName, filterValue)
+                        if (filterName.isNotBlank() || filterValue.isNotBlank()) {
+                            // Use the renamed method for adding settings screen filters
+                            viewModel.addSettingScreenFilter(filterName, filterValue)
                             showAddFilterDialog = false
                             filterName = ""
                             filterValue = ""
@@ -91,19 +93,16 @@ fun SettingsScreen(viewModel: MainViewModel) {
 }
 
 @Composable
-fun FilterItem(filter: SheetFilter) { // Changed parameter type to SheetFilter
+fun FilterItem(filter: SheetFilter) {
     Row(
         modifier = Modifier
-            .fillMaxWidth() // Row fills width to allow content to be pushed to the end
+            .fillMaxWidth()
             .padding(8.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.End // Align content to the End (right)
+        horizontalArrangement = Arrangement.End
     ) {
-        Text(
-            text = filter.name,
-            // modifier = Modifier.weight(1f) // Removed weight
-        )
-        Spacer(modifier = Modifier.width(8.dp)) // Add some space between name and value if desired
+        Text(text = filter.name)
+        Spacer(modifier = Modifier.width(8.dp))
         Text(text = filter.value)
     }
 }
