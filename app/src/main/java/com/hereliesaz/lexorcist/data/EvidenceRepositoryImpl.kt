@@ -5,8 +5,7 @@ import kotlinx.coroutines.flow.Flow
 import java.lang.Exception
 
 class EvidenceRepositoryImpl(
-    private val evidenceDao: EvidenceDao,
-    private var googleApiService: GoogleApiService?
+    private val evidenceDao: EvidenceDao
 ) : EvidenceRepository {
 
     override fun setGoogleApiService(googleApiService: GoogleApiService?) {
