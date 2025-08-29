@@ -48,14 +48,8 @@ fun AddEvidenceScreen(
     val imageBitmapForReview by ocrViewModel.imageBitmapForReview.collectAsState()
     val isOcrInProgress by ocrViewModel.isOcrInProgress.collectAsState()
     val newlyCreatedEvidence by ocrViewModel.newlyCreatedEvidence.collectAsState() // This is StateFlow<Evidence?>
-    val uiEvidenceList by evidenceViewModel.uiEvidenceList.collectAsState() // This is StateFlow<List<Evidence>>
+    val evidenceList by evidenceViewModel.evidenceList.collectAsState() // This is StateFlow<List<Evidence>>
     val context = LocalContext.current
-
-    LaunchedEffect(newlyCreatedEvidence) {
-        newlyCreatedEvidence?.let {
-            evidenceViewModel.addEvidenceToUiList(it) // addEvidenceToUiList should expect data.Evidence
-        }
-    }
 
     if (isOcrInProgress) {
         Column(
@@ -100,7 +94,7 @@ fun AddEvidenceScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f)) {
-                    items(uiEvidenceList) { evidence -> // evidence is data.Evidence
+                    items(evidenceList) { evidence -> // evidence is data.Evidence
                         val displayContent = if (evidence.content.length > 100) evidence.content.substring(0, 100) + "..." else evidence.content
                         val detailsList = listOfNotNull(
                             displayContent,

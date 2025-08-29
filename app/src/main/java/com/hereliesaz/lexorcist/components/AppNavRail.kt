@@ -78,7 +78,7 @@ fun AppNavRail(onNavigate: (String) -> Unit) {
                     NavItem(
                         text = timelineText,
                         data = NavItemData.Action(onClick = { onNavigate(navTimelineStr) }),
-                        showOnRail = false
+                        showOnRail = true
                     ),
                     NavItem(
                         text = dataReviewText,
@@ -88,7 +88,7 @@ fun AppNavRail(onNavigate: (String) -> Unit) {
                     NavItem(
                         text = evidenceText,
                         data = NavItemData.Action(onClick = { onNavigate(navEvidenceStr) }),
-                        showOnRail = false
+                        showOnRail = true
                     ),
                     NavItem(
                         text = addText,

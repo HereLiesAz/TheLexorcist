@@ -38,7 +38,7 @@ class MainActivity : ComponentActivity() {
 
     private val appDatabase by lazy { AppDatabase.getDatabase(this) }
     private val evidenceRepository by lazy { EvidenceRepositoryImpl(appDatabase.evidenceDao(), null) }
-    private val caseRepository by lazy { CaseRepositoryImpl(applicationContext, null) }
+    private val caseRepository by lazy { CaseRepositoryImpl(applicationContext, appDatabase.caseDao(), null) }
 
     private val authViewModel: AuthViewModel by viewModels {
         AuthViewModelFactory(application, evidenceRepository, caseRepository)
@@ -47,7 +47,7 @@ class MainActivity : ComponentActivity() {
         CaseViewModelFactory(application, caseRepository)
     }
     private val evidenceViewModel: EvidenceViewModel by viewModels {
-        EvidenceViewModelFactory(application, evidenceRepository, caseViewModel.selectedCase.value)
+        EvidenceViewModelFactory(application, evidenceRepository)
     }
     private val ocrViewModel: OcrViewModel by viewModels {
         OcrViewModelFactory(application)
@@ -100,7 +100,9 @@ class MainActivity : ComponentActivity() {
         GetContentWithMultiFilter(arrayOf("application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"))
     ) { uri: Uri? ->
         uri?.let {
-            evidenceViewModel.addDocumentEvidence(it, this)
+            caseViewModel.selectedCase.value?.let { case ->
+                evidenceViewModel.addDocumentEvidence(case.id, it, this)
+            }
         }
     }
 
@@ -109,7 +111,9 @@ class MainActivity : ComponentActivity() {
         GetContentWithMultiFilter(arrayOf("application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
     ) { uri: Uri? ->
         uri?.let {
-            evidenceViewModel.addSpreadsheetEvidence(it, this)
+            caseViewModel.selectedCase.value?.let { case ->
+                evidenceViewModel.addSpreadsheetEvidence(case.id, it, this)
+            }
         }
     }
 

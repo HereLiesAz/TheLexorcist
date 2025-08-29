@@ -13,8 +13,11 @@ interface EvidenceDao {
     fun getEvidenceForCase(caseId: Long): Flow<List<Evidence>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertAll(evidence: List<Evidence>)
+    suspend fun insert(evidence: Evidence)
 
-    @Query("DELETE FROM evidence")
-    suspend fun deleteAll()
+    @androidx.room.Update
+    suspend fun update(evidence: Evidence)
+
+    @androidx.room.Delete
+    suspend fun delete(evidence: Evidence)
 }

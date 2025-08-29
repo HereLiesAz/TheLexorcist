@@ -170,7 +170,6 @@ class MainViewModel(application: Application, private val evidenceRepository: co
                         if (currentCase.spreadsheetId.isNotBlank()) {
                             loadSelectedCaseSheetFilters(currentCase.spreadsheetId)
                             loadAllegationsForSelectedCase(currentCase.spreadsheetId, currentCase.id)
-                            evidenceRepository.refreshEvidenceForCase(currentCase.spreadsheetId, currentCase.id)
                         }
                     }
                 } else {
@@ -216,7 +215,6 @@ class MainViewModel(application: Application, private val evidenceRepository: co
                 if (currentCase.spreadsheetId.isNotBlank()) {
                     loadSelectedCaseSheetFilters(currentCase.spreadsheetId)
                     loadAllegationsForSelectedCase(currentCase.spreadsheetId, currentCase.id)
-                    evidenceRepository.refreshEvidenceForCase(currentCase.spreadsheetId, currentCase.id)
                 }
             }
         }
@@ -377,7 +375,6 @@ class MainViewModel(application: Application, private val evidenceRepository: co
             viewModelScope.launch {
                 loadSelectedCaseSheetFilters(case.spreadsheetId)
                 loadAllegationsForSelectedCase(case.spreadsheetId, case.id)
-                evidenceRepository.refreshEvidenceForCase(case.spreadsheetId, case.id)
             }
         } else {
             _selectedCaseSheetFilters.value = emptyList()
@@ -467,7 +464,7 @@ class MainViewModel(application: Application, private val evidenceRepository: co
         }
         val entryWithCaseId = entry.copy(caseId = currentCase.id)
         viewModelScope.launch {
-            evidenceRepository.addEvidence(currentCase.spreadsheetId, entryWithCaseId)
+            evidenceRepository.addEvidence(entryWithCaseId)
         }
     }
     

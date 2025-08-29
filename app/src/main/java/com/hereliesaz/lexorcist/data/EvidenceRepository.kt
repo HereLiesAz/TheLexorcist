@@ -4,8 +4,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface EvidenceRepository {
     fun getEvidenceForCase(caseId: Long): Flow<List<Evidence>>
-    suspend fun refreshEvidenceForCase(spreadsheetId: String, caseId: Int)
-    suspend fun addEvidence(spreadsheetId: String, evidence: Evidence)
-    suspend fun updateEvidence(spreadsheetId: String, evidence: Evidence)
-    suspend fun deleteEvidence(spreadsheetId: String, evidence: Evidence)
+    suspend fun addEvidence(evidence: Evidence)
+    suspend fun updateEvidence(evidence: Evidence)
+    suspend fun deleteEvidence(evidence: Evidence)
 }

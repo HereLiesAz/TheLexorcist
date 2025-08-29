@@ -91,7 +91,7 @@ class GoogleApiService(
             val fileListResult = driveService.files().list().setQ(query).setSpaces("drive").execute()
             val existingFiles = fileListResult?.files
             var registrySpreadsheetId: String?
-            val newHeader = listOf(listOf("Case Name", "Spreadsheet ID", "Generated PDF ID", "Source HTML Snapshot ID", "Original Master HTML Template ID"))
+            val newHeader = listOf(listOf("Case Name", "Spreadsheet ID", "Generated PDF ID", "Source HTML Snapshot ID"))
 
             if (existingFiles != null && existingFiles.isNotEmpty()) {
                 registrySpreadsheetId = existingFiles[0].id
@@ -107,7 +107,7 @@ class GoogleApiService(
                 val currentHeaderResponse = sheetsService.spreadsheets().values().get(registrySpreadsheetId, range).execute()
                 val currentHeader = currentHeaderResponse.getValues()
 
-                if (currentHeader == null || currentHeader.isEmpty() || currentHeader[0].size < 5) { 
+                if (currentHeader == null || currentHeader.isEmpty() || currentHeader[0].size < 4) {
                     if (currentHeader == null || currentHeader.isEmpty()){
                          appendData(registrySpreadsheetId, CASE_REGISTRY_SHEET_NAME, newHeader)
                     } else {
