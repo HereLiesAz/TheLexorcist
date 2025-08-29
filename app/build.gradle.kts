@@ -66,6 +66,7 @@ dependencies {
     implementation("androidx.compose.runtime:runtime:1.9.0")
     implementation("androidx.navigation:navigation-runtime-ktx:2.9.3")
     testImplementation("junit:junit:4.13.2")
+    testImplementation("io.mockk:mockk:1.13.5")
     androidTestImplementation("androidx.test.ext:junit:1.3.0")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
 
@@ -117,9 +118,12 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:34.1.0"))
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.guava:guava:33.4.8-android")
+    implementation("com.quickbirdstudios:opencv:4.5.3")
     // Mozilla Rhino for JavaScript execution
     implementation("org.mozilla:rhino:1.8.0")
     implementation("com.materialkolor:material-kolor:3.0.0")
+    implementation("com.patrykandpatrick.vico:compose:2.1.3")
+    implementation("io.github.pushpalroy:jetlime:4.0.0")
 }
 
 // Removed kapt block entirely

@@ -183,6 +183,30 @@ class GoogleApiService(
         }
     }
 
+    suspend fun deleteEvidenceFromCase(spreadsheetId: String, evidenceId: Int): Boolean = withContext(Dispatchers.IO) {
+        if (spreadsheetId.isBlank()) return@withContext false
+        try {
+            val sheetId = getSheetId(spreadsheetId, EVIDENCE_SHEET_NAME) ?: return@withContext false
+            val request = Request().setDeleteDimension(
+                DeleteDimensionRequest()
+                    .setRange(
+                        DimensionRange()
+                            .setSheetId(sheetId)
+                            .setDimension("ROWS")
+                            .setStartIndex(evidenceId + 1) // +1 because rows are 1-indexed and we skip the header
+                            .setEndIndex(evidenceId + 2)
+                    )
+            )
+            val batchUpdateRequest = BatchUpdateSpreadsheetRequest().setRequests(listOf(request))
+            sheetsService.spreadsheets().batchUpdate(spreadsheetId, batchUpdateRequest).execute()
+            true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Log.e("GoogleApiService", "Error in deleteEvidenceFromCase for $spreadsheetId", e)
+            false
+        }
+    }
+
     // createMasterTemplate function removed
 
     suspend fun listHtmlTemplatesInAppRootFolder(): List<DriveFile> = withContext(Dispatchers.IO) {
@@ -254,6 +278,7 @@ class GoogleApiService(
                     val documentDate = row.getOrNull(3)?.toString()?.toLongOrNull() ?: System.currentTimeMillis()
                     val tags = row.getOrNull(4)?.toString()?.split(",")?.map { it.trim() } ?: emptyList()
                     val allegationId = row.getOrNull(5)?.toString()?.toIntOrNull()
+                    val category = row.getOrNull(6)?.toString() ?: ""
 
                     entries.add(Evidence(
                         id = index, // Using row index as a simple ID for now
@@ -263,7 +288,8 @@ class GoogleApiService(
                         timestamp = timestamp,
                         sourceDocument = sourceDocument,
                         documentDate = documentDate,
-                        tags = tags
+                        tags = tags,
+                        category = category
                     ))
                 } catch (e: Exception) {
                     e.printStackTrace() 
@@ -284,7 +310,7 @@ class GoogleApiService(
             val sheetExists = sheetsService.spreadsheets().get(caseSpreadsheetId).execute().sheets?.any { it.properties?.title == EVIDENCE_SHEET_NAME } == true
             if (!sheetExists) {
                 addSheet(caseSpreadsheetId, EVIDENCE_SHEET_NAME)
-                val header = listOf(listOf("Content", "Timestamp", "Source Document", "Document Date", "Tags", "Allegation ID"))
+                val header = listOf(listOf("Content", "Timestamp", "Source Document", "Document Date", "Tags", "Allegation ID", "Category"))
                 appendData(caseSpreadsheetId, EVIDENCE_SHEET_NAME, header)
             }
 
@@ -294,7 +320,8 @@ class GoogleApiService(
                 entry.sourceDocument,
                 entry.documentDate.toString(),
                 entry.tags.joinToString(","),
-                entry.allegationId?.toString() ?: "" // Store Allegation ID as string, empty if null
+                entry.allegationId?.toString() ?: "", // Store Allegation ID as string, empty if null
+                entry.category
             ))
             appendData(caseSpreadsheetId, EVIDENCE_SHEET_NAME, values) != null
         } catch (e: Exception) {
@@ -303,7 +330,45 @@ class GoogleApiService(
             false
         }
     }
+
+    suspend fun updateEvidenceInCase(spreadsheetId: String, evidence: Evidence): Boolean = withContext(Dispatchers.IO) {
+        if (spreadsheetId.isBlank()) return@withContext false
+        try {
+            val range = "$EVIDENCE_SHEET_NAME!A${evidence.id + 2}" // +2 because sheet is 1-indexed and there's a header
+            val values = listOf(listOf(
+                evidence.content,
+                evidence.timestamp.toString(),
+                evidence.sourceDocument,
+                evidence.documentDate.toString(),
+                evidence.tags.joinToString(","),
+                evidence.allegationId?.toString() ?: "",
+                evidence.category
+            ))
+            val body = ValueRange().setValues(values)
+            sheetsService.spreadsheets().values().update(spreadsheetId, range, body)
+                .setValueInputOption("USER_ENTERED")
+                .execute()
+            true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Log.e("GoogleApiService", "Error in updateEvidenceInCase for $spreadsheetId", e)
+            false
+        }
+    }
+
     
+    suspend fun getSheetId(spreadsheetId: String, sheetName: String): Int? = withContext(Dispatchers.IO) {
+        try {
+            val spreadsheet = sheetsService.spreadsheets().get(spreadsheetId).execute()
+            val sheet = spreadsheet.sheets?.find { it.properties?.title == sheetName }
+            sheet?.properties?.sheetId
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Log.e("GoogleApiService", "Error getting sheet ID for $sheetName in $spreadsheetId", e)
+            null
+        }
+    }
+
     suspend fun readSpreadsheet(spreadsheetId: String): Map<String, List<List<Any>>>? = withContext(Dispatchers.IO) {
         try {
             val spreadsheet = sheetsService.spreadsheets().get(spreadsheetId).setIncludeGridData(false).execute()

@@ -35,7 +35,8 @@ fun CasesScreen(viewModel: MainViewModel) {
                 .fillMaxSize()
                 .padding(paddingValues)
                 .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.End,
+            verticalArrangement = Arrangement.Center
         ) {
             Text("Cases", style = MaterialTheme.typography.headlineMedium)
             Spacer(modifier = Modifier.height(16.dp))
@@ -73,7 +74,8 @@ fun CaseItem(case: Case, isSelected: Boolean, onClick: () -> Unit) {
             .fillMaxWidth()
             .clickable(onClick = onClick)
             .padding(vertical = 8.dp, horizontal = 16.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.End
     ) {
         Text(
             text = case.name,

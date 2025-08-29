@@ -8,7 +8,8 @@ data class Evidence(
     val tags: List<String> = emptyList(),
     var id: Int = 0,
     var caseId: Int = 0,
-    var allegationId: Int? = null
+    var allegationId: Int? = null,
+    var category: String = ""
 
 
 )

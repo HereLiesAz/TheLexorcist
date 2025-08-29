@@ -108,6 +108,9 @@ object DataParser {
             } ?: System.currentTimeMillis()
 
             val linkedAllegation = allegations.find { sentence.contains(it.text, ignoreCase = true) }
+            val categoryRegex = """(?i)Category:\s*(\w+)""".toRegex()
+            val categoryMatch = categoryRegex.find(sentence)
+            val category = categoryMatch?.groupValues?.get(1) ?: ""
 
             entries.add(
                 Evidence(
@@ -117,7 +120,8 @@ object DataParser {
                     timestamp = System.currentTimeMillis(),
                     sourceDocument = "Parsed from text",
                     documentDate = date,
-                    tags = emptyList()
+                    tags = emptyList(),
+                    category = category
                 )
             )
         }
