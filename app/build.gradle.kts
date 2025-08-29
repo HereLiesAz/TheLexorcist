@@ -1,5 +1,41 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import com.palantir.gradle.gitversion.VersionDetails
+import java.io.ByteArrayOutputStream // Added for executing Git commands
+
+// Helper functions to get version from Git
+fun getGitVersionName(): String {
+    return try {
+        val byteOut = ByteArrayOutputStream()
+        project.exec {
+            commandLine("git", "describe", "--tags", "--dirty", "--always")
+            standardOutput = byteOut
+            errorOutput = byteOut // Capture errors too, in case 'git describe' fails
+            isIgnoreExitValue = true // Allow us to handle non-zero exit codes if needed
+        }
+        val output = byteOut.toString().trim()
+        if (output.startsWith("fatal:") || output.isEmpty()) { // Check if git describe failed (e.g. no tags)
+            "0.0.0-nogit" // Fallback if git describe fails or no tags
+        } else {
+            output
+        }
+    } catch (e: Exception) {
+        e.printStackTrace()
+        "0.0.0-error" // Fallback in case of other errors
+    }
+}
+
+fun getGitVersionCode(): Int {
+    return try {
+        val byteOut = ByteArrayOutputStream()
+        project.exec {
+            commandLine("git", "rev-list", "--count", "HEAD")
+            standardOutput = byteOut
+        }
+        byteOut.toString().trim().toInt()
+    } catch (e: Exception) {
+        e.printStackTrace()
+        1 // Fallback version code
+    }
+}
 
 plugins {
     id("com.android.application")
@@ -8,11 +44,8 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose") version "2.2.10"
     id("com.google.devtools.ksp") version "2.2.10-2.0.2" // Added KSP plugin
     id("com.google.gms.google-services") // Add this line at the end of the plugins block
-    id("com.palantir.git-version")
+    // id("com.palantir.git-version") // Temporarily removed
 }
-
-val versionDetails: groovy.lang.Closure<VersionDetails> by extra
-val gitVersion = versionDetails.call().version
 
 android {
     namespace = "com.hereliesaz.lexorcist"
@@ -22,8 +55,8 @@ android {
         applicationId = "com.hereliesaz.lexorcist"
         minSdk = 26
         targetSdk = 36
-        versionCode = (System.currentTimeMillis() / 1000).toInt()
-        versionName = gitVersion
+        versionCode = getGitVersionCode() // Updated
+        versionName = getGitVersionName() // Updated
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -66,7 +99,7 @@ dependencies {
     implementation("androidx.compose.runtime:runtime:1.9.0")
     implementation("androidx.navigation:navigation-runtime-ktx:2.9.3")
     testImplementation("junit:junit:4.13.2")
-    testImplementation("io.mockk:mockk:1.13.5")
+    testImplementation("io.mockk:mockk:1.14.5")
     androidTestImplementation("androidx.test.ext:junit:1.3.0")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
 
@@ -115,13 +148,13 @@ dependencies {
 
     implementation("com.google.http-client:google-http-client-jackson2:2.0.0")
     implementation("com.github.HereLiesAz:AzNavRail:1.9")
-    implementation(platform("com.google.firebase:firebase-bom:34.1.0"))
+    implementation(platform("com.google.firebase:firebase-bom:34.2.0"))
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.guava:guava:33.4.8-android")
     implementation("com.quickbirdstudios:opencv:4.5.3")
     // Mozilla Rhino for JavaScript execution
     implementation("org.mozilla:rhino:1.8.0")
-    implementation("com.materialkolor:material-kolor:3.0.0")
+    implementation("com.materialkolor:material-kolor:3.0.1")
     implementation("com.patrykandpatrick.vico:compose:2.1.3")
     implementation("io.github.pushpalroy:jetlime:4.0.0")
 }
