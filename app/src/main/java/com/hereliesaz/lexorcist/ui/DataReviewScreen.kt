@@ -1,13 +1,43 @@
 package com.hereliesaz.lexorcist.ui
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.InputChip
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
@@ -148,6 +178,7 @@ fun EvidenceItem(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun EditEvidenceDialog(
     evidence: Evidence,
@@ -155,39 +186,79 @@ fun EditEvidenceDialog(
     onSave: (Evidence) -> Unit
 ) {
     var content by remember { mutableStateOf(evidence.content) }
-    var tags by remember { mutableStateOf(evidence.tags.joinToString(",")) }
     var category by remember { mutableStateOf(evidence.category) }
+    val tagsList = remember { mutableStateOf(evidence.tags) }
+    var newTag by remember { mutableStateOf("") }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Edit Evidence") },
         text = {
-            Column(horizontalAlignment = Alignment.End) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = content,
                     onValueChange = { content = it },
                     label = { Text("Content") },
-                    placeholder = { Text("Enter the evidence content") }
+                    placeholder = { Text("Enter the evidence content") },
+                    singleLine = false,
+                    maxLines = 5,
+                    modifier = Modifier.fillMaxWidth()
                 )
-                OutlinedTextField(
-                    value = tags,
-                    onValueChange = { tags = it },
-                    label = { Text("Tags") },
-                    placeholder = { Text("Enter tags, separated by commas") }
-                )
+
+                // Category
                 OutlinedTextField(
                     value = category,
                     onValueChange = { category = it },
                     label = { Text("Category") },
-                    placeholder = { Text("Enter a category for this evidence") }
+                    placeholder = { Text("Enter a category for this evidence") },
+                    modifier = Modifier.fillMaxWidth()
                 )
+
+                // Tags
+                Text("Tags", style = MaterialTheme.typography.labelMedium)
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    tagsList.value.forEach { tag ->
+                        InputChip(
+                            selected = false,
+                            onClick = { },
+                            label = { Text(tag) },
+                            trailingIcon = {
+                                IconButton(onClick = {
+                                    tagsList.value = tagsList.value - tag
+                                }) {
+                                    Icon(Icons.Default.Close, contentDescription = "Remove tag")
+                                }
+                            }
+                        )
+                    }
+                }
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    OutlinedTextField(
+                        value = newTag,
+                        onValueChange = { newTag = it },
+                        label = { Text("Add Tag") },
+                        modifier = Modifier.weight(1f)
+                    )
+                    IconButton(onClick = {
+                        if (newTag.isNotBlank() && !tagsList.value.contains(newTag)) {
+                            tagsList.value = tagsList.value + newTag
+                            newTag = ""
+                        }
+                    }) {
+                        Icon(Icons.Default.Add, contentDescription = "Add Tag")
+                    }
+                }
             }
         },
         confirmButton = {
             Button(onClick = {
                 val updatedEvidence = evidence.copy(
                     content = content,
-                    tags = tags.split(",").map { it.trim() },
+                    tags = tagsList.value,
                     category = category
                 )
                 onSave(updatedEvidence)
