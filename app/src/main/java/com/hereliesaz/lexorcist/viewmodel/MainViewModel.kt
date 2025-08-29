@@ -16,6 +16,7 @@ import android.print.PrintDocumentInfo
 import android.print.PrintManager
 import android.provider.MediaStore
 import android.provider.OpenableColumns
+import android.provider.Settings.Global.putString
 import android.util.Log
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
@@ -32,9 +33,9 @@ import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import com.hereliesaz.lexorcist.GoogleApiService
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.SpreadsheetParser
-import com.hereliesaz.lexorcist.data.EvidenceRepository
 import com.hereliesaz.lexorcist.data.Allegation
-import com.hereliesaz.lexorcist.data.Case
+import com.hereliesaz.lexorcist.data.EvidenceRepository
+
 import com.hereliesaz.lexorcist.model.Evidence
 import com.hereliesaz.lexorcist.model.SheetFilter
 import com.hereliesaz.lexorcist.model.TaggedEvidence
@@ -61,6 +62,8 @@ import java.io.FileOutputStream
 import java.io.InputStreamReader
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
+import androidx.core.content.edit
+import com.hereliesaz.lexorcist.data.Case
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MainViewModel(application: Application) : AndroidViewModel(application) {
@@ -114,9 +117,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     // --- Image Processing & Text Extraction ---
     private val _extractedText = MutableStateFlow("")
     val extractedText: StateFlow<String> = _extractedText.asStateFlow()
-    // _imageBitmap is for the older flow, replaced by imageBitmapForReview
-    // private val _imageBitmap = MutableStateFlow<Bitmap?>(null) 
-    // val imageBitmap: StateFlow<Bitmap?> = _imageBitmap.asStateFlow()
 
     // --- Image Review Workflow ---
     private val _imageBitmapForReview = MutableStateFlow<Bitmap?>(null)
@@ -231,11 +231,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun onCourtChanged(name: String) { _court.value = name; saveCaseInfo() }
 
     private fun saveCaseInfo() {
-        with(sharedPref.edit()) {
+        sharedPref.edit() {
             putString("plaintiffs", _plaintiffs.value)
             putString("defendants", _defendants.value)
             putString("court", _court.value)
-            apply()
         }
     }
 
@@ -251,9 +250,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setDarkMode(isDark: Boolean) {
         _isDarkMode.value = isDark
-        with(sharedPref.edit()) {
+        sharedPref.edit() {
             putBoolean("is_dark_mode", isDark)
-            apply()
         }
     }
 
@@ -284,11 +282,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private suspend fun generatePdfFromHtmlString(htmlString: String, outputPdfName: String, context: Context): File? = suspendCancellableCoroutine { continuation ->
         Log.d(TAG, "generatePdfFromHtmlString for $outputPdfName. HTML length: ${htmlString.length}")
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
-            Log.e(TAG, "PDF generation requires API level 19 (KitKat) or higher.")
-            if (continuation.isActive) continuation.resume(null)
-            return@suspendCancellableCoroutine
-        }
 
         val outputPdfFile = File(context.cacheDir, outputPdfName)
         var webView: WebView? = null
@@ -315,7 +308,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         }
 
                         val jobName = "${context.packageName} Document"
-                        // val printAdapter = view.createPrintDocumentAdapter(jobName) // Keep this line commented or handle differently
 
                         val printAttributes = PrintAttributes.Builder()
                             .setMediaSize(PrintAttributes.MediaSize.ISO_A4)
@@ -323,106 +315,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                             .setMinMargins(PrintAttributes.Margins.NO_MARGINS)
                             .build()
 
-                        // Problematic section commented out to avoid build errors
-                        /*
-                        val directFilePrintAdapter = object : PrintDocumentAdapter() {
-                            private var webViewAdapter: PrintDocumentAdapter? = null
-
-                            override fun onStart() {
-                                super.onStart()
-                                // webViewAdapter = printAdapter 
-                                // webViewAdapter?.onStart()
-                            }
-
-                            override fun onLayout(oldAttributes: PrintAttributes?, newAttributes: PrintAttributes?, cancellationSignal: CancellationSignal?, callback: LayoutResultCallback?, extras: android.os.Bundle?) {
-                                // webViewAdapter?.onLayout(oldAttributes, newAttributes, cancellationSignal, object : LayoutResultCallback() {
-                                //     override fun onLayoutFinished(info: PrintDocumentInfo?, changed: Boolean) {
-                                //         callback?.onLayoutFinished(info, changed)
-                                //     }
-                                //     override fun onLayoutFailed(error: CharSequence?) {
-                                //         callback?.onLayoutFailed(error)
-                                //         Log.e(TAG, "Layout failed for PDF: $error")
-                                //         if (continuation.isActive) continuation.resume(null) 
-                                //     }
-                                //     override fun onLayoutCancelled() {
-                                //         callback?.onLayoutCancelled()
-                                //         if (continuation.isActive) continuation.resume(null) 
-                                //     }
-                                // }, extras)
-                            }
-
-                            override fun onWrite(pages: Array<out PageRange>?, destination: ParcelFileDescriptor?, cancellationSignal: CancellationSignal?, callback: WriteResultCallback?) {
-                                // webViewAdapter?.onWrite(pages, destination, cancellationSignal, object : WriteResultCallback() {
-                                //     override fun onWriteFinished(pages: Array<out PageRange>?) {
-                                //         callback?.onWriteFinished(pages)
-                                //         Log.d(TAG, "onWriteFinished: PDF successfully written to ParcelFileDescriptor.")
-                                //         if (continuation.isActive) continuation.resume(outputPdfFile) 
-                                //     }
-                                //     override fun onWriteFailed(error: CharSequence?) {
-                                //         callback?.onWriteFailed(error)
-                                //         Log.e(TAG, "onWriteFailed for PDF: $error")
-                                //         if (continuation.isActive) continuation.resume(null) 
-                                //     }
-                                //     override fun onWriteCancelled() {
-                                //         callback?.onWriteCancelled()
-                                //         if (continuation.isActive) continuation.resume(null) 
-                                //     }
-                                // })
-                            }
-                            override fun onFinish() {
-                                // webViewAdapter?.onFinish()
-                                super.onFinish()
-                                Log.d(TAG, "PrintDocumentAdapter onFinish called.")
-                            }
-                        }
-                        
-                        try {
-                            val pfd = ParcelFileDescriptor.open(outputPdfFile, ParcelFileDescriptor.MODE_READ_WRITE)
-                            // directFilePrintAdapter.onLayout(printAttributes, printAttributes, CancellationSignal(), object : PrintDocumentAdapter.LayoutResultCallback() {
-                            //     override fun onLayoutFinished(info: PrintDocumentInfo, changed: Boolean) {
-                            //         // directFilePrintAdapter.onWrite(arrayOf(PageRange.ALL_PAGES), pfd, CancellationSignal(), object : PrintDocumentAdapter.WriteResultCallback() {
-                            //         //     override fun onWriteFinished(pages: Array<PageRange>) {
-                            //         //         Log.d(TAG, "Direct PDF write finished to ${outputPdfFile.absolutePath}")
-                            //         //         try { pfd.close() } catch (e: Exception) { Log.e(TAG, "Error closing PFD (write success)", e) }
-                            //         //         if (continuation.isActive) continuation.resume(outputPdfFile)
-                            //         //     }
-                            //         //     override fun onWriteFailed(error: CharSequence) {
-                            //         //         Log.e(TAG, "Direct PDF write failed: $error")
-                            //         //         try { pfd.close() } catch (e: Exception) { Log.e(TAG, "Error closing PFD (write failed)", e) }
-                            //         //         if (continuation.isActive) continuation.resume(null)
-                            //         //     }
-                            //         //     override fun onWriteCancelled() {
-                            //         //         Log.w(TAG, "Direct PDF write cancelled")
-                            //         //         try { pfd.close() } catch (e: Exception) { Log.e(TAG, "Error closing PFD (write cancelled)", e) }
-                            //         //         if (continuation.isActive) continuation.resume(null)
-                            //         //     }
-                            //         // })
-                            //     }
-                            //     override fun onLayoutFailed(error: CharSequence) {
-                            //         Log.e(TAG, "Direct PDF layout failed: $error")
-                            //          try { pfd.close() } catch (e: Exception) { Log.e(TAG, "Error closing PFD (layout failed)", e) }
-                            //         if (continuation.isActive) continuation.resume(null)
-                            //     }
-                            //      override fun onLayoutCancelled() {
-                            //         Log.w(TAG, "Direct PDF layout cancelled")
-                            //          try { pfd.close() } catch (e: Exception) { Log.e(TAG, "Error closing PFD (layout cancelled)", e) }
-                            //         if (continuation.isActive) continuation.resume(null)
-                            //     }
-                            // }, null)
-                        } catch (e: Exception) {
-                            Log.e(TAG, "Error during direct PDF file generation: ", e)
-                            if (continuation.isActive) continuation.resume(null)
-                        }
-                        */
-                        // Fallback: resume with null since the direct PDF generation is commented out
+                        // Fallback: resume with null since the direct PDF generation (using PrintDocumentAdapter) is currently commented out
                         if (continuation.isActive) continuation.resume(null)
-
                     }
 
-                    @Deprecated("Deprecated in Java")
-                    override fun onReceivedError(view: WebView?, errorCode: Int, description: String?, failingUrl: String?) {
-                        super.onReceivedError(view, errorCode, description, failingUrl) // Still call super if needed, or handle exclusively.
-                    }
+                    // The deprecated onReceivedError(view, errorCode, description, failingUrl) has been removed.
 
                     override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
                         if (request?.isForMainFrame == true) {
@@ -498,7 +395,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             
             if (localPdfFile == null) {
                 Log.e(TAG, "createCase: Failed to generate local PDF from HTML.")
-                // Optionally, could decide to not proceed if PDF is critical
             }
             Log.d(TAG, "createCase: Local PDF generation completed. File: ${localPdfFile?.absolutePath ?: "null"}")
 
@@ -521,9 +417,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val caseSpreadsheetId = apiService.createSpreadsheet(caseName, caseFolderId) ?: return@launch Unit.also { Log.e(TAG, "createCase: Failed to create case spreadsheet for '$caseName'.") }
             Log.d(TAG, "createCase: Case spreadsheet created. ID: $caseSpreadsheetId")
             
-            // 6. Attach Script (using the generated PDF ID as the 'masterTemplateId' for the script config)
-            // The script configuration might need to be updated if it expects a Google Doc ID vs a PDF ID.
-            // For now, we pass generatedPdfId, but this might need review based on script's needs.
             val scriptTemplate = getApplication<Application>().resources.openRawResource(R.raw.apps_script_template).use { InputStreamReader(it).readText() }
             val scriptContent = scriptTemplate
                 .replace("{{EXHIBIT_SHEET_NAME}}", exhibitSheetName)
@@ -534,13 +427,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             apiService.attachScript(caseSpreadsheetId, scriptContent, generatedPdfId ?: "") 
             Log.d(TAG, "createCase: Script attached to spreadsheet. Master Doc ID used for script: ${generatedPdfId ?: "(none)"}")
 
-            // 7. Add Case to Registry (using new Case structure - will require db.Case.kt update)
             val newCase = Case(
-                name = caseName, 
-                spreadsheetId = caseSpreadsheetId, 
-                generatedPdfId = generatedPdfId, 
-                sourceHtmlSnapshotId = snapshotHtmlId, 
-                originalMasterHtmlTemplateId = selectedMasterHtmlTemplateId 
+                name = caseName,
+                spreadsheetId = caseSpreadsheetId,
+                generatedPdfId = generatedPdfId,
+                sourceHtmlSnapshotId = snapshotHtmlId,
+                originalMasterHtmlTemplateId = selectedMasterHtmlTemplateId
             )
             if (apiService.addCaseToRegistry(caseRegistryId, newCase)) {
                 Log.d(TAG, "Case '${newCase.name}' added to registry. PDF ID: ${newCase.generatedPdfId}, HTML Snapshot ID: ${newCase.sourceHtmlSnapshotId}, Original Template: ${newCase.originalMasterHtmlTemplateId}.")
@@ -566,7 +458,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    // --- Case Specific Data Loading (Filters, Allegations, Evidence from Sheets) ---
     private suspend fun loadSelectedCaseSheetFilters(spreadsheetId: String) { 
         val apiService = _googleApiService.value ?: return Unit.also { Log.w(TAG, "loadSelectedCaseSheetFilters: No API service.") }
         if (spreadsheetId.isBlank()) {
@@ -675,7 +566,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
     
-    // --- Generic Evidence Parsing & UI List Management (from newer ViewModel) ---
     fun addEvidenceToUiList(uri: Uri, context: Context) { 
         viewModelScope.launch {
             val mimeType = context.contentResolver.getType(uri)
@@ -684,13 +574,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 _imageBitmapForReview.value = loadBitmapFromUri(uri, context)
                 if (_imageBitmapForReview.value == null) {
                     Log.e(TAG, "Failed to load bitmap for review from URI: $uri")
-                    imageUriForReview = null // Clear URI if bitmap loading failed
+                    imageUriForReview = null 
                 }
             } else {
                 val evidence = when (mimeType) {
                     "text/plain" -> parseTextFile(uri, context)
                     "application/pdf" -> parsePdfFile(uri, context)
-                    // "image/jpeg", "image/png" -> // Handled above
                     "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" -> parseSpreadsheetFile(uri, context)
                     "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document" -> parseDocFile(uri, context)
                     else -> { Log.w(TAG, "Unsupported file type: $mimeType for URI: $uri"); null }
@@ -718,7 +607,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun rotateImageBeingReviewed(degrees: Float) {
         val currentBitmap = _imageBitmapForReview.value ?: return
-        viewModelScope.launch(Dispatchers.Default) { // Use Default dispatcher for image manipulation
+        viewModelScope.launch(Dispatchers.Default) { 
             val matrix = Matrix().apply { postRotate(degrees) }
             val rotatedBitmap = Bitmap.createBitmap(currentBitmap, 0, 0, currentBitmap.width, currentBitmap.height, matrix, true)
             _imageBitmapForReview.value = rotatedBitmap
@@ -731,7 +620,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
         if (reviewedBitmap == null || reviewedUri == null) {
             Log.w(TAG, "confirmImageReview: Bitmap or URI for review is null.")
-            cancelImageReview() // Clear any partial state
+            cancelImageReview()
             return
         }
 
@@ -749,12 +638,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                             Log.e(TAG, "ML Kit text recognition failed during review confirmation", e)
                             if (continuation.isActive) continuation.resumeWithException(e) 
                         }
-                } ?: return@launch // Should not happen if resumeWithException is used correctly
+                } ?: return@launch
 
                 val newEvidence = Evidence(
                     content = visionText.text,
                     timestamp = System.currentTimeMillis(),
-                    sourceDocument = reviewedUri.toString(), // Use the original URI
+                    sourceDocument = reviewedUri.toString(),
                     documentDate = System.currentTimeMillis()
                 )
                 _uiEvidenceList.value = _uiEvidenceList.value + newEvidence
@@ -762,9 +651,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
             } catch (e: Exception) {
                 Log.e(TAG, "Exception during image review confirmation or text recognition.", e)
-                // Optionally, communicate this error to the UI (e.g., via a Toast or another StateFlow)
             } finally {
-                cancelImageReview() // Clear review state whether success or failure
+                cancelImageReview()
             }
         }
     }
@@ -797,13 +685,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         } catch (e: Exception) { Log.e(TAG, "Failed to parse PDF file", e); null }
     }
 
-    // parseImageFileToEvidence removed as its logic is now in confirmImageReview
-
     private suspend fun parseSpreadsheetFile(uri: Uri, context: Context): Evidence? { 
         return try {
             context.contentResolver.openInputStream(uri)?.let { inputStream ->
                 val workbook = WorkbookFactory.create(inputStream)
-                val text = buildString { /* ... */ } // Placeholder for actual parsing
+                val text = buildString { /* ... */ } 
                 workbook.close()
                 Evidence(content = text, timestamp = System.currentTimeMillis(), sourceDocument = uri.toString(), documentDate = System.currentTimeMillis())
             }
@@ -846,7 +732,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
     
-    // --- Export, Scripting (from newer ViewModel, uses uiEvidenceList) ---
     fun exportToSheet() { 
         viewModelScope.launch {
             _googleApiService.value?.let { apiService ->
@@ -865,78 +750,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             val taggedList = _uiEvidenceList.value.map { evidence ->
                 val parserResult = scriptRunner.runScript(script, evidence)
-                // Ensure TaggedEvidence constructor matches its definition if 'id' is complex type
                 TaggedEvidence(id = evidence, tags = parserResult.tags, content = evidence.content) 
             }
             EvidenceRepository.setTaggedEvidence(taggedList)
         }
     }
     
-    // --- Filters for Settings Screen (in-memory) ---
     fun addSettingScreenFilter(name: String, value: String) { 
         val newFilter = SheetFilter(name = name, value = value)
         _settingScreenFilters.value = _settingScreenFilters.value + newFilter
         Log.d(TAG, "Added setting screen filter: $newFilter. Current setting filters: ${_settingScreenFilters.value}")
     }
-
-    // --- Image Processing & Text Evidence (from older ViewModel) ---
-    // This function onImageSelectedForProcessing is now effectively replaced by addEvidenceToUiList (for images) and the review workflow.
-    // The _imageBitmap StateFlow and processSelectedImage are also part of this older flow and can be removed if not used elsewhere.
-    /*
-    fun onImageSelectedForProcessing(bitmap: Bitmap, context: Context) { 
-        _imageBitmap.value = bitmap
-        viewModelScope.launch {
-            processSelectedImage(bitmap, context) 
-        }
-    }
-
-    private suspend fun processSelectedImage(bitmap: Bitmap, context: Context) { 
-        Log.d(TAG, "processSelectedImage called")
-        val currentCase = _selectedCase.value
-        val apiService = _googleApiService.value
-        var uploadedDriveFile: DriveFile? = null // Using alias
-
-        if (currentCase != null && apiService != null) {
-            val rawEvidenceFolderId = apiService.getOrCreateEvidenceFolder(currentCase.name) ?: return
-            val timestamp = System.currentTimeMillis()
-            val file = java.io.File(context.cacheDir, "evidence-$timestamp.jpg")
-            file.outputStream().use { bitmap.compress(Bitmap.CompressFormat.JPEG, 100, it) }
-            uploadedDriveFile = apiService.uploadFile(file, rawEvidenceFolderId, "image/jpeg")
-        } else {
-            Log.w(TAG, "processSelectedImage: Selected case or API service is null, skipping file upload part.")
-        }
-
-        val image = InputImage.fromBitmap(bitmap, 0)
-        val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
-        recognizer.process(image)
-            .addOnSuccessListener { visionText ->
-                Log.d(TAG, "processSelectedImage: Text recognition successful")
-                _extractedText.value = visionText.text
-                if (currentCase != null) { 
-                    val newEvidence = Evidence(
-                        caseId = currentCase.id,
-                        content = visionText.text,
-                        timestamp = System.currentTimeMillis(),
-                        sourceDocument = uploadedDriveFile?.name ?: "Processed Image",
-                        documentDate = System.currentTimeMillis()
-                    )
-                    addEvidenceToSelectedCase(newEvidence)
-                } else { 
-                     _uiEvidenceList.value = _uiEvidenceList.value + Evidence(
-                        content = visionText.text,
-                        timestamp = System.currentTimeMillis(),
-                        sourceDocument = "Processed Image (No Case)",
-                        documentDate = System.currentTimeMillis()
-                    )
-                    Log.d(TAG, "processSelectedImage: No case selected, text extracted and added to UI list.")
-                }
-            }
-            .addOnFailureListener { e ->
-                Log.e(TAG, "processSelectedImage: Text recognition failed", e)
-                _extractedText.value = "Failed to extract text: ${e.message}"
-            }
-    }
-    */
 
     fun addTextEvidenceToSelectedCase(text: String, context: Context) { 
         viewModelScope.launch {
@@ -964,7 +788,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
     
-    // --- Spreadsheet Import and Tagged Data (from older ViewModel) ---
     fun importSpreadsheet(spreadsheetIdToImport: String) {
         viewModelScope.launch {
             val apiService = _googleApiService.value ?: return@launch Unit.also { Log.w(TAG, "importSpreadsheet: No API service.") }
@@ -1008,7 +831,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    // --- Google Drive File Upload (from older, for addFileEvidence) ---
     fun addDriveFileEvidenceToSelectedCase(uri: Uri, context: Context) { 
         viewModelScope.launch {
             val currentCase = _selectedCase.value
@@ -1039,6 +861,5 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     
     companion object {
         private const val FILTERS_SHEET_NAME = "Filters" 
-        // Constants like KEY_CASE_NUMBER etc. are used internally by GoogleApiService or SpreadsheetParser
     }
 }
