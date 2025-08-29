@@ -23,5 +23,6 @@ data class Evidence(
     val timestamp: Long,
     val sourceDocument: String,
     val documentDate: Long,
-    val tags: List<String> = emptyList()
+    val tags: List<String> = emptyList(),
+    val category: String = ""
 )

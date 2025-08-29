@@ -74,7 +74,7 @@
     <string name="judge">Judge</string>
     <string name="master_template_required">Master Template*</string>
     <string name="no_templates_found_create_one">No templates found. Create one via Home screen.</string>
-    <string name="unnamed_template">Unnamed Template (ID: %1$s...)</string>
+    <string name="unnamed_template">Unnamed Template (ID: %1$s…)</string>
     <string name="create">Create</string>
     <string name="cancel">Cancel</string>
     <string name="no_cases_found">No cases found. Click the \'+\' button to create a new case.</string>
@@ -95,14 +95,14 @@
     <string name="enter_your_script">Enter your script</string>
     <string name="save_script">Save Script</string>
     <string name="script_builder">Script Builder</string>
-    <string name="script_snippet_text_includes">evidence.text.includes(\"\")</string>
-    <string name="script_snippet_text_includes_label">text.includes(...)</string>
-    <string name="script_snippet_tags_includes">evidence.tags.includes(\"\")</string>
-    <string name="script_snippet_tags_includes_label">tags.includes(...)</string>
-    <string name="script_snippet_date_greater">evidence.documentDate > new Date(\"YYYY-MM-DD\").getTime()</string>
-    <string name="script_snippet_date_greater_label">date > ...</string>
-    <string name="script_snippet_date_less">evidence.documentDate < new Date(\"YYYY-MM-DD\").getTime()</string>
-    <string name="script_snippet_date_less_label">date < ...</string>
+    <string name="script_snippet_text_includes">evidence.text.includes("")</string>
+    <string name="script_snippet_text_includes_label">text.includes(…)</string>
+    <string name="script_snippet_tags_includes">evidence.tags.includes("")</string>
+    <string name="script_snippet_tags_includes_label">tags.includes(…)</string>
+    <string name="script_snippet_date_greater">evidence.documentDate &gt; new Date("YYYY-MM-DD").getTime()</string>
+    <string name="script_snippet_date_greater_label">date &gt; …</string>
+    <string name="script_snippet_date_less">evidence.documentDate &lt; new Date("YYYY-MM-DD").getTime()</string>
+    <string name="script_snippet_date_less_label">date &lt; …</string>
     <string name="evidence_by_category">Evidence by Category</string>
 
     <string-array name="sort_options">
