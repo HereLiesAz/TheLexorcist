@@ -23,14 +23,14 @@ fun TimelineScreen(viewModel: MainViewModel) {
         Event(
             title = {
                 Text(
-                    text = it.content,
+                    text = it.sourceDocument,
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.padding(bottom = 4.dp)
                 )
             },
             subtitle = {
                 Text(
-                    text = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(it.documentDate)),
+                    text = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(it.documentDate),
                     style = MaterialTheme.typography.bodySmall
                 )
             }

@@ -37,7 +37,8 @@ import org.opencv.android.Utils
 import org.opencv.core.Mat
 import org.opencv.imgproc.Imgproc
 import com.hereliesaz.lexorcist.data.Allegation
-import com.hereliesaz.lexorcist.data.EvidenceRepository
+import com.hereliesaz.lexorcist.data.EvidenceRepositoryImpl
+import com.hereliesaz.lexorcist.data.TaggedEvidenceRepository
 
 import com.hereliesaz.lexorcist.model.Evidence
 import com.hereliesaz.lexorcist.model.SheetFilter
@@ -69,7 +70,7 @@ import androidx.core.content.edit
 import com.hereliesaz.lexorcist.data.Case
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class MainViewModel(application: Application) : AndroidViewModel(application) {
+class MainViewModel(application: Application, private val evidenceRepository: com.hereliesaz.lexorcist.data.EvidenceRepository) : AndroidViewModel(application) {
 
     private val TAG = "MainViewModelCombined"
 
@@ -152,6 +153,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         loadCaseInfo() // Load plaintiffs, defendants, court from SharedPreferences
         loadDarkModePreference()
         viewModelScope.launch {
+            _selectedCase.collect { case ->
+                if (case != null) {
+                    evidenceRepository.getEvidenceForCase(case.id).collect {
+                        _selectedCaseEvidenceList.value = it
+                    }
+                } else {
+                    _selectedCaseEvidenceList.value = emptyList()
+                }
+            }
+        }
+        viewModelScope.launch {
             _googleApiService.collect { apiService ->
                 if (apiService != null && _isSignedIn.value) {
                     loadCasesFromRegistry()
@@ -160,7 +172,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         if (currentCase.spreadsheetId.isNotBlank()) {
                             loadSelectedCaseSheetFilters(currentCase.spreadsheetId)
                             loadAllegationsForSelectedCase(currentCase.spreadsheetId, currentCase.id)
-                            loadSelectedCaseEvidence(currentCase.spreadsheetId, currentCase.id)
+                            evidenceRepository.refreshEvidenceForCase(currentCase.spreadsheetId, currentCase.id)
                         }
                     }
                 } else {
@@ -177,14 +189,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun updateEvidence(evidence: Evidence) {
         viewModelScope.launch {
             val currentCase = _selectedCase.value
-            val apiService = _googleApiService.value
-            if (currentCase != null && apiService != null) {
-                if (apiService.updateEvidenceInCase(currentCase.spreadsheetId, evidence)) {
-                    loadSelectedCaseEvidence(currentCase.spreadsheetId, currentCase.id) // Reload
-                } else {
-                    showError("Failed to update evidence.")
-                    Log.w(TAG, "updateEvidence: Failed to update evidence in sheet.")
-                }
+            if (currentCase != null) {
+                evidenceRepository.updateEvidence(currentCase.spreadsheetId, evidence)
             } else {
                 Log.w(TAG, "updateEvidence: Missing data.")
             }
@@ -194,14 +200,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun deleteEvidence(evidence: Evidence) {
         viewModelScope.launch {
             val currentCase = _selectedCase.value
-            val apiService = _googleApiService.value
-            if (currentCase != null && apiService != null) {
-                if (apiService.deleteEvidenceFromCase(currentCase.spreadsheetId, evidence.id)) {
-                    loadSelectedCaseEvidence(currentCase.spreadsheetId, currentCase.id) // Reload
-                } else {
-                    showError("Failed to delete evidence.")
-                    Log.w(TAG, "deleteEvidence: Failed to delete evidence from sheet.")
-                }
+            if (currentCase != null) {
+                evidenceRepository.deleteEvidence(currentCase.spreadsheetId, evidence)
             } else {
                 Log.w(TAG, "deleteEvidence: Missing data.")
             }
@@ -227,11 +227,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun onSignInSuccess(apiService: GoogleApiService) {
+        (evidenceRepository as EvidenceRepositoryImpl).setGoogleApiService(apiService)
         _googleApiService.value = apiService
         _isSignedIn.value = true
         GoogleApiServiceHolder.googleApiService = apiService
         Log.d(TAG, "onSignInSuccess: Signed in.")
-        viewModelScope.launch { 
+        viewModelScope.launch {
             loadCasesFromRegistry()
             loadHtmlTemplates() // Load HTML templates
             _selectedCase.value?.let { currentCase ->
@@ -245,6 +246,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun onSignInFailed() {
+        (evidenceRepository as EvidenceRepositoryImpl).setGoogleApiService(null)
         _googleApiService.value = null
         _isSignedIn.value = false
         Log.d(TAG, "onSignInFailed: Sign in failed.")
@@ -257,7 +259,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun onSignOut() {
-        _googleApiService.value = null 
+        (evidenceRepository as EvidenceRepositoryImpl).setGoogleApiService(null)
+        _googleApiService.value = null
         _isSignedIn.value = false
         GoogleApiServiceHolder.googleApiService = null
         Log.d(TAG, "onSignOut: Signed out.")
@@ -500,12 +503,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             viewModelScope.launch {
                 loadSelectedCaseSheetFilters(case.spreadsheetId)
                 loadAllegationsForSelectedCase(case.spreadsheetId, case.id)
-                loadSelectedCaseEvidence(case.spreadsheetId, case.id)
+                evidenceRepository.refreshEvidenceForCase(case.spreadsheetId, case.id)
             }
         } else {
             _selectedCaseSheetFilters.value = emptyList()
             _allegations.value = emptyList()
-            _selectedCaseEvidenceList.value = emptyList()
         }
     }
 
@@ -582,39 +584,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    private suspend fun loadSelectedCaseEvidence(spreadsheetId: String, caseIdForAssociation: Int) { 
-        val apiService = _googleApiService.value ?: return Unit.also { Log.w(TAG, "loadSelectedCaseEvidence: No API service.") }
-        if (spreadsheetId.isBlank()) {
-            _selectedCaseEvidenceList.value = emptyList(); return
-        }
-        try {
-            _selectedCaseEvidenceList.value = apiService.getEvidenceForCase(spreadsheetId, caseIdForAssociation)
-            Log.d(TAG, "Loaded ${_selectedCaseEvidenceList.value.size} evidence items for case $caseIdForAssociation.")
-        } catch (e: Exception) {
-            Log.e(TAG, "Error loading evidence for $spreadsheetId", e)
-            _selectedCaseEvidenceList.value = emptyList()
-        }
-    }
 
-    fun addEvidenceToSelectedCase(entry: Evidence) { 
+    fun addEvidenceToSelectedCase(entry: Evidence) {
         val currentCase = _selectedCase.value
-        val apiService = _googleApiService.value
-        if (currentCase == null || currentCase.spreadsheetId.isBlank() || apiService == null) {
+        if (currentCase == null) {
             Log.w(TAG, "addEvidenceToSelectedCase: Missing data.")
             return
         }
-        val entryWithCaseId = entry.copy(caseId = currentCase.id) 
+        val entryWithCaseId = entry.copy(caseId = currentCase.id)
         viewModelScope.launch {
-            try {
-                if (apiService.addEvidenceToCase(currentCase.spreadsheetId, entryWithCaseId)) {
-                    loadSelectedCaseEvidence(currentCase.spreadsheetId, currentCase.id)
-                } else {
-                    showError("Failed to add evidence.")
-                    Log.w(TAG, "Failed to add evidence to case ${currentCase.id}.")
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Error adding evidence to case ${currentCase.id}", e)
-            }
+            evidenceRepository.addEvidence(currentCase.spreadsheetId, entryWithCaseId)
         }
     }
     
@@ -667,14 +646,53 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /**
-     * Pre-processes the image for OCR by converting it to grayscale, applying noise reduction,
-     * and then using adaptive thresholding to create a binary image.
+     * Pre-processes the image for OCR by applying skew correction, converting it to grayscale,
+     * applying noise reduction, and then using adaptive thresholding to create a binary image.
      * @param bitmap The input image.
      * @return The processed bitmap, ready for OCR.
      */
     private fun preprocessImageForOcr(bitmap: Bitmap): Bitmap {
-        val mat = Mat()
+        var mat = Mat()
         Utils.bitmapToMat(bitmap, mat)
+
+        // --- Skew Correction ---
+        val gray = Mat()
+        Imgproc.cvtColor(mat, gray, Imgproc.COLOR_BGR2GRAY)
+
+        val blurred = Mat()
+        Imgproc.GaussianBlur(gray, blurred, org.opencv.core.Size(5.0, 5.0), 0.0)
+
+        val edged = Mat()
+        Imgproc.Canny(blurred, edged, 75.0, 200.0)
+
+        val contours = ArrayList<MatOfPoint>()
+        val hierarchy = Mat()
+        Imgproc.findContours(edged, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE)
+
+        if (contours.isNotEmpty()) {
+            val boxPoints = contours.flatMap { it.toList() }
+            if (boxPoints.isNotEmpty()) {
+                val points = MatOfPoint2f(*boxPoints.toTypedArray())
+                val rect = Imgproc.minAreaRect(points)
+
+                var angle = rect.angle
+                if (angle < -45) {
+                    angle = -(90 + angle)
+                } else {
+                    angle = -angle
+                }
+
+                if (angle != 0.0) {
+                    val center = rect.center
+                    val rotationMatrix = Imgproc.getRotationMatrix2D(center, angle, 1.0)
+                    val rotatedMat = Mat()
+                    Imgproc.warpAffine(mat, rotatedMat, rotationMatrix, mat.size(), Imgproc.INTER_CUBIC)
+                    mat = rotatedMat
+                }
+            }
+        }
+        // --- End Skew Correction ---
+
 
         // Convert to grayscale
         val grayMat = Mat()
@@ -845,7 +863,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 val parserResult = scriptRunner.runScript(script, evidence)
                 TaggedEvidence(id = evidence, tags = parserResult.tags, content = evidence.content) 
             }
-            EvidenceRepository.setTaggedEvidence(taggedList)
+            TaggedEvidenceRepository.setTaggedEvidence(taggedList)
         }
     }
     

@@ -272,31 +272,30 @@ class GoogleApiService(
             val sheetValues = allSheetData?.get(EVIDENCE_SHEET_NAME)
             sheetValues?.drop(1)?.forEachIndexed { index, row -> // drop(1) to skip header
                 try {
-                    val content = row.getOrNull(0)?.toString() ?: ""
-                    val timestamp = row.getOrNull(1)?.toString()?.toLongOrNull() ?: System.currentTimeMillis()
                     val sourceDocument = row.getOrNull(2)?.toString() ?: ""
+                    val timestamp = row.getOrNull(1)?.toString()?.toLongOrNull() ?: System.currentTimeMillis()
                     val documentDate = row.getOrNull(3)?.toString()?.toLongOrNull() ?: System.currentTimeMillis()
-                    val tags = row.getOrNull(4)?.toString()?.split(",")?.map { it.trim() } ?: emptyList()
-                    val allegationId = row.getOrNull(5)?.toString()?.toIntOrNull()
+                    val allegationId = row.getOrNull(5)?.toString() ?: ""
                     val category = row.getOrNull(6)?.toString() ?: ""
+                    val amount = row.getOrNull(7)?.toString()?.toDoubleOrNull()
 
-                    entries.add(Evidence(
-                        id = index, // Using row index as a simple ID for now
-                        caseId = caseIdForAssociation,
-                        allegationId = allegationId,
-                        content = content,
-                        timestamp = timestamp,
-                        sourceDocument = sourceDocument,
-                        documentDate = documentDate,
-                        tags = tags,
-                        category = category
-                    ))
+                    entries.add(
+                        Evidence(
+                            caseId = caseIdForAssociation.toLong(),
+                            allegationId = allegationId,
+                            amount = amount,
+                            timestamp = java.util.Date(timestamp),
+                            sourceDocument = sourceDocument,
+                            documentDate = java.util.Date(documentDate),
+                            category = category
+                        )
+                    )
                 } catch (e: Exception) {
-                    e.printStackTrace() 
+                    e.printStackTrace()
                     Log.e("GoogleApiService", "Error parsing row in getEvidenceForCase for $caseSpreadsheetId", e)
                 }
             }
-        } catch (e: Exception) { 
+        } catch (e: Exception) {
             e.printStackTrace()
             Log.e("GoogleApiService", "Error in getEvidenceForCase for $caseSpreadsheetId", e)
         }
@@ -310,18 +309,17 @@ class GoogleApiService(
             val sheetExists = sheetsService.spreadsheets().get(caseSpreadsheetId).execute().sheets?.any { it.properties?.title == EVIDENCE_SHEET_NAME } == true
             if (!sheetExists) {
                 addSheet(caseSpreadsheetId, EVIDENCE_SHEET_NAME)
-                val header = listOf(listOf("Content", "Timestamp", "Source Document", "Document Date", "Tags", "Allegation ID", "Category"))
+                val header = listOf(listOf("Source Document", "Timestamp", "Document Date", "Allegation ID", "Category", "Amount"))
                 appendData(caseSpreadsheetId, EVIDENCE_SHEET_NAME, header)
             }
 
             val values = listOf(listOf(
-                entry.content,
-                entry.timestamp.toString(),
                 entry.sourceDocument,
-                entry.documentDate.toString(),
-                entry.tags.joinToString(","),
-                entry.allegationId?.toString() ?: "", // Store Allegation ID as string, empty if null
-                entry.category
+                entry.timestamp.time.toString(),
+                entry.documentDate.time.toString(),
+                entry.allegationId,
+                entry.category,
+                entry.amount?.toString() ?: ""
             ))
             appendData(caseSpreadsheetId, EVIDENCE_SHEET_NAME, values) != null
         } catch (e: Exception) {
@@ -336,13 +334,12 @@ class GoogleApiService(
         try {
             val range = "$EVIDENCE_SHEET_NAME!A${evidence.id + 2}" // +2 because sheet is 1-indexed and there's a header
             val values = listOf(listOf(
-                evidence.content,
-                evidence.timestamp.toString(),
                 evidence.sourceDocument,
-                evidence.documentDate.toString(),
-                evidence.tags.joinToString(","),
-                evidence.allegationId?.toString() ?: "",
-                evidence.category
+                evidence.timestamp.time.toString(),
+                evidence.documentDate.time.toString(),
+                evidence.allegationId,
+                evidence.category,
+                evidence.amount?.toString() ?: ""
             ))
             val body = ValueRange().setValues(values)
             sheetsService.spreadsheets().values().update(spreadsheetId, range, body)

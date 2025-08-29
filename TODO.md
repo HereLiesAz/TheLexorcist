@@ -3,7 +3,7 @@
 This document outlines the tasks and improvements for The Lexorcist application, based on a recent code review. The previous `TODO.md` was found to be outdated.
 
 ## Critical 🎯
-- [ ] **Implement Data Parsing:** The app currently performs OCR but does not parse the extracted text to identify key information (e.g., total amount, date, vendor from a receipt). This is a core feature that is completely missing. The existing `DataParser.kt` is a good starting point but is not currently used.
+- [ ] **Implement Data Parsing:** The app currently performs OCR but does not parse the extracted text to identify key information (e.g., total amount, date, source from a document). This is a core feature that is completely missing. The existing `DataParser.kt` is a good starting point but is not currently used.
 - [ ] **Complete Placeholder Screens:** The navigation rail includes links to "Timeline," and "Visualization" screens. These screens are currently placeholders and need to be fully implemented to match the app's advertised features.
 - [ ] **User-Friendly Error Handling:** The app's error handling is minimal. When something goes wrong (e.g., network error, API failure, OCR failure), the user is often shown a generic error message or no message at all. Implement specific, user-friendly error messages for common failure scenarios.
 
@@ -25,7 +25,7 @@ This document outlines the tasks and improvements for The Lexorcist application,
 - [ ] **Add Unit and Integration Tests:** The project has very few tests.
     - Add unit tests for the `DataParser`, ViewModels, and other logic.
     - Add integration tests for the database and Google API interactions.
-- [ ] **Expense Categorization:** Implement the feature to allow users to categorize expenses. This is mentioned in the old `TODO.md` and is a valuable feature for organization and reporting.
+- [ ] **Evidence Categorization:** Implement the feature to allow users to categorize evidence. This is mentioned in the old `TODO.md` and is a valuable feature for organization and reporting.
 - [ ] **Incomplete Spreadsheet Parsing:** The `parseSpreadsheetFile` function in `MainViewModel.kt` is a stub. Implement the logic to correctly parse data from `.xls` and `.xlsx` files.
 
 ## Low Priority 🛠️

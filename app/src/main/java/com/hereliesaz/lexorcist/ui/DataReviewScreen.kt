@@ -114,14 +114,14 @@ fun EvidenceItem(
                 horizontalAlignment = Alignment.End
             ) {
                 Text(
-                    text = evidence.content,
+                    text = evidence.sourceDocument,
                     style = MaterialTheme.typography.bodyLarge,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Row {
-                    if (evidence.category.isNotBlank()) {
+                    if (evidence.category?.isNotBlank() == true) {
                         Text(
                             text = evidence.category,
                             style = MaterialTheme.typography.bodySmall,
@@ -129,11 +129,6 @@ fun EvidenceItem(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                     }
-                    Text(
-                        text = evidence.tags.joinToString(", "),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
                 }
             }
             Row {
@@ -154,27 +149,13 @@ fun EditEvidenceDialog(
     onDismiss: () -> Unit,
     onSave: (Evidence) -> Unit
 ) {
-    var content by remember { mutableStateOf(evidence.content) }
-    var tags by remember { mutableStateOf(evidence.tags.joinToString(",")) }
-    var category by remember { mutableStateOf(evidence.category) }
+    var category by remember { mutableStateOf(evidence.category ?: "") }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Edit Evidence") },
         text = {
             Column(horizontalAlignment = Alignment.End) {
-                OutlinedTextField(
-                    value = content,
-                    onValueChange = { content = it },
-                    label = { Text("Content") },
-                    placeholder = { Text("Enter the evidence content") }
-                )
-                OutlinedTextField(
-                    value = tags,
-                    onValueChange = { tags = it },
-                    label = { Text("Tags") },
-                    placeholder = { Text("Enter tags, separated by commas") }
-                )
                 OutlinedTextField(
                     value = category,
                     onValueChange = { category = it },
@@ -186,8 +167,6 @@ fun EditEvidenceDialog(
         confirmButton = {
             Button(onClick = {
                 val updatedEvidence = evidence.copy(
-                    content = content,
-                    tags = tags.split(",").map { it.trim() },
                     category = category
                 )
                 onSave(updatedEvidence)
