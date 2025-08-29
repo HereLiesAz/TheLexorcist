@@ -28,11 +28,7 @@ import java.io.IOException
 import java.io.InputStreamReader // Added for reading InputStream
 import android.util.Log // Added for logging
 
-private const val APP_ROOT_FOLDER_NAME = "The Lexorcist"
-private const val CASE_REGISTRY_SPREADSHEET_NAME = "Lexorcist_Case_Registry"
-private const val CASE_REGISTRY_SHEET_NAME = "Cases"
-private const val ALLEGATIONS_SHEET_NAME = "Allegations"
-private const val EVIDENCE_SHEET_NAME = "Evidence"
+import com.hereliesaz.lexorcist.data.Schema
 
 class GoogleApiService(
     private val credential: GoogleAccountCredential,
@@ -71,7 +67,7 @@ class GoogleApiService(
     }
 
     suspend fun getOrCreateAppRootFolder(): String? {
-        return getOrCreateFolder(APP_ROOT_FOLDER_NAME)
+        return getOrCreateFolder(Schema.APP_ROOT_FOLDER_NAME)
     }
 
     suspend fun getOrCreateCaseFolder(caseName: String): String? {
@@ -81,34 +77,34 @@ class GoogleApiService(
 
     suspend fun getOrCreateEvidenceFolder(caseName: String): String? {
         val caseFolderId = getOrCreateCaseFolder(caseName)
-        return getOrCreateFolder("Evidence", caseFolderId)
+        return getOrCreateFolder(Schema.Evidence.SHEET_NAME, caseFolderId)
     }
 
     suspend fun getOrCreateCaseRegistrySpreadsheetId(appRootFolderId: String): String? = withContext(Dispatchers.IO) {
         try {
-            val query = "'${appRootFolderId}' in parents and mimeType='application/vnd.google-apps.spreadsheet' and name='$CASE_REGISTRY_SPREADSHEET_NAME' and trashed=false"
+            val query = "'${appRootFolderId}' in parents and mimeType='application/vnd.google-apps.spreadsheet' and name='${Schema.CASE_REGISTRY_SPREADSHEET_NAME}' and trashed=false"
             val fileListResult = driveService.files().list().setQ(query).setSpaces("drive").execute()
             val existingFiles = fileListResult?.files
             var registrySpreadsheetId: String?
-            val newHeader = listOf(listOf("Case Name", "Spreadsheet ID", "Generated PDF ID", "Source HTML Snapshot ID", "Original Master HTML Template ID"))
+            val newHeader = listOf(Schema.CaseRegistry.HEADER)
 
             if (existingFiles != null && existingFiles.isNotEmpty()) {
                 registrySpreadsheetId = existingFiles[0].id
             } else {
-                registrySpreadsheetId = createSpreadsheet(CASE_REGISTRY_SPREADSHEET_NAME, appRootFolderId)
+                registrySpreadsheetId = createSpreadsheet(Schema.CASE_REGISTRY_SPREADSHEET_NAME, appRootFolderId)
                 if (registrySpreadsheetId == null) return@withContext null
-                addSheet(registrySpreadsheetId, CASE_REGISTRY_SHEET_NAME)
-                appendData(registrySpreadsheetId, CASE_REGISTRY_SHEET_NAME, newHeader)
+                addSheet(registrySpreadsheetId, Schema.CaseRegistry.SHEET_NAME)
+                appendData(registrySpreadsheetId, Schema.CaseRegistry.SHEET_NAME, newHeader)
             }
             if (registrySpreadsheetId != null) {
-                addSheet(registrySpreadsheetId, CASE_REGISTRY_SHEET_NAME) // Ensure sheet exists
-                val range = "$CASE_REGISTRY_SHEET_NAME!A1:E1" // Updated range for 5 columns
+                addSheet(registrySpreadsheetId, Schema.CaseRegistry.SHEET_NAME) // Ensure sheet exists
+                val range = "${Schema.CaseRegistry.SHEET_NAME}!A1:E1" // Updated range for 5 columns
                 val currentHeaderResponse = sheetsService.spreadsheets().values().get(registrySpreadsheetId, range).execute()
                 val currentHeader = currentHeaderResponse.getValues()
 
-                if (currentHeader == null || currentHeader.isEmpty() || currentHeader[0].size < 5) { 
+                if (currentHeader == null || currentHeader.isEmpty() || currentHeader[0].size < 5) {
                     if (currentHeader == null || currentHeader.isEmpty()){
-                         appendData(registrySpreadsheetId, CASE_REGISTRY_SHEET_NAME, newHeader)
+                         appendData(registrySpreadsheetId, Schema.CaseRegistry.SHEET_NAME, newHeader)
                     } else {
                         Log.w("GoogleApiService", "Case Registry header might be outdated or incomplete. Found: ${currentHeader[0]}. Expected: ${newHeader[0]}")
                         // Potentially add logic here to update the header if it's old but exists
@@ -127,17 +123,23 @@ class GoogleApiService(
         val cases = mutableListOf<Case>()
         try {
             val allSheetData = readSpreadsheet(registrySpreadsheetId)
-            val caseSheetValues = allSheetData?.get(CASE_REGISTRY_SHEET_NAME)
+            val caseSheetValues = allSheetData?.get(Schema.CaseRegistry.SHEET_NAME)
             
-            caseSheetValues?.drop(1)?.forEach { row -> // drop(1) to skip header
-                val name = row.getOrNull(0)?.toString() ?: ""
-                val spreadsheetId = row.getOrNull(1)?.toString() ?: ""
+            caseSheetValues?.let {
+                val header = it.firstOrNull() ?: return@withContext emptyList()
+                val nameIndex = header.indexOf(Schema.CaseRegistry.COL_CASE_NAME)
+                val spreadsheetIdIndex = header.indexOf(Schema.CaseRegistry.COL_SPREADSHEET_ID)
+                val pdfIdIndex = header.indexOf(Schema.CaseRegistry.COL_GENERATED_PDF_ID)
+                val snapshotIdIndex = header.indexOf(Schema.CaseRegistry.COL_SOURCE_HTML_SNAPSHOT_ID)
+                val templateIdIndex = header.indexOf(Schema.CaseRegistry.COL_ORIGINAL_MASTER_HTML_TEMPLATE_ID)
 
-                if (name.isNotBlank() && spreadsheetId.isNotBlank()) {
-                    if (row.size >= 5) { // New structure with 5+ columns
-                        val generatedPdfId = row.getOrNull(2)?.toString()
-                        val sourceHtmlSnapshotId = row.getOrNull(3)?.toString()
-                        val originalMasterHtmlTemplateId = row.getOrNull(4)?.toString()
+                it.drop(1).forEach { row ->
+                    val name = row.getOrNull(nameIndex)?.toString() ?: ""
+                    val spreadsheetId = row.getOrNull(spreadsheetIdIndex)?.toString() ?: ""
+                    if (name.isNotBlank() && spreadsheetId.isNotBlank()) {
+                        val generatedPdfId = row.getOrNull(pdfIdIndex)?.toString()
+                        val sourceHtmlSnapshotId = row.getOrNull(snapshotIdIndex)?.toString()
+                        val originalMasterHtmlTemplateId = row.getOrNull(templateIdIndex)?.toString()
                         cases.add(Case(
                             name = name, 
                             spreadsheetId = spreadsheetId, 
@@ -145,17 +147,6 @@ class GoogleApiService(
                             sourceHtmlSnapshotId = if(sourceHtmlSnapshotId?.isBlank() == true) null else sourceHtmlSnapshotId,
                             originalMasterHtmlTemplateId = if(originalMasterHtmlTemplateId?.isBlank() == true) null else originalMasterHtmlTemplateId
                         ))
-                    } else if (row.size >= 3) { // Fallback for old structure (3 columns)
-                        val oldMasterTemplateId = row.getOrNull(2)?.toString()
-                        cases.add(Case(
-                            name = name, 
-                            spreadsheetId = spreadsheetId, 
-                            generatedPdfId = if(oldMasterTemplateId?.isBlank() == true) null else oldMasterTemplateId, 
-                            sourceHtmlSnapshotId = null, 
-                            originalMasterHtmlTemplateId = null 
-                        ))
-                    } else {
-                        Log.w("GoogleApiService", "Skipping row in case registry due to insufficient columns: $row")
                     }
                 }
             }
@@ -169,13 +160,13 @@ class GoogleApiService(
     suspend fun addCaseToRegistry(registrySpreadsheetId: String, caseData: Case): Boolean = withContext(Dispatchers.IO) {
         try {
             val values = listOf(listOf(
-                caseData.name, 
-                caseData.spreadsheetId, 
-                caseData.generatedPdfId ?: "", 
+                caseData.name,
+                caseData.spreadsheetId,
+                caseData.generatedPdfId ?: "",
                 caseData.sourceHtmlSnapshotId ?: "",
                 caseData.originalMasterHtmlTemplateId ?: ""
             ))
-            appendData(registrySpreadsheetId, CASE_REGISTRY_SHEET_NAME, values) != null
+            appendData(registrySpreadsheetId, Schema.CaseRegistry.SHEET_NAME, values) != null
         } catch (e: Exception) {
             e.printStackTrace()
             Log.e("GoogleApiService", "Error in addCaseToRegistry for ${caseData.name}", e)
@@ -186,7 +177,7 @@ class GoogleApiService(
     suspend fun deleteEvidenceFromCase(spreadsheetId: String, evidenceId: Int): Boolean = withContext(Dispatchers.IO) {
         if (spreadsheetId.isBlank()) return@withContext false
         try {
-            val sheetId = getSheetId(spreadsheetId, EVIDENCE_SHEET_NAME) ?: return@withContext false
+            val sheetId = getSheetId(spreadsheetId, Schema.Evidence.SHEET_NAME) ?: return@withContext false
             val request = Request().setDeleteDimension(
                 DeleteDimensionRequest()
                     .setRange(
@@ -237,11 +228,15 @@ class GoogleApiService(
         if (caseSpreadsheetId.isBlank()) return@withContext allegations
         try {
             val allSheetData = readSpreadsheet(caseSpreadsheetId)
-            val allegationSheetValues = allSheetData?.get(ALLEGATIONS_SHEET_NAME)
-            allegationSheetValues?.forEachIndexed { index, row ->
-                val text = row.getOrNull(0)?.toString() ?: ""
-                if (text.isNotBlank()) {
-                    allegations.add(Allegation(id = index, caseId = caseIdForAssociation, text = text))
+            val allegationSheetValues = allSheetData?.get(Schema.Allegations.SHEET_NAME)
+            allegationSheetValues?.let {
+                val header = it.firstOrNull() ?: return@withContext emptyList()
+                val textIndex = header.indexOf(Schema.Allegations.COL_ALLEGATION_TEXT)
+                it.drop(1).forEachIndexed { index, row ->
+                    val text = row.getOrNull(textIndex)?.toString() ?: ""
+                    if (text.isNotBlank()) {
+                        allegations.add(Allegation(id = index, caseId = caseIdForAssociation, text = text))
+                    }
                 }
             }
         } catch (e: Exception) { 
@@ -254,9 +249,9 @@ class GoogleApiService(
     suspend fun addAllegationToCase(caseSpreadsheetId: String, allegationText: String): Boolean = withContext(Dispatchers.IO) {
         if (caseSpreadsheetId.isBlank() || allegationText.isBlank()) return@withContext false
         try {
-            addSheet(caseSpreadsheetId, ALLEGATIONS_SHEET_NAME) // Ensure sheet exists
+            addSheet(caseSpreadsheetId, Schema.Allegations.SHEET_NAME) // Ensure sheet exists
             val values = listOf(listOf(allegationText))
-            appendData(caseSpreadsheetId, ALLEGATIONS_SHEET_NAME, values) != null
+            appendData(caseSpreadsheetId, Schema.Allegations.SHEET_NAME, values) != null
         } catch (e: Exception) {
             e.printStackTrace()
             Log.e("GoogleApiService", "Error in addAllegationToCase for $caseSpreadsheetId", e)
@@ -269,31 +264,42 @@ class GoogleApiService(
         if (caseSpreadsheetId.isBlank()) return@withContext entries
         try {
             val allSheetData = readSpreadsheet(caseSpreadsheetId)
-            val sheetValues = allSheetData?.get(EVIDENCE_SHEET_NAME)
-            sheetValues?.drop(1)?.forEachIndexed { index, row -> // drop(1) to skip header
-                try {
-                    val content = row.getOrNull(0)?.toString() ?: ""
-                    val timestamp = row.getOrNull(1)?.toString()?.toLongOrNull() ?: System.currentTimeMillis()
-                    val sourceDocument = row.getOrNull(2)?.toString() ?: ""
-                    val documentDate = row.getOrNull(3)?.toString()?.toLongOrNull() ?: System.currentTimeMillis()
-                    val tags = row.getOrNull(4)?.toString()?.split(",")?.map { it.trim() } ?: emptyList()
-                    val allegationId = row.getOrNull(5)?.toString()?.toIntOrNull()
-                    val category = row.getOrNull(6)?.toString() ?: ""
+            val sheetValues = allSheetData?.get(Schema.Evidence.SHEET_NAME)
+            sheetValues?.let {
+                val header = it.firstOrNull() ?: return@withContext emptyList()
+                val contentIndex = header.indexOf(Schema.Evidence.COL_CONTENT)
+                val timestampIndex = header.indexOf(Schema.Evidence.COL_TIMESTAMP)
+                val sourceDocumentIndex = header.indexOf(Schema.Evidence.COL_SOURCE_DOCUMENT)
+                val documentDateIndex = header.indexOf(Schema.Evidence.COL_DOCUMENT_DATE)
+                val tagsIndex = header.indexOf(Schema.Evidence.COL_TAGS)
+                val allegationIdIndex = header.indexOf(Schema.Evidence.COL_ALLEGATION_ID)
+                val categoryIndex = header.indexOf(Schema.Evidence.COL_CATEGORY)
 
-                    entries.add(Evidence(
-                        id = index, // Using row index as a simple ID for now
-                        caseId = caseIdForAssociation,
-                        allegationId = allegationId,
-                        content = content,
-                        timestamp = timestamp,
-                        sourceDocument = sourceDocument,
-                        documentDate = documentDate,
-                        tags = tags,
-                        category = category
-                    ))
-                } catch (e: Exception) {
-                    e.printStackTrace() 
-                    Log.e("GoogleApiService", "Error parsing row in getEvidenceForCase for $caseSpreadsheetId", e)
+                it.drop(1).forEachIndexed { index, row -> // drop(1) to skip header
+                    try {
+                        val content = row.getOrNull(contentIndex)?.toString() ?: ""
+                        val timestamp = row.getOrNull(timestampIndex)?.toString()?.toLongOrNull() ?: System.currentTimeMillis()
+                        val sourceDocument = row.getOrNull(sourceDocumentIndex)?.toString() ?: ""
+                        val documentDate = row.getOrNull(documentDateIndex)?.toString()?.toLongOrNull() ?: System.currentTimeMillis()
+                        val tags = row.getOrNull(tagsIndex)?.toString()?.split(",")?.map { it.trim() } ?: emptyList()
+                        val allegationId = row.getOrNull(allegationIdIndex)?.toString()?.toIntOrNull()
+                        val category = row.getOrNull(categoryIndex)?.toString() ?: ""
+
+                        entries.add(Evidence(
+                            id = index, // Using row index as a simple ID for now
+                            caseId = caseIdForAssociation,
+                            allegationId = allegationId,
+                            content = content,
+                            timestamp = timestamp,
+                            sourceDocument = sourceDocument,
+                            documentDate = documentDate,
+                            tags = tags,
+                            category = category
+                        ))
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        Log.e("GoogleApiService", "Error parsing row in getEvidenceForCase for $caseSpreadsheetId", e)
+                    }
                 }
             }
         } catch (e: Exception) { 
@@ -307,11 +313,11 @@ class GoogleApiService(
         if (caseSpreadsheetId.isBlank()) return@withContext false
         try {
             // Ensure sheet exists and add header if it's new
-            val sheetExists = sheetsService.spreadsheets().get(caseSpreadsheetId).execute().sheets?.any { it.properties?.title == EVIDENCE_SHEET_NAME } == true
+            val sheetExists = sheetsService.spreadsheets().get(caseSpreadsheetId).execute().sheets?.any { it.properties?.title == Schema.Evidence.SHEET_NAME } == true
             if (!sheetExists) {
-                addSheet(caseSpreadsheetId, EVIDENCE_SHEET_NAME)
-                val header = listOf(listOf("Content", "Timestamp", "Source Document", "Document Date", "Tags", "Allegation ID", "Category"))
-                appendData(caseSpreadsheetId, EVIDENCE_SHEET_NAME, header)
+                addSheet(caseSpreadsheetId, Schema.Evidence.SHEET_NAME)
+                val header = listOf(Schema.Evidence.HEADER)
+                appendData(caseSpreadsheetId, Schema.Evidence.SHEET_NAME, header)
             }
 
             val values = listOf(listOf(
@@ -323,7 +329,7 @@ class GoogleApiService(
                 entry.allegationId?.toString() ?: "", // Store Allegation ID as string, empty if null
                 entry.category
             ))
-            appendData(caseSpreadsheetId, EVIDENCE_SHEET_NAME, values) != null
+            appendData(caseSpreadsheetId, Schema.Evidence.SHEET_NAME, values) != null
         } catch (e: Exception) {
             e.printStackTrace()
             Log.e("GoogleApiService", "Error in addEvidenceToCase for $caseSpreadsheetId", e)
@@ -334,7 +340,7 @@ class GoogleApiService(
     suspend fun updateEvidenceInCase(spreadsheetId: String, evidence: Evidence): Boolean = withContext(Dispatchers.IO) {
         if (spreadsheetId.isBlank()) return@withContext false
         try {
-            val range = "$EVIDENCE_SHEET_NAME!A${evidence.id + 2}" // +2 because sheet is 1-indexed and there's a header
+            val range = "${Schema.Evidence.SHEET_NAME}!A${evidence.id + 2}" // +2 because sheet is 1-indexed and there's a header
             val values = listOf(listOf(
                 evidence.content,
                 evidence.timestamp.toString(),
