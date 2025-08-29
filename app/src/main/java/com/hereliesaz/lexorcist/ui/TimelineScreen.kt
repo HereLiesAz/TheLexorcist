@@ -1,8 +1,8 @@
 package com.hereliesaz.lexorcist.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
@@ -40,10 +40,13 @@ fun TimelineScreen(viewModel: MainViewModel) {
             style = JetLimeEventDefaults.eventStyle(
                 position = position,
                 pointAnimation = JetLimeEventDefaults.pointAnimation()
-            ),
-            onClick = { selectedEvidence = item }
+            )
         ) {
-            Column(modifier = Modifier.padding(start = 12.dp)) {
+            Column(
+                modifier = Modifier
+                    .clickable { selectedEvidence = item }
+                    .padding(start = 12.dp)
+            ) {
                 Text(
                     text = item.sourceDocument,
                     style = MaterialTheme.typography.titleMedium,
