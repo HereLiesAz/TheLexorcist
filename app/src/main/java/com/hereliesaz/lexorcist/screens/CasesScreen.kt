@@ -8,6 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -24,25 +25,30 @@ fun CasesScreen(viewModel: MainViewModel) {
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(onClick = { showCreateCaseDialog = true }) {
-                Icon(Icons.Default.Add, contentDescription = "Add Case")
+                Icon(Icons.Filled.Add, contentDescription = "Create New Case")
             }
         }
-    ) { padding ->
+    ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp)
+                .padding(paddingValues)
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text("Cases", style = MaterialTheme.typography.headlineMedium)
             Spacer(modifier = Modifier.height(16.dp))
-            LazyColumn(modifier = Modifier.fillMaxSize()) {
-                items(cases) { case ->
-                    CaseItem(
-                        case = case,
-                        isSelected = case.id == selectedCase?.id,
-                        onClick = { viewModel.selectCase(case) }
-                    )
+            if (cases.isEmpty()) {
+                Text("No cases found. Click the '+' button to create a new case.")
+            } else {
+                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                    items(cases) { case ->
+                        CaseItem(
+                            case = case,
+                            isSelected = case.id == selectedCase?.id,
+                            onClick = { viewModel.selectCase(case) }
+                        )
+                    }
                 }
             }
         }
@@ -51,8 +57,15 @@ fun CasesScreen(viewModel: MainViewModel) {
     if (showCreateCaseDialog) {
         CreateCaseDialog(
             onDismiss = { showCreateCaseDialog = false },
-            onCreate = { caseName, exhibitSheetName, caseNumber, caseSection, caseJudge ->
-                viewModel.createCase(caseName, exhibitSheetName, caseNumber, caseSection, caseJudge)
+            onCreate = { caseName ->
+                // Provide default empty values for other parameters
+                viewModel.createCase(
+                    caseName = caseName,
+                    exhibitSheetName = "Exhibit Matrix - Exhibit List", // A reasonable default
+                    caseNumber = "",
+                    caseSection = "",
+                    caseJudge = ""
+                )
                 showCreateCaseDialog = false
             }
         )
@@ -60,74 +73,32 @@ fun CasesScreen(viewModel: MainViewModel) {
 }
 
 @Composable
-fun CaseItem(case: Case, isSelected: Boolean, onClick: () -> Unit) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp)
-            .clickable(onClick = onClick),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
-        )
-    ) {
-        Text(
-            text = case.name,
-            modifier = Modifier.padding(16.dp),
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-        )
-    }
-}
-
-@Composable
-fun CreateCaseDialog(
+private fun CreateCaseDialog(
     onDismiss: () -> Unit,
-    onCreate: (String, String, String, String, String) -> Unit
+    onCreate: (String) -> Unit
 ) {
     var caseName by remember { mutableStateOf("") }
-    var exhibitSheetName by remember { mutableStateOf("Exhibit Matrix - Exhibit List") }
-    var caseNumber by remember { mutableStateOf("") }
-    var caseSection by remember { mutableStateOf("") }
-    var caseJudge by remember { mutableStateOf("") }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Create New Case") },
         text = {
-            Column {
-                OutlinedTextField(
-                    value = caseName,
-                    onValueChange = { caseName = it },
-                    label = { Text("Case Name") }
-                )
-                OutlinedTextField(
-                    value = exhibitSheetName,
-                    onValueChange = { exhibitSheetName = it },
-                    label = { Text("Exhibit Sheet Name") }
-                )
-                OutlinedTextField(
-                    value = caseNumber,
-                    onValueChange = { caseNumber = it },
-                    label = { Text("Case Number") }
-                )
-                OutlinedTextField(
-                    value = caseSection,
-                    onValueChange = { caseSection = it },
-                    label = { Text("Case Section") }
-                )
-                OutlinedTextField(
-                    value = caseJudge,
-                    onValueChange = { caseJudge = it },
-                    label = { Text("Case Judge") }
-                )
-            }
+            OutlinedTextField(
+                value = caseName,
+                onValueChange = { caseName = it },
+                label = { Text("Case Name") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
         },
         confirmButton = {
             Button(
                 onClick = {
                     if (caseName.isNotBlank()) {
-                        onCreate(caseName, exhibitSheetName, caseNumber, caseSection, caseJudge)
+                        onCreate(caseName)
                     }
-                }
+                },
+                enabled = caseName.isNotBlank()
             ) {
                 Text("Create")
             }
@@ -138,4 +109,24 @@ fun CreateCaseDialog(
             }
         }
     )
+}
+
+@Composable
+fun CaseItem(case: Case, isSelected: Boolean, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = 8.dp, horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = case.name,
+            style = if (isSelected) {
+                MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
+            } else {
+                MaterialTheme.typography.bodyLarge
+            }
+        )
+    }
 }
