@@ -8,18 +8,18 @@ import java.util.Locale
 import java.util.TimeZone
 
 object DataParser {
-    fun parseDates(text: String): List<Long> {
-        val datePatterns = mapOf(
-            """\b\d{4}-\d{2}-\d{2}\b""".toRegex() to SimpleDateFormat("yyyy-MM-dd", Locale.US),
-            """\b\d{2}-\d{2}-\d{4}\b""".toRegex() to SimpleDateFormat("MM-dd-yyyy", Locale.US),
-            """\b\d{2}/\d{2}/\d{4}\b""".toRegex() to SimpleDateFormat("MM/dd/yyyy", Locale.US),
-            """\b\d{4}/\d{2}/\d{2}\b""".toRegex() to SimpleDateFormat("yyyy/MM/dd", Locale.US),
-            """\b\d{2}/\d{2}/\d{2}\b""".toRegex() to SimpleDateFormat("MM/dd/yy", Locale.US),
-            """\b\d{2}-\d{2}-\d{2}\b""".toRegex() to SimpleDateFormat("MM-dd-yy", Locale.US),
-            """\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s\d{1,2},?\s\d{4}\b""".toRegex() to SimpleDateFormat("MMM d, yyyy", Locale.US),
-            """\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\s\d{1,2},?\s\d{4}\b""".toRegex() to SimpleDateFormat("MMMM d, yyyy", Locale.US)
-        )
+    private val datePatterns = mapOf(
+        """\b\d{4}-\d{2}-\d{2}\b""".toRegex() to SimpleDateFormat("yyyy-MM-dd", Locale.US),
+        """\b\d{2}[-/]\d{2}[-/]\d{4}\b""".toRegex() to SimpleDateFormat("MM-dd-yyyy", Locale.US),
+        """\b\d{2}[-/]\d{2}[-/]\d{2}\b""".toRegex() to SimpleDateFormat("MM-dd-yy", Locale.US),
+        """\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s\d{1,2},?\s\d{4}\b""".toRegex() to SimpleDateFormat("MMM d, yyyy", Locale.US),
+        """\b\d{1,2}\s(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s\d{4}\b""".toRegex() to SimpleDateFormat("dd MMM yyyy", Locale.US),
+        """\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\s\d{1,2},?\s\d{4}\b""".toRegex() to SimpleDateFormat("MMMM d, yyyy", Locale.US),
+        """\b\d{1,2}\s(?:January|February|March|April|May|June|July|August|September|October|November|December)\s\d{4}\b""".toRegex() to SimpleDateFormat("dd MMMM yyyy", Locale.US),
+        """\b\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z\b""".toRegex() to SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
+    )
 
+    fun parseDates(text: String): List<Long> {
         val dates = mutableListOf<Long>()
         for ((regex, format) in datePatterns) {
             regex.findAll(text).forEach { matchResult ->
@@ -77,35 +77,11 @@ object DataParser {
     }
 
     fun extractEvidence(caseId: Int, text: String, allegations: List<Allegation>): List<Evidence> {
-        val dateRegex = """(?i)(?:\d{1,4}[/-]\d{1,2}[/-]\d{2,4})|(?:\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b\s\d{1,2},?\s\d{4})""".toRegex()
-        val dateFormats = listOf(
-            SimpleDateFormat("yyyy-MM-dd", Locale.US),
-            SimpleDateFormat("MM/dd/yyyy", Locale.US),
-            SimpleDateFormat("MM-dd-yyyy", Locale.US),
-            SimpleDateFormat("MM/dd/yy", Locale.US),
-            SimpleDateFormat("MM-dd-yy", Locale.US),
-            SimpleDateFormat("yyyy/MM/dd", Locale.US),
-            SimpleDateFormat("MMM d, yyyy", Locale.US),
-            SimpleDateFormat("MMMM d, yyyy", Locale.US)
-        ).onEach {
-            it.timeZone = TimeZone.getTimeZone("UTC")
-            it.isLenient = true
-        }
-
         val entries = mutableListOf<Evidence>()
         val sentences = text.split("\n")
 
         for (sentence in sentences) {
-            val dateMatch = dateRegex.find(sentence)
-            val date = dateMatch?.let { matchResult ->
-                dateFormats.firstNotNullOfOrNull { format ->
-                    try {
-                        format.parse(matchResult.value.trim())?.time
-                    } catch (e: Exception) {
-                        null
-                    }
-                }
-            } ?: System.currentTimeMillis()
+            val date = parseDates(sentence).firstOrNull() ?: System.currentTimeMillis()
 
             val linkedAllegation = allegations.find { sentence.contains(it.text, ignoreCase = true) }
             val categoryRegex = """(?i)Category:\s*(\w+)""".toRegex()

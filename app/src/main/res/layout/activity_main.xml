@@ -17,7 +17,7 @@
         android:id="@+id/select_image_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Select Image to Scan"
+        android:text="@string/select_image_to_scan"
         android:visibility="gone"
         tools:visibility="visible" />
 
@@ -25,7 +25,7 @@
         android:id="@+id/create_case_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Create New Case"
+        android:text="@string/create_new_case"
         android:visibility="gone"
         tools:visibility="visible" />
 
@@ -33,7 +33,7 @@
         android:id="@+id/load_case_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Load Case"
+        android:text="@string/load_case"
         android:visibility="gone"
         tools:visibility="visible" />
 
@@ -41,7 +41,7 @@
         android:id="@+id/save_to_sheet_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Save to Sheet"
+        android:text="@string/save_to_sheet"
         android:visibility="gone"
         tools:visibility="visible" />
 
@@ -49,7 +49,7 @@
         android:id="@+id/edit_script_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Edit App Script"
+        android:text="@string/edit_app_script"
         android:visibility="gone"
         tools:visibility="visible" />
 
@@ -58,7 +58,7 @@
         android:layout_width="match_parent"
         android:layout_height="150dp"
         android:layout_marginTop="16dp"
-        android:contentDescription="Selected Image for scanning"
+        android:contentDescription="@string/selected_image_for_scanning"
         android:visibility="gone"
         tools:visibility="visible" />
 
@@ -78,7 +78,7 @@
             android:id="@+id/filter_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Filter"/>
+            android:text="@string/filter"/>
 
     </LinearLayout>
 
@@ -86,7 +86,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:text="All Entries:"
+        android:text="@string/all_entries"
         android:textAppearance="?attr/textAppearanceHeadline6" />
 
     <androidx.recyclerview.widget.RecyclerView
@@ -104,6 +104,6 @@
         android:layout_marginTop="16dp"
         android:gravity="end"
         android:textAppearance="?attr/textAppearanceHeadline5"
-        tools:text="Total: $1,234.56" />
+        tools:text="@string/total" />
 
 </LinearLayout>
