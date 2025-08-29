@@ -811,11 +811,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    private suspend fun parseSpreadsheetFile(uri: Uri, context: Context): Evidence? { 
+    private suspend fun parseSpreadsheetFile(uri: Uri, context: Context): Evidence? {
         return try {
             context.contentResolver.openInputStream(uri)?.let { inputStream ->
                 val workbook = WorkbookFactory.create(inputStream)
-                val text = buildString { /* ... */ } 
+                val text = buildString {
+                    for (sheet in workbook) {
+                        for (row in sheet) {
+                            for (cell in row) {
+                                append(cell.toString()).append("\t")
+                            }
+                            append("\n")
+                        }
+                    }
+                }
                 workbook.close()
                 Evidence(content = text, timestamp = System.currentTimeMillis(), sourceDocument = uri.toString(), documentDate = System.currentTimeMillis())
             }
