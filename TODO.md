@@ -10,10 +10,9 @@ This document outlines the required tasks to develop The Lexorcist into a functi
 
 The most significant issue is the disconnect between the app's stated purpose as a "legal evidence tracker" and the heavy emphasis on financial tracking in its documentation and feature planning.
 
-- [ ] **1.1. Revise `README.md`:**
+- [x] **1.1. Revise `README.md`:**
     - Rewrite the `README.md` to use general legal evidence terminology. Replace financial terms (e.g., "receipts", "vendors", "amounts") with broader terms like "documents," "exhibits," "artifacts," "photos," etc.
     - The features should be described in a way that reflects this broader scope (e.g., "OCR for text-based evidence" instead of for "financial documents").
-    - **Note:** `README.md` still contains financial terminology.
 
 - [ / ] **1.2. Align Planning Documents (`TODO.md`, `FUTURE_PLANS.md`):**
     - Rephrase or replace financially-focused tasks.
