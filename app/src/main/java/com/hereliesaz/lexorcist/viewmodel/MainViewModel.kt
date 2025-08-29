@@ -666,6 +666,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /**
+     * Pre-processes the image for OCR by converting it to grayscale, applying noise reduction,
+     * and then using adaptive thresholding to create a binary image.
+     * @param bitmap The input image.
+     * @return The processed bitmap, ready for OCR.
+     */
     private fun preprocessImageForOcr(bitmap: Bitmap): Bitmap {
         val mat = Mat()
         Utils.bitmapToMat(bitmap, mat)
@@ -674,10 +680,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val grayMat = Mat()
         Imgproc.cvtColor(mat, grayMat, Imgproc.COLOR_BGR2GRAY)
 
-        // Apply adaptive thresholding
+        // Apply median blur for noise reduction
+        val blurredMat = Mat()
+        Imgproc.medianBlur(grayMat, blurredMat, 3) // Using a 3x3 kernel
+
+        // Apply adaptive thresholding on the blurred image
         val binaryMat = Mat()
         Imgproc.adaptiveThreshold(
-            grayMat,
+            blurredMat,
             binaryMat,
             255.0,
             Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C,

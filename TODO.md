@@ -3,7 +3,7 @@
 This file lists the immediate tasks that need to be addressed to improve the Lexorcist application.
 
 ## High Priority
-- [ ] **Improve OCR Accuracy:** The current text recognition can sometimes be inaccurate, especially with crumpled receipts or unusual fonts. Research and implement techniques to improve the reliability of the ML Kit OCR. This could involve pre-processing the image (e.g., binarization, noise reduction) before sending it to the recognizer.
+- [x] **Improve OCR Accuracy:** The current text recognition can sometimes be inaccurate, especially with crumpled receipts or unusual fonts. Research and implement techniques to improve the reliability of the ML Kit OCR. This could involve pre-processing the image (e.g., binarization, noise reduction) before sending it to the recognizer.
 - [ ] **Implement Edit/Delete Functionality:** Users currently cannot edit or delete financial entries after they have been saved. This is a critical feature for correcting mistakes or removing duplicate entries.
 
 ## Medium Priority
