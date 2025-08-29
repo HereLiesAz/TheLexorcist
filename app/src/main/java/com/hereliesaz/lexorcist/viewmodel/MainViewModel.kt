@@ -3,6 +3,8 @@ package com.hereliesaz.lexorcist.viewmodel
 import android.app.Application
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.ImageDecoder
+import android.graphics.Matrix
 import android.net.Uri
 import android.os.Build
 import android.os.CancellationSignal
@@ -12,6 +14,7 @@ import android.print.PrintAttributes
 import android.print.PrintDocumentAdapter
 import android.print.PrintDocumentInfo
 import android.print.PrintManager
+import android.provider.MediaStore
 import android.provider.OpenableColumns
 import android.util.Log
 import android.webkit.WebResourceError
@@ -111,8 +114,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     // --- Image Processing & Text Extraction ---
     private val _extractedText = MutableStateFlow("")
     val extractedText: StateFlow<String> = _extractedText.asStateFlow()
-    private val _imageBitmap = MutableStateFlow<Bitmap?>(null)
-    val imageBitmap: StateFlow<Bitmap?> = _imageBitmap.asStateFlow()
+    // _imageBitmap is for the older flow, replaced by imageBitmapForReview
+    // private val _imageBitmap = MutableStateFlow<Bitmap?>(null) 
+    // val imageBitmap: StateFlow<Bitmap?> = _imageBitmap.asStateFlow()
+
+    // --- Image Review Workflow ---
+    private val _imageBitmapForReview = MutableStateFlow<Bitmap?>(null)
+    val imageBitmapForReview: StateFlow<Bitmap?> = _imageBitmapForReview.asStateFlow()
+    private var imageUriForReview: Uri? = null
     
     // --- Tagged Data for Scripting ---
     private val _taggedData = MutableStateFlow<Map<String, List<String>>>(emptyMap())
@@ -213,6 +222,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _uiEvidenceList.value = emptyList()
         _settingScreenFilters.value = emptyList()
         saveCaseInfo()
+        cancelImageReview() // Clear any image under review
     }
 
     // --- SharedPreferences ---
@@ -669,19 +679,102 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun addEvidenceToUiList(uri: Uri, context: Context) { 
         viewModelScope.launch {
             val mimeType = context.contentResolver.getType(uri)
-            val evidence = when (mimeType) {
-                "text/plain" -> parseTextFile(uri, context)
-                "application/pdf" -> parsePdfFile(uri, context)
-                "image/jpeg", "image/png" -> parseImageFileToEvidence(uri, context) 
-                "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" -> parseSpreadsheetFile(uri, context)
-                "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document" -> parseDocFile(uri, context)
-                else -> { Log.w(TAG, "Unsupported file type: $mimeType"); null }
-            }
-            evidence?.let {
-                _uiEvidenceList.value = _uiEvidenceList.value + it
+            if (mimeType?.startsWith("image/") == true) {
+                imageUriForReview = uri
+                _imageBitmapForReview.value = loadBitmapFromUri(uri, context)
+                if (_imageBitmapForReview.value == null) {
+                    Log.e(TAG, "Failed to load bitmap for review from URI: $uri")
+                    imageUriForReview = null // Clear URI if bitmap loading failed
+                }
+            } else {
+                val evidence = when (mimeType) {
+                    "text/plain" -> parseTextFile(uri, context)
+                    "application/pdf" -> parsePdfFile(uri, context)
+                    // "image/jpeg", "image/png" -> // Handled above
+                    "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" -> parseSpreadsheetFile(uri, context)
+                    "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document" -> parseDocFile(uri, context)
+                    else -> { Log.w(TAG, "Unsupported file type: $mimeType for URI: $uri"); null }
+                }
+                evidence?.let {
+                    _uiEvidenceList.value = _uiEvidenceList.value + it
+                }
             }
         }
     }
+
+    private suspend fun loadBitmapFromUri(uri: Uri, context: Context): Bitmap? = withContext(Dispatchers.IO) {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                ImageDecoder.decodeBitmap(ImageDecoder.createSource(context.contentResolver, uri))
+            } else {
+                @Suppress("DEPRECATION")
+                MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error loading bitmap from URI: $uri", e)
+            null
+        }
+    }
+
+    fun rotateImageBeingReviewed(degrees: Float) {
+        val currentBitmap = _imageBitmapForReview.value ?: return
+        viewModelScope.launch(Dispatchers.Default) { // Use Default dispatcher for image manipulation
+            val matrix = Matrix().apply { postRotate(degrees) }
+            val rotatedBitmap = Bitmap.createBitmap(currentBitmap, 0, 0, currentBitmap.width, currentBitmap.height, matrix, true)
+            _imageBitmapForReview.value = rotatedBitmap
+        }
+    }
+
+    fun confirmImageReview(context: Context) {
+        val reviewedBitmap = _imageBitmapForReview.value
+        val reviewedUri = imageUriForReview
+
+        if (reviewedBitmap == null || reviewedUri == null) {
+            Log.w(TAG, "confirmImageReview: Bitmap or URI for review is null.")
+            cancelImageReview() // Clear any partial state
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                val inputImage = InputImage.fromBitmap(reviewedBitmap, 0)
+                val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+                
+                val visionText = suspendCancellableCoroutine<com.google.mlkit.vision.text.Text> { continuation ->
+                    recognizer.process(inputImage)
+                        .addOnSuccessListener { text -> 
+                            if (continuation.isActive) continuation.resume(text) 
+                        }
+                        .addOnFailureListener { e -> 
+                            Log.e(TAG, "ML Kit text recognition failed during review confirmation", e)
+                            if (continuation.isActive) continuation.resumeWithException(e) 
+                        }
+                } ?: return@launch // Should not happen if resumeWithException is used correctly
+
+                val newEvidence = Evidence(
+                    content = visionText.text,
+                    timestamp = System.currentTimeMillis(),
+                    sourceDocument = reviewedUri.toString(), // Use the original URI
+                    documentDate = System.currentTimeMillis()
+                )
+                _uiEvidenceList.value = _uiEvidenceList.value + newEvidence
+                Log.d(TAG, "Image review confirmed. Evidence added to UI list.")
+
+            } catch (e: Exception) {
+                Log.e(TAG, "Exception during image review confirmation or text recognition.", e)
+                // Optionally, communicate this error to the UI (e.g., via a Toast or another StateFlow)
+            } finally {
+                cancelImageReview() // Clear review state whether success or failure
+            }
+        }
+    }
+
+    fun cancelImageReview() {
+        _imageBitmapForReview.value = null
+        imageUriForReview = null
+        Log.d(TAG, "Image review cancelled/cleared.")
+    }
+
 
     private suspend fun parseTextFile(uri: Uri, context: Context): Evidence? { 
         return try {
@@ -704,17 +797,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         } catch (e: Exception) { Log.e(TAG, "Failed to parse PDF file", e); null }
     }
 
-    private suspend fun parseImageFileToEvidence(uri: Uri, context: Context): Evidence? { 
-        return try {
-            val inputImage = InputImage.fromFilePath(context, uri)
-            val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
-            suspendCancellableCoroutine { continuation ->
-                recognizer.process(inputImage)
-                    .addOnSuccessListener { visionText -> continuation.resume(Evidence(content = visionText.text, timestamp = System.currentTimeMillis(), sourceDocument = uri.toString(), documentDate = System.currentTimeMillis())) }
-                    .addOnFailureListener { e -> Log.e(TAG, "ML Kit text recognition failed", e); continuation.resume(null) }
-            }
-        } catch (e: Exception) { Log.e(TAG, "Failed to parse image file to evidence", e); null }
-    }
+    // parseImageFileToEvidence removed as its logic is now in confirmImageReview
 
     private suspend fun parseSpreadsheetFile(uri: Uri, context: Context): Evidence? { 
         return try {
@@ -797,6 +880,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     // --- Image Processing & Text Evidence (from older ViewModel) ---
+    // This function onImageSelectedForProcessing is now effectively replaced by addEvidenceToUiList (for images) and the review workflow.
+    // The _imageBitmap StateFlow and processSelectedImage are also part of this older flow and can be removed if not used elsewhere.
+    /*
     fun onImageSelectedForProcessing(bitmap: Bitmap, context: Context) { 
         _imageBitmap.value = bitmap
         viewModelScope.launch {
@@ -850,6 +936,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 _extractedText.value = "Failed to extract text: ${e.message}"
             }
     }
+    */
 
     fun addTextEvidenceToSelectedCase(text: String, context: Context) { 
         viewModelScope.launch {
