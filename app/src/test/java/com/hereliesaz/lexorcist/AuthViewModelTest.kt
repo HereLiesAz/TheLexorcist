@@ -1,12 +1,12 @@
-package com.hereliesaz.lexorcist
+package com.hereliesaz.lexorcist.viewmodel
 
 import android.app.Application
 import android.content.Context
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import com.hereliesaz.lexorcist.GoogleApiService
 import com.hereliesaz.lexorcist.data.CaseRepositoryImpl
 import com.hereliesaz.lexorcist.data.EvidenceRepositoryImpl
-import com.hereliesaz.lexorcist.viewmodel.AuthViewModel
-import io.mockk.coEvery
+import io.mockk.any
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
@@ -16,13 +16,13 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
 
 @ExperimentalCoroutinesApi
 @RunWith(JUnit4::class)
@@ -67,8 +67,8 @@ class AuthViewModelTest {
 
         // Then
         assertTrue(authViewModel.isSignedIn.value)
-        verify { evidenceRepository.setGoogleApiService(any()) }
-        verify { caseRepository.setGoogleApiService(any()) }
+        verify { evidenceRepository.setGoogleApiService(any<GoogleApiService>()) }
+        verify { caseRepository.setGoogleApiService(any<GoogleApiService>()) }
     }
 
     @Test

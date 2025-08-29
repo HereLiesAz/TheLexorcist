@@ -13,13 +13,12 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import java.util.Date
-import kotlin.test.assertEquals
 
 @ExperimentalCoroutinesApi
 @RunWith(JUnit4::class)
@@ -31,15 +30,13 @@ class EvidenceRepositoryTest {
     private val testDispatcher = StandardTestDispatcher()
 
     private lateinit var evidenceRepository: EvidenceRepositoryImpl
-    private lateinit var googleApiService: GoogleApiService
     private lateinit var evidenceDao: EvidenceDao
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
-        googleApiService = mockk()
         evidenceDao = mockk()
-        evidenceRepository = EvidenceRepositoryImpl(evidenceDao, googleApiService)
+        evidenceRepository = EvidenceRepositoryImpl(evidenceDao)
     }
 
     @After
@@ -52,8 +49,8 @@ class EvidenceRepositoryTest {
         // Given
         val caseId = 1L
         val evidenceList = listOf(
-            Evidence(id = 1, caseId = 1, content = "Evidence 1", timestamp = Date(), sourceDocument = "doc1", documentDate = Date()),
-            Evidence(id = 2, caseId = 1, content = "Evidence 2", timestamp = Date(), sourceDocument = "doc2", documentDate = Date())
+            Evidence(id = 1, caseId = 1, content = "Evidence 1", timestamp = System.currentTimeMillis(), sourceDocument = "doc1", documentDate = System.currentTimeMillis()),
+            Evidence(id = 2, caseId = 1, content = "Evidence 2", timestamp = System.currentTimeMillis(), sourceDocument = "doc2", documentDate = System.currentTimeMillis())
         )
         coEvery { evidenceDao.getEvidenceForCase(caseId) } returns flowOf(evidenceList)
 

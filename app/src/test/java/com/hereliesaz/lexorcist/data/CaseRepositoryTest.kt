@@ -8,17 +8,18 @@ import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import kotlin.test.assertEquals
 
 @ExperimentalCoroutinesApi
 @RunWith(JUnit4::class)
@@ -30,15 +31,15 @@ class CaseRepositoryTest {
     private val testDispatcher = StandardTestDispatcher()
 
     private lateinit var caseRepository: CaseRepositoryImpl
-    private lateinit var googleApiService: GoogleApiService
+    private lateinit var caseDao: CaseDao
     private lateinit var context: Context
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
-        googleApiService = mockk()
+        caseDao = mockk()
         context = mockk(relaxed = true)
-        caseRepository = CaseRepositoryImpl(context, googleApiService)
+        caseRepository = CaseRepositoryImpl(context, caseDao, null)
     }
 
     @After
@@ -47,18 +48,15 @@ class CaseRepositoryTest {
     }
 
     @Test
-    fun `getCases returns cases from googleApiService`() = runTest {
+    fun `getCases returns cases from dao`() = runTest {
         // Given
         val cases = listOf(
             Case(id = 1, name = "Case 1", spreadsheetId = "sheet1"),
             Case(id = 2, name = "Case 2", spreadsheetId = "sheet2")
         )
-        coEvery { googleApiService.getOrCreateAppRootFolder() } returns "root_folder"
-        coEvery { googleApiService.getOrCreateCaseRegistrySpreadsheetId("root_folder") } returns "registry_id"
-        coEvery { googleApiService.getAllCasesFromRegistry("registry_id") } returns cases
+        coEvery { caseDao.getAllCases() } returns flowOf(cases)
 
         // When
-        caseRepository.refreshCases()
         val result = caseRepository.getCases().first()
         testDispatcher.scheduler.advanceUntilIdle()
 

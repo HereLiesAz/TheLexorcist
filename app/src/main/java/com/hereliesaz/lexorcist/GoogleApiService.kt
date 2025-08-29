@@ -134,25 +134,14 @@ class GoogleApiService(
                 val spreadsheetId = row.getOrNull(1)?.toString() ?: ""
 
                 if (name.isNotBlank() && spreadsheetId.isNotBlank()) {
-                    if (row.size >= 5) { 
+                    if (row.size >= 4) {
                         val generatedPdfId = row.getOrNull(2)?.toString()
                         val sourceHtmlSnapshotId = row.getOrNull(3)?.toString()
-                        val originalMasterHtmlTemplateId = row.getOrNull(4)?.toString()
                         cases.add(Case(
                             name = name, 
                             spreadsheetId = spreadsheetId, 
                             generatedPdfId = if(generatedPdfId?.isBlank() == true) null else generatedPdfId,
-                            sourceHtmlSnapshotId = if(sourceHtmlSnapshotId?.isBlank() == true) null else sourceHtmlSnapshotId,
-                            originalMasterHtmlTemplateId = if(originalMasterHtmlTemplateId?.isBlank() == true) null else originalMasterHtmlTemplateId
-                        ))
-                    } else if (row.size >= 3) { 
-                        val oldMasterTemplateId = row.getOrNull(2)?.toString()
-                        cases.add(Case(
-                            name = name, 
-                            spreadsheetId = spreadsheetId, 
-                            generatedPdfId = if(oldMasterTemplateId?.isBlank() == true) null else oldMasterTemplateId, 
-                            sourceHtmlSnapshotId = null, 
-                            originalMasterHtmlTemplateId = null 
+                            sourceHtmlSnapshotId = if(sourceHtmlSnapshotId?.isBlank() == true) null else sourceHtmlSnapshotId
                         ))
                     } else {
                         Log.w("GoogleApiService", "Skipping row in case registry due to insufficient columns: $row")
@@ -172,8 +161,7 @@ class GoogleApiService(
                 caseData.name, 
                 caseData.spreadsheetId, 
                 caseData.generatedPdfId ?: "", 
-                caseData.sourceHtmlSnapshotId ?: "",
-                caseData.originalMasterHtmlTemplateId ?: ""
+                caseData.sourceHtmlSnapshotId ?: ""
             ))
             appendData(registrySpreadsheetId, CASE_REGISTRY_SHEET_NAME, values) != null
         } catch (e: Exception) {
