@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:gravity="end|center_vertical"
     android:orientation="vertical"
     android:padding="16dp"
     tools:context=".MainActivity">
@@ -10,14 +11,12 @@
     <com.google.android.gms.common.SignInButton
         android:id="@+id/sign_in_button"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal" />
+        android:layout_height="wrap_content" />
 
     <Button
         android:id="@+id/select_image_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
         android:text="Select Image to Scan"
         android:visibility="gone"
         tools:visibility="visible" />
@@ -26,7 +25,6 @@
         android:id="@+id/create_case_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
         android:text="Create New Case"
         android:visibility="gone"
         tools:visibility="visible" />
@@ -35,7 +33,6 @@
         android:id="@+id/load_case_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
         android:text="Load Case"
         android:visibility="gone"
         tools:visibility="visible" />
@@ -44,7 +41,6 @@
         android:id="@+id/save_to_sheet_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
         android:text="Save to Sheet"
         android:visibility="gone"
         tools:visibility="visible" />
@@ -53,7 +49,6 @@
         android:id="@+id/edit_script_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
         android:text="Edit App Script"
         android:visibility="gone"
         tools:visibility="visible" />
@@ -63,9 +58,9 @@
         android:layout_width="match_parent"
         android:layout_height="150dp"
         android:layout_marginTop="16dp"
+        android:contentDescription="Selected Image for scanning"
         android:visibility="gone"
-        tools:visibility="visible"
-        android:contentDescription="Selected Image for scanning" />
+        tools:visibility="visible" />
 
     <LinearLayout
         android:layout_width="match_parent"
