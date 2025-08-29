@@ -20,48 +20,44 @@ import androidx.compose.ui.unit.dp
 import com.hereliesaz.lexorcist.model.Evidence
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 import com.pushpal.jetlime.JetLimeEvent
-import com.pushpal.jetlime.JetLimeColumn
-import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
-import io.github.pushpalroy.jetlime.Event
-import io.github.pushpalroy.jetlime.JetLime
+import com.pushpalroy.JetLimeEvent
+import com.pushpalroy.jetlime.JetLime
 import java.text.SimpleDateFormat
 import java.util.*
 
 @Composable
-fun TimelineScreen(evidenceViewModel: EvidenceViewModel) {
-    val evidenceList by evidenceViewModel.evidenceList.collectAsState()
 fun TimelineScreen(viewModel: MainViewModel) {
     val evidenceList by viewModel.selectedCaseEvidenceList.collectAsState()
     var selectedEvidence by remember { mutableStateOf<Evidence?>(null) }
 
     val events = evidenceList.map { evidence ->
-        JetLimeEvent {
+        JetLimeEvent {  }(
             onClick = { selectedEvidence = evidence },
-            title = {
+            title = { 
                 Text(
                     text = evidence.sourceDocument,
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.padding(bottom = 4.dp)
                 )
             },
-            subtitle = {
+            description = { 
                 Text(
                     text = SimpleDateFormat(
                         "yyyy-MM-dd",
                         Locale.getDefault()
-                    ).format(evidence.documentDate),
+                    ).format(evidence.documentDate), // documentDate is Date
                     style = MaterialTheme.typography.bodySmall
                 )
             }
-        }
+        )
     }
 
-    JetLimeColumn {
+    JetLime(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
         events = events
-    }
+    )
 
     selectedEvidence?.let {
         EvidenceDetailsDialog(evidence = it, onDismiss = { selectedEvidence = null })
@@ -79,7 +75,7 @@ fun EvidenceDetailsDialog(evidence: Evidence, onDismiss: () -> Unit) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text("Category: ${evidence.category ?: "N/A"}", style = MaterialTheme.typography.bodyMedium)
                 Spacer(modifier = Modifier.height(8.dp))
-                Text("Tags: ${evidence.tags?.joinToString() ?: "N/A"}", style = MaterialTheme.typography.bodyMedium)
+                Text("Tags: ${evidence.tags?.joinToString(", ") ?: "N/A"}", style = MaterialTheme.typography.bodyMedium)
             }
         },
         confirmButton = {

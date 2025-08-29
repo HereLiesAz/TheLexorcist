@@ -5,6 +5,7 @@ import com.hereliesaz.lexorcist.data.Allegation
 import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.model.Evidence
 import com.hereliesaz.lexorcist.model.SpreadsheetSchema
+import java.util.Date // Added for Date objects
 
 class SpreadsheetParser(
     private val googleApiService: GoogleApiService,
@@ -42,8 +43,7 @@ class SpreadsheetParser(
         // 3. Create New Case Structure (since no duplicate was found)
         Log.d(TAG, "parseAndStore: No existing case found with name '$importedCaseName'. Proceeding to create new case structure.")
         
-        // val masterTemplateId = googleApiService.createMasterTemplate(appRootFolderId) // Removed call
-        val originalMasterHtmlTemplateIdForCaseRecord: String? = null // This will be null for imported cases now
+        val originalMasterHtmlTemplateIdForCaseRecord: String? = null
 
         val newCaseFolderId = googleApiService.getOrCreateFolder(importedCaseName, appRootFolderId)
         if (newCaseFolderId == null) {
@@ -56,27 +56,25 @@ class SpreadsheetParser(
             return null
         }
         
-        // Corrected attachScript call for imported cases
-        // For now, using placeholder script content. Ideally, this would load a suitable script template.
         val placeholderScriptContent = "// Default script for imported case\nfunction onOpen() {}\n"
-        val masterIdForScriptConfig = "" // No specific PDF/Doc template for imported cases initially
+        val masterIdForScriptConfig = ""
         googleApiService.attachScript(newCaseSpreadsheetId, placeholderScriptContent, masterIdForScriptConfig)
         
         Log.d(TAG, "parseAndStore: Created new case structure: Folder ID $newCaseFolderId, Spreadsheet ID $newCaseSpreadsheetId")
 
         // 4. Add to Case Registry
-        // originalMasterHtmlTemplateId will be null for this newly imported case
+        // newCase.id will be 0 by default from the Case data class if not otherwise set
         val newCase = Case(name = importedCaseName, spreadsheetId = newCaseSpreadsheetId, originalMasterHtmlTemplateId = originalMasterHtmlTemplateIdForCaseRecord)
         val addedToRegistry = googleApiService.addCaseToRegistry(caseRegistrySpreadsheetId, newCase)
         if (!addedToRegistry) {
             Log.w(TAG, "parseAndStore: Failed to add new case '$importedCaseName' to registry. Proceeding with data import to its sheet, but it won't be listed until registry issue is fixed.")
-            // This is a problematic state. The case files are created but not registered.
-            // For now, we continue to populate, but this might need better error handling or cleanup.
         }
 
         // 5. Parse and Store Allegations into the new case's spreadsheet
-        val allegationsSheet = sheetsData[schema.allegationsSheet.name]
-        allegationsSheet?.drop(1)?.forEach { row -> // Assuming first row is header
+        val allegationsSheetName = schema.allegationsSheet.name
+        googleApiService.addSheet(newCaseSpreadsheetId, allegationsSheetName) // Ensure sheet exists
+        val allegationsSheetData = sheetsData[allegationsSheetName]
+        allegationsSheetData?.drop(1)?.forEach { row -> // Assuming first row is header
             val allegationText = row.getOrNull(schema.allegationsSheet.allegationColumn)?.toString()
             if (!allegationText.isNullOrBlank()) {
                 val success = googleApiService.addAllegationToCase(newCaseSpreadsheetId, allegationText)
@@ -87,22 +85,32 @@ class SpreadsheetParser(
         }
 
         // 6. Parse and Store Evidence into the new case's spreadsheet
-        val evidenceSheet = sheetsData[schema.evidenceSheet.name]
-        evidenceSheet?.drop(1)?.forEach { row -> // Assuming first row is header
+        val evidenceSheetName = schema.evidenceSheet.name
+        googleApiService.addSheet(newCaseSpreadsheetId, evidenceSheetName) // Ensure sheet exists
+        val evidenceHeader = listOf(listOf("Content", "Timestamp", "Source Document", "Document Date", "Tags", "Allegation ID", "Category", "Amount"))
+        googleApiService.appendData(newCaseSpreadsheetId, evidenceSheetName, evidenceHeader) // Add header row
+
+        val evidenceSheetData = sheetsData[evidenceSheetName]
+        var evidenceCounter = 0 // For generating a unique ID for evidence within this import context
+        evidenceSheetData?.drop(1)?.forEach { row -> // Assuming first row is header
             try {
                 val content = row.getOrNull(schema.evidenceSheet.contentColumn)?.toString()
                 val tagsStr = row.getOrNull(schema.evidenceSheet.tagsColumn)?.toString()
+                // For other fields like timestamp, documentDate, amount, category, allegationId, sourceDocument:
+                // we'll use defaults or parse them if schema includes them. For now, using defaults.
 
                 if (content != null) {
                     val evidence = Evidence(
-                        caseId = newCase.id.toLong(),
-                        allegationId = null,
+                        id = evidenceCounter++, 
+                        caseId = newCase.id, // newCase.id is Int from Case data class definition
                         content = content,
-                        timestamp = System.currentTimeMillis(),
-                        sourceDocument = "Imported from spreadsheet",
-                        documentDate = System.currentTimeMillis(),
-                        tags = tagsStr?.split(",")?.map { it.trim() } ?: emptyList(),
-                        category = ""
+                        amount = null, // Defaulting to null
+                        timestamp = Date(System.currentTimeMillis()), // Defaulting to current time
+                        sourceDocument = "Imported from spreadsheet", // Default source
+                        documentDate = Date(System.currentTimeMillis()), // Defaulting to current time
+                        allegationId = null, // Defaulting to null
+                        category = "Imported", // Default category
+                        tags = tagsStr?.split(",")?.map { it.trim() } ?: emptyList()
                     )
                     val success = googleApiService.addEvidenceToCase(newCaseSpreadsheetId, evidence)
                     if (!success) {

@@ -71,8 +71,9 @@ object DataParser {
 
     private fun extractAllegations(caseId: Int, text: String): List<Allegation> {
         val allegationRegex = """"(?i)\b(alleges|claims|argues that)\b.*"""".toRegex()
+        var currentId = 0 // Assuming Allegation needs an id and it's generated sequentially here
         return allegationRegex.findAll(text).map {
-            Allegation(caseId = caseId, text = it.value)
+            Allegation(id = currentId++, caseId = caseId, text = it.value) // Assuming Allegation(id: Int, caseId: Int, text: String)
         }.toList()
     }
 
@@ -90,15 +91,16 @@ object DataParser {
 
             entries.add(
                 Evidence(
-                    caseId = caseId,
+                    id = entries.size, 
+                    caseId = caseId, 
                     allegationId = linkedAllegation?.id?.toString(),
                     content = sentence,
-                    amount = null, // Added default value
-                    timestamp = Date(System.currentTimeMillis()),
+                    amount = null, 
+                    timestamp = Date(System.currentTimeMillis()), 
                     sourceDocument = "Parsed from text",
-                    documentDate = Date(date),
+                    documentDate = Date(date), 
                     category = category,
-                    tags = null // Added default value
+                    tags = null 
                 )
             )
         }

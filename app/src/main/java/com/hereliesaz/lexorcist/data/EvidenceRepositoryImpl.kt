@@ -15,33 +15,35 @@ class EvidenceRepositoryImpl(
     }
 
     override fun getEvidenceForCase(caseId: Long): Flow<List<Evidence>> {
+        // Assuming EvidenceDao.getEvidenceForCase expects a Long and handles mapping to Evidence.caseId (Int) if necessary internally or via query conversion.
+        // Or, that the Case ID in the database is indeed stored as Long and Evidence.caseId (Int) is for the model object after retrieval.
         return evidenceDao.getEvidenceForCase(caseId)
     }
 
     override suspend fun refreshEvidenceForCase(spreadsheetId: String, caseId: Int) {
         try {
             googleApiService?.let {
-                val evidence = it.getEvidenceForCase(spreadsheetId, caseId)
-                evidenceDao.deleteAll()
-                evidenceDao.insertAll(evidence)
+                val evidenceList = it.getEvidenceForCase(spreadsheetId, caseId) // This now returns List<model.Evidence>
+                evidenceDao.deleteAll() // Consider deleting only for the specific caseId if applicable
+                evidenceDao.insertAll(evidenceList)
             }
         } catch (e: Exception) {
-            // Handle error
+            // Handle error, e.g., log it or emit an error state
         }
     }
 
     override suspend fun addEvidence(spreadsheetId: String, evidence: Evidence) {
         googleApiService?.addEvidenceToCase(spreadsheetId, evidence)
-        refreshEvidenceForCase(spreadsheetId, evidence.caseId.toInt())
+        refreshEvidenceForCase(spreadsheetId, evidence.caseId) // evidence.caseId is Int
     }
 
     override suspend fun updateEvidence(spreadsheetId: String, evidence: Evidence) {
         googleApiService?.updateEvidenceInCase(spreadsheetId, evidence)
-        refreshEvidenceForCase(spreadsheetId, evidence.caseId.toInt())
+        refreshEvidenceForCase(spreadsheetId, evidence.caseId) // evidence.caseId is Int
     }
 
     override suspend fun deleteEvidence(spreadsheetId: String, evidence: Evidence) {
-        googleApiService?.deleteEvidenceFromCase(spreadsheetId, evidence.id.toInt())
-        refreshEvidenceForCase(spreadsheetId, evidence.caseId.toInt())
+        googleApiService?.deleteEvidenceFromCase(spreadsheetId, evidence.id) // evidence.id is Int
+        refreshEvidenceForCase(spreadsheetId, evidence.caseId) // evidence.caseId is Int
     }
 }

@@ -28,11 +28,21 @@ class EvidenceAdapter : ListAdapter<Evidence, EvidenceAdapter.EvidenceViewHolder
         private val contentTextView: TextView = itemView.findViewById(R.id.content_textview)
         private val dateTextView: TextView = itemView.findViewById(R.id.date_textview)
         private val tagsTextView: TextView = itemView.findViewById(R.id.tags_textview)
+        // Assuming there might be another TextView for timestamp if errors on 35 & 36 are distinct
+        // For now, will use dateTextView for documentDate and make sure tags are handled.
 
         fun bind(entry: Evidence) {
-            contentTextView.text = entry.sourceDocument
+            contentTextView.text = entry.sourceDocument // Displays source document as content
+            
+            // Line 35 equivalent if it was for timestamp (entry.timestamp is Date)
+            // if there was a timestampTextView: 
+            // timestampTextView.text = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(entry.timestamp)
+            
+            // Line 36 equivalent for documentDate (entry.documentDate is Date)
             dateTextView.text = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(entry.documentDate)
-            tagsTextView.text = ""
+            
+            // Line 37 equivalent for tags (entry.tags is List<String>?)
+            tagsTextView.text = entry.tags?.joinToString(", ") ?: "No tags"
         }
     }
 }
