@@ -10,30 +10,31 @@ import com.hereliesaz.aznavrail.model.PredefinedAction
 import com.hereliesaz.aznavrail.ui.AzNavRail
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.ui.res.stringResource
+import com.hereliesaz.lexorcist.R
 
 @Composable
 fun AppNavRail(onNavigate: (String) -> Unit) {
     val context = LocalContext.current
-    val appName = context.packageManager.getApplicationLabel(context.applicationInfo).toString()
     AzNavRail(
-        appName = "The Lexorcist",
+        appName = stringResource(R.string.app_name),
         useAppIconAsHeader = true,
         header = NavRailHeader {        },
         onPredefinedAction = { action ->
             when (action) {
-                PredefinedAction.HOME -> onNavigate("home")
-                PredefinedAction.SETTINGS -> onNavigate("settings")
+                PredefinedAction.HOME -> onNavigate(stringResource(R.string.nav_home))
+                PredefinedAction.SETTINGS -> onNavigate(stringResource(R.string.nav_settings))
                 PredefinedAction.ABOUT -> {
                     val intent = Intent(
                         Intent.ACTION_VIEW,
-                        Uri.parse("https://github.com/hereliesaz/$appName")
+                        Uri.parse(stringResource(R.string.github_url))
                     )
                     context.startActivity(intent)
                 }
                 PredefinedAction.FEEDBACK -> {
                     val intent = Intent(Intent.ACTION_SENDTO).apply {
-                        data = Uri.parse("mailto:hereliesaz@gmail.com")
-                        putExtra(Intent.EXTRA_SUBJECT, "$appName - Feedback")
+                        data = Uri.parse(stringResource(R.string.feedback_email))
+                        putExtra(Intent.EXTRA_SUBJECT, stringResource(R.string.feedback_subject))
                     }
                     context.startActivity(intent)
                 }
@@ -46,37 +47,37 @@ fun AppNavRail(onNavigate: (String) -> Unit) {
                 items = listOf(
 
                             NavItem(
-                        text = "Cases",
-                        data = NavItemData.Action(onClick = { onNavigate("cases") }),
+                        text = stringResource(R.string.cases),
+                        data = NavItemData.Action(onClick = { onNavigate(stringResource(R.string.nav_cases)) }),
                         showOnRail = true
                     ),
                     NavItem(
-                        text = "Timeline",
-                        data = NavItemData.Action(onClick = { onNavigate("timeline") }),
+                        text = stringResource(R.string.timeline),
+                        data = NavItemData.Action(onClick = { onNavigate(stringResource(R.string.nav_timeline)) }),
                         showOnRail = false
                     ),
                     NavItem(
-                        text = "Data Review",
-                        data = NavItemData.Action(onClick = { onNavigate("data_review") }),
+                        text = stringResource(R.string.data_review),
+                        data = NavItemData.Action(onClick = { onNavigate(stringResource(R.string.nav_data_review)) }),
                         showOnRail = false
                     ),
                     NavItem(
-                        text = "Visualization",
-                        data = NavItemData.Action(onClick = { onNavigate("visualization") }),
+                        text = stringResource(R.string.visualization),
+                        data = NavItemData.Action(onClick = { onNavigate(stringResource(R.string.nav_visualization)) }),
                         showOnRail = false
                     ),
                     NavItem(
-                        text = "Evidence",
-                        data = NavItemData.Action(onClick = { onNavigate("evidence") }),
+                        text = stringResource(R.string.evidence),
+                        data = NavItemData.Action(onClick = { onNavigate(stringResource(R.string.nav_evidence)) }),
                         showOnRail = false
                     ),
                     NavItem(
-                        text = "Add",
-                        data = NavItemData.Action(onClick = { onNavigate("add_evidence") }),
+                        text = stringResource(R.string.add),
+                        data = NavItemData.Action(onClick = { onNavigate(stringResource(R.string.nav_add_evidence)) }),
                         showOnRail = true
                     ),
                     NavItem(
-                        text = "Settings",
+                        text = stringResource(R.string.settings),
                         data = NavItemData.Action(predefinedAction = PredefinedAction.SETTINGS),
                         showOnRail = false
                     )
@@ -85,11 +86,11 @@ fun AppNavRail(onNavigate: (String) -> Unit) {
         ),
         footerItems = listOf(
             NavItem(
-                text = "About",
+                text = stringResource(R.string.about),
                 data = NavItemData.Action(predefinedAction = PredefinedAction.ABOUT)
                 ),
             NavItem(
-                text = "Feedback",
+                text = stringResource(R.string.feedback),
                 data = NavItemData.Action(predefinedAction = PredefinedAction.FEEDBACK)
         )
     )

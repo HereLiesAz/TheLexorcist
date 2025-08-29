@@ -927,7 +927,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val apiService = _googleApiService.value ?: return@launch Unit.also { Log.w(TAG, "importSpreadsheet: No API service.") }
             val sheetsData = apiService.readSpreadsheet(spreadsheetIdToImport)
             if (sheetsData != null) {
-                val spreadsheetParser = SpreadsheetParser(apiService)
+                val spreadsheetParser = SpreadsheetParser(getApplication(), apiService)
                 val newCase = spreadsheetParser.parseAndStore(sheetsData)
                 if (newCase != null) {
                     Log.i(TAG, "Spreadsheet imported. New case: ${newCase.name}")

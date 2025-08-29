@@ -7,7 +7,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.viewmodel.ScriptEditorViewModel
 import com.hereliesaz.lexorcist.viewmodel.SaveState
 
@@ -20,7 +22,7 @@ fun ScriptEditorScreen(viewModel: ScriptEditorViewModel) {
     LaunchedEffect(saveState) {
         when (saveState) {
             is SaveState.Success -> {
-                Toast.makeText(context, "Script saved successfully", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, R.string.script_saved_successfully, Toast.LENGTH_SHORT).show()
             }
             is SaveState.Error -> {
                 val errorMessage = (saveState as SaveState.Error).message
@@ -39,7 +41,7 @@ fun ScriptEditorScreen(viewModel: ScriptEditorViewModel) {
             OutlinedTextField(
                 value = scriptText,
                 onValueChange = { viewModel.onScriptTextChanged(it) },
-                label = { Text("Enter your script") },
+                label = { Text(stringResource(R.string.enter_your_script)) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
@@ -53,7 +55,7 @@ fun ScriptEditorScreen(viewModel: ScriptEditorViewModel) {
                 if (saveState == SaveState.Saving) {
                     CircularProgressIndicator(modifier = Modifier.size(24.dp))
                 } else {
-                    Text("Save Script")
+                    Text(stringResource(R.string.save_script))
                 }
             }
         }
@@ -63,22 +65,22 @@ fun ScriptEditorScreen(viewModel: ScriptEditorViewModel) {
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text("Script Builder", style = MaterialTheme.typography.headlineSmall)
+            Text(stringResource(R.string.script_builder), style = MaterialTheme.typography.headlineSmall)
             Spacer(modifier = Modifier.height(16.dp))
-            Button(onClick = { viewModel.insertText("evidence.text.includes(\"\")") }) {
-                Text("text.includes(...)")
+            Button(onClick = { viewModel.insertText(stringResource(R.string.script_snippet_text_includes)) }) {
+                Text(stringResource(R.string.script_snippet_text_includes_label))
             }
             Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = { viewModel.insertText("evidence.tags.includes(\"\")") }) {
-                Text("tags.includes(...)")
+            Button(onClick = { viewModel.insertText(stringResource(R.string.script_snippet_tags_includes)) }) {
+                Text(stringResource(R.string.script_snippet_tags_includes_label))
             }
             Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = { viewModel.insertText("evidence.documentDate > new Date(\"YYYY-MM-DD\").getTime()") }) {
-                Text("date > ...")
+            Button(onClick = { viewModel.insertText(stringResource(R.string.script_snippet_date_greater)) }) {
+                Text(stringResource(R.string.script_snippet_date_greater_label))
             }
             Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = { viewModel.insertText("evidence.documentDate < new Date(\"YYYY-MM-DD\").getTime()") }) {
-                Text("date < ...")
+            Button(onClick = { viewModel.insertText(stringResource(R.string.script_snippet_date_less)) }) {
+                Text(stringResource(R.string.script_snippet_date_less_label))
             }
         }
     }
