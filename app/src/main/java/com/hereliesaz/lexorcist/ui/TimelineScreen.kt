@@ -38,7 +38,8 @@ fun TimelineScreen(viewModel: MainViewModel) {
     ) { _, item, position ->
         JetLimeEvent(
             style = JetLimeEventDefaults.eventStyle(
-                position = position
+                position = position,
+                pointAnimation = JetLimeEventDefaults.pointAnimation()
             ),
             onClick = { selectedEvidence = item }
         ) {
