@@ -102,13 +102,13 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private val selectDocumentLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+    private val selectDocumentLauncher = registerForActivityResult(GetContentWithMultiFilter()) { uri: Uri? ->
         uri?.let {
             evidenceViewModel.addDocumentEvidence(it, this)
         }
     }
 
-    private val selectSpreadsheetLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+    private val selectSpreadsheetLauncher = registerForActivityResult(GetContentWithMultiFilter()) { uri: Uri? ->
         uri?.let {
             evidenceViewModel.addSpreadsheetEvidence(it, this)
         }
@@ -211,11 +211,11 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun selectDocument() {
-        selectDocumentLauncher.launch("application/pdf")
+        selectDocumentLauncher.launch(arrayOf("application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"))
     }
 
     private fun selectSpreadsheet() {
-        selectSpreadsheetLauncher.launch("application/vnd.ms-excel")
+        selectSpreadsheetLauncher.launch(arrayOf("application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
     }
 
     // The "bottom" block of code (with NavHost and placeholder screens) has been removed.

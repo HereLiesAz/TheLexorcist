@@ -26,6 +26,13 @@ class EvidenceViewModel(
     private val _uiEvidenceList = MutableStateFlow<List<Evidence>>(emptyList())
     val uiEvidenceList: StateFlow<List<Evidence>> = _uiEvidenceList.asStateFlow()
 
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
+    fun clearError() {
+        _errorMessage.value = null
+    }
+
     init {
         selectedCase?.let {
             loadEvidenceForCase(it.id.toLong()) // Corrected: Convert Int to Long
@@ -125,7 +132,7 @@ class EvidenceViewModel(
                     addEvidenceToSelectedCase(newEvidence)
                 }
             } catch (e: Exception) {
-                // TODO: Handle exception
+                _errorMessage.value = "Failed to parse document: ${e.message}"
             }
         }
     }
@@ -171,7 +178,7 @@ class EvidenceViewModel(
                     }
                 }
             } catch (e: Exception) {
-                // TODO: Handle exception
+                _errorMessage.value = "Failed to parse spreadsheet: ${e.message}"
             }
         }
     }
