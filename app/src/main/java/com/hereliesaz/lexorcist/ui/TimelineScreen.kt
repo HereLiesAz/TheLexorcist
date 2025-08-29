@@ -19,9 +19,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.hereliesaz.lexorcist.model.Evidence
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
-import com.pushpal.jetlime.JetLimeEvent
-import com.pushpalroy.JetLimeEvent
-import com.pushpalroy.jetlime.JetLime
+import io.github.pushpalroy.jetlime.Event
+import io.github.pushpalroy.jetlime.JetLime
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -30,34 +29,33 @@ fun TimelineScreen(viewModel: MainViewModel) {
     val evidenceList by viewModel.selectedCaseEvidenceList.collectAsState()
     var selectedEvidence by remember { mutableStateOf<Evidence?>(null) }
 
-    val events = evidenceList.map { evidence ->
-        JetLimeEvent {  }(
-            onClick = { selectedEvidence = evidence },
-            title = { 
-                Text(
-                    text = evidence.sourceDocument,
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(bottom = 4.dp)
-                )
-            },
-            description = { 
-                Text(
-                    text = SimpleDateFormat(
-                        "yyyy-MM-dd",
-                        Locale.getDefault()
-                    ).format(evidence.documentDate), // documentDate is Date
-                    style = MaterialTheme.typography.bodySmall
-                )
-            }
-        )
-    }
-
     JetLime(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
-        events = events
-    )
+    ) {
+        evidenceList.forEach { evidence ->
+            Event(
+                onClick = { selectedEvidence = evidence },
+                title = {
+                    Text(
+                        text = evidence.sourceDocument,
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    )
+                },
+                subtitle = {
+                    Text(
+                        text = SimpleDateFormat(
+                            "yyyy-MM-dd",
+                            Locale.getDefault()
+                        ).format(evidence.documentDate),
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            )
+        }
+    }
 
     selectedEvidence?.let {
         EvidenceDetailsDialog(evidence = it, onDismiss = { selectedEvidence = null })
@@ -75,7 +73,7 @@ fun EvidenceDetailsDialog(evidence: Evidence, onDismiss: () -> Unit) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text("Category: ${evidence.category ?: "N/A"}", style = MaterialTheme.typography.bodyMedium)
                 Spacer(modifier = Modifier.height(8.dp))
-                Text("Tags: ${evidence.tags?.joinToString(", ") ?: "N/A"}", style = MaterialTheme.typography.bodyMedium)
+                Text("Tags: ${evidence.tags?.joinToString() ?: "N/A"}", style = MaterialTheme.typography.bodyMedium)
             }
         },
         confirmButton = {
