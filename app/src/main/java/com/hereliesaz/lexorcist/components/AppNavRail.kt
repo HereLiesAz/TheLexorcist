@@ -56,6 +56,16 @@ fun AppNavRail(onNavigate: (String) -> Unit) {
                         showOnRail = false
                     ),
                     NavItem(
+                        text = "Data Review",
+                        data = NavItemData.Action(onClick = { onNavigate("data_review") }),
+                        showOnRail = false
+                    ),
+                    NavItem(
+                        text = "Visualization",
+                        data = NavItemData.Action(onClick = { onNavigate("visualization") }),
+                        showOnRail = false
+                    ),
+                    NavItem(
                         text = "Evidence",
                         data = NavItemData.Action(onClick = { onNavigate("evidence") }),
                         showOnRail = false

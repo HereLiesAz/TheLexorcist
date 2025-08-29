@@ -59,4 +59,33 @@ class DataParserTest {
         assertEquals("The first piece of evidence.", evidence[0].content)
         assertEquals("The second piece of evidence.", evidence[1].content)
     }
+
+    @Test
+    fun `test parseDates with no dates`() {
+        val text = "This is a string with no dates."
+        val dates = DataParser.parseDates(text)
+        assertEquals(0, dates.size)
+    }
+
+    @Test
+    fun `test parseNames with no names`() {
+        val text = "This is a string with no names."
+        val names = DataParser.parseNames(text)
+        assertEquals(0, names.size)
+    }
+
+    @Test
+    fun `test parseAddresses with no addresses`() {
+        val text = "This is a string with no addresses."
+        val addresses = DataParser.parseAddresses(text)
+        assertEquals(0, addresses.size)
+    }
+
+    @Test
+    fun `test extractEvidence with category`() {
+        val text = "This is a piece of evidence. Category: Medical"
+        val evidence = DataParser.extractEvidence(1, text, emptyList())
+        assertEquals(1, evidence.size)
+        assertEquals("Medical", evidence[0].category)
+    }
 }

@@ -36,21 +36,33 @@ fun AddEvidenceScreen(
     onAddSpreadsheet: () -> Unit
 ) {
     val imageBitmapForReview by viewModel.imageBitmapForReview.collectAsState()
+    val isOcrInProgress by viewModel.isOcrInProgress.collectAsState()
     // val extractedText by viewModel.extractedText.collectAsState() // Not directly used in this screen view anymore
     val taggedData by viewModel.taggedData.collectAsState() // Still used for RecyclerView below
     val context = LocalContext.current
 
-    Column(
+    if (isOcrInProgress) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            CircularProgressIndicator()
+            Spacer(modifier = Modifier.height(16.dp))
+            Text("Processing Image...")
+        }
+    } else {
+        Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
+        horizontalAlignment = Alignment.End,
         verticalArrangement = Arrangement.Center
     ) {
         if (imageBitmapForReview == null) {
             // Buttons for adding new evidence - shown when no image is under review
             Column(
-                horizontalAlignment = Alignment.CenterHorizontally, // Center buttons in this column
+                horizontalAlignment = Alignment.End, // Center buttons in this column
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Button(onClick = onSelectImage) {
@@ -91,7 +103,7 @@ fun AddEvidenceScreen(
             // Image Review UI - shown when an image is selected/taken
             Column(
                 modifier = Modifier.fillMaxSize(), // Take full screen for review
-                horizontalAlignment = Alignment.CenterHorizontally,
+                horizontalAlignment = Alignment.End,
                 verticalArrangement = Arrangement.Center
             ) {
                 Image(
@@ -104,7 +116,7 @@ fun AddEvidenceScreen(
                 )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     IconButton(onClick = { viewModel.rotateImageBeingReviewed(-90f) }) {
@@ -123,4 +135,5 @@ fun AddEvidenceScreen(
             }
         }
     }
+}
 }

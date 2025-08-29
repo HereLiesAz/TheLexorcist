@@ -26,10 +26,21 @@ fun MainScreen(
     onAddSpreadsheet: () -> Unit
 ) {
     val isSignedIn by viewModel.isSignedIn.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
     var currentScreen by remember { mutableStateOf("home") }
     var showCreateCaseDialog by remember { mutableStateOf(false) }
 
-    Scaffold { paddingValues ->
+    LaunchedEffect(errorMessage) {
+        errorMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.clearError()
+        }
+    }
+
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { paddingValues ->
         if (isSignedIn) {
             Row(
                 modifier = Modifier
@@ -60,6 +71,8 @@ fun MainScreen(
                             })
                         }
                         "timeline" -> TimelineScreen(viewModel = viewModel)
+                        "visualization" -> VisualizationScreen(viewModel = viewModel)
+                        "data_review" -> DataReviewScreen(viewModel = viewModel)
                         "settings" -> SettingsScreen(viewModel = viewModel)
                     }
                 }

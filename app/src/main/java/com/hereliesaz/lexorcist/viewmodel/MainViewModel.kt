@@ -33,6 +33,9 @@ import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import com.hereliesaz.lexorcist.GoogleApiService
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.SpreadsheetParser
+import org.opencv.android.Utils
+import org.opencv.core.Mat
+import org.opencv.imgproc.Imgproc
 import com.hereliesaz.lexorcist.data.Allegation
 import com.hereliesaz.lexorcist.data.EvidenceRepository
 
@@ -114,9 +117,23 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _settingScreenFilters = MutableStateFlow<List<SheetFilter>>(emptyList()) // Renamed from _filters
     val settingScreenFilters: StateFlow<List<SheetFilter>> = _settingScreenFilters.asStateFlow()
 
+    // --- Error Handling ---
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
+    fun showError(message: String) {
+        _errorMessage.value = message
+    }
+
+    fun clearError() {
+        _errorMessage.value = null
+    }
+
     // --- Image Processing & Text Extraction ---
     private val _extractedText = MutableStateFlow("")
     val extractedText: StateFlow<String> = _extractedText.asStateFlow()
+    private val _isOcrInProgress = MutableStateFlow(false)
+    val isOcrInProgress: StateFlow<Boolean> = _isOcrInProgress.asStateFlow()
 
     // --- Image Review Workflow ---
     private val _imageBitmapForReview = MutableStateFlow<Bitmap?>(null)
@@ -153,6 +170,40 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     _allegations.value = emptyList()
                     _selectedCaseEvidenceList.value = emptyList()
                 }
+            }
+        }
+    }
+
+    fun updateEvidence(evidence: Evidence) {
+        viewModelScope.launch {
+            val currentCase = _selectedCase.value
+            val apiService = _googleApiService.value
+            if (currentCase != null && apiService != null) {
+                if (apiService.updateEvidenceInCase(currentCase.spreadsheetId, evidence)) {
+                    loadSelectedCaseEvidence(currentCase.spreadsheetId, currentCase.id) // Reload
+                } else {
+                    showError("Failed to update evidence.")
+                    Log.w(TAG, "updateEvidence: Failed to update evidence in sheet.")
+                }
+            } else {
+                Log.w(TAG, "updateEvidence: Missing data.")
+            }
+        }
+    }
+
+    fun deleteEvidence(evidence: Evidence) {
+        viewModelScope.launch {
+            val currentCase = _selectedCase.value
+            val apiService = _googleApiService.value
+            if (currentCase != null && apiService != null) {
+                if (apiService.deleteEvidenceFromCase(currentCase.spreadsheetId, evidence.id)) {
+                    loadSelectedCaseEvidence(currentCase.spreadsheetId, currentCase.id) // Reload
+                } else {
+                    showError("Failed to delete evidence.")
+                    Log.w(TAG, "deleteEvidence: Failed to delete evidence from sheet.")
+                }
+            } else {
+                Log.w(TAG, "deleteEvidence: Missing data.")
             }
         }
     }
@@ -556,8 +607,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             try {
                 if (apiService.addEvidenceToCase(currentCase.spreadsheetId, entryWithCaseId)) {
-                    loadSelectedCaseEvidence(currentCase.spreadsheetId, currentCase.id) 
+                    loadSelectedCaseEvidence(currentCase.spreadsheetId, currentCase.id)
                 } else {
+                    showError("Failed to add evidence.")
                     Log.w(TAG, "Failed to add evidence to case ${currentCase.id}.")
                 }
             } catch (e: Exception) {
@@ -607,11 +659,38 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun rotateImageBeingReviewed(degrees: Float) {
         val currentBitmap = _imageBitmapForReview.value ?: return
-        viewModelScope.launch(Dispatchers.Default) { 
+        viewModelScope.launch(Dispatchers.Default) {
             val matrix = Matrix().apply { postRotate(degrees) }
             val rotatedBitmap = Bitmap.createBitmap(currentBitmap, 0, 0, currentBitmap.width, currentBitmap.height, matrix, true)
             _imageBitmapForReview.value = rotatedBitmap
         }
+    }
+
+    private fun preprocessImageForOcr(bitmap: Bitmap): Bitmap {
+        val mat = Mat()
+        Utils.bitmapToMat(bitmap, mat)
+
+        // Convert to grayscale
+        val grayMat = Mat()
+        Imgproc.cvtColor(mat, grayMat, Imgproc.COLOR_BGR2GRAY)
+
+        // Apply adaptive thresholding
+        val binaryMat = Mat()
+        Imgproc.adaptiveThreshold(
+            grayMat,
+            binaryMat,
+            255.0,
+            Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C,
+            Imgproc.THRESH_BINARY,
+            11,
+            2.0
+        )
+
+        // Convert back to bitmap
+        val resultBitmap = Bitmap.createBitmap(binaryMat.cols(), binaryMat.rows(), Bitmap.Config.ARGB_8888)
+        Utils.matToBitmap(binaryMat, resultBitmap)
+
+        return resultBitmap
     }
 
     fun confirmImageReview(context: Context) {
@@ -625,8 +704,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
 
         viewModelScope.launch {
+            _isOcrInProgress.value = true
             try {
-                val inputImage = InputImage.fromBitmap(reviewedBitmap, 0)
+                val preprocessedBitmap = preprocessImageForOcr(reviewedBitmap)
+                val inputImage = InputImage.fromBitmap(preprocessedBitmap, 0)
                 val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
                 
                 val visionText = suspendCancellableCoroutine<com.google.mlkit.vision.text.Text> { continuation ->
@@ -634,9 +715,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         .addOnSuccessListener { text -> 
                             if (continuation.isActive) continuation.resume(text) 
                         }
-                        .addOnFailureListener { e -> 
+                        .addOnFailureListener { e ->
+                            showError("Failed to recognize text.")
                             Log.e(TAG, "ML Kit text recognition failed during review confirmation", e)
-                            if (continuation.isActive) continuation.resumeWithException(e) 
+                            if (continuation.isActive) continuation.resumeWithException(e)
                         }
                 } ?: return@launch
 
@@ -652,6 +734,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             } catch (e: Exception) {
                 Log.e(TAG, "Exception during image review confirmation or text recognition.", e)
             } finally {
+                _isOcrInProgress.value = false
                 cancelImageReview()
             }
         }
