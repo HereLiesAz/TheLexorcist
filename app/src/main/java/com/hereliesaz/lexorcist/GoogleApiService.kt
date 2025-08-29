@@ -321,7 +321,7 @@ class GoogleApiService(
                 entry.category,
                 entry.amount?.toString() ?: ""
             ))
-            appendData(caseSpreadsheetId, EVIDENCE_SHEET_NAME, values) != null
+            appendData(caseSpreadsheetId, EVIDENCE_SHEET_NAME, values as List<List<Any>>) != null
         } catch (e: Exception) {
             e.printStackTrace()
             Log.e("GoogleApiService", "Error in addEvidenceToCase for $caseSpreadsheetId", e)
