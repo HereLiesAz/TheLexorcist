@@ -28,7 +28,6 @@ fun AppNavRail(onNavigate: (String) -> Unit) {
     val navCasesStr = stringResource(R.string.nav_cases)
     val navTimelineStr = stringResource(R.string.nav_timeline)
     val navDataReviewStr = stringResource(R.string.nav_data_review)
-    val navVisualizationStr = stringResource(R.string.nav_visualization)
     val navEvidenceStr = stringResource(R.string.nav_evidence)
     val navAddEvidenceStr = stringResource(R.string.nav_add_evidence)
 
@@ -36,7 +35,6 @@ fun AppNavRail(onNavigate: (String) -> Unit) {
     val casesText = stringResource(R.string.cases)
     val timelineText = stringResource(R.string.timeline)
     val dataReviewText = stringResource(R.string.data_review)
-    val visualizationText = stringResource(R.string.visualization)
     val evidenceText = stringResource(R.string.evidence)
     val addText = stringResource(R.string.add)
     val settingsText = stringResource(R.string.settings)
@@ -85,11 +83,6 @@ fun AppNavRail(onNavigate: (String) -> Unit) {
                     NavItem(
                         text = dataReviewText,
                         data = NavItemData.Action(onClick = { onNavigate(navDataReviewStr) }),
-                        showOnRail = false
-                    ),
-                    NavItem(
-                        text = visualizationText,
-                        data = NavItemData.Action(onClick = { onNavigate(navVisualizationStr) }),
                         showOnRail = false
                     ),
                     NavItem(
