@@ -1,0 +1,16 @@
+{
+  "caseInfoSheet": {
+    "name": "Case Info",
+    "caseNameLabel": "Case Name",
+    "caseNameColumn": 1
+  },
+  "allegationsSheet": {
+    "name": "Exhibit Matrix - Allegations",
+    "allegationColumn": 3
+  },
+  "evidenceSheet": {
+    "name": "Evidence",
+    "contentColumn": 0,
+    "tagsColumn": 1
+  }
+}

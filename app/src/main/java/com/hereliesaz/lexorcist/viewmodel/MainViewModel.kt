@@ -31,8 +31,10 @@ import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import com.hereliesaz.lexorcist.GoogleApiService
+import com.google.gson.Gson
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.SpreadsheetParser
+import com.hereliesaz.lexorcist.model.SpreadsheetSchema
 import org.opencv.android.Utils
 import org.opencv.core.Mat
 import org.opencv.imgproc.Imgproc
@@ -904,7 +906,12 @@ class MainViewModel(application: Application, private val evidenceRepository: co
             val apiService = _googleApiService.value ?: return@launch Unit.also { Log.w(TAG, "importSpreadsheet: No API service.") }
             val sheetsData = apiService.readSpreadsheet(spreadsheetIdToImport)
             if (sheetsData != null) {
-                val spreadsheetParser = SpreadsheetParser(apiService)
+                // Load the schema from the JSON file.
+                val context = getApplication<Application>().applicationContext
+                val schemaJson = context.resources.openRawResource(R.raw.spreadsheet_schema).bufferedReader().use { it.readText() }
+                val schema = Gson().fromJson(schemaJson, SpreadsheetSchema::class.java)
+
+                val spreadsheetParser = SpreadsheetParser(apiService, schema)
                 val newCase = spreadsheetParser.parseAndStore(sheetsData)
                 if (newCase != null) {
                     Log.i(TAG, "Spreadsheet imported. New case: ${newCase.name}")
