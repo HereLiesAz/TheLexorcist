@@ -1,7 +1,7 @@
 package com.hereliesaz.lexorcist.ui
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -34,7 +34,7 @@ fun AddTextEvidenceScreen(
                 .weight(1f)      // TextField takes available vertical space
         )
         Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = { onSave(text) }) {
+        OutlinedButton(onClick = { onSave(text) }) {
             Text("Save")
         }
     }

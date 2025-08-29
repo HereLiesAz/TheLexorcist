@@ -42,7 +42,9 @@ fun ScriptEditorScreen(viewModel: ScriptEditorViewModel) {
         Column(
             modifier = Modifier
                 .weight(1f)
-                .padding(16.dp)
+                .padding(16.dp),
+            horizontalAlignment = Alignment.End,
+            verticalArrangement = Arrangement.Center
         ) {
             OutlinedTextField(
                 value = scriptText,
@@ -53,7 +55,7 @@ fun ScriptEditorScreen(viewModel: ScriptEditorViewModel) {
                     .weight(1f)
             )
             Spacer(modifier = Modifier.height(8.dp))
-            Button(
+            OutlinedButton(
                 onClick = { viewModel.saveScript() },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = saveState != SaveState.Saving
@@ -69,23 +71,24 @@ fun ScriptEditorScreen(viewModel: ScriptEditorViewModel) {
             modifier = Modifier
                 .weight(1f)
                 .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
+            horizontalAlignment = Alignment.End,
+            verticalArrangement = Arrangement.Center
         ) {
             Text(stringResource(R.string.script_builder), style = MaterialTheme.typography.headlineSmall)
             Spacer(modifier = Modifier.height(16.dp))
-            Button(onClick = { viewModel.insertText(snippetTextIncludesStr) }) {
+            OutlinedButton(onClick = { viewModel.insertText(snippetTextIncludesStr) }) {
                 Text(stringResource(R.string.script_snippet_text_includes_label))
             }
             Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = { viewModel.insertText(snippetTagsIncludesStr) }) {
+            OutlinedButton(onClick = { viewModel.insertText(snippetTagsIncludesStr) }) {
                 Text(stringResource(R.string.script_snippet_tags_includes_label))
             }
             Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = { viewModel.insertText(snippetDateGreaterStr) }) {
+            OutlinedButton(onClick = { viewModel.insertText(snippetDateGreaterStr) }) {
                 Text(stringResource(R.string.script_snippet_date_greater_label))
             }
             Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = { viewModel.insertText(snippetDateLessStr) }) {
+            OutlinedButton(onClick = { viewModel.insertText(snippetDateLessStr) }) {
                 Text(stringResource(R.string.script_snippet_date_less_label))
             }
         }
