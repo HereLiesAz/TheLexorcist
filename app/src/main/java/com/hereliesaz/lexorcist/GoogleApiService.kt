@@ -23,7 +23,10 @@ import com.hereliesaz.lexorcist.model.Evidence // Import FinancialEntry data cla
 import com.hereliesaz.lexorcist.utils.FolderManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.BufferedReader // Added for reading InputStream
 import java.io.IOException
+import java.io.InputStreamReader // Added for reading InputStream
+import android.util.Log // Added for logging
 
 private const val APP_ROOT_FOLDER_NAME = "The Lexorcist"
 private const val CASE_REGISTRY_SPREADSHEET_NAME = "Lexorcist_Case_Registry"
@@ -62,6 +65,7 @@ class GoogleApiService(
             folderManager.getOrCreateFolder(folderName, parentId)
         } catch (e: IOException) {
             e.printStackTrace()
+            Log.e("GoogleApiService", "Error in getOrCreateFolder for $folderName", e)
             null
         }
     }
@@ -86,27 +90,35 @@ class GoogleApiService(
             val fileListResult = driveService.files().list().setQ(query).setSpaces("drive").execute()
             val existingFiles = fileListResult?.files
             var registrySpreadsheetId: String?
+            val newHeader = listOf(listOf("Case Name", "Spreadsheet ID", "Generated PDF ID", "Source HTML Snapshot ID", "Original Master HTML Template ID"))
+
             if (existingFiles != null && existingFiles.isNotEmpty()) {
                 registrySpreadsheetId = existingFiles[0].id
             } else {
                 registrySpreadsheetId = createSpreadsheet(CASE_REGISTRY_SPREADSHEET_NAME, appRootFolderId)
                 if (registrySpreadsheetId == null) return@withContext null
                 addSheet(registrySpreadsheetId, CASE_REGISTRY_SHEET_NAME)
-                val header = listOf(listOf("Case Name", "Spreadsheet ID", "Master Template ID"))
-                appendData(registrySpreadsheetId, CASE_REGISTRY_SHEET_NAME, header)
+                appendData(registrySpreadsheetId, CASE_REGISTRY_SHEET_NAME, newHeader)
             }
             if (registrySpreadsheetId != null) {
                 addSheet(registrySpreadsheetId, CASE_REGISTRY_SHEET_NAME) // Ensure sheet exists
-                val range = "$CASE_REGISTRY_SHEET_NAME!A1:C1"
-                val currentHeader = sheetsService.spreadsheets().values().get(registrySpreadsheetId, range).execute()
-                if (currentHeader.getValues() == null || currentHeader.getValues().isEmpty()) {
-                    val header = listOf(listOf("Case Name", "Spreadsheet ID", "Master Template ID"))
-                    appendData(registrySpreadsheetId, CASE_REGISTRY_SHEET_NAME, header)
+                val range = "$CASE_REGISTRY_SHEET_NAME!A1:E1" // Updated range for 5 columns
+                val currentHeaderResponse = sheetsService.spreadsheets().values().get(registrySpreadsheetId, range).execute()
+                val currentHeader = currentHeaderResponse.getValues()
+
+                if (currentHeader == null || currentHeader.isEmpty() || currentHeader[0].size < 5) { 
+                    if (currentHeader == null || currentHeader.isEmpty()){
+                         appendData(registrySpreadsheetId, CASE_REGISTRY_SHEET_NAME, newHeader)
+                    } else {
+                        Log.w("GoogleApiService", "Case Registry header might be outdated or incomplete. Found: ${currentHeader[0]}. Expected: ${newHeader[0]}")
+                        // Potentially add logic here to update the header if it's old but exists
+                    }
                 }
             }
             registrySpreadsheetId
         } catch (e: Exception) {
             e.printStackTrace()
+            Log.e("GoogleApiService", "Error in getOrCreateCaseRegistrySpreadsheetId", e)
             null
         }
     }
@@ -116,30 +128,127 @@ class GoogleApiService(
         try {
             val allSheetData = readSpreadsheet(registrySpreadsheetId)
             val caseSheetValues = allSheetData?.get(CASE_REGISTRY_SHEET_NAME)
-            caseSheetValues?.drop(1)?.forEach { row ->
-                if (row.size >= 3) {
-                    val name = row.getOrNull(0)?.toString() ?: ""
-                    val spreadsheetId = row.getOrNull(1)?.toString() ?: ""
-                    val masterTemplateId = row.getOrNull(2)?.toString() ?: ""
-                    if (name.isNotBlank() && spreadsheetId.isNotBlank()) {
-                        cases.add(Case(name = name, spreadsheetId = spreadsheetId, masterTemplateId = masterTemplateId))
+            
+            caseSheetValues?.drop(1)?.forEach { row -> // drop(1) to skip header
+                val name = row.getOrNull(0)?.toString() ?: ""
+                val spreadsheetId = row.getOrNull(1)?.toString() ?: ""
+
+                if (name.isNotBlank() && spreadsheetId.isNotBlank()) {
+                    if (row.size >= 5) { // New structure with 5+ columns
+                        val generatedPdfId = row.getOrNull(2)?.toString()
+                        val sourceHtmlSnapshotId = row.getOrNull(3)?.toString()
+                        val originalMasterHtmlTemplateId = row.getOrNull(4)?.toString()
+                        cases.add(Case(
+                            name = name, 
+                            spreadsheetId = spreadsheetId, 
+                            generatedPdfId = if(generatedPdfId?.isBlank() == true) null else generatedPdfId,
+                            sourceHtmlSnapshotId = if(sourceHtmlSnapshotId?.isBlank() == true) null else sourceHtmlSnapshotId,
+                            originalMasterHtmlTemplateId = if(originalMasterHtmlTemplateId?.isBlank() == true) null else originalMasterHtmlTemplateId
+                        ))
+                    } else if (row.size >= 3) { // Fallback for old structure (3 columns)
+                        val oldMasterTemplateId = row.getOrNull(2)?.toString()
+                        cases.add(Case(
+                            name = name, 
+                            spreadsheetId = spreadsheetId, 
+                            generatedPdfId = if(oldMasterTemplateId?.isBlank() == true) null else oldMasterTemplateId, 
+                            sourceHtmlSnapshotId = null, 
+                            originalMasterHtmlTemplateId = null 
+                        ))
+                    } else {
+                        Log.w("GoogleApiService", "Skipping row in case registry due to insufficient columns: $row")
                     }
                 }
             }
-        } catch (e: Exception) { e.printStackTrace() }
+        } catch (e: Exception) { 
+            e.printStackTrace()
+            Log.e("GoogleApiService", "Error in getAllCasesFromRegistry", e)
+        }
         cases
     }
 
     suspend fun addCaseToRegistry(registrySpreadsheetId: String, caseData: Case): Boolean = withContext(Dispatchers.IO) {
         try {
-            val values = listOf(listOf(caseData.name, caseData.spreadsheetId, caseData.masterTemplateId))
+            val values = listOf(listOf(
+                caseData.name, 
+                caseData.spreadsheetId, 
+                caseData.generatedPdfId ?: "", 
+                caseData.sourceHtmlSnapshotId ?: "",
+                caseData.originalMasterHtmlTemplateId ?: ""
+            ))
             appendData(registrySpreadsheetId, CASE_REGISTRY_SHEET_NAME, values) != null
         } catch (e: Exception) {
             e.printStackTrace()
+            Log.e("GoogleApiService", "Error in addCaseToRegistry for ${caseData.name}", e)
             false
         }
     }
 
+    suspend fun createMasterTemplate(parentId: String? = null, templateName: String = "Lexorcist Master HTML Template"): String? = withContext(Dispatchers.IO) {
+        try {
+            val fileMetadata = DriveFile()
+                .setName(templateName)
+                .setMimeType("text/html") // Correct MimeType for HTML
+            if (parentId != null) {
+                 fileMetadata.parents = listOf(parentId)
+            } else {
+                // If no parentId is specified, create it in the app root folder by default.
+                val appRootFolderId = getOrCreateAppRootFolder()
+                if (appRootFolderId != null) {
+                    fileMetadata.parents = listOf(appRootFolderId)
+                } else {
+                    Log.e("GoogleApiService", "Failed to get/create app root folder for master template. Template will be in Drive root.")
+                    // Optionally, don't set parents if appRootFolderId is null, placing it in user's Drive root.
+                }
+            }
+            val content = ByteArrayContent.fromString("text/html", 
+                """<html>
+                    |<head>
+                    |    <title>Master Template</title>
+                    |</head>
+                    |<body>
+                    |    <h1>Case: {{CASE_NAME}}</h1>
+                    |    <p>Court: {{COURT}}</p>
+                    |    <p>Plaintiffs: {{PLAINTIFFS}}</p>
+                    |    <p>Defendants: {{DEFENDANTS}}</p>
+                    |    <p>Case Number: {{CASE_NUMBER}}</p>
+                    |    <p>Section: {{CASE_SECTION}}</p>
+                    |    <p>Judge: {{JUDGE}}</p>
+                    |    <!-- Add more placeholders as needed -->
+                    |</body>
+                    |</html>
+                """.trimMargin()
+            )
+            driveService.files().create(fileMetadata, content).setFields("id").execute()?.id
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Log.e("GoogleApiService", "Error in createMasterTemplate", e)
+            null
+        }
+    }
+
+    suspend fun listHtmlTemplatesInAppRootFolder(): List<DriveFile> = withContext(Dispatchers.IO) {
+        try {
+            val appRootFolderId = getOrCreateAppRootFolder()
+            if (appRootFolderId == null) {
+                Log.e("GoogleApiService", "Failed to get app root folder ID. Cannot list HTML templates.")
+                return@withContext emptyList()
+            }
+
+            val query = "'${appRootFolderId}' in parents and mimeType='text/html' and trashed=false"
+            val result = driveService.files().list()
+                .setQ(query)
+                .setSpaces("drive")
+                .setFields("files(id, name, mimeType, modifiedTime)") // Include fields you might need for display/sorting
+                .execute()
+            
+            result.files ?: emptyList()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Log.e("GoogleApiService", "Error listing HTML templates in app root folder", e)
+            emptyList()
+        }
+    }
+    
     suspend fun getAllegationsForCase(caseSpreadsheetId: String, caseIdForAssociation: Int): List<Allegation> = withContext(Dispatchers.IO) {
         val allegations = mutableListOf<Allegation>()
         if (caseSpreadsheetId.isBlank()) return@withContext allegations
@@ -152,7 +261,10 @@ class GoogleApiService(
                     allegations.add(Allegation(id = index, caseId = caseIdForAssociation, text = text))
                 }
             }
-        } catch (e: Exception) { e.printStackTrace() }
+        } catch (e: Exception) { 
+            e.printStackTrace()
+            Log.e("GoogleApiService", "Error in getAllegationsForCase for $caseSpreadsheetId", e)
+        }
         allegations
     }
 
@@ -164,6 +276,7 @@ class GoogleApiService(
             appendData(caseSpreadsheetId, ALLEGATIONS_SHEET_NAME, values) != null
         } catch (e: Exception) {
             e.printStackTrace()
+            Log.e("GoogleApiService", "Error in addAllegationToCase for $caseSpreadsheetId", e)
             false
         }
     }
@@ -194,10 +307,14 @@ class GoogleApiService(
                         tags = tags
                     ))
                 } catch (e: Exception) {
-                    e.printStackTrace() // Log error during row parsing
+                    e.printStackTrace() 
+                    Log.e("GoogleApiService", "Error parsing row in getEvidenceForCase for $caseSpreadsheetId", e)
                 }
             }
-        } catch (e: Exception) { e.printStackTrace() }
+        } catch (e: Exception) { 
+            e.printStackTrace()
+            Log.e("GoogleApiService", "Error in getEvidenceForCase for $caseSpreadsheetId", e)
+        }
         entries
     }
 
@@ -223,19 +340,8 @@ class GoogleApiService(
             appendData(caseSpreadsheetId, EVIDENCE_SHEET_NAME, values) != null
         } catch (e: Exception) {
             e.printStackTrace()
+            Log.e("GoogleApiService", "Error in addEvidenceToCase for $caseSpreadsheetId", e)
             false
-        }
-    }
-
-    suspend fun createMasterTemplate(parentId: String? = null): String? = withContext(Dispatchers.IO) {
-        try {
-            val fileMetadata = DriveFile().setName("Lexorcist Master Template").setMimeType("application/vnd.google-apps.document")
-            if (parentId != null) fileMetadata.parents = listOf(parentId)
-            val content = ByteArrayContent.fromString("text/plain", "Placeholder for master template content.")
-            driveService.files().create(fileMetadata, content).setFields("id").execute()?.id
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
         }
     }
     
@@ -253,6 +359,7 @@ class GoogleApiService(
             sheetData
         } catch (e: Exception) {
             e.printStackTrace()
+            Log.e("GoogleApiService", "Error in readSpreadsheet for $spreadsheetId", e)
             null
         }
     }
@@ -264,6 +371,7 @@ class GoogleApiService(
             driveService.files().create(fileMetadata).setFields("id").execute()?.id
         } catch (e: Exception) {
             e.printStackTrace()
+            Log.e("GoogleApiService", "Error in createSpreadsheet for $title", e)
             null
         }
     }
@@ -271,12 +379,13 @@ class GoogleApiService(
     suspend fun addSheet(spreadsheetId: String, sheetTitle: String): BatchUpdateSpreadsheetResponse? = withContext(Dispatchers.IO) {
         try {
             val spreadsheet = sheetsService.spreadsheets().get(spreadsheetId).execute()
-            if (spreadsheet.sheets?.any { it.properties?.title == sheetTitle } == true) return@withContext null
+            if (spreadsheet.sheets?.any { it.properties?.title == sheetTitle } == true) return@withContext null // Sheet already exists
             val addSheetRequest = AddSheetRequest().setProperties(SheetProperties().setTitle(sheetTitle))
             val batchUpdateRequest = BatchUpdateSpreadsheetRequest().setRequests(listOf(Request().setAddSheet(addSheetRequest)))
             sheetsService.spreadsheets().batchUpdate(spreadsheetId, batchUpdateRequest).execute()
         } catch (e: Exception) {
             e.printStackTrace()
+            Log.e("GoogleApiService", "Error in addSheet for $sheetTitle in $spreadsheetId", e)
             null 
         }
     }
@@ -284,12 +393,13 @@ class GoogleApiService(
     suspend fun appendData(spreadsheetId: String, sheetTitle: String, values: List<List<Any>>): AppendValuesResponse? = withContext(Dispatchers.IO) {
         try {
             val body = ValueRange().setValues(values)
-            sheetsService.spreadsheets().values().append(spreadsheetId, "$sheetTitle!A1", body)
+            sheetsService.spreadsheets().values().append(spreadsheetId, "$sheetTitle!A1", body) // Appending to A1 of the specified sheet
                 .setValueInputOption("USER_ENTERED") 
                 .setInsertDataOption("INSERT_ROWS")
                 .execute()
         } catch (e: Exception) {
             e.printStackTrace()
+            Log.e("GoogleApiService", "Error in appendData to $sheetTitle in $spreadsheetId", e)
             null
         }
     }
@@ -301,20 +411,50 @@ class GoogleApiService(
             val scriptId = createdProject.scriptId ?: return@withContext
 
             val scriptFile = ScriptPlatformFile().setSource(scriptContent).setName("Code")
-            val configFile = ScriptPlatformFile().setSource("{\"masterTemplateId\": \"$masterTemplateId\"}").setName("config.json")
+            val configContent = if (masterTemplateId.isNotBlank()) {
+                "{\"masterTemplateId\": \"$masterTemplateId\"}" // This masterTemplateId is for the script's use, might refer to the generated PDF ID
+            } else {
+                "{}" 
+            }
+            val configFile = ScriptPlatformFile().setSource(configContent).setName("config.json")
 
             val scriptAPIContent = ScriptContent().setFiles(listOf(scriptFile, configFile)).setScriptId(scriptId)
             scriptService.projects().updateContent(scriptId, scriptAPIContent).execute()
-        } catch (e: Exception) { e.printStackTrace() }
+        } catch (e: Exception) { 
+            e.printStackTrace()
+            Log.e("GoogleApiService", "Error in attachScript for $spreadsheetId", e)
+        }
     }
     
     suspend fun uploadFile(file: java.io.File, folderId: String, mimeType: String): DriveFile? = withContext(Dispatchers.IO) {
         try {
-            val fileMetadata = DriveFile().apply { name = file.name; parents = listOf(folderId) }
+            val fileMetadata = DriveFile().apply { 
+                name = file.name
+                parents = listOf(folderId) 
+            }
             val mediaContent = GoogleFileContent(mimeType, file)
             driveService.files().create(fileMetadata, mediaContent).setFields("id, name, webViewLink, webContentLink").execute()
         } catch (e: Exception) {
             e.printStackTrace()
+            Log.e("GoogleApiService", "Error in uploadFile ${file.name}", e)
+            null
+        }
+    }
+
+    suspend fun uploadStringAsFile(content: String, mimeType: String, fileName: String, folderId: String): DriveFile? = withContext(Dispatchers.IO) {
+        try {
+            val fileMetadata = DriveFile().apply {
+                name = fileName
+                parents = listOf(folderId)
+                this.mimeType = mimeType 
+            }
+            val mediaContent = ByteArrayContent.fromString(mimeType, content)
+            driveService.files().create(fileMetadata, mediaContent)
+                .setFields("id, name, webViewLink, webContentLink") 
+                .execute()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Log.e("GoogleApiService", "Failed to upload string as file '$fileName'", e)
             null
         }
     }
@@ -328,6 +468,7 @@ class GoogleApiService(
             driveService.files().copy(fileId, newFile).execute()
         } catch (e: Exception) {
             e.printStackTrace()
+            Log.e("GoogleApiService", "Error in copyFile $fileId to $newName", e)
             null
         }
     }
@@ -337,14 +478,17 @@ class GoogleApiService(
             val requests = replacements.map { (placeholder, value) ->
                 com.google.api.services.docs.v1.model.Request().setReplaceAllText(
                     ReplaceAllTextRequest()
-                        .setContainsText(SubstringMatchCriteria().setText("{{$placeholder}}"))
+                        .setContainsText(SubstringMatchCriteria().setText("{{$placeholder}}")) 
                         .setReplaceText(value)
                 )
             }
-            val batchUpdateRequest = BatchUpdateDocumentRequest().setRequests(requests)
-            docsService.documents().batchUpdate(docId, batchUpdateRequest).execute()
+            if (requests.isNotEmpty()) { 
+                val batchUpdateRequest = BatchUpdateDocumentRequest().setRequests(requests)
+                docsService.documents().batchUpdate(docId, batchUpdateRequest).execute()
+            }
         } catch (e: Exception) {
             e.printStackTrace()
+            Log.e("GoogleApiService", "Error in replacePlaceholdersInDoc for $docId", e)
         }
     }
 
@@ -353,22 +497,53 @@ class GoogleApiService(
             scriptService.projects().getContent(scriptId).execute()
         } catch (e: Exception) {
             e.printStackTrace()
+            Log.e("GoogleApiService", "Error in getScript $scriptId", e)
             null
         }
     }
 
     suspend fun updateScript(scriptId: String, scriptContent: String): Boolean = withContext(Dispatchers.IO) {
         try {
-            val newContent = com.google.api.services.script.model.Content().setFiles(
-                listOf(
-                    com.google.api.services.script.model.File().setName("Code").setSource(scriptContent)
-                )
-            )
+            val existingContent = scriptService.projects().getContent(scriptId).execute()
+            val existingFiles = existingContent?.files ?: mutableListOf()
+
+            val updatedFiles = existingFiles.map { 
+                if (it.name == "Code" && it.type == "SERVER_JS") { 
+                    it.setSource(scriptContent) 
+                } else {
+                    it
+                }
+            }.toMutableList()
+
+            if (updatedFiles.none { (it.name == "Code" || it.name == "Code.gs" || it.name == "Code.js") && it.type == "SERVER_JS"}) {
+                 updatedFiles.add(com.google.api.services.script.model.File().setName("Code").setType("SERVER_JS").setSource(scriptContent))
+            }
+            
+            val newContent = com.google.api.services.script.model.Content().setFiles(updatedFiles)
             scriptService.projects().updateContent(scriptId, newContent).execute()
             true
         } catch (e: Exception) {
             e.printStackTrace()
+            Log.e("GoogleApiService", "Error in updateScript $scriptId", e)
             false
+        }
+    }
+
+    suspend fun downloadFileAsString(fileId: String): String? = withContext(Dispatchers.IO) {
+        try {
+            driveService.files().get(fileId).executeMediaAsInputStream().use { inputStream ->
+                if (inputStream == null) {
+                    Log.e("GoogleApiService", "Failed to get input stream for file ID: $fileId")
+                    return@withContext null
+                }
+                BufferedReader(InputStreamReader(inputStream)).use { reader ->
+                    reader.readText()
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Log.e("GoogleApiService", "Error in downloadFileAsString for $fileId", e)
+            null
         }
     }
 }

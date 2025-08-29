@@ -14,6 +14,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.hereliesaz.lexorcist.db.Case
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
+import com.hereliesaz.lexorcist.CreateCaseDialog // Import the dialog from the parent package
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,61 +56,15 @@ fun CasesScreen(viewModel: MainViewModel) {
     }
 
     if (showCreateCaseDialog) {
+        // Use the CreateCaseDialog from com.hereliesaz.lexorcist package (MainScreen.kt)
         CreateCaseDialog(
-            onDismiss = { showCreateCaseDialog = false },
-            onCreate = { caseName ->
-                // Provide default empty values for other parameters
-                viewModel.createCase(
-                    caseName = caseName,
-                    exhibitSheetName = "Exhibit Matrix - Exhibit List", // A reasonable default
-                    caseNumber = "",
-                    caseSection = "",
-                    caseJudge = ""
-                )
-                showCreateCaseDialog = false
-            }
+            viewModel = viewModel,
+            onDismiss = { showCreateCaseDialog = false }
         )
     }
 }
 
-@Composable
-private fun CreateCaseDialog(
-    onDismiss: () -> Unit,
-    onCreate: (String) -> Unit
-) {
-    var caseName by remember { mutableStateOf("") }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Create New Case") },
-        text = {
-            OutlinedTextField(
-                value = caseName,
-                onValueChange = { caseName = it },
-                label = { Text("Case Name") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    if (caseName.isNotBlank()) {
-                        onCreate(caseName)
-                    }
-                },
-                enabled = caseName.isNotBlank()
-            ) {
-                Text("Create")
-            }
-        },
-        dismissButton = {
-            Button(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        }
-    )
-}
+// Internal CreateCaseDialog composable removed
 
 @Composable
 fun CaseItem(case: Case, isSelected: Boolean, onClick: () -> Unit) {
