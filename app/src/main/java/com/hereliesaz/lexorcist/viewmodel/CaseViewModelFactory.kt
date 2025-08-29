@@ -3,16 +3,16 @@ package com.hereliesaz.lexorcist.viewmodel
 import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.hereliesaz.lexorcist.data.EvidenceRepository
+import com.hereliesaz.lexorcist.data.CaseRepository
 
-class MainViewModelFactory(
+class CaseViewModelFactory(
     private val application: Application,
-    private val evidenceRepository: EvidenceRepository
+    private val caseRepository: CaseRepository
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
+        if (modelClass.isAssignableFrom(CaseViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return MainViewModel(application, evidenceRepository) as T
+            return CaseViewModel(application, caseRepository) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

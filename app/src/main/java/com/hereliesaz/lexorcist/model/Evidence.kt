@@ -19,8 +19,8 @@ import java.util.Date
 @Entity(tableName = "evidence")
 data class Evidence(
     @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
-    var caseId: Long = 0, // Added this line
+    val id: Int = 0,
+    var caseId: Int = 0, // Added this line
     val amount: Double?,
     val timestamp: Date,
     val sourceDocument: String,

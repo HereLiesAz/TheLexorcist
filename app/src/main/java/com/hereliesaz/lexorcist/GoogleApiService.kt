@@ -281,7 +281,7 @@ class GoogleApiService(
 
                     entries.add(
                         Evidence(
-                            caseId = caseIdForAssociation.toLong(),
+                            caseId = caseIdForAssociation,
                             allegationId = allegationId,
                             amount = amount,
                             timestamp = java.util.Date(timestamp),
@@ -309,7 +309,7 @@ class GoogleApiService(
             val sheetExists = sheetsService.spreadsheets().get(caseSpreadsheetId).execute().sheets?.any { it.properties?.title == EVIDENCE_SHEET_NAME } == true
             if (!sheetExists) {
                 addSheet(caseSpreadsheetId, EVIDENCE_SHEET_NAME)
-                val header = listOf(listOf("Source Document", "Timestamp", "Document Date", "Allegation ID", "Category", "Amount"))
+                val header: List<List<Any>> = listOf(listOf("Source Document", "Timestamp", "Document Date", "Allegation ID", "Category", "Amount"))
                 appendData(caseSpreadsheetId, EVIDENCE_SHEET_NAME, header)
             }
 

@@ -12,11 +12,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.hereliesaz.lexorcist.R
-import com.hereliesaz.lexorcist.viewmodel.MainViewModel
+import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 
 @Composable
-fun SettingsScreen(viewModel: MainViewModel) {
-    val isDarkMode by viewModel.isDarkMode.collectAsState()
+fun SettingsScreen(caseViewModel: CaseViewModel) {
+    val isDarkMode by caseViewModel.isDarkMode.collectAsState()
 
     Column(
         modifier = Modifier
@@ -33,7 +33,7 @@ fun SettingsScreen(viewModel: MainViewModel) {
         Text(stringResource(R.string.dark_mode), style = MaterialTheme.typography.bodyLarge)
             Switch(
                 checked = isDarkMode,
-                onCheckedChange = { viewModel.setDarkMode(it) }
+                onCheckedChange = { caseViewModel.setDarkMode(it) }
             )
         }
     }

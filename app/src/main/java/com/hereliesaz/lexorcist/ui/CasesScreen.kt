@@ -15,14 +15,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.data.Case
-import com.hereliesaz.lexorcist.viewmodel.MainViewModel
+import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import com.hereliesaz.lexorcist.CreateCaseDialog // Import the dialog from the parent package
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CasesScreen(viewModel: MainViewModel) {
-    val cases by viewModel.cases.collectAsState()
-    val selectedCase by viewModel.selectedCase.collectAsState()
+fun CasesScreen(caseViewModel: CaseViewModel) {
+    val cases by caseViewModel.cases.collectAsState()
+    val selectedCase by caseViewModel.selectedCase.collectAsState()
     var showCreateCaseDialog by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -50,7 +50,7 @@ fun CasesScreen(viewModel: MainViewModel) {
                         CaseItem(
                             case = case,
                             isSelected = case.id == selectedCase?.id,
-                            onClick = { viewModel.selectCase(case) }
+                            onClick = { caseViewModel.selectCase(case) }
                         )
                     }
                 }
@@ -61,7 +61,7 @@ fun CasesScreen(viewModel: MainViewModel) {
     if (showCreateCaseDialog) {
         // Use the CreateCaseDialog from com.hereliesaz.lexorcist package (MainScreen.kt)
         CreateCaseDialog(
-            viewModel = viewModel,
+            caseViewModel = caseViewModel,
             onDismiss = { showCreateCaseDialog = false }
         )
     }

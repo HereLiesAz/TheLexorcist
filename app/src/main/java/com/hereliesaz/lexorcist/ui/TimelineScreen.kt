@@ -9,15 +9,15 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.hereliesaz.lexorcist.viewmodel.MainViewModel
+import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
 import io.github.pushpalroy.jetlime.Event
 import io.github.pushpalroy.jetlime.JetLime
 import java.text.SimpleDateFormat
 import java.util.*
 
 @Composable
-fun TimelineScreen(viewModel: MainViewModel) {
-    val evidenceList by viewModel.selectedCaseEvidenceList.collectAsState()
+fun TimelineScreen(evidenceViewModel: EvidenceViewModel) {
+    val evidenceList by evidenceViewModel.evidenceList.collectAsState()
 
     val events = evidenceList.map {
         Event(

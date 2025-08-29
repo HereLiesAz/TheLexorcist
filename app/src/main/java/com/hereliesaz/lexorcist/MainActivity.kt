@@ -21,9 +21,16 @@ import com.google.android.gms.common.api.ApiException
 import com.hereliesaz.lexorcist.MainScreen
 import com.hereliesaz.lexorcist.ui.theme.LexorcistTheme
 import com.hereliesaz.lexorcist.data.AppDatabase
+import com.hereliesaz.lexorcist.data.CaseRepositoryImpl
 import com.hereliesaz.lexorcist.data.EvidenceRepositoryImpl
-import com.hereliesaz.lexorcist.viewmodel.MainViewModel
-import com.hereliesaz.lexorcist.viewmodel.MainViewModelFactory
+import com.hereliesaz.lexorcist.viewmodel.AuthViewModel
+import com.hereliesaz.lexorcist.viewmodel.AuthViewModelFactory
+import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
+import com.hereliesaz.lexorcist.viewmodel.CaseViewModelFactory
+import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
+import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModelFactory
+import com.hereliesaz.lexorcist.viewmodel.OcrViewModel
+import com.hereliesaz.lexorcist.viewmodel.OcrViewModelFactory
 
 // Removed DataReviewViewModel and placeholder/settings screen imports as they belonged to the NavHost block
 
@@ -31,8 +38,19 @@ class MainActivity : ComponentActivity() {
 
     private val appDatabase by lazy { AppDatabase.getDatabase(this) }
     private val evidenceRepository by lazy { EvidenceRepositoryImpl(appDatabase.evidenceDao(), null) }
-    private val viewModel: MainViewModel by viewModels {
-        MainViewModelFactory(application, evidenceRepository)
+    private val caseRepository by lazy { CaseRepositoryImpl(applicationContext, null) }
+
+    private val authViewModel: AuthViewModel by viewModels {
+        AuthViewModelFactory(application, evidenceRepository, caseRepository)
+    }
+    private val caseViewModel: CaseViewModel by viewModels {
+        CaseViewModelFactory(application, caseRepository)
+    }
+    private val evidenceViewModel: EvidenceViewModel by viewModels {
+        EvidenceViewModelFactory(application, evidenceRepository, caseViewModel.selectedCase.value)
+    }
+    private val ocrViewModel: OcrViewModel by viewModels {
+        OcrViewModelFactory(application)
     }
     
     // These are the "top" block client/request declarations
@@ -49,11 +67,11 @@ class MainActivity : ComponentActivity() {
             try {
                 val credential = oneTapClient.getSignInCredentialFromIntent(result.data)
                 val idToken = credential.googleIdToken
-                val email = credential.id 
+                val email = credential.id
                 val displayName = credential.displayName
                 Toast.makeText(this, "Signed in as ${email ?: displayName}", Toast.LENGTH_SHORT).show()
                 val applicationName = applicationInfo.loadLabel(packageManager).toString()
-                viewModel.onSignInResult(idToken, email, this, applicationName)
+                authViewModel.onSignInResult(idToken, email, this, applicationName)
             } catch (e: ApiException) {
                 Log.e(APP_TAG, "Sign-in failed after result: ${e.statusCode}", e)
                 Toast.makeText(this, "Sign in failed: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
@@ -67,7 +85,7 @@ class MainActivity : ComponentActivity() {
     // Kept from "top" block
     private val selectImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let {
-            viewModel.addEvidenceToUiList(it, this)
+            ocrViewModel.startImageReview(it, this)
         }
     }
 
@@ -78,7 +96,7 @@ class MainActivity : ComponentActivity() {
     private val takePictureLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
         if (success) {
             imageUri?.let {
-                viewModel.addEvidenceToUiList(it, this)
+                ocrViewModel.startImageReview(it, this)
             }
         }
     }
@@ -112,7 +130,10 @@ class MainActivity : ComponentActivity() {
             LexorcistTheme {
                 val navController = rememberNavController()
                 MainScreen(
-                    viewModel = viewModel,
+                    authViewModel = authViewModel,
+                    caseViewModel = caseViewModel,
+                    evidenceViewModel = evidenceViewModel,
+                    ocrViewModel = ocrViewModel,
                     onSignIn = { signIn() },
                     onSelectImage = { selectImage() },
                     onTakePicture = { takePicture() },
