@@ -17,7 +17,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.hereliesaz.lexorcist.data.Evidence
+import com.hereliesaz.lexorcist.model.Evidence
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 import com.pushpal.jetlime.JetLimeColumn
 import com.pushpal.jetlime.JetLimeEvent
