@@ -16,7 +16,7 @@ import com.google.android.gms.auth.api.identity.Identity
 import com.google.android.gms.auth.api.identity.SignInClient
 import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.common.api.ApiException
-import com.hereliesaz.lexorcist.ui.MainScreen
+import com.hereliesaz.lexorcist.MainScreen
 import com.hereliesaz.lexorcist.ui.theme.LexorcistTheme
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 
@@ -104,13 +104,22 @@ class MainActivity : ComponentActivity() {
             .build()
 
         setContent {
-            LexorcistTheme {
+            val settingsManager = com.hereliesaz.lexorcist.data.SettingsManager(this)
+            val theme = settingsManager.getTheme()
+            val darkTheme = when (theme) {
+                "Dark" -> true
+                "Light" -> false
+                else -> androidx.compose.foundation.isSystemInDarkTheme()
+            }
+            LexorcistTheme(darkTheme = darkTheme) {
                 val navController = rememberNavController()
                 MainScreen(
-                    navController = navController,
-                    mainViewModel = viewModel,
-                    onSignInClick = { signIn() },
-                    onExportClick = { viewModel.exportToSheet() }
+                    viewModel = viewModel,
+                    onSignIn = { signIn() },
+                    onSelectImage = { selectImage() },
+                    onTakePicture = { takePicture() },
+                    onAddDocument = { /*TODO*/ },
+                    onAddSpreadsheet = { /*TODO*/ }
                 )
             }
         }
