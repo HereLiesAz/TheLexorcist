@@ -43,7 +43,7 @@ plugins {
     id("com.google.dagger.hilt.android")
     // Removed kotlin("kapt")
     id("org.jetbrains.kotlin.plugin.compose") version "2.2.10"
-    id("com.google.devtools.ksp") version "2.2.10-2.0.0" // Added KSP plugin
+    id("com.google.devtools.ksp") version "2.2.10-2.0.2" // Added KSP plugin
     // id("com.palantir.git-version") // Temporarily removed
 }
 
@@ -128,13 +128,13 @@ dependencies {
     ksp("androidx.room:room-compiler:$room_version") // Changed from kapt to ksp
 
     // Gson
-    implementation("com.google.code.gson:gson:2.10.1")
+    implementation("com.google.code.gson:gson:2.13.1")
 
     // Lifecycle components
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.9.3")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.3")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.9.3")
-    implementation("androidx.work:work-runtime-ktx:2.9.0")
+    implementation("androidx.work:work-runtime-ktx:2.10.3")
     implementation("androidx.compose.runtime:runtime-livedata:1.9.0")
 
     // Jetpack Compose
