@@ -70,9 +70,18 @@ import kotlin.coroutines.resumeWithException
 import androidx.core.content.edit
 // import androidx.room.util.copy // Removed as unused
 import com.hereliesaz.lexorcist.data.Case
+import com.hereliesaz.lexorcist.data.CaseRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class MainViewModel(application: Application, private val evidenceRepository: com.hereliesaz.lexorcist.data.EvidenceRepository) : AndroidViewModel(application) {
+@HiltViewModel
+class MainViewModel @Inject constructor(
+    application: Application,
+    private val evidenceRepository: com.hereliesaz.lexorcist.data.EvidenceRepository,
+    private val caseRepository: CaseRepository,
+    private val googleApiService: GoogleApiService
+) : AndroidViewModel(application) {
 
     private val tag = "MainViewModelCombined" // Changed TAG to tag
 
@@ -125,6 +134,10 @@ class MainViewModel(application: Application, private val evidenceRepository: co
     // --- Error Handling ---
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
+    // --- Uploading State ---
+    private val _isUploadingFile = MutableStateFlow(false)
+    val isUploadingFile: StateFlow<Boolean> = _isUploadingFile.asStateFlow()
 
 
     // --- Image Processing & Text Extraction ---
@@ -720,11 +733,21 @@ class MainViewModel(application: Application, private val evidenceRepository: co
 
     fun processUiEvidenceForReview() {
         viewModelScope.launch {
-            val taggedList = _uiEvidenceList.value.map { evidence ->
-                val parserResult = scriptRunner.runScript(script, evidence) // Changed evidence.content to evidence
-                TaggedEvidence(id = evidence, tags = parserResult.tags, content = evidence.content) // Changed evidence.id to evidence and evidence to evidence.content
+            val taggedList = _uiEvidenceList.value.mapNotNull { evidence ->
+                when (val result = scriptRunner.runScript(script, evidence)) {
+                    is com.hereliesaz.lexorcist.util.Result.Success -> {
+                        val parserResult = result.data
+                        TaggedEvidence(id = evidence, tags = parserResult.tags, content = evidence.content)
+                    }
+                    is com.hereliesaz.lexorcist.util.Result.Error -> {
+                        _errorMessage.value = "Script execution failed: ${result.exception.message}"
+                        null
+                    }
+                }
             }
-            TaggedEvidenceRepository.setTaggedEvidence(taggedList)
+            if (taggedList.size == _uiEvidenceList.value.size) {
+                TaggedEvidenceRepository.setTaggedEvidence(taggedList)
+            }
         }
     }
     
@@ -832,44 +855,50 @@ class MainViewModel(application: Application, private val evidenceRepository: co
         }
     }
 
-    fun addDriveFileEvidenceToSelectedCase(uri: Uri, context: Context) { 
+    fun addDriveFileEvidenceToSelectedCase(uri: Uri, context: Context) {
         viewModelScope.launch {
-            val currentCase = _selectedCase.value // Corrected _selectedLiesAz to _selectedCase
-            val apiService = _googleApiService.value
-            if (currentCase != null && apiService != null) {
-                val rawEvidenceFolderId = apiService.getOrCreateEvidenceFolder(currentCase?.name ?: "Unknown Case") ?: return@launch // Added safe call and default
-                context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
-                    val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-                    cursor.moveToFirst()
-                    val fileName = cursor.getString(nameIndex)
-                    val mimeType = context.contentResolver.getType(uri)
-                    context.contentResolver.openInputStream(uri)?.let { inputStream ->
-                        val file = File(context.cacheDir, fileName)
-                        file.outputStream().use { outputStream -> inputStream.copyTo(outputStream) }
-                        val uploadedDriveFile = apiService.uploadFile(file, rawEvidenceFolderId, mimeType ?: "application/octet-stream")
-                        Log.d(tag, "File $fileName uploaded to Drive for case ${currentCase?.name ?: "Unknown Case"}") // Added safe call and default
-                        if (uploadedDriveFile != null) {
-                             val newEvidenceEntry = Evidence(
-                                 id = 0, // DB will assign ID
-                                 caseId = currentCase?.id ?: 0, // Added safe call and default
-                                 content = "Uploaded file: $fileName (Content not extracted for preview)",
-                                 timestamp = System.currentTimeMillis(),
-                                 sourceDocument = uploadedDriveFile?.name ?: fileName, // Added safe call
-                                 documentDate = System.currentTimeMillis(),
-                                 allegationId = null,
-                                 category = mimeType ?: "file",
-                                 tags = listOf("drive_upload")
-                             )
-                            // Consider if this should be added to the _selectedCaseEvidenceList or _uiEvidenceList immediately
-                            // or if addEvidenceToSelectedCase (which persists to sheet) should be called.
-                            // addEvidenceToSelectedCase(newEvidenceEntry)
-                        } else {
-                            _errorMessage.value = "Failed to upload file to Drive."
+            _isUploadingFile.value = true
+            try {
+                val currentCase = _selectedCase.value
+                val apiService = _googleApiService.value
+                if (currentCase != null && apiService != null) {
+                    val rawEvidenceFolderId = apiService.getOrCreateEvidenceFolder(currentCase.name) ?: return@launch
+                    context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                        val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                        cursor.moveToFirst()
+                        val fileName = cursor.getString(nameIndex)
+                        val mimeType = context.contentResolver.getType(uri)
+                        context.contentResolver.openInputStream(uri)?.let { inputStream ->
+                            val file = File(context.cacheDir, fileName)
+                            file.outputStream().use { outputStream -> inputStream.copyTo(outputStream) }
+                            when (val result = apiService.uploadFile(file, rawEvidenceFolderId, mimeType ?: "application/octet-stream")) {
+                                is com.hereliesaz.lexorcist.util.Result.Success -> {
+                                    val uploadedDriveFile = result.data
+                                    Log.d(tag, "File $fileName uploaded to Drive for case ${currentCase.name}")
+                                    val newEvidenceEntry = Evidence(
+                                        id = 0,
+                                        caseId = currentCase.id,
+                                    content = "Uploaded file: $fileName (Content not extracted for preview)",
+                                    timestamp = System.currentTimeMillis(),
+                                    sourceDocument = uploadedDriveFile.name ?: fileName,
+                                    documentDate = System.currentTimeMillis(),
+                                    allegationId = null,
+                                    category = mimeType ?: "file",
+                                    tags = listOf("drive_upload")
+                                )
+                                addEvidenceToSelectedCase(newEvidenceEntry)
+                                }
+                                is com.hereliesaz.lexorcist.util.Result.Error -> {
+                                    _errorMessage.value = "Failed to upload file: ${result.exception.message}"
+                                }
+                            }
                         }
                     }
+                } else {
+                    Log.w(tag, "addDriveFileEvidenceToSelectedCase: No case or API service.")
                 }
-            } else {
-                Log.w(tag, "addDriveFileEvidenceToSelectedCase: No case or API service.")
+            } finally {
+                _isUploadingFile.value = false
             }
         }
     }

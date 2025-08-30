@@ -14,14 +14,17 @@ import com.hereliesaz.lexorcist.data.Evidence // Correct import
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import org.opencv.android.Utils
 import org.opencv.core.Mat
 import org.opencv.imgproc.Imgproc
 import java.util.ArrayList
-// import java.util.Date // Removed import
+import javax.inject.Inject
 
-class OcrViewModel(application: Application) : AndroidViewModel(application) {
+// import java.util.Date // Removed import
+@HiltViewModel
+class OcrViewModel @Inject constructor(application: Application) : AndroidViewModel(application) {
 
     private val _isOcrInProgress = MutableStateFlow(false)
     val isOcrInProgress: StateFlow<Boolean> = _isOcrInProgress.asStateFlow()

@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 // import com.hereliesaz.lexorcist.viewmodel.MainViewModel // Not used in the first composable
 import com.hereliesaz.lexorcist.ui.TaggedDataItem // Ensure this is present
 import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
+import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 import com.hereliesaz.lexorcist.viewmodel.OcrViewModel
 import com.hereliesaz.lexorcist.R // For stringResource
 import com.hereliesaz.lexorcist.data.Evidence // Ensure Evidence model is imported
@@ -39,6 +40,7 @@ import java.util.Locale // For date formatting
 fun AddEvidenceScreen(
     evidenceViewModel: EvidenceViewModel,
     ocrViewModel: OcrViewModel,
+    mainViewModel: MainViewModel,
     onSelectImage: () -> Unit,
     onTakePicture: () -> Unit,
     onAddTextEvidence: () -> Unit,
@@ -47,11 +49,12 @@ fun AddEvidenceScreen(
 ) {
     val imageBitmapForReview by ocrViewModel.imageBitmapForReview.collectAsState()
     val isOcrInProgress by ocrViewModel.isOcrInProgress.collectAsState()
+    val isUploadingFile by mainViewModel.isUploadingFile.collectAsState()
     val newlyCreatedEvidence by ocrViewModel.newlyCreatedEvidence.collectAsState() // This is StateFlow<Evidence?>
     val evidenceList by evidenceViewModel.evidenceList.collectAsState() // This is StateFlow<List<Evidence>>
     val context = LocalContext.current
 
-    if (isOcrInProgress) {
+    if (isOcrInProgress || isUploadingFile) {
         Column(
             modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -59,7 +62,7 @@ fun AddEvidenceScreen(
         ) {
             CircularProgressIndicator()
             Spacer(modifier = Modifier.height(16.dp))
-            Text("Processing Image...")
+            Text(if (isOcrInProgress) "Processing Image..." else "Uploading File...")
         }
     } else {
         Column(

@@ -40,6 +40,7 @@ fun getGitVersionCode(): Int {
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("com.google.dagger.hilt.android")
     // Removed kotlin("kapt")
     id("org.jetbrains.kotlin.plugin.compose") version "2.2.10"
     id("com.google.devtools.ksp") version "2.2.10-2.0.2" // Added KSP plugin
@@ -166,6 +167,10 @@ dependencies {
     // JetLime Timeline Library
     implementation("io.github.pushpalroy:jetlime:4.0.0")
     implementation("io.github.pushpalroy:jetlime-android:4.0.0")
+
+    // Hilt
+    implementation("com.google.dagger:hilt-android:2.51.1")
+    ksp("com.google.dagger:hilt-compiler:2.51.1")
 }
 
 kotlin {

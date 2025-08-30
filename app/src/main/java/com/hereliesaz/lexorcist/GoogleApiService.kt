@@ -20,6 +20,7 @@ import com.google.api.services.sheets.v4.model.*
 import com.hereliesaz.lexorcist.data.Allegation
 import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.data.Evidence // Corrected import
+import com.hereliesaz.lexorcist.util.Result
 import com.hereliesaz.lexorcist.utils.FolderManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -392,15 +393,16 @@ class GoogleApiService(
         }
     }
 
-    suspend fun createSpreadsheet(title: String, parentId: String? = null): String? = withContext(Dispatchers.IO) {
+    suspend fun createSpreadsheet(title: String, parentId: String? = null): Result<String?> = withContext(Dispatchers.IO) {
         try {
             val fileMetadata = DriveFile().setName(title).setMimeType("application/vnd.google-apps.spreadsheet")
             if (parentId != null) fileMetadata.parents = listOf(parentId)
-            driveService.files().create(fileMetadata).setFields("id").execute()?.id
+            val spreadsheetId = driveService.files().create(fileMetadata).setFields("id").execute()?.id
+            Result.Success(spreadsheetId)
         } catch (e: Exception) {
             e.printStackTrace()
             Log.e("GoogleApiService", "Error in createSpreadsheet for $title", e)
-            null
+            Result.Error(e)
         }
     }
     
@@ -454,18 +456,19 @@ class GoogleApiService(
         }
     }
     
-    suspend fun uploadFile(file: java.io.File, folderId: String, mimeType: String): DriveFile? = withContext(Dispatchers.IO) {
+    suspend fun uploadFile(file: java.io.File, folderId: String, mimeType: String): Result<DriveFile> = withContext(Dispatchers.IO) {
         try {
-            val fileMetadata = DriveFile().apply { 
+            val fileMetadata = DriveFile().apply {
                 name = file.name
-                parents = listOf(folderId) 
+                parents = listOf(folderId)
             }
             val mediaContent = GoogleFileContent(mimeType, file)
-            driveService.files().create(fileMetadata, mediaContent).setFields("id, name, webViewLink, webContentLink").execute()
+            val uploadedFile = driveService.files().create(fileMetadata, mediaContent).setFields("id, name, webViewLink, webContentLink").execute()
+            Result.Success(uploadedFile)
         } catch (e: Exception) {
             e.printStackTrace()
             Log.e("GoogleApiService", "Error in uploadFile ${file.name}", e)
-            null
+            Result.Error(e)
         }
     }
 

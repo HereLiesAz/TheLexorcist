@@ -10,15 +10,15 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import java.io.InputStreamReader
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class CaseRepositoryImpl(
+@Singleton
+class CaseRepositoryImpl @Inject constructor(
     private val applicationContext: Context,
-    private var googleApiService: GoogleApiService?
+    private val caseDao: CaseDao,
+    private val googleApiService: GoogleApiService
 ) : CaseRepository {
-
-    fun setGoogleApiService(googleApiService: GoogleApiService?) {
-        this.googleApiService = googleApiService
-    }
 
     private val _cases = MutableStateFlow<List<Case>>(emptyList())
     private val _sheetFilters = MutableStateFlow<List<SheetFilter>>(emptyList())
@@ -52,18 +52,19 @@ class CaseRepositoryImpl(
         val rootFolderId = googleApiService?.getOrCreateAppRootFolder() ?: return
         val caseRegistryId = googleApiService?.getOrCreateCaseRegistrySpreadsheetId(rootFolderId) ?: return
         val caseFolderId = googleApiService?.getOrCreateCaseFolder(caseName) ?: return
-        googleApiService?.getOrCreateEvidenceFolder(caseName)
+        googleApiService.getOrCreateEvidenceFolder(caseName)
 
-        val caseSpreadsheetId = googleApiService?.createSpreadsheet(caseName, caseFolderId) ?: return
-
-        val scriptTemplate = applicationContext.resources.openRawResource(R.raw.apps_script_template).use { InputStreamReader(it).readText() }
+        when (val result = googleApiService.createSpreadsheet(caseName, caseFolderId)) {
+            is com.hereliesaz.lexorcist.util.Result.Success -> {
+                val caseSpreadsheetId = result.data ?: return
+                val scriptTemplate = applicationContext.resources.openRawResource(R.raw.apps_script_template).use { InputStreamReader(it).readText() }
         val scriptContent = scriptTemplate
             .replace("{{EXHIBIT_SHEET_NAME}}", exhibitSheetName)
             .replace("{{CASE_NUMBER}}", caseNumber)
             .replace("{{CASE_SECTION}}", caseSection)
             .replace("{{CASE_JUDGE}}", caseJudge)
 
-        googleApiService?.attachScript(caseSpreadsheetId, scriptContent, "")
+        googleApiService.attachScript(caseSpreadsheetId, scriptContent, "")
 
         val newCase = Case(
             name = caseName,
@@ -71,8 +72,13 @@ class CaseRepositoryImpl(
             generatedPdfId = null,
             sourceHtmlSnapshotId = null
         )
-        if (googleApiService?.addCaseToRegistry(caseRegistryId, newCase) == true) {
+        if (googleApiService.addCaseToRegistry(caseRegistryId, newCase) == true) {
             refreshCases()
+        }
+            }
+            is com.hereliesaz.lexorcist.util.Result.Error -> {
+                // Here we should probably expose the error to the ViewModel
+            }
         }
     }
 

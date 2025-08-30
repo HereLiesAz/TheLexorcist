@@ -3,14 +3,14 @@ package com.hereliesaz.lexorcist.data
 import com.hereliesaz.lexorcist.GoogleApiService
 import kotlinx.coroutines.flow.Flow
 import java.lang.Exception
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class EvidenceRepositoryImpl(
-    private val evidenceDao: EvidenceDao
+@Singleton
+class EvidenceRepositoryImpl @Inject constructor(
+    private val evidenceDao: EvidenceDao,
+    private val googleApiService: GoogleApiService
 ) : EvidenceRepository {
-
-    override fun setGoogleApiService(googleApiService: GoogleApiService?) {
-        this.googleApiService = googleApiService
-    }
 
     override fun getEvidenceForCase(caseId: Long): Flow<List<Evidence>> {
         return evidenceDao.getEvidenceForCase(caseId)
