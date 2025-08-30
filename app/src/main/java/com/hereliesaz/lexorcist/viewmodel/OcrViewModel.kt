@@ -116,6 +116,46 @@ class OcrViewModel(application: Application) : AndroidViewModel(application) {
         imageUriForReview = null
     }
 
+    fun performOcrOnUri(uri: Uri, context: Context, caseId: Int, parentVideoId: String) {
+        viewModelScope.launch {
+            _isOcrInProgress.value = true
+            try {
+                val bitmap = loadBitmapFromUri(uri, context)
+                if (bitmap != null) {
+                    val preprocessedBitmap = preprocessImageForOcr(bitmap)
+                    val inputImage = InputImage.fromBitmap(preprocessedBitmap, 0)
+                    val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+
+                    recognizer.process(inputImage)
+                        .addOnSuccessListener { visionText ->
+                            _extractedText.value = visionText.text
+                            val newEvidence = Evidence(
+                                id = 0,
+                                caseId = caseId,
+                                content = visionText.text,
+                                timestamp = System.currentTimeMillis(),
+                                sourceDocument = uri.toString(),
+                                documentDate = System.currentTimeMillis(),
+                                allegationId = null,
+                                category = "OCR Image from Video",
+                                tags = emptyList(),
+                                parentVideoId = parentVideoId
+                            )
+                            _newlyCreatedEvidence.value = newEvidence
+                            _isOcrInProgress.value = false
+                        }
+                        .addOnFailureListener { e ->
+                            _isOcrInProgress.value = false
+                        }
+                } else {
+                    _isOcrInProgress.value = false
+                }
+            } catch (e: Exception) {
+                _isOcrInProgress.value = false
+            }
+        }
+    }
+
     private fun preprocessImageForOcr(bitmap: Bitmap): Bitmap {
         var mat = Mat()
         Utils.bitmapToMat(bitmap, mat)

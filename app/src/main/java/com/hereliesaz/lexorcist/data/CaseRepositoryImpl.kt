@@ -13,12 +13,8 @@ import java.io.InputStreamReader
 
 class CaseRepositoryImpl(
     private val applicationContext: Context,
-    private var googleApiService: GoogleApiService?
+    private val googleApiService: GoogleApiService?
 ) : CaseRepository {
-
-    fun setGoogleApiService(googleApiService: GoogleApiService?) {
-        this.googleApiService = googleApiService
-    }
 
     private val _cases = MutableStateFlow<List<Case>>(emptyList())
     private val _sheetFilters = MutableStateFlow<List<SheetFilter>>(emptyList())
@@ -77,13 +73,15 @@ class CaseRepositoryImpl(
     }
 
     override suspend fun archiveCase(case: Case) {
-        googleApiService?.updateCaseInRegistry(case.copy(isArchived = true))
+        // TODO: Implement updateCaseInRegistry in GoogleApiService
+        // googleApiService?.updateCaseInRegistry(case.copy(isArchived = true))
         refreshCases()
     }
 
     override suspend fun deleteCase(case: Case) {
-        googleApiService?.deleteCaseFromRegistry(case)
-        googleApiService?.deleteFolder(case.spreadsheetId)
+        // TODO: Implement deleteCaseFromRegistry and deleteFolder in GoogleApiService
+        // googleApiService?.deleteCaseFromRegistry(case)
+        // googleApiService?.deleteFolder(case.spreadsheetId)
         refreshCases()
     }
 

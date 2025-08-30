@@ -43,7 +43,9 @@ fun AddEvidenceScreen(
     onTakePicture: () -> Unit,
     onAddTextEvidence: () -> Unit,
     onAddDocument: () -> Unit,
-    onAddSpreadsheet: () -> Unit
+    onAddSpreadsheet: () -> Unit,
+    onRecordVideo: () -> Unit,
+    onImportVideo: () -> Unit
 ) {
     val imageBitmapForReview by ocrViewModel.imageBitmapForReview.collectAsState()
     val isOcrInProgress by ocrViewModel.isOcrInProgress.collectAsState()
@@ -88,6 +90,12 @@ fun AddEvidenceScreen(
                     }
                     OutlinedButton(onClick = onAddSpreadsheet) {
                         Text("Add Spreadsheet")
+                    }
+                    OutlinedButton(onClick = onRecordVideo) {
+                        Text("Record Video")
+                    }
+                    OutlinedButton(onClick = onImportVideo) {
+                        Text("Import Video File")
                     }
                 }
 

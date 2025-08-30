@@ -117,6 +117,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.9.3")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.3")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.9.3")
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
     implementation("androidx.compose.runtime:runtime-livedata:1.9.0")
 
     // Jetpack Compose
