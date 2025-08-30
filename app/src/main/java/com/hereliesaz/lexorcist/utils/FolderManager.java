@@ -62,4 +62,10 @@ public class FolderManager {
         Log.d(TAG, "Folder ID: " + file.getId());
         return file.getId();
     }
+
+    public void deleteFolder(String folderId) throws IOException {
+        if (folderId != null) {
+            googleDriveService.files().delete(folderId).execute();
+        }
+    }
 }

@@ -39,6 +39,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
+import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
 // import com.pushpal.jetlime.EventPointType // Removed import as it's causing unresolved references
 import com.pushpal.jetlime.JetLimeColumn
 import com.pushpal.jetlime.JetLimeEventDefaults
@@ -73,6 +74,8 @@ import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
 
 @OptIn(ExperimentalComposeApi::class, ExperimentalFoundationApi::class)
 @Composable
+fun TimelineScreen(viewModel: EvidenceViewModel) {
+    val evidenceList by viewModel.evidenceList.collectAsState()
 fun TimelineScreen(caseViewModel: CaseViewModel) {
     val evidenceList by caseViewModel.selectedCaseEvidenceList.collectAsState()
 fun TimelineScreen(

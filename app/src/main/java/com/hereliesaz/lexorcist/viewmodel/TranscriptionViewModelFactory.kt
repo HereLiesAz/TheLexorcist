@@ -13,6 +13,10 @@ class EvidenceViewModelFactory(
     private val authViewModel: AuthViewModel
     private val caseRepository: CaseRepository,
     private val evidenceRepository: EvidenceRepository
+    private val evidenceRepository: EvidenceRepository,
+    private val authViewModel: AuthViewModel,
+    private val caseViewModel: CaseViewModel,
+    private val ocrViewModel: OcrViewModel
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(TranscriptionViewModel::class.java)) {
@@ -20,6 +24,7 @@ class EvidenceViewModelFactory(
             return EvidenceViewModel(application, evidenceRepository, authViewModel) as T
             return EvidenceViewModel(application, caseRepository, evidenceRepository) as T
             return TranscriptionViewModel(application) as T
+            return EvidenceViewModel(application, evidenceRepository, authViewModel, caseViewModel, ocrViewModel) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

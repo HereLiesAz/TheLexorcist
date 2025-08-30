@@ -65,6 +65,19 @@ class OcrViewModelTest {
         val bitmap: Bitmap = mockk()
         mockkStatic(ImageDecoder::class)
         every { ImageDecoder.decodeBitmap(any<ImageDecoder.Source>()) } returns bitmap
+        val bitmap = mockk<Bitmap>(relaxed = true)
+        val uri = mockk<Uri>(relaxed = true)
+        val visionText = mockk<Text> {
+            every { text } returns "Recognized Text"
+        }
+        val task = mockk<Task<Text>>()
+        val successListener = slot<OnSuccessListener<Text>>()
+        every { textRecognizer.process(any()) } returns task
+        every { task.addOnSuccessListener(capture(successListener)) } answers {
+            successListener.captured.onSuccess(visionText)
+            task
+        }
+        every { task.addOnFailureListener(any<OnFailureListener>()) } returns task
 
         // When
         ocrViewModel.startImageReview(uri, context)

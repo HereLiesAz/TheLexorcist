@@ -200,6 +200,69 @@ class GoogleApiService(
         }
     }
 
+    suspend fun updateCaseInRegistry(caseData: Case): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val registryId = getOrCreateCaseRegistrySpreadsheetId(getOrCreateAppRootFolder() ?: return@withContext false) ?: return@withContext false
+            val allCases = readSpreadsheet(registryId)?.get(CASE_REGISTRY_SHEET_NAME) ?: return@withContext false
+            val caseRowIndex = allCases.indexOfFirst { it.getOrNull(1) == caseData.spreadsheetId }
+            if (caseRowIndex == -1) return@withContext false
+
+            val range = "$CASE_REGISTRY_SHEET_NAME!A${caseRowIndex + 1}:D${caseRowIndex + 1}"
+            val values = listOf(listOf(
+                caseData.name,
+                caseData.spreadsheetId,
+                caseData.generatedPdfId ?: "",
+                caseData.sourceHtmlSnapshotId ?: ""
+            ))
+            val body = ValueRange().setValues(values)
+            sheetsService.spreadsheets().values().update(registryId, range, body)
+                .setValueInputOption("USER_ENTERED")
+                .execute()
+            true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Log.e("GoogleApiService", "Error in updateCaseInRegistry for ${caseData.name}", e)
+            false
+        }
+    }
+
+    suspend fun deleteCaseFromRegistry(caseData: Case): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val registryId = getOrCreateCaseRegistrySpreadsheetId(getOrCreateAppRootFolder() ?: return@withContext false) ?: return@withContext false
+            val allCases = readSpreadsheet(registryId)?.get(CASE_REGISTRY_SHEET_NAME) ?: return@withContext false
+            val caseRowIndex = allCases.indexOfFirst { it.getOrNull(1) == caseData.spreadsheetId }
+            if (caseRowIndex == -1) return@withContext false
+
+            val sheetId = getSheetId(registryId, CASE_REGISTRY_SHEET_NAME) ?: return@withContext false
+            val request = Request().setDeleteDimension(
+                DeleteDimensionRequest()
+                    .setRange(
+                        DimensionRange()
+                            .setSheetId(sheetId)
+                            .setDimension("ROWS")
+                            .setStartIndex(caseRowIndex)
+                            .setEndIndex(caseRowIndex + 1)
+                    )
+            )
+            val batchUpdateRequest = BatchUpdateSpreadsheetRequest().setRequests(listOf(request))
+            sheetsService.spreadsheets().batchUpdate(registryId, batchUpdateRequest).execute()
+            true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Log.e("GoogleApiService", "Error in deleteCaseFromRegistry for ${caseData.name}", e)
+            false
+        }
+    }
+
+    suspend fun deleteFolder(folderId: String) = withContext(Dispatchers.IO) {
+        try {
+            folderManager.deleteFolder(folderId)
+        } catch (e: IOException) {
+            e.printStackTrace()
+            Log.e("GoogleApiService", "Error in deleteFolder for $folderId", e)
+        }
+    }
+
     suspend fun deleteEvidenceFromCase(spreadsheetId: String, evidenceId: Int): Boolean = withContext(Dispatchers.IO) {
         if (spreadsheetId.isBlank()) return@withContext false
         try {

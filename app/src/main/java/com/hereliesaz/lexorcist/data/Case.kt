@@ -3,6 +3,10 @@ package com.hereliesaz.lexorcist.data
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
+import androidx.room.ColumnInfo
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+
 /**
  * Represents a legal case within the Lexorcist application.
  *
@@ -20,15 +24,22 @@ import androidx.room.PrimaryKey
  * @property originalMasterHtmlTemplateId The ID of the original master HTML template used for the case.
  */
 @Entity(tableName = "cases")
+@Entity(tableName = "cases")
 @Entity(tableName = "case")
 data class Case(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
+    @ColumnInfo(name = "name")
     val name: String,
+    @ColumnInfo(name = "spreadsheetId")
+    val spreadsheetId: String,
+    @ColumnInfo(name = "generatedPdfId")
     var spreadsheetId: String?,
     var scriptId: String? = null,
     val generatedPdfId: String? = null,
+    @ColumnInfo(name = "sourceHtmlSnapshotId")
     val sourceHtmlSnapshotId: String? = null,
+    @ColumnInfo(name = "originalMasterHtmlTemplateId")
     val originalMasterHtmlTemplateId: String? = null,
     val folderId: String?, // Often the same as 'id' if using Drive folder IDs as PK
     val plaintiffs: String?,
@@ -38,4 +49,6 @@ data class Case(
     val lastModifiedTime: Long? = null // Optional: for sorting or tracking
     // Add any other fields relevant to a "Case"
     // Ensure all types are Room-compatible or have TypeConverters
+    @ColumnInfo(name = "isArchived")
+    val isArchived: Boolean = false
 )

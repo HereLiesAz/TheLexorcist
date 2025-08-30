@@ -47,6 +47,8 @@ class MainActivity : ComponentActivity() {
     private val caseRepository by lazy { CaseRepositoryImpl(applicationContext, null) }
     private val evidenceRepository by lazy { EvidenceRepositoryImpl(appDatabase.evidenceDao(), null) }
     private val caseRepository by lazy { CaseRepositoryImpl(applicationContext, null) }
+    private val evidenceRepository by lazy { EvidenceRepositoryImpl(appDatabase.evidenceDao()) }
+    private val caseRepository by lazy { CaseRepositoryImpl(appDatabase.caseDao(), applicationContext) }
 
     private val authViewModel: AuthViewModel by viewModels {
         AuthViewModelFactory(application, evidenceRepository, caseRepository)
@@ -56,6 +58,7 @@ class MainActivity : ComponentActivity() {
     }
     private val evidenceViewModel: EvidenceViewModel by viewModels {
         EvidenceViewModelFactory(application, evidenceRepository, authViewModel)
+        CaseViewModelFactory(application, caseRepository, authViewModel)
     }
     private val ocrViewModel: OcrViewModel by viewModels {
         OcrViewModelFactory(application)
@@ -70,6 +73,11 @@ class MainActivity : ComponentActivity() {
         TranscriptionViewModelFactory(application)
     }
 
+
+    private lateinit var oneTapClient: SignInClient
+    private val evidenceViewModel: EvidenceViewModel by viewModels {
+        EvidenceViewModelFactory(application, evidenceRepository, authViewModel, caseViewModel, ocrViewModel)
+    }
 
     private lateinit var oneTapClient: SignInClient
     private lateinit var signUpRequest: BeginSignInRequest
@@ -118,9 +126,7 @@ class MainActivity : ComponentActivity() {
         GetContentWithMultiFilter(arrayOf("application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"))
     ) { uri: Uri? ->
         uri?.let {
-            caseViewModel.selectedCase.value?.let { case ->
-                evidenceViewModel.addDocumentEvidence(case.id, it, this)
-            }
+            evidenceViewModel.addEvidenceToUiList(it, this)
         }
     }
 
@@ -129,9 +135,7 @@ class MainActivity : ComponentActivity() {
         GetContentWithMultiFilter(arrayOf("application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
     ) { uri: Uri? ->
         uri?.let {
-            caseViewModel.selectedCase.value?.let { case ->
-                evidenceViewModel.addSpreadsheetEvidence(case.id, it, this)
-            }
+            evidenceViewModel.addEvidenceToUiList(it, this)
         }
     }
 

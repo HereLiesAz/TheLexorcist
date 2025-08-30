@@ -3,6 +3,10 @@ package com.hereliesaz.lexorcist.data
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
+import androidx.room.ColumnInfo
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+
 /**
  * Represents a single allegation within a legal case.
  *
@@ -17,6 +21,7 @@ import androidx.room.PrimaryKey
  * @property text The text of the allegation.
  */
 @Entity(tableName = "allegations")
+@Entity(tableName = "allegations")
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -25,6 +30,8 @@ import androidx.room.PrimaryKey
 data class Allegation(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
+    @ColumnInfo(name = "caseId")
     val caseId: Int,
+    @ColumnInfo(name = "text")
     val text: String
 )

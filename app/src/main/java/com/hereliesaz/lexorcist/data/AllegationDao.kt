@@ -12,6 +12,7 @@ interface AllegationDao {
     suspend fun insert(allegation: Allegation)
 
     @Query("SELECT * FROM allegations WHERE caseId = :caseId ORDER BY id DESC")
+    @Query("SELECT * FROM allegations WHERE caseId = :caseId")
     fun getAllegationsForCase(caseId: Int): Flow<List<Allegation>>
 
     @Query("DELETE FROM allegations WHERE id = :id")

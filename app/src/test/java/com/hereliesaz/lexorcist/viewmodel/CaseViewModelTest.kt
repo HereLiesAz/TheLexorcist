@@ -40,6 +40,9 @@ class CaseViewModelTest {
         caseRepository = mockk(relaxed = true)
         authViewModel = mockk(relaxed = true)
         caseViewModel = CaseViewModel(application, caseRepository, authViewModel)
+        caseRepository = mockk()
+        authViewModel = mockk(relaxed = true)
+        caseViewModel = CaseViewModel(application, caseRepository, authViewModel)
     }
 
     @After

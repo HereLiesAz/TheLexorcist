@@ -18,6 +18,9 @@ import com.hereliesaz.lexorcist.service.ScriptRunner
 import com.hereliesaz.lexorcist.DataParser
 import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.util.ExifUtils
+import com.hereliesaz.lexorcist.data.Evidence
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -50,8 +53,8 @@ class OcrViewModel(
     private val _extractedText = MutableStateFlow("")
     val extractedText: StateFlow<String> = _extractedText.asStateFlow()
 
-    private val _newlyCreatedEvidence = MutableStateFlow<Evidence?>(null)
-    val newlyCreatedEvidence: StateFlow<Evidence?> = _newlyCreatedEvidence.asStateFlow()
+    private val _newlyCreatedEvidence = MutableSharedFlow<Evidence>()
+    val newlyCreatedEvidence = _newlyCreatedEvidence.asSharedFlow()
 
     fun startImageReview(uri: Uri, context: Context) {
         viewModelScope.launch {
@@ -104,17 +107,28 @@ class OcrViewModel(
                         val extractedText = visionText.text
                         val entities = DataParser.tagData(extractedText)
                         val newEvidence = Evidence(
+                            id = 0,
+                            caseId = 0,
+                            content = visionText.text,
+                            timestamp = System.currentTimeMillis(),
                             id = 0, // Placeholder ID for newly created evidence via OCR
                             caseId = 0, // Placeholder caseId, to be set by the consuming ViewModel if needed
                             content = extractedText,
                             timestamp = System.currentTimeMillis(), // Changed to Long
                             sourceDocument = reviewedUri.toString(),
+                            documentDate = System.currentTimeMillis(),
+                            allegationId = null,
+                            category = "OCR Image",
+                            tags = emptyList()
                             documentDate = parsedDate ?: exifDate ?: System.currentTimeMillis(), // Changed to Long
                             allegationId = null, // Int? is fine with null
                             category = "OCR Image", // String is fine
                             tags = emptyList(), // List<String> is fine
                             entities = entities
                         )
+                        viewModelScope.launch {
+                            _newlyCreatedEvidence.emit(newEvidence)
+                        }
 
                         // Run the user script
                         val userScript = settingsManager.getScript()
@@ -125,17 +139,15 @@ class OcrViewModel(
 
                         _newlyCreatedEvidence.value = newEvidence
                         _isOcrInProgress.value = false
-                        cancelImageReview() // Clear review state after processing
+                        cancelImageReview()
                     }
                     .addOnFailureListener { e ->
-                        // Handle error, e.g., show a message to the user
                         _isOcrInProgress.value = false
-                        cancelImageReview() // Clear review state on failure
+                        cancelImageReview()
                     }
             } catch (e: Exception) {
-                // Handle other exceptions during processing
                 _isOcrInProgress.value = false
-                cancelImageReview() // Clear review state on exception
+                cancelImageReview()
             }
         }
     }
@@ -193,7 +205,6 @@ class OcrViewModel(
         var mat = Mat()
         Utils.bitmapToMat(bitmap, mat)
 
-        // --- Skew Correction ---
         val gray = Mat()
         Imgproc.cvtColor(mat, gray, Imgproc.COLOR_BGR2GRAY)
 
@@ -229,18 +240,13 @@ class OcrViewModel(
                 }
             }
         }
-        // --- End Skew Correction ---
 
-
-        // Convert to grayscale
         val grayMat = Mat()
         Imgproc.cvtColor(mat, grayMat, Imgproc.COLOR_BGR2GRAY)
 
-        // Apply median blur for noise reduction
         val blurredMat = Mat()
-        Imgproc.medianBlur(grayMat, blurredMat, 3) // Using a 3x3 kernel
+        Imgproc.medianBlur(grayMat, blurredMat, 3)
 
-        // Apply adaptive thresholding on the blurred image
         val binaryMat = Mat()
         Imgproc.adaptiveThreshold(
             blurredMat,
@@ -252,7 +258,6 @@ class OcrViewModel(
             2.0
         )
 
-        // Convert back to bitmap
         val resultBitmap = Bitmap.createBitmap(binaryMat.cols(), binaryMat.rows(), Bitmap.Config.ARGB_8888)
         Utils.matToBitmap(binaryMat, resultBitmap)
 

@@ -9,7 +9,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hereliesaz.lexorcist.components.AppNavRail
-import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 import com.hereliesaz.lexorcist.ui.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -122,10 +121,13 @@ fun MainScreen(
                                     evidenceViewModel.addTextEvidence(it.id, text)
                                 }
                                 navController.navigate("cases")
+                                evidenceViewModel.addTextEvidence(text)
+                                currentScreen = R.string.nav_cases
                             })
                         }
                         R.string.nav_timeline -> TimelineScreen(evidenceViewModel = evidenceViewModel)
                         R.string.nav_timeline -> TimelineScreen(caseViewModel = caseViewModel)
+                        R.string.nav_timeline -> TimelineScreen(viewModel = evidenceViewModel)
                         R.string.nav_data_review -> DataReviewScreen(evidenceViewModel = evidenceViewModel)
                         R.string.nav_settings -> SettingsScreen(caseViewModel = caseViewModel)
                         composable("timeline") { TimelineScreen(navController = navController, viewModel = viewModel()) }

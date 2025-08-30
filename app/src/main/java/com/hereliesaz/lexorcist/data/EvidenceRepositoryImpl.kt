@@ -20,6 +20,8 @@ class EvidenceRepositoryImpl(
     private var caseSpreadsheetId: String? = null
     private var caseScriptId: String? = null
 
+    private var googleApiService: GoogleApiService? = null
+
     override fun setGoogleApiService(googleApiService: GoogleApiService?) {
         this.googleApiService = googleApiService
     }

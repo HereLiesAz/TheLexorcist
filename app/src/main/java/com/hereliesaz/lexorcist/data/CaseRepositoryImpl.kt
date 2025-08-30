@@ -18,18 +18,23 @@ class CaseRepositoryImpl @Inject constructor(
     private val applicationContext: Context,
     private val caseDao: CaseDao,
     private val googleApiService: GoogleApiService?
+class CaseRepositoryImpl(
+    private val caseDao: CaseDao,
+    private val applicationContext: Context
 ) : CaseRepository {
 
     override fun setGoogleApiService(googleApiService: GoogleApiService?) {
+    private var googleApiService: GoogleApiService? = null
+
+    fun setGoogleApiService(googleApiService: GoogleApiService?) {
         this.googleApiService = googleApiService
     }
 
-    private val _cases = MutableStateFlow<List<Case>>(emptyList())
     private val _sheetFilters = MutableStateFlow<List<SheetFilter>>(emptyList())
     private val _allegations = MutableStateFlow<List<Allegation>>(emptyList())
     private val cacheManager = CacheManager(applicationContext)
 
-    override fun getCases(): Flow<List<Case>> = _cases.asStateFlow()
+    override fun getCases(): Flow<List<Case>> = caseDao.getAllCases()
 
     override suspend fun getCaseById(id: Int): Case? {
         return _cases.value.find { it.id == id }
@@ -40,10 +45,9 @@ class CaseRepositoryImpl @Inject constructor(
             val appRootFolderId = googleApiService?.getOrCreateAppRootFolder() ?: return
             val registryId = googleApiService?.getOrCreateCaseRegistrySpreadsheetId(appRootFolderId) ?: return
             val cases = googleApiService?.getAllCasesFromRegistry(registryId) ?: emptyList()
-            _cases.value = cases
-            cacheManager.saveCases(cases)
+            cases.forEach { caseDao.insert(it) }
         } catch (e: Exception) {
-            _cases.value = cacheManager.loadCases() ?: emptyList()
+            // No action on exception, local data will be served
         }
     }
 
@@ -87,14 +91,15 @@ class CaseRepositoryImpl @Inject constructor(
     }
 
     override suspend fun archiveCase(case: Case) {
-        googleApiService?.updateCaseInRegistry(case.copy(isArchived = true))
-        refreshCases()
+        val updatedCase = case.copy(isArchived = true)
+        googleApiService?.updateCaseInRegistry(updatedCase)
+        caseDao.insert(updatedCase)
     }
 
     override suspend fun deleteCase(case: Case) {
         googleApiService?.deleteCaseFromRegistry(case)
         googleApiService?.deleteFolder(case.spreadsheetId)
-        refreshCases()
+        caseDao.deleteCaseById(case.id)
     }
 
     override fun getSheetFilters(spreadsheetId: String): Flow<List<SheetFilter>> = _sheetFilters.asStateFlow()
@@ -125,5 +130,36 @@ class CaseRepositoryImpl @Inject constructor(
             // This is tricky without the caseId. The calling ViewModel will need to trigger the refresh.
             // For now, the refresh is not called automatically after adding an allegation.
         }
+    }
+
+    private val _htmlTemplates = MutableStateFlow<List<DriveFile>>(emptyList())
+    override fun getHtmlTemplates(): Flow<List<DriveFile>> = _htmlTemplates.asStateFlow()
+
+    override suspend fun refreshHtmlTemplates() {
+        try {
+            _htmlTemplates.value = googleApiService?.listHtmlTemplatesInAppRootFolder() ?: emptyList()
+        } catch (e: Exception) {
+            // Log error
+        }
+    }
+
+    override suspend fun importSpreadsheet(spreadsheetId: String): Case? {
+        val sheetsData = googleApiService?.readSpreadsheet(spreadsheetId)
+        if (sheetsData != null) {
+            try {
+                val schemaJson = applicationContext.resources.openRawResource(R.raw.spreadsheet_schema).bufferedReader().use { it.readText() }
+                val schema = com.google.gson.Gson().fromJson(schemaJson, com.hereliesaz.lexorcist.model.SpreadsheetSchema::class.java)
+
+                val spreadsheetParser = com.hereliesaz.lexorcist.SpreadsheetParser(googleApiService!!, schema)
+                val newCase = spreadsheetParser.parseAndStore(sheetsData)
+                if (newCase != null) {
+                    refreshCases()
+                    return newCase
+                }
+            } catch (e: Exception) {
+                // Log error
+            }
+        }
+        return null
     }
 }

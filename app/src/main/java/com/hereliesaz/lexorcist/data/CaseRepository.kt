@@ -27,4 +27,7 @@ interface CaseRepository {
     fun getAllegations(caseId: Int, spreadsheetId: String): Flow<List<Allegation>>
     suspend fun refreshAllegations(caseId: Int, spreadsheetId: String)
     suspend fun addAllegation(spreadsheetId: String, allegationText: String)
+    fun getHtmlTemplates(): Flow<List<DriveFile>>
+    suspend fun refreshHtmlTemplates()
+    suspend fun importSpreadsheet(spreadsheetId: String): Case?
 }
