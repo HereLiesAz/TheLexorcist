@@ -9,6 +9,9 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface EvidenceDao {
+    @Query("SELECT * FROM evidence WHERE id = :id")
+    suspend fun getEvidenceById(id: Int): Evidence?
+
     @Query("SELECT * FROM evidence WHERE caseId = :caseId")
     fun getEvidenceForCase(caseId: Long): Flow<List<Evidence>>
 

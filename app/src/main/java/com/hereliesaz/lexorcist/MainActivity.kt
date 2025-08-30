@@ -37,8 +37,8 @@ import com.hereliesaz.lexorcist.viewmodel.OcrViewModelFactory
 class MainActivity : ComponentActivity() {
 
     private val appDatabase by lazy { AppDatabase.getDatabase(this) }
-    private val evidenceRepository by lazy { EvidenceRepositoryImpl(appDatabase.evidenceDao(), null) }
-    private val caseRepository by lazy { CaseRepositoryImpl(applicationContext, appDatabase.caseDao(), null) }
+    private val evidenceRepository by lazy { EvidenceRepositoryImpl(appDatabase.evidenceDao()) }
+    private val caseRepository by lazy { CaseRepositoryImpl(applicationContext, null) }
 
     private val authViewModel: AuthViewModel by viewModels {
         AuthViewModelFactory(application, evidenceRepository, caseRepository)

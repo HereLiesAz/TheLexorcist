@@ -8,12 +8,18 @@ class EvidenceRepositoryImpl(
     private val evidenceDao: EvidenceDao
 ) : EvidenceRepository {
 
+    private var googleApiService: GoogleApiService? = null
+
     override fun setGoogleApiService(googleApiService: GoogleApiService?) {
         this.googleApiService = googleApiService
     }
 
     override fun getEvidenceForCase(caseId: Long): Flow<List<Evidence>> {
         return evidenceDao.getEvidenceForCase(caseId)
+    }
+
+    override suspend fun getEvidenceById(id: Int): Evidence? {
+        return evidenceDao.getEvidenceById(id)
     }
 
     override suspend fun addEvidence(evidence: Evidence) {

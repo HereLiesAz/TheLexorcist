@@ -48,81 +48,139 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-@OptIn(ExperimentalComposeApi::class)
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
+import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
+
+@OptIn(ExperimentalComposeApi::class, ExperimentalFoundationApi::class)
 @Composable
-fun TimelineScreen(viewModel: MainViewModel) {
-    val evidenceList by viewModel.selectedCaseEvidenceList.collectAsState()
+fun TimelineScreen(evidenceViewModel: EvidenceViewModel) {
+    val evidenceList by evidenceViewModel.evidenceList.collectAsState()
     var selectedEvidence by remember { mutableStateOf<Evidence?>(null) }
+    var linkingMode by remember { mutableStateOf(false) }
+    var linkingFromId by remember { mutableStateOf<Int?>(null) }
+    val evidenceCardPositions = remember { mutableStateMapOf<Int, Offset>() }
 
     Column(
         modifier = Modifier.padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text("Case Timeline", style = MaterialTheme.typography.headlineMedium)
+        if (linkingMode) {
+            Text("Linking mode enabled. Tap another evidence to link.", style = MaterialTheme.typography.bodyMedium)
+        }
         Spacer(modifier = Modifier.height(16.dp))
 
         if (evidenceList.isEmpty()) {
             Text("No evidence found for this case.")
         } else {
-            JetLimeColumn(
-                modifier = Modifier.padding(horizontal = 12.dp),
-                itemsList = ItemsList(evidenceList), 
-                key = { _, item -> item.id }, 
-            ) { _, item, position -> 
-                JetLimeExtendedEvent(
-                    style = JetLimeEventDefaults.eventStyle(
-                        position = position,
-                        pointColor = MaterialTheme.colorScheme.primary, 
-                        pointAnimation = JetLimeEventDefaults.pointAnimation()
-                    ),
-                    additionalContent = {
-                        Column(horizontalAlignment = Alignment.End) {
-                            Text(
-                                text = SimpleDateFormat("MMM dd", Locale.getDefault()).format(Date(item.documentDate)),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.End
-                            )
-                            Text(
-                                text = SimpleDateFormat("yyyy", Locale.getDefault()).format(Date(item.documentDate)),
-                                style = MaterialTheme.typography.bodySmall,
-                                textAlign = TextAlign.End
-                            )
-                        }
-                    }
-                ) {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { selectedEvidence = item }
-                            .padding(start = 12.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(12.dp),
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Text(
-                                text = item.sourceDocument,
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = item.content,
-                                style = MaterialTheme.typography.bodyMedium,
-                                maxLines = 3
-                            )
-                            if (item.category.isNotBlank()) {
+            Box {
+                JetLimeColumn(
+                    modifier = Modifier.padding(horizontal = 12.dp),
+                    itemsList = ItemsList(evidenceList),
+                    key = { _, item -> item.id },
+                ) { _, item, position ->
+                    JetLimeExtendedEvent(
+                        style = JetLimeEventDefaults.eventStyle(
+                            position = position,
+                            pointColor = MaterialTheme.colorScheme.primary,
+                            pointAnimation = JetLimeEventDefaults.pointAnimation()
+                        ),
+                        additionalContent = {
+                            Column(horizontalAlignment = Alignment.End) {
                                 Text(
-                                    text = "Category: ${item.category}",
+                                    text = SimpleDateFormat("MMM dd", Locale.getDefault()).format(Date(item.documentDate)),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    textAlign = TextAlign.End
+                                )
+                                Text(
+                                    text = SimpleDateFormat("yyyy", Locale.getDefault()).format(Date(item.documentDate)),
                                     style = MaterialTheme.typography.bodySmall,
-                                    fontWeight = FontWeight.SemiBold
+                                    textAlign = TextAlign.End
                                 )
                             }
-                            if (item.tags.isNotEmpty()) {
+                        }
+                    ) {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .combinedClickable(
+                                    onClick = {
+                                        if (linkingMode) {
+                                            linkingFromId?.let { fromId ->
+                                                evidenceViewModel.linkEvidence(fromId, item.id)
+                                                linkingMode = false
+                                                linkingFromId = null
+                                            }
+                                        } else {
+                                            selectedEvidence = item
+                                        }
+                                    },
+                                    onLongClick = {
+                                        linkingMode = true
+                                        linkingFromId = item.id
+                                    }
+                                )
+                                .onGloballyPositioned { coordinates ->
+                                    val size = coordinates.size
+                                    evidenceCardPositions[item.id] = coordinates.positionInParent() + Offset(size.width / 2f, size.height / 2f)
+                                }
+                                .padding(start = 12.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
                                 Text(
-                                    text = "Tags: ${item.tags.joinToString()}",
-                                    style = MaterialTheme.typography.bodySmall
+                                    text = item.sourceDocument,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = item.content,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    maxLines = 3
+                                )
+                                if (item.category.isNotBlank()) {
+                                    Text(
+                                        text = "Category: ${item.category}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                }
+                                if (item.tags.isNotEmpty()) {
+                                    Text(
+                                        text = "Tags: ${item.tags.joinToString()}",
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    evidenceList.forEach { evidence ->
+                        evidence.linkedEvidenceIds.forEach { linkedId ->
+                            val from = evidenceCardPositions[evidence.id]
+                            val to = evidenceCardPositions[linkedId]
+                            if (from != null && to != null) {
+                                drawLine(
+                                    color = Color.Gray,
+                                    start = from,
+                                    end = to,
+                                    strokeWidth = 2f,
+                                    pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f)
                                 )
                             }
                         }

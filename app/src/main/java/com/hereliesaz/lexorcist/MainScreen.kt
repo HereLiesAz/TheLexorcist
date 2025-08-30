@@ -90,7 +90,7 @@ fun MainScreen(
                                 currentScreen = R.string.nav_cases
                             })
                         }
-                        R.string.nav_timeline -> TimelineScreen(viewModel = viewModel())
+                        R.string.nav_timeline -> TimelineScreen(evidenceViewModel = evidenceViewModel)
                         R.string.nav_data_review -> DataReviewScreen(evidenceViewModel = evidenceViewModel)
                         R.string.nav_settings -> SettingsScreen(caseViewModel = caseViewModel)
                     }
