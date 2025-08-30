@@ -1,36 +1,45 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import java.io.ByteArrayOutputStream // Added for executing Git commands
+import java.io.ByteArrayOutputStream
+import java.io.BufferedReader
+import java.io.InputStreamReader
 
-// Helper functions to get version from Git
+// Helper functions to get version from Git using java.lang.Runtime
 fun getGitVersionName(): String {
     return try {
-        val byteOut = ByteArrayOutputStream()
-        project.exec {
-            commandLine("git", "describe", "--tags", "--dirty", "--always")
-            standardOutput = byteOut
-            errorOutput = byteOut // Capture errors too, in case 'git describe' fails
-            isIgnoreExitValue = true // Allow us to handle non-zero exit codes if needed
-        }
-        val output = byteOut.toString().trim()
-        if (output.startsWith("fatal:") || output.isEmpty()) { // Check if git describe failed (e.g. no tags)
-            "0.0.0-nogit" // Fallback if git describe fails or no tags
+        val process = Runtime.getRuntime().exec("git describe --tags --dirty --always")
+        val reader = BufferedReader(InputStreamReader(process.inputStream))
+        val errorReader = BufferedReader(InputStreamReader(process.errorStream))
+        val output = reader.readLine()?.trim()
+        val errorOutput = errorReader.readText().trim()
+        process.waitFor()
+        reader.close()
+        errorReader.close()
+
+        if (process.exitValue() != 0 || output == null || output.isEmpty() || output.startsWith("fatal:")) {
+            System.err.println("Git describe error: $errorOutput")
+            "0.0.0-nogit"
         } else {
             output
         }
     } catch (e: Exception) {
         e.printStackTrace()
-        "0.0.0-error" // Fallback in case of other errors
+        "0.0.0-error"
     }
 }
 
 fun getGitVersionCode(): Int {
     return try {
-        val byteOut = ByteArrayOutputStream()
-        project.exec {
-            commandLine("git", "rev-list", "--count", "HEAD")
-            standardOutput = byteOut
+        val process = Runtime.getRuntime().exec("git rev-list --count HEAD")
+        val reader = BufferedReader(InputStreamReader(process.inputStream))
+        val output = reader.readLine()?.trim()
+        process.waitFor()
+        reader.close()
+
+        if (process.exitValue() == 0 && output != null && output.isNotEmpty()) {
+            output.toInt()
+        } else {
+            1 // Fallback version code
         }
-        byteOut.toString().trim().toInt()
     } catch (e: Exception) {
         e.printStackTrace()
         1 // Fallback version code
@@ -41,10 +50,8 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("com.google.dagger.hilt.android")
-    // Removed kotlin("kapt")
     id("org.jetbrains.kotlin.plugin.compose") version "2.2.10"
-    id("com.google.devtools.ksp") version "2.2.10-2.0.2" // Added KSP plugin
-    // id("com.palantir.git-version") // Temporarily removed
+    id("com.google.devtools.ksp") version "2.2.10-2.0.2"
 }
 
 android {
@@ -55,8 +62,9 @@ android {
         applicationId = "com.hereliesaz.lexorcist"
         minSdk = 26
         targetSdk = 36
-        versionCode = getGitVersionCode() // Updated
-        versionName = getGitVersionName() // Updated
+
+        versionCode = getGitVersionCode()
+        versionName = getGitVersionName()
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -77,15 +85,8 @@ android {
         compose = true
     }
     composeOptions {
-        // Explicitly set sourceInformation to true (or false if you don't need it for debug).
-        // For debugging, it's generally desirable to have source information.
-        //sourceInformation = true
-        // You might also explicitly set the Kotlin compiler extension version here
-        // if you encounter other compatibility issues, but for this error,
-        // focusing on sourceInformation is enough for now.
-        // For example: kotlinCompilerExtensionVersion = "1.5.11" // (matching your Compose BOM version)
     }
-    packaging { // Changed from packagingOptions
+    packaging {
         resources.excludes.add("META-INF/INDEX.LIST")
         resources.excludes.add("META-INF/DEPENDENCIES")
     }
@@ -100,22 +101,18 @@ dependencies {
     implementation("androidx.navigation:navigation-runtime-ktx:2.9.3")
     implementation("androidx.compose.ui:ui:1.9.0")
     implementation("androidx.compose.foundation:foundation:1.9.0")
-    implementation("androidx.room:room-ktx:2.7.2")
+
     // Core testing dependencies
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.2")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.8.2")
     testImplementation("io.mockk:mockk:1.14.5")
     testImplementation("androidx.arch.core:core-testing:2.2.0")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0")
-    testImplementation("app.cash.turbine:turbine:1.1.0")
-
-    // AndroidX Test dependencies
-    testImplementation("androidx.arch.core:core-testing:2.2.0")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
+    testImplementation("app.cash.turbine:turbine:1.1.0")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:1.9.0")
-    testImplementation("androidx.arch.core:core-testing:2.2.0")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
+
+    // AndroidX Test dependencies (androidTest)
     androidTestImplementation("androidx.test.ext:junit:1.3.0")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
     androidTestImplementation("androidx.compose.ui:ui-test-junit4:1.9.0")
@@ -125,10 +122,10 @@ dependencies {
     implementation("com.google.android.gms:play-services-mlkit-text-recognition:19.0.1")
 
     // Room components
-    val room_version = "2.6.1"
-    implementation("androidx.room:room-runtime:$room_version")
-    implementation("androidx.room:room-ktx:$room_version")
-    ksp("androidx.room:room-compiler:$room_version") // Changed from kapt to ksp
+    val roomVersion = "2.6.1"
+    implementation("androidx.room:room-runtime:$roomVersion")
+    implementation("androidx.room:room-ktx:$roomVersion")
+    ksp("androidx.room:room-compiler:$roomVersion")
 
     // Gson
     implementation("com.google.code.gson:gson:2.13.1")
@@ -186,7 +183,7 @@ dependencies {
     
     // Vico Charting Library
     implementation("com.patrykandpatrick.vico:compose:2.1.3")
-    implementation("com.patrykandpatrick.vico:core:2.1.3") // Added Vico core
+    implementation("com.patrykandpatrick.vico:core:2.1.3")
 
     // JetLime Timeline Library
     implementation("io.github.pushpalroy:jetlime:4.0.0")

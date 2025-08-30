@@ -1,4 +1,4 @@
-package com.hereliesaz.lexorcist.util
+package com.hereliesaz.lexorcist.utils // Corrected package
 
 import android.content.Context
 import com.google.gson.Gson
