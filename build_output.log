@@ -1,92 +1,108 @@
 WARNING: The following problems were found when resolving the SDK location:
 Where: sdk.dir property in local.properties file. Problem: Directory does not exist
 
-> Task :app:clean
 > Task :app:preBuild UP-TO-DATE
 > Task :app:preDebugBuild UP-TO-DATE
 > Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
 > Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
-> Task :app:generateDebugResValues
-> Task :app:processDebugGoogleServices
-> Task :app:checkDebugAarMetadata
-> Task :app:mapDebugSourceSetPaths
-> Task :app:generateDebugResources
-> Task :app:packageDebugResources
+> Task :app:checkDebugAarMetadata UP-TO-DATE
+> Task :app:generateDebugResValues UP-TO-DATE
+> Task :app:mapDebugSourceSetPaths UP-TO-DATE
+> Task :app:generateDebugResources UP-TO-DATE
+> Task :app:mergeDebugResources UP-TO-DATE
+> Task :app:packageDebugResources UP-TO-DATE
+> Task :app:parseDebugLocalResources UP-TO-DATE
 > Task :app:createDebugCompatibleScreenManifests
-> Task :app:extractDeepLinksDebug
-> Task :app:parseDebugLocalResources
+> Task :app:extractDeepLinksDebug UP-TO-DATE
 > Task :app:processDebugMainManifest
 > Task :app:processDebugManifest
-> Task :app:javaPreCompileDebug
+> Task :app:javaPreCompileDebug UP-TO-DATE
 > Task :app:processDebugManifestForPackage
-> Task :app:mergeDebugShaders
+> Task :app:mergeDebugShaders UP-TO-DATE
 > Task :app:compileDebugShaders NO-SOURCE
 > Task :app:generateDebugAssets UP-TO-DATE
-> Task :app:mergeDebugAssets
-> Task :app:compressDebugAssets
-> Task :app:desugarDebugFileDependencies
-> Task :app:mergeDebugResources
-> Task :app:checkDebugDuplicateClasses
-> Task :app:mergeDebugJniLibFolders
-> Task :app:mergeLibDexDebug
-> Task :app:mergeDebugNativeLibs
-> Task :app:validateSigningDebug
-> Task :app:writeDebugAppMetadata
-> Task :app:writeDebugSigningConfigVersions
+> Task :app:mergeDebugAssets UP-TO-DATE
+> Task :app:compressDebugAssets UP-TO-DATE
+> Task :app:desugarDebugFileDependencies UP-TO-DATE
+> Task :app:checkDebugDuplicateClasses UP-TO-DATE
+> Task :app:mergeExtDexDebug UP-TO-DATE
+> Task :app:mergeLibDexDebug UP-TO-DATE
+> Task :app:mergeDebugJniLibFolders UP-TO-DATE
+> Task :app:mergeDebugNativeLibs UP-TO-DATE
+> Task :app:stripDebugDebugSymbols UP-TO-DATE
+> Task :app:validateSigningDebug UP-TO-DATE
+> Task :app:writeDebugAppMetadata UP-TO-DATE
+> Task :app:writeDebugSigningConfigVersions UP-TO-DATE
 > Task :app:preReleaseBuild UP-TO-DATE
-
-> Task :app:stripDebugDebugSymbols
-Unable to strip the following libraries, packaging them as they are: libandroidx.graphics.path.so, libdatastore_shared_counter.so. Run with --info option to learn more.
-
-> Task :app:mergeReleaseJniLibFolders
-> Task :app:mergeReleaseNativeLibs
-> Task :app:checkReleaseDuplicateClasses
-> Task :app:buildKotlinToolingMetadata
-
-> Task :app:stripReleaseDebugSymbols
-Unable to strip the following libraries, packaging them as they are: libandroidx.graphics.path.so, libdatastore_shared_counter.so. Run with --info option to learn more.
-
-> Task :app:checkReleaseAarMetadata
-> Task :app:generateReleaseResValues
-> Task :app:extractReleaseNativeSymbolTables
-> Task :app:processReleaseGoogleServices
+> Task :app:mergeReleaseJniLibFolders UP-TO-DATE
+> Task :app:mergeReleaseNativeLibs UP-TO-DATE
+> Task :app:stripReleaseDebugSymbols UP-TO-DATE
+> Task :app:extractReleaseNativeSymbolTables UP-TO-DATE
 > Task :app:mergeReleaseNativeDebugMetadata NO-SOURCE
-> Task :app:mapReleaseSourceSetPaths
-> Task :app:generateReleaseResources
-> Task :app:processDebugResources
-> Task :app:packageReleaseResources
-> Task :app:parseReleaseLocalResources
-> Task :app:mergeReleaseResources
+> Task :app:checkReleaseDuplicateClasses UP-TO-DATE
+> Task :app:buildKotlinToolingMetadata UP-TO-DATE
+> Task :app:checkReleaseAarMetadata UP-TO-DATE
+> Task :app:generateReleaseResValues UP-TO-DATE
+> Task :app:mapReleaseSourceSetPaths UP-TO-DATE
+> Task :app:generateReleaseResources UP-TO-DATE
+> Task :app:mergeReleaseResources UP-TO-DATE
+> Task :app:packageReleaseResources UP-TO-DATE
+> Task :app:parseReleaseLocalResources UP-TO-DATE
 > Task :app:createReleaseCompatibleScreenManifests
-> Task :app:extractDeepLinksRelease
+> Task :app:extractDeepLinksRelease UP-TO-DATE
 > Task :app:processReleaseMainManifest
 > Task :app:processReleaseManifest
-> Task :app:javaPreCompileRelease
-> Task :app:desugarReleaseFileDependencies
-> Task :app:processReleaseManifestForPackage
+> Task :app:javaPreCompileRelease UP-TO-DATE
+> Task :app:desugarReleaseFileDependencies UP-TO-DATE
 > Task :app:mergeReleaseStartupProfile UP-TO-DATE
+> Task :app:processReleaseManifestForPackage
+> Task :app:mergeExtDexRelease UP-TO-DATE
+> Task :app:mergeReleaseArtProfile UP-TO-DATE
+> Task :app:mergeReleaseShaders UP-TO-DATE
+> Task :app:compileReleaseShaders NO-SOURCE
+> Task :app:generateReleaseAssets UP-TO-DATE
+> Task :app:mergeReleaseAssets UP-TO-DATE
+> Task :app:compressReleaseAssets UP-TO-DATE
+> Task :app:extractReleaseVersionControlInfo
+> Task :app:extractProguardFiles UP-TO-DATE
+> Task :app:collectReleaseDependencies UP-TO-DATE
+> Task :app:sdkReleaseDependencyData UP-TO-DATE
+> Task :app:writeReleaseAppMetadata UP-TO-DATE
+> Task :app:writeReleaseSigningConfigVersions UP-TO-DATE
+> Task :app:preDebugAndroidTestBuild SKIPPED
+> Task :app:generateDebugAndroidTestResValues UP-TO-DATE
+> Task :app:preDebugUnitTestBuild UP-TO-DATE
+> Task :app:javaPreCompileDebugUnitTest UP-TO-DATE
+> Task :app:preReleaseUnitTestBuild UP-TO-DATE
+> Task :app:javaPreCompileReleaseUnitTest UP-TO-DATE
+> Task :app:processDebugResources
 > Task :app:processReleaseResources
-> Task :app:kspDebugKotlin
-> Task :app:mergeExtDexDebug
-> Task :app:mergeExtDexRelease
+> Task :app:optimizeReleaseResources
 > Task :app:kspReleaseKotlin
-> Task :app:compileDebugKotlin
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainActivity.kt:18:42 Unresolved reference 'TheLexorcistTheme'.
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainActivity.kt:98:13 Unresolved reference 'TheLexorcistTheme'.
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainActivity.kt:99:17 @Composable invocations can only happen from the context of a @Composable function
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ScriptEditorActivity.kt:12:42 Unresolved reference 'TheLexorcistTheme'.
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ScriptEditorActivity.kt:35:13 Unresolved reference 'TheLexorcistTheme'.
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ScriptEditorActivity.kt:36:17 @Composable invocations can only happen from the context of a @Composable function
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ScriptEditorActivity.kt:38:43 @Composable invocations can only happen from the context of a @Composable function
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/screens/CasesScreen.kt:7:40 Unresolved reference 'Icons'.
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/screens/CasesScreen.kt:8:40 Unresolved reference 'filled'.
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/screens/CasesScreen.kt:27:22 Unresolved reference 'Icons'.
+> Task :app:kspDebugKotlin
+
+> Task :app:compileReleaseKotlin
+w: Argument -Xopt-in is deprecated. Please use -opt-in instead
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainActivity.kt:40:96 Too many arguments for 'constructor(evidenceDao: EvidenceDao): EvidenceRepositoryImpl'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainActivity.kt:41:81 Argument type mismatch: actual type is 'CaseDao', but 'GoogleApiService?' was expected.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainActivity.kt:41:104 Too many arguments for 'constructor(applicationContext: Context, googleApiService: GoogleApiService?): CaseRepositoryImpl'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/data/EvidenceRepositoryImpl.kt:12:14 Unresolved reference 'googleApiService'.
 
 > Task :app:compileDebugKotlin FAILED
-> Task :app:mergeReleaseArtProfile
+w: Argument -Xopt-in is deprecated. Please use -opt-in instead
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainActivity.kt:40:96 Too many arguments for 'constructor(evidenceDao: EvidenceDao): EvidenceRepositoryImpl'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainActivity.kt:41:81 Argument type mismatch: actual type is 'CaseDao', but 'GoogleApiService?' was expected.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainActivity.kt:41:104 Too many arguments for 'constructor(applicationContext: Context, googleApiService: GoogleApiService?): CaseRepositoryImpl'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/data/EvidenceRepositoryImpl.kt:12:14 Unresolved reference 'googleApiService'.
 
-FAILURE: Build failed with an exception.
+> Task :app:compileReleaseKotlin FAILED
 
+[Incubating] Problems report is available at: file:///app/build/reports/problems/problems-report.html
+
+FAILURE: Build completed with 2 failures.
+
+1: Task failed with an exception.
+-----------
 * What went wrong:
 Execution failed for task ':app:compileDebugKotlin'.
 > A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
@@ -97,6 +113,27 @@ Execution failed for task ':app:compileDebugKotlin'.
 > Run with --info or --debug option to get more log output.
 > Run with --scan to get full insights.
 > Get more help at https://help.gradle.org.
+==============================================================================
 
-BUILD FAILED in 46s
-57 actionable tasks: 56 executed, 1 up-to-date
+2: Task failed with an exception.
+-----------
+* What went wrong:
+Execution failed for task ':app:compileReleaseKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+==============================================================================
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.13/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD FAILED in 31s
+68 actionable tasks: 16 executed, 52 up-to-date

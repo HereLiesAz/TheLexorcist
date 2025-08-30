@@ -10,7 +10,12 @@ package com.hereliesaz.lexorcist.data
  * @property caseId The ID of the case this allegation belongs to.
  * @property text The text of the allegation.
  */
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+
+@Entity(tableName = "allegations")
 data class Allegation(
+    @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
     val caseId: Int,
     val text: String

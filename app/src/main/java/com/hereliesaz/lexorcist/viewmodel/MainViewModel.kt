@@ -44,6 +44,7 @@ import com.hereliesaz.lexorcist.data.EvidenceRepositoryImpl
 import com.hereliesaz.lexorcist.data.TaggedEvidenceRepository
 import com.hereliesaz.lexorcist.model.SheetFilter
 import com.hereliesaz.lexorcist.model.TaggedEvidence
+import com.hereliesaz.lexorcist.DataParser
 import com.hereliesaz.lexorcist.service.ScriptRunner
 import com.hereliesaz.lexorcist.utils.GoogleApiServiceHolder
 import com.itextpdf.kernel.pdf.PdfDocument
@@ -721,8 +722,10 @@ class MainViewModel(application: Application, private val evidenceRepository: co
     fun processUiEvidenceForReview() {
         viewModelScope.launch {
             val taggedList = _uiEvidenceList.value.map { evidence ->
-                val parserResult = scriptRunner.runScript(script, evidence) // Changed evidence.content to evidence
-                TaggedEvidence(id = evidence, tags = parserResult.tags, content = evidence.content) // Changed evidence.id to evidence and evidence to evidence.content
+                val parsedData = DataParser.tagData(evidence.content)
+                val updatedEvidence = evidence.copy(tags = evidence.tags + (parsedData["dates"] ?: emptyList()) + (parsedData["names"] ?: emptyList()) + (parsedData["addresses"] ?: emptyList()))
+                val parserResult = scriptRunner.runScript(script, updatedEvidence)
+                TaggedEvidence(id = updatedEvidence, tags = parserResult.tags, content = updatedEvidence.content)
             }
             TaggedEvidenceRepository.setTaggedEvidence(taggedList)
         }
