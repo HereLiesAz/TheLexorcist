@@ -574,4 +574,25 @@ class GoogleApiService(
             null
         }
     }
+
+    suspend fun updateCaseInRegistry(case: Case): Boolean = withContext(Dispatchers.IO) {
+        // Implementation needed
+        false
+    }
+
+    suspend fun deleteCaseFromRegistry(case: Case): Boolean = withContext(Dispatchers.IO) {
+        // Implementation needed
+        false
+    }
+
+    suspend fun deleteFolder(folderId: String): Boolean = withContext(Dispatchers.IO) {
+        try {
+            driveService.files().delete(folderId).execute()
+            true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Log.e("GoogleApiService", "Error in deleteFolder for $folderId", e)
+            false
+        }
+    }
 }

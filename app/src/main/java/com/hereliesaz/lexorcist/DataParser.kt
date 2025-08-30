@@ -45,6 +45,33 @@ object DataParser {
         return addressRegex.findAll(text).map { it.value }.toList()
     }
 
+    private val timePatterns = mapOf(
+        """\b\d{1,2}:\d{2}\s*(?:AM|PM)\b""".toRegex() to SimpleDateFormat("h:mm a", Locale.US),
+        """\b\d{1,2}:\d{2}:\d{2}\s*(?:AM|PM)\b""".toRegex() to SimpleDateFormat("h:mm:ss a", Locale.US),
+        """\b\d{2}:\d{2}:\d{2}\b""".toRegex() to SimpleDateFormat("HH:mm:ss", Locale.US),
+        """\b\d{2}:\d{2}\b""".toRegex() to SimpleDateFormat("HH:mm", Locale.US)
+    )
+
+    fun parseTimestamps(text: String): List<String> {
+        val timestamps = mutableListOf<String>()
+        for ((regex, format) in timePatterns) {
+            regex.findAll(text).forEach { matchResult ->
+                try {
+                    format.timeZone = TimeZone.getDefault() // Use local timezone for times
+                    format.isLenient = false
+                    val date = format.parse(matchResult.value.trim())
+                    if (date != null) {
+                        val outputFormat = SimpleDateFormat("HH:mm:ss", Locale.US)
+                        timestamps.add(outputFormat.format(date))
+                    }
+                } catch (e: Exception) {
+                    // Ignore and continue
+                }
+            }
+        }
+        return timestamps
+    }
+
     fun tagData(text: String): Map<String, List<String>> {
         val dates = parseDates(text).map {
             val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
@@ -53,11 +80,13 @@ object DataParser {
         }
         val names = parseNames(text)
         val addresses = parseAddresses(text)
+        val timestamps = parseTimestamps(text)
 
         return mapOf(
             "dates" to dates,
             "names" to names,
-            "addresses" to addresses
+            "addresses" to addresses,
+            "timestamps" to timestamps
         )
     }
 

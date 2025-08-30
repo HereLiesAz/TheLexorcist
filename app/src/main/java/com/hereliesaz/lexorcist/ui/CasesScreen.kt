@@ -161,13 +161,13 @@ fun CaseItem(
             if (isLongPressed) {
                 Row {
                     IconButton(onClick = onDelete) {
-                        Icon(Icons.Default.Delete, contentDescription = "Delete")
+                        Icon(Icons.Filled.Delete, contentDescription = "Delete")
                     }
                     IconButton(onClick = onArchive) {
-                        Icon(Icons.Default.Archive, contentDescription = "Archive")
+                        Icon(Icons.Filled.Archive, contentDescription = "Archive")
                     }
                     IconButton(onClick = onCancel) {
-                        Icon(Icons.Default.MoreVert, contentDescription = "Cancel")
+                        Icon(Icons.Filled.MoreVert, contentDescription = "Cancel")
                     }
                 }
             }
