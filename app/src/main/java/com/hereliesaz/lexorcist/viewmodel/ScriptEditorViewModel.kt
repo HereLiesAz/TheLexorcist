@@ -2,7 +2,7 @@ package com.hereliesaz.lexorcist.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.hereliesaz.lexorcist.GoogleApiService
+import com.hereliesaz.lexorcist.data.SettingsManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import com.hereliesaz.lexorcist.GoogleApiService
@@ -17,6 +17,7 @@ import javax.inject.Inject
 class ScriptEditorViewModel @Inject constructor(
     private val googleApiService: GoogleApiService
 ) : ViewModel() {
+class ScriptEditorViewModel(private val settingsManager: SettingsManager) : ViewModel() {
 
     private val _scriptText = MutableStateFlow("")
     val scriptText: StateFlow<String> = _scriptText.asStateFlow()
@@ -24,6 +25,8 @@ class ScriptEditorViewModel @Inject constructor(
     private val _saveState = MutableStateFlow<SaveState>(SaveState.Idle)
     val saveState: StateFlow<SaveState> = _saveState.asStateFlow()
 
+    init {
+        loadScript()
     private var scriptId: String? = null
 
     fun loadScript(scriptId: String) {
@@ -44,24 +47,18 @@ class ScriptEditorViewModel @Inject constructor(
 
     private fun loadScript() {
         viewModelScope.launch {
-            scriptId?.let {
-                val scriptContent = googleApiService?.getScript(it)
-                _scriptText.value = scriptContent?.files?.firstOrNull()?.source ?: ""
-            }
+            _scriptText.value = settingsManager.getScript()
         }
     }
 
     fun saveScript() {
         viewModelScope.launch {
             _saveState.value = SaveState.Saving
-            val scriptContent = _scriptText.value
-            scriptId?.let {
-                val success = googleApiService?.updateScript(it, scriptContent)
-                if (success == true) {
-                    _saveState.value = SaveState.Success
-                } else {
-                    _saveState.value = SaveState.Error("Failed to save script")
-                }
+            try {
+                settingsManager.saveScript(_scriptText.value)
+                _saveState.value = SaveState.Success
+            } catch (e: Exception) {
+                _saveState.value = SaveState.Error("Failed to save script")
             }
         }
     }

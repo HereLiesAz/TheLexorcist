@@ -10,6 +10,9 @@ import androidx.lifecycle.viewModelScope
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
+import com.hereliesaz.lexorcist.data.Evidence
+import com.hereliesaz.lexorcist.data.SettingsManager
+import com.hereliesaz.lexorcist.service.ScriptRunner
 import com.hereliesaz.lexorcist.DataParser
 import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.util.ExifUtils
@@ -27,6 +30,12 @@ import javax.inject.Inject
 // import java.util.Date // Removed import
 @HiltViewModel
 class OcrViewModel @Inject constructor(application: Application) : AndroidViewModel(application) {
+
+class OcrViewModel(
+    application: Application,
+    private val settingsManager: SettingsManager,
+    private val scriptRunner: ScriptRunner
+) : AndroidViewModel(application) {
 
     private val _isOcrInProgress = MutableStateFlow(false)
     val isOcrInProgress: StateFlow<Boolean> = _isOcrInProgress.asStateFlow()
@@ -101,6 +110,14 @@ class OcrViewModel @Inject constructor(application: Application) : AndroidViewMo
                             category = "OCR Image", // String is fine
                             tags = emptyList() // List<String> is fine
                         )
+
+                        // Run the user script
+                        val userScript = settingsManager.getScript()
+                        if (userScript.isNotBlank()) {
+                            val parserResult = scriptRunner.runScript(userScript, newEvidence)
+                            newEvidence = newEvidence.copy(tags = parserResult.tags)
+                        }
+
                         _newlyCreatedEvidence.value = newEvidence
                         _isOcrInProgress.value = false
                         cancelImageReview() // Clear review state after processing

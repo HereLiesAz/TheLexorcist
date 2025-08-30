@@ -17,6 +17,26 @@ class SettingsManager(private val context: Context) {
     private val sharedPreferences: SharedPreferences =
         context.getSharedPreferences(context.getString(R.string.settings_preferences_name), Context.MODE_PRIVATE)
 
+    private val keyUserScript = "user_script"
+
+    /**
+     * Saves the user-defined script.
+     *
+     * @param script The script to save.
+     */
+    fun saveScript(script: String) {
+        sharedPreferences.edit().putString(keyUserScript, script).apply()
+    }
+
+    /**
+     * Retrieves the saved user script.
+     *
+     * @return The saved script, or an empty string if no script is set.
+     */
+    fun getScript(): String {
+        return sharedPreferences.getString(keyUserScript, "") ?: ""
+    }
+
     /**
      * Saves the selected application theme.
      *

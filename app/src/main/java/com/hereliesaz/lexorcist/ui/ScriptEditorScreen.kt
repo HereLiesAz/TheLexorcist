@@ -50,6 +50,7 @@ fun ScriptEditorScreen(viewModel: ScriptEditorViewModel) {
                 value = scriptText,
                 onValueChange = { viewModel.onScriptTextChanged(it) },
                 label = { Text(stringResource(R.string.enter_your_script)) },
+                placeholder = { Text(stringResource(R.string.script_editor_placeholder)) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
