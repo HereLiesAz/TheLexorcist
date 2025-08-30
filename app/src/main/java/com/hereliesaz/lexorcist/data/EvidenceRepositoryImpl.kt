@@ -10,6 +10,9 @@ import javax.inject.Singleton
 class EvidenceRepositoryImpl @Inject constructor(
     private val evidenceDao: EvidenceDao,
     private val googleApiService: GoogleApiService?
+class EvidenceRepositoryImpl(
+    private val evidenceDao: EvidenceDao,
+    private var googleApiService: GoogleApiService?
 ) : EvidenceRepository {
     private var googleApiService: GoogleApiService? = null
 
@@ -84,35 +87,10 @@ class EvidenceRepositoryImpl @Inject constructor(
     }
 
     override suspend fun updateEvidence(evidence: Evidence) {
-        var evidenceToUpdate = evidence
-        googleApiService?.let { api ->
-            caseScriptId?.let { scriptId ->
-                val scriptContent = api.getScript(scriptId)?.files?.find { it.name == "Code" }?.source
-                if (scriptContent != null) {
-                    val scriptRunner = com.hereliesaz.lexorcist.service.ScriptRunner()
-                    val result = scriptRunner.runScript(scriptContent, evidence)
-                    evidenceToUpdate = evidence.copy(tags = result.tags)
-                }
-            }
-        }
-        evidenceDao.update(evidenceToUpdate)
-        googleApiService?.let { api ->
-            caseSpreadsheetId?.let { spreadsheetId ->
-                api.updateEvidenceInCase(spreadsheetId, evidenceToUpdate)
-            }
-        }
+        evidenceDao.update(evidence)
     }
 
     override suspend fun deleteEvidence(evidence: Evidence) {
         evidenceDao.delete(evidence)
-        googleApiService?.let { api ->
-            caseSpreadsheetId?.let { spreadsheetId ->
-                api.deleteEvidenceFromCase(spreadsheetId, evidence.id)
-            }
-        }
-    }
-
-    override suspend fun updateCommentary(id: Int, commentary: String) {
-        evidenceDao.updateCommentary(id, commentary)
     }
 }

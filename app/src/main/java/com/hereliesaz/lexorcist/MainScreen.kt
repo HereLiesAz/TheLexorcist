@@ -49,6 +49,7 @@ fun MainScreen(
     val selectedCase by caseViewModel.selectedCase.collectAsState()
     val errorMessage by caseViewModel.errorMessage.collectAsState() // Assuming CaseViewModel will have error messages
     val snackbarHostState = remember { SnackbarHostState() }
+    var currentScreen by remember { mutableStateOf(R.string.nav_home) }
     var showCreateCaseDialog by remember { mutableStateOf(false) }
 
     val localContext = LocalContext.current // Get context for onNavigate
@@ -124,6 +125,7 @@ fun MainScreen(
                             })
                         }
                         R.string.nav_timeline -> TimelineScreen(evidenceViewModel = evidenceViewModel)
+                        R.string.nav_timeline -> TimelineScreen(caseViewModel = caseViewModel)
                         R.string.nav_data_review -> DataReviewScreen(evidenceViewModel = evidenceViewModel)
                         R.string.nav_settings -> SettingsScreen(caseViewModel = caseViewModel)
                         composable("timeline") { TimelineScreen(navController = navController, viewModel = viewModel()) }

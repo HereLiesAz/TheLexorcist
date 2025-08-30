@@ -20,12 +20,16 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+import com.hereliesaz.lexorcist.GoogleApiService
 @HiltViewModel
 class CaseViewModel @Inject constructor(
     application: Application,
     private val caseRepository: CaseRepository
 ) : AndroidViewModel(application) {
 
+class CaseViewModel(application: Application, private val caseRepository: CaseRepository, private val authViewModel: AuthViewModel) : AndroidViewModel(application) {
+
+    private var googleApiService: GoogleApiService? = null
     private val sharedPref = application.getSharedPreferences("CaseInfoPrefs", Context.MODE_PRIVATE)
 
     private val _sortOrder = MutableStateFlow(SortOrder.DATE_DESC)
@@ -64,9 +68,30 @@ class CaseViewModel @Inject constructor(
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
+    private val _htmlTemplates = MutableStateFlow<List<DriveFile>>(emptyList())
+    val htmlTemplates: StateFlow<List<DriveFile>> = _htmlTemplates.asStateFlow()
+
+    private val _selectedCaseEvidenceList = MutableStateFlow<List<com.hereliesaz.lexorcist.data.Evidence>>(emptyList())
+    val selectedCaseEvidenceList: StateFlow<List<com.hereliesaz.lexorcist.data.Evidence>> = _selectedCaseEvidenceList.asStateFlow()
+
     init {
-        loadCases()
         loadDarkModePreference()
+        viewModelScope.launch {
+            authViewModel.isSignedIn.collect { isSignedIn ->
+                if (isSignedIn) {
+                    googleApiService = authViewModel.googleApiService.value
+                    loadCases()
+                    loadHtmlTemplates()
+                } else {
+                    googleApiService = null
+                    _htmlTemplates.value = emptyList()
+                    _selectedCase.value = null
+                    _sheetFilters.value = emptyList()
+                    _allegations.value = emptyList()
+                    _selectedCaseEvidenceList.value = emptyList()
+                }
+            }
+        }
     }
 
     fun showError(message: String) {
@@ -199,6 +224,14 @@ class CaseViewModel @Inject constructor(
     fun deleteCase(case: Case) {
         viewModelScope.launch {
             caseRepository.deleteCase(case)
+        }
+    }
+
+    private fun loadHtmlTemplates() {
+        viewModelScope.launch {
+            googleApiService?.let {
+                _htmlTemplates.value = it.listHtmlTemplatesInAppRootFolder()
+            }
         }
     }
 }

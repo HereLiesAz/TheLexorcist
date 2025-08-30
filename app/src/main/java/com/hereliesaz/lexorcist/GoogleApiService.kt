@@ -620,4 +620,16 @@ class GoogleApiService(
             null
         }
     }
+
+    suspend fun updateCaseInRegistry(case: Case) {
+        // TODO: Implement this method
+    }
+
+    suspend fun deleteCaseFromRegistry(case: Case) {
+        // TODO: Implement this method
+    }
+
+    suspend fun deleteFolder(folderId: String) {
+        // TODO: Implement this method
+    }
 }

@@ -19,6 +19,7 @@ import androidx.room.PrimaryKey
  * @property sourceHtmlSnapshotId The ID of the HTML snapshot used as the source for the generated PDF.
  * @property originalMasterHtmlTemplateId The ID of the original master HTML template used for the case.
  */
+@Entity(tableName = "cases")
 @Entity(tableName = "case")
 data class Case(
     @PrimaryKey(autoGenerate = true)
