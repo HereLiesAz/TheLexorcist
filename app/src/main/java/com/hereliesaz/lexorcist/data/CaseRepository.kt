@@ -5,7 +5,6 @@ import com.hereliesaz.lexorcist.model.SheetFilter
 import kotlinx.coroutines.flow.Flow
 
 interface CaseRepository {
-    fun setGoogleApiService(googleApiService: com.hereliesaz.lexorcist.GoogleApiService?)
     fun getCases(): Flow<List<Case>>
     suspend fun refreshCases()
     suspend fun createCase(
@@ -18,6 +17,7 @@ interface CaseRepository {
         defendants: String,
         court: String
     )
+    suspend fun archiveCase(case: Case)
     suspend fun deleteCase(case: Case)
     fun getSheetFilters(spreadsheetId: String): Flow<List<SheetFilter>>
     suspend fun refreshSheetFilters(spreadsheetId: String)

@@ -5,6 +5,7 @@ import com.google.api.services.drive.model.File as DriveFile
 import com.hereliesaz.lexorcist.GoogleApiService
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.model.SheetFilter
+import com.hereliesaz.lexorcist.util.CacheManager
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -12,22 +13,30 @@ import java.io.InputStreamReader
 
 class CaseRepositoryImpl(
     private val applicationContext: Context,
-    private val caseDao: CaseDao,
     private var googleApiService: GoogleApiService?
 ) : CaseRepository {
 
-    override fun setGoogleApiService(googleApiService: GoogleApiService?) {
+    fun setGoogleApiService(googleApiService: GoogleApiService?) {
         this.googleApiService = googleApiService
     }
 
+    private val _cases = MutableStateFlow<List<Case>>(emptyList())
     private val _sheetFilters = MutableStateFlow<List<SheetFilter>>(emptyList())
     private val _allegations = MutableStateFlow<List<Allegation>>(emptyList())
+    private val cacheManager = CacheManager(applicationContext)
 
-    override fun getCases(): Flow<List<Case>> = caseDao.getAllCases()
+    override fun getCases(): Flow<List<Case>> = _cases.asStateFlow()
 
     override suspend fun refreshCases() {
-        // Data is now loaded from Room, so this function can be left empty
-        // or used to sync with a remote source in the future.
+        try {
+            val appRootFolderId = googleApiService?.getOrCreateAppRootFolder() ?: return
+            val registryId = googleApiService?.getOrCreateCaseRegistrySpreadsheetId(appRootFolderId) ?: return
+            val cases = googleApiService?.getAllCasesFromRegistry(registryId) ?: emptyList()
+            _cases.value = cases
+            cacheManager.saveCases(cases)
+        } catch (e: Exception) {
+            _cases.value = cacheManager.loadCases() ?: emptyList()
+        }
     }
 
     override suspend fun createCase(
@@ -41,20 +50,41 @@ class CaseRepositoryImpl(
         court: String
     ) {
         val rootFolderId = googleApiService?.getOrCreateAppRootFolder() ?: return
+        val caseRegistryId = googleApiService?.getOrCreateCaseRegistrySpreadsheetId(rootFolderId) ?: return
         val caseFolderId = googleApiService?.getOrCreateCaseFolder(caseName) ?: return
         googleApiService?.getOrCreateEvidenceFolder(caseName)
+
         val caseSpreadsheetId = googleApiService?.createSpreadsheet(caseName, caseFolderId) ?: return
+
+        val scriptTemplate = applicationContext.resources.openRawResource(R.raw.apps_script_template).use { InputStreamReader(it).readText() }
+        val scriptContent = scriptTemplate
+            .replace("{{EXHIBIT_SHEET_NAME}}", exhibitSheetName)
+            .replace("{{CASE_NUMBER}}", caseNumber)
+            .replace("{{CASE_SECTION}}", caseSection)
+            .replace("{{CASE_JUDGE}}", caseJudge)
+
+        googleApiService?.attachScript(caseSpreadsheetId, scriptContent, "")
 
         val newCase = Case(
             name = caseName,
-            spreadsheetId = caseSpreadsheetId
+            spreadsheetId = caseSpreadsheetId,
+            generatedPdfId = null,
+            sourceHtmlSnapshotId = null
         )
-        caseDao.insert(newCase)
+        if (googleApiService?.addCaseToRegistry(caseRegistryId, newCase) == true) {
+            refreshCases()
+        }
+    }
+
+    override suspend fun archiveCase(case: Case) {
+        googleApiService?.updateCaseInRegistry(case.copy(isArchived = true))
+        refreshCases()
     }
 
     override suspend fun deleteCase(case: Case) {
-        caseDao.deleteCaseById(case.id)
-        // I will add the Google Drive deletion logic here later
+        googleApiService?.deleteCaseFromRegistry(case)
+        googleApiService?.deleteFolder(case.spreadsheetId)
+        refreshCases()
     }
 
     override fun getSheetFilters(spreadsheetId: String): Flow<List<SheetFilter>> = _sheetFilters.asStateFlow()

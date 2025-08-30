@@ -13,15 +13,12 @@ package com.hereliesaz.lexorcist.data
  * @property sourceHtmlSnapshotId The ID of the HTML snapshot used as the source for the generated PDF.
  * @property originalMasterHtmlTemplateId The ID of the original master HTML template used for the case.
  */
-import androidx.room.Entity
-import androidx.room.PrimaryKey
-
-@Entity(tableName = "case")
 data class Case(
-    @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
     val name: String,
-    var spreadsheetId: String,
+    val spreadsheetId: String,
     val generatedPdfId: String? = null,
-    val sourceHtmlSnapshotId: String? = null
+    val sourceHtmlSnapshotId: String? = null,
+    val originalMasterHtmlTemplateId: String? = null,
+    val isArchived: Boolean = false
 )

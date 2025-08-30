@@ -1,20 +1,26 @@
 package com.hereliesaz.lexorcist.ui
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Archive
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.foundation.background
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Sort
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import com.hereliesaz.lexorcist.data.SortOrder
+import kotlinx.coroutines.delay
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.hereliesaz.lexorcist.R
@@ -26,116 +32,145 @@ import com.hereliesaz.lexorcist.CreateCaseDialog // Import the dialog from the p
 @Composable
 fun CasesScreen(caseViewModel: CaseViewModel) {
     val cases by caseViewModel.cases.collectAsState()
-    val selectedCase by caseViewModel.selectedCase.collectAsState()
-    var showCreateCaseDialog by remember { mutableStateOf(false) }
-    var caseToDelete by remember { mutableStateOf<Case?>(null) }
+    val sortOrder by caseViewModel.sortOrder.collectAsState()
+    var longPressedCase by remember { mutableStateOf<Case?>(null) }
+    var showDeleteConfirmDialog by remember { mutableStateOf(false) }
+    var sortOrderState by remember { mutableStateOf(sortOrder) }
+    var lastSortTap by remember { mutableStateOf(0L) }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.cases)) },
-                actions = {
-                    IconButton(onClick = { /* TODO: Implement search */ }) {
-                        Icon(Icons.Filled.Search, contentDescription = stringResource(R.string.search))
+    LaunchedEffect(sortOrderState) {
+        if (System.currentTimeMillis() - lastSortTap > 1000) {
+            caseViewModel.onSortOrderChange(sortOrderState)
+        }
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedTextField(
+                    value = "",
+                    onValueChange = { },
+                    label = { Text("Search Cases") },
+                    modifier = Modifier.weight(1f)
+                )
+                IconButton(onClick = { /* TODO: Implement search */ }) {
+                    Icon(Icons.Filled.Search, contentDescription = "Search")
+                }
+                IconButton(onClick = {
+                    lastSortTap = System.currentTimeMillis()
+                    sortOrderState = when (sortOrderState) {
+                        SortOrder.DATE_DESC -> SortOrder.DATE_ASC
+                        SortOrder.DATE_ASC -> SortOrder.NAME_DESC
+                        SortOrder.NAME_DESC -> SortOrder.NAME_ASC
+                        SortOrder.NAME_ASC -> SortOrder.DATE_DESC
+                        else -> SortOrder.DATE_DESC
                     }
-                    IconButton(onClick = { /* TODO: Implement archive */ }) {
-                        Icon(Icons.Filled.Archive, contentDescription = stringResource(R.string.archive))
+                }) {
+                    Icon(Icons.Filled.Sort, contentDescription = "Sort")
+                }
+            }
+
+            LazyColumn(modifier = Modifier.fillMaxSize()) {
+                items(cases.filter { !it.isArchived }) { case ->
+                    CaseItem(
+                        case = case,
+                        isLongPressed = longPressedCase == case,
+                        onLongPress = { longPressedCase = it },
+                        onDelete = {
+                            longPressedCase = case
+                            showDeleteConfirmDialog = true
+                        },
+                        onArchive = {
+                            longPressedCase?.let { caseViewModel.archiveCase(it) }
+                            longPressedCase = null
+                        },
+                        onCancel = { longPressedCase = null },
+                        onClick = {
+                            if (longPressedCase == null) {
+                                // Navigate to case details
+                            } else {
+                                longPressedCase = null // Cancel long press state
+                            }
+                        }
+                    )
+                }
+            }
+        }
+
+        if (showDeleteConfirmDialog) {
+            AlertDialog(
+                onDismissRequest = { showDeleteConfirmDialog = false },
+                title = { Text("Delete Case") },
+                text = { Text("Are you sure you want to delete this case?") },
+                confirmButton = {
+                    TextButton(onClick = {
+                        longPressedCase?.let { caseViewModel.deleteCase(it) }
+                        showDeleteConfirmDialog = false
+                        longPressedCase = null
+                    }) {
+                        Text("Delete")
                     }
-                    IconButton(onClick = { /* TODO: Implement sort */ }) {
-                        Icon(Icons.Filled.Sort, contentDescription = stringResource(R.string.sort))
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDeleteConfirmDialog = false }) {
+                        Text("Cancel")
                     }
                 }
             )
-        },
-        floatingActionButton = {
-            FloatingActionButton(onClick = { showCreateCaseDialog = true }) {
-                Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.create_new_case))
-            }
         }
-    ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp),
-            contentAlignment = Alignment.TopEnd
-        ) {
-            Column(
-                horizontalAlignment = Alignment.End
-            ) {
-                if (cases.isEmpty()) {
-                    Text(stringResource(R.string.no_cases_found))
-                } else {
-                    LazyColumn(modifier = Modifier.fillMaxWidth()) {
-                        items(cases) { case ->
-                            CaseItem(
-                                case = case,
-                                isSelected = case.id == selectedCase?.id,
-                                onClick = { caseViewModel.selectCase(case) },
-                                onDelete = { caseToDelete = case }
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    if (caseToDelete != null) {
-        AlertDialog(
-            onDismissRequest = { caseToDelete = null },
-            title = { Text(stringResource(R.string.delete_case)) },
-            text = { Text(stringResource(R.string.delete_case_confirmation, caseToDelete!!.name)) },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        caseViewModel.deleteCase(caseToDelete!!)
-                        caseToDelete = null
-                    }
-                ) {
-                    Text(stringResource(R.string.delete))
-                }
-            },
-            dismissButton = {
-                Button(onClick = { caseToDelete = null }) {
-                    Text(stringResource(R.string.cancel))
-                }
-            }
-        )
-    }
-
-    if (showCreateCaseDialog) {
-        // Use the CreateCaseDialog from com.hereliesaz.lexorcist package (MainScreen.kt)
-        CreateCaseDialog(
-            caseViewModel = caseViewModel,
-            onDismiss = { showCreateCaseDialog = false }
-        )
     }
 }
 
-// Internal CreateCaseDialog composable removed
-
 @Composable
-fun CaseItem(case: Case, isSelected: Boolean, onClick: () -> Unit, onDelete: () -> Unit) {
-    Row(
+fun CaseItem(
+    case: Case,
+    isLongPressed: Boolean,
+    onLongPress: (Case) -> Unit,
+    onDelete: () -> Unit,
+    onArchive: () -> Unit,
+    onCancel: () -> Unit,
+    onClick: () -> Unit
+) {
+    val backgroundColor = if (isLongPressed) Color.LightGray else Color.Transparent
+
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(vertical = 8.dp, horizontal = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.End
+            .background(backgroundColor)
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onLongPress = { onLongPress(case) },
+                    onTap = { onClick() }
+                )
+            }
+            .padding(16.dp)
     ) {
-        Text(
-            text = case.name,
-            style = if (isSelected) {
-                MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
-            } else {
-                MaterialTheme.typography.bodyLarge
-            },
-            modifier = Modifier.weight(1f)
-        )
-        IconButton(onClick = onDelete) {
-            Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.delete_case))
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                text = case.name,
+                style = MaterialTheme.typography.bodyLarge
+            )
+            if (isLongPressed) {
+                Row {
+                    IconButton(onClick = onDelete) {
+                        Icon(Icons.Default.Delete, contentDescription = "Delete")
+                    }
+                    IconButton(onClick = onArchive) {
+                        Icon(Icons.Default.Archive, contentDescription = "Archive")
+                    }
+                    IconButton(onClick = onCancel) {
+                        Icon(Icons.Default.MoreVert, contentDescription = "Cancel")
+                    }
+                }
+            }
         }
     }
 }
