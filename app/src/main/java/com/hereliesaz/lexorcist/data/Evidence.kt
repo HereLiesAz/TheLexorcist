@@ -31,5 +31,6 @@ data class Evidence(
     val documentDate: Long,
     val tags: List<String> = emptyList(),
     val category: String = "",
-    val linkedEvidenceIds: List<Int> = emptyList()
+    val linkedEvidenceIds: List<Int> = emptyList(),
+    val parentVideoId: String? = null
 )

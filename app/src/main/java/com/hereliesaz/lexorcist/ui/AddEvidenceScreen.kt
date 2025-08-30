@@ -100,6 +100,12 @@ fun AddEvidenceScreen(
                     OutlinedButton(onClick = onImportAudio) {
                         Text("Import Audio File")
                     }
+                    OutlinedButton(onClick = onRecordVideo) {
+                        Text("Record Video")
+                    }
+                    OutlinedButton(onClick = onImportVideo) {
+                        Text("Import Video File")
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))

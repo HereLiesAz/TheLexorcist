@@ -18,6 +18,7 @@ class CaseRepositoryImpl @Inject constructor(
     private val applicationContext: Context,
     private val caseDao: CaseDao,
     private val googleApiService: GoogleApiService
+    private val googleApiService: GoogleApiService?
 ) : CaseRepository {
 
     override fun setGoogleApiService(googleApiService: GoogleApiService?) {
@@ -93,10 +94,15 @@ class CaseRepositoryImpl @Inject constructor(
 
     override suspend fun archiveCase(case: Case) {
         // googleApiService?.updateCaseInRegistry(case.copy(isArchived = true))
+        // TODO: Implement updateCaseInRegistry in GoogleApiService
+        // googleApiService?.updateCaseInRegistry(case.copy(isArchived = true))
         refreshCases()
     }
 
     override suspend fun deleteCase(case: Case) {
+        // googleApiService?.deleteCaseFromRegistry(case)
+        // googleApiService?.deleteFolder(case.spreadsheetId)
+        // TODO: Implement deleteCaseFromRegistry and deleteFolder in GoogleApiService
         // googleApiService?.deleteCaseFromRegistry(case)
         // googleApiService?.deleteFolder(case.spreadsheetId)
         refreshCases()

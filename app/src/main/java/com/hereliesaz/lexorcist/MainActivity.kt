@@ -12,6 +12,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import android.net.Uri
 import androidx.activity.viewModels
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.work.Data
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import androidx.compose.runtime.Composable // Keep: General Compose import
 import androidx.navigation.NavController // Keep: MainScreen might use it internally
 import androidx.navigation.compose.rememberNavController // Keep: MainScreen or theme might use it
@@ -132,6 +135,54 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private val requestPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+            val allPermissionsGranted = permissions.entries.all { it.value }
+            if (allPermissionsGranted) {
+                // Permissions granted, we can now launch the camera
+                recordVideo()
+            } else {
+                // Permissions denied, show a toast
+                Toast.makeText(this, "Camera and audio permissions are required to record video", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+    private var videoUri: Uri? = null
+
+    private val recordVideoLauncher = registerForActivityResult(ActivityResultContracts.TakeVideo()) { success ->
+        if (success) {
+            videoUri?.let { uri ->
+                caseViewModel.selectedCase.value?.let { case ->
+                    val inputData = Data.Builder()
+                        .putString(com.hereliesaz.lexorcist.service.VideoProcessingWorker.KEY_VIDEO_URI, uri.toString())
+                        .putInt(com.hereliesaz.lexorcist.service.VideoProcessingWorker.KEY_CASE_ID, case.id)
+                        .putString(com.hereliesaz.lexorcist.service.VideoProcessingWorker.KEY_CASE_NAME, case.name)
+                        .build()
+                    val workRequest = OneTimeWorkRequestBuilder<com.hereliesaz.lexorcist.service.VideoProcessingWorker>()
+                        .setInputData(inputData)
+                        .build()
+                    WorkManager.getInstance(this).enqueue(workRequest)
+                }
+            }
+        }
+    }
+
+    private val importVideoLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        uri?.let { videoUri ->
+            caseViewModel.selectedCase.value?.let { case ->
+                val inputData = Data.Builder()
+                    .putString(com.hereliesaz.lexorcist.service.VideoProcessingWorker.KEY_VIDEO_URI, videoUri.toString())
+                    .putInt(com.hereliesaz.lexorcist.service.VideoProcessingWorker.KEY_CASE_ID, case.id)
+                    .putString(com.hereliesaz.lexorcist.service.VideoProcessingWorker.KEY_CASE_NAME, case.name)
+                    .build()
+                val workRequest = OneTimeWorkRequestBuilder<com.hereliesaz.lexorcist.service.VideoProcessingWorker>()
+                    .setInputData(inputData)
+                    .build()
+                WorkManager.getInstance(this).enqueue(workRequest)
+            }
+        }
+    }
+
     // Corrected: Provide the mimeTypes array to the constructor
     private val selectDocumentLauncher = registerForActivityResult(
         GetContentWithMultiFilter(arrayOf("application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"))
@@ -223,6 +274,9 @@ class MainActivity : ComponentActivity() {
                     onSelectImage = { selectImage() },
                     onTakePicture = { takePicture() },
                     onAddDocument = { selectDocument() },
+                    onAddSpreadsheet = { selectSpreadsheet() },
+                    onRecordVideo = { checkPermissionsAndRecordVideo() },
+                    onImportVideo = { importVideo() }
                     onAddSpreadsheet = { selectSpreadsheet() },
                     onRecordAudio = { requestPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO) },
                     onImportAudio = { importAudio() },
@@ -321,6 +375,36 @@ class MainActivity : ComponentActivity() {
         isRecording.value = false
         audioFile?.let {
             transcriptionViewModel.transcribeAudio(Uri.fromFile(it))
+        }
+    }
+
+    private fun recordVideo() {
+        if (shouldShowRequestPermissionRationale(android.Manifest.permission.CAMERA) ||
+            shouldShowRequestPermissionRationale(android.Manifest.permission.RECORD_AUDIO)) {
+            // Show a rationale to the user
+            Toast.makeText(this, "Camera and audio permissions are required to record video", Toast.LENGTH_LONG).show()
+        }
+
+        val file = java.io.File(filesDir, "new_video.mp4")
+        videoUri = androidx.core.content.FileProvider.getUriForFile(this, "${packageName}.fileprovider", file)
+        videoUri?.let { recordVideoLauncher.launch(it) }
+    }
+
+    private fun importVideo() {
+        importVideoLauncher.launch("video/*")
+    }
+
+    private fun checkPermissionsAndRecordVideo() {
+        when {
+            (checkSelfPermission(android.Manifest.permission.CAMERA) == android.content.pm.PackageManager.PERMISSION_GRANTED &&
+             checkSelfPermission(android.Manifest.permission.RECORD_AUDIO) == android.content.pm.PackageManager.PERMISSION_GRANTED) -> {
+                recordVideo()
+            }
+            else -> {
+                requestPermissionLauncher.launch(
+                    arrayOf(android.Manifest.permission.CAMERA, android.Manifest.permission.RECORD_AUDIO)
+                )
+            }
         }
     }
 }

@@ -9,9 +9,9 @@ import javax.inject.Singleton
 @Singleton
 class EvidenceRepositoryImpl @Inject constructor(
     private val evidenceDao: EvidenceDao,
+    private val googleApiService: GoogleApiService?
 ) : EvidenceRepository {
 
-    private var googleApiService: GoogleApiService? = null
 
     private var caseSpreadsheetId: String? = null
     private var caseScriptId: String? = null
