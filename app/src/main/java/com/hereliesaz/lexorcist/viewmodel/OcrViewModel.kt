@@ -116,6 +116,10 @@ class OcrViewModel(application: Application) : AndroidViewModel(application) {
         imageUriForReview = null
     }
 
+    fun updateExtractedText(text: String) {
+        _extractedText.value = text
+    }
+
     private fun preprocessImageForOcr(bitmap: Bitmap): Bitmap {
         var mat = Mat()
         Utils.bitmapToMat(bitmap, mat)

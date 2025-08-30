@@ -45,6 +45,7 @@ class AuthViewModel(
         _isSignedIn.value = true
         evidenceRepository.setGoogleApiService(apiService)
         caseRepository.setGoogleApiService(apiService)
+        com.hereliesaz.lexorcist.utils.GoogleApiServiceHolder.googleApiService = apiService
     }
 
     private fun onSignInFailed() {
@@ -52,9 +53,13 @@ class AuthViewModel(
         _isSignedIn.value = false
         evidenceRepository.setGoogleApiService(null)
         caseRepository.setGoogleApiService(null)
+        com.hereliesaz.lexorcist.utils.GoogleApiServiceHolder.googleApiService = null
     }
 
     fun onSignOut() {
         onSignInFailed()
+        // Here you might want to add logic to clear other related data/state
+        // For example, if there are other ViewModels holding user-specific data,
+        // you could have a shared service or use some other mechanism to notify them.
     }
 }

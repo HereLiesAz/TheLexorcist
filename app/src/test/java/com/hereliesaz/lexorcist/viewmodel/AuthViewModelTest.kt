@@ -1,12 +1,9 @@
 package com.hereliesaz.lexorcist.viewmodel
 
 import android.app.Application
-import android.content.Context
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
-import com.hereliesaz.lexorcist.GoogleApiService
-import com.hereliesaz.lexorcist.data.CaseRepositoryImpl
-import com.hereliesaz.lexorcist.data.EvidenceRepositoryImpl
-import io.mockk.any
+import com.hereliesaz.lexorcist.data.CaseRepository
+import com.hereliesaz.lexorcist.data.EvidenceRepository
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
@@ -16,6 +13,9 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
+import android.content.Context
+import com.hereliesaz.lexorcist.GoogleApiService
+import io.mockk.any
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -37,7 +37,6 @@ class AuthViewModelTest {
     private lateinit var evidenceRepository: EvidenceRepositoryImpl
     private lateinit var caseRepository: CaseRepositoryImpl
     private lateinit var application: Application
-    private lateinit var context: Context
 
     @Before
     fun setup() {
@@ -45,47 +44,12 @@ class AuthViewModelTest {
         application = mockk(relaxed = true)
         evidenceRepository = mockk(relaxed = true)
         caseRepository = mockk(relaxed = true)
-        context = mockk(relaxed = true)
         authViewModel = AuthViewModel(application, evidenceRepository, caseRepository)
     }
 
     @After
     fun tearDown() {
         Dispatchers.resetMain()
-    }
-
-    @Test
-    fun `onSignInResult with valid credentials sets isSignedIn to true`() = runTest {
-        // Given
-        val idToken = "test_id_token"
-        val email = "test@example.com"
-        val applicationName = "TestApp"
-
-        // When
-        authViewModel.onSignInResult(idToken, email, context, applicationName)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        // Then
-        assertTrue(authViewModel.isSignedIn.value)
-        verify { evidenceRepository.setGoogleApiService(any<GoogleApiService>()) }
-        verify { caseRepository.setGoogleApiService(any<GoogleApiService>()) }
-    }
-
-    @Test
-    fun `onSignInResult with invalid credentials sets isSignedIn to false`() = runTest {
-        // Given
-        val idToken = null
-        val email = null
-        val applicationName = "TestApp"
-
-        // When
-        authViewModel.onSignInResult(idToken, email, context, applicationName)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        // Then
-        assertFalse(authViewModel.isSignedIn.value)
-        verify { evidenceRepository.setGoogleApiService(null) }
-        verify { caseRepository.setGoogleApiService(null) }
     }
 
     @Test
@@ -98,5 +62,41 @@ class AuthViewModelTest {
         assertFalse(authViewModel.isSignedIn.value)
         verify { evidenceRepository.setGoogleApiService(null) }
         verify { caseRepository.setGoogleApiService(null) }
+    }
+
+    @Test
+    fun `onSignInResult with valid credentials sets isSignedIn to true`() = runTest {
+        // Given
+        val idToken = "test_id_token"
+        val email = "test@example.com"
+        val applicationName = "TestApp"
+        val context: Context = mockk(relaxed = true)
+
+        // When
+        authViewModel.onSignInResult(idToken, email, context, applicationName)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then
+        assertTrue(authViewModel.isSignedIn.value)
+        verify { evidenceRepository.setGoogleApiService(any()) }
+        verify { caseRepository.setGoogleApiService(any()) }
+    }
+
+    @Test
+    fun `onSignInResult with invalid credentials sets isSignedIn to false`() = runTest {
+        // Given
+        val idToken = null
+        val email = null
+        val applicationName = "TestApp"
+        val context: Context = mockk(relaxed = true)
+
+        // When
+        authViewModel.onSignInResult(idToken, email, context, applicationName)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then
+        assertFalse(authViewModel.isSignedIn.value)
+        verify(exactly = 0) { evidenceRepository.setGoogleApiService(any()) }
+        verify(exactly = 0) { caseRepository.setGoogleApiService(any()) }
     }
 }
