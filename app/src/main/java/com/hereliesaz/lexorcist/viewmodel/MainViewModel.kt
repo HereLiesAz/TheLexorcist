@@ -732,6 +732,14 @@ class MainViewModel @Inject constructor(
 
     fun setScript(scriptText: String) { this.script = scriptText }
 
+    fun runScriptOnEvidence(evidence: Evidence) {
+        viewModelScope.launch {
+            val parserResult = scriptRunner.runScript(script, evidence)
+            val updatedEvidence = evidence.copy(tags = parserResult.tags)
+            evidenceRepository.updateEvidence(updatedEvidence)
+        }
+    }
+
     fun processUiEvidenceForReview() {
         viewModelScope.launch {
             val taggedList = _uiEvidenceList.value.mapNotNull { evidence ->
@@ -917,6 +925,27 @@ class MainViewModel @Inject constructor(
 
     fun clearEvidenceToEdit() {
         _evidenceToEdit.value = null
+    }
+
+    fun uploadAudioFile(uri: Uri, context: Context) {
+        viewModelScope.launch {
+            val currentCase = _selectedCase.value
+            val apiService = _googleApiService.value
+            if (currentCase != null && apiService != null) {
+                val rawEvidenceFolderId = apiService.getOrCreateEvidenceFolder(currentCase.name) ?: return@launch
+                context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                    val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                    cursor.moveToFirst()
+                    val fileName = cursor.getString(nameIndex)
+                    val mimeType = context.contentResolver.getType(uri)
+                    context.contentResolver.openInputStream(uri)?.let { inputStream ->
+                        val file = File(context.cacheDir, fileName)
+                        file.outputStream().use { outputStream -> inputStream.copyTo(outputStream) }
+                        apiService.uploadFile(file, rawEvidenceFolderId, mimeType ?: "audio/mpeg")
+                    }
+                }
+            }
+        }
     }
     
     companion object {

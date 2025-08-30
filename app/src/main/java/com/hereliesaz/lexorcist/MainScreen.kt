@@ -32,7 +32,12 @@ fun MainScreen(
     onSelectImage: () -> Unit,
     onTakePicture: () -> Unit,
     onAddDocument: () -> Unit,
-    onAddSpreadsheet: () -> Unit
+    onAddSpreadsheet: () -> Unit,
+    onRecordAudio: () -> Unit,
+    onImportAudio: () -> Unit,
+    startRecording: () -> Unit,
+    stopRecording: () -> Unit,
+    isRecording: Boolean
 ) {
     val isSignedIn by authViewModel.isSignedIn.collectAsState()
     val selectedCase by caseViewModel.selectedCase.collectAsState()
@@ -81,7 +86,14 @@ fun MainScreen(
                             onTakePicture = onTakePicture,
                             onAddTextEvidence = { currentScreen = R.string.add_text_evidence }, // Corrected: R.string.add_text_evidence
                             onAddDocument = onAddDocument,
-                            onAddSpreadsheet = onAddSpreadsheet
+                            onAddSpreadsheet = onAddSpreadsheet,
+                            onRecordAudio = { currentScreen = R.string.record_audio },
+                            onImportAudio = onImportAudio
+                        )
+                        R.string.record_audio -> RecordAudioScreen(
+                            onStartRecording = { startRecording() },
+                            onStopRecording = { stopRecording() },
+                            isRecording = isRecording.value
                         )
                         R.string.add_text_evidence -> { // Corrected: R.string.add_text_evidence
                             val context = LocalContext.current // This context is fine for AddTextEvidenceScreen

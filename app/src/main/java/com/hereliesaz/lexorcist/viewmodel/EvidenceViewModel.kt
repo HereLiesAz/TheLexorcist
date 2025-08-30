@@ -86,6 +86,22 @@ class EvidenceViewModel @Inject constructor(
         addEvidence(newEvidence)
     }
 
+    fun addAudioEvidence(caseId: Int, transcript: String): Evidence {
+        val newEvidence = Evidence(
+            id = 0,
+            caseId = caseId,
+            content = transcript,
+            timestamp = System.currentTimeMillis(),
+            sourceDocument = "Audio Recording",
+            documentDate = System.currentTimeMillis(),
+            allegationId = null,
+            category = "Audio",
+            tags = emptyList()
+        )
+        addEvidence(newEvidence)
+        return newEvidence
+    }
+
     /**
      * Extracts text from a PDF document and adds it as evidence to the selected case.
      *

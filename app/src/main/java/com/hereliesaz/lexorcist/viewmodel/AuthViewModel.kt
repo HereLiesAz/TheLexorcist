@@ -5,7 +5,6 @@ import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
@@ -26,6 +25,9 @@ class AuthViewModel @Inject constructor(
     private val googleApiService: GoogleApiService
 ) : ViewModel() {
 
+    private val _credential = MutableStateFlow<GoogleAccountCredential?>(null)
+    val credential: StateFlow<GoogleAccountCredential?> = _credential.asStateFlow()
+
     private val _isSignedIn = MutableStateFlow(false)
     val isSignedIn: StateFlow<Boolean> = _isSignedIn.asStateFlow()
 
@@ -44,12 +46,20 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    private fun onSignInSuccess() {
+    private fun onSignInSuccess(apiService: GoogleApiService, credential: GoogleAccountCredential) {
+        _googleApiService.value = apiService
+        _credential.value = credential
         _isSignedIn.value = true
+        evidenceRepository.setGoogleApiService(apiService)
+        caseRepository.setGoogleApiService(apiService)
     }
 
     private fun onSignInFailed() {
+        _googleApiService.value = null
+        _credential.value = null
         _isSignedIn.value = false
+        evidenceRepository.setGoogleApiService(null)
+        caseRepository.setGoogleApiService(null)
     }
 
     fun onSignOut() {
