@@ -21,9 +21,7 @@ data class Case(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
     val name: String,
-    val spreadsheetId: String,
+    var spreadsheetId: String,
     val generatedPdfId: String? = null,
-    val sourceHtmlSnapshotId: String? = null,
-    val originalMasterHtmlTemplateId: String? = null,
-    val isArchived: Boolean = false
+    val sourceHtmlSnapshotId: String? = null
 )
