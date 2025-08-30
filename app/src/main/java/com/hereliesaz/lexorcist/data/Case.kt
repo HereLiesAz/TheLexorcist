@@ -21,9 +21,15 @@ data class Case(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
     val name: String,
-    var spreadsheetId: String,
-    val generatedPdfId: String? = null,
-    val sourceHtmlSnapshotId: String? = null,
+    var spreadsheetId: String?,
     val originalMasterHtmlTemplateId: String? = null,
-    val isArchived: Boolean = false
+    val folderId: String?, // Often the same as 'id' if using Drive folder IDs as PK
+    val plaintiffs: String?,
+    val defendants: String?,
+    val court: String?,
+    val isArchived: Boolean = false,
+    val lastModifiedTime: Long? = null // Optional: for sorting or tracking
+    // Add any other fields relevant to a "Case"
+    // Ensure all types are Room-compatible or have TypeConverters
 )
+
