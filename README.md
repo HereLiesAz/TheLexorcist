@@ -1,22 +1,21 @@
 # The Lexorcist
 
-The Lexorcist is a powerful, user-friendly Android application designed to assist users in preparing for legal cases, particularly those involving the review and organization of extensive digital evidence. It provides a suite of tools to streamline the process of handling, annotating, and presenting evidence, making it an indispensable asset for legal professionals and individuals representing themselves.
+The Lexorcist is a powerful, user-friendly Android application designed to exorcise the demonic tedium of legal discovery. It empowers lawyers and their clients to capture, automatically analyze, and process digital evidence, transforming raw data into court-ready documentation with powerful, scriptable automation.
 
-## Current Status
+Whether you're dealing with screenshots of harassment, written threats, or examples of slander, The Lexorcist provides the tools to streamline the entire workflow—from a picture on a phone to a fully prepared exhibit.
 
-This project is in an early development stage. Many of the features listed below are either partially implemented or planned for the future. The backend is currently based on Google Sheets, and a transition to a local Room database is planned. The application's focus is being shifted from financial document tracking to a more general-purpose legal evidence management tool.
+## The Vision
 
-The timeline view has been implemented using JetLime, and the overall UI has been updated to comply with the Material 3 Expressive design system guidelines.
+This project is in an advanced stage of development, with a robust architecture designed to realize a specific vision: to create a seamless pipeline where a user can take a photo of evidence, have the app's OCR extract the text, and then use a custom, user-defined rules engine to automatically tag and categorize that evidence. This categorized data is then organized in a Google Sheet, where a powerful backend script can be triggered to generate all necessary legal paperwork, such as cover sheets, metadata reports, and affidavits.
 
 ## Key Features
 
-- **OCR-based Evidence Capture:** Digitize physical documents and other text-based evidence by taking a picture. The app uses Google's ML Kit to recognize and extract text.
-- **Data Parsing:** Intelligently parses recognized text to identify key information such as dates, names, and locations.
-- **Evidence Management:** Create and manage cases, and associate evidence with them.
-- **Advanced Filtering and Sorting:** Quickly find relevant information with robust filtering and sorting capabilities.
-- **Custom Tagging:** Apply custom tags to evidence for easy identification and grouping.
-- **Timeline View:** Visualize the sequence of events with an interactive timeline.
-- **Secure and Private:** All data is processed on your device to ensure privacy and security.
+- **Automated Evidence Pipeline:** Capture images or screenshots and let the app handle the rest. The Lexorcist uses OCR to extract text and then feeds it into a powerful, user-scriptable engine for analysis.
+- **Customizable Tagging Engine:** Define your own keywords, patterns, and "dorks" using JavaScript to automatically tag evidence. This allows you to create highly specific rules for identifying content relevant to your case, such as threats, hate speech, or contract violations.
+- **Google Suite Integration:** Each case gets its own Google Sheet, where all evidence and its metadata are neatly organized. This serves as a central hub for your case data.
+- **Automatic Document Generation:** The app leverages a powerful Google Apps Script backend. From your case's Google Sheet, you can instantly generate a variety of court-ready documents using customizable HTML templates.
+- **Timeline View:** Visualize the chronology of your evidence with an interactive timeline, making it easy to see the sequence of events.
+- **Secure and On-Device:** All OCR and data parsing happens on your device to ensure privacy and security.
 
 ## License
 
