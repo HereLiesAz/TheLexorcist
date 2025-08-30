@@ -57,6 +57,20 @@ class EvidenceViewModel @Inject constructor(
         }
     }
 
+    fun linkEvidence(fromId: Int, toId: Int) {
+        viewModelScope.launch {
+            val fromEvidence = evidenceRepository.getEvidenceById(fromId)
+            if (fromEvidence != null) {
+                val updatedLinkedIds = fromEvidence.linkedEvidenceIds.toMutableList()
+                if (!updatedLinkedIds.contains(toId)) {
+                    updatedLinkedIds.add(toId)
+                }
+                val updatedEvidence = fromEvidence.copy(linkedEvidenceIds = updatedLinkedIds)
+                evidenceRepository.updateEvidence(updatedEvidence)
+            }
+        }
+    }
+
     fun addTextEvidence(caseId: Int, text: String) {
         val newEvidence = Evidence(
             id = 0,

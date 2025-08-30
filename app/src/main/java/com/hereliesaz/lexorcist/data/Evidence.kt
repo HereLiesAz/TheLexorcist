@@ -30,5 +30,6 @@ data class Evidence(
     val sourceDocument: String,
     val documentDate: Long,
     val tags: List<String> = emptyList(),
-    val category: String = ""
+    val category: String = "",
+    val linkedEvidenceIds: List<Int> = emptyList()
 )

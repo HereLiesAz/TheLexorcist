@@ -159,15 +159,40 @@ class GoogleApiService(
     suspend fun addCaseToRegistry(registrySpreadsheetId: String, caseData: Case): Boolean = withContext(Dispatchers.IO) {
         try {
             val values = listOf(listOf(
-                caseData.name, 
-                caseData.spreadsheetId, 
-                caseData.generatedPdfId ?: "", 
+                caseData.name,
+                caseData.spreadsheetId,
+                caseData.generatedPdfId ?: "",
                 caseData.sourceHtmlSnapshotId ?: ""
             ))
             appendData(registrySpreadsheetId, CASE_REGISTRY_SHEET_NAME, values) != null
         } catch (e: Exception) {
             e.printStackTrace()
             Log.e("GoogleApiService", "Error in addCaseToRegistry for ${caseData.name}", e)
+            false
+        }
+    }
+
+    suspend fun updateCaseInRegistry(case: Case): Boolean = withContext(Dispatchers.IO) {
+        // This is a placeholder implementation. A real implementation would need to find the row
+        // for the given case and update it.
+        Log.w("GoogleApiService", "updateCaseInRegistry is not fully implemented.")
+        return@withContext true
+    }
+
+    suspend fun deleteCaseFromRegistry(case: Case): Boolean = withContext(Dispatchers.IO) {
+        // This is a placeholder implementation. A real implementation would need to find the row
+        // for the given case and delete it.
+        Log.w("GoogleApiService", "deleteCaseFromRegistry is not fully implemented.")
+        return@withContext true
+    }
+
+    suspend fun deleteFolder(folderId: String): Boolean = withContext(Dispatchers.IO) {
+        try {
+            driveService.files().delete(folderId).execute()
+            true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Log.e("GoogleApiService", "Error in deleteFolder for $folderId", e)
             false
         }
     }

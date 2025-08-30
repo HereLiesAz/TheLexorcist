@@ -42,7 +42,23 @@ class MainActivity : ComponentActivity() {
     private val caseViewModel: CaseViewModel by viewModels()
     private val evidenceViewModel: EvidenceViewModel by viewModels()
     private val ocrViewModel: OcrViewModel by viewModels()
-    
+    private val appDatabase by lazy { AppDatabase.getDatabase(this) }
+    private val evidenceRepository by lazy { EvidenceRepositoryImpl(appDatabase.evidenceDao()) }
+    private val caseRepository by lazy { CaseRepositoryImpl(applicationContext, null) }
+
+    private val authViewModel: AuthViewModel by viewModels {
+        AuthViewModelFactory(application, evidenceRepository, caseRepository)
+    }
+    private val caseViewModel: CaseViewModel by viewModels {
+        CaseViewModelFactory(application, caseRepository)
+    }
+    private val evidenceViewModel: EvidenceViewModel by viewModels {
+        EvidenceViewModelFactory(application, evidenceRepository)
+    }
+    private val ocrViewModel: OcrViewModel by viewModels {
+        OcrViewModelFactory(application)
+    }
+
     private lateinit var oneTapClient: SignInClient 
     private lateinit var signUpRequest: BeginSignInRequest
     private lateinit var signInRequest: BeginSignInRequest
