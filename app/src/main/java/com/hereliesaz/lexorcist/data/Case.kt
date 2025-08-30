@@ -13,6 +13,9 @@ import androidx.room.PrimaryKey
  * @property name The name of the case.
  * @property spreadsheetId The ID of the Google Sheets spreadsheet containing the case data.
  * @property generatedPdfId The ID of the generated PDF document for the case.
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+
  * @property sourceHtmlSnapshotId The ID of the HTML snapshot used as the source for the generated PDF.
  * @property originalMasterHtmlTemplateId The ID of the original master HTML template used for the case.
  */

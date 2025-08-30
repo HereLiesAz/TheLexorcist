@@ -7,9 +7,13 @@ package com.hereliesaz.lexorcist.data
  * the case it belongs to.
  *
  * @property id The unique identifier for the allegation.
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+
  * @property caseId The ID of the case this allegation belongs to.
  * @property text The text of the allegation.
  */
+@Entity(tableName = "allegations")
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
