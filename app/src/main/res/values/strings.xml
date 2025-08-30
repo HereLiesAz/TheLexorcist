@@ -103,14 +103,9 @@
     <string name="script_snippet_date_greater_label">date &gt; …</string>
     <string name="script_snippet_date_less">evidence.documentDate &lt; new Date("YYYY-MM-DD").getTime()</string>
     <string name="script_snippet_date_less_label">date &lt; …</string>
+    <string name="script_editor_placeholder">if (evidence.content.includes("slander")) { parser.tags.push("Slander"); }</string>
     <string name="evidence_by_category">Evidence by Category</string>
     <string name="evidence_by_month">Evidence by Month</string>
-    <string name="search">Search</string>
-    <string name="archive">Archive</string>
-    <string name="sort">Sort</string>
-    <string name="delete_case">Delete Case</string>
-    <string name="delete_case_confirmation">Are you sure you want to delete this case?</string>
-
     <string name="search">Search</string>
     <string name="archive">Archive</string>
     <string name="sort">Sort</string>

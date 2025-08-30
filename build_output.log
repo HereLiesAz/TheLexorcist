@@ -1,96 +1,22 @@
-WARNING: The following problems were found when resolving the SDK location:
-Where: sdk.dir property in local.properties file. Problem: Directory does not exist
-
-> Task :app:clean
 > Task :app:preBuild UP-TO-DATE
 > Task :app:preDebugBuild UP-TO-DATE
 > Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
 > Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
-> Task :app:generateDebugResValues
-> Task :app:processDebugGoogleServices
-> Task :app:checkDebugAarMetadata
+> Task :app:checkDebugAarMetadata UP-TO-DATE
+> Task :app:generateDebugResValues UP-TO-DATE
 > Task :app:mapDebugSourceSetPaths
 > Task :app:generateDebugResources
-> Task :app:packageDebugResources
-> Task :app:createDebugCompatibleScreenManifests
-> Task :app:extractDeepLinksDebug
-> Task :app:parseDebugLocalResources
-> Task :app:processDebugMainManifest
-> Task :app:processDebugManifest
-> Task :app:javaPreCompileDebug
-> Task :app:processDebugManifestForPackage
-> Task :app:mergeDebugShaders
-> Task :app:compileDebugShaders NO-SOURCE
-> Task :app:generateDebugAssets UP-TO-DATE
-> Task :app:mergeDebugAssets
-> Task :app:compressDebugAssets
-> Task :app:desugarDebugFileDependencies
-> Task :app:mergeDebugResources
-> Task :app:checkDebugDuplicateClasses
-> Task :app:mergeDebugJniLibFolders
-> Task :app:mergeLibDexDebug
-> Task :app:mergeDebugNativeLibs
-> Task :app:validateSigningDebug
-> Task :app:writeDebugAppMetadata
-> Task :app:writeDebugSigningConfigVersions
-> Task :app:preReleaseBuild UP-TO-DATE
 
-> Task :app:stripDebugDebugSymbols
-Unable to strip the following libraries, packaging them as they are: libandroidx.graphics.path.so, libdatastore_shared_counter.so. Run with --info option to learn more.
+> Task :app:mergeDebugResources FAILED
+ERROR: /app/app/src/main/res/values/strings.xml: Resource and asset merger: Found item String/archive more than one time
 
-> Task :app:mergeReleaseJniLibFolders
-> Task :app:mergeReleaseNativeLibs
-> Task :app:checkReleaseDuplicateClasses
-> Task :app:buildKotlinToolingMetadata
-
-> Task :app:stripReleaseDebugSymbols
-Unable to strip the following libraries, packaging them as they are: libandroidx.graphics.path.so, libdatastore_shared_counter.so. Run with --info option to learn more.
-
-> Task :app:checkReleaseAarMetadata
-> Task :app:generateReleaseResValues
-> Task :app:extractReleaseNativeSymbolTables
-> Task :app:processReleaseGoogleServices
-> Task :app:mergeReleaseNativeDebugMetadata NO-SOURCE
-> Task :app:mapReleaseSourceSetPaths
-> Task :app:generateReleaseResources
-> Task :app:processDebugResources
-> Task :app:packageReleaseResources
-> Task :app:parseReleaseLocalResources
-> Task :app:mergeReleaseResources
-> Task :app:createReleaseCompatibleScreenManifests
-> Task :app:extractDeepLinksRelease
-> Task :app:processReleaseMainManifest
-> Task :app:processReleaseManifest
-> Task :app:javaPreCompileRelease
-> Task :app:desugarReleaseFileDependencies
-> Task :app:processReleaseManifestForPackage
-> Task :app:mergeReleaseStartupProfile UP-TO-DATE
-> Task :app:processReleaseResources
-> Task :app:kspDebugKotlin
-> Task :app:mergeExtDexDebug
-> Task :app:mergeExtDexRelease
-> Task :app:kspReleaseKotlin
-> Task :app:compileDebugKotlin
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainActivity.kt:18:42 Unresolved reference 'TheLexorcistTheme'.
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainActivity.kt:98:13 Unresolved reference 'TheLexorcistTheme'.
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainActivity.kt:99:17 @Composable invocations can only happen from the context of a @Composable function
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ScriptEditorActivity.kt:12:42 Unresolved reference 'TheLexorcistTheme'.
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ScriptEditorActivity.kt:35:13 Unresolved reference 'TheLexorcistTheme'.
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ScriptEditorActivity.kt:36:17 @Composable invocations can only happen from the context of a @Composable function
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ScriptEditorActivity.kt:38:43 @Composable invocations can only happen from the context of a @Composable function
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/screens/CasesScreen.kt:7:40 Unresolved reference 'Icons'.
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/screens/CasesScreen.kt:8:40 Unresolved reference 'filled'.
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/screens/CasesScreen.kt:27:22 Unresolved reference 'Icons'.
-
-> Task :app:compileDebugKotlin FAILED
-> Task :app:mergeReleaseArtProfile
+[Incubating] Problems report is available at: file:///app/build/reports/problems/problems-report.html
 
 FAILURE: Build failed with an exception.
 
 * What went wrong:
-Execution failed for task ':app:compileDebugKotlin'.
-> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
-   > Compilation error. See log for more details
+Execution failed for task ':app:mergeDebugResources'.
+> /app/app/src/main/res/values/strings.xml: Error: Found item String/archive more than one time
 
 * Try:
 > Run with --stacktrace option to get the stack trace.
@@ -98,5 +24,11 @@ Execution failed for task ':app:compileDebugKotlin'.
 > Run with --scan to get full insights.
 > Get more help at https://help.gradle.org.
 
-BUILD FAILED in 46s
-57 actionable tasks: 56 executed, 1 up-to-date
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.13/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD FAILED in 2s
+5 actionable tasks: 3 executed, 2 up-to-date

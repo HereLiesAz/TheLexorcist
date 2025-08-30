@@ -10,7 +10,9 @@ import androidx.lifecycle.viewModelScope
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
-import com.hereliesaz.lexorcist.data.Evidence // Correct import
+import com.hereliesaz.lexorcist.data.Evidence
+import com.hereliesaz.lexorcist.data.SettingsManager
+import com.hereliesaz.lexorcist.service.ScriptRunner
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,7 +23,11 @@ import org.opencv.imgproc.Imgproc
 import java.util.ArrayList
 // import java.util.Date // Removed import
 
-class OcrViewModel(application: Application) : AndroidViewModel(application) {
+class OcrViewModel(
+    application: Application,
+    private val settingsManager: SettingsManager,
+    private val scriptRunner: ScriptRunner
+) : AndroidViewModel(application) {
 
     private val _isOcrInProgress = MutableStateFlow(false)
     val isOcrInProgress: StateFlow<Boolean> = _isOcrInProgress.asStateFlow()
@@ -83,7 +89,7 @@ class OcrViewModel(application: Application) : AndroidViewModel(application) {
                 recognizer.process(inputImage)
                     .addOnSuccessListener { visionText ->
                         _extractedText.value = visionText.text
-                        val newEvidence = Evidence(
+                        var newEvidence = Evidence(
                             id = 0, // Placeholder ID for newly created evidence via OCR
                             caseId = 0, // Placeholder caseId, to be set by the consuming ViewModel if needed
                             content = visionText.text,
@@ -94,6 +100,14 @@ class OcrViewModel(application: Application) : AndroidViewModel(application) {
                             category = "OCR Image", // String is fine
                             tags = emptyList() // List<String> is fine
                         )
+
+                        // Run the user script
+                        val userScript = settingsManager.getScript()
+                        if (userScript.isNotBlank()) {
+                            val parserResult = scriptRunner.runScript(userScript, newEvidence)
+                            newEvidence = newEvidence.copy(tags = parserResult.tags)
+                        }
+
                         _newlyCreatedEvidence.value = newEvidence
                         _isOcrInProgress.value = false
                         cancelImageReview() // Clear review state after processing

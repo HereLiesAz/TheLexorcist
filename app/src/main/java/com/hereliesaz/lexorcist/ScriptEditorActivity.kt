@@ -9,29 +9,21 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import com.hereliesaz.lexorcist.data.SettingsManager
 import com.hereliesaz.lexorcist.ui.ScriptEditorScreen
 import com.hereliesaz.lexorcist.ui.theme.LexorcistTheme
-import com.hereliesaz.lexorcist.utils.GoogleApiServiceHolder
 import com.hereliesaz.lexorcist.viewmodel.ScriptEditorViewModel
+import com.hereliesaz.lexorcist.viewmodel.ScriptEditorViewModelFactory
 
 class ScriptEditorActivity : ComponentActivity() {
 
-    private val viewModel: ScriptEditorViewModel by viewModels()
+    private val viewModel: ScriptEditorViewModel by viewModels {
+        ScriptEditorViewModelFactory(SettingsManager(this))
+    }
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        val scriptId = intent.getStringExtra("scriptId")
-        val googleApiService = GoogleApiServiceHolder.googleApiService
-
-        if (scriptId == null || googleApiService == null) {
-            // Handle error, maybe show a toast and finish
-            finish()
-            return
-        }
-
-        viewModel.initialize(googleApiService, scriptId)
 
         setContent {
             LexorcistTheme {
