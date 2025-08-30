@@ -10,6 +10,7 @@ import com.hereliesaz.lexorcist.data.CaseRepository
 import com.hereliesaz.lexorcist.data.Allegation
 import com.hereliesaz.lexorcist.data.SortOrder
 import com.hereliesaz.lexorcist.model.SheetFilter
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -17,8 +18,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class CaseViewModel(application: Application, private val caseRepository: CaseRepository) : AndroidViewModel(application) {
+@HiltViewModel
+class CaseViewModel @Inject constructor(
+    application: Application,
+    private val caseRepository: CaseRepository
+) : AndroidViewModel(application) {
 
     private val sharedPref = application.getSharedPreferences("CaseInfoPrefs", Context.MODE_PRIVATE)
 

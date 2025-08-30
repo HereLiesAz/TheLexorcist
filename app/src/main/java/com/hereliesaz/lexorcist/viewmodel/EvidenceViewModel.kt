@@ -8,15 +8,17 @@ import androidx.lifecycle.viewModelScope
 import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.data.EvidenceRepository
 import com.hereliesaz.lexorcist.data.Evidence // Correct import
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-// import java.util.Date // Removed import
+import javax.inject.Inject
 
-class EvidenceViewModel(
-    application: Application,
-    private val evidenceRepository: EvidenceRepository
+@HiltViewModel
+class EvidenceViewModel @Inject constructor(
+    private val evidenceRepository: EvidenceRepository,
+    private val application: Application
 ) : AndroidViewModel(application) {
 
     private val _evidenceList = MutableStateFlow<List<Evidence>>(emptyList())

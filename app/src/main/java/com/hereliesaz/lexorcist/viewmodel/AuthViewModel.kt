@@ -5,22 +5,26 @@ import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
+import android.content.Context
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
 import com.hereliesaz.lexorcist.GoogleApiService
-import com.hereliesaz.lexorcist.data.CaseRepositoryImpl
-import com.hereliesaz.lexorcist.data.EvidenceRepositoryImpl
+import com.hereliesaz.lexorcist.data.CaseRepository
+import com.hereliesaz.lexorcist.data.EvidenceRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class AuthViewModel(
-    application: Application,
-    private val evidenceRepository: EvidenceRepositoryImpl,
-    private val caseRepository: CaseRepositoryImpl
-) : AndroidViewModel(application) {
-
-    private val _googleApiService = MutableStateFlow<GoogleApiService?>(null)
-    val googleApiService: StateFlow<GoogleApiService?> = _googleApiService.asStateFlow()
+@HiltViewModel
+class AuthViewModel @Inject constructor(
+    private val evidenceRepository: EvidenceRepository,
+    private val caseRepository: CaseRepository,
+    private val googleApiService: GoogleApiService
+) : ViewModel() {
 
     private val _isSignedIn = MutableStateFlow(false)
     val isSignedIn: StateFlow<Boolean> = _isSignedIn.asStateFlow()
@@ -32,26 +36,20 @@ class AuthViewModel(
                     .usingOAuth2(context, setOf("https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive.file"))
                 credential.selectedAccountName = email
 
-                val service = GoogleApiService(credential, applicationName)
-                onSignInSuccess(service)
+                googleApiService.setCredential(credential)
+                onSignInSuccess()
             } else {
                 onSignInFailed()
             }
         }
     }
 
-    private fun onSignInSuccess(apiService: GoogleApiService) {
-        _googleApiService.value = apiService
+    private fun onSignInSuccess() {
         _isSignedIn.value = true
-        evidenceRepository.setGoogleApiService(apiService)
-        caseRepository.setGoogleApiService(apiService)
     }
 
     private fun onSignInFailed() {
-        _googleApiService.value = null
         _isSignedIn.value = false
-        evidenceRepository.setGoogleApiService(null)
-        caseRepository.setGoogleApiService(null)
     }
 
     fun onSignOut() {

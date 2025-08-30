@@ -5,10 +5,18 @@ import androidx.lifecycle.viewModelScope
 import com.hereliesaz.lexorcist.GoogleApiService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import com.hereliesaz.lexorcist.GoogleApiService
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class ScriptEditorViewModel : ViewModel() {
+@HiltViewModel
+class ScriptEditorViewModel @Inject constructor(
+    private val googleApiService: GoogleApiService
+) : ViewModel() {
 
     private val _scriptText = MutableStateFlow("")
     val scriptText: StateFlow<String> = _scriptText.asStateFlow()
@@ -16,13 +24,14 @@ class ScriptEditorViewModel : ViewModel() {
     private val _saveState = MutableStateFlow<SaveState>(SaveState.Idle)
     val saveState: StateFlow<SaveState> = _saveState.asStateFlow()
 
-    private var googleApiService: GoogleApiService? = null
     private var scriptId: String? = null
 
-    fun initialize(googleApiService: GoogleApiService, scriptId: String) {
-        this.googleApiService = googleApiService
+    fun loadScript(scriptId: String) {
         this.scriptId = scriptId
-        loadScript()
+        viewModelScope.launch {
+            val scriptContent = googleApiService.getScript(scriptId)
+            _scriptText.value = scriptContent?.files?.firstOrNull()?.source ?: ""
+        }
     }
 
     fun onScriptTextChanged(newText: String) {

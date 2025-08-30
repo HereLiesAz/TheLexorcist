@@ -27,6 +27,7 @@ fun MainScreen(
     caseViewModel: CaseViewModel = viewModel(),
     evidenceViewModel: EvidenceViewModel = viewModel(),
     ocrViewModel: OcrViewModel = viewModel(),
+    mainViewModel: MainViewModel = viewModel(),
     onSignIn: () -> Unit,
     onSelectImage: () -> Unit,
     onTakePicture: () -> Unit,
@@ -75,6 +76,7 @@ fun MainScreen(
                         R.string.nav_add_evidence -> AddEvidenceScreen(
                             evidenceViewModel = evidenceViewModel,
                             ocrViewModel = ocrViewModel,
+                            mainViewModel = mainViewModel,
                             onSelectImage = onSelectImage,
                             onTakePicture = onTakePicture,
                             onAddTextEvidence = { currentScreen = R.string.add_text_evidence }, // Corrected: R.string.add_text_evidence

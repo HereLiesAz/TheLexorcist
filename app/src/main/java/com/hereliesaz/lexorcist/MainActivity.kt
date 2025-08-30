@@ -33,25 +33,15 @@ import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
 import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModelFactory
 import com.hereliesaz.lexorcist.viewmodel.OcrViewModel
 import com.hereliesaz.lexorcist.viewmodel.OcrViewModelFactory
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
-    private val appDatabase by lazy { AppDatabase.getDatabase(this) }
-    private val evidenceRepository by lazy { EvidenceRepositoryImpl(appDatabase.evidenceDao(), null) }
-    private val caseRepository by lazy { CaseRepositoryImpl(applicationContext, appDatabase.caseDao(), null) }
-
-    private val authViewModel: AuthViewModel by viewModels {
-        AuthViewModelFactory(application, evidenceRepository, caseRepository)
-    }
-    private val caseViewModel: CaseViewModel by viewModels {
-        CaseViewModelFactory(application, caseRepository)
-    }
-    private val evidenceViewModel: EvidenceViewModel by viewModels {
-        EvidenceViewModelFactory(application, evidenceRepository)
-    }
-    private val ocrViewModel: OcrViewModel by viewModels {
-        OcrViewModelFactory(application)
-    }
+    private val authViewModel: AuthViewModel by viewModels()
+    private val caseViewModel: CaseViewModel by viewModels()
+    private val evidenceViewModel: EvidenceViewModel by viewModels()
+    private val ocrViewModel: OcrViewModel by viewModels()
     
     private lateinit var oneTapClient: SignInClient 
     private lateinit var signUpRequest: BeginSignInRequest
