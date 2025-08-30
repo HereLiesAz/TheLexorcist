@@ -35,4 +35,6 @@ data class Evidence(
     val parentVideoId: String? = null
     val category: String = "",
     val commentary: String = ""
+    val category: String = "",
+    val entities: Map<String, List<String>> = emptyMap()
 )

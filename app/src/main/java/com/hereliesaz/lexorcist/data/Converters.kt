@@ -3,6 +3,9 @@ package com.hereliesaz.lexorcist.data
 import androidx.room.TypeConverter
 import java.util.Date
 
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+
 class Converters {
     @TypeConverter
     fun fromTimestamp(value: Long?): Date? {
@@ -22,6 +25,18 @@ class Converters {
     @TypeConverter
     fun fromList(list: List<String>): String {
         return list.joinToString(",")
+    }
+
+    @TypeConverter
+    fun fromStringToMap(value: String): Map<String, List<String>> {
+        val mapType = object : TypeToken<Map<String, List<String>>>() {}.type
+        return Gson().fromJson(value, mapType)
+    }
+
+    @TypeConverter
+    fun fromMapToString(map: Map<String, List<String>>): String {
+        val gson = Gson()
+        return gson.toJson(map)
     }
 
     @TypeConverter

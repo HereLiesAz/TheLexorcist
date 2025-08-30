@@ -10,6 +10,8 @@ import androidx.lifecycle.viewModelScope
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
+import com.hereliesaz.lexorcist.DataParser
+import com.hereliesaz.lexorcist.data.Evidence // Correct import
 import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.data.SettingsManager
 import com.hereliesaz.lexorcist.service.ScriptRunner
@@ -99,16 +101,19 @@ class OcrViewModel(
                         _extractedText.value = visionText.text
                         val parsedDate = DataParser.parseTimestamp(visionText.text)
                         val exifDate = ExifUtils.getExifDate(context, reviewedUri)
+                        val extractedText = visionText.text
+                        val entities = DataParser.tagData(extractedText)
                         val newEvidence = Evidence(
                             id = 0, // Placeholder ID for newly created evidence via OCR
                             caseId = 0, // Placeholder caseId, to be set by the consuming ViewModel if needed
-                            content = visionText.text,
+                            content = extractedText,
                             timestamp = System.currentTimeMillis(), // Changed to Long
                             sourceDocument = reviewedUri.toString(),
                             documentDate = parsedDate ?: exifDate ?: System.currentTimeMillis(), // Changed to Long
                             allegationId = null, // Int? is fine with null
                             category = "OCR Image", // String is fine
-                            tags = emptyList() // List<String> is fine
+                            tags = emptyList(), // List<String> is fine
+                            entities = entities
                         )
 
                         // Run the user script
