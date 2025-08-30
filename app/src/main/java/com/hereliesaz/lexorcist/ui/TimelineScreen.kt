@@ -72,21 +72,19 @@ fun TimelineScreen(viewModel: MainViewModel) {
                 JetLimeExtendedEvent(
                     style = JetLimeEventDefaults.eventStyle(
                         position = position,
-                        // pointType = EventPointType.POINT, // Removed pointType
                         pointColor = MaterialTheme.colorScheme.primary, 
                         pointAnimation = JetLimeEventDefaults.pointAnimation()
-                        // pointIcon removed
                     ),
                     additionalContent = {
                         Column(horizontalAlignment = Alignment.End) {
                             Text(
-                                text = SimpleDateFormat("MMM dd", Locale.getDefault()).format(Date(item.documentDate ?: System.currentTimeMillis())),
+                                text = SimpleDateFormat("MMM dd", Locale.getDefault()).format(Date(item.documentDate)),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 textAlign = TextAlign.End
                             )
                             Text(
-                                text = SimpleDateFormat("yyyy", Locale.getDefault()).format(Date(item.documentDate ?: System.currentTimeMillis())),
+                                text = SimpleDateFormat("yyyy", Locale.getDefault()).format(Date(item.documentDate)),
                                 style = MaterialTheme.typography.bodySmall,
                                 textAlign = TextAlign.End
                             )
@@ -105,7 +103,7 @@ fun TimelineScreen(viewModel: MainViewModel) {
                             verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
                             Text(
-                                text = item.sourceDocument ?: "Unknown Source",
+                                text = item.sourceDocument,
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold
                             )
@@ -114,7 +112,7 @@ fun TimelineScreen(viewModel: MainViewModel) {
                                 style = MaterialTheme.typography.bodyMedium,
                                 maxLines = 3
                             )
-                            if (item.category?.isNotBlank() == true) { 
+                            if (item.category.isNotBlank()) {
                                 Text(
                                     text = "Category: ${item.category}",
                                     style = MaterialTheme.typography.bodySmall,
@@ -168,18 +166,18 @@ fun getIconForCategory(category: String?): ImageVector {
 fun EvidenceDetailsDialog(evidence: Evidence, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(evidence.sourceDocument ?: "Details") },
+        title = { Text(evidence.sourceDocument) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("Content: ${evidence.content}", style = MaterialTheme.typography.bodyMedium)
-                Text("Category: ${evidence.category ?: "N/A"}", style = MaterialTheme.typography.bodyMedium)
+                Text("Category: ${evidence.category}", style = MaterialTheme.typography.bodyMedium)
                 Text("Tags: ${evidence.tags.joinToString().ifEmpty { "N/A" }}", style = MaterialTheme.typography.bodyMedium) // Corrected typo
                 Text(
                     text = "Date: ${
                         SimpleDateFormat(
                             "yyyy-MM-dd HH:mm",
                             Locale.getDefault()
-                        ).format(Date(evidence.documentDate ?: System.currentTimeMillis()))
+                        ).format(Date(evidence.documentDate))
                     }",
                     style = MaterialTheme.typography.bodySmall
                 )

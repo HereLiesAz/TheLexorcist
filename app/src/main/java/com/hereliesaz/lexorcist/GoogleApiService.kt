@@ -71,67 +71,6 @@ class GoogleApiService(
         }
     }
 
-    suspend fun updateCaseInRegistry(caseData: Case): Boolean = withContext(Dispatchers.IO) {
-        try {
-            val appRootFolderId = getOrCreateAppRootFolder() ?: return@withContext false
-            val registryId = getOrCreateCaseRegistrySpreadsheetId(appRootFolderId) ?: return@withContext false
-            val range = "$CASE_REGISTRY_SHEET_NAME!A${caseData.id + 2}:F${caseData.id + 2}"
-            val values = listOf(listOf(
-                caseData.name,
-                caseData.spreadsheetId,
-                caseData.generatedPdfId ?: "",
-                caseData.sourceHtmlSnapshotId ?: "",
-                caseData.originalMasterHtmlTemplateId ?: "",
-                caseData.isArchived.toString()
-            ))
-            val body = ValueRange().setValues(values)
-            sheetsService.spreadsheets().values().update(registryId, range, body)
-                .setValueInputOption("USER_ENTERED")
-                .execute()
-            true
-        } catch (e: Exception) {
-            e.printStackTrace()
-            Log.e("GoogleApiService", "Error in updateCaseInRegistry for ${caseData.name}", e)
-            false
-        }
-    }
-
-    suspend fun deleteCaseFromRegistry(case: Case): Boolean = withContext(Dispatchers.IO) {
-        try {
-            val appRootFolderId = getOrCreateAppRootFolder() ?: return@withContext false
-            val registryId = getOrCreateCaseRegistrySpreadsheetId(appRootFolderId) ?: return@withContext false
-            val sheetId = getSheetId(registryId, CASE_REGISTRY_SHEET_NAME) ?: return@withContext false
-            val request = Request().setDeleteDimension(
-                DeleteDimensionRequest()
-                    .setRange(
-                        DimensionRange()
-                            .setSheetId(sheetId)
-                            .setDimension("ROWS")
-                            .setStartIndex(case.id + 1)
-                            .setEndIndex(case.id + 2)
-                    )
-            )
-            val batchUpdateRequest = BatchUpdateSpreadsheetRequest().setRequests(listOf(request))
-            sheetsService.spreadsheets().batchUpdate(registryId, batchUpdateRequest).execute()
-            true
-        } catch (e: Exception) {
-            e.printStackTrace()
-            Log.e("GoogleApiService", "Error in deleteCaseFromRegistry for ${case.name}", e)
-            false
-        }
-    }
-
-    suspend fun deleteFolder(folderId: String): Boolean = withContext(Dispatchers.IO) {
-        try {
-            driveService.files().delete(folderId).execute()
-            true
-        } catch (e: Exception) {
-            e.printStackTrace()
-            Log.e("GoogleApiService", "Error in deleteFolder for $folderId", e)
-            false
-        }
-    }
-
     suspend fun getOrCreateAppRootFolder(): String? {
         return getOrCreateFolder(APP_ROOT_FOLDER_NAME)
     }
@@ -152,7 +91,7 @@ class GoogleApiService(
             val fileListResult = driveService.files().list().setQ(query).setSpaces("drive").execute()
             val existingFiles = fileListResult?.files
             var registrySpreadsheetId: String?
-            val newHeader = listOf(listOf("Case Name", "Spreadsheet ID", "Generated PDF ID", "Source HTML Snapshot ID", "Original Master HTML Template ID", "Is Archived"))
+            val newHeader = listOf(listOf("Case Name", "Spreadsheet ID", "Generated PDF ID", "Source HTML Snapshot ID"))
 
             if (existingFiles != null && existingFiles.isNotEmpty()) {
                 registrySpreadsheetId = existingFiles[0].id
@@ -168,7 +107,7 @@ class GoogleApiService(
                 val currentHeaderResponse = sheetsService.spreadsheets().values().get(registrySpreadsheetId, range).execute()
                 val currentHeader = currentHeaderResponse.getValues()
 
-                if (currentHeader == null || currentHeader.isEmpty() || currentHeader[0].size < 6) {
+                if (currentHeader == null || currentHeader.isEmpty() || currentHeader[0].size < 4) {
                     if (currentHeader == null || currentHeader.isEmpty()){
                          appendData(registrySpreadsheetId, CASE_REGISTRY_SHEET_NAME, newHeader)
                     } else {
@@ -195,38 +134,14 @@ class GoogleApiService(
                 val spreadsheetId = row.getOrNull(1)?.toString() ?: ""
 
                 if (name.isNotBlank() && spreadsheetId.isNotBlank()) {
-                    if (row.size >= 6) {
+                    if (row.size >= 4) {
                         val generatedPdfId = row.getOrNull(2)?.toString()
                         val sourceHtmlSnapshotId = row.getOrNull(3)?.toString()
-                        val originalMasterHtmlTemplateId = row.getOrNull(4)?.toString()
-                        val isArchived = row.getOrNull(5)?.toString()?.toBoolean() ?: false
-                        cases.add(Case(
-                            name = name,
-                            spreadsheetId = spreadsheetId,
-                            generatedPdfId = if(generatedPdfId?.isBlank() == true) null else generatedPdfId,
-                            sourceHtmlSnapshotId = if(sourceHtmlSnapshotId?.isBlank() == true) null else sourceHtmlSnapshotId,
-                            originalMasterHtmlTemplateId = if(originalMasterHtmlTemplateId?.isBlank() == true) null else originalMasterHtmlTemplateId,
-                            isArchived = isArchived
-                        ))
-                    } else if (row.size >= 5) {
-                        val generatedPdfId = row.getOrNull(2)?.toString()
-                        val sourceHtmlSnapshotId = row.getOrNull(3)?.toString()
-                        val originalMasterHtmlTemplateId = row.getOrNull(4)?.toString()
                         cases.add(Case(
                             name = name, 
                             spreadsheetId = spreadsheetId, 
                             generatedPdfId = if(generatedPdfId?.isBlank() == true) null else generatedPdfId,
-                            sourceHtmlSnapshotId = if(sourceHtmlSnapshotId?.isBlank() == true) null else sourceHtmlSnapshotId,
-                            originalMasterHtmlTemplateId = if(originalMasterHtmlTemplateId?.isBlank() == true) null else originalMasterHtmlTemplateId
-                        ))
-                    } else if (row.size >= 3) { 
-                        val oldMasterTemplateId = row.getOrNull(2)?.toString()
-                        cases.add(Case(
-                            name = name, 
-                            spreadsheetId = spreadsheetId, 
-                            generatedPdfId = if(oldMasterTemplateId?.isBlank() == true) null else oldMasterTemplateId, 
-                            sourceHtmlSnapshotId = null, 
-                            originalMasterHtmlTemplateId = null 
+                            sourceHtmlSnapshotId = if(sourceHtmlSnapshotId?.isBlank() == true) null else sourceHtmlSnapshotId
                         ))
                     } else {
                         Log.w("GoogleApiService", "Skipping row in case registry due to insufficient columns: $row")
@@ -246,9 +161,7 @@ class GoogleApiService(
                 caseData.name, 
                 caseData.spreadsheetId, 
                 caseData.generatedPdfId ?: "", 
-                caseData.sourceHtmlSnapshotId ?: "",
-                caseData.originalMasterHtmlTemplateId ?: "",
-                caseData.isArchived.toString()
+                caseData.sourceHtmlSnapshotId ?: ""
             ))
             appendData(registrySpreadsheetId, CASE_REGISTRY_SHEET_NAME, values) != null
         } catch (e: Exception) {

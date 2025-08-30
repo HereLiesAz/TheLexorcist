@@ -42,8 +42,6 @@ class SpreadsheetParser(
         // 3. Create New Case Structure (since no duplicate was found)
         Log.d(TAG, "parseAndStore: No existing case found with name '$importedCaseName'. Proceeding to create new case structure.")
         
-        val originalMasterHtmlTemplateIdForCaseRecord: String? = null
-
         val newCaseFolderId = googleApiService.getOrCreateFolder(importedCaseName, appRootFolderId)
         if (newCaseFolderId == null) {
             Log.e(TAG, "parseAndStore: Failed to create folder for new case: $importedCaseName")
@@ -63,7 +61,7 @@ class SpreadsheetParser(
 
         // 4. Add to Case Registry
         // newCase.id will be 0 by default from the Case data class if not otherwise set
-        val newCase = Case(name = importedCaseName, spreadsheetId = newCaseSpreadsheetId, originalMasterHtmlTemplateId = originalMasterHtmlTemplateIdForCaseRecord)
+        val newCase = Case(name = importedCaseName, spreadsheetId = newCaseSpreadsheetId)
         val addedToRegistry = googleApiService.addCaseToRegistry(caseRegistrySpreadsheetId, newCase)
         if (!addedToRegistry) {
             Log.w(TAG, "parseAndStore: Failed to add new case '$importedCaseName' to registry. Proceeding with data import to its sheet, but it won't be listed until registry issue is fixed.")
