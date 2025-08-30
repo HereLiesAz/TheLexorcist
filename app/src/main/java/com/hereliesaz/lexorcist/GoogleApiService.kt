@@ -91,7 +91,7 @@ class GoogleApiService(
             val fileListResult = driveService.files().list().setQ(query).setSpaces("drive").execute()
             val existingFiles = fileListResult?.files
             var registrySpreadsheetId: String?
-            val newHeader = listOf(listOf("Case Name", "Spreadsheet ID", "Generated PDF ID", "Source HTML Snapshot ID"))
+            val newHeader = listOf(listOf("Case Name", "Spreadsheet ID", "Script ID", "Generated PDF ID", "Source HTML Snapshot ID"))
 
             if (existingFiles != null && existingFiles.isNotEmpty()) {
                 registrySpreadsheetId = existingFiles[0].id
@@ -103,11 +103,11 @@ class GoogleApiService(
             }
             if (registrySpreadsheetId != null) {
                 addSheet(registrySpreadsheetId, CASE_REGISTRY_SHEET_NAME) // Ensure sheet exists
-                val range = "$CASE_REGISTRY_SHEET_NAME!A1:E1" 
+                val range = "$CASE_REGISTRY_SHEET_NAME!A1:E1"
                 val currentHeaderResponse = sheetsService.spreadsheets().values().get(registrySpreadsheetId, range).execute()
                 val currentHeader = currentHeaderResponse.getValues()
 
-                if (currentHeader == null || currentHeader.isEmpty() || currentHeader[0].size < 4) {
+                if (currentHeader == null || currentHeader.isEmpty() || currentHeader[0].size < 5) {
                     if (currentHeader == null || currentHeader.isEmpty()){
                          appendData(registrySpreadsheetId, CASE_REGISTRY_SHEET_NAME, newHeader)
                     } else {
@@ -128,18 +128,20 @@ class GoogleApiService(
         try {
             val allSheetData = readSpreadsheet(registrySpreadsheetId)
             val caseSheetValues = allSheetData?.get(CASE_REGISTRY_SHEET_NAME)
-            
-            caseSheetValues?.drop(1)?.forEach { row -> 
+
+            caseSheetValues?.drop(1)?.forEach { row ->
                 val name = row.getOrNull(0)?.toString() ?: ""
                 val spreadsheetId = row.getOrNull(1)?.toString() ?: ""
 
                 if (name.isNotBlank() && spreadsheetId.isNotBlank()) {
-                    if (row.size >= 4) {
-                        val generatedPdfId = row.getOrNull(2)?.toString()
-                        val sourceHtmlSnapshotId = row.getOrNull(3)?.toString()
+                    if (row.size >= 5) {
+                        val scriptId = row.getOrNull(2)?.toString()
+                        val generatedPdfId = row.getOrNull(3)?.toString()
+                        val sourceHtmlSnapshotId = row.getOrNull(4)?.toString()
                         cases.add(Case(
-                            name = name, 
-                            spreadsheetId = spreadsheetId, 
+                            name = name,
+                            spreadsheetId = spreadsheetId,
+                            scriptId = if(scriptId?.isBlank() == true) null else scriptId,
                             generatedPdfId = if(generatedPdfId?.isBlank() == true) null else generatedPdfId,
                             sourceHtmlSnapshotId = if(sourceHtmlSnapshotId?.isBlank() == true) null else sourceHtmlSnapshotId
                         ))
@@ -148,7 +150,7 @@ class GoogleApiService(
                     }
                 }
             }
-        } catch (e: Exception) { 
+        } catch (e: Exception) {
             e.printStackTrace()
             Log.e("GoogleApiService", "Error in getAllCasesFromRegistry", e)
         }
@@ -158,9 +160,10 @@ class GoogleApiService(
     suspend fun addCaseToRegistry(registrySpreadsheetId: String, caseData: Case): Boolean = withContext(Dispatchers.IO) {
         try {
             val values = listOf(listOf(
-                caseData.name, 
-                caseData.spreadsheetId, 
-                caseData.generatedPdfId ?: "", 
+                caseData.name,
+                caseData.spreadsheetId,
+                caseData.scriptId ?: "",
+                caseData.generatedPdfId ?: "",
                 caseData.sourceHtmlSnapshotId ?: ""
             ))
             appendData(registrySpreadsheetId, CASE_REGISTRY_SHEET_NAME, values) != null
@@ -304,33 +307,42 @@ class GoogleApiService(
         }
     }
 
-    suspend fun addEvidenceToCase(caseSpreadsheetId: String, entry: Evidence): Boolean = withContext(Dispatchers.IO) {
-        if (caseSpreadsheetId.isBlank()) return@withContext false
+    suspend fun addEvidenceToCase(caseSpreadsheetId: String, entry: Evidence): Int? = withContext(Dispatchers.IO) {
+        if (caseSpreadsheetId.isBlank()) return@withContext null
         try {
             val sheetExists = sheetsService.spreadsheets().get(caseSpreadsheetId).execute().sheets?.any { it.properties?.title == EVIDENCE_SHEET_NAME } == true
             if (!sheetExists) {
                 addSheet(caseSpreadsheetId, EVIDENCE_SHEET_NAME)
                 val header: List<List<Any>> = listOf(listOf(
-                    "Content", "Timestamp", "Source Document", "Document Date", "Tags", "Allegation ID", "Category" // Amount removed
+                    "Content", "Timestamp", "Source Document", "Document Date", "Tags", "Allegation ID", "Category"
                 ))
                 appendData(caseSpreadsheetId, EVIDENCE_SHEET_NAME, header)
             }
 
             val values = listOf(listOf(
                 entry.content,
-                entry.timestamp.toString(), 
+                entry.timestamp.toString(),
                 entry.sourceDocument,
-                entry.documentDate.toString(), 
+                entry.documentDate.toString(),
                 entry.tags.joinToString(","),
                 entry.allegationId?.toString() ?: "",
                 entry.category
-                // entry.amount?.toString() ?: "" // Amount removed
             ))
-            appendData(caseSpreadsheetId, EVIDENCE_SHEET_NAME, values) != null
+            val response = appendData(caseSpreadsheetId, EVIDENCE_SHEET_NAME, values)
+            val tableRange = response?.tableRange
+            if (tableRange != null) {
+                val regex = ".*!A(\\d+):.*".toRegex()
+                val matchResult = regex.find(tableRange)
+                val row = matchResult?.groups?.get(1)?.value?.toIntOrNull()
+                if (row != null) {
+                    return@withContext row - 2 // -1 for 0-based index, -1 for header
+                }
+            }
+            null
         } catch (e: Exception) {
             e.printStackTrace()
             Log.e("GoogleApiService", "Error in addEvidenceToCase for $caseSpreadsheetId", e)
-            false
+            null
         }
     }
 
@@ -432,11 +444,15 @@ class GoogleApiService(
         }
     }
 
-    suspend fun attachScript(spreadsheetId: String, scriptContent: String, masterTemplateId: String) = withContext(Dispatchers.IO) {
+    suspend fun attachScript(spreadsheetId: String, scriptContent: String, masterTemplateId: String): String? = withContext(Dispatchers.IO) {
         try {
             val createProjectRequest = CreateProjectRequest().setTitle("Case Tools Script").setParentId(spreadsheetId)
             val createdProject = scriptService.projects().create(createProjectRequest).execute()
-            val scriptId = createdProject.scriptId ?: return@withContext
+            val scriptId = createdProject.scriptId
+            if (scriptId == null) {
+                Log.e("GoogleApiService", "Failed to create script project for spreadsheet $spreadsheetId")
+                return@withContext null
+            }
 
             val scriptFile = ScriptPlatformFile().setSource(scriptContent).setName("Code")
             val configContent = if (masterTemplateId.isNotBlank()) {
@@ -448,9 +464,11 @@ class GoogleApiService(
 
             val scriptAPIContent = ScriptContent().setFiles(listOf(scriptFile, configFile)).setScriptId(scriptId)
             scriptService.projects().updateContent(scriptId, scriptAPIContent).execute()
+            scriptId
         } catch (e: Exception) { 
             e.printStackTrace()
             Log.e("GoogleApiService", "Error in attachScript for $spreadsheetId", e)
+            null
         }
     }
     

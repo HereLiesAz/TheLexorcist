@@ -6,6 +6,7 @@ import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.hereliesaz.lexorcist.data.Case
+import com.hereliesaz.lexorcist.data.CaseRepository
 import com.hereliesaz.lexorcist.data.EvidenceRepository
 import com.hereliesaz.lexorcist.data.Evidence // Correct import
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,6 +17,7 @@ import kotlinx.coroutines.launch
 
 class EvidenceViewModel(
     application: Application,
+    private val caseRepository: CaseRepository,
     private val evidenceRepository: EvidenceRepository
 ) : AndroidViewModel(application) {
 
@@ -31,15 +33,16 @@ class EvidenceViewModel(
 
     fun loadEvidenceForCase(caseId: Long) {
         viewModelScope.launch {
-            evidenceRepository.getEvidenceForCase(caseId).collect {
-                _evidenceList.value = it
+            val caseItem = caseRepository.getCaseById(caseId.toInt())
+            if (caseItem != null) {
+                evidenceRepository.setCaseSpreadsheetId(caseItem.spreadsheetId)
+                caseItem.scriptId?.let { evidenceRepository.setCaseScriptId(it) }
+                evidenceRepository.getEvidenceForCase(caseId).collect {
+                    _evidenceList.value = it
+                }
+            } else {
+                _errorMessage.value = "Case not found"
             }
-        }
-    }
-
-    fun addEvidence(evidence: Evidence) {
-        viewModelScope.launch {
-            evidenceRepository.addEvidence(evidence)
         }
     }
 
@@ -56,18 +59,15 @@ class EvidenceViewModel(
     }
 
     fun addTextEvidence(caseId: Int, text: String) {
-        val newEvidence = Evidence(
-            id = 0,
-            caseId = caseId,
-            content = text,
-            timestamp = System.currentTimeMillis(),
-            sourceDocument = "Text Input",
-            documentDate = System.currentTimeMillis(),
-            allegationId = null,
-            category = "Text Input",
-            tags = emptyList()
-        )
-        addEvidence(newEvidence)
+        viewModelScope.launch {
+            evidenceRepository.addEvidence(
+                caseId = caseId,
+                content = text,
+                sourceDocument = "Text Input",
+                category = "Text Input",
+                allegationId = null
+            )
+        }
     }
 
     /**
@@ -89,18 +89,13 @@ class EvidenceViewModel(
                 }
                 pdfDocument.close()
 
-                val newEvidence = Evidence(
-                    id = 0,
+                evidenceRepository.addEvidence(
                     caseId = caseId,
                     content = text,
-                    timestamp = System.currentTimeMillis(),
                     sourceDocument = "PDF Document",
-                    documentDate = System.currentTimeMillis(),
-                    allegationId = null,
                     category = "Document",
-                    tags = emptyList()
+                    allegationId = null
                 )
-                addEvidence(newEvidence)
             } catch (e: Exception) {
                 _errorMessage.value = "Failed to parse document: ${e.message}"
             }
@@ -132,18 +127,13 @@ class EvidenceViewModel(
                     workbook.close()
                     val text = stringBuilder.toString()
 
-                    val newEvidence = Evidence(
-                        id = 0,
+                    evidenceRepository.addEvidence(
                         caseId = caseId,
                         content = text,
-                        timestamp = System.currentTimeMillis(),
                         sourceDocument = "Spreadsheet",
-                        documentDate = System.currentTimeMillis(),
-                        allegationId = null,
                         category = "Spreadsheet",
-                        tags = emptyList()
+                        allegationId = null
                     )
-                    addEvidence(newEvidence)
                 }
             } catch (e: Exception) {
                 _errorMessage.value = "Failed to parse spreadsheet: ${e.message}"
