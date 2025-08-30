@@ -149,7 +149,6 @@ fun CreateCaseDialog(
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current // Get context for getString calls
-    val templates by caseViewModel.htmlTemplates.collectAsState()
     var caseName by remember { mutableStateOf("") }
 
     // Hoist stringResource calls for remember initializers
@@ -159,34 +158,6 @@ fun CreateCaseDialog(
     var caseNumber by remember { mutableStateOf("") }
     var caseSection by remember { mutableStateOf("") }
     var caseJudge by remember { mutableStateOf("") }
-
-    var expanded by remember { mutableStateOf(false) }
-    var selectedTemplateId by remember { mutableStateOf<String?>(null) }
-
-    val selectATemplateStr = stringResource(R.string.select_a_template)
-    var selectedTemplateName by remember(templates) { // Re-evaluate if templates change
-        mutableStateOf(templates.firstOrNull()?.name ?: selectATemplateStr)
-    }
-
-    LaunchedEffect(templates, selectedTemplateId) { // Adjusted key for LaunchedEffect
-        if (selectedTemplateId == null) {
-            if (templates.isNotEmpty()) {
-                // Update selectedTemplateName based on templates, not just setting to "select a template"
-                // This logic might need further refinement based on desired UX for initial state.
-                // For now, if no template is selected and templates are available, keep the "Select a Template" or first template name.
-                 if (selectedTemplateName == context.getString(R.string.no_templates_found) || selectedTemplateName == selectATemplateStr) {
-                     // If it was "no templates found" or the generic "select a template", and now templates are available,
-                     // update to the generic "select a template" or first available template name.
-                     // templates.firstOrNull()?.let { selectedTemplateName = it.name ?: context.getString(R.string.unnamed_template, it.id.take(8)) }
-                     // For simplicity, let's ensure it's "Select a Template" if nothing is picked yet and templates exist.
-                     // The remember block for selectedTemplateName handles initial value better.
-                 }
-            } else { // templates are empty
-                selectedTemplateName = context.getString(R.string.no_templates_found)
-            }
-        }
-    }
-
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -222,63 +193,24 @@ fun CreateCaseDialog(
                     onValueChange = { caseJudge = it },
                     label = { Text(stringResource(R.string.judge)) }
                 )
-
-                ExposedDropdownMenuBox(
-                    expanded = expanded,
-                    onExpandedChange = { expanded = !expanded }
-                ) {
-                    TextField(
-                        value = selectedTemplateName,
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text(stringResource(R.string.master_template_required)) },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                        modifier = Modifier.menuAnchor(androidx.compose.material3.ExposedDropdownMenuAnchorType.PrimaryNotEditable),
-                        isError = selectedTemplateId == null
-                    )
-                    ExposedDropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false }
-                    ) {
-                        if (templates.isEmpty()) {
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.no_templates_found_create_one)) },
-                                onClick = { expanded = false },
-                                enabled = false
-                            )
-                        }
-                        templates.forEach { template ->
-                            val unnamedTemplateString = stringResource(R.string.unnamed_template, template.id.take(8))
-                            DropdownMenuItem(
-                                text = { Text(template.name ?: unnamedTemplateString) },
-                                onClick = {
-                                    selectedTemplateId = template.id
-                                    selectedTemplateName = template.name ?: context.getString(R.string.unnamed_template, template.id.take(8)) // Use context.getString
-                                    expanded = false
-                                }
-                            )
-                        }
-                    }
-                }
             }
         },
         confirmButton = {
             Button(
                 onClick = {
-                    if (caseName.isNotBlank() && selectedTemplateId != null) {
+                    if (caseName.isNotBlank()) {
                         caseViewModel.createCase(
                             caseName = caseName,
                             // Use context.getString for ifBlank
                             exhibitSheetName = exhibitSheetName.ifBlank { context.getString(R.string.default_exhibit_sheet_name) },
                             caseNumber = caseNumber,
                             caseSection = caseSection,
-                            caseJudge = caseJudge,
-                            selectedMasterHtmlTemplateId = selectedTemplateId!!
+                            caseJudge = caseJudge
                         )
                         onDismiss()
                     }
                 },
-                enabled = caseName.isNotBlank() && selectedTemplateId != null
+                enabled = caseName.isNotBlank()
             ) {
                 Text(stringResource(R.string.create))
             }

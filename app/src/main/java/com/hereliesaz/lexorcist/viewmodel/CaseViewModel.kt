@@ -8,11 +8,13 @@ import com.google.api.services.drive.model.File as DriveFile
 import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.data.CaseRepository
 import com.hereliesaz.lexorcist.data.Allegation
+import com.hereliesaz.lexorcist.data.SortOrder
 import com.hereliesaz.lexorcist.model.SheetFilter
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -20,14 +22,23 @@ class CaseViewModel(application: Application, private val caseRepository: CaseRe
 
     private val sharedPref = application.getSharedPreferences("CaseInfoPrefs", Context.MODE_PRIVATE)
 
+    private val _sortOrder = MutableStateFlow(SortOrder.DATE_DESC)
+    val sortOrder: StateFlow<SortOrder> = _sortOrder.asStateFlow()
+
     val cases: StateFlow<List<Case>> = caseRepository.getCases()
+        .combine(sortOrder) { cases, sortOrder ->
+            when (sortOrder) {
+                SortOrder.NAME_ASC -> cases.sortedBy { it.name }
+                SortOrder.NAME_DESC -> cases.sortedByDescending { it.name }
+                SortOrder.DATE_ASC -> cases.sortedBy { it.id }
+                SortOrder.DATE_DESC -> cases.sortedByDescending { it.id }
+                else -> cases.sortedByDescending { it.id }
+            }
+        }
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     private val _selectedCase = MutableStateFlow<Case?>(null)
     val selectedCase: StateFlow<Case?> = _selectedCase.asStateFlow()
-
-    val htmlTemplates: StateFlow<List<DriveFile>> = caseRepository.getHtmlTemplates()
-        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     private val _sheetFilters = MutableStateFlow<List<SheetFilter>>(emptyList())
     val sheetFilters: StateFlow<List<SheetFilter>> = _sheetFilters.asStateFlow()
@@ -49,7 +60,6 @@ class CaseViewModel(application: Application, private val caseRepository: CaseRe
 
     init {
         loadCases()
-        loadHtmlTemplates()
         loadDarkModePreference()
     }
 
@@ -75,15 +85,13 @@ class CaseViewModel(application: Application, private val caseRepository: CaseRe
         _isDarkMode.value = sharedPref.getBoolean("is_dark_mode", false)
     }
 
+    fun onSortOrderChange(sortOrder: SortOrder) {
+        _sortOrder.value = sortOrder
+    }
+
     fun loadCases() {
         viewModelScope.launch {
             caseRepository.refreshCases()
-        }
-    }
-
-    fun loadHtmlTemplates() {
-        viewModelScope.launch {
-            caseRepository.refreshHtmlTemplates()
         }
     }
 
@@ -92,8 +100,7 @@ class CaseViewModel(application: Application, private val caseRepository: CaseRe
         exhibitSheetName: String,
         caseNumber: String,
         caseSection: String,
-        caseJudge: String,
-        selectedMasterHtmlTemplateId: String
+        caseJudge: String
     ) {
         viewModelScope.launch {
             caseRepository.createCase(
@@ -104,8 +111,7 @@ class CaseViewModel(application: Application, private val caseRepository: CaseRe
                 caseJudge,
                 plaintiffs.value,
                 defendants.value,
-                court.value,
-                selectedMasterHtmlTemplateId
+                court.value
             )
         }
     }
@@ -176,5 +182,17 @@ class CaseViewModel(application: Application, private val caseRepository: CaseRe
             .putString("defendants", _defendants.value)
             .putString("court", _court.value)
             .apply()
+    }
+
+    fun archiveCase(case: Case) {
+        viewModelScope.launch {
+            caseRepository.archiveCase(case)
+        }
+    }
+
+    fun deleteCase(case: Case) {
+        viewModelScope.launch {
+            caseRepository.deleteCase(case)
+        }
     }
 }

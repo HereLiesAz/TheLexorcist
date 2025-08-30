@@ -15,11 +15,10 @@ interface CaseRepository {
         caseJudge: String,
         plaintiffs: String,
         defendants: String,
-        court: String,
-        selectedMasterHtmlTemplateId: String
+        court: String
     )
-    fun getHtmlTemplates(): Flow<List<DriveFile>>
-    suspend fun refreshHtmlTemplates()
+    suspend fun archiveCase(case: Case)
+    suspend fun deleteCase(case: Case)
     fun getSheetFilters(spreadsheetId: String): Flow<List<SheetFilter>>
     suspend fun refreshSheetFilters(spreadsheetId: String)
     suspend fun addSheetFilter(spreadsheetId: String, name: String, value: String)

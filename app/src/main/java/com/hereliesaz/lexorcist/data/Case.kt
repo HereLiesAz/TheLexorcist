@@ -19,5 +19,6 @@ data class Case(
     val spreadsheetId: String,
     val generatedPdfId: String? = null,
     val sourceHtmlSnapshotId: String? = null,
-    val originalMasterHtmlTemplateId: String? = null
+    val originalMasterHtmlTemplateId: String? = null,
+    val isArchived: Boolean = false
 )
