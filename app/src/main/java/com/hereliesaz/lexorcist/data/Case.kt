@@ -22,6 +22,9 @@ data class Case(
     val id: Int = 0,
     val name: String,
     var spreadsheetId: String?,
+    var scriptId: String? = null,
+    val generatedPdfId: String? = null,
+    val sourceHtmlSnapshotId: String? = null,
     val originalMasterHtmlTemplateId: String? = null,
     val folderId: String?, // Often the same as 'id' if using Drive folder IDs as PK
     val plaintiffs: String?,
@@ -32,4 +35,3 @@ data class Case(
     // Add any other fields relevant to a "Case"
     // Ensure all types are Room-compatible or have TypeConverters
 )
-

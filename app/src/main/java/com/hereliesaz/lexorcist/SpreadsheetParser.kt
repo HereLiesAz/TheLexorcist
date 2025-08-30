@@ -109,8 +109,8 @@ class SpreadsheetParser(
                         category = "Imported", // Default category
                         tags = tagsStr?.split(",")?.map { it.trim() } ?: emptyList()
                     )
-                    val success = googleApiService.addEvidenceToCase(newCaseSpreadsheetId, evidence)
-                    if (!success) {
+                    val newId = googleApiService.addEvidenceToCase(newCaseSpreadsheetId, evidence)
+                    if (newId == null) {
                         Log.w(TAG, "parseAndStore: Failed to add evidence: $evidence to $newCaseSpreadsheetId")
                     }
                 }

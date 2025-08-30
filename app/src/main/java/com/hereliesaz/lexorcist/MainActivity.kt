@@ -57,7 +57,7 @@ class MainActivity : ComponentActivity() {
         CaseViewModelFactory(application, caseRepository)
     }
     private val evidenceViewModel: EvidenceViewModel by viewModels {
-        EvidenceViewModelFactory(application, evidenceRepository)
+        EvidenceViewModelFactory(application, caseRepository, evidenceRepository)
     }
     private val ocrViewModel: OcrViewModel by viewModels {
         OcrViewModelFactory(application)

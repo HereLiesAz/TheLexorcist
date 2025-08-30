@@ -21,8 +21,8 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "evidence")
 data class Evidence(
-    @PrimaryKey(autoGenerate = true)
-    val id: Int = 0,
+    @PrimaryKey
+    val id: Int,
     val caseId: Int = 0,
     val allegationId: Int? = null,
     val content: String,

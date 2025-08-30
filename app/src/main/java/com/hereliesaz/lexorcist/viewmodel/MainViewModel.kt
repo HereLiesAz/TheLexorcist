@@ -476,9 +476,14 @@ class MainViewModel @Inject constructor(
             Log.w(tag, "addEvidenceToSelectedCase: Missing data.")
             return
         }
-        val entryWithCaseId = entry.copy(caseId = currentCase.id)
         viewModelScope.launch {
-            evidenceRepository.addEvidence(entryWithCaseId)
+            evidenceRepository.addEvidence(
+                caseId = currentCase.id,
+                content = entry.content,
+                sourceDocument = entry.sourceDocument,
+                category = entry.category,
+                allegationId = entry.allegationId
+            )
         }
     }
     

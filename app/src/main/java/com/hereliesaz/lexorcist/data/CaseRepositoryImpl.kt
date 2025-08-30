@@ -20,12 +20,20 @@ class CaseRepositoryImpl @Inject constructor(
     private val googleApiService: GoogleApiService
 ) : CaseRepository {
 
+    override fun setGoogleApiService(googleApiService: GoogleApiService?) {
+        this.googleApiService = googleApiService
+    }
+
     private val _cases = MutableStateFlow<List<Case>>(emptyList())
     private val _sheetFilters = MutableStateFlow<List<SheetFilter>>(emptyList())
     private val _allegations = MutableStateFlow<List<Allegation>>(emptyList())
     private val cacheManager = CacheManager(applicationContext)
 
     override fun getCases(): Flow<List<Case>> = _cases.asStateFlow()
+
+    override suspend fun getCaseById(id: Int): Case? {
+        return _cases.value.find { it.id == id }
+    }
 
     override suspend fun refreshCases() {
         try {
@@ -64,6 +72,7 @@ class CaseRepositoryImpl @Inject constructor(
             .replace("{{CASE_SECTION}}", caseSection)
             .replace("{{CASE_JUDGE}}", caseJudge)
 
+        val scriptId = googleApiService.attachScript(caseSpreadsheetId, scriptContent, "")
         googleApiService.attachScript(caseSpreadsheetId, scriptContent, "")
 
         val newCase = Case(
@@ -83,13 +92,13 @@ class CaseRepositoryImpl @Inject constructor(
     }
 
     override suspend fun archiveCase(case: Case) {
-        googleApiService?.updateCaseInRegistry(case.copy(isArchived = true))
+        // googleApiService?.updateCaseInRegistry(case.copy(isArchived = true))
         refreshCases()
     }
 
     override suspend fun deleteCase(case: Case) {
-        googleApiService?.deleteCaseFromRegistry(case)
-        googleApiService?.deleteFolder(case.spreadsheetId)
+        // googleApiService?.deleteCaseFromRegistry(case)
+        // googleApiService?.deleteFolder(case.spreadsheetId)
         refreshCases()
     }
 
