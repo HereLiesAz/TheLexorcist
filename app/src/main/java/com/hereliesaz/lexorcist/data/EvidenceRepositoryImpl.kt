@@ -11,6 +11,7 @@ class EvidenceRepositoryImpl @Inject constructor(
     private val evidenceDao: EvidenceDao,
     private val googleApiService: GoogleApiService?
 ) : EvidenceRepository {
+    private var googleApiService: GoogleApiService? = null
 
 
     private var caseSpreadsheetId: String? = null
@@ -32,6 +33,12 @@ class EvidenceRepositoryImpl @Inject constructor(
         return evidenceDao.getEvidenceForCase(caseId)
     }
 
+    override fun getEvidence(id: Int): Flow<Evidence> {
+        return evidenceDao.getEvidence(id)
+    }
+
+    override suspend fun addEvidence(evidence: Evidence) {
+        evidenceDao.insert(evidence)
     override suspend fun getEvidenceById(id: Int): Evidence? {
         return evidenceDao.getEvidenceById(id)
     }
@@ -103,5 +110,9 @@ class EvidenceRepositoryImpl @Inject constructor(
                 api.deleteEvidenceFromCase(spreadsheetId, evidence.id)
             }
         }
+    }
+
+    override suspend fun updateCommentary(id: Int, commentary: String) {
+        evidenceDao.updateCommentary(id, commentary)
     }
 }

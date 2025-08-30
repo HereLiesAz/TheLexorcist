@@ -17,7 +17,6 @@ import javax.inject.Singleton
 class CaseRepositoryImpl @Inject constructor(
     private val applicationContext: Context,
     private val caseDao: CaseDao,
-    private val googleApiService: GoogleApiService
     private val googleApiService: GoogleApiService?
 ) : CaseRepository {
 
@@ -82,29 +81,19 @@ class CaseRepositoryImpl @Inject constructor(
             generatedPdfId = null,
             sourceHtmlSnapshotId = null
         )
-        if (googleApiService.addCaseToRegistry(caseRegistryId, newCase) == true) {
+        if (googleApiService?.addCaseToRegistry(caseRegistryId, newCase) == true) {
             refreshCases()
-        }
-            }
-            is com.hereliesaz.lexorcist.util.Result.Error -> {
-                // Here we should probably expose the error to the ViewModel
-            }
         }
     }
 
     override suspend fun archiveCase(case: Case) {
-        // googleApiService?.updateCaseInRegistry(case.copy(isArchived = true))
-        // TODO: Implement updateCaseInRegistry in GoogleApiService
-        // googleApiService?.updateCaseInRegistry(case.copy(isArchived = true))
+        googleApiService?.updateCaseInRegistry(case.copy(isArchived = true))
         refreshCases()
     }
 
     override suspend fun deleteCase(case: Case) {
-        // googleApiService?.deleteCaseFromRegistry(case)
-        // googleApiService?.deleteFolder(case.spreadsheetId)
-        // TODO: Implement deleteCaseFromRegistry and deleteFolder in GoogleApiService
-        // googleApiService?.deleteCaseFromRegistry(case)
-        // googleApiService?.deleteFolder(case.spreadsheetId)
+        googleApiService?.deleteCaseFromRegistry(case)
+        googleApiService?.deleteFolder(case.spreadsheetId)
         refreshCases()
     }
 

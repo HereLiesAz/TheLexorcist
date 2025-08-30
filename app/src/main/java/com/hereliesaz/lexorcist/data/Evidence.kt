@@ -33,4 +33,6 @@ data class Evidence(
     val category: String = "",
     val linkedEvidenceIds: List<Int> = emptyList(),
     val parentVideoId: String? = null
+    val category: String = "",
+    val commentary: String = ""
 )

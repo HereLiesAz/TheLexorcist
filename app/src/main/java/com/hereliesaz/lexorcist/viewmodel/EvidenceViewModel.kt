@@ -10,6 +10,7 @@ import com.hereliesaz.lexorcist.data.CaseRepository
 import com.hereliesaz.lexorcist.data.EvidenceRepository
 import com.hereliesaz.lexorcist.data.Evidence // Correct import
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -58,6 +59,10 @@ class EvidenceViewModel @Inject constructor(
         viewModelScope.launch {
             evidenceRepository.deleteEvidence(evidence)
         }
+    }
+
+    fun getEvidence(id: Int): Flow<Evidence> {
+        return evidenceRepository.getEvidence(id)
     }
 
     fun linkEvidence(fromId: Int, toId: Int) {

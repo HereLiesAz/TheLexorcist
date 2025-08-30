@@ -36,15 +36,8 @@ import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
 import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModelFactory
 import com.hereliesaz.lexorcist.viewmodel.OcrViewModel
 import com.hereliesaz.lexorcist.viewmodel.OcrViewModelFactory
-import com.hereliesaz.lexorcist.viewmodel.TranscriptionViewModel
-import com.hereliesaz.lexorcist.viewmodel.TranscriptionViewModelFactory
-import com.hereliesaz.lexorcist.viewmodel.TranscriptionState
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import android.Manifest
-import androidx.compose.runtime.getValue
-import kotlinx.coroutines.flow.collectLatest
-import dagger.hilt.android.AndroidEntryPoint
+import com.hereliesaz.lexorcist.viewmodel.EvidenceDetailsViewModel
+import com.hereliesaz.lexorcist.viewmodel.EvidenceDetailsViewModelFactory
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -60,11 +53,16 @@ class MainActivity : ComponentActivity() {
         CaseViewModelFactory(application, caseRepository)
     }
     private val evidenceViewModel: EvidenceViewModel by viewModels {
-        EvidenceViewModelFactory(application, caseRepository, evidenceRepository)
+        EvidenceViewModelFactory(application, evidenceRepository)
     }
     private val ocrViewModel: OcrViewModel by viewModels {
         OcrViewModelFactory(application)
     }
+    private val evidenceDetailsViewModel: EvidenceDetailsViewModel by viewModels {
+        EvidenceDetailsViewModelFactory(evidenceRepository)
+    }
+
+    private lateinit var oneTapClient: SignInClient 
 
     private val transcriptionViewModel: TranscriptionViewModel by viewModels {
         TranscriptionViewModelFactory(application)
@@ -104,81 +102,11 @@ class MainActivity : ComponentActivity() {
     }
 
     private var imageUri: Uri? = null
-    private var audioUri: Uri? = null
 
     private val takePictureLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
         if (success) {
             imageUri?.let {
                 ocrViewModel.startImageReview(it, this)
-            }
-        }
-    }
-
-    private val selectAudioLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-        uri?.let {
-            audioUri = it
-            transcriptionViewModel.transcribeAudio(it)
-        }
-    }
-
-    private var mediaRecorder: MediaRecorder? = null
-    private var audioFile: java.io.File? = null
-    private var isRecording = mutableStateOf(false)
-
-    private val requestPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted: Boolean ->
-        if (isGranted) {
-            startRecording()
-        } else {
-            Toast.makeText(this, "Permission denied to record audio", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    private val requestPermissionLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
-            val allPermissionsGranted = permissions.entries.all { it.value }
-            if (allPermissionsGranted) {
-                // Permissions granted, we can now launch the camera
-                recordVideo()
-            } else {
-                // Permissions denied, show a toast
-                Toast.makeText(this, "Camera and audio permissions are required to record video", Toast.LENGTH_SHORT).show()
-            }
-        }
-
-    private var videoUri: Uri? = null
-
-    private val recordVideoLauncher = registerForActivityResult(ActivityResultContracts.TakeVideo()) { success ->
-        if (success) {
-            videoUri?.let { uri ->
-                caseViewModel.selectedCase.value?.let { case ->
-                    val inputData = Data.Builder()
-                        .putString(com.hereliesaz.lexorcist.service.VideoProcessingWorker.KEY_VIDEO_URI, uri.toString())
-                        .putInt(com.hereliesaz.lexorcist.service.VideoProcessingWorker.KEY_CASE_ID, case.id)
-                        .putString(com.hereliesaz.lexorcist.service.VideoProcessingWorker.KEY_CASE_NAME, case.name)
-                        .build()
-                    val workRequest = OneTimeWorkRequestBuilder<com.hereliesaz.lexorcist.service.VideoProcessingWorker>()
-                        .setInputData(inputData)
-                        .build()
-                    WorkManager.getInstance(this).enqueue(workRequest)
-                }
-            }
-        }
-    }
-
-    private val importVideoLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-        uri?.let { videoUri ->
-            caseViewModel.selectedCase.value?.let { case ->
-                val inputData = Data.Builder()
-                    .putString(com.hereliesaz.lexorcist.service.VideoProcessingWorker.KEY_VIDEO_URI, videoUri.toString())
-                    .putInt(com.hereliesaz.lexorcist.service.VideoProcessingWorker.KEY_CASE_ID, case.id)
-                    .putString(com.hereliesaz.lexorcist.service.VideoProcessingWorker.KEY_CASE_NAME, case.name)
-                    .build()
-                val workRequest = OneTimeWorkRequestBuilder<com.hereliesaz.lexorcist.service.VideoProcessingWorker>()
-                    .setInputData(inputData)
-                    .build()
-                WorkManager.getInstance(this).enqueue(workRequest)
             }
         }
     }
@@ -231,38 +159,6 @@ class MainActivity : ComponentActivity() {
             .build()
 
         setContent {
-            val credential by authViewModel.credential.collectAsState()
-
-            LaunchedEffect(credential) {
-                credential?.let {
-                    transcriptionViewModel.setCredential(it)
-                }
-            }
-
-            val transcriptionState by transcriptionViewModel.transcriptionState.collectAsState()
-
-            LaunchedEffect(transcriptionState) {
-                when (val state = transcriptionState) {
-                    is TranscriptionState.Success -> {
-                        val caseId = caseViewModel.selectedCase.value?.id
-                        if (caseId != null) {
-                            val newEvidence = evidenceViewModel.addAudioEvidence(caseId, state.transcript)
-                            mainViewModel.runScriptOnEvidence(newEvidence)
-                            audioUri?.let { mainViewModel.uploadAudioFile(it, this@MainActivity) }
-                            Toast.makeText(this@MainActivity, "Audio evidence added and processed.", Toast.LENGTH_SHORT).show()
-                        } else {
-                            Toast.makeText(this@MainActivity, "No case selected.", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                    is TranscriptionState.Error -> {
-                        Toast.makeText(this@MainActivity, state.message, Toast.LENGTH_LONG).show()
-                    }
-                    else -> {
-                        // Idle or Loading
-                    }
-                }
-            }
-
             LexorcistTheme {
                 // val navController = rememberNavController() // Commented out as MainScreen doesn't take navController
                 MainScreen(
@@ -274,15 +170,7 @@ class MainActivity : ComponentActivity() {
                     onSelectImage = { selectImage() },
                     onTakePicture = { takePicture() },
                     onAddDocument = { selectDocument() },
-                    onAddSpreadsheet = { selectSpreadsheet() },
-                    onRecordVideo = { checkPermissionsAndRecordVideo() },
-                    onImportVideo = { importVideo() }
-                    onAddSpreadsheet = { selectSpreadsheet() },
-                    onRecordAudio = { requestPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO) },
-                    onImportAudio = { importAudio() },
-                    startRecording = { startRecording() },
-                    stopRecording = { stopRecording() },
-                    isRecording = isRecording.value
+                    onAddSpreadsheet = { selectSpreadsheet() }
                 )
             }
         }
@@ -343,68 +231,5 @@ class MainActivity : ComponentActivity() {
     private fun selectSpreadsheet() {
         // Corrected: Launch with a single primary MIME type string.
         selectSpreadsheetLauncher.launch("*/*") // Or a more specific primary type like "application/vnd.ms-excel"
-    }
-
-    private fun importAudio() {
-        selectAudioLauncher.launch("audio/*")
-    }
-
-    private fun startRecording() {
-        audioFile = java.io.File(filesDir, "new_recording.3gp")
-        mediaRecorder = MediaRecorder().apply {
-            setAudioSource(MediaRecorder.AudioSource.MIC)
-            setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
-            setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
-            setOutputFile(audioFile?.absolutePath)
-            try {
-                prepare()
-            } catch (e: java.io.IOException) {
-                Log.e(APP_TAG, "prepare() failed")
-            }
-            start()
-            isRecording.value = true
-        }
-    }
-
-    private fun stopRecording() {
-        mediaRecorder?.apply {
-            stop()
-            release()
-        }
-        mediaRecorder = null
-        isRecording.value = false
-        audioFile?.let {
-            transcriptionViewModel.transcribeAudio(Uri.fromFile(it))
-        }
-    }
-
-    private fun recordVideo() {
-        if (shouldShowRequestPermissionRationale(android.Manifest.permission.CAMERA) ||
-            shouldShowRequestPermissionRationale(android.Manifest.permission.RECORD_AUDIO)) {
-            // Show a rationale to the user
-            Toast.makeText(this, "Camera and audio permissions are required to record video", Toast.LENGTH_LONG).show()
-        }
-
-        val file = java.io.File(filesDir, "new_video.mp4")
-        videoUri = androidx.core.content.FileProvider.getUriForFile(this, "${packageName}.fileprovider", file)
-        videoUri?.let { recordVideoLauncher.launch(it) }
-    }
-
-    private fun importVideo() {
-        importVideoLauncher.launch("video/*")
-    }
-
-    private fun checkPermissionsAndRecordVideo() {
-        when {
-            (checkSelfPermission(android.Manifest.permission.CAMERA) == android.content.pm.PackageManager.PERMISSION_GRANTED &&
-             checkSelfPermission(android.Manifest.permission.RECORD_AUDIO) == android.content.pm.PackageManager.PERMISSION_GRANTED) -> {
-                recordVideo()
-            }
-            else -> {
-                requestPermissionLauncher.launch(
-                    arrayOf(android.Manifest.permission.CAMERA, android.Manifest.permission.RECORD_AUDIO)
-                )
-            }
-        }
     }
 }

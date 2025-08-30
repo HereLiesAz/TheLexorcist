@@ -137,6 +137,9 @@ dependencies {
     implementation("androidx.exifinterface:exifinterface:1.4.1")
     implementation("androidx.activity:activity-compose:1.10.1")
 
+    // Coil for image loading
+    implementation("io.coil-kt:coil-compose:2.7.0")
+
     // Navigation Compose
     implementation("androidx.navigation:navigation-compose:2.9.3")
     // iText and POI
