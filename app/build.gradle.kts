@@ -166,6 +166,9 @@ dependencies {
     // JetLime Timeline Library
     implementation("io.github.pushpalroy:jetlime:4.0.0")
     implementation("io.github.pushpalroy:jetlime-android:4.0.0")
+
+    // Google Cloud Speech-to-Text
+    implementation("com.google.cloud:google-cloud-speech:4.28.0")
 }
 
 kotlin {

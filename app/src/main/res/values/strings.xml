@@ -55,6 +55,7 @@
     <string name="nav_visualization">visualization</string>
     <string name="evidence">Evidence</string>
     <string name="nav_evidence">evidence</string>
+    <string name="record_audio">record_audio</string>
     <string name="add">Add</string>
     <string name="nav_add_evidence">add_evidence</string>
     <string name="settings">Settings</string>
@@ -105,12 +106,6 @@
     <string name="script_snippet_date_less_label">date &lt; …</string>
     <string name="evidence_by_category">Evidence by Category</string>
     <string name="evidence_by_month">Evidence by Month</string>
-    <string name="search">Search</string>
-    <string name="archive">Archive</string>
-    <string name="sort">Sort</string>
-    <string name="delete_case">Delete Case</string>
-    <string name="delete_case_confirmation">Are you sure you want to delete this case?</string>
-
     <string name="search">Search</string>
     <string name="archive">Archive</string>
     <string name="sort">Sort</string>

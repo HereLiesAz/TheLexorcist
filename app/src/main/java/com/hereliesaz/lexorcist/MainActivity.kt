@@ -33,6 +33,14 @@ import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
 import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModelFactory
 import com.hereliesaz.lexorcist.viewmodel.OcrViewModel
 import com.hereliesaz.lexorcist.viewmodel.OcrViewModelFactory
+import com.hereliesaz.lexorcist.viewmodel.TranscriptionViewModel
+import com.hereliesaz.lexorcist.viewmodel.TranscriptionViewModelFactory
+import com.hereliesaz.lexorcist.viewmodel.TranscriptionState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import android.Manifest
+import androidx.compose.runtime.getValue
+import kotlinx.coroutines.flow.collectLatest
 
 class MainActivity : ComponentActivity() {
 
@@ -51,6 +59,10 @@ class MainActivity : ComponentActivity() {
     }
     private val ocrViewModel: OcrViewModel by viewModels {
         OcrViewModelFactory(application)
+    }
+
+    private val transcriptionViewModel: TranscriptionViewModel by viewModels {
+        TranscriptionViewModelFactory(application)
     }
     
     private lateinit var oneTapClient: SignInClient 
@@ -86,12 +98,34 @@ class MainActivity : ComponentActivity() {
     }
 
     private var imageUri: Uri? = null
+    private var audioUri: Uri? = null
 
     private val takePictureLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
         if (success) {
             imageUri?.let {
                 ocrViewModel.startImageReview(it, this)
             }
+        }
+    }
+
+    private val selectAudioLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        uri?.let {
+            audioUri = it
+            transcriptionViewModel.transcribeAudio(it)
+        }
+    }
+
+    private var mediaRecorder: MediaRecorder? = null
+    private var audioFile: java.io.File? = null
+    private var isRecording = mutableStateOf(false)
+
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            startRecording()
+        } else {
+            Toast.makeText(this, "Permission denied to record audio", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -143,6 +177,38 @@ class MainActivity : ComponentActivity() {
             .build()
 
         setContent {
+            val credential by authViewModel.credential.collectAsState()
+
+            LaunchedEffect(credential) {
+                credential?.let {
+                    transcriptionViewModel.setCredential(it)
+                }
+            }
+
+            val transcriptionState by transcriptionViewModel.transcriptionState.collectAsState()
+
+            LaunchedEffect(transcriptionState) {
+                when (val state = transcriptionState) {
+                    is TranscriptionState.Success -> {
+                        val caseId = caseViewModel.selectedCase.value?.id
+                        if (caseId != null) {
+                            val newEvidence = evidenceViewModel.addAudioEvidence(caseId, state.transcript)
+                            mainViewModel.runScriptOnEvidence(newEvidence)
+                            audioUri?.let { mainViewModel.uploadAudioFile(it, this@MainActivity) }
+                            Toast.makeText(this@MainActivity, "Audio evidence added and processed.", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(this@MainActivity, "No case selected.", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                    is TranscriptionState.Error -> {
+                        Toast.makeText(this@MainActivity, state.message, Toast.LENGTH_LONG).show()
+                    }
+                    else -> {
+                        // Idle or Loading
+                    }
+                }
+            }
+
             LexorcistTheme {
                 // val navController = rememberNavController() // Commented out as MainScreen doesn't take navController
                 MainScreen(
@@ -154,7 +220,12 @@ class MainActivity : ComponentActivity() {
                     onSelectImage = { selectImage() },
                     onTakePicture = { takePicture() },
                     onAddDocument = { selectDocument() },
-                    onAddSpreadsheet = { selectSpreadsheet() }
+                    onAddSpreadsheet = { selectSpreadsheet() },
+                    onRecordAudio = { requestPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO) },
+                    onImportAudio = { importAudio() },
+                    startRecording = { startRecording() },
+                    stopRecording = { stopRecording() },
+                    isRecording = isRecording.value
                 )
             }
         }
@@ -215,5 +286,38 @@ class MainActivity : ComponentActivity() {
     private fun selectSpreadsheet() {
         // Corrected: Launch with a single primary MIME type string.
         selectSpreadsheetLauncher.launch("*/*") // Or a more specific primary type like "application/vnd.ms-excel"
+    }
+
+    private fun importAudio() {
+        selectAudioLauncher.launch("audio/*")
+    }
+
+    private fun startRecording() {
+        audioFile = java.io.File(filesDir, "new_recording.3gp")
+        mediaRecorder = MediaRecorder().apply {
+            setAudioSource(MediaRecorder.AudioSource.MIC)
+            setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
+            setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
+            setOutputFile(audioFile?.absolutePath)
+            try {
+                prepare()
+            } catch (e: java.io.IOException) {
+                Log.e(APP_TAG, "prepare() failed")
+            }
+            start()
+            isRecording.value = true
+        }
+    }
+
+    private fun stopRecording() {
+        mediaRecorder?.apply {
+            stop()
+            release()
+        }
+        mediaRecorder = null
+        isRecording.value = false
+        audioFile?.let {
+            transcriptionViewModel.transcribeAudio(Uri.fromFile(it))
+        }
     }
 }

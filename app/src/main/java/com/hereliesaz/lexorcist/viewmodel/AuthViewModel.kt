@@ -22,6 +22,9 @@ class AuthViewModel(
     private val _googleApiService = MutableStateFlow<GoogleApiService?>(null)
     val googleApiService: StateFlow<GoogleApiService?> = _googleApiService.asStateFlow()
 
+    private val _credential = MutableStateFlow<GoogleAccountCredential?>(null)
+    val credential: StateFlow<GoogleAccountCredential?> = _credential.asStateFlow()
+
     private val _isSignedIn = MutableStateFlow(false)
     val isSignedIn: StateFlow<Boolean> = _isSignedIn.asStateFlow()
 
@@ -33,15 +36,16 @@ class AuthViewModel(
                 credential.selectedAccountName = email
 
                 val service = GoogleApiService(credential, applicationName)
-                onSignInSuccess(service)
+                onSignInSuccess(service, credential)
             } else {
                 onSignInFailed()
             }
         }
     }
 
-    private fun onSignInSuccess(apiService: GoogleApiService) {
+    private fun onSignInSuccess(apiService: GoogleApiService, credential: GoogleAccountCredential) {
         _googleApiService.value = apiService
+        _credential.value = credential
         _isSignedIn.value = true
         evidenceRepository.setGoogleApiService(apiService)
         caseRepository.setGoogleApiService(apiService)
@@ -49,6 +53,7 @@ class AuthViewModel(
 
     private fun onSignInFailed() {
         _googleApiService.value = null
+        _credential.value = null
         _isSignedIn.value = false
         evidenceRepository.setGoogleApiService(null)
         caseRepository.setGoogleApiService(null)
