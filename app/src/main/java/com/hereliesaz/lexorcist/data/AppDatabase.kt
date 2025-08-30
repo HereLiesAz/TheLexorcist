@@ -7,12 +7,13 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.hereliesaz.lexorcist.data.Evidence // Corrected import
 
-@Database(entities = [Evidence::class, Case::class], version = 1, exportSchema = false)
+@Database(entities = [Evidence::class, Case::class, Allegation::class], version = 2, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun evidenceDao(): EvidenceDao
     abstract fun caseDao(): CaseDao
+    abstract fun allegationDao(): AllegationDao
 
     companion object {
         @Volatile
@@ -24,7 +25,9 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "lexorcist_database"
-                ).build()
+                )
+                .fallbackToDestructiveMigration()
+                .build()
                 INSTANCE = instance
                 instance
             }

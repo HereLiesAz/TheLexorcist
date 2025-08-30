@@ -42,7 +42,7 @@ plugins {
     id("org.jetbrains.kotlin.android")
     // Removed kotlin("kapt")
     id("org.jetbrains.kotlin.plugin.compose") version "2.2.10"
-    id("com.google.devtools.ksp") version "2.2.10-2.0.2" // Added KSP plugin
+    id("com.google.devtools.ksp") version "2.2.10-2.0.0" // Added KSP plugin
     // id("com.palantir.git-version") // Temporarily removed
 }
 
@@ -108,10 +108,13 @@ dependencies {
     implementation("com.google.android.gms:play-services-mlkit-text-recognition:19.0.1")
 
     // Room components
-    val room_version = "2.8.0-rc02"
+    val room_version = "2.6.1"
     implementation("androidx.room:room-runtime:$room_version")
     implementation("androidx.room:room-ktx:$room_version")
     ksp("androidx.room:room-compiler:$room_version") // Changed from kapt to ksp
+
+    // Gson
+    implementation("com.google.code.gson:gson:2.10.1")
 
     // Lifecycle components
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.9.3")
