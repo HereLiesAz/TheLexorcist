@@ -49,6 +49,7 @@ class MainActivity : ComponentActivity() {
     private val caseRepository by lazy { CaseRepositoryImpl(applicationContext, null) }
     private val evidenceRepository by lazy { EvidenceRepositoryImpl(appDatabase.evidenceDao()) }
     private val caseRepository by lazy { CaseRepositoryImpl(appDatabase.caseDao(), applicationContext) }
+    private val caseRepository by lazy { CaseRepositoryImpl(applicationContext, null) }
 
     private val authViewModel: AuthViewModel by viewModels {
         AuthViewModelFactory(application, evidenceRepository, caseRepository)

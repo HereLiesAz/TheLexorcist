@@ -104,29 +104,15 @@ class MainViewModel @Inject constructor(
     private val _isSignedIn = MutableStateFlow(false)
     val isSignedIn: StateFlow<Boolean> = _isSignedIn.asStateFlow()
 
-    // --- Case Management ---
-    private val _cases = MutableStateFlow<List<Case>>(emptyList())
-    val cases: StateFlow<List<Case>> = _cases.asStateFlow()
-    private val _selectedCase = MutableStateFlow<Case?>(null)
-    val selectedCase: StateFlow<Case?> = _selectedCase.asStateFlow()
+    // --- Case Management (Moved to CaseViewModel) ---
 
     // --- HTML Templates ---
     private val _htmlTemplates = MutableStateFlow<List<DriveFile>>(emptyList())
     val htmlTemplates: StateFlow<List<DriveFile>> = _htmlTemplates.asStateFlow()
 
-    // --- Data for Selected Case (from Sheets) ---
-    private val _selectedCaseSheetFilters = MutableStateFlow<List<SheetFilter>>(emptyList())
-    val selectedCaseSheetFilters: StateFlow<List<SheetFilter>> = _selectedCaseSheetFilters.asStateFlow()
-    private val _allegations = MutableStateFlow<List<Allegation>>(emptyList())
-    val allegations: StateFlow<List<Allegation>> = _allegations.asStateFlow()
-    // Corrected Evidence type
-    private val _selectedCaseEvidenceList = MutableStateFlow<List<Evidence>>(emptyList())
-    val selectedCaseEvidenceList: StateFlow<List<Evidence>> = _selectedCaseEvidenceList.asStateFlow()
+    // --- Data for Selected Case (Moved to CaseViewModel and EvidenceViewModel) ---
 
-    // --- Generic Evidence List (for UI parsing, MainScreen display, generic export) ---
-    // Corrected Evidence type
-    private val _uiEvidenceList = MutableStateFlow<List<Evidence>>(emptyList())
-    val uiEvidenceList: StateFlow<List<Evidence>> = _uiEvidenceList.asStateFlow()
+    // --- Generic Evidence List (Moved to EvidenceViewModel) ---
 
     // --- Filters for SettingsScreen (in-memory) ---
     private val _settingScreenFilters = MutableStateFlow<List<SheetFilter>>(emptyList())
@@ -282,34 +268,20 @@ class MainViewModel @Inject constructor(
     }
 
     private fun loadCaseInfo() {
-        _plaintiffs.value = sharedPref.getString("plaintiffs", "") ?: ""
-        _defendants.value = sharedPref.getString("defendants", "") ?: ""
-        _court.value = sharedPref.getString("court", "") ?: ""
+        // Moved to CaseViewModel
     }
 
     private fun loadDarkModePreference() {
-        _isDarkMode.value = sharedPref.getBoolean("is_dark_mode", false)
+        // Moved to CaseViewModel
     }
 
     fun setDarkMode(isDark: Boolean) {
-        _isDarkMode.value = isDark
-        sharedPref.edit {
-            putBoolean("is_dark_mode", isDark)
-        }
+        // Moved to CaseViewModel
     }
 
-    // --- Case Management & Google Drive/Sheets ---
+    // --- Case Management & Google Drive/Sheets (Moved to CaseViewModel) ---
     private suspend fun loadCasesFromRegistry() {
-        val apiService = _googleApiService.value ?: return Unit.also { Log.w(tag, "loadCasesFromRegistry: No API service.") }
-        try {
-            val appRootFolderId = apiService.getOrCreateAppRootFolder() ?: return Unit.also { Log.e(tag, "Failed to get app root folder.") }
-            val registryId = apiService.getOrCreateCaseRegistrySpreadsheetId(appRootFolderId) ?: return Unit.also { Log.e(tag, "Failed to get case registry.") }
-            _cases.value = apiService.getAllCasesFromRegistry(registryId)
-            Log.d(tag, "Loaded ${_cases.value.size} cases.")
-        } catch (e: Exception) {
-            Log.e(tag, "Error loading cases", e)
-            _cases.value = emptyList()
-        }
+        // Moved to CaseViewModel
     }
 
     private suspend fun loadHtmlTemplates() {
@@ -384,89 +356,23 @@ class MainViewModel @Inject constructor(
 
 
     fun selectCase(case: Case?) {
-        _selectedCase.value = case
-        if (case != null && case.spreadsheetId.isNotBlank() && _googleApiService.value != null) {
-            viewModelScope.launch {
-                loadSelectedCaseSheetFilters(case.spreadsheetId)
-                loadAllegationsForSelectedCase(case.spreadsheetId, case.id)
-            }
-        } else {
-            _selectedCaseSheetFilters.value = emptyList()
-            _allegations.value = emptyList()
-        }
+        // Moved to CaseViewModel
     }
 
-    private suspend fun loadSelectedCaseSheetFilters(spreadsheetId: String) { 
-        val apiService = _googleApiService.value ?: return Unit.also { Log.w(tag, "loadSelectedCaseSheetFilters: No API service.") }
-        if (spreadsheetId.isBlank()) {
-            _selectedCaseSheetFilters.value = emptyList(); return
-        }
-        try {
-            val allSheetData = apiService.readSpreadsheet(spreadsheetId)
-            val filterSheetData = allSheetData?.get(FILTERS_SHEET_NAME)
-            _selectedCaseSheetFilters.value = filterSheetData?.mapNotNull {
-                if (it.size >= 2) SheetFilter(it.getOrNull(0)?.toString() ?: "", it.getOrNull(1)?.toString() ?: "") else null
-            } ?: emptyList()
-            Log.d(tag, "Loaded ${_selectedCaseSheetFilters.value.size} sheet filters for $spreadsheetId.")
-        } catch (e: Exception) {
-            Log.e(tag, "Error loading sheet filters for $spreadsheetId", e)
-            _selectedCaseSheetFilters.value = emptyList()
-        }
+    private suspend fun loadSelectedCaseSheetFilters(spreadsheetId: String) {
+        // Moved to CaseViewModel
     }
     
-    fun addSelectedCaseSheetFilter(name: String, value: String) { 
-        val currentCase = _selectedCase.value
-        val apiService = _googleApiService.value
-        if (currentCase == null || currentCase.spreadsheetId.isBlank() || apiService == null) {
-            Log.w(tag, "addSelectedCaseSheetFilter: Case, Spreadsheet ID, or API Service is missing.")
-            return
-        }
-        viewModelScope.launch {
-            try {
-                apiService.addSheet(currentCase.spreadsheetId, FILTERS_SHEET_NAME) 
-                if (apiService.appendData(currentCase.spreadsheetId, FILTERS_SHEET_NAME, listOf(listOf(name, value))) != null) {
-                    loadSelectedCaseSheetFilters(currentCase.spreadsheetId) 
-                } else {
-                    Log.w(tag, "Failed to add sheet filter '$name' to sheet.")
-                }
-            } catch (e: Exception) {
-                Log.e(tag, "Error adding sheet filter '$name'", e)
-            }
-        }
+    fun addSelectedCaseSheetFilter(name: String, value: String) {
+        // Moved to CaseViewModel
     }
 
     private suspend fun loadAllegationsForSelectedCase(spreadsheetId: String, caseIdForAssociation: Int) {
-        val apiService = _googleApiService.value ?: return Unit.also { Log.w(tag, "loadAllegations: No API service.") }
-         if (spreadsheetId.isBlank()) {
-            _allegations.value = emptyList(); return
-        }
-        try {
-            _allegations.value = apiService.getAllegationsForCase(spreadsheetId, caseIdForAssociation)
-            Log.d(tag, "Loaded ${_allegations.value.size} allegations for case $caseIdForAssociation.")
-        } catch (e: Exception) {
-            Log.e(tag, "Error loading allegations for $spreadsheetId", e)
-            _allegations.value = emptyList()
-        }
+        // Moved to CaseViewModel
     }
 
-    fun addAllegationToSelectedCase(allegationText: String) { 
-        val currentCase = _selectedCase.value
-        val apiService = _googleApiService.value
-        if (currentCase == null || currentCase.spreadsheetId.isBlank() || allegationText.isBlank() || apiService == null) {
-            Log.w(tag, "addAllegationToSelectedCase: Missing data.")
-            return
-        }
-        viewModelScope.launch {
-            try {
-                if (apiService.addAllegationToCase(currentCase.spreadsheetId, allegationText)) {
-                    loadAllegationsForSelectedCase(currentCase.spreadsheetId, currentCase.id) 
-                } else {
-                    Log.w(tag, "Failed to add allegation to case ${currentCase.id}.")
-                }
-            } catch (e: Exception) {
-                Log.e(tag, "Error adding allegation to case ${currentCase.id}", e)
-            }
-        }
+    fun addAllegationToSelectedCase(allegationText: String) {
+        // Moved to CaseViewModel
     }
 
 
@@ -485,31 +391,11 @@ class MainViewModel @Inject constructor(
                 allegationId = entry.allegationId
             )
         }
+        // Moved to EvidenceViewModel
     }
     
     fun addEvidenceToUiList(uri: Uri, context: Context) {
-        viewModelScope.launch {
-            val mimeType = context.contentResolver.getType(uri)
-            if (mimeType?.startsWith("image/") == true) {
-                imageUriForReview = uri
-                _imageBitmapForReview.value = loadBitmapFromUri(uri, context)
-                if (_imageBitmapForReview.value == null) {
-                    Log.e(tag, "Failed to load bitmap for review from URI: $uri")
-                    imageUriForReview = null
-                }
-            } else {
-                val evidence : Evidence? = when (mimeType) {
-                    "text/plain" -> parseTextFile(uri, context)
-                    "application/pdf" -> parsePdfFile(uri, context)
-                    "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" -> parseSpreadsheetFile(uri, context)
-                    "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document" -> parseDocFile(uri, context)
-                    else -> { Log.w(tag, "Unsupported file type: $mimeType for URI: $uri"); null }
-                }
-                evidence?.let {
-                    _uiEvidenceList.value = _uiEvidenceList.value + it
-                }
-            }
-        }
+        // Moved to EvidenceViewModel
     }
 
     private suspend fun loadBitmapFromUri(uri: Uri, context: Context): Bitmap? = withContext(Dispatchers.IO) {
@@ -601,126 +487,27 @@ class MainViewModel @Inject constructor(
 
     // Corrected to non-suspend, ensure ID logic is appropriate for UI list
     private fun parseTextFile(uri: Uri, context: Context): Evidence? {
-        return try {
-            context.contentResolver.openInputStream(uri)?.bufferedReader()?.use {
-                val text = it.readText()
-                Evidence(
-                    id = 0, // Placeholder ID
-                    caseId = _selectedCase.value?.id ?: 0, 
-                    content = text, 
-                    timestamp = System.currentTimeMillis(), 
-                    sourceDocument = uri.toString(), 
-                    documentDate = System.currentTimeMillis(), 
-                    allegationId = null, 
-                    category = "Text File",
-                    tags = emptyList()
-                )
-            }
-        } catch (e: Exception) { Log.e(tag, "Failed to parse text file", e); _errorMessage.value = "Failed to parse text file"; null }
+        // Moved to EvidenceViewModel
+        return null
     }
 
-    private fun parsePdfFile(uri: Uri, context: Context): Evidence? { 
-        return try {
-            context.contentResolver.openInputStream(uri)?.let { inputStream ->
-                val pdfReader = PdfReader(inputStream)
-                val pdfDocument = PdfDocument(pdfReader)
-                val text = buildString { for (i in 1..pdfDocument.numberOfPages) { append(PdfTextExtractor.getTextFromPage(pdfDocument.getPage(i))) } }
-                pdfDocument.close()
-                Evidence(
-                    id = 0, // Placeholder ID
-                    caseId = _selectedCase.value?.id ?: 0, 
-                    content = text, 
-                    timestamp = System.currentTimeMillis(), 
-                    sourceDocument = uri.toString(), 
-                    documentDate = System.currentTimeMillis(), 
-                    allegationId = null, 
-                    category = "PDF File",
-                    tags = emptyList()
-                )
-            }
-        } catch (e: Exception) { Log.e(tag, "Failed to parse PDF file", e); _errorMessage.value = "Failed to parse PDF file"; null }
+    private fun parsePdfFile(uri: Uri, context: Context): Evidence? {
+        // Moved to EvidenceViewModel
+        return null
     }
 
     private fun parseSpreadsheetFile(uri: Uri, context: Context): Evidence? {
-        return try {
-            context.contentResolver.openInputStream(uri)?.let { inputStream ->
-                val workbook = WorkbookFactory.create(inputStream)
-                val text = buildString { /* For now, content will be empty. Implement actual parsing later */ }
-                workbook.close()
-                Evidence(
-                    id = 0, // Placeholder ID
-                    caseId = _selectedCase.value?.id ?: 0, 
-                    content = text, 
-                    timestamp = System.currentTimeMillis(), 
-                    sourceDocument = uri.toString(), 
-                    documentDate = System.currentTimeMillis(), 
-                    allegationId = null, 
-                    category = "Spreadsheet File",
-                    tags = emptyList()
-                )
-            }
-        } catch (e: Exception) { Log.e(tag, "Failed to parse spreadsheet file", e); _errorMessage.value = "Failed to parse spreadsheet file"; null }
+        // Moved to EvidenceViewModel
+        return null
     }
 
     private fun parseDocFile(uri: Uri, context: Context): Evidence? {
-        return try {
-            context.contentResolver.openInputStream(uri)?.let { inputStream ->
-                val text = if (context.contentResolver.getType(uri) == "application/msword") {
-                    WordExtractor(HWPFDocument(inputStream)).text
-                } else {
-                    XWPFWordExtractor(XWPFDocument(inputStream)).text
-                }
-                Evidence(
-                    id = 0, // Placeholder ID
-                    caseId = _selectedCase.value?.id ?: 0, 
-                    content = text, 
-                    timestamp = System.currentTimeMillis(), 
-                    sourceDocument = uri.toString(), 
-                    documentDate = System.currentTimeMillis(), 
-                    allegationId = null, 
-                    category = "Document File",
-                    tags = emptyList()
-                )
-            }
-        } catch (e: Exception) { Log.e(tag, "Failed to parse document file", e); _errorMessage.value = "Failed to parse document file"; null }
+        // Moved to EvidenceViewModel
+        return null
     }
     
     fun importSmsMessages(context: Context) {
-        viewModelScope.launch {
-            val smsList = mutableListOf<Evidence>()
-            val cursor = context.contentResolver.query(
-                android.provider.Telephony.Sms.CONTENT_URI,
-                null,
-                null,
-                null,
-                null
-            )
-            var currentUiId = _uiEvidenceList.value.size // For UI temporary uniqueness
-            cursor?.use {
-                if (it.moveToFirst()) {
-                    val bodyIndex = it.getColumnIndex(android.provider.Telephony.Sms.BODY)
-                    val dateIndex = it.getColumnIndex(android.provider.Telephony.Sms.DATE)
-                    do {
-                        val body = it.getString(bodyIndex)
-                        val dateMillis = it.getLong(dateIndex)
-                        smsList.add(
-                            Evidence(
-                                id = 0, // Placeholder ID
-                                caseId = _selectedCase.value?.id ?: 0, 
-                                content = body, 
-                                timestamp = dateMillis, 
-                                sourceDocument = "SMS Message", 
-                                documentDate = dateMillis, 
-                                allegationId = null, 
-                                category = "SMS",
-                                tags = emptyList()
-                            )
-                        )
-                    } while (it.moveToNext())
-                }
-            }
-            _uiEvidenceList.value = _uiEvidenceList.value + smsList
-        }
+        // Moved to EvidenceViewModel
     }
     
     fun exportToSheet() { 
@@ -772,77 +559,11 @@ class MainViewModel @Inject constructor(
     }
 
     fun addTextEvidenceToSelectedCase(text: String, context: Context) {
-        viewModelScope.launch {
-            val currentCase = _selectedCase.value
-            val apiService = _googleApiService.value
-            if (currentCase != null && apiService != null) {
-                val rawEvidenceFolderId = apiService.getOrCreateEvidenceFolder(currentCase.name) ?: return@launch
-                val timestamp = System.currentTimeMillis()
-                val file = File(context.cacheDir, "text-evidence-$timestamp.txt")
-                file.writeText(text)
-                val uploadedDriveFile = apiService.uploadFile(file, rawEvidenceFolderId, "text/plain")
-                if (uploadedDriveFile != null) {
-                    val newEvidence = Evidence(
-                        id = 0, // DB will assign ID
-                        caseId = currentCase.id, 
-                        content = text, 
-                        timestamp = timestamp,
-                        sourceDocument = uploadedDriveFile.name ?: "Uploaded Text Evidence", 
-                        documentDate = timestamp,
-                        allegationId = null, 
-                        category = "Text Upload",
-                        tags = emptyList()
-                    )
-                    addEvidenceToSelectedCase(newEvidence)
-                } else {
-                    _errorMessage.value = "Failed to upload text evidence."
-                }
-            } else {
-                Log.w(tag, "addTextEvidenceToSelectedCase: No case or API service. Adding to UI list only.")
-                 val newEvidenceForUiList = Evidence(
-                    id = 0, // Temp UI id or manage better if needed for UI keys
-                    caseId = 0,
-                    content = text, 
-                    timestamp = System.currentTimeMillis(), 
-                    sourceDocument = "Text Input (No Case)", 
-                    documentDate = System.currentTimeMillis(), 
-                    allegationId = null, 
-                    category = "Local Text",
-                    tags = emptyList()
-                )
-                _uiEvidenceList.value = _uiEvidenceList.value + newEvidenceForUiList
-            }
-        }
+        // Moved to EvidenceViewModel
     }
     
     fun importSpreadsheet(spreadsheetIdToImport: String) {
-        viewModelScope.launch {
-            val apiService = _googleApiService.value ?: return@launch Unit.also { Log.w(tag, "importSpreadsheet: No API service.") }
-            val sheetsData = apiService.readSpreadsheet(spreadsheetIdToImport)
-            if (sheetsData != null) {
-                val context = getApplication<Application>().applicationContext
-                try {
-                    val schemaJson = context.resources.openRawResource(R.raw.spreadsheet_schema).bufferedReader().use { it.readText() }
-                    val schema = Gson().fromJson(schemaJson, SpreadsheetSchema::class.java)
-
-                    val spreadsheetParser = SpreadsheetParser(apiService, schema)
-                    val newCase = spreadsheetParser.parseAndStore(sheetsData)
-                    if (newCase != null) {
-                        Log.i(tag, "Spreadsheet imported. New case: ${newCase.name}")
-                        loadCasesFromRegistry()
-                    } else {
-                        Log.w(tag, "Failed to parse/store spreadsheet: $spreadsheetIdToImport")
-                        _errorMessage.value = "Failed to parse or store spreadsheet."
-                    }
-                } catch (e: Exception) {
-                     Log.e(tag, "Error during spreadsheet import (schema or parsing): $spreadsheetIdToImport", e)
-                    _errorMessage.value = "Error importing spreadsheet: ${e.localizedMessage}"
-                }
-            } else {
-                Log.w(tag, "Failed to read spreadsheet data for ID: $spreadsheetIdToImport")
-                _errorMessage.value = "Failed to read spreadsheet data."
-            }
-        }
+        // Moved to CaseViewModel
     }
 
     fun storeTaggedDataToSheet(newTaggedData: Map<String, List<String>>) { 
@@ -869,6 +590,8 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    fun addDriveFileEvidenceToSelectedCase(uri: Uri, context: Context) {
+        // Moved to EvidenceViewModel
     fun addDriveFileEvidenceToSelectedCase(uri: Uri, context: Context) {
         viewModelScope.launch {
             _isUploadingFile.value = true
@@ -921,6 +644,7 @@ class MainViewModel @Inject constructor(
         _extractedText.value = text
     }
 
+    // --- Evidence Editing (Moved to EvidenceViewModel) ---
     private val _evidenceToEdit = MutableStateFlow<Evidence?>(null)
     val evidenceToEdit: StateFlow<Evidence?> = _evidenceToEdit.asStateFlow()
 
@@ -952,7 +676,7 @@ class MainViewModel @Inject constructor(
             }
         }
     }
-    
+
     companion object {
         private const val FILTERS_SHEET_NAME = "Filters" 
     }

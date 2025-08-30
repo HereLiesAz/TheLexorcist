@@ -30,6 +30,10 @@ import org.opencv.android.Utils
 import org.opencv.core.Mat
 import org.opencv.imgproc.Imgproc
 import java.util.ArrayList
+import androidx.exifinterface.media.ExifInterface
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.TimeZone
 import javax.inject.Inject
 
 // import java.util.Date // Removed import
@@ -102,6 +106,32 @@ class OcrViewModel(
                 recognizer.process(inputImage)
                     .addOnSuccessListener { visionText ->
                         _extractedText.value = visionText.text
+
+                        // 1. Run DataParser
+                        val parsedData = com.hereliesaz.lexorcist.DataParser.tagData(visionText.text)
+                        val initialTags = parsedData.values.flatten()
+
+                        // 2. Extract EXIF data
+                        val documentDate = try {
+                            context.contentResolver.openInputStream(reviewedUri)?.use { inputStream ->
+                                val exif = ExifInterface(inputStream)
+                                exif.getAttribute(ExifInterface.TAG_DATETIME)?.let { dateTimeString ->
+                                    // EXIF format is "yyyy:MM:dd HH:mm:ss"
+                                    val sdf = SimpleDateFormat("yyyy:MM:dd HH:mm:ss", java.util.Locale.US)
+                                    sdf.timeZone = TimeZone.getTimeZone("UTC")
+                                    sdf.parse(dateTimeString)?.time
+                                }
+                            } ?: System.currentTimeMillis()
+                        } catch (e: Exception) {
+                            System.currentTimeMillis()
+                        }
+
+                        // 3. Create initial Evidence object
+                        var newEvidence = Evidence(
+                            id = 0, // Placeholder ID
+                            caseId = 0, // Placeholder caseId
+                            content = visionText.text,
+                            timestamp = System.currentTimeMillis(),
                         val parsedDate = DataParser.parseTimestamp(visionText.text)
                         val exifDate = ExifUtils.getExifDate(context, reviewedUri)
                         val extractedText = visionText.text
@@ -125,6 +155,10 @@ class OcrViewModel(
                             category = "OCR Image", // String is fine
                             tags = emptyList(), // List<String> is fine
                             entities = entities
+                            documentDate = documentDate,
+                            allegationId = null,
+                            category = "OCR Image",
+                            tags = initialTags
                         )
                         viewModelScope.launch {
                             _newlyCreatedEvidence.emit(newEvidence)
@@ -136,6 +170,17 @@ class OcrViewModel(
                             val parserResult = scriptRunner.runScript(userScript, newEvidence)
                             newEvidence = newEvidence.copy(tags = parserResult.tags)
                         }
+
+
+                        // 3. Run ScriptRunner
+                        val scriptRunner = com.hereliesaz.lexorcist.service.ScriptRunner()
+                        // Placeholder for where the actual script would be retrieved
+                        val caseScript = ""
+                        val scriptResult = scriptRunner.runScript(caseScript, newEvidence)
+
+                        // 4. Combine tags and update Evidence
+                        val combinedTags = (initialTags + scriptResult.tags).distinct()
+                        newEvidence = newEvidence.copy(tags = combinedTags)
 
                         _newlyCreatedEvidence.value = newEvidence
                         _isOcrInProgress.value = false

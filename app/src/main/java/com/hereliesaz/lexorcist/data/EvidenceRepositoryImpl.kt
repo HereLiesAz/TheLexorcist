@@ -10,11 +10,7 @@ import javax.inject.Singleton
 class EvidenceRepositoryImpl @Inject constructor(
     private val evidenceDao: EvidenceDao,
     private val googleApiService: GoogleApiService?
-class EvidenceRepositoryImpl(
-    private val evidenceDao: EvidenceDao,
-    private var googleApiService: GoogleApiService?
 ) : EvidenceRepository {
-    private var googleApiService: GoogleApiService? = null
 
 
     private var caseSpreadsheetId: String? = null

@@ -1,11 +1,8 @@
 package com.hereliesaz.lexorcist.data
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
-
 import androidx.room.ColumnInfo
-import androidx.room.Entity
 import androidx.room.PrimaryKey
+import androidx.room.Entity
 
 /**
  * Represents a legal case within the Lexorcist application.
@@ -24,8 +21,6 @@ import androidx.room.PrimaryKey
  * @property originalMasterHtmlTemplateId The ID of the original master HTML template used for the case.
  */
 @Entity(tableName = "cases")
-@Entity(tableName = "cases")
-@Entity(tableName = "case")
 data class Case(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
