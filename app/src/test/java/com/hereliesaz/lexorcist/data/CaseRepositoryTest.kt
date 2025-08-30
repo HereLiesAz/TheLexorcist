@@ -39,7 +39,7 @@ class CaseRepositoryTest {
         Dispatchers.setMain(testDispatcher)
         caseDao = mockk()
         context = mockk(relaxed = true)
-        caseRepository = CaseRepositoryImpl(context, caseDao, null)
+        caseRepository = CaseRepositoryImpl(caseDao, context)
     }
 
     @After

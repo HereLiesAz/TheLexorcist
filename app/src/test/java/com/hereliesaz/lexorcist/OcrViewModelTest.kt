@@ -71,7 +71,7 @@ class OcrViewModelTest {
             successListener.captured.onSuccess(visionText)
             task
         }
-        every { task.addOnFailureListener(any()) } returns task
+        every { task.addOnFailureListener(any<OnFailureListener>()) } returns task
 
         // When
         ocrViewModel.startImageReview(uri, context)

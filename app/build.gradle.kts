@@ -102,6 +102,9 @@ dependencies {
     implementation("androidx.room:room-ktx:2.7.2")
     testImplementation("junit:junit:4.13.2")
     testImplementation("io.mockk:mockk:1.14.5")
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:1.9.0")
+    testImplementation("androidx.arch.core:core-testing:2.2.0")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
     androidTestImplementation("androidx.test.ext:junit:1.3.0")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
 

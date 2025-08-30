@@ -1,5 +1,9 @@
 package com.hereliesaz.lexorcist.data
 
+import androidx.room.ColumnInfo
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+
 /**
  * Represents a legal case within the Lexorcist application.
  *
@@ -13,12 +17,20 @@ package com.hereliesaz.lexorcist.data
  * @property sourceHtmlSnapshotId The ID of the HTML snapshot used as the source for the generated PDF.
  * @property originalMasterHtmlTemplateId The ID of the original master HTML template used for the case.
  */
+@Entity(tableName = "cases")
 data class Case(
+    @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
+    @ColumnInfo(name = "name")
     val name: String,
+    @ColumnInfo(name = "spreadsheetId")
     val spreadsheetId: String,
+    @ColumnInfo(name = "generatedPdfId")
     val generatedPdfId: String? = null,
+    @ColumnInfo(name = "sourceHtmlSnapshotId")
     val sourceHtmlSnapshotId: String? = null,
+    @ColumnInfo(name = "originalMasterHtmlTemplateId")
     val originalMasterHtmlTemplateId: String? = null,
+    @ColumnInfo(name = "isArchived")
     val isArchived: Boolean = false
 )

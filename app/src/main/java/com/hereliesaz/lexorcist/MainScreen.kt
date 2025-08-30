@@ -9,7 +9,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hereliesaz.lexorcist.components.AppNavRail
-import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 import com.hereliesaz.lexorcist.ui.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -84,13 +83,11 @@ fun MainScreen(
                         R.string.add_text_evidence -> { // Corrected: R.string.add_text_evidence
                             val context = LocalContext.current // This context is fine for AddTextEvidenceScreen
                             AddTextEvidenceScreen(evidenceViewModel = evidenceViewModel, onSave = { text ->
-                                selectedCase?.let {
-                                    evidenceViewModel.addTextEvidence(it.id, text)
-                                }
+                                evidenceViewModel.addTextEvidence(text)
                                 currentScreen = R.string.nav_cases
                             })
                         }
-                        R.string.nav_timeline -> TimelineScreen(viewModel = viewModel())
+                        R.string.nav_timeline -> TimelineScreen(viewModel = evidenceViewModel)
                         R.string.nav_data_review -> DataReviewScreen(evidenceViewModel = evidenceViewModel)
                         R.string.nav_settings -> SettingsScreen(caseViewModel = caseViewModel)
                     }

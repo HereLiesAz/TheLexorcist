@@ -38,7 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.hereliesaz.lexorcist.data.Evidence
-import com.hereliesaz.lexorcist.viewmodel.MainViewModel
+import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
 // import com.pushpal.jetlime.EventPointType // Removed import as it's causing unresolved references
 import com.pushpal.jetlime.JetLimeColumn
 import com.pushpal.jetlime.JetLimeEventDefaults
@@ -50,8 +50,8 @@ import java.util.Locale
 
 @OptIn(ExperimentalComposeApi::class)
 @Composable
-fun TimelineScreen(viewModel: MainViewModel) {
-    val evidenceList by viewModel.selectedCaseEvidenceList.collectAsState()
+fun TimelineScreen(viewModel: EvidenceViewModel) {
+    val evidenceList by viewModel.evidenceList.collectAsState()
     var selectedEvidence by remember { mutableStateOf<Evidence?>(null) }
 
     Column(

@@ -33,13 +33,15 @@ class CaseViewModelTest {
     private lateinit var caseViewModel: CaseViewModel
     private lateinit var caseRepository: CaseRepository
     private lateinit var application: Application
+    private lateinit var authViewModel: AuthViewModel
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         application = mockk(relaxed = true)
         caseRepository = mockk()
-        caseViewModel = CaseViewModel(application, caseRepository)
+        authViewModel = mockk(relaxed = true)
+        caseViewModel = CaseViewModel(application, caseRepository, authViewModel)
     }
 
     @After

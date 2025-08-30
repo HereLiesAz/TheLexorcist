@@ -35,13 +35,19 @@ class EvidenceViewModelTest {
     private lateinit var evidenceViewModel: EvidenceViewModel
     private lateinit var evidenceRepository: EvidenceRepository
     private lateinit var application: Application
+    private lateinit var authViewModel: AuthViewModel
+    private lateinit var caseViewModel: CaseViewModel
+    private lateinit var ocrViewModel: OcrViewModel
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         application = mockk(relaxed = true)
         evidenceRepository = mockk(relaxed = true)
-        evidenceViewModel = EvidenceViewModel(application, evidenceRepository)
+        authViewModel = mockk(relaxed = true)
+        caseViewModel = mockk(relaxed = true)
+        ocrViewModel = mockk(relaxed = true)
+        evidenceViewModel = EvidenceViewModel(application, evidenceRepository, authViewModel, caseViewModel, ocrViewModel)
     }
 
     @After

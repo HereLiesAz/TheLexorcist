@@ -18,7 +18,11 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class CaseViewModel(application: Application, private val caseRepository: CaseRepository) : AndroidViewModel(application) {
+class CaseViewModel(
+    application: Application,
+    private val caseRepository: CaseRepository,
+    private val authViewModel: AuthViewModel
+) : AndroidViewModel(application) {
 
     private val sharedPref = application.getSharedPreferences("CaseInfoPrefs", Context.MODE_PRIVATE)
 
@@ -46,6 +50,9 @@ class CaseViewModel(application: Application, private val caseRepository: CaseRe
     private val _allegations = MutableStateFlow<List<Allegation>>(emptyList())
     val allegations: StateFlow<List<Allegation>> = _allegations.asStateFlow()
 
+    private val _htmlTemplates = MutableStateFlow<List<DriveFile>>(emptyList())
+    val htmlTemplates: StateFlow<List<DriveFile>> = _htmlTemplates.asStateFlow()
+
     private val _plaintiffs = MutableStateFlow(sharedPref.getString("plaintiffs", "") ?: "")
     val plaintiffs: StateFlow<String> = _plaintiffs.asStateFlow()
 
@@ -59,8 +66,37 @@ class CaseViewModel(application: Application, private val caseRepository: CaseRe
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
     init {
-        loadCases()
         loadDarkModePreference()
+        observeAuthChanges()
+    }
+
+    private fun observeAuthChanges() {
+        viewModelScope.launch {
+            authViewModel.isSignedIn.collect { isSignedIn ->
+                if (isSignedIn) {
+                    loadCases()
+                    loadHtmlTemplates()
+                } else {
+                    clearCaseData()
+                }
+            }
+        }
+        viewModelScope.launch {
+            authViewModel.signOutEvent.collect {
+                clearCaseData()
+            }
+        }
+    }
+
+    private fun clearCaseData() {
+        _selectedCase.value = null
+        _sheetFilters.value = emptyList()
+        _allegations.value = emptyList()
+        _htmlTemplates.value = emptyList()
+        _plaintiffs.value = ""
+        _defendants.value = ""
+        _court.value = ""
+        saveCaseInfo()
     }
 
     fun showError(message: String) {
@@ -92,6 +128,18 @@ class CaseViewModel(application: Application, private val caseRepository: CaseRe
     fun loadCases() {
         viewModelScope.launch {
             caseRepository.refreshCases()
+        }
+    }
+
+    fun loadHtmlTemplates() {
+        viewModelScope.launch {
+            caseRepository.refreshHtmlTemplates()
+        }
+    }
+
+    fun importSpreadsheet(spreadsheetId: String) {
+        viewModelScope.launch {
+            caseRepository.importSpreadsheet(spreadsheetId)
         }
     }
 
@@ -156,7 +204,6 @@ class CaseViewModel(application: Application, private val caseRepository: CaseRe
         val case = _selectedCase.value ?: return
         viewModelScope.launch {
             caseRepository.addAllegation(case.spreadsheetId, allegationText)
-            // Refresh allegations after adding a new one
             loadAllegations(case.id, case.spreadsheetId)
         }
     }

@@ -8,6 +8,8 @@ class EvidenceRepositoryImpl(
     private val evidenceDao: EvidenceDao
 ) : EvidenceRepository {
 
+    private var googleApiService: GoogleApiService? = null
+
     override fun setGoogleApiService(googleApiService: GoogleApiService?) {
         this.googleApiService = googleApiService
     }

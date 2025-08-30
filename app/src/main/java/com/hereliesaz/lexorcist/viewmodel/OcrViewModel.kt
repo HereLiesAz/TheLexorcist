@@ -10,7 +10,9 @@ import androidx.lifecycle.viewModelScope
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
-import com.hereliesaz.lexorcist.data.Evidence // Correct import
+import com.hereliesaz.lexorcist.data.Evidence
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,7 +21,6 @@ import org.opencv.android.Utils
 import org.opencv.core.Mat
 import org.opencv.imgproc.Imgproc
 import java.util.ArrayList
-// import java.util.Date // Removed import
 
 class OcrViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -34,8 +35,8 @@ class OcrViewModel(application: Application) : AndroidViewModel(application) {
     private val _extractedText = MutableStateFlow("")
     val extractedText: StateFlow<String> = _extractedText.asStateFlow()
 
-    private val _newlyCreatedEvidence = MutableStateFlow<Evidence?>(null)
-    val newlyCreatedEvidence: StateFlow<Evidence?> = _newlyCreatedEvidence.asStateFlow()
+    private val _newlyCreatedEvidence = MutableSharedFlow<Evidence>()
+    val newlyCreatedEvidence = _newlyCreatedEvidence.asSharedFlow()
 
     fun startImageReview(uri: Uri, context: Context) {
         viewModelScope.launch {
@@ -84,29 +85,29 @@ class OcrViewModel(application: Application) : AndroidViewModel(application) {
                     .addOnSuccessListener { visionText ->
                         _extractedText.value = visionText.text
                         val newEvidence = Evidence(
-                            id = 0, // Placeholder ID for newly created evidence via OCR
-                            caseId = 0, // Placeholder caseId, to be set by the consuming ViewModel if needed
+                            id = 0,
+                            caseId = 0,
                             content = visionText.text,
-                            timestamp = System.currentTimeMillis(), // Changed to Long
+                            timestamp = System.currentTimeMillis(),
                             sourceDocument = reviewedUri.toString(),
-                            documentDate = System.currentTimeMillis(), // Changed to Long
-                            allegationId = null, // Int? is fine with null
-                            category = "OCR Image", // String is fine
-                            tags = emptyList() // List<String> is fine
+                            documentDate = System.currentTimeMillis(),
+                            allegationId = null,
+                            category = "OCR Image",
+                            tags = emptyList()
                         )
-                        _newlyCreatedEvidence.value = newEvidence
+                        viewModelScope.launch {
+                            _newlyCreatedEvidence.emit(newEvidence)
+                        }
                         _isOcrInProgress.value = false
-                        cancelImageReview() // Clear review state after processing
+                        cancelImageReview()
                     }
                     .addOnFailureListener { e ->
-                        // Handle error, e.g., show a message to the user
                         _isOcrInProgress.value = false
-                        cancelImageReview() // Clear review state on failure
+                        cancelImageReview()
                     }
             } catch (e: Exception) {
-                // Handle other exceptions during processing
                 _isOcrInProgress.value = false
-                cancelImageReview() // Clear review state on exception
+                cancelImageReview()
             }
         }
     }
@@ -120,7 +121,6 @@ class OcrViewModel(application: Application) : AndroidViewModel(application) {
         var mat = Mat()
         Utils.bitmapToMat(bitmap, mat)
 
-        // --- Skew Correction ---
         val gray = Mat()
         Imgproc.cvtColor(mat, gray, Imgproc.COLOR_BGR2GRAY)
 
@@ -156,18 +156,13 @@ class OcrViewModel(application: Application) : AndroidViewModel(application) {
                 }
             }
         }
-        // --- End Skew Correction ---
 
-
-        // Convert to grayscale
         val grayMat = Mat()
         Imgproc.cvtColor(mat, grayMat, Imgproc.COLOR_BGR2GRAY)
 
-        // Apply median blur for noise reduction
         val blurredMat = Mat()
-        Imgproc.medianBlur(grayMat, blurredMat, 3) // Using a 3x3 kernel
+        Imgproc.medianBlur(grayMat, blurredMat, 3)
 
-        // Apply adaptive thresholding on the blurred image
         val binaryMat = Mat()
         Imgproc.adaptiveThreshold(
             blurredMat,
@@ -179,7 +174,6 @@ class OcrViewModel(application: Application) : AndroidViewModel(application) {
             2.0
         )
 
-        // Convert back to bitmap
         val resultBitmap = Bitmap.createBitmap(binaryMat.cols(), binaryMat.rows(), Bitmap.Config.ARGB_8888)
         Utils.matToBitmap(binaryMat, resultBitmap)
 

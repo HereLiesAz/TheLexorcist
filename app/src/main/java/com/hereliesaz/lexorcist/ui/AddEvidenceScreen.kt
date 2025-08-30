@@ -26,7 +26,6 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-// import com.hereliesaz.lexorcist.viewmodel.MainViewModel // Not used in the first composable
 import com.hereliesaz.lexorcist.ui.TaggedDataItem // Ensure this is present
 import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
 import com.hereliesaz.lexorcist.viewmodel.OcrViewModel
@@ -47,7 +46,7 @@ fun AddEvidenceScreen(
 ) {
     val imageBitmapForReview by ocrViewModel.imageBitmapForReview.collectAsState()
     val isOcrInProgress by ocrViewModel.isOcrInProgress.collectAsState()
-    val newlyCreatedEvidence by ocrViewModel.newlyCreatedEvidence.collectAsState() // This is StateFlow<Evidence?>
+    val newlyCreatedEvidence by ocrViewModel.newlyCreatedEvidence.collectAsState(initial = null)
     val evidenceList by evidenceViewModel.evidenceList.collectAsState() // This is StateFlow<List<Evidence>>
     val context = LocalContext.current
 
