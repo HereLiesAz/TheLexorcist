@@ -12,6 +12,9 @@ interface EvidenceDao {
     @Query("SELECT * FROM evidence WHERE caseId = :caseId")
     fun getEvidenceForCase(caseId: Long): Flow<List<Evidence>>
 
+    @Query("SELECT * FROM evidence WHERE id = :id")
+    fun getEvidence(id: Int): Flow<Evidence>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(evidence: Evidence)
 
@@ -20,4 +23,7 @@ interface EvidenceDao {
 
     @androidx.room.Delete
     suspend fun delete(evidence: Evidence)
+
+    @Query("UPDATE evidence SET commentary = :commentary WHERE id = :id")
+    suspend fun updateCommentary(id: Int, commentary: String)
 }

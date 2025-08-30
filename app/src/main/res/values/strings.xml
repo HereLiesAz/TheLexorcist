@@ -109,12 +109,6 @@
     <string name="archive">Archive</string>
     <string name="sort">Sort</string>
     <string name="delete_case">Delete Case</string>
-    <string name="delete_case_confirmation">Are you sure you want to delete this case?</string>
-
-    <string name="search">Search</string>
-    <string name="archive">Archive</string>
-    <string name="sort">Sort</string>
-    <string name="delete_case">Delete Case</string>
     <string name="delete_case_confirmation">Are you sure you want to delete case %1$s?</string>
 
     <string name="select_image_to_scan">Select Image to Scan</string>

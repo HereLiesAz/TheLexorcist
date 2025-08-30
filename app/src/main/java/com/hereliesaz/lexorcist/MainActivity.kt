@@ -33,12 +33,14 @@ import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
 import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModelFactory
 import com.hereliesaz.lexorcist.viewmodel.OcrViewModel
 import com.hereliesaz.lexorcist.viewmodel.OcrViewModelFactory
+import com.hereliesaz.lexorcist.viewmodel.EvidenceDetailsViewModel
+import com.hereliesaz.lexorcist.viewmodel.EvidenceDetailsViewModelFactory
 
 class MainActivity : ComponentActivity() {
 
     private val appDatabase by lazy { AppDatabase.getDatabase(this) }
-    private val evidenceRepository by lazy { EvidenceRepositoryImpl(appDatabase.evidenceDao(), null) }
-    private val caseRepository by lazy { CaseRepositoryImpl(applicationContext, appDatabase.caseDao(), null) }
+    private val evidenceRepository by lazy { EvidenceRepositoryImpl(appDatabase.evidenceDao()) }
+    private val caseRepository by lazy { CaseRepositoryImpl(applicationContext, null) }
 
     private val authViewModel: AuthViewModel by viewModels {
         AuthViewModelFactory(application, evidenceRepository, caseRepository)
@@ -51,6 +53,9 @@ class MainActivity : ComponentActivity() {
     }
     private val ocrViewModel: OcrViewModel by viewModels {
         OcrViewModelFactory(application)
+    }
+    private val evidenceDetailsViewModel: EvidenceDetailsViewModel by viewModels {
+        EvidenceDetailsViewModelFactory(evidenceRepository)
     }
     
     private lateinit var oneTapClient: SignInClient 
@@ -144,11 +149,13 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             LexorcistTheme {
-                // val navController = rememberNavController() // Commented out as MainScreen doesn't take navController
+                val navController = rememberNavController()
                 MainScreen(
+                    navController = navController,
                     authViewModel = authViewModel,
                     caseViewModel = caseViewModel,
                     evidenceViewModel = evidenceViewModel,
+                    evidenceDetailsViewModel = evidenceDetailsViewModel,
                     ocrViewModel = ocrViewModel,
                     onSignIn = { signIn() },
                     onSelectImage = { selectImage() },

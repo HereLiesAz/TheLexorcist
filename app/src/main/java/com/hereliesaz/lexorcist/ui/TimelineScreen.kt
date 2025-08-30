@@ -47,12 +47,26 @@ import com.pushpal.jetlime.ItemsList
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import androidx.compose.foundation.Image
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.core.net.toUri
+import coil.compose.rememberAsyncImagePainter
+import androidx.compose.material3.Button
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.navigation.NavController
 
 @OptIn(ExperimentalComposeApi::class)
 @Composable
-fun TimelineScreen(viewModel: MainViewModel) {
+fun TimelineScreen(
+    navController: NavController,
+    viewModel: MainViewModel
+) {
     val evidenceList by viewModel.selectedCaseEvidenceList.collectAsState()
     var selectedEvidence by remember { mutableStateOf<Evidence?>(null) }
+    var showEnlargedImageDialog by remember { mutableStateOf(false) }
+    var evidenceToEnlarge by remember { mutableStateOf<Evidence?>(null) }
 
     Column(
         modifier = Modifier.padding(16.dp),
@@ -125,6 +139,20 @@ fun TimelineScreen(viewModel: MainViewModel) {
                                     style = MaterialTheme.typography.bodySmall
                                 )
                             }
+                            if (item.category in listOf("Image", "OCR Image") && item.sourceDocument.startsWith("content://")) {
+                                Image(
+                                    painter = rememberAsyncImagePainter(model = item.sourceDocument.toUri()),
+                                    contentDescription = "Evidence Thumbnail",
+                                    modifier = Modifier
+                                        .size(64.dp)
+                                        .clip(MaterialTheme.shapes.small)
+                                        .clickable {
+                                            evidenceToEnlarge = item
+                                            showEnlargedImageDialog = true
+                                        },
+                                    contentScale = ContentScale.Crop
+                                )
+                            }
                         }
                     }
                 }
@@ -135,6 +163,48 @@ fun TimelineScreen(viewModel: MainViewModel) {
     selectedEvidence?.let { evidence ->
         EvidenceDetailsDialog(evidence = evidence, onDismiss = { selectedEvidence = null })
     }
+
+    if (showEnlargedImageDialog && evidenceToEnlarge != null) {
+        EnlargedImageDialog(
+            evidence = evidenceToEnlarge!!,
+            onDismiss = { showEnlargedImageDialog = false },
+            onNavigate = {
+                showEnlargedImageDialog = false
+                navController.navigate("evidence_details/${evidenceToEnlarge!!.id}")
+            }
+        )
+    }
+}
+
+@Composable
+fun EnlargedImageDialog(
+    evidence: Evidence,
+    onDismiss: () -> Unit,
+    onNavigate: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(evidence.sourceDocument) },
+        text = {
+            Column {
+                Image(
+                    painter = rememberAsyncImagePainter(model = evidence.sourceDocument.toUri()),
+                    contentDescription = "Enlarged Evidence Thumbnail",
+                    modifier = Modifier.fillMaxWidth(),
+                    contentScale = ContentScale.Fit
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(onClick = onNavigate) {
+                    Text("View Details")
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Close")
+            }
+        }
+    )
 }
 
 @Composable

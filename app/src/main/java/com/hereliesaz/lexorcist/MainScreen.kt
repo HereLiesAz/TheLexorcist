@@ -19,13 +19,19 @@ import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
 import com.hereliesaz.lexorcist.viewmodel.OcrViewModel
 import kotlinx.coroutines.launch // Already present, ensure viewModelScope is used if needed from MainViewModel
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import com.hereliesaz.lexorcist.viewmodel.EvidenceDetailsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
+    navController: NavHostController,
     authViewModel: AuthViewModel = viewModel(),
     caseViewModel: CaseViewModel = viewModel(),
     evidenceViewModel: EvidenceViewModel = viewModel(),
+    evidenceDetailsViewModel: EvidenceDetailsViewModel = viewModel(),
     ocrViewModel: OcrViewModel = viewModel(),
     onSignIn: () -> Unit,
     onSelectImage: () -> Unit,
@@ -37,7 +43,6 @@ fun MainScreen(
     val selectedCase by caseViewModel.selectedCase.collectAsState()
     val errorMessage by caseViewModel.errorMessage.collectAsState() // Assuming CaseViewModel will have error messages
     val snackbarHostState = remember { SnackbarHostState() }
-    var currentScreen by remember { mutableStateOf(R.string.nav_home) }
     var showCreateCaseDialog by remember { mutableStateOf(false) }
 
     val localContext = LocalContext.current // Get context for onNavigate
@@ -64,35 +69,45 @@ fun MainScreen(
                     .fillMaxSize()
                     .padding(paddingValues)
             ) {
-                // Use localContext for getIdentifier
-                AppNavRail(onNavigate = { screen -> currentScreen = localContext.resources.getIdentifier(screen, "string", localContext.packageName) })
+                AppNavRail(onNavigate = { screen -> navController.navigate(screen) })
                 Box(modifier = Modifier.weight(1f)) {
-                    when (currentScreen) {
-                        R.string.nav_home -> AuthenticatedView(
-                            onCreateCase = { showCreateCaseDialog = true }
-                        )
-                        R.string.nav_cases -> CasesScreen(caseViewModel = caseViewModel)
-                        R.string.nav_add_evidence -> AddEvidenceScreen(
-                            evidenceViewModel = evidenceViewModel,
-                            ocrViewModel = ocrViewModel,
-                            onSelectImage = onSelectImage,
-                            onTakePicture = onTakePicture,
-                            onAddTextEvidence = { currentScreen = R.string.add_text_evidence }, // Corrected: R.string.add_text_evidence
-                            onAddDocument = onAddDocument,
-                            onAddSpreadsheet = onAddSpreadsheet
-                        )
-                        R.string.add_text_evidence -> { // Corrected: R.string.add_text_evidence
-                            val context = LocalContext.current // This context is fine for AddTextEvidenceScreen
+                    NavHost(navController = navController, startDestination = "home") {
+                        composable("home") { AuthenticatedView(onCreateCase = { showCreateCaseDialog = true }) }
+                        composable("cases") { CasesScreen(caseViewModel = caseViewModel) }
+                        composable("add_evidence") {
+                            AddEvidenceScreen(
+                                evidenceViewModel = evidenceViewModel,
+                                ocrViewModel = ocrViewModel,
+                                onSelectImage = onSelectImage,
+                                onTakePicture = onTakePicture,
+                                onAddTextEvidence = { navController.navigate("add_text_evidence") },
+                                onAddDocument = onAddDocument,
+                                onAddSpreadsheet = onAddSpreadsheet
+                            )
+                        }
+                        composable("add_text_evidence") {
                             AddTextEvidenceScreen(evidenceViewModel = evidenceViewModel, onSave = { text ->
                                 selectedCase?.let {
                                     evidenceViewModel.addTextEvidence(it.id, text)
                                 }
-                                currentScreen = R.string.nav_cases
+                                navController.navigate("cases")
                             })
                         }
-                        R.string.nav_timeline -> TimelineScreen(viewModel = viewModel())
-                        R.string.nav_data_review -> DataReviewScreen(evidenceViewModel = evidenceViewModel)
-                        R.string.nav_settings -> SettingsScreen(caseViewModel = caseViewModel)
+                        composable("timeline") { TimelineScreen(navController = navController, viewModel = viewModel()) }
+                        composable("data_review") { DataReviewScreen(evidenceViewModel = evidenceViewModel) }
+                        composable("settings") { SettingsScreen(caseViewModel = caseViewModel) }
+                        composable("evidence_details/{evidenceId}") { backStackEntry ->
+                            val evidenceId = backStackEntry.arguments?.getString("evidenceId")
+                            if (evidenceId != null) {
+                                val evidence by evidenceViewModel.getEvidence(evidenceId.toInt()).collectAsState(initial = null)
+                                evidence?.let {
+                                    EvidenceDetailsScreen(
+                                        evidence = it,
+                                        viewModel = evidenceDetailsViewModel
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }

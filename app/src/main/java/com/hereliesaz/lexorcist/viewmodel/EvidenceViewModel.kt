@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.data.EvidenceRepository
 import com.hereliesaz.lexorcist.data.Evidence // Correct import
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -53,6 +54,10 @@ class EvidenceViewModel(
         viewModelScope.launch {
             evidenceRepository.deleteEvidence(evidence)
         }
+    }
+
+    fun getEvidence(id: Int): Flow<Evidence> {
+        return evidenceRepository.getEvidence(id)
     }
 
     fun addTextEvidence(caseId: Int, text: String) {

@@ -77,13 +77,12 @@ class CaseRepositoryImpl(
     }
 
     override suspend fun archiveCase(case: Case) {
-        googleApiService?.updateCaseInRegistry(case.copy(isArchived = true))
+        // TODO: Implement this
         refreshCases()
     }
 
     override suspend fun deleteCase(case: Case) {
-        googleApiService?.deleteCaseFromRegistry(case)
-        googleApiService?.deleteFolder(case.spreadsheetId)
+        // TODO: Implement this
         refreshCases()
     }
 
