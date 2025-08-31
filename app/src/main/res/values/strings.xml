@@ -98,6 +98,7 @@
     <string name="save">Save</string>
     <string name="script_saved_successfully">Script saved successfully</string>
     <string name="enter_your_script">Enter your script</string>
+    <string name="script_editor_placeholder">e.g., evidence.text.includes("keyword")</string>
     <string name="save_script">Save Script</string>
     <string name="script_builder">Script Builder</string>
     <string name="script_snippet_text_includes">evidence.text.includes("")</string>

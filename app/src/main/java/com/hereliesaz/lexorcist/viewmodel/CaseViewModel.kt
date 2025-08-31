@@ -121,7 +121,7 @@ class CaseViewModel @Inject constructor(
     }
 
     fun importSpreadsheetWithRepository(spreadsheetId: String) {
-        viewModelScope.launch { caseRepository.importSpreadsheetAndStore(spreadsheetId) }
+        viewModelScope.launch { caseRepository.importSpreadsheet(spreadsheetId) } // Corrected method name
     }
 
     // Renamed from createNewCaseWithRepository
@@ -130,7 +130,7 @@ class CaseViewModel @Inject constructor(
         caseSection: String, caseJudge: String
     ) {
         viewModelScope.launch {
-            caseRepository.createNewCaseWithDetails(
+            caseRepository.createCase( // Corrected method name
                 caseName, exhibitSheetName, caseNumber, caseSection, caseJudge,
                 plaintiffs.value, defendants.value, court.value
             )
@@ -188,7 +188,7 @@ class CaseViewModel @Inject constructor(
     }
 
     fun archiveCaseWithRepository(case: Case) {
-        viewModelScope.launch { caseRepository.archiveExistingCase(case) }
+        viewModelScope.launch { caseRepository.archiveCase(case) } // Corrected method name
     }
 
     fun deleteCaseWithRepository(case: Case) {

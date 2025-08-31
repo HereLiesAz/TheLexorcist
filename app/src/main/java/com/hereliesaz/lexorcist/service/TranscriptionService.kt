@@ -21,8 +21,8 @@ class TranscriptionService(
 
     suspend fun transcribeAudio(uri: Uri): String {
         try {
-            // Changed to use explicit getters
-            val accessToken = credential.getCredential().getAccessToken()
+            // Corrected: Use credential.credential.accessToken
+            val accessToken = credential.credential.accessToken
             if (accessToken == null) {
                  return "Error: Could not retrieve access token."
             }

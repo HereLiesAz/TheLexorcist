@@ -50,7 +50,7 @@ fun AddonsBrowserScreen(
                         name = script.name,
                         description = script.description,
                         author = script.author,
-                        rating = script.rating,
+                        rating = script.rating.toFloat(), // Converted Double to Float
                         onRate = { rating ->
                             viewModel.rateAddon(script.id, rating, "Script")
                         }
@@ -64,7 +64,7 @@ fun AddonsBrowserScreen(
                         name = template.name,
                         description = template.description,
                         author = template.author,
-                        rating = template.rating,
+                        rating = template.rating.toFloat(), // Converted Double to Float
                         onRate = { rating ->
                             viewModel.rateAddon(template.id, rating, "Template")
                         }
