@@ -184,6 +184,12 @@ dependencies {
     implementation("io.github.pushpalroy:jetlime:4.0.0")
     implementation("io.github.pushpalroy:jetlime-android:4.0.0")
 
+    // Room
+    val room_version = "2.6.1"
+    implementation("androidx.room:room-runtime:$room_version")
+    implementation("androidx.room:room-ktx:$room_version")
+    ksp("androidx.room:room-compiler:$room_version")
+
     // Hilt
     implementation("com.google.dagger:hilt-android:2.57.1")
     ksp("com.google.dagger:hilt-compiler:2.57.1")
