@@ -16,23 +16,22 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.nio.ByteBuffer
 import android.app.Application
-import com.hereliesaz.lexorcist.data.SettingsManager
 import com.hereliesaz.lexorcist.viewmodel.OcrViewModel
+import com.hereliesaz.lexorcist.utils.Result as LexResult // Alias for your Result class
+import com.google.api.services.drive.model.File as DriveFile // Alias for Google Drive File
 
+// TODO: If VideoProcessingWorker is intended to be a HiltWorker, it needs @HiltWorker and @AssistedInject constructor.
+// For now, manually instantiating OcrViewModel and GoogleApiService.
 class VideoProcessingWorker(
     appContext: Context,
     workerParams: WorkerParameters
 ) : CoroutineWorker(appContext, workerParams) {
 
-    // TODO: This is not a good practice. The OCR logic should be extracted into a repository.
-    private val settingsManager by lazy { SettingsManager(applicationContext) }
-    private val scriptRunner by lazy { ScriptRunner() }
+    // OcrViewModel is a HiltViewModel, ideally it (or its repository) would be injected 
+    // if this Worker was a HiltWorker.
+    // For now, we instantiate it directly, which is not ideal for Hilt ViewModels.
     private val ocrViewModel by lazy {
-        OcrViewModel(
-            applicationContext as Application,
-            settingsManager,
-            scriptRunner
-        )
+        OcrViewModel(applicationContext as Application)
     }
 
     override suspend fun doWork(): Result {
@@ -48,8 +47,9 @@ class VideoProcessingWorker(
         val videoUri = Uri.parse(videoUriString)
         Log.d(TAG, "Processing video: $videoUri for case: $caseName ($caseId)")
 
-        // TODO: Get a proper instance of GoogleApiService
-        val googleApiService: com.hereliesaz.lexorcist.GoogleApiService? = null
+        // TODO: Get a proper instance of GoogleApiService. This should be injected.
+        // For now, this will be null and dependent operations will be skipped.
+        val googleApiService: com.hereliesaz.lexorcist.GoogleApiService? = null 
 
         val videoFile = File(applicationContext.cacheDir, "video_${System.currentTimeMillis()}.mp4")
         applicationContext.contentResolver.openInputStream(videoUri)?.use { input ->
@@ -58,33 +58,41 @@ class VideoProcessingWorker(
             }
         }
 
-        val evidenceFolderId = googleApiService?.getOrCreateEvidenceFolder(caseName)
-        val uploadedVideo = evidenceFolderId?.let {
-            googleApiService.uploadFile(videoFile, it, "video/mp4")
+        var uploadedDriveFile: DriveFile? = null
+        if (googleApiService != null) {
+            val evidenceFolderId = googleApiService.getOrCreateEvidenceFolder(caseName)
+            if (evidenceFolderId != null) {
+                when (val uploadResult = googleApiService.uploadFile(videoFile, evidenceFolderId, "video/mp4")) {
+                    is LexResult.Success -> {
+                        uploadedDriveFile = uploadResult.data
+                        Log.d(TAG, "Video uploaded to Drive with ID: ${uploadedDriveFile?.id}")
+                    }
+                    is LexResult.Error -> {
+                        Log.e(TAG, "Failed to upload video: ${uploadResult.exception.message}")
+                        // Decide if this is a fatal error for the worker
+                        // return Result.failure() 
+                    }
+                }
+            } else {
+                Log.e(TAG, "Failed to get or create evidence folder for case: $caseName")
+            }
+        } else {
+            Log.w(TAG, "GoogleApiService is null, skipping video upload.")
         }
-
-        if (uploadedVideo == null) {
-            Log.e(TAG, "Failed to upload video")
-            return Result.failure()
-        }
-
-        Log.d(TAG, "Video uploaded to Drive with ID: ${uploadedVideo?.id}")
-
 
         val audioUri = extractAudio(videoUri)
         if (audioUri == null) {
             Log.e(TAG, "Failed to extract audio")
-            // Decide if this is a fatal error
         } else {
             Log.d(TAG, "Audio extracted to: $audioUri")
-            // TODO: Pass audioUri to the speech-to-text pipeline
+            // TODO: Pass audioUri to the speech-to-text pipeline (TranscriptionService)
         }
 
         val frameUris = extractKeyframes(videoUri)
         if (frameUris.isNotEmpty()) {
             Log.d(TAG, "Extracted ${frameUris.size} keyframes")
             frameUris.forEach { uri ->
-                ocrViewModel.performOcrOnUri(uri, applicationContext, caseId, uploadedVideo?.id)
+                ocrViewModel.performOcrOnUri(uri, applicationContext, caseId, uploadedDriveFile?.id)
             }
         }
 

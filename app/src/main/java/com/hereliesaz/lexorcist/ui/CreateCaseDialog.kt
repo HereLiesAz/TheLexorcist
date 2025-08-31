@@ -71,7 +71,7 @@ fun CreateCaseDialog(
             Button(
                 onClick = {
                     if (caseName.isNotBlank()) {
-                        caseViewModel.createNewCaseWithRepository(
+                        caseViewModel.createCase( // Changed from createNewCaseWithRepository
                             caseName = caseName,
                             exhibitSheetName = exhibitSheetName.ifBlank { context.getString(R.string.default_exhibit_sheet_name) },
                             caseNumber = caseNumber,

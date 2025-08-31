@@ -9,6 +9,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -20,6 +21,12 @@ class EvidenceViewModel @Inject constructor(
 
     private val _selectedEvidenceDetails = MutableStateFlow<Evidence?>(null)
     val selectedEvidenceDetails: StateFlow<Evidence?> = _selectedEvidenceDetails.asStateFlow()
+
+    private val _evidenceList = MutableStateFlow<List<Evidence>>(emptyList())
+    val evidenceList: StateFlow<List<Evidence>> = _evidenceList.asStateFlow()
+
+    private var currentCaseIdForList: Long? = null
+    private var currentSpreadsheetIdForList: String? = null
 
     fun addTextEvidence(text: String, caseId: Long, spreadsheetId: String) {
         viewModelScope.launch {
@@ -41,6 +48,10 @@ class EvidenceViewModel @Inject constructor(
                 entities = emptyMap()
             )
             evidenceRepository.addEvidence(newEvidence)
+            // Refresh list if it's for the same case
+            if (caseId == currentCaseIdForList && spreadsheetId == currentSpreadsheetIdForList) {
+                loadEvidenceForCase(caseId, spreadsheetId)
+            }
         }
     }
 
@@ -53,23 +64,50 @@ class EvidenceViewModel @Inject constructor(
     fun updateCommentary(evidenceId: Int, commentary: String) {
         viewModelScope.launch {
             evidenceRepository.updateCommentary(evidenceId, commentary)
-            // Optionally, refresh the loaded evidence details if the update doesn't reflect immediately
-            // For example, by calling loadEvidenceDetails(evidenceId) again or by updating the specific field.
-            // For now, we assume the repository or underlying data source handles the update efficiently.
-            // If not, and the UI doesn't update, we might need to reload:
-            // _selectedEvidenceDetails.value = evidenceRepository.getEvidenceById(evidenceId)
-            // Or, more efficiently, update the existing object if the repository confirms success:
-            val currentEvidence = _selectedEvidenceDetails.value
-            if (currentEvidence != null && currentEvidence.id == evidenceId) {
-                _selectedEvidenceDetails.value = currentEvidence.copy(commentary = commentary)
+            val currentDetails = _selectedEvidenceDetails.value
+            if (currentDetails != null && currentDetails.id == evidenceId) {
+                _selectedEvidenceDetails.value = currentDetails.copy(commentary = commentary)
+            }
+            // Refresh list if the updated item is in the current list
+            currentCaseIdForList?.let { caseId ->
+                currentSpreadsheetIdForList?.let { spreadsheetId ->
+                    loadEvidenceForCase(caseId, spreadsheetId)
+                }
             }
         }
     }
 
-    // Call this when the details screen is left to clear the state
     fun clearEvidenceDetails() {
         _selectedEvidenceDetails.value = null
     }
 
-    // ... any other existing code in your EvidenceViewModel
+    fun loadEvidenceForCase(caseId: Long, spreadsheetId: String) {
+        currentCaseIdForList = caseId
+        currentSpreadsheetIdForList = spreadsheetId
+        viewModelScope.launch {
+            evidenceRepository.getEvidenceForCase(spreadsheetId, caseId).collectLatest {
+                _evidenceList.value = it
+            }
+        }
+    }
+
+    fun updateEvidence(evidence: Evidence) {
+        viewModelScope.launch {
+            evidenceRepository.updateEvidence(evidence)
+            // Refresh list if it's for the same case
+            if (evidence.caseId == currentCaseIdForList && evidence.spreadsheetId == currentSpreadsheetIdForList) {
+                loadEvidenceForCase(evidence.caseId, evidence.spreadsheetId)
+            }
+        }
+    }
+
+    fun deleteEvidence(evidence: Evidence) {
+        viewModelScope.launch {
+            evidenceRepository.deleteEvidence(evidence)
+            // Refresh list if it's for the same case
+            if (evidence.caseId == currentCaseIdForList && evidence.spreadsheetId == currentSpreadsheetIdForList) {
+                loadEvidenceForCase(evidence.caseId, evidence.spreadsheetId)
+            }
+        }
+    }
 }

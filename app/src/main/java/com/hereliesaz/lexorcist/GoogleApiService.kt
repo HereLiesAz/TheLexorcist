@@ -9,6 +9,8 @@ import com.google.api.services.drive.model.File
 import com.google.api.services.sheets.v4.Sheets
 import com.google.api.services.sheets.v4.model.*
 import com.hereliesaz.lexorcist.data.Case
+import com.hereliesaz.lexorcist.model.Script // Added import
+import com.hereliesaz.lexorcist.model.Template // Added import
 import com.hereliesaz.lexorcist.utils.Result
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -185,10 +187,10 @@ class GoogleApiService(
                                     lastModifiedTime = row.getOrNull(12)?.toString()?.toLongOrNull()
                                 )
                             } catch (e: Exception) {
-                                null
+                                null // Skip row if parsing fails
                             }
                         } else {
-                            null
+                            null // Skip row if not enough columns
                         }
                     }
                 }
@@ -317,5 +319,28 @@ class GoogleApiService(
                 emptyList()
             }
         }
+    }
+
+    // Placeholder methods for AddonsBrowserViewModel
+    suspend fun getSharedScripts(): List<Script> = withContext(Dispatchers.IO) {
+        // TODO: Implement actual logic to fetch shared scripts
+        emptyList()
+    }
+
+    suspend fun getSharedTemplates(): List<Template> = withContext(Dispatchers.IO) {
+        // TODO: Implement actual logic to fetch shared templates
+        emptyList()
+    }
+
+    suspend fun shareAddon(name: String, description: String, content: String, type: String): Boolean = withContext(Dispatchers.IO) {
+        // TODO: Implement actual logic to share an addon (script or template)
+        // This might involve creating a file in a shared Drive folder and updating a registry.
+        false
+    }
+
+    suspend fun rateAddon(id: String, rating: Int, type: String): Boolean = withContext(Dispatchers.IO) {
+        // TODO: Implement actual logic to rate an addon
+        // This might involve updating metadata for the shared addon file or a registry.
+        false
     }
 }

@@ -21,7 +21,11 @@ class TranscriptionService(
 
     suspend fun transcribeAudio(uri: Uri): String {
         try {
-            val accessToken = credential.credential.accessToken
+            // Changed to use explicit getters
+            val accessToken = credential.getCredential().getAccessToken()
+            if (accessToken == null) {
+                 return "Error: Could not retrieve access token."
+            }
             val googleCredentials = GoogleCredentials.create(AccessToken(accessToken, null))
             val speechSettings = SpeechSettings.newBuilder()
                 .setCredentialsProvider(FixedCredentialsProvider.create(googleCredentials))

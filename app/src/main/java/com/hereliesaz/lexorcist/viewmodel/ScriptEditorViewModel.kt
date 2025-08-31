@@ -3,6 +3,7 @@ package com.hereliesaz.lexorcist.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.hereliesaz.lexorcist.data.SettingsManager
+import com.hereliesaz.lexorcist.model.SaveState // Added import
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -51,10 +52,4 @@ class ScriptEditorViewModel @Inject constructor(
         }
     }
 }
-
-sealed class SaveState {
-    object Idle : SaveState()
-    object Saving : SaveState()
-    object Success : SaveState()
-    data class Error(val message: String) : SaveState()
-}
+// Removed local SaveState definition from here
