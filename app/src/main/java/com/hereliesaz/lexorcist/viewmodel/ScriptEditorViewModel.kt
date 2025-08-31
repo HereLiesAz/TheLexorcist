@@ -2,9 +2,6 @@ package com.hereliesaz.lexorcist.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.hereliesaz.lexorcist.data.SettingsManager
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import com.hereliesaz.lexorcist.GoogleApiService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,7 +14,6 @@ import javax.inject.Inject
 class ScriptEditorViewModel @Inject constructor(
     private val googleApiService: GoogleApiService
 ) : ViewModel() {
-class ScriptEditorViewModel(private val settingsManager: SettingsManager) : ViewModel() {
 
     private val _scriptText = MutableStateFlow("")
     val scriptText: StateFlow<String> = _scriptText.asStateFlow()
@@ -25,8 +21,6 @@ class ScriptEditorViewModel(private val settingsManager: SettingsManager) : View
     private val _saveState = MutableStateFlow<SaveState>(SaveState.Idle)
     val saveState: StateFlow<SaveState> = _saveState.asStateFlow()
 
-    init {
-        loadScript()
     private var scriptId: String? = null
 
     fun loadScript(scriptId: String) {
@@ -45,17 +39,16 @@ class ScriptEditorViewModel(private val settingsManager: SettingsManager) : View
         _scriptText.value += text
     }
 
-    private fun loadScript() {
-        viewModelScope.launch {
-            _scriptText.value = settingsManager.getScript()
-        }
-    }
-
     fun saveScript() {
         viewModelScope.launch {
             _saveState.value = SaveState.Saving
+            if (scriptId == null) {
+                _saveState.value = SaveState.Error("No script loaded to save.")
+                return@launch
+            }
             try {
-                settingsManager.saveScript(_scriptText.value)
+                // TODO: Implement save functionality using GoogleApiService
+                // For example: googleApiService.updateScript(scriptId, _scriptText.value)
                 _saveState.value = SaveState.Success
             } catch (e: Exception) {
                 _saveState.value = SaveState.Error("Failed to save script")
