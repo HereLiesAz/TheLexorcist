@@ -20,38 +20,32 @@ import com.hereliesaz.lexorcist.viewmodel.OcrViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import com.hereliesaz.lexorcist.viewmodel.EvidenceDetailsViewModel
+import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
+    navController: NavHostController,
     authViewModel: AuthViewModel = viewModel(),
     caseViewModel: CaseViewModel = viewModel(),
     evidenceViewModel: EvidenceViewModel = viewModel(),
+    evidenceDetailsViewModel: EvidenceDetailsViewModel = viewModel(),
     ocrViewModel: OcrViewModel = viewModel(),
-    onSignIn: () -> Unit,
-    onSelectImage: () -> Unit,
-    onTakePicture: () -> Unit,
-    onAddDocument: () -> Unit,
-    onAddSpreadsheet: () -> Unit
+    mainViewModel: MainViewModel = viewModel(),
+    onSignInClick: () -> Unit,
+    onSignOutClick: () -> Unit,
 ) {
     val isSignedIn by authViewModel.isSignedIn.collectAsState()
     val selectedCase by caseViewModel.selectedCase.collectAsState()
     val errorMessage by caseViewModel.errorMessage.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
-    val navController = rememberNavController()
     var showCreateCaseDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(errorMessage) {
         errorMessage?.let {
             snackbarHostState.showSnackbar(it)
             caseViewModel.clearError()
-        }
-    }
-
-    LaunchedEffect(selectedCase) {
-        selectedCase?.let {
-            evidenceViewModel.loadEvidenceForCase(it)
         }
     }
 
@@ -68,39 +62,43 @@ fun MainScreen(
                 Box(modifier = Modifier.weight(1f)) {
                     NavHost(navController = navController, startDestination = "home") {
                         composable("home") { AuthenticatedView(onCreateCase = { showCreateCaseDialog = true }) }
-                        composable("cases") { CasesScreen(caseViewModel = caseViewModel) }
+                        composable("cases") { CasesScreen(caseViewModel = caseViewModel, onCaseSelected = {
+                            caseViewModel.selectCase(it)
+                            navController.navigate("timeline")
+                        }) }
                         composable("add_evidence") {
                             AddEvidenceScreen(
-                                evidenceViewModel = evidenceViewModel,
-                                ocrViewModel = ocrViewModel,
-                                onSelectImage = onSelectImage,
-                                onTakePicture = onTakePicture,
                                 onAddTextEvidence = { navController.navigate("add_text_evidence") },
-                                onAddDocument = onAddDocument,
-                                onAddSpreadsheet = onAddSpreadsheet
                             )
                         }
                         composable("add_text_evidence") {
-                            AddTextEvidenceScreen(
-                                evidenceViewModel = evidenceViewModel,
-                                onSave = {
-                                    navController.popBackStack()
+                            AddTextEvidenceScreen(onSave = { text ->
+                                selectedCase?.let {
+                                    evidenceViewModel.addTextEvidence(text)
                                 }
-                            )
+                                navController.navigateUp()
+                            })
                         }
-                        composable("timeline") { TimelineScreen(navController = navController, evidenceViewModel = evidenceViewModel) }
-                        composable("data_review") { DataReviewScreen(evidenceViewModel = evidenceViewModel) }
-                        composable("settings") { SettingsScreen(caseViewModel = caseViewModel) }
+                        composable("timeline") {
+                            selectedCase?.let {
+                                TimelineScreen(
+                                    case = it,
+                                    evidenceViewModel = evidenceViewModel,
+                                    onNavigateToEvidenceDetails = { evidenceId ->
+                                        navController.navigate("evidence_details/$evidenceId")
+                                    }
+                                )
+                            }
+                        }
+                        composable("data_review") { DataReviewScreen() }
+                        composable("settings") { SettingsScreen() }
                         composable("evidence_details/{evidenceId}") { backStackEntry ->
-                            val evidenceId = backStackEntry.arguments?.getString("evidenceId")
+                            val evidenceId = backStackEntry.arguments?.getString("evidenceId")?.toIntOrNull()
                             if (evidenceId != null) {
-                                val evidence by evidenceViewModel.getEvidenceFlow(evidenceId.toInt()).collectAsState(initial = null)
-                                evidence?.let {
-                                    EvidenceDetailsScreen(
-                                        evidence = it,
-                                        viewModel = evidenceViewModel
-                                    )
-                                }
+                                EvidenceDetailsScreen(
+                                    evidenceId = evidenceId,
+                                    viewModel = evidenceDetailsViewModel
+                                )
                             }
                         }
                     }
@@ -115,7 +113,7 @@ fun MainScreen(
                 horizontalAlignment = Alignment.End,
                 verticalArrangement = Arrangement.Center
             ) {
-                Button(onClick = onSignIn) {
+                Button(onClick = onSignInClick) {
                     Text(stringResource(R.string.sign_in_with_google))
                 }
             }
@@ -124,7 +122,7 @@ fun MainScreen(
         if (showCreateCaseDialog) {
             CreateCaseDialog(
                 caseViewModel = caseViewModel,
-                onDismiss = { showCreateCase-dialog = false }
+                onDismiss = { showCreateCaseDialog = false }
             )
         }
     }
@@ -169,8 +167,7 @@ fun CreateCaseDialog(
 ) {
     val context = LocalContext.current
     var caseName by remember { mutableStateOf("") }
-    val defaultExhibitSheetNameStr = stringResource(R.string.default_exhibit_sheet_name)
-    var exhibitSheetName by remember { mutableStateOf(defaultExhibitSheetNameStr) }
+    var exhibitSheetName by remember { mutableStateOf("") }
     var caseNumber by remember { mutableStateOf("") }
     var caseSection by remember { mutableStateOf("") }
     var caseJudge by remember { mutableStateOf("") }
@@ -215,7 +212,7 @@ fun CreateCaseDialog(
             Button(
                 onClick = {
                     if (caseName.isNotBlank()) {
-                        caseViewModel.createNewCaseWithRepository(
+                        caseViewModel.createCase(
                             caseName = caseName,
                             exhibitSheetName = exhibitSheetName.ifBlank { context.getString(R.string.default_exhibit_sheet_name) },
                             caseNumber = caseNumber,

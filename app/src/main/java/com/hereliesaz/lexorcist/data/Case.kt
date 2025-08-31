@@ -1,9 +1,5 @@
 package com.hereliesaz.lexorcist.data
 
-import androidx.room.ColumnInfo
-import androidx.room.PrimaryKey
-import androidx.room.Entity
-
 /**
  * Represents a legal case within the Lexorcist application.
  *
@@ -24,32 +20,18 @@ import androidx.room.Entity
  * @property isArchived Indicates if the case is archived.
  * @property lastModifiedTime The timestamp of when the case was last modified (optional).
  */
-@Entity(tableName = "cases")
 data class Case(
-    @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
-    @ColumnInfo(name = "name")
     val name: String,
-    @ColumnInfo(name = "spreadsheetId")
-    val spreadsheetId: String, // Assuming this is non-nullable based on one of the original definitions
-    @ColumnInfo(name = "scriptId")
+    val spreadsheetId: String,
     var scriptId: String? = null,
-    @ColumnInfo(name = "generatedPdfId")
     val generatedPdfId: String? = null,
-    @ColumnInfo(name = "sourceHtmlSnapshotId")
     val sourceHtmlSnapshotId: String? = null,
-    @ColumnInfo(name = "originalMasterHtmlTemplateId")
     val originalMasterHtmlTemplateId: String? = null,
-    @ColumnInfo(name = "folderId")
     val folderId: String? = null,
-    @ColumnInfo(name = "plaintiffs")
     val plaintiffs: String? = null,
-    @ColumnInfo(name = "defendants")
     val defendants: String? = null,
-    @ColumnInfo(name = "court")
     val court: String? = null,
-    @ColumnInfo(name = "isArchived")
     val isArchived: Boolean = false,
-    @ColumnInfo(name = "lastModifiedTime")
     val lastModifiedTime: Long? = null
 )

@@ -1,8 +1,10 @@
 package com.hereliesaz.lexorcist.data
 
 data class Evidence(
-    val id: Int,
+    val id: Int = 0,
+    val caseId: Long,
     val spreadsheetId: String,
+    val type: String,
     val content: String,
     val timestamp: Long,
     val sourceDocument: String,
@@ -11,5 +13,7 @@ data class Evidence(
     val category: String,
     val tags: List<String>,
     val commentary: String? = null,
-    val linkedEvidenceIds: List<Int> = emptyList()
+    val linkedEvidenceIds: List<Int> = emptyList(),
+    val parentVideoId: String? = null,
+    val entities: Map<String, List<String>> = emptyMap()
 )
