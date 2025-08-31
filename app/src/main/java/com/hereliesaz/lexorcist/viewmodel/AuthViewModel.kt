@@ -1,20 +1,14 @@
 package com.hereliesaz.lexorcist.viewmodel
 
-import android.app.Application // Keep if it extends AndroidViewModel, otherwise remove
 import android.content.Context
 import android.util.Log
-import androidx.lifecycle.ViewModel // Use ViewModel if not needing Application context
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
 import com.hereliesaz.lexorcist.GoogleApiService
-import com.hereliesaz.lexorcist.data.CaseRepository // Interface
-import com.hereliesaz.lexorcist.data.EvidenceRepository // Interface
-// Remove Impl imports if not directly used:
-// import com.hereliesaz.lexorcist.data.CaseRepositoryImpl
-// import com.hereliesaz.lexorcist.data.EvidenceRepositoryImpl
-import com.hereliesaz.lexorcist.utils.GoogleApiServiceHolder // If still used
+import com.hereliesaz.lexorcist.utils.GoogleApiServiceHolder
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext // For Context if needed
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,9 +19,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
-    @ApplicationContext private val applicationContext: Context, // Example if Context is needed
-    private var injectedGoogleApiService: GoogleApiService? // Changed to nullable, and named to avoid clash
-) : ViewModel() { // Changed to ViewModel, use AndroidViewModel if app context is truly needed for other things
+    @ApplicationContext private val applicationContext: Context
+) : ViewModel() {
 
     private val tag = "AuthViewModel"
 
@@ -42,28 +35,15 @@ class AuthViewModel @Inject constructor(
 
     private val _signOutEvent = MutableSharedFlow<Unit>()
     val signOutEvent = _signOutEvent.asSharedFlow()
-    
-    init {
-        _currentGoogleApiService.value = injectedGoogleApiService
-        _isSignedIn.value = injectedGoogleApiService != null
-        if (injectedGoogleApiService != null) {
-             GoogleApiServiceHolder.googleApiService = injectedGoogleApiService // If still using holder
-        }
-    }
 
-
-    fun onSignInResult(idToken: String?, email: String?, applicationName: String) { // Context removed from params, use injected
+    fun onSignInResult(idToken: String?, email: String?, applicationName: String) {
         viewModelScope.launch {
             if (email != null && idToken != null) {
                 try {
                     val newCredential = GoogleAccountCredential
                         .usingOAuth2(applicationContext, setOf(
-                            "https.www.googleapis.com/auth/spreadsheets", 
+                            "https.www.googleapis.com/auth/spreadsheets",
                             "https.www.googleapis.com/auth/drive.file"
-                            // Add other scopes like Drive, Docs, Script if needed
-                            // "https://www.googleapis.com/auth/drive",
-                            // "https://www.googleapis.com/auth/documents",
-                            // "https://www.googleapis.com/auth/script.projects"
                         ))
                     newCredential.selectedAccountName = email
                     
@@ -85,7 +65,7 @@ class AuthViewModel @Inject constructor(
         _currentGoogleApiService.value = apiService
         _credential.value = newCredential
         _isSignedIn.value = true
-        GoogleApiServiceHolder.googleApiService = apiService // Update static holder if still used
+        GoogleApiServiceHolder.googleApiService = apiService
         Log.d(tag, "onSignInSuccess: Signed in. GoogleApiService is now available.")
     }
 
@@ -93,12 +73,12 @@ class AuthViewModel @Inject constructor(
         _currentGoogleApiService.value = null
         _credential.value = null
         _isSignedIn.value = false
-        GoogleApiServiceHolder.googleApiService = null // Clear static holder if still used
+        GoogleApiServiceHolder.googleApiService = null
         Log.d(tag, "onSignInFailed: Sign in failed. GoogleApiService is null.")
     }
 
     fun onSignOut() {
-        onSignInFailed() // Clear current service and state
+        onSignInFailed()
         viewModelScope.launch {
             _signOutEvent.emit(Unit)
         }

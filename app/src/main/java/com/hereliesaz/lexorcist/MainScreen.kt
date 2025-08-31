@@ -12,47 +12,35 @@ import com.hereliesaz.lexorcist.components.AppNavRail
 import com.hereliesaz.lexorcist.ui.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.ui.platform.LocalContext // Added import
+import androidx.compose.ui.platform.LocalContext
 import com.hereliesaz.lexorcist.viewmodel.AuthViewModel
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
 import com.hereliesaz.lexorcist.viewmodel.OcrViewModel
-import kotlinx.coroutines.launch // Already present, ensure viewModelScope is used if needed from MainViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.hereliesaz.lexorcist.viewmodel.EvidenceDetailsViewModel
-import com.hereliesaz.lexorcist.viewmodel.MainViewModel
+import androidx.navigation.compose.rememberNavController
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
-    navController: NavHostController,
     authViewModel: AuthViewModel = viewModel(),
     caseViewModel: CaseViewModel = viewModel(),
     evidenceViewModel: EvidenceViewModel = viewModel(),
-    evidenceDetailsViewModel: EvidenceDetailsViewModel = viewModel(),
     ocrViewModel: OcrViewModel = viewModel(),
-    mainViewModel: MainViewModel = viewModel(),
     onSignIn: () -> Unit,
     onSelectImage: () -> Unit,
     onTakePicture: () -> Unit,
     onAddDocument: () -> Unit,
-    onAddSpreadsheet: () -> Unit,
-    onRecordAudio: () -> Unit,
-    onImportAudio: () -> Unit,
-    startRecording: () -> Unit,
-    stopRecording: () -> Unit,
-    isRecording: Boolean
+    onAddSpreadsheet: () -> Unit
 ) {
     val isSignedIn by authViewModel.isSignedIn.collectAsState()
     val selectedCase by caseViewModel.selectedCase.collectAsState()
-    val errorMessage by caseViewModel.errorMessage.collectAsState() // Assuming CaseViewModel will have error messages
+    val errorMessage by caseViewModel.errorMessage.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
-    var currentScreen by remember { mutableStateOf(R.string.nav_home) }
+    val navController = rememberNavController()
     var showCreateCaseDialog by remember { mutableStateOf(false) }
-
-    val localContext = LocalContext.current // Get context for onNavigate
 
     LaunchedEffect(errorMessage) {
         errorMessage?.let {
@@ -63,7 +51,7 @@ fun MainScreen(
 
     LaunchedEffect(selectedCase) {
         selectedCase?.let {
-            evidenceViewModel.loadEvidenceForCase(it.id.toLong())
+            evidenceViewModel.loadEvidenceForCase(it)
         }
     }
 
@@ -93,55 +81,24 @@ fun MainScreen(
                             )
                         }
                         composable("add_text_evidence") {
-                    when (currentScreen) {
-                        R.string.nav_home -> AuthenticatedView(
-                            onCreateCase = { showCreateCaseDialog = true }
-                        )
-                        R.string.nav_cases -> CasesScreen(caseViewModel = caseViewModel)
-                        R.string.nav_add_evidence -> AddEvidenceScreen(
-                            evidenceViewModel = evidenceViewModel,
-                            ocrViewModel = ocrViewModel,
-                            mainViewModel = mainViewModel,
-                            onSelectImage = onSelectImage,
-                            onTakePicture = onTakePicture,
-                            onAddTextEvidence = { currentScreen = R.string.add_text_evidence }, // Corrected: R.string.add_text_evidence
-                            onAddDocument = onAddDocument,
-                            onAddSpreadsheet = onAddSpreadsheet,
-                            onRecordAudio = { currentScreen = R.string.record_audio },
-                            onImportAudio = onImportAudio
-                        )
-                        R.string.record_audio -> RecordAudioScreen(
-                            onStartRecording = { startRecording() },
-                            onStopRecording = { stopRecording() },
-                            isRecording = isRecording.value
-                        )
-                        R.string.add_text_evidence -> { // Corrected: R.string.add_text_evidence
-                            val context = LocalContext.current // This context is fine for AddTextEvidenceScreen
-                            AddTextEvidenceScreen(evidenceViewModel = evidenceViewModel, onSave = { text ->
-                                selectedCase?.let {
-                                    evidenceViewModel.addTextEvidence(it.id, text)
+                            AddTextEvidenceScreen(
+                                evidenceViewModel = evidenceViewModel,
+                                onSave = {
+                                    navController.popBackStack()
                                 }
-                                navController.navigate("cases")
-                                evidenceViewModel.addTextEvidence(text)
-                                currentScreen = R.string.nav_cases
-                            })
+                            )
                         }
-                        R.string.nav_timeline -> TimelineScreen(evidenceViewModel = evidenceViewModel)
-                        R.string.nav_timeline -> TimelineScreen(caseViewModel = caseViewModel)
-                        R.string.nav_timeline -> TimelineScreen(viewModel = evidenceViewModel)
-                        R.string.nav_data_review -> DataReviewScreen(evidenceViewModel = evidenceViewModel)
-                        R.string.nav_settings -> SettingsScreen(caseViewModel = caseViewModel)
-                        composable("timeline") { TimelineScreen(navController = navController, viewModel = viewModel()) }
+                        composable("timeline") { TimelineScreen(navController = navController, evidenceViewModel = evidenceViewModel) }
                         composable("data_review") { DataReviewScreen(evidenceViewModel = evidenceViewModel) }
                         composable("settings") { SettingsScreen(caseViewModel = caseViewModel) }
                         composable("evidence_details/{evidenceId}") { backStackEntry ->
                             val evidenceId = backStackEntry.arguments?.getString("evidenceId")
                             if (evidenceId != null) {
-                                val evidence by evidenceViewModel.getEvidence(evidenceId.toInt()).collectAsState(initial = null)
+                                val evidence by evidenceViewModel.getEvidenceFlow(evidenceId.toInt()).collectAsState(initial = null)
                                 evidence?.let {
                                     EvidenceDetailsScreen(
                                         evidence = it,
-                                        viewModel = evidenceDetailsViewModel
+                                        viewModel = evidenceViewModel
                                     )
                                 }
                             }
@@ -167,7 +124,7 @@ fun MainScreen(
         if (showCreateCaseDialog) {
             CreateCaseDialog(
                 caseViewModel = caseViewModel,
-                onDismiss = { showCreateCaseDialog = false }
+                onDismiss = { showCreateCase-dialog = false }
             )
         }
     }
@@ -210,13 +167,10 @@ fun CreateCaseDialog(
     caseViewModel: CaseViewModel,
     onDismiss: () -> Unit
 ) {
-    val context = LocalContext.current // Get context for getString calls
+    val context = LocalContext.current
     var caseName by remember { mutableStateOf("") }
-
-    // Hoist stringResource calls for remember initializers
     val defaultExhibitSheetNameStr = stringResource(R.string.default_exhibit_sheet_name)
     var exhibitSheetName by remember { mutableStateOf(defaultExhibitSheetNameStr) }
-
     var caseNumber by remember { mutableStateOf("") }
     var caseSection by remember { mutableStateOf("") }
     var caseJudge by remember { mutableStateOf("") }
@@ -261,9 +215,8 @@ fun CreateCaseDialog(
             Button(
                 onClick = {
                     if (caseName.isNotBlank()) {
-                        caseViewModel.createCase(
+                        caseViewModel.createNewCaseWithRepository(
                             caseName = caseName,
-                            // Use context.getString for ifBlank
                             exhibitSheetName = exhibitSheetName.ifBlank { context.getString(R.string.default_exhibit_sheet_name) },
                             caseNumber = caseNumber,
                             caseSection = caseSection,

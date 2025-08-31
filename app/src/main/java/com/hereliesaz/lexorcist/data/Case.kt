@@ -1,7 +1,6 @@
 package com.hereliesaz.lexorcist.data
 
 import androidx.room.ColumnInfo
-import androidx.room.ColumnInfo
 import androidx.room.PrimaryKey
 import androidx.room.Entity
 

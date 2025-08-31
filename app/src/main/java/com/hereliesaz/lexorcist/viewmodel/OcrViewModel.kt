@@ -13,8 +13,8 @@ import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import com.hereliesaz.lexorcist.data.Evidence
-import com.hereliesaz.lexorcist.data.SettingsManager // Assuming this is correctly injected if used
-import com.hereliesaz.lexorcist.service.ScriptRunner // Assuming this is correctly injected if used
+import com.hereliesaz.lexorcist.data.SettingsManager
+import com.hereliesaz.lexorcist.service.ScriptRunner
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,8 +32,8 @@ import javax.inject.Inject
 @HiltViewModel
 class OcrViewModel @Inject constructor(
     application: Application,
-    private val settingsManager: SettingsManager, // Ensure these are properly provided by Hilt
-    private val scriptRunner: ScriptRunner         // Ensure these are properly provided by Hilt
+    private val settingsManager: SettingsManager,
+    private val scriptRunner: ScriptRunner
 ) : AndroidViewModel(application) {
 
     private val tag = "OcrViewModel"
@@ -88,7 +88,7 @@ class OcrViewModel @Inject constructor(
 
     fun confirmImageReview(context: Context) {
         val reviewedBitmap = _imageBitmapForReview.value ?: return
-        val currentImageUri = imageUriForReview ?: return // Use a different name to avoid confusion
+        val currentImageUri = imageUriForReview ?: return
 
         _isOcrInProgress.value = true
         viewModelScope.launch {
@@ -105,21 +105,21 @@ class OcrViewModel @Inject constructor(
                         val documentTimestamp = extractDocumentDate(context, currentImageUri)
                         val parsedEntities = com.hereliesaz.lexorcist.DataParser.tagData(ocrText)
                         var evidenceToEmit = Evidence(
-                            caseId = 0L, // Placeholder caseId, to be set by EvidenceViewModel
-                            type = "ocr_image_review",
+                            id = 0, // Will be replaced by Room
+                            spreadsheetId = "", // Placeholder
                             content = ocrText,
                             timestamp = System.currentTimeMillis(),
                             sourceDocument = currentImageUri.toString(),
                             documentDate = documentTimestamp,
                             category = "OCR Image",
-                            tags = parsedEntities.values.flatten().distinct(), // Initial tags from DataParser
-                            entities = parsedEntities
+                            tags = parsedEntities.values.flatten().distinct(),
+                            allegationId = null
                         )
 
                         val userScript = settingsManager.getScript()
                         if (userScript.isNotBlank()) {
                             try {
-                                val scriptResult = scriptRunner.runScript(userScript, evidenceToEmit) // Pass Evidence object
+                                val scriptResult = scriptRunner.runScript(userScript, evidenceToEmit)
                                 evidenceToEmit = evidenceToEmit.copy(tags = (evidenceToEmit.tags + scriptResult.tags).distinct())
                             } catch (e: Exception) {
                                 Log.e(tag, "Error running user script on OCR evidence", e)
@@ -130,7 +130,7 @@ class OcrViewModel @Inject constructor(
                             _newlyCreatedEvidence.emit(evidenceToEmit)
                         }
                         _isOcrInProgress.value = false
-                        cancelImageReview() // Clear review state
+                        cancelImageReview()
                     }
                     .addOnFailureListener { e ->
                         Log.e(tag, "Text recognition failed", e)
@@ -150,9 +150,8 @@ class OcrViewModel @Inject constructor(
             context.contentResolver.openInputStream(uri)?.use { inputStream ->
                 val exif = ExifInterface(inputStream)
                 exif.getAttribute(ExifInterface.TAG_DATETIME)?.let { dateTimeString ->
-                    // EXIF format is "yyyy:MM:dd HH:mm:ss"
                     val sdf = SimpleDateFormat("yyyy:MM:dd HH:mm:ss", Locale.US)
-                    sdf.timeZone = TimeZone.getTimeZone("UTC") // Or local, if EXIF is local
+                    sdf.timeZone = TimeZone.getTimeZone("UTC")
                     sdf.parse(dateTimeString)?.time
                 }
             } ?: System.currentTimeMillis()
@@ -167,7 +166,7 @@ class OcrViewModel @Inject constructor(
         imageUriForReview = null
     }
 
-    fun performOcrOnUri(uri: Uri, context: Context, caseIdInput: Int, parentVideoIdInput: String?) {
+    fun performOcrOnUri(uri: Uri, context: Context, spreadsheetId: String) {
         _isOcrInProgress.value = true
         viewModelScope.launch {
             try {
@@ -191,18 +190,16 @@ class OcrViewModel @Inject constructor(
                         val parsedEntities = com.hereliesaz.lexorcist.DataParser.tagData(ocrText)
 
                         val evidenceToEmit = Evidence(
-                            caseId = caseIdInput.toLong(), // Convert Int to Long
-                            type = "ocr_from_video",
+                            id = 0,
+                            spreadsheetId = spreadsheetId,
                             content = ocrText,
                             timestamp = System.currentTimeMillis(),
                             sourceDocument = uri.toString(),
                             documentDate = documentTimestamp,
                             category = "OCR from Video",
-                            parentVideoId = parentVideoIdInput,
                             tags = parsedEntities.values.flatten().distinct(),
-                            entities = parsedEntities
+                            allegationId = null
                         )
-                        // Note: ScriptRunner could also be applied here if needed
                         viewModelScope.launch {
                             _newlyCreatedEvidence.emit(evidenceToEmit)
                         }
@@ -224,29 +221,23 @@ class OcrViewModel @Inject constructor(
     }
 
     private fun preprocessImageForOcr(bitmap: Bitmap): Bitmap {
-        // Consider making preprocessing optional or configurable via SettingsManager
-        // For now, keeping the existing logic
         var mat = Mat()
         Utils.bitmapToMat(bitmap, mat)
-        // ... (rest of preprocessing logic remains the same) ...
         val gray = Mat()
         Imgproc.cvtColor(mat, gray, Imgproc.COLOR_BGR2GRAY)
 
         val blurred = Mat()
         Imgproc.GaussianBlur(gray, blurred, org.opencv.core.Size(5.0, 5.0), 0.0)
 
-        // Optional: Deskewing - can be complex and depends on image characteristics
-        // val deskewedMat = deskewImage(mat) // Assuming deskewImage is a new private method
-
         val binaryMat = Mat()
         Imgproc.adaptiveThreshold(
-            blurred, // Use blurred or deskewedMat if implemented
+            blurred,
             binaryMat,
             255.0,
             Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C,
             Imgproc.THRESH_BINARY,
-            11, // Block size
-            2.0  // C value
+            11,
+            2.0
         )
         val resultBitmap = Bitmap.createBitmap(binaryMat.cols(), binaryMat.rows(), Bitmap.Config.ARGB_8888)
         Utils.matToBitmap(binaryMat, resultBitmap)

@@ -1,89 +1,50 @@
 package com.hereliesaz.lexorcist.ui
 
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Article
 import androidx.compose.material.icons.automirrored.filled.Message
-import androidx.compose.material.icons.filled.Audiotrack
-import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Mail
-import androidx.compose.material.icons.filled.Phone
-import androidx.compose.material.icons.filled.Videocam
-import androidx.compose.material.icons.filled.Work
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.ExperimentalComposeApi
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
+import androidx.navigation.NavController
+import coil.compose.rememberAsyncImagePainter
 import com.hereliesaz.lexorcist.data.Evidence
-import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
-// import com.pushpal.jetlime.EventPointType // Removed import as it's causing unresolved references
 import com.pushpal.jetlime.JetLimeColumn
 import com.pushpal.jetlime.JetLimeEventDefaults
 import com.pushpal.jetlime.JetLimeExtendedEvent
 import com.pushpal.jetlime.ItemsList
 import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import androidx.compose.foundation.Image
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
-import androidx.core.net.toUri
-import coil.compose.rememberAsyncImagePainter
-import androidx.compose.material3.Button
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.navigation.NavController
+import java.util.*
 
-@OptIn(ExperimentalMaterial3Api::class)
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInParent
-import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
-
-@OptIn(ExperimentalComposeApi::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun TimelineScreen(viewModel: EvidenceViewModel) {
-    val evidenceList by viewModel.evidenceList.collectAsState()
-fun TimelineScreen(caseViewModel: CaseViewModel) {
-    val evidenceList by caseViewModel.selectedCaseEvidenceList.collectAsState()
 fun TimelineScreen(
     navController: NavController,
-    viewModel: MainViewModel
+    evidenceViewModel: EvidenceViewModel
 ) {
-    val evidenceList by viewModel.selectedCaseEvidenceList.collectAsState()
-fun TimelineScreen(evidenceViewModel: EvidenceViewModel) {
     val evidenceList by evidenceViewModel.evidenceList.collectAsState()
     var selectedEvidence by remember { mutableStateOf<Evidence?>(null) }
     var showEnlargedImageDialog by remember { mutableStateOf(false) }
@@ -102,8 +63,8 @@ fun TimelineScreen(evidenceViewModel: EvidenceViewModel) {
             evidenceList.filter { evidence ->
                 val matchesSearch = if (searchQuery.isNotBlank()) {
                     evidence.content.contains(searchQuery, ignoreCase = true) ||
-                    evidence.sourceDocument.contains(searchQuery, ignoreCase = true) ||
-                    evidence.tags.any { it.contains(searchQuery, ignoreCase = true) }
+                            (evidence.sourceDocument.contains(searchQuery, ignoreCase = true)) ||
+                            evidence.tags.any { it.contains(searchQuery, ignoreCase = true) }
                 } else {
                     true
                 }
@@ -164,74 +125,16 @@ fun TimelineScreen(evidenceViewModel: EvidenceViewModel) {
         if (filteredEvidenceList.isEmpty()) {
             Text("No evidence found matching your criteria.")
         } else {
-            JetLimeColumn(
-                modifier = Modifier.padding(horizontal = 12.dp),
-                itemsList = ItemsList(filteredEvidenceList),
-                key = { _, item -> item.id },
-            ) { _, item, position ->
-                JetLimeExtendedEvent(
-                    style = JetLimeEventDefaults.eventStyle(
-                        position = position,
-                        pointColor = getColorForCategory(item.category), // Color-coded point
-                        pointAnimation = JetLimeEventDefaults.pointAnimation()
-                    ),
-                    additionalContent = {
-                        Column(horizontalAlignment = Alignment.End) {
-                            Text(
-                                text = SimpleDateFormat("MMM dd", Locale.getDefault()).format(Date(item.documentDate)),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.End
-                            )
-                            Text(
-                                text = SimpleDateFormat("yyyy", Locale.getDefault()).format(Date(item.documentDate)),
-                                style = MaterialTheme.typography.bodySmall,
-                                textAlign = TextAlign.End
-                            )
-                        }
-                    }
-                ) {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { selectedEvidence = item }
-                            .padding(start = 12.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = getIconForCategory(item.category),
-                                contentDescription = "Category Icon",
-                                tint = getColorForCategory(item.category),
-                                modifier = Modifier.size(40.dp)
-                            )
-                            Spacer(Modifier.width(12.dp))
-                            Column(
-                                verticalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Text(
-                                    text = item.sourceDocument,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Text(
-                                    text = item.content,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    maxLines = 3,
-                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
             Box {
                 JetLimeColumn(
                     modifier = Modifier.padding(horizontal = 12.dp),
-                    itemsList = ItemsList(evidenceList),
+                    itemsList = ItemsList(filteredEvidenceList),
                     key = { _, item -> item.id },
                 ) { _, item, position ->
                     JetLimeExtendedEvent(
                         style = JetLimeEventDefaults.eventStyle(
                             position = position,
-                            pointColor = MaterialTheme.colorScheme.primary,
+                            pointColor = getColorForCategory(item.category),
                             pointAnimation = JetLimeEventDefaults.pointAnimation()
                         ),
                         additionalContent = {
@@ -277,32 +180,58 @@ fun TimelineScreen(evidenceViewModel: EvidenceViewModel) {
                                 .padding(start = 12.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),
                             elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                         ) {
-                            Column(
+                            Row(
                                 modifier = Modifier.padding(12.dp),
-                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(
-                                    text = item.sourceDocument,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold
+                                Icon(
+                                    imageVector = getIconForCategory(item.category),
+                                    contentDescription = "Category Icon",
+                                    tint = getColorForCategory(item.category),
+                                    modifier = Modifier.size(40.dp)
                                 )
-                                Text(
-                                    text = item.content,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    maxLines = 3
-                                )
-                                if (item.category.isNotBlank()) {
+                                Spacer(Modifier.width(12.dp))
+                                Column(
+                                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
                                     Text(
-                                        text = "Category: ${item.category}",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        fontWeight = FontWeight.SemiBold
+                                        text = item.sourceDocument,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold
                                     )
-                                }
-                                if (item.tags.isNotEmpty()) {
                                     Text(
-                                        text = "Tags: ${item.tags.joinToString()}",
-                                        style = MaterialTheme.typography.bodySmall
+                                        text = item.content,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        maxLines = 3,
+                                        overflow = TextOverflow.Ellipsis
                                     )
+                                    if (item.category.isNotBlank()) {
+                                        Text(
+                                            text = "Category: ${item.category}",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                    }
+                                    if (item.tags.isNotEmpty()) {
+                                        Text(
+                                            text = "Tags: ${item.tags.joinToString()}",
+                                            style = MaterialTheme.typography.bodySmall
+                                        )
+                                    }
+                                     if (item.category in listOf("Image", "OCR Image") && item.sourceDocument.startsWith("content://") == true) {
+                                        androidx.compose.foundation.Image(
+                                            painter = rememberAsyncImagePainter(model = item.sourceDocument.toUri()),
+                                            contentDescription = "Evidence Thumbnail",
+                                            modifier = Modifier
+                                                .size(64.dp)
+                                                .clip(MaterialTheme.shapes.small)
+                                                .clickable {
+                                                    evidenceToEnlarge = item
+                                                    showEnlargedImageDialog = true
+                                                },
+                                            contentScale = ContentScale.Crop
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -320,20 +249,6 @@ fun TimelineScreen(evidenceViewModel: EvidenceViewModel) {
                                     end = to,
                                     strokeWidth = 2f,
                                     pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f)
-                                )
-                            }
-                            if (item.category in listOf("Image", "OCR Image") && item.sourceDocument.startsWith("content://")) {
-                                Image(
-                                    painter = rememberAsyncImagePainter(model = item.sourceDocument.toUri()),
-                                    contentDescription = "Evidence Thumbnail",
-                                    modifier = Modifier
-                                        .size(64.dp)
-                                        .clip(MaterialTheme.shapes.small)
-                                        .clickable {
-                                            evidenceToEnlarge = item
-                                            showEnlargedImageDialog = true
-                                        },
-                                    contentScale = ContentScale.Crop
                                 )
                             }
                         }
@@ -370,7 +285,7 @@ fun EnlargedImageDialog(
         title = { Text(evidence.sourceDocument) },
         text = {
             Column {
-                Image(
+                androidx.compose.foundation.Image(
                     painter = rememberAsyncImagePainter(model = evidence.sourceDocument.toUri()),
                     contentDescription = "Enlarged Evidence Thumbnail",
                     modifier = Modifier.fillMaxWidth(),
@@ -380,6 +295,27 @@ fun EnlargedImageDialog(
                 Button(onClick = onNavigate) {
                     Text("View Details")
                 }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Close")
+            }
+        }
+    )
+}
+
+@Composable
+fun EvidenceDetailsDialog(evidence: Evidence, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Evidence Details") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Source: ${evidence.sourceDocument}", fontWeight = FontWeight.Bold)
+                Text(evidence.content)
+                Text("Category: ${evidence.category}", style = MaterialTheme.typography.bodySmall)
+                Text("Tags: ${evidence.tags.joinToString()}", style = MaterialTheme.typography.bodySmall)
             }
         },
         confirmButton = {
@@ -402,5 +338,16 @@ fun getColorForCategory(category: String?): Color {
     }
 }
 
-// getIconForCategory and EvidenceDetailsDialog functions remain the same as before...
-// (Make sure they are still in this file)
+@Composable
+fun getIconForCategory(category: String?): ImageVector {
+    return when (category?.lowercase(Locale.getDefault())) {
+        "email" -> Icons.Default.Mail
+        "sms", "message" -> Icons.AutoMirrored.Filled.Message
+        "image", "ocr image" -> Icons.Default.Image
+        "video" -> Icons.Default.Videocam
+        "audio" -> Icons.Default.Audiotrack
+        "document", "text file", "pdf file", "spreadsheet file" -> Icons.AutoMirrored.Filled.Article
+        "location" -> Icons.Default.LocationOn
+        else -> Icons.Default.Work
+    }
+}

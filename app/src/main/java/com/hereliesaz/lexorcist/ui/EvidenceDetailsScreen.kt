@@ -14,7 +14,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.hereliesaz.lexorcist.data.Evidence
-import com.hereliesaz.lexorcist.viewmodel.EvidenceDetailsViewModel
+import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
 import androidx.compose.material3.Button
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -25,9 +25,9 @@ import coil.compose.rememberAsyncImagePainter
 @Composable
 fun EvidenceDetailsScreen(
     evidence: Evidence,
-    viewModel: EvidenceDetailsViewModel
+    viewModel: EvidenceViewModel
 ) {
-    var commentary by remember { mutableStateOf(evidence.commentary) }
+    var commentary by remember { mutableStateOf(evidence.commentary ?: "") }
 
     Column(modifier = Modifier.padding(16.dp)) {
         if (evidence.category in listOf("Image", "OCR Image") && evidence.sourceDocument.startsWith("content://")) {
