@@ -282,7 +282,7 @@ class GoogleApiService(
         }
     }
 
-    suspend fun appendData(spreadsheetId: String, range: String, values: List<List<Any>>): UpdateValuesResponse? {
+    suspend fun appendData(spreadsheetId: String, range: String, values: List<List<Any>>): AppendValuesResponse? {
         return withContext(Dispatchers.IO) {
             try {
                 val body = ValueRange().setValues(values)
