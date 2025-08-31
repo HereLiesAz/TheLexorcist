@@ -13,8 +13,9 @@ import com.google.api.services.sheets.v4.model.Request
 import com.google.api.services.sheets.v4.model.AddSheetRequest
 import io.mockk.coEvery
 import io.mockk.coVerify
-import io.mockk.eq
 import io.mockk.mockk
+import io.mockk.any
+import io.mockk.eq
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -28,23 +29,14 @@ import org.junit.runners.JUnit4
 class GoogleApiServiceTest {
 
     private lateinit var googleApiService: GoogleApiService
-    private lateinit var credential: GoogleAccountCredential
     private lateinit var driveService: Drive
     private lateinit var sheetsService: Sheets
 
     @Before
     fun setup() {
-        credential = mockk(relaxed = true)
         driveService = mockk(relaxed = true)
         sheetsService = mockk(relaxed = true)
-        googleApiService = GoogleApiService(credential, "TestApp")
-        // This is a hack to replace the real services with mocks
-        val driveServiceField = googleApiService.javaClass.getDeclaredField("driveService")
-        driveServiceField.isAccessible = true
-        driveServiceField.set(googleApiService, driveService)
-        val sheetsServiceField = googleApiService.javaClass.getDeclaredField("sheetsService")
-        sheetsServiceField.isAccessible = true
-        sheetsServiceField.set(googleApiService, sheetsService)
+        googleApiService = GoogleApiService(driveService, sheetsService)
     }
 
     @Test
@@ -82,7 +74,7 @@ class GoogleApiServiceTest {
         coEvery { driveService.files().create(any()).setFields("id").execute() } returns newFile
 
         // When
-        val spreadsheetId = googleApiService.createSpreadsheet("Test Spreadsheet")
+        val spreadsheetId = googleApiService.createSpreadsheet("Test Spreadsheet", "test_folder_id")
 
         // Then
         assertEquals("new_spreadsheet_id", spreadsheetId)
