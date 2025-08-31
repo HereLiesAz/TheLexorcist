@@ -1,19 +1,12 @@
 package com.hereliesaz.lexorcist.di
 
-import com.hereliesaz.lexorcist.GoogleApiService
 import dagger.Module
-import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
-
-    @Provides
-    @Singleton
-    fun provideGoogleApiService(): GoogleApiService {
-        return GoogleApiService()
-    }
+    // GoogleApiService is not provided here because it requires a user's credential.
+    // It will be created in the AuthViewModel after the user signs in.
 }

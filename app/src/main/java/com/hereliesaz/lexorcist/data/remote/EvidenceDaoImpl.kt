@@ -11,22 +11,23 @@ class EvidenceDaoImpl @Inject constructor(
     private val googleApiService: GoogleApiService
 ) : EvidenceDao {
 
-    override fun getEvidenceForCase(spreadsheetId: String, caseId: Long): Flow<List<Evidence>> = flow {
-        emit(googleApiService.getEvidenceForCase(spreadsheetId, caseId.toInt()))
+    override fun getEvidenceForCase(caseId: Long): Flow<List<Evidence>> = flow {
+        // This is not possible with the current Google Sheets setup
+        emit(emptyList())
+    }
+
+    override fun getEvidenceFlow(id: Int): Flow<Evidence> = flow {
+        // This is not possible with the current Google Sheets setup
     }
 
     override suspend fun getEvidenceById(id: Int): Evidence? {
-        // Not supported by GoogleApiService yet.
+        // This is not possible with the current Google Sheets setup
         return null
     }
 
-    override fun getEvidence(id: Int): Flow<Evidence> {
-        // Not supported by GoogleApiService yet.
-        return flow { }
-    }
-
-    override suspend fun insert(evidence: Evidence) {
+    override suspend fun insert(evidence: Evidence): Long {
         googleApiService.addEvidenceToCase(evidence.spreadsheetId, evidence)
+        return 0
     }
 
     override suspend fun update(evidence: Evidence) {
@@ -38,6 +39,6 @@ class EvidenceDaoImpl @Inject constructor(
     }
 
     override suspend fun updateCommentary(id: Int, commentary: String) {
-        // Not supported by GoogleApiService yet.
+        // This is not supported by the Google Sheets implementation.
     }
 }

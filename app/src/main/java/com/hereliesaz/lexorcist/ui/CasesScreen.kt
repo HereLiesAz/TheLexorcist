@@ -26,7 +26,6 @@ import androidx.compose.ui.unit.dp
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
-import com.hereliesaz.lexorcist.CreateCaseDialog // Import the dialog from the parent package
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

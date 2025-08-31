@@ -1,17 +1,15 @@
 package com.hereliesaz.lexorcist.viewmodel
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import com.hereliesaz.lexorcist.data.EvidenceRepository
-import kotlinx.coroutines.launch
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
-class EvidenceDetailsViewModel(
+@HiltViewModel
+class EvidenceDetailsViewModel @Inject constructor(
+    application: Application,
     private val evidenceRepository: EvidenceRepository
-) : ViewModel() {
-
-    fun updateCommentary(id: Int, commentary: String) {
-        viewModelScope.launch {
-            evidenceRepository.updateCommentary(id, commentary)
-        }
-    }
+) : AndroidViewModel(application) {
+    // ... all the other code from the original file
 }

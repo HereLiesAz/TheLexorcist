@@ -2,49 +2,42 @@ package com.hereliesaz.lexorcist.data
 
 import com.hereliesaz.lexorcist.GoogleApiService
 import kotlinx.coroutines.flow.Flow
-import java.lang.Exception
+import kotlinx.coroutines.flow.flow
 import javax.inject.Inject
-import javax.inject.Singleton
 
-@Singleton
 class EvidenceRepositoryImpl @Inject constructor(
     private val evidenceDao: EvidenceDao,
     private val googleApiService: GoogleApiService?
 ) : EvidenceRepository {
 
-    override fun getEvidenceForCase(spreadsheetId: String, caseId: Long): Flow<List<Evidence>> {
+    override fun getEvidenceForCase(caseId: Long): Flow<List<Evidence>> {
         return evidenceDao.getEvidenceForCase(caseId)
+    }
+
+    override fun getEvidenceFlow(id: Int): Flow<Evidence> {
+        return evidenceDao.getEvidenceFlow(id)
     }
 
     override suspend fun getEvidenceById(id: Int): Evidence? {
         return evidenceDao.getEvidenceById(id)
     }
 
-    override fun getEvidence(id: Int): Flow<Evidence> {
-        return evidenceDao.getEvidence(id)
-    }
-
     override suspend fun addEvidence(evidence: Evidence) {
-        googleApiService?.let { api ->
-            val newId = api.addEvidenceToCase(evidence.spreadsheetId, evidence)
-            if (newId != null) {
-                val finalEvidence = evidence.copy(id = newId)
-                evidenceDao.insert(finalEvidence)
-            }
-        }
+        val newId = evidenceDao.insert(evidence)
+        googleApiService?.addEvidenceToCase(evidence.spreadsheetId, evidence.copy(id = newId.toInt()))
     }
 
     override suspend fun updateEvidence(evidence: Evidence) {
-        googleApiService?.updateEvidenceInCase(evidence.spreadsheetId, evidence)
         evidenceDao.update(evidence)
+        googleApiService?.updateEvidenceInCase(evidence.spreadsheetId, evidence)
     }
 
     override suspend fun deleteEvidence(evidence: Evidence) {
-        googleApiService?.deleteEvidenceFromCase(evidence.spreadsheetId, evidence.id)
         evidenceDao.delete(evidence)
+        googleApiService?.deleteEvidenceFromCase(evidence.spreadsheetId, evidence.id)
     }
 
     override suspend fun updateCommentary(id: Int, commentary: String) {
-        // This method is not supported by the Google Sheets implementation.
+        evidenceDao.updateCommentary(id, commentary)
     }
 }

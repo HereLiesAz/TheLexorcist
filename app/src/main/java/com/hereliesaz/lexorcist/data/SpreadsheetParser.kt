@@ -1,17 +1,15 @@
-package com.hereliesaz.lexorcist.data // Assuming this is the correct package
+package com.hereliesaz.lexorcist.data
 
-import com.hereliesaz.lexorcist.GoogleApiService
-import com.hereliesaz.lexorcist.model.Case // Added import
+import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.model.SpreadsheetSchema
 import javax.inject.Inject
 
 class SpreadsheetParser @Inject constructor(
-    private val googleApiService: GoogleApiService,
     private val schema: SpreadsheetSchema,
     private val caseDao: CaseDao
 ) {
 
-    suspend fun parseAndStore(sheetData: Map<String, List<List<Any>>>): Case? {
+    suspend fun parseAndStore(spreadsheetId: String, sheetData: Map<String, List<List<Any>>>): Case? {
         val caseDetailsSheet = schema.sheets.find { it.name == "Case Details" }
         val evidenceSheet = schema.sheets.find { it.name == "Evidence Log" }
 
@@ -29,13 +27,10 @@ class SpreadsheetParser @Inject constructor(
         }
 
         val caseName = extractStringValue(caseDetailsData, caseDetailsSheet, "Case Name") ?: "Imported Case"
-        // Placeholder for the ID of the spreadsheet being parsed. This is a complex topic
-        // as the map itself doesn't directly provide it. For now, empty.
-        val sourceSpreadsheetId = "" 
 
         val newCase = Case(
             name = caseName,
-            spreadsheetId = sourceSpreadsheetId 
+            spreadsheetId = spreadsheetId
             // Initialize other fields as needed based on your schema and extraction logic
         )
 
@@ -58,11 +53,6 @@ class SpreadsheetParser @Inject constructor(
         val columnIndex = sheetSchema.columns.indexOfFirst { it.name == columnName }
         if (columnIndex == -1) return null
         
-        // This assumes actual data starts from the second row (index 1) of the sheetData list,
-        // and that case details are typically single values in a specific row (e.g., the first data row).
-        // Adjust indices if your sheet structure is different (e.g., headers are not in sheetData).
         return sheetData.getOrNull(1)?.getOrNull(columnIndex)?.toString()
     }
-
-    // You might need other helper functions like extractIntValue, extractDateValue, etc.
 }

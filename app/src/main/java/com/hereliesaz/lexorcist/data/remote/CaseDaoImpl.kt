@@ -11,29 +11,30 @@ class CaseDaoImpl @Inject constructor(
     private val googleApiService: GoogleApiService
 ) : CaseDao {
 
-    private suspend fun getRegistryId(): String? {
-        val appRootFolderId = googleApiService.getOrCreateAppRootFolder()
-        return appRootFolderId?.let {
-            googleApiService.getOrCreateCaseRegistrySpreadsheetId(it)
-        }
-    }
-
-    override suspend fun insert(case: Case) {
-        getRegistryId()?.let {
-            googleApiService.addCaseToRegistry(it, case)
-        }
-    }
-
     override fun getAllCases(): Flow<List<Case>> = flow {
-        getRegistryId()?.let {
-            emit(googleApiService.getAllCasesFromRegistry(it))
-        }
+        val appRootFolderId = googleApiService.getOrCreateAppRootFolder() ?: return@flow
+        val registryId = googleApiService.getOrCreateCaseRegistrySpreadsheetId(appRootFolderId) ?: return@flow
+        emit(googleApiService.getAllCasesFromRegistry(registryId))
+    }
+
+    override suspend fun getCaseById(id: Int): Case? {
+        // This is not possible with the current Google Sheets setup
+        return null
     }
 
     override suspend fun getCaseBySpreadsheetId(spreadsheetId: String): Case? {
-        val registryId = getRegistryId() ?: return null
-        val cases = googleApiService.getAllCasesFromRegistry(registryId)
-        return cases.find { it.spreadsheetId == spreadsheetId }
+        // This is not possible with the current Google Sheets setup
+        return null
+    }
+
+    override suspend fun insert(case: Case): Long {
+        val appRootFolderId = googleApiService.getOrCreateAppRootFolder() ?: return 0
+        val registryId = googleApiService.getOrCreateCaseRegistrySpreadsheetId(appRootFolderId) ?: return 0
+        return if (googleApiService.addCaseToRegistry(registryId, case)) 1 else 0
+    }
+
+    override suspend fun update(case: Case) {
+        googleApiService.updateCaseInRegistry(case)
     }
 
     override suspend fun delete(case: Case) {
