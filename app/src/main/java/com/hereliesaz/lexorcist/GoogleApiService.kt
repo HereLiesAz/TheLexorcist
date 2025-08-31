@@ -98,10 +98,16 @@ class GoogleApiService(
             if (existingFiles != null && existingFiles.isNotEmpty()) {
                 registrySpreadsheetId = existingFiles[0].id
             } else {
-                registrySpreadsheetId = createSpreadsheet(CASE_REGISTRY_SPREADSHEET_NAME, appRootFolderId)
-                if (registrySpreadsheetId == null) return@withContext null
-                addSheet(registrySpreadsheetId, CASE_REGISTRY_SHEET_NAME)
-                appendData(registrySpreadsheetId, CASE_REGISTRY_SHEET_NAME, newHeader)
+                val createResult = createSpreadsheet(CASE_REGISTRY_SPREADSHEET_NAME, appRootFolderId)
+                if (createResult is Result.Success) {
+                    registrySpreadsheetId = createResult.data
+                    if (registrySpreadsheetId == null) return@withContext null
+                    addSheet(registrySpreadsheetId, CASE_REGISTRY_SHEET_NAME)
+                    appendData(registrySpreadsheetId, CASE_REGISTRY_SHEET_NAME, newHeader)
+                } else {
+                    Log.e("GoogleApiService", "Error creating case registry spreadsheet: ${(createResult as Result.Error).exception}")
+                    return@withContext null
+                }
             }
             if (registrySpreadsheetId != null) {
                 addSheet(registrySpreadsheetId, CASE_REGISTRY_SHEET_NAME) // Ensure sheet exists
@@ -228,15 +234,6 @@ class GoogleApiService(
             e.printStackTrace()
             Log.e("GoogleApiService", "Error in deleteCaseFromRegistry for ${caseData.name}", e)
             false
-        }
-    }
-
-    suspend fun deleteFolder(folderId: String) = withContext(Dispatchers.IO) {
-        try {
-            folderManager.deleteFolder(folderId)
-        } catch (e: IOException) {
-            e.printStackTrace()
-            Log.e("GoogleApiService", "Error in deleteFolder for $folderId", e)
         }
     }
 
@@ -396,7 +393,7 @@ class GoogleApiService(
                     entries.add(
                         Evidence(
                             id = index,                            
-                            caseId = caseIdForAssociation,       
+                            spreadsheetId = caseSpreadsheetId,       
                             content = content,                     
                             timestamp = timestampLong,      
                             sourceDocument = sourceDocument,       
@@ -686,7 +683,7 @@ class GoogleApiService(
                 }
             }.toMutableList()
 
-            if (updatedFiles.none { (it.name == "Code" || it.name == "Code.gs" || it.name == "Code.js") && it.type == "SERVER_JS"}) {
+            if (updatedFiles.none { (it.name == "Code" || it.name == "Code.gs" || it.name == "Code.js") && it.type == "SERVER_JS" }) {
                  updatedFiles.add(com.google.api.services.script.model.File().setName("Code").setType("SERVER_JS").setSource(scriptContent))
             }
             
@@ -705,7 +702,7 @@ class GoogleApiService(
             driveService.files().get(fileId).executeMediaAsInputStream().use { inputStream ->
                 if (inputStream == null) {
                     Log.e("GoogleApiService", "Failed to get input stream for file ID: $fileId")
-                    return@withContext null
+                    return@useContext null
                 }
                 BufferedReader(InputStreamReader(inputStream)).use { reader ->
                     reader.readText()
@@ -716,16 +713,6 @@ class GoogleApiService(
             Log.e("GoogleApiService", "Error in downloadFileAsString for $fileId", e)
             null
         }
-    }
-
-    suspend fun updateCaseInRegistry(case: Case): Boolean = withContext(Dispatchers.IO) {
-        // Implementation needed
-        false
-    }
-
-    suspend fun deleteCaseFromRegistry(case: Case): Boolean = withContext(Dispatchers.IO) {
-        // Implementation needed
-        false
     }
 
     suspend fun deleteFolder(folderId: String): Boolean = withContext(Dispatchers.IO) {
