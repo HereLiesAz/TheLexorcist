@@ -12,26 +12,12 @@ class EvidenceRepositoryImpl @Inject constructor(
     private val googleApiService: GoogleApiService?
 ) : EvidenceRepository {
 
-
-    private var caseSpreadsheetId: String? = null
-    private var caseScriptId: String? = null
-
-    private var googleApiService: GoogleApiService? = null
-
-    override fun setGoogleApiService(googleApiService: GoogleApiService?) {
-        this.googleApiService = googleApiService
-    }
-
-    override fun setCaseSpreadsheetId(id: String) {
-        this.caseSpreadsheetId = id
-    }
-
-    override fun setCaseScriptId(id: String) {
-        this.caseScriptId = id
-    }
-
-    override fun getEvidenceForCase(caseId: Long): Flow<List<Evidence>> {
+    override fun getEvidenceForCase(spreadsheetId: String, caseId: Long): Flow<List<Evidence>> {
         return evidenceDao.getEvidenceForCase(caseId)
+    }
+
+    override suspend fun getEvidenceById(id: Int): Evidence? {
+        return evidenceDao.getEvidenceById(id)
     }
 
     override fun getEvidence(id: Int): Flow<Evidence> {
@@ -39,56 +25,26 @@ class EvidenceRepositoryImpl @Inject constructor(
     }
 
     override suspend fun addEvidence(evidence: Evidence) {
-        evidenceDao.insert(evidence)
-    override suspend fun getEvidenceById(id: Int): Evidence? {
-        return evidenceDao.getEvidenceById(id)
-    }
-
-
-    override suspend fun addEvidence(caseId: Int, content: String, sourceDocument: String, category: String, allegationId: Int?) {
-        // Create a temporary evidence object to run the script against
-        val tempEvidenceForScript = Evidence(
-            id = -1, // Dummy ID
-            caseId = caseId,
-            content = content,
-            timestamp = System.currentTimeMillis(),
-            sourceDocument = sourceDocument,
-            documentDate = System.currentTimeMillis(),
-            allegationId = allegationId,
-            category = category,
-            tags = emptyList()
-        )
-
-        var tags = emptyList<String>()
         googleApiService?.let { api ->
-            caseScriptId?.let { scriptId ->
-                val scriptContent = api.getScript(scriptId)?.files?.find { it.name == "Code" }?.source
-                if (scriptContent != null) {
-                    val scriptRunner = com.hereliesaz.lexorcist.service.ScriptRunner()
-                    val result = scriptRunner.runScript(scriptContent, tempEvidenceForScript)
-                    tags = result.tags
-                }
-            }
-        }
-
-        val evidenceForSheet = tempEvidenceForScript.copy(tags = tags)
-
-        googleApiService?.let { api ->
-            caseSpreadsheetId?.let { spreadsheetId ->
-                val newId = api.addEvidenceToCase(spreadsheetId, evidenceForSheet)
-                if (newId != null) {
-                    val finalEvidence = evidenceForSheet.copy(id = newId)
-                    evidenceDao.insert(finalEvidence)
-                }
+            val newId = api.addEvidenceToCase(evidence.spreadsheetId, evidence)
+            if (newId != null) {
+                val finalEvidence = evidence.copy(id = newId)
+                evidenceDao.insert(finalEvidence)
             }
         }
     }
 
     override suspend fun updateEvidence(evidence: Evidence) {
+        googleApiService?.updateEvidenceInCase(evidence.spreadsheetId, evidence)
         evidenceDao.update(evidence)
     }
 
     override suspend fun deleteEvidence(evidence: Evidence) {
+        googleApiService?.deleteEvidenceFromCase(evidence.spreadsheetId, evidence.id)
         evidenceDao.delete(evidence)
+    }
+
+    override suspend fun updateCommentary(id: Int, commentary: String) {
+        // This method is not supported by the Google Sheets implementation.
     }
 }
