@@ -46,12 +46,12 @@ fun EvidenceDetailsScreen(
         Text("Tags: ${evidence.tags.joinToString()}")
         Spacer(modifier = Modifier.height(16.dp))
         OutlinedTextField(
-            value = commentary,
+            value = commentary ?: "",
             onValueChange = { commentary = it },
             label = { Text("Commentary") }
         )
         Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = { viewModel.updateCommentary(evidence.id, commentary) }) {
+        Button(onClick = { viewModel.updateCommentary(evidence.id, commentary ?: "") }) {
             Text("Save Commentary")
         }
     }

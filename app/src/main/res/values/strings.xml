@@ -53,6 +53,7 @@
     <string name="nav_data_review">data_review</string>
     <string name="visualization">Visualization</string>
     <string name="nav_visualization">visualization</string>
+    <string name="nav_script_editor">script_editor</string>
     <string name="evidence">Evidence</string>
     <string name="nav_evidence">evidence</string>
     <string name="record_audio">record_audio</string>
