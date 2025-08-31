@@ -55,15 +55,21 @@ class MainActivity : ComponentActivity() {
                     authViewModel = authViewModel,
                     onSignInClick = {
                         authViewModel.clearSignInError()
-                        val signInRequest: BeginSignInRequest = authViewModel.getSignInRequest() // Explicitly typed
-                        val pendingIntent: PendingIntent? = signInRequest.getPendingIntent()
-                        if (pendingIntent != null) {
-                            val intentSenderRequest = IntentSenderRequest.Builder(pendingIntent.intentSender).build()
-                            signInLauncher.launch(intentSenderRequest)
-                        } else {
-                            Log.e("MainActivity", "PendingIntent for sign-in was null.")
-                            authViewModel.onSignInError(Exception("Failed to prepare sign-in request (null PendingIntent)."))
-                        }
+                        val signInRequest: BeginSignInRequest = authViewModel.getSignInRequest()
+                        oneTapClient.beginSignIn(signInRequest)
+                            .addOnSuccessListener { result ->
+                                try {
+                                    val intentSenderRequest =
+                                        IntentSenderRequest.Builder(result.pendingIntent.intentSender).build()
+                                    signInLauncher.launch(intentSenderRequest)
+                                } catch (e: IntentSender.SendIntentException) {
+                                    Log.e("MainActivity", "Couldn't start One Tap UI: ${e.localizedMessage}")
+                                }
+                            }
+                            .addOnFailureListener { e ->
+                                Log.e("MainActivity", "Sign-in failed", e)
+                                authViewModel.onSignInError(e)
+                            }
                     },
                     onSignOutClick = {
                         authViewModel.signOut()

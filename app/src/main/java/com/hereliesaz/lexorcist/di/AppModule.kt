@@ -29,16 +29,6 @@ class AppModule {
     }
 
     @Provides
-    @Singleton
-    fun provideGoogleApiService(): GoogleApiService? {
-        // This will initially be null.
-        // AuthViewModel will be responsible for creating and providing the actual instance
-        // to other components that need it, likely via a SharedFlow or StateFlow.
-        // For direct injection, Hilt provides null if no other @Provides method returns a non-null instance.
-        return null
-    }
-
-    @Provides
     @Singleton // Or appropriate scope
     fun provideSettingsManager(@ApplicationContext context: Context): SettingsManager {
         // TODO: Replace with actual constructor and dependencies if any

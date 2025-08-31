@@ -22,7 +22,7 @@ class TranscriptionService(
     suspend fun transcribeAudio(uri: Uri): String {
         try {
             // Updated usage of the renamed parameter
-            val accessToken = authCredentialParam.credential.accessToken
+            val accessToken = authCredentialParam.token
             if (accessToken == null) {
                  return "Error: Could not retrieve access token."
             }

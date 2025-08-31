@@ -20,17 +20,15 @@ abstract class SheetModule {
     companion object {
         @Provides
         @Singleton
-        fun provideGoogleApiService(@ApplicationContext context: Context): GoogleApiService? {
+        fun provideGoogleApiService(@ApplicationContext context: Context): GoogleApiService {
             val account = GoogleSignIn.getLastSignedInAccount(context)
-            if (account != null) {
-                val credential = GoogleAccountCredential.usingOAuth2(
-                    context,
-                    listOf(DriveScopes.DRIVE, SheetsScopes.SPREADSHEETS)
-                )
-                credential.selectedAccount = account.account
-                return GoogleApiService(credential, "The Lexorcist")
-            }
-            return null
+            checkNotNull(account) { "User must be signed in to use GoogleApiService" }
+            val credential = GoogleAccountCredential.usingOAuth2(
+                context,
+                listOf(DriveScopes.DRIVE, SheetsScopes.SPREADSHEETS)
+            )
+            credential.selectedAccount = account.account
+            return GoogleApiService(credential, "The Lexorcist")
         }
     }
 }
