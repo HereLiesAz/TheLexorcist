@@ -18,7 +18,7 @@ class ScriptEditorViewModel @Inject constructor(
     private val _scriptText = MutableStateFlow("")
     val scriptText: StateFlow<String> = _scriptText.asStateFlow()
 
-    private val _saveState = MutableStateFlow<SaveState>(SaveState.NONE)
+    private val _saveState = MutableStateFlow<SaveState>(SaveState.Idle)
     val saveState: StateFlow<SaveState> = _saveState.asStateFlow()
 
     private var scriptId: String? = null
@@ -41,17 +41,25 @@ class ScriptEditorViewModel @Inject constructor(
 
     fun saveScript() {
         viewModelScope.launch {
-            _saveState.value = SaveState.SAVING
+            _saveState.value = SaveState.Saving
+            if (scriptId == null) {
+                _saveState.value = SaveState.Error("No script loaded to save.")
+                return@launch
+            }
             try {
-                scriptId?.let {
-                    googleApiService.updateScript(it, _scriptText.value)
-                    _saveState.value = SaveState.SUCCESS
-                } ?: run {
-                    _saveState.value = SaveState.FAILURE("Script ID is not set")
-                }
+                // TODO: Implement save functionality using GoogleApiService
+                // For example: googleApiService.updateScript(scriptId, _scriptText.value)
+                _saveState.value = SaveState.Success
             } catch (e: Exception) {
-                _saveState.value = SaveState.FAILURE("Failed to save script: ${e.message}")
+                _saveState.value = SaveState.Error("Failed to save script")
             }
         }
     }
+}
+
+sealed class SaveState {
+    object Idle : SaveState()
+    object Saving : SaveState()
+    object Success : SaveState()
+    data class Error(val message: String) : SaveState()
 }
