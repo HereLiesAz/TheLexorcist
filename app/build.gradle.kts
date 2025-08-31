@@ -50,8 +50,8 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("com.google.dagger.hilt.android")
-    id("org.jetbrains.kotlin.plugin.compose") version "2.2.0"
-    id("com.google.devtools.ksp") version "2.2.0-2.0.2"
+    id("org.jetbrains.kotlin.plugin.compose") version "2.2.10"
+    id("com.google.devtools.ksp") version "2.2.10-2.0.2"
 }
 
 android {
@@ -104,13 +104,13 @@ dependencies {
 
     // Core testing dependencies
     testImplementation("junit:junit:4.13.2")
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.2")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.8.2")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.13.4")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.13.4")
     testImplementation("io.mockk:mockk:1.14.5")
     testImplementation("androidx.arch.core:core-testing:2.2.0")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
-    testImplementation("app.cash.turbine:turbine:1.1.0")
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:1.9.0")
+    testImplementation("app.cash.turbine:turbine:1.2.1")
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:2.2.10")
 
     // AndroidX Test dependencies (androidTest)
     androidTestImplementation("androidx.test.ext:junit:1.3.0")
@@ -188,10 +188,7 @@ dependencies {
     implementation("com.google.dagger:hilt-android:2.57.1")
     ksp("com.google.dagger:hilt-compiler:2.57.1")
 
-    // Room
-    implementation("androidx.room:room-runtime:2.6.1")
-    implementation("androidx.room:room-ktx:2.6.1")
-    ksp("androidx.room:room-compiler:2.6.1")
+    // Room IS NOT ALLOWED IN THIS PROJECT!!!!!
 
     // Google Cloud Speech-to-Text
     implementation("com.google.cloud:google-cloud-speech:4.68.0")
