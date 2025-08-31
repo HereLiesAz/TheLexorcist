@@ -96,6 +96,11 @@ fun AppNavRail(onNavigate: (String) -> Unit) {
                         showOnRail = true
                     ),
                     NavItem(
+                        text = "Script Editor",
+                        data = NavItemData.Action(onClick = { onNavigate("script_editor") }),
+                        showOnRail = true
+                    ),
+                    NavItem(
                         text = settingsText,
                         data = NavItemData.Action(predefinedAction = PredefinedAction.SETTINGS),
                         showOnRail = false
