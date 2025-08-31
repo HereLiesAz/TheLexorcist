@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.api.services.drive.model.File as DriveFile
 import com.hereliesaz.lexorcist.data.Case
-import com.hereliesaz.lexorcist.data.CaseDao
+// import com.hereliesaz.lexorcist.data.CaseDao // Removed CaseDao
 import com.hereliesaz.lexorcist.data.CaseRepository
 import com.hereliesaz.lexorcist.data.Allegation
 import com.hereliesaz.lexorcist.data.SortOrder
@@ -24,8 +24,8 @@ import javax.inject.Inject
 @HiltViewModel
 class CaseViewModel @Inject constructor(
     @ApplicationContext private val applicationContext: Context,
-    private val caseRepository: CaseRepository,
-    private val caseDao: CaseDao // As per error
+    private val caseRepository: CaseRepository
+    // private val caseDao: CaseDao // Removed CaseDao
     // private val authViewModel: AuthViewModel // Assuming this is also a @HiltViewModel
 ) : ViewModel() {
 
@@ -34,8 +34,9 @@ class CaseViewModel @Inject constructor(
     private val _sortOrder = MutableStateFlow(SortOrder.DATE_DESC)
     val sortOrder: StateFlow<SortOrder> = _sortOrder.asStateFlow()
 
-    val cases: StateFlow<List<Case>> = caseRepository.getAllCases() // Using interface method
-        .combine(sortOrder) { cases, currentSortOrder -> // Explicitly named lambda param
+    // Assuming caseRepository.getAllCases() exists and returns Flow<List<Case>>
+    val cases: StateFlow<List<Case>> = caseRepository.getAllCases()
+        .combine(sortOrder) { cases, currentSortOrder ->
             when (currentSortOrder) {
                 SortOrder.NAME_ASC -> cases.sortedBy { it.name }
                 SortOrder.NAME_DESC -> cases.sortedByDescending { it.name }
@@ -55,7 +56,7 @@ class CaseViewModel @Inject constructor(
     val allegations: StateFlow<List<Allegation>> = _allegations.asStateFlow()
 
     private val _htmlTemplates = MutableStateFlow<List<DriveFile>>(emptyList())
-    val htmlTemplates: StateFlow<List<DriveFile>> = _htmlTemplates.asStateFlow() // One definition
+    val htmlTemplates: StateFlow<List<DriveFile>> = _htmlTemplates.asStateFlow()
 
     private val _plaintiffs = MutableStateFlow(sharedPref.getString("plaintiffs", "") ?: "")
     val plaintiffs: StateFlow<String> = _plaintiffs.asStateFlow()
@@ -79,27 +80,6 @@ class CaseViewModel @Inject constructor(
         loadDarkModePreference()
         // observeAuthChanges() //TODO: Re-enable this once AuthViewModel is provided correctly
     }
-
-    /* //TODO: Re-enable this once AuthViewModel is provided correctly
-    private fun observeAuthChanges() {
-        viewModelScope.launch {
-            authViewModel.isSignedIn.collect { isSignedIn ->
-                if (isSignedIn) {
-                    // Interactions with googleApiService should ideally be through authViewModel or repository
-                    loadCasesFromRepository()
-                    loadHtmlTemplatesFromRepository()
-                } else {
-                    clearCaseData()
-                }
-            }
-        }
-        viewModelScope.launch {
-            authViewModel.signOutEvent.collect { // Assuming AuthViewModel has this
-                clearCaseData()
-            }
-        }
-    }
-    */
 
     private fun clearCaseData() {
         _selectedCase.value = null
@@ -130,7 +110,6 @@ class CaseViewModel @Inject constructor(
     fun loadCasesFromRepository() {
         viewModelScope.launch {
             // Logic to load/refresh cases, e.g., caseRepository.refreshCasesFromRemote()
-            // The `cases` StateFlow should update automatically if caseRepository.getAllCases() emits new lists
         }
     }
     
@@ -138,7 +117,6 @@ class CaseViewModel @Inject constructor(
         viewModelScope.launch {
             // caseRepository.refreshHtmlTemplates()
             // caseRepository.getHtmlTemplates().collect { _htmlTemplates.value = it }
-            // If direct GoogleApiService is needed, ensure it's accessed via authViewModel or injected
         }
     }
 
@@ -146,7 +124,8 @@ class CaseViewModel @Inject constructor(
         viewModelScope.launch { caseRepository.importSpreadsheetAndStore(spreadsheetId) }
     }
 
-    fun createNewCaseWithRepository(
+    // Renamed from createNewCaseWithRepository
+    fun createCase(
         caseName: String, exhibitSheetName: String, caseNumber: String,
         caseSection: String, caseJudge: String
     ) {
