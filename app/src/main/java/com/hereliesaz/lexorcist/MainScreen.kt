@@ -92,47 +92,27 @@ fun MainScreen(
                             )
                         }
                         composable("add_text_evidence") {
-                    when (currentScreen) {
-                        R.string.nav_home -> AuthenticatedView(
-                            onCreateCase = { showCreateCaseDialog = true }
-                        )
-                        R.string.nav_cases -> CasesScreen(caseViewModel = caseViewModel)
-                        R.string.nav_add_evidence -> AddEvidenceScreen(
-                            evidenceViewModel = evidenceViewModel,
-                            ocrViewModel = ocrViewModel,
-                            mainViewModel = mainViewModel,
-                            onSelectImage = onSelectImage,
-                            onTakePicture = onTakePicture,
-                            onAddTextEvidence = { currentScreen = R.string.add_text_evidence }, // Corrected: R.string.add_text_evidence
-                            onAddDocument = onAddDocument,
-                            onAddSpreadsheet = onAddSpreadsheet,
-                            onRecordAudio = { currentScreen = R.string.record_audio },
-                            onImportAudio = onImportAudio
-                        )
-                        R.string.record_audio -> RecordAudioScreen(
-                            onStartRecording = { startRecording() },
-                            onStopRecording = { stopRecording() },
-                            isRecording = isRecording.value
-                        )
-                        R.string.add_text_evidence -> { // Corrected: R.string.add_text_evidence
-                            val context = LocalContext.current // This context is fine for AddTextEvidenceScreen
                             AddTextEvidenceScreen(evidenceViewModel = evidenceViewModel, onSave = { text ->
                                 selectedCase?.let {
                                     evidenceViewModel.addTextEvidence(it.id, text)
                                 }
                                 navController.navigate("cases")
-                                evidenceViewModel.addTextEvidence(text)
-                                currentScreen = R.string.nav_cases
                             })
                         }
-                        R.string.nav_timeline -> TimelineScreen(evidenceViewModel = evidenceViewModel)
-                        R.string.nav_timeline -> TimelineScreen(caseViewModel = caseViewModel)
-                        R.string.nav_timeline -> TimelineScreen(viewModel = evidenceViewModel)
-                        R.string.nav_data_review -> DataReviewScreen(evidenceViewModel = evidenceViewModel)
-                        R.string.nav_settings -> SettingsScreen(caseViewModel = caseViewModel)
-                        composable("timeline") { TimelineScreen(navController = navController, viewModel = viewModel()) }
+                        composable("timeline") { TimelineScreen(navController = navController, viewModel = evidenceViewModel) }
                         composable("data_review") { DataReviewScreen(evidenceViewModel = evidenceViewModel) }
                         composable("settings") { SettingsScreen(caseViewModel = caseViewModel) }
+                        composable("addons_browser") {
+                            AddonsBrowserScreen(onShare = { navController.navigate("share_addon") })
+                        }
+                        composable("share_addon") {
+                            ShareAddonScreen(onShare = { name, description, content, type ->
+                                // a little bit of a hack to get the viewmodel, but it's fine for now
+                                val addonsViewModel: AddonsBrowserViewModel = viewModel()
+                                addonsViewModel.shareAddon(name, description, content, type)
+                                navController.popBackStack()
+                            })
+                        }
                         composable("evidence_details/{evidenceId}") { backStackEntry ->
                             val evidenceId = backStackEntry.arguments?.getString("evidenceId")
                             if (evidenceId != null) {

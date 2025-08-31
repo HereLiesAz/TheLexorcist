@@ -14,6 +14,22 @@ Your primary objective is to develop "The Lexorcist" into a fully functional leg
 4.  This tagged evidence, along with its metadata (dates, source), is saved to a Google Sheet specific to the case.
 5.  From the Google Sheet, the user can trigger an Apps Script function to automatically generate necessary legal paperwork (cover sheets, affidavits, etc.) using predefined HTML templates.
 
+---
+
+### **CRITICAL ARCHITECTURAL DIRECTIVE**
+
+> **DO NOT USE LOCAL DATABASES.**
+>
+> Under **NO CIRCUMSTANCES** should you attempt to implement a local database, such as **Room** or **SQLite**. The application's core design relies **exclusively** on the Google Sheets API for data storage.
+>
+> **This is a non-negotiable architectural constraint.**
+>
+> Any attempt to introduce a local database will be considered a fundamental misunderstanding of the project's design and will be rejected. This approach ensures that the user maintains full control and visibility of their data in a familiar format (Google Sheets) and simplifies the application by avoiding complex data synchronization logic.
+>
+> If a task appears to require data persistence, the solution **must** involve the Google Sheets API. If you are uncertain how to proceed, you must ask for clarification.
+
+---
+
 ### Before You Begin...
 
 1.  **Analyze the Full Project:** The core architecture for the above workflow is already in place. Familiarize yourself with `OcrViewModel.kt` (for image processing), `ScriptRunner.kt` (for the tagging engine), `GoogleApiService.kt` (for Sheets/Drive integration), and the `raw` resources folder (for Apps Script and HTML templates).

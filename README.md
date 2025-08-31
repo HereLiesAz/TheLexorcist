@@ -8,6 +8,18 @@ Whether you're dealing with screenshots of harassment, written threats, or examp
 
 This project is in an advanced stage of development, with a robust architecture designed to realize a specific vision: to create a seamless pipeline where a user can take a photo of evidence, have the app's OCR extract the text, and then use a custom, user-defined rules engine to automatically tag and categorize that evidence. This categorized data is then organized in a Google Sheet, where a powerful backend script can be triggered to generate all necessary legal paperwork, such as cover sheets, metadata reports, and affidavits.
 
+## Important Note for Developers
+
+> **CRITICAL ARCHITECTURAL DIRECTIVE: DO NOT USE LOCAL DATABASES.**
+>
+> Under **NO CIRCUMSTANCES** should you attempt to implement a local database, such as **Room** or **SQLite**. The application's core design relies **exclusively** on the Google Sheets API for data storage.
+>
+> **This is a non-negotiable architectural constraint.**
+>
+> Any attempt to introduce a local database will be considered a fundamental misunderstanding of the project's design and will be rejected. This approach ensures that the user maintains full control and visibility of their data in a familiar format (Google Sheets) and simplifies the application by avoiding complex data synchronization logic.
+>
+> If a task appears to require data persistence, the solution **must** involve the Google Sheets API.
+
 ## Key Features
 
 - **Automated Evidence Pipeline:** Capture images or screenshots and let the app handle the rest. The Lexorcist uses OCR to extract text and then feeds it into a powerful, user-scriptable engine for analysis.
