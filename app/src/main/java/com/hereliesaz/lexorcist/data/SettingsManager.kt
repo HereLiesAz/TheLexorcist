@@ -3,6 +3,9 @@ package com.hereliesaz.lexorcist.data
 import android.content.Context
 import android.content.SharedPreferences
 import com.hereliesaz.lexorcist.R
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
+import javax.inject.Singleton
 
 /**
  * Manages application settings using [SharedPreferences].
@@ -12,7 +15,8 @@ import com.hereliesaz.lexorcist.R
  *
  * @param context The application context, used to access [SharedPreferences].
  */
-class SettingsManager(private val context: Context) {
+@Singleton
+class SettingsManager @Inject constructor(@ApplicationContext private val context: Context) {
 
     private val sharedPreferences: SharedPreferences =
         context.getSharedPreferences(context.getString(R.string.settings_preferences_name), Context.MODE_PRIVATE)

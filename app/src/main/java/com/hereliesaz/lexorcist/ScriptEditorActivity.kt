@@ -9,17 +9,15 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
-import com.hereliesaz.lexorcist.data.SettingsManager
 import com.hereliesaz.lexorcist.ui.ScriptEditorScreen
 import com.hereliesaz.lexorcist.ui.theme.LexorcistTheme
 import com.hereliesaz.lexorcist.viewmodel.ScriptEditorViewModel
-import com.hereliesaz.lexorcist.viewmodel.ScriptEditorViewModelFactory
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class ScriptEditorActivity : ComponentActivity() {
 
-    private val viewModel: ScriptEditorViewModel by viewModels {
-        ScriptEditorViewModelFactory(SettingsManager(this))
-    }
+    private val viewModel: ScriptEditorViewModel by viewModels()
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {

@@ -51,7 +51,7 @@ class MainActivity : ComponentActivity() {
                     authViewModel = authViewModel,
                     onSignInClick = {
                         authViewModel.getSignInRequest()?.let { signInRequest ->
-                            signInLauncher.launch(IntentSenderRequest.Builder(signInRequest.pendingIntent).build())
+                            signInLauncher.launch(IntentSenderRequest.Builder(signInRequest.getPendingIntent()).build())
                         }
                     },
                     onSignOutClick = {
