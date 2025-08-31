@@ -16,7 +16,7 @@ import com.hereliesaz.lexorcist.data.Evidence // Added import
  * @property notes Additional notes or comments about the evidence.
  */
 data class TaggedEvidence(
-    val id: Evidence,
+    val evidence: Evidence,
     val tags: List<String>,
     val content: String,
     val relevance: Int = 0,

@@ -16,6 +16,7 @@ import com.hereliesaz.lexorcist.data.EvidenceRepository
 import com.hereliesaz.lexorcist.data.TaggedEvidenceRepository // Import for static usage
 import com.hereliesaz.lexorcist.model.TaggedEvidence
 import com.hereliesaz.lexorcist.service.ScriptRunner
+import com.hereliesaz.lexorcist.utils.Result
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.*
@@ -80,7 +81,7 @@ class EvidenceViewModel @Inject constructor(
         viewModelScope.launch {
             authViewModel.signOutEvent.collect {
                 clearEvidenceData()
-                _currentSelectedCase.value = null 
+                _currentSelectedCase.value = null
             }
         }
     }
@@ -89,10 +90,10 @@ class EvidenceViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 ocrViewModel.newlyCreatedEvidence.collect { ocrGeneratedEvidence ->
-                    val selectedCase = _currentSelectedCase.value 
+                    val selectedCase = _currentSelectedCase.value
                     if (selectedCase != null) {
-                        val evidenceWithCaseId = ocrGeneratedEvidence.copy(caseId = selectedCase.id.toLong())
-                        addEvidence(evidenceWithCaseId) 
+                        val evidenceWithCaseId = ocrGeneratedEvidence.copy(spreadsheetId = selectedCase.spreadsheetId)
+                        addEvidence(evidenceWithCaseId)
                         Log.i(tag, "OCR evidence added to case ${selectedCase.id}: ${evidenceWithCaseId.content.take(30)}")
                     } else {
                         Log.w(tag, "OCR evidence created but no case currently selected: ${ocrGeneratedEvidence.content.take(50)}")
@@ -117,7 +118,7 @@ class EvidenceViewModel @Inject constructor(
     fun clearEvidenceToEdit() { _evidenceToEdit.value = null }
 
     fun loadEvidenceForCase(selectedCase: Case) {
-        _currentSelectedCase.value = selectedCase 
+        _currentSelectedCase.value = selectedCase
         viewModelScope.launch {
             evidenceRepository.getEvidenceForCase(
                 spreadsheetId = selectedCase.spreadsheetId,
@@ -128,8 +129,8 @@ class EvidenceViewModel @Inject constructor(
         }
     }
 
-    fun getEvidenceFlow(id: Int): Flow<Evidence?> {
-        return evidenceRepository.getEvidenceFlow(id)
+    fun getEvidence(id: Int): Flow<Evidence?> {
+        return evidenceRepository.getEvidence(id)
     }
 
     suspend fun getEvidenceById(id: Int): Evidence? {
@@ -138,7 +139,7 @@ class EvidenceViewModel @Inject constructor(
 
     fun linkEvidence(fromId: Int, toId: Int) {
         viewModelScope.launch {
-            val fromEvidence = getEvidenceById(fromId) 
+            val fromEvidence = getEvidenceById(fromId)
             if (fromEvidence != null) {
                 val updatedLinkedIds = fromEvidence.linkedEvidenceIds.toMutableList()
                 if (!updatedLinkedIds.contains(toId)) { updatedLinkedIds.add(toId) }
@@ -182,16 +183,18 @@ class EvidenceViewModel @Inject constructor(
             Log.w(tag, "addTextEvidence called but no case is selected.")
         }
     }
-    
+
     fun addTextEvidenceToSelectedCase(text: String, selectedCase: Case) {
         val newEvidence = Evidence(
-            caseId = selectedCase.id.toLong(),
-            type = "text_manual",
+            id = 0,
+            spreadsheetId = selectedCase.spreadsheetId,
             content = text,
             timestamp = System.currentTimeMillis(),
             sourceDocument = "Manual Text Input",
             documentDate = System.currentTimeMillis(),
-            category = "Text Note"
+            allegationId = null,
+            category = "Text Note",
+            tags = emptyList()
         )
         addEvidence(newEvidence)
     }
@@ -215,19 +218,27 @@ class EvidenceViewModel @Inject constructor(
                     appContext.contentResolver.openInputStream(uri)?.let { inputStream ->
                         val tempFile = File(appContext.cacheDir, fileName)
                         tempFile.outputStream().use { outputStream -> inputStream.copyTo(outputStream) }
-                        val uploadedDriveFile = service.uploadFile(tempFile, rawEvidenceFolderId, mimeType ?: "application/octet-stream")
+                        val uploadResult = service.uploadFile(tempFile, rawEvidenceFolderId, mimeType ?: "application/octet-stream")
                         tempFile.delete()
-                        if (uploadedDriveFile != null) {
-                            addEvidence(Evidence(
-                                caseId = selectedCase.id.toLong(),
-                                type = "drive_file",
-                                content = "Uploaded Drive file: $fileName. Link: ${uploadedDriveFile.webViewLink}",
-                                sourceDocument = uploadedDriveFile.id ?: fileName,
-                                documentDate = System.currentTimeMillis(),
-                                category = mimeType ?: "Drive File",
-                                tags = listOf("drive_upload")
-                            ))
-                        } else { _errorMessage.value = "Failed to upload file to Google Drive." }
+                        when (uploadResult) {
+                            is Result.Success -> {
+                                val uploadedDriveFile = uploadResult.data
+                                addEvidence(Evidence(
+                                    id = 0,
+                                    spreadsheetId = selectedCase.spreadsheetId,
+                                    content = "Uploaded Drive file: $fileName. Link: ${uploadedDriveFile.webViewLink}",
+                                    sourceDocument = uploadedDriveFile.id ?: fileName,
+                                    documentDate = System.currentTimeMillis(),
+                                    allegationId = null,
+                                    category = mimeType ?: "Drive File",
+                                    tags = listOf("drive_upload"),
+                                    timestamp = System.currentTimeMillis()
+                                ))
+                            }
+                            is Result.Error -> {
+                                _errorMessage.value = "Failed to upload file to Google Drive: ${uploadResult.exception.message}"
+                            }
+                        }
                     }
                 } catch (e: Exception) {
                     Log.e(tag, "Error uploading Drive file", e)
@@ -241,27 +252,31 @@ class EvidenceViewModel @Inject constructor(
         viewModelScope.launch {
             val mimeType = appContext.contentResolver.getType(uri)
             val evidence = when (mimeType) {
-                "text/plain" -> parseTextFile(uri, caseIdForContext)
-                "application/pdf" -> parsePdfFile(uri, caseIdForContext)
-                "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" -> parseSpreadsheetFile(uri, caseIdForContext)
-                "application/msword" -> parseDocFile(uri, caseIdForContext, true)
-                "application/vnd.openxmlformats-officedocument.wordprocessingml.document" -> parseDocFile(uri, caseIdForContext, false)
+                "text/plain" -> parseTextFile(uri)
+                "application/pdf" -> parsePdfFile(uri)
+                "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" -> parseSpreadsheetFile(uri)
+                "application/msword" -> parseDocFile(uri, true)
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document" -> parseDocFile(uri, false)
                 else -> { _errorMessage.value = "Unsupported file type: $mimeType"; null }
             }
             evidence?.let { _uiStagedEvidenceList.value = _uiStagedEvidenceList.value + it }
         }
     }
 
-    private fun parseTextFile(uri: Uri, caseIdForContext: Long?): Evidence? {
+    private fun parseTextFile(uri: Uri): Evidence? {
         return try {
             appContext.contentResolver.openInputStream(uri)?.bufferedReader()?.use {
                 val text = it.readText()
                 Evidence(
-                    caseId = caseIdForContext ?: 0L, 
-                    type = "file_text",
+                    id = 0,
+                    spreadsheetId = _currentSelectedCase.value?.spreadsheetId ?: "",
                     content = text,
                     sourceDocument = uri.toString(),
-                    category = "Text File Import"
+                    category = "Text File Import",
+                    timestamp = System.currentTimeMillis(),
+                    documentDate = System.currentTimeMillis(),
+                    allegationId = null,
+                    tags = emptyList()
                 )
             }
         } catch (e: Exception) {
@@ -271,28 +286,32 @@ class EvidenceViewModel @Inject constructor(
         }
     }
 
-    private fun parsePdfFile(uri: Uri, caseIdForContext: Long?): Evidence? {
+    private fun parsePdfFile(uri: Uri): Evidence? {
         return try {
             appContext.contentResolver.openInputStream(uri)?.let { inputStream ->
                 val pdfReader = ITextPdfReader(inputStream)
                 val pdfDocument = ITextPdfDocument(pdfReader)
-                val text = buildString { 
-                    for (i in 1..pdfDocument.numberOfPages) { 
-                        try { 
+                val text = buildString {
+                    for (i in 1..pdfDocument.numberOfPages) {
+                        try {
                            append(PdfTextExtractor.getTextFromPage(pdfDocument.getPage(i)))
                         } catch (pageEx: Exception) {
                            Log.e(tag, "Error extracting text from PDF page $i of $uri", pageEx)
                            append("\n[Error extracting page $i]\n")
                         }
-                    } 
+                    }
                 }
                 pdfDocument.close()
                 Evidence(
-                    caseId = caseIdForContext ?: 0L,
-                    type = "file_pdf",
+                    id = 0,
+                    spreadsheetId = _currentSelectedCase.value?.spreadsheetId ?: "",
                     content = text,
                     sourceDocument = uri.toString(),
-                    category = "PDF Import"
+                    category = "PDF Import",
+                    timestamp = System.currentTimeMillis(),
+                    documentDate = System.currentTimeMillis(),
+                    allegationId = null,
+                    tags = emptyList()
                 )
             }
         } catch (e: Exception) {
@@ -301,8 +320,8 @@ class EvidenceViewModel @Inject constructor(
             null
         }
     }
-    
-    private fun parseSpreadsheetFile(uri: Uri, caseIdForContext: Long?): Evidence? {
+
+    private fun parseSpreadsheetFile(uri: Uri): Evidence? {
          return try {
             appContext.contentResolver.openInputStream(uri)?.let { inputStream ->
                 val workbook = WorkbookFactory.create(inputStream)
@@ -320,11 +339,15 @@ class EvidenceViewModel @Inject constructor(
                 }
                 workbook.close()
                 Evidence(
-                    caseId = caseIdForContext ?: 0L,
-                    type = "file_spreadsheet",
+                    id = 0,
+                    spreadsheetId = _currentSelectedCase.value?.spreadsheetId ?: "",
                     content = stringBuilder.toString(),
                     sourceDocument = uri.toString(),
-                    category = "Spreadsheet Import"
+                    category = "Spreadsheet Import",
+                    timestamp = System.currentTimeMillis(),
+                    documentDate = System.currentTimeMillis(),
+                    allegationId = null,
+                    tags = emptyList()
                 )
             }
         } catch (e: Exception) {
@@ -334,20 +357,24 @@ class EvidenceViewModel @Inject constructor(
         }
     }
 
-    private fun parseDocFile(uri: Uri, caseIdForContext: Long?, isLegacyDoc: Boolean): Evidence? {
+    private fun parseDocFile(uri: Uri, isLegacyDoc: Boolean): Evidence? {
         return try {
             appContext.contentResolver.openInputStream(uri)?.let { inputStream ->
-                val text = if (isLegacyDoc) { 
+                val text = if (isLegacyDoc) {
                     WordExtractor(HWPFDocument(inputStream)).text
-                } else { 
+                } else {
                     XWPFWordExtractor(XWPFDocument(inputStream)).text
                 }
                 Evidence(
-                    caseId = caseIdForContext ?: 0L,
-                    type = if (isLegacyDoc) "file_doc_legacy" else "file_docx",
+                    id = 0,
+                    spreadsheetId = _currentSelectedCase.value?.spreadsheetId ?: "",
                     content = text,
                     sourceDocument = uri.toString(),
-                    category = if (isLegacyDoc) "Word Document (DOC)" else "Word Document (DOCX)"
+                    category = if (isLegacyDoc) "Word Document (DOC)" else "Word Document (DOCX)",
+                    timestamp = System.currentTimeMillis(),
+                    documentDate = System.currentTimeMillis(),
+                    allegationId = null,
+                    tags = emptyList()
                 )
             }
         } catch (e: Exception) {
@@ -357,7 +384,7 @@ class EvidenceViewModel @Inject constructor(
         }
     }
 
-    fun importSmsMessages(caseIdForContext: Long? = _currentSelectedCase.value?.id?.toLong()) { 
+    fun importSmsMessages() {
         viewModelScope.launch {
             val smsList = mutableListOf<Evidence>()
             try {
@@ -374,13 +401,15 @@ class EvidenceViewModel @Inject constructor(
                             val dateMillis = it.getLong(dateIndex)
                             smsList.add(
                                 Evidence(
-                                    caseId = caseIdForContext ?: 0L,
-                                    type = "import_sms",
+                                    id = 0,
+                                    spreadsheetId = _currentSelectedCase.value?.spreadsheetId ?: "",
                                     content = body,
                                     timestamp = dateMillis,
-                                    sourceDocument = "SMS Import", 
+                                    sourceDocument = "SMS Import",
                                     documentDate = dateMillis,
-                                    category = "SMS"
+                                    category = "SMS",
+                                    allegationId = null,
+                                    tags = emptyList()
                                 )
                             )
                         } while (it.moveToNext())
@@ -394,16 +423,16 @@ class EvidenceViewModel @Inject constructor(
         }
     }
 
-    fun exportToSheet(spreadsheetId: String, sheetName: String) { 
+    fun exportToSheet(spreadsheetId: String, sheetName: String) {
         viewModelScope.launch {
-            val service = authViewModel.currentGoogleApiService.value 
+            val service = authViewModel.currentGoogleApiService.value
             if (service == null) {
                  _errorMessage.value = "Google Account not signed in or service unavailable."
                 return@launch
             }
             try {
                 val dataToExport = _evidenceList.value.map { ev ->
-                    listOf(ev.id.toString(), ev.type, ev.content.take(100), ev.timestamp.toString()) 
+                    listOf(ev.id.toString(), ev.content.take(100), ev.timestamp.toString())
                 }
                 if (dataToExport.isNotEmpty()) {
                     service.appendData(spreadsheetId, sheetName, dataToExport)
@@ -420,8 +449,8 @@ class EvidenceViewModel @Inject constructor(
     fun processUiStagedEvidenceForReview(scriptToRun: String) {
         viewModelScope.launch {
             val taggedList = _uiStagedEvidenceList.value.map { evidence ->
-                val parserResult = localScriptRunner.runScript(scriptToRun, evidence) 
-                TaggedEvidence(evidence = evidence, tags = parserResult.tags)
+                val parserResult = localScriptRunner.runScript(scriptToRun, evidence)
+                TaggedEvidence(evidence = evidence, tags = parserResult.tags, content = evidence.content)
             }
             TaggedEvidenceRepository.setTaggedEvidence(taggedList)
             Log.d(tag, "Processed ${taggedList.size} staged evidence items for review. Set in TaggedEvidenceRepository.")
