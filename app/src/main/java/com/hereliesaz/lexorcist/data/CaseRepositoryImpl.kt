@@ -36,7 +36,7 @@ class CaseRepositoryImpl @Inject constructor(
         return caseDao.insert(case).toInt()
     }
     
-    override suspend fun createNewCaseWithDetails(
+    override suspend fun createCase(
         caseName: String,
         exhibitSheetName: String,
         caseNumber: String,
@@ -128,7 +128,7 @@ class CaseRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun archiveExistingCase(case: Case) { // Added to match previous impl, ensure in interface
+    override suspend fun archiveCase(case: Case) { // Added to match previous impl, ensure in interface
         val updatedCase = case.copy(isArchived = true) // Assuming Case has isArchived
         googleApiService?.updateCaseInRegistry(updatedCase) // Assuming this method exists and takes updatedCase
         caseDao.update(updatedCase)
@@ -168,7 +168,7 @@ class CaseRepositoryImpl @Inject constructor(
         _htmlTemplates.value = googleApiService?.listHtmlTemplatesInAppRootFolder() ?: emptyList()
     }
     
-    override suspend fun importSpreadsheetAndStore(spreadsheetId: String): Case? { // Added to match previous impl, ensure in interface
+    override suspend fun importSpreadsheet(spreadsheetId: String): Case? { // Added to match previous impl, ensure in interface
         val currentGoogleApiService = googleApiService ?: return null
         val sheetsData = currentGoogleApiService.readSpreadsheet(spreadsheetId)
         if (sheetsData != null) {

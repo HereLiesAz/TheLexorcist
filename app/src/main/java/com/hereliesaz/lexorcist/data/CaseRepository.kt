@@ -5,10 +5,10 @@ import com.hereliesaz.lexorcist.model.SheetFilter
 import kotlinx.coroutines.flow.Flow
 
 interface CaseRepository {
-    fun getAllCases(): Flow<List<Case>>
+    fun getCases(): Flow<List<Case>>
     suspend fun getCaseBySpreadsheetId(spreadsheetId: String): Case?
     suspend fun refreshCases()
-    suspend fun createNewCaseWithDetails(
+    suspend fun createCase(
         caseName: String,
         exhibitSheetName: String,
         caseNumber: String,
@@ -18,7 +18,7 @@ interface CaseRepository {
         defendants: String,
         court: String
     )
-    suspend fun archiveExistingCase(case: Case)
+    suspend fun archiveCase(case: Case)
     suspend fun deleteCase(case: Case)
     fun getSheetFilters(spreadsheetId: String): Flow<List<SheetFilter>>
     suspend fun refreshSheetFilters(spreadsheetId: String)
@@ -28,5 +28,5 @@ interface CaseRepository {
     suspend fun addAllegation(spreadsheetId: String, allegationText: String)
     fun getHtmlTemplates(): Flow<List<DriveFile>>
     suspend fun refreshHtmlTemplates()
-    suspend fun importSpreadsheetAndStore(spreadsheetId: String): Case?
+    suspend fun importSpreadsheet(spreadsheetId: String): Case?
 }

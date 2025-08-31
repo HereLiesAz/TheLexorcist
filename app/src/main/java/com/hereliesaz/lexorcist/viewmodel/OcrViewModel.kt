@@ -15,6 +15,7 @@ import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.data.SettingsManager // Assuming this is correctly injected if used
 import com.hereliesaz.lexorcist.service.ScriptRunner // Assuming this is correctly injected if used
+import com.hereliesaz.lexorcist.utils.Result
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -105,24 +106,26 @@ class OcrViewModel @Inject constructor(
                         val documentTimestamp = extractDocumentDate(context, currentImageUri)
                         val parsedEntities = com.hereliesaz.lexorcist.DataParser.tagData(ocrText)
                         var evidenceToEmit = Evidence(
-                            caseId = 0L, // Placeholder caseId, to be set by EvidenceViewModel
-                            type = "ocr_image_review",
+                            id = 0,
+                            spreadsheetId = "", // Placeholder, to be set by the collector
                             content = ocrText,
                             timestamp = System.currentTimeMillis(),
                             sourceDocument = currentImageUri.toString(),
                             documentDate = documentTimestamp,
+                            allegationId = null,
                             category = "OCR Image",
-                            tags = parsedEntities.values.flatten().distinct(), // Initial tags from DataParser
-                            entities = parsedEntities
+                            tags = parsedEntities.values.flatten().distinct()
                         )
 
                         val userScript = settingsManager.getScript()
                         if (userScript.isNotBlank()) {
-                            try {
-                                val scriptResult = scriptRunner.runScript(userScript, evidenceToEmit) // Pass Evidence object
-                                evidenceToEmit = evidenceToEmit.copy(tags = (evidenceToEmit.tags + scriptResult.tags).distinct())
-                            } catch (e: Exception) {
-                                Log.e(tag, "Error running user script on OCR evidence", e)
+                            when (val scriptResult = scriptRunner.runScript(userScript, evidenceToEmit)) {
+                                is Result.Success -> {
+                                    evidenceToEmit = evidenceToEmit.copy(tags = (evidenceToEmit.tags + scriptResult.data.tags).distinct())
+                                }
+                                is Result.Error -> {
+                                    Log.e(tag, "Error running user script on OCR evidence", scriptResult.exception)
+                                }
                             }
                         }
 
@@ -144,7 +147,7 @@ class OcrViewModel @Inject constructor(
             }
         }
     }
-    
+
     private fun extractDocumentDate(context: Context, uri: Uri): Long {
         return try {
             context.contentResolver.openInputStream(uri)?.use { inputStream ->
@@ -191,16 +194,15 @@ class OcrViewModel @Inject constructor(
                         val parsedEntities = com.hereliesaz.lexorcist.DataParser.tagData(ocrText)
 
                         val evidenceToEmit = Evidence(
-                            caseId = caseIdInput.toLong(), // Convert Int to Long
-                            type = "ocr_from_video",
+                            id = 0,
+                            spreadsheetId = "", // Placeholder, caseIdInput is ignored for now
                             content = ocrText,
                             timestamp = System.currentTimeMillis(),
                             sourceDocument = uri.toString(),
                             documentDate = documentTimestamp,
+                            allegationId = null,
                             category = "OCR from Video",
-                            parentVideoId = parentVideoIdInput,
-                            tags = parsedEntities.values.flatten().distinct(),
-                            entities = parsedEntities
+                            tags = parsedEntities.values.flatten().distinct()
                         )
                         // Note: ScriptRunner could also be applied here if needed
                         viewModelScope.launch {

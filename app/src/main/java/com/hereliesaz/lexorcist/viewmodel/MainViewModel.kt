@@ -43,6 +43,7 @@ import com.hereliesaz.lexorcist.model.TaggedEvidence
 import com.hereliesaz.lexorcist.DataParser
 import com.hereliesaz.lexorcist.service.ScriptRunner
 import com.hereliesaz.lexorcist.utils.GoogleApiServiceHolder
+import com.hereliesaz.lexorcist.utils.Result
 import com.itextpdf.kernel.pdf.PdfDocument
 import com.itextpdf.kernel.pdf.PdfReader
 import com.itextpdf.kernel.pdf.canvas.parser.PdfTextExtractor
@@ -151,7 +152,7 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             _selectedCase.collect { case ->
                 if (case != null) {
-                    evidenceRepository.getEvidenceForCase(case.id.toLong()).collect {
+                    evidenceRepository.getEvidenceForCase(case.spreadsheetId, case.id.toLong()).collect {
                         _selectedCaseEvidenceList.value = it
                     }
                 } else {
@@ -187,7 +188,6 @@ class MainViewModel @Inject constructor(
         if (clearGoogleService) {
             _googleApiServiceInternal.value = null
             GoogleApiServiceHolder.googleApiService = null
-            (evidenceRepository as? EvidenceRepositoryImpl)?.setGoogleApiService(null)
         }
         _cases.value = emptyList()
         _htmlTemplates.value = emptyList()
@@ -215,7 +215,6 @@ class MainViewModel @Inject constructor(
     }
 
     private fun onSignInSuccess(apiService: GoogleApiService) {
-        (evidenceRepository as? EvidenceRepositoryImpl)?.setGoogleApiService(apiService)
         _googleApiServiceInternal.value = apiService
         _isSignedIn.value = true
         GoogleApiServiceHolder.googleApiService = apiService
@@ -240,7 +239,6 @@ class MainViewModel @Inject constructor(
         _uiEvidenceList.value = emptyList()
         _settingScreenFilters.value = emptyList()
         saveCaseInfo() // Persist cleared case info
-        cancelImageReview()
     }
 
     // --- SharedPreferences ---
@@ -362,7 +360,7 @@ class MainViewModel @Inject constructor(
         // Moved to CaseViewModel
     }
 
-    private suspend fun loadSelectedCaseSheetFilters(spreadsheetId: String) { 
+    private suspend fun loadSelectedCaseSheetFilters(spreadsheetId: String) {
         val apiService = _googleApiServiceInternal.value ?: return Unit.also { Log.w(tag, "loadSelectedCaseSheetFilters: No API service.") }
         if (spreadsheetId.isBlank()) {
             _selectedCaseSheetFilters.value = emptyList(); return
@@ -379,12 +377,8 @@ class MainViewModel @Inject constructor(
             _errorMessage.value = "Error loading sheet filters: ${e.localizedMessage}"
             _selectedCaseSheetFilters.value = emptyList()
         }
-    private suspend fun loadSelectedCaseSheetFilters(spreadsheetId: String) {
-        // Moved to CaseViewModel
     }
     
-    fun addSelectedCaseSheetFilter(name: String, value: String) {
-        // Moved to CaseViewModel
     fun addSelectedCaseSheetFilter(name: String, value: String) {
         val currentCase = _selectedCase.value
         val apiService = _googleApiServiceInternal.value
@@ -410,7 +404,6 @@ class MainViewModel @Inject constructor(
     }
 
     private suspend fun loadAllegationsForSelectedCase(spreadsheetId: String, caseIdForAssociation: Int) {
-        // Moved to CaseViewModel
         val apiService = _googleApiServiceInternal.value ?: return Unit.also { Log.w(tag, "loadAllegations: No API service.") }
          if (spreadsheetId.isBlank()) {
             _allegations.value = emptyList(); return
@@ -425,8 +418,6 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun addAllegationToSelectedCase(allegationText: String) {
-        // Moved to CaseViewModel
     fun addAllegationToSelectedCase(allegationText: String) {
         val currentCase = _selectedCase.value
         val apiService = _googleApiServiceInternal.value
@@ -451,254 +442,53 @@ class MainViewModel @Inject constructor(
     }
 
     fun addEvidenceToSelectedCase(entry: Evidence) {
-        val currentCase = _selectedCase.value
-        if (currentCase == null) {
-            Log.w(tag, "addEvidenceToSelectedCase: No case selected to add evidence.")
-            _errorMessage.value = "Cannot add evidence: No case selected."
-            return
-        }
-        viewModelScope.launch {
-            evidenceRepository.addEvidence(
-                caseId = currentCase.id,
-                content = entry.content,
-                sourceDocument = entry.sourceDocument,
-                category = entry.category,
-                allegationId = entry.allegationId,
-                timestamp = entry.timestamp, // Ensure all fields are passed
-                documentDate = entry.documentDate,
-                tags = entry.tags
-            )
-        }
         // Moved to EvidenceViewModel
     }
     
     fun addEvidenceToUiList(uri: Uri, context: Context) {
-        viewModelScope.launch {
-            val mimeType = context.contentResolver.getType(uri)
-            if (mimeType?.startsWith("image/") == true) {
-                imageUriForReview = uri
-                _imageBitmapForReview.value = loadBitmapFromUri(uri, context)
-                if (_imageBitmapForReview.value == null) {
-                    Log.e(tag, "Failed to load bitmap for review from URI: $uri")
-                    _errorMessage.value = "Failed to load image for review."
-                    imageUriForReview = null
-                }
-            } else {
-                val evidence : Evidence? = when (mimeType) {
-                    "text/plain" -> parseTextFile(uri, context)
-                    "application/pdf" -> parsePdfFile(uri, context)
-                    "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" -> parseSpreadsheetFile(uri, context)
-                    "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document" -> parseDocFile(uri, context)
-                    else -> {
-                        Log.w(tag, "Unsupported file type: $mimeType for URI: $uri")
-                        _errorMessage.value = "Unsupported file type: $mimeType"
-                        null
-                    }
-                }
-                evidence?.let {
-                    _uiEvidenceList.value = _uiEvidenceList.value + it
-                }
-            }
-        }
         // Moved to EvidenceViewModel
     }
 
-    private suspend fun loadBitmapFromUri(uri: Uri, context: Context): Bitmap? = withContext(Dispatchers.IO) {
-        try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                ImageDecoder.decodeBitmap(ImageDecoder.createSource(context.contentResolver, uri))
-            } else {
-                @Suppress("DEPRECATION")
-                MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
-            }
-        } catch (e: Exception) {
-            Log.e(tag, "Error loading bitmap from URI: $uri", e)
-            _errorMessage.value = "Error loading image: ${e.localizedMessage}"
-            null
-        }
+    private suspend fun loadBitmapFromUri(uri: Uri, context: Context): Bitmap? {
+        // Moved to EvidenceViewModel
+        return null
     }
 
     fun rotateImageBeingReviewed(degrees: Float) {
-        val currentBitmap = _imageBitmapForReview.value ?: return
-        viewModelScope.launch(Dispatchers.Default) {
-            val matrix = Matrix().apply { postRotate(degrees) }
-            val rotatedBitmap = Bitmap.createBitmap(currentBitmap, 0, 0, currentBitmap.width, currentBitmap.height, matrix, true)
-            _imageBitmapForReview.value = rotatedBitmap
-        }
+        // Moved to EvidenceViewModel
     }
 
     private fun preprocessImageForOcr(bitmap: Bitmap): Bitmap {
-        // Placeholder for actual preprocessing. Consider OpenCV or other image processing libraries.
+        // Moved to EvidenceViewModel
         return bitmap
     }
 
     fun confirmImageReview(context: Context) {
-        val reviewedBitmap = _imageBitmapForReview.value
-        val reviewedUri = imageUriForReview
-
-        if (reviewedBitmap == null || reviewedUri == null) {
-            Log.w(tag, "confirmImageReview: Bitmap or URI for review is null.")
-            cancelImageReview()
-            return
-        }
-
-        viewModelScope.launch {
-            _isOcrInProgress.value = true
-            try {
-                val preprocessedBitmap = preprocessImageForOcr(reviewedBitmap)
-                val inputImage = InputImage.fromBitmap(preprocessedBitmap, 0)
-                val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
-                
-                val visionText = suspendCancellableCoroutine<com.google.mlkit.vision.text.Text> { continuation ->
-                    recognizer.process(inputImage)
-                        .addOnSuccessListener { text -> 
-                            if (continuation.isActive) continuation.resume(text) 
-                        }
-                        .addOnFailureListener { e ->
-                            _errorMessage.value = "Failed to recognize text from image."
-                            Log.e(tag, "ML Kit text recognition failed during review confirmation", e)
-                            if (continuation.isActive) continuation.resumeWithException(e)
-                        }
-                } ?: return@launch // If null (e.g. from exception in listener), exit early.
-
-                val newEvidence = Evidence(
-                    id = 0,
-                    caseId = _selectedCase.value?.id ?: 0,
-                    content = visionText.text,
-                    timestamp = System.currentTimeMillis(),
-                    sourceDocument = reviewedUri.toString(),
-                    documentDate = System.currentTimeMillis(), // Or try to get from EXIF if available
-                    allegationId = null,
-                    category = "OCR Image",
-                    tags = emptyList()
-                )
-                _uiEvidenceList.value = _uiEvidenceList.value + newEvidence
-                Log.d(tag, "Image review confirmed. Evidence added to UI list.")
-
-            } catch (e: Exception) {
-                Log.e(tag, "Exception during image review confirmation or text recognition.", e)
-                _errorMessage.value = "Error processing image: ${e.localizedMessage}"
-            } finally {
-                _isOcrInProgress.value = false
-                cancelImageReview()
-            }
-        }
+        // Moved to EvidenceViewModel
     }
 
     fun cancelImageReview() {
-        _imageBitmapForReview.value = null
-        imageUriForReview = null
-        Log.d(tag, "Image review cancelled/cleared.")
+        // Moved to EvidenceViewModel
     }
 
     private fun parseTextFile(uri: Uri, context: Context): Evidence? {
         // Moved to EvidenceViewModel
         return null
-        return try {
-            context.contentResolver.openInputStream(uri)?.bufferedReader()?.use {
-                val text = it.readText()
-                Evidence(
-                    id = 0,
-                    caseId = _selectedCase.value?.id ?: 0,
-                    content = text,
-                    timestamp = System.currentTimeMillis(),
-                    sourceDocument = uri.toString(),
-                    documentDate = System.currentTimeMillis(), // Consider file lastModified or EXIF
-                    allegationId = null,
-                    category = "Text File",
-                    tags = emptyList()
-                )
-            }
-        } catch (e: Exception) {
-            Log.e(tag, "Failed to parse text file", e);
-            _errorMessage.value = "Failed to parse text file: ${e.localizedMessage}"
-            null
-        }
     }
 
     private fun parsePdfFile(uri: Uri, context: Context): Evidence? {
         // Moved to EvidenceViewModel
         return null
-    private fun parsePdfFile(uri: Uri, context: Context): Evidence? {
-        return try {
-            context.contentResolver.openInputStream(uri)?.let { inputStream ->
-                val pdfReader = PdfReader(inputStream)
-                val pdfDocument = PdfDocument(pdfReader)
-                val text = buildString { for (i in 1..pdfDocument.numberOfPages) { append(PdfTextExtractor.getTextFromPage(pdfDocument.getPage(i))) } }
-                pdfDocument.close()
-                Evidence(
-                    id = 0,
-                    caseId = _selectedCase.value?.id ?: 0,
-                    content = text,
-                    timestamp = System.currentTimeMillis(),
-                    sourceDocument = uri.toString(),
-                    documentDate = System.currentTimeMillis(),
-                    allegationId = null,
-                    category = "PDF File",
-                    tags = emptyList()
-                )
-            }
-        } catch (e: Exception) {
-            Log.e(tag, "Failed to parse PDF file", e)
-            _errorMessage.value = "Failed to parse PDF file: ${e.localizedMessage}"
-            null
-        }
     }
 
     private fun parseSpreadsheetFile(uri: Uri, context: Context): Evidence? {
         // Moved to EvidenceViewModel
         return null
-        return try {
-            context.contentResolver.openInputStream(uri)?.let { inputStream ->
-                val workbook = WorkbookFactory.create(inputStream)
-                val text = buildString { /* Implement actual parsing logic */ }
-                workbook.close()
-                Evidence(
-                    id = 0,
-                    caseId = _selectedCase.value?.id ?: 0,
-                    content = text,
-                    timestamp = System.currentTimeMillis(),
-                    sourceDocument = uri.toString(),
-                    documentDate = System.currentTimeMillis(),
-                    allegationId = null,
-                    category = "Spreadsheet File",
-                    tags = emptyList()
-                )
-            }
-        } catch (e: Exception) {
-            Log.e(tag, "Failed to parse spreadsheet file", e)
-            _errorMessage.value = "Failed to parse spreadsheet: ${e.localizedMessage}"
-            null
-        }
     }
 
     private fun parseDocFile(uri: Uri, context: Context): Evidence? {
         // Moved to EvidenceViewModel
         return null
-        return try {
-            context.contentResolver.openInputStream(uri)?.let { inputStream ->
-                val text = if (context.contentResolver.getType(uri) == "application/msword") {
-                    WordExtractor(HWPFDocument(inputStream)).text
-                } else {
-                    XWPFWordExtractor(XWPFDocument(inputStream)).text
-                }
-                Evidence(
-                    id = 0,
-                    caseId = _selectedCase.value?.id ?: 0,
-                    content = text,
-                    timestamp = System.currentTimeMillis(),
-                    sourceDocument = uri.toString(),
-                    documentDate = System.currentTimeMillis(),
-                    allegationId = null,
-                    category = "Document File",
-                    tags = emptyList()
-                )
-            }
-        } catch (e: Exception) {
-            Log.e(tag, "Failed to parse document file", e)
-            _errorMessage.value = "Failed to parse document: ${e.localizedMessage}"
-            null
-        }
     }
     
     fun importSmsMessages(context: Context) {
@@ -722,7 +512,7 @@ class MainViewModel @Inject constructor(
                         smsList.add(
                             Evidence(
                                 id = 0,
-                                caseId = _selectedCase.value?.id ?: 0,
+                                spreadsheetId = _selectedCase.value?.spreadsheetId ?: "",
                                 content = body,
                                 timestamp = dateMillis, // SMS date is the timestamp
                                 sourceDocument = "SMS Message",
@@ -771,11 +561,11 @@ class MainViewModel @Inject constructor(
             // This function seems to intend to update repository, ensure evidence has a valid DB ID
             // For now, assuming it's for an existing evidence item.
             when (parserResult) {
-                 is com.hereliesaz.lexorcist.utils.Result.Success -> {
+                 is Result.Success -> {
                     val updatedEvidence = evidence.copy(tags = parserResult.data.tags)
                     evidenceRepository.updateEvidence(updatedEvidence)
                  }
-                 is com.hereliesaz.lexorcist.utils.Result.Error -> {
+                 is Result.Error -> {
                     _errorMessage.value = "Script execution failed: ${parserResult.exception.message}"
                  }
             }
@@ -786,10 +576,10 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             val taggedList = _uiEvidenceList.value.mapNotNull { evidence ->
                 when (val result = scriptRunner.runScript(script, evidence)) {
-                    is com.hereliesaz.lexorcist.utils.Result.Success -> {
+                    is Result.Success -> {
                         TaggedEvidence(id = evidence, tags = result.data.tags, content = evidence.content)
                     }
-                    is com.hereliesaz.lexorcist.utils.Result.Error -> {
+                    is Result.Error -> {
                         _errorMessage.value = "Script execution failed: ${result.exception.message}"
                         null
                     }
@@ -831,7 +621,7 @@ class MainViewModel @Inject constructor(
                         val uploadedDriveFile = uploadResult.data
                         val newEvidence = Evidence(
                             id = 0,
-                            caseId = currentCase.id,
+                            spreadsheetId = currentCase.spreadsheetId,
                             content = text,
                             timestamp = timestamp,
                             sourceDocument = uploadedDriveFile.name ?: fileName,
@@ -852,7 +642,7 @@ class MainViewModel @Inject constructor(
                 Log.w(tag, "addTextEvidenceToSelectedCase: No case or API service. Adding to UI list only.")
                  val newEvidenceForUiList = Evidence(
                     id = 0,
-                    caseId = 0,
+                    spreadsheetId = "",
                     content = text,
                     timestamp = System.currentTimeMillis(),
                     sourceDocument = "Text Input (Local)",
@@ -934,65 +724,6 @@ class MainViewModel @Inject constructor(
 
     fun addDriveFileEvidenceToSelectedCase(uri: Uri, context: Context) {
         // Moved to EvidenceViewModel
-    fun addDriveFileEvidenceToSelectedCase(uri: Uri, context: Context) {
-        viewModelScope.launch {
-            _isUploadingFile.value = true
-            var localFileToClean: File? = null
-            try {
-                val currentCase = _selectedCase.value
-                val apiService = _googleApiServiceInternal.value
-                if (currentCase != null && apiService != null) {
-                    val rawEvidenceFolderId = apiService.getOrCreateEvidenceFolder(currentCase.name) ?: run {
-                        _errorMessage.value = "Could not get or create Drive evidence folder."
-                        _isUploadingFile.value = false
-                        return@launch
-                    }
-                    context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
-                        val nameIndex = cursor.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME)
-                        cursor.moveToFirst()
-                        val fileName = cursor.getString(nameIndex)
-                        val mimeType = context.contentResolver.getType(uri)
-                        context.contentResolver.openInputStream(uri)?.use { inputStream -> // Use .use for auto-close
-                            val file = File(context.cacheDir, fileName)
-                            localFileToClean = file // Mark for cleanup
-                            file.outputStream().use { outputStream -> inputStream.copyTo(outputStream) }
-
-                            when (val result = apiService.uploadFile(file, rawEvidenceFolderId, mimeType ?: "application/octet-stream")) {
-                                is com.hereliesaz.lexorcist.utils.Result.Success -> {
-                                    val uploadedDriveFile = result.data
-                                    Log.d(tag, "File $fileName uploaded to Drive for case ${currentCase.name}")
-                                    val newEvidenceEntry = Evidence(
-                                        id = 0,
-                                        caseId = currentCase.id,
-                                        content = "Uploaded file: $fileName (Content not extracted for preview)",
-                                        timestamp = System.currentTimeMillis(),
-                                        sourceDocument = uploadedDriveFile.name ?: fileName,
-                                        documentDate = System.currentTimeMillis(), // Consider file modified date or EXIF
-                                        allegationId = null,
-                                        category = mimeType ?: "file",
-                                        tags = listOf("drive_upload")
-                                    )
-                                    addEvidenceToSelectedCase(newEvidenceEntry)
-                                    _errorMessage.value = "File '$fileName' uploaded and added."
-                                }
-                                is com.hereliesaz.lexorcist.utils.Result.Error -> {
-                                    _errorMessage.value = "Failed to upload file '$fileName': ${result.exception.message}"
-                                }
-                            }
-                        }
-                    } ?: run { _errorMessage.value = "Could not get file details from URI." }
-                } else {
-                    Log.w(tag, "addDriveFileEvidenceToSelectedCase: No case or API service.")
-                    _errorMessage.value = "Cannot upload to Drive: No case or not signed in."
-                }
-            } catch(e: Exception) {
-                 Log.e(tag, "Error adding Drive file evidence", e)
-                _errorMessage.value = "Error adding Drive file: ${e.localizedMessage}"
-            } finally {
-                _isUploadingFile.value = false
-                localFileToClean?.delete() // Clean up cached file
-            }
-        }
     }
 
     fun updateExtractedText(text: String) {
