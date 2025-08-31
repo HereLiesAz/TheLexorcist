@@ -1,50 +1,4 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import java.io.ByteArrayOutputStream
-import java.io.BufferedReader
-import java.io.InputStreamReader
-
-// Helper functions to get version from Git using java.lang.Runtime
-fun getGitVersionName(): String {
-    return try {
-        val process = Runtime.getRuntime().exec("git describe --tags --dirty --always")
-        val reader = BufferedReader(InputStreamReader(process.inputStream))
-        val errorReader = BufferedReader(InputStreamReader(process.errorStream))
-        val output = reader.readLine()?.trim()
-        val errorOutput = errorReader.readText().trim()
-        process.waitFor()
-        reader.close()
-        errorReader.close()
-
-        if (process.exitValue() != 0 || output == null || output.isEmpty() || output.startsWith("fatal:")) {
-            System.err.println("Git describe error: $errorOutput")
-            "0.0.0-nogit"
-        } else {
-            output
-        }
-    } catch (e: Exception) {
-        e.printStackTrace()
-        "0.0.0-error"
-    }
-}
-
-fun getGitVersionCode(): Int {
-    return try {
-        val process = Runtime.getRuntime().exec("git rev-list --count HEAD")
-        val reader = BufferedReader(InputStreamReader(process.inputStream))
-        val output = reader.readLine()?.trim()
-        process.waitFor()
-        reader.close()
-
-        if (process.exitValue() == 0 && output != null && output.isNotEmpty()) {
-            output.toInt()
-        } else {
-            1 // Fallback version code
-        }
-    } catch (e: Exception) {
-        e.printStackTrace()
-        1 // Fallback version code
-    }
-}
 
 plugins {
     id("com.android.application")
@@ -64,8 +18,8 @@ android {
         minSdk = 26
         targetSdk = 36
 
-        versionCode = getGitVersionCode()
-        versionName = getGitVersionName()
+        versionCode = 1
+        versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
