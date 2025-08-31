@@ -19,37 +19,6 @@ object DataParser {
         """"\b\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z\b"""".toRegex() to SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
     )
 
-    private val timePatterns = mapOf(
-        """"\b\d{1,2}:\d{2}\s*(?:AM|PM)\b"""".toRegex() to SimpleDateFormat("hh:mm a", Locale.US),
-        """"\b\d{1,2}:\d{2}\b"""".toRegex() to SimpleDateFormat("HH:mm", Locale.US)
-    )
-
-    fun parseTimestamp(text: String): Long? {
-        // First, try to parse a time
-        for ((regex, format) in timePatterns) {
-            regex.findAll(text).forEach { matchResult ->
-                try {
-                    format.isLenient = false
-                    return format.parse(matchResult.value.trim())?.time
-                } catch (e: Exception) {
-                    // Ignore and continue
-                }
-            }
-        }
-
-        // If no time, try to parse a full date
-        val fullDate = parseDates(text).firstOrNull()
-        if (fullDate != null) {
-            return fullDate
-        }
-
-        // If no time or date, check for relative dates
-        if (text.contains("Yesterday", ignoreCase = true)) {
-            return System.currentTimeMillis() - 24 * 60 * 60 * 1000
-        }
-
-        return null
-    }
 
     fun parseDates(text: String): List<Long> {
         val dates = mutableListOf<Long>()

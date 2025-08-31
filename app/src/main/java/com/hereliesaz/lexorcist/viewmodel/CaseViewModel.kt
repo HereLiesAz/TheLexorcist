@@ -25,8 +25,8 @@ import javax.inject.Inject
 class CaseViewModel @Inject constructor(
     @ApplicationContext private val applicationContext: Context,
     private val caseRepository: CaseRepository,
-    private val caseDao: CaseDao, // As per error
-    private val authViewModel: AuthViewModel // Assuming this is also a @HiltViewModel
+    private val caseDao: CaseDao // As per error
+    // private val authViewModel: AuthViewModel // Assuming this is also a @HiltViewModel
 ) : ViewModel() {
 
     private val sharedPref = applicationContext.getSharedPreferences("CaseInfoPrefs", Context.MODE_PRIVATE)
@@ -77,9 +77,10 @@ class CaseViewModel @Inject constructor(
 
     init {
         loadDarkModePreference()
-        observeAuthChanges()
+        // observeAuthChanges() //TODO: Re-enable this once AuthViewModel is provided correctly
     }
 
+    /* //TODO: Re-enable this once AuthViewModel is provided correctly
     private fun observeAuthChanges() {
         viewModelScope.launch {
             authViewModel.isSignedIn.collect { isSignedIn ->
@@ -98,6 +99,7 @@ class CaseViewModel @Inject constructor(
             }
         }
     }
+    */
 
     private fun clearCaseData() {
         _selectedCase.value = null
