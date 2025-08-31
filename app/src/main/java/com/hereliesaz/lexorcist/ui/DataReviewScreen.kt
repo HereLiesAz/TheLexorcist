@@ -3,6 +3,8 @@ package com.hereliesaz.lexorcist.ui
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState // Added import
+import androidx.compose.foundation.verticalScroll // Added import
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -13,19 +15,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.hereliesaz.lexorcist.data.Evidence
-import com.hereliesaz.lexorcist.viewmodel.CaseViewModel // Added import
+import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DataReviewScreen(
     evidenceViewModel: EvidenceViewModel,
-    caseViewModel: CaseViewModel // Added parameter
+    caseViewModel: CaseViewModel
 ) {
     val evidenceList by evidenceViewModel.evidenceList.collectAsState()
     val selectedCase by caseViewModel.selectedCase.collectAsState()
 
-    // Load evidence when the selected case changes
     LaunchedEffect(selectedCase) {
         selectedCase?.let {
             evidenceViewModel.loadEvidenceForCase(it.id.toLong(), it.spreadsheetId)
@@ -131,8 +132,8 @@ fun EvidenceItem(
         ) {
             Column(
                 modifier = Modifier.weight(1f),
-                 horizontalAlignment = Alignment.Start, // Changed to Start for LTR text
-                 verticalArrangement = Arrangement.spacedBy(4.dp) // Added spacing between text items
+                 horizontalAlignment = Alignment.Start, 
+                 verticalArrangement = Arrangement.spacedBy(4.dp) 
             ) {
                 Text(
                     text = evidence.sourceDocument,
@@ -155,16 +156,14 @@ fun EvidenceItem(
                         overflow = TextOverflow.Ellipsis
                     )
                 }
-                // Displaying content for context
                 Text(
                     text = evidence.content,
                     style = MaterialTheme.typography.bodySmall,
-                    maxLines = 3, // Show a bit of the content
+                    maxLines = 3, 
                     overflow = TextOverflow.Ellipsis,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            // Icons Column for Edit and Delete
             Column(horizontalAlignment = Alignment.End) { 
                 IconButton(onClick = { onEditClick(evidence) }) {
                     Icon(Icons.Default.Edit, contentDescription = "Edit")
@@ -192,14 +191,14 @@ fun EditEvidenceDialog(
         onDismissRequest = onDismiss,
         title = { Text("Edit Evidence") },
         text = {
-            Column(modifier = Modifier.verticalScroll(rememberScrollState()), // Make dialog scrollable if content overflows
+            Column(modifier = Modifier.verticalScroll(rememberScrollState()), 
                    verticalArrangement = Arrangement.spacedBy(8.dp)) { 
                 OutlinedTextField(
                     value = content,
                     onValueChange = { content = it },
                     label = { Text("Content") },
                     modifier = Modifier.fillMaxWidth(),
-                    maxLines = 5 // Allow more lines for content
+                    maxLines = 5 
                 )
                  OutlinedTextField(
                     value = sourceDocument,

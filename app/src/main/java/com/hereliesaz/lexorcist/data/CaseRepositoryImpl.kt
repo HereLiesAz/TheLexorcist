@@ -126,7 +126,7 @@ class CaseRepositoryImpl @Inject constructor(
                 }
             }
             is Result.Error -> {
-                Log.e(tag, "Error creating spreadsheet: ${'$'}{result.exception.message}")
+                Log.e(tag, "Error creating spreadsheet: ${result.exception.message}")
             }
         }
     }
@@ -227,7 +227,7 @@ class CaseRepositoryImpl @Inject constructor(
                 }
                 return importedCase
             } catch (e: Exception) {
-                Log.e(tag, "Error parsing spreadsheet $spreadsheetId: ${'$'}{e.message}", e)
+                Log.e(tag, "Error parsing spreadsheet $spreadsheetId: ${e.message}", e)
             }
         }
         return null

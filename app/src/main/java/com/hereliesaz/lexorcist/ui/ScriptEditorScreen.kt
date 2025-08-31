@@ -11,7 +11,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.viewmodel.ScriptEditorViewModel
-import com.hereliesaz.lexorcist.viewmodel.SaveState
+import com.hereliesaz.lexorcist.model.SaveState // Changed import from viewmodel.SaveState to model.SaveState
 
 @Composable
 fun ScriptEditorScreen(viewModel: ScriptEditorViewModel) {
@@ -25,13 +25,12 @@ fun ScriptEditorScreen(viewModel: ScriptEditorViewModel) {
     val snippetDateLessStr = stringResource(R.string.script_snippet_date_less)
 
     LaunchedEffect(saveState) {
-        when (saveState) {
+        when (val currentState = saveState) { // Use 'currentState' for smart casting
             is SaveState.Success -> {
                 Toast.makeText(context, R.string.script_saved_successfully, Toast.LENGTH_SHORT).show()
             }
             is SaveState.Error -> {
-                val errorMessage = (saveState as SaveState.Error).message
-                Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, currentState.message, Toast.LENGTH_SHORT).show()
             }
             else -> {}
         }
@@ -42,7 +41,7 @@ fun ScriptEditorScreen(viewModel: ScriptEditorViewModel) {
             modifier = Modifier
                 .weight(1f)
                 .padding(16.dp),
-            horizontalAlignment = Alignment.End,
+            horizontalAlignment = Alignment.End, // This seems odd for a text field column, usually Start
             verticalArrangement = Arrangement.Center
         ) {
             OutlinedTextField(
@@ -52,15 +51,15 @@ fun ScriptEditorScreen(viewModel: ScriptEditorViewModel) {
                 placeholder = { Text(stringResource(R.string.script_editor_placeholder)) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f)
+                    .weight(1f) // This makes the TextField take available vertical space
             )
             Spacer(modifier = Modifier.height(8.dp))
             OutlinedButton(
                 onClick = { viewModel.saveScript() },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = saveState != SaveState.Saving
+                enabled = saveState !is SaveState.Saving // Corrected condition check for sealed class object
             ) {
-                if (saveState == SaveState.Saving) {
+                if (saveState is SaveState.Saving) { // Corrected condition check for sealed class object
                     CircularProgressIndicator(modifier = Modifier.size(24.dp))
                 } else {
                     Text(stringResource(R.string.save_script))
