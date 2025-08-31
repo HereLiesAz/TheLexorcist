@@ -20,36 +20,26 @@ import com.hereliesaz.lexorcist.viewmodel.OcrViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.hereliesaz.lexorcist.viewmodel.EvidenceDetailsViewModel
-import com.hereliesaz.lexorcist.viewmodel.MainViewModel
-import com.hereliesaz.lexorcist.viewmodel.ScriptEditorViewModel
+import androidx.navigation.compose.rememberNavController
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
-    navController: NavHostController,
     authViewModel: AuthViewModel = viewModel(),
     caseViewModel: CaseViewModel = viewModel(),
     evidenceViewModel: EvidenceViewModel = viewModel(),
-    evidenceDetailsViewModel: EvidenceDetailsViewModel = viewModel(),
     ocrViewModel: OcrViewModel = viewModel(),
-    mainViewModel: MainViewModel = viewModel(),
-    scriptEditorViewModel: ScriptEditorViewModel = viewModel(),
     onSignIn: () -> Unit,
     onSelectImage: () -> Unit,
     onTakePicture: () -> Unit,
     onAddDocument: () -> Unit,
-    onAddSpreadsheet: () -> Unit,
-    onRecordAudio: () -> Unit,
-    onImportAudio: () -> Unit,
-    startRecording: () -> Unit,
-    stopRecording: () -> Unit,
-    isRecording: Boolean
+    onAddSpreadsheet: () -> Unit
 ) {
     val isSignedIn by authViewModel.isSignedIn.collectAsState()
     val selectedCase by caseViewModel.selectedCase.collectAsState()
     val errorMessage by caseViewModel.errorMessage.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val navController = rememberNavController()
     var showCreateCaseDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(errorMessage) {
@@ -61,7 +51,7 @@ fun MainScreen(
 
     LaunchedEffect(selectedCase) {
         selectedCase?.let {
-            evidenceViewModel.loadEvidenceForCase(it.id.toLong())
+            evidenceViewModel.loadEvidenceForCase(it)
         }
     }
 
@@ -91,37 +81,24 @@ fun MainScreen(
                             )
                         }
                         composable("add_text_evidence") {
-                            val context = LocalContext.current
-                            AddTextEvidenceScreen(evidenceViewModel = evidenceViewModel, onSave = { text ->
-                                selectedCase?.let {
-                                    evidenceViewModel.addTextEvidence(it.id, text)
+                            AddTextEvidenceScreen(
+                                evidenceViewModel = evidenceViewModel,
+                                onSave = {
+                                    navController.popBackStack()
                                 }
-                                navController.navigate("cases")
-                            })
+                            )
                         }
-                        composable("timeline") { TimelineScreen(navController = navController, viewModel = evidenceViewModel) }
+                        composable("timeline") { TimelineScreen(navController = navController, evidenceViewModel = evidenceViewModel) }
                         composable("data_review") { DataReviewScreen(evidenceViewModel = evidenceViewModel) }
                         composable("settings") { SettingsScreen(caseViewModel = caseViewModel) }
-                        composable("addons_browser") {
-                            AddonsBrowserScreen(onShare = { navController.navigate("share_addon") })
-                        }
-                        composable("share_addon") {
-                            ShareAddonScreen(onShare = { name, description, content, type ->
-                                // a little bit of a hack to get the viewmodel, but it's fine for now
-                                val addonsViewModel: AddonsBrowserViewModel = viewModel()
-                                addonsViewModel.shareAddon(name, description, content, type)
-                                navController.popBackStack()
-                            })
-                        }
-                        composable("script_editor") { ScriptEditorScreen(viewModel = scriptEditorViewModel) }
                         composable("evidence_details/{evidenceId}") { backStackEntry ->
                             val evidenceId = backStackEntry.arguments?.getString("evidenceId")
                             if (evidenceId != null) {
-                                val evidence by evidenceViewModel.getEvidence(evidenceId.toInt()).collectAsState(initial = null)
+                                val evidence by evidenceViewModel.getEvidenceFlow(evidenceId.toInt()).collectAsState(initial = null)
                                 evidence?.let {
                                     EvidenceDetailsScreen(
                                         evidence = it,
-                                        viewModel = evidenceDetailsViewModel
+                                        viewModel = evidenceViewModel
                                     )
                                 }
                             }
@@ -147,7 +124,7 @@ fun MainScreen(
         if (showCreateCaseDialog) {
             CreateCaseDialog(
                 caseViewModel = caseViewModel,
-                onDismiss = { showCreateCaseDialog = false }
+                onDismiss = { showCreateCase-dialog = false }
             )
         }
     }
@@ -238,7 +215,7 @@ fun CreateCaseDialog(
             Button(
                 onClick = {
                     if (caseName.isNotBlank()) {
-                        caseViewModel.createCase(
+                        caseViewModel.createNewCaseWithRepository(
                             caseName = caseName,
                             exhibitSheetName = exhibitSheetName.ifBlank { context.getString(R.string.default_exhibit_sheet_name) },
                             caseNumber = caseNumber,

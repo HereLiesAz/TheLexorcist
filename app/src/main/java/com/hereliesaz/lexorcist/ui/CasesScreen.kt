@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.foundation.background
@@ -18,12 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import com.hereliesaz.lexorcist.data.SortOrder
-import kotlinx.coroutines.delay
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 
@@ -78,7 +72,6 @@ fun CasesScreen(caseViewModel: CaseViewModel) {
                         SortOrder.DATE_ASC -> SortOrder.NAME_DESC
                         SortOrder.NAME_DESC -> SortOrder.NAME_ASC
                         SortOrder.NAME_ASC -> SortOrder.DATE_DESC
-                        else -> SortOrder.DATE_DESC
                     }
                 }) {
                     Icon(Icons.Filled.Sort, contentDescription = "Sort")
@@ -96,7 +89,7 @@ fun CasesScreen(caseViewModel: CaseViewModel) {
                             showDeleteConfirmDialog = true
                         },
                         onArchive = {
-                            longPressedCase?.let { caseViewModel.archiveCase(it) }
+                            longPressedCase?.let { caseViewModel.archiveCaseWithRepository(it) }
                             longPressedCase = null
                         },
                         onCancel = { longPressedCase = null },
@@ -119,7 +112,7 @@ fun CasesScreen(caseViewModel: CaseViewModel) {
                 text = { Text("Are you sure you want to delete this case?") },
                 confirmButton = {
                     TextButton(onClick = {
-                        longPressedCase?.let { caseViewModel.deleteCase(it) }
+                        longPressedCase?.let { caseViewModel.deleteCaseWithRepository(it) }
                         showDeleteConfirmDialog = false
                         longPressedCase = null
                     }) {

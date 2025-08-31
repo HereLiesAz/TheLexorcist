@@ -9,25 +9,30 @@ import java.util.TimeZone
 
 object DataParser {
     private val datePatterns = mapOf(
-        """\b\d{4}-\d{2}-\d{2}\b"""".toRegex() to SimpleDateFormat("yyyy-MM-dd", Locale.US),
-        """\b\d{2}[-/]\d{2}[-/]\d{4}\b"""".toRegex() to SimpleDateFormat("MM-dd-yyyy", Locale.US),
-        """\b\d{2}[-/]\d{2}[-/]\d{2}\b"""".toRegex() to SimpleDateFormat("MM-dd-yy", Locale.US),
-        """\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s\d{1,2},?\s\d{4}\b"""".toRegex() to SimpleDateFormat("MMM d, yyyy", Locale.US),
-        """\b\d{1,2}\s(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s\d{4}\b"""".toRegex() to SimpleDateFormat("dd MMM yyyy", Locale.US),
-        """\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\s\d{1,2},?\s\d{4}\b"""".toRegex() to SimpleDateFormat("MMMM d, yyyy", Locale.US),
-        """\b\d{1,2}\s(?:January|February|March|April|May|June|July|August|September|October|November|December)\s\d{4}\b"""".toRegex() to SimpleDateFormat("dd MMMM yyyy", Locale.US),
-        """\b\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z\b"""".toRegex() to SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
+        "\\b\\d{4}-\\d{2}-\\d{2}\\b".toRegex() to SimpleDateFormat("yyyy-MM-dd", Locale.US),
+        "\\b\\d{2}[-/]\\d{2}[-/]\\d{4}\\b".toRegex() to SimpleDateFormat("MM-dd-yyyy", Locale.US),
+        "\\b\\d{2}[-/]\\d{2}[-/]\\d{2}\\b".toRegex() to SimpleDateFormat("MM-dd-yy", Locale.US),
+        "\\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\\s\\d{1,2},?\\s\\d{4}\\b".toRegex() to SimpleDateFormat("MMM d, yyyy", Locale.US),
+        "\\b\\d{1,2}\\s(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\\s\\d{4}\\b".toRegex() to SimpleDateFormat("dd MMM yyyy", Locale.US),
+        "\\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\\s\\d{1,2},?\\s\\d{4}\\b".toRegex() to SimpleDateFormat("MMMM d, yyyy", Locale.US),
+        "\\b\\d{1,2}\\s(?:January|February|March|April|May|June|July|August|September|October|November|December)\\s\\d{4}\\b".toRegex() to SimpleDateFormat("dd MMMM yyyy", Locale.US),
+        "\\b\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z\\b".toRegex() to SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
     )
 
-    // First timePatterns block removed.
+    private val timePatterns = mapOf(
+        "\\b\\d{1,2}:\\d{2}:\\d{2}\\s*(?:AM|PM)\\b".toRegex() to SimpleDateFormat("h:mm:ss a", Locale.US),
+        "\\b\\d{1,2}:\\d{2}\\s*(?:AM|PM)\\b".toRegex() to SimpleDateFormat("h:mm a", Locale.US),
+        "\\b\\d{2}:\\d{2}:\\d{2}\\b".toRegex() to SimpleDateFormat("HH:mm:ss", Locale.US),
+        "\\b\\d{2}:\\d{2}\\b".toRegex() to SimpleDateFormat("HH:mm", Locale.US)
+    )
 
     fun parseTimestamp(text: String): Long? {
         // First, try to parse a time
-        for ((regex, format) in timePatterns) { // Refers to the timePatterns defined below
-            for (matchResult in regex.findAll(text)) { // Corrected loop
+        timePatterns.forEach { (regex, format) ->
+            regex.findAll(text).forEach { matchResult ->
                 try {
                     format.isLenient = false
-                    return format.parse(matchResult.value.trim())?.time // Correct return
+                    return format.parse(matchResult.value.trim())?.time
                 } catch (e: Exception) {
                     // Ignore and continue
                 }
@@ -50,7 +55,7 @@ object DataParser {
 
     fun parseDates(text: String): List<Long> {
         val dates = mutableListOf<Long>()
-        for ((regex, format) in datePatterns) {
+        datePatterns.forEach { (regex, format) ->
             regex.findAll(text).forEach { matchResult ->
                 try {
                     format.timeZone = TimeZone.getTimeZone("UTC")
@@ -65,26 +70,18 @@ object DataParser {
     }
 
     fun parseNames(text: String): List<String> {
-        val nameRegex = """\b[A-Z][a-z]+ [A-Z][a-z]+\b"""".toRegex()
+        val nameRegex = "\\b[A-Z][a-z]+ [A-Z][a-z]+\\b".toRegex()
         return nameRegex.findAll(text).map { it.value }.toList()
     }
 
     fun parseAddresses(text: String): List<String> {
-        val addressRegex = """\d+\s+[\w\s,]+[A-Z]{2}\s+\d{5}"""".toRegex()
+        val addressRegex = "\\d+\\s+[\\w\\s,]+[A-Z]{2}\\s+\\d{5}".toRegex()
         return addressRegex.findAll(text).map { it.value }.toList()
     }
 
-    // This is the single, more comprehensive timePatterns definition that is kept.
-    private val timePatterns = mapOf(
-        """\b\d{1,2}:\d{2}\s*(?:AM|PM)\b""".toRegex() to SimpleDateFormat("h:mm a", Locale.US),
-        """\b\d{1,2}:\d{2}:\d{2}\s*(?:AM|PM)\b""".toRegex() to SimpleDateFormat("h:mm:ss a", Locale.US),
-        """\b\d{2}:\d{2}:\d{2}\b"""".toRegex() to SimpleDateFormat("HH:mm:ss", Locale.US),
-        """\b\d{2}:\d{2}\b"""".toRegex() to SimpleDateFormat("HH:mm", Locale.US)
-    )
-
     fun parseTimestamps(text: String): List<String> {
         val timestamps = mutableListOf<String>()
-        for ((regex, format) in timePatterns) {
+        timePatterns.forEach { (regex, format) ->
             regex.findAll(text).forEach { matchResult ->
                 try {
                     format.timeZone = TimeZone.getDefault() // Use local timezone for times
@@ -129,10 +126,10 @@ object DataParser {
     }
 
     private fun extractAllegations(caseId: Int, text: String): List<Allegation> {
-        val allegationRegex = """(?i)\b(alleges|claims|argues that)\b.*"""".toRegex()
+        val allegationRegex = "(?i)\\b(alleges|claims|argues that)\\b.*".toRegex()
         var currentId = 0 // Assuming Allegation needs an id and it's generated sequentially here
         return allegationRegex.findAll(text).map {
-            Allegation(id = currentId++, spreadsheetId = caseId.toString(), text = it.value) // Corrected
+            Allegation(id = currentId++, caseId = caseId, text = it.value) // Assuming Allegation(id: Int, caseId: Int, text: String)
         }.toList()
     }
 
@@ -144,14 +141,14 @@ object DataParser {
             val date = parseDates(sentence).firstOrNull() ?: System.currentTimeMillis()
 
             val linkedAllegation = allegations.find { sentence.contains(it.text, ignoreCase = true) }
-            val categoryRegex = """(?i)Category:\s*(\w+)"""".toRegex()
+            val categoryRegex = "(?i)Category:\\s*(\\w+)".toRegex()
             val categoryMatch = categoryRegex.find(sentence)
             val category = categoryMatch?.groupValues?.get(1) ?: ""
 
             entries.add(
                 Evidence(
                     id = entries.size,
-                    spreadsheetId = caseId.toString(), // Corrected
+                    spreadsheetId = "", // FIXME: This needs a proper spreadsheetId
                     allegationId = linkedAllegation?.id,
                     content = sentence,
                     timestamp = System.currentTimeMillis(),

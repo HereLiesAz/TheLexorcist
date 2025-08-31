@@ -19,7 +19,6 @@ fun ScriptEditorScreen(viewModel: ScriptEditorViewModel) {
     val saveState by viewModel.saveState.collectAsState()
     val context = LocalContext.current
 
-    // Resolve strings for lambdas in the Composable scope
     val snippetTextIncludesStr = stringResource(R.string.script_snippet_text_includes)
     val snippetTagsIncludesStr = stringResource(R.string.script_snippet_tags_includes)
     val snippetDateGreaterStr = stringResource(R.string.script_snippet_date_greater)
