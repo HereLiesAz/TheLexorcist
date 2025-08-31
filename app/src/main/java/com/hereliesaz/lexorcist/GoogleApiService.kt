@@ -35,6 +35,7 @@ private const val CASE_REGISTRY_SPREADSHEET_NAME = "Lexorcist_Case_Registry"
 private const val CASE_REGISTRY_SHEET_NAME = "Cases"
 private const val ALLEGATIONS_SHEET_NAME = "Allegations"
 private const val EVIDENCE_SHEET_NAME = "Evidence"
+private const val FILTERS_SHEET_NAME = "Filters"
 
 class GoogleApiService(
     private val credential: GoogleAccountCredential,
@@ -175,30 +176,6 @@ class GoogleApiService(
         }
     }
 
-    suspend fun updateCaseInRegistry(case: Case): Boolean = withContext(Dispatchers.IO) {
-        // This is a placeholder implementation. A real implementation would need to find the row
-        // for the given case and update it.
-        Log.w("GoogleApiService", "updateCaseInRegistry is not fully implemented.")
-        return@withContext true
-    }
-
-    suspend fun deleteCaseFromRegistry(case: Case): Boolean = withContext(Dispatchers.IO) {
-        // This is a placeholder implementation. A real implementation would need to find the row
-        // for the given case and delete it.
-        Log.w("GoogleApiService", "deleteCaseFromRegistry is not fully implemented.")
-        return@withContext true
-    }
-
-    suspend fun deleteFolder(folderId: String): Boolean = withContext(Dispatchers.IO) {
-        try {
-            driveService.files().delete(folderId).execute()
-            true
-        } catch (e: Exception) {
-            e.printStackTrace()
-            Log.e("GoogleApiService", "Error in deleteFolder for $folderId", e)
-            false
-        }
-    }
 
     suspend fun updateCaseInRegistry(caseData: Case): Boolean = withContext(Dispatchers.IO) {
         try {
@@ -319,10 +296,10 @@ class GoogleApiService(
             allegationSheetValues?.forEachIndexed { index, row ->
                 val text = row.getOrNull(0)?.toString() ?: ""
                 if (text.isNotBlank()) {
-                    allegations.add(Allegation(id = index, caseId = caseIdForAssociation, text = text))
+                    allegations.add(Allegation(id = index, spreadsheetId = caseSpreadsheetId, text = text))
                 }
             }
-        } catch (e: Exception) { 
+        } catch (e: Exception) {
             e.printStackTrace()
             Log.e("GoogleApiService", "Error in getAllegationsForCase for $caseSpreadsheetId", e)
         }
@@ -332,12 +309,69 @@ class GoogleApiService(
     suspend fun addAllegationToCase(caseSpreadsheetId: String, allegationText: String): Boolean = withContext(Dispatchers.IO) {
         if (caseSpreadsheetId.isBlank() || allegationText.isBlank()) return@withContext false
         try {
-            addSheet(caseSpreadsheetId, ALLEGATIONS_SHEET_NAME) 
+            addSheet(caseSpreadsheetId, ALLEGATIONS_SHEET_NAME)
             val values = listOf(listOf(allegationText))
             appendData(caseSpreadsheetId, ALLEGATIONS_SHEET_NAME, values) != null
         } catch (e: Exception) {
             e.printStackTrace()
             Log.e("GoogleApiService", "Error in addAllegationToCase for $caseSpreadsheetId", e)
+            false
+        }
+    }
+
+    suspend fun deleteAllegation(spreadsheetId: String, allegationId: Int): Boolean = withContext(Dispatchers.IO) {
+        if (spreadsheetId.isBlank()) return@withContext false
+        try {
+            val sheetId = getSheetId(spreadsheetId, ALLEGATIONS_SHEET_NAME) ?: return@withContext false
+            val request = Request().setDeleteDimension(
+                DeleteDimensionRequest()
+                    .setRange(
+                        DimensionRange()
+                            .setSheetId(sheetId)
+                            .setDimension("ROWS")
+                            .setStartIndex(allegationId)
+                            .setEndIndex(allegationId + 1)
+                    )
+            )
+            val batchUpdateRequest = BatchUpdateSpreadsheetRequest().setRequests(listOf(request))
+            sheetsService.spreadsheets().batchUpdate(spreadsheetId, batchUpdateRequest).execute()
+            true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Log.e("GoogleApiService", "Error in deleteAllegation for $spreadsheetId", e)
+            false
+        }
+    }
+
+    suspend fun getFiltersForCase(spreadsheetId: String): List<com.hereliesaz.lexorcist.data.Filter> = withContext(Dispatchers.IO) {
+        val filters = mutableListOf<com.hereliesaz.lexorcist.data.Filter>()
+        if (spreadsheetId.isBlank()) return@withContext filters
+        try {
+            val allSheetData = readSpreadsheet(spreadsheetId)
+            val filterSheetValues = allSheetData?.get(FILTERS_SHEET_NAME)
+            filterSheetValues?.forEachIndexed { index, row ->
+                val name = row.getOrNull(0)?.toString() ?: ""
+                val value = row.getOrNull(1)?.toString() ?: ""
+                if (name.isNotBlank()) {
+                    filters.add(com.hereliesaz.lexorcist.data.Filter(id = index, spreadsheetId = spreadsheetId, name = name, value = value))
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Log.e("GoogleApiService", "Error in getFiltersForCase for $spreadsheetId", e)
+        }
+        filters
+    }
+
+    suspend fun addFilterToCase(spreadsheetId: String, filter: com.hereliesaz.lexorcist.data.Filter): Boolean = withContext(Dispatchers.IO) {
+        if (spreadsheetId.isBlank() || filter.name.isBlank()) return@withContext false
+        try {
+            addSheet(spreadsheetId, FILTERS_SHEET_NAME)
+            val values = listOf(listOf(filter.name, filter.value))
+            appendData(spreadsheetId, FILTERS_SHEET_NAME, values) != null
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Log.e("GoogleApiService", "Error in addFilterToCase for $spreadsheetId", e)
             false
         }
     }

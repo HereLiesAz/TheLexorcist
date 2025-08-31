@@ -1,8 +1,7 @@
 package com.hereliesaz.lexorcist.data
 
-data class Filter(
+data class Allegation(
     val id: Int,
     val spreadsheetId: String,
-    val name: String,
-    val value: String
+    val text: String
 )
