@@ -36,16 +36,16 @@ class CaseRepositoryImpl @Inject constructor(
         return caseDao.insert(case).toInt()
     }
     
-    override suspend fun createCase(
+    override suspend fun createNewCaseWithDetails(
         caseName: String,
         exhibitSheetName: String,
         caseNumber: String,
         caseSection: String,
         caseJudge: String,
-        plaintiffs: String, 
-        defendants: String, 
-        court: String       
-    ): Case? { 
+        plaintiffs: String,
+        defendants: String,
+        court: String
+    ): Case? {
         val currentGoogleApiService = googleApiService ?: run {
             Log.e(tag, "GoogleApiService not available, cannot create case.")
             return null
@@ -65,7 +65,7 @@ class CaseRepositoryImpl @Inject constructor(
                     .replace("{{CASE_NUMBER}}", caseNumber)
                     .replace("{{CASE_SECTION}}", caseSection)
                     .replace("{{CASE_JUDGE}}", caseJudge)
-                
+
                 val scriptId = currentGoogleApiService.attachScript(caseSpreadsheetId, scriptContent, "")
 
                 val newCase = Case( // Assuming Case constructor matches these fields
@@ -128,7 +128,7 @@ class CaseRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun archiveCase(case: Case) { // Added to match previous impl, ensure in interface
+    override suspend fun archiveExistingCase(case: Case) { // Added to match previous impl, ensure in interface
         val updatedCase = case.copy(isArchived = true) // Assuming Case has isArchived
         googleApiService?.updateCaseInRegistry(updatedCase) // Assuming this method exists and takes updatedCase
         caseDao.update(updatedCase)
@@ -168,7 +168,7 @@ class CaseRepositoryImpl @Inject constructor(
         _htmlTemplates.value = googleApiService?.listHtmlTemplatesInAppRootFolder() ?: emptyList()
     }
     
-    override suspend fun importSpreadsheet(spreadsheetId: String): Case? { // Added to match previous impl, ensure in interface
+    override suspend fun importSpreadsheetAndStore(spreadsheetId: String): Case? { // Added to match previous impl, ensure in interface
         val currentGoogleApiService = googleApiService ?: return null
         val sheetsData = currentGoogleApiService.readSpreadsheet(spreadsheetId)
         if (sheetsData != null) {

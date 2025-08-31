@@ -25,8 +25,7 @@ import javax.inject.Inject
 class CaseViewModel @Inject constructor(
     @ApplicationContext private val applicationContext: Context,
     private val caseRepository: CaseRepository,
-    private val caseDao: CaseDao, // As per error
-    private val authViewModel: AuthViewModel // Assuming this is also a @HiltViewModel
+    private val authViewModel: AuthViewModel
 ) : ViewModel() {
 
     private val sharedPref = applicationContext.getSharedPreferences("CaseInfoPrefs", Context.MODE_PRIVATE)
@@ -34,13 +33,13 @@ class CaseViewModel @Inject constructor(
     private val _sortOrder = MutableStateFlow(SortOrder.DATE_DESC)
     val sortOrder: StateFlow<SortOrder> = _sortOrder.asStateFlow()
 
-    val cases: StateFlow<List<Case>> = caseRepository.getAllCases() // Using interface method
-        .combine(sortOrder) { cases, currentSortOrder -> // Explicitly named lambda param
+    val cases: StateFlow<List<Case>> =
+        combine(caseRepository.getAllCases(), sortOrder) { cases, currentSortOrder ->
             when (currentSortOrder) {
-                SortOrder.NAME_ASC -> cases.sortedBy { it.name }
-                SortOrder.NAME_DESC -> cases.sortedByDescending { it.name }
-                SortOrder.DATE_ASC -> cases.sortedBy { it.id } 
-                SortOrder.DATE_DESC -> cases.sortedByDescending { it.id }
+                SortOrder.NAME_ASC -> cases.sortedBy { case -> case.name }
+                SortOrder.NAME_DESC -> cases.sortedByDescending { case -> case.name }
+                SortOrder.DATE_ASC -> cases.sortedBy { case -> case.id }
+                SortOrder.DATE_DESC -> cases.sortedByDescending { case -> case.id }
             }
         }
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
