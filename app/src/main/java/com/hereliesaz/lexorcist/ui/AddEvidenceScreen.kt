@@ -47,11 +47,12 @@ fun AddEvidenceScreen(
     onAddDocument: () -> Unit,
     onAddSpreadsheet: () -> Unit,
     onRecordAudio: () -> Unit,
-    onImportAudio: () -> Unit
+    onImportAudio: () -> Unit,
+    onRecordVideo: () -> Unit,
+    onImportVideo: () -> Unit
 ) {
     val imageBitmapForReview by ocrViewModel.imageBitmapForReview.collectAsState()
     val isOcrInProgress by ocrViewModel.isOcrInProgress.collectAsState()
-    val newlyCreatedEvidence by ocrViewModel.newlyCreatedEvidence.collectAsState(initial = null)
     val isUploadingFile by mainViewModel.isUploadingFile.collectAsState()
     val newlyCreatedEvidence by ocrViewModel.newlyCreatedEvidence.collectAsState() // This is StateFlow<Evidence?>
     val evidenceList by evidenceViewModel.evidenceList.collectAsState() // This is StateFlow<List<Evidence>>

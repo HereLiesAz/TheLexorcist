@@ -18,10 +18,11 @@ class CaseDaoImpl @Inject constructor(
         }
     }
 
-    override suspend fun insert(case: Case) {
+    override suspend fun insert(case: Case): Long {
         getRegistryId()?.let {
             googleApiService.addCaseToRegistry(it, case)
         }
+        return 0L // Google Sheets doesn't provide a row ID easily
     }
 
     override fun getAllCases(): Flow<List<Case>> = flow {
@@ -37,6 +38,17 @@ class CaseDaoImpl @Inject constructor(
     }
 
     override suspend fun delete(case: Case) {
-        googleApiService.deleteCaseFromRegistry(case)
+        getRegistryId()?.let {
+            googleApiService.deleteCaseFromRegistry(it, case)
+        }
+    }
+
+    override suspend fun getCaseById(id: Int): Case? {
+        // Not supported by GoogleApiService yet.
+        return null
+    }
+
+    override suspend fun update(case: Case) {
+        // Not supported by GoogleApiService yet.
     }
 }

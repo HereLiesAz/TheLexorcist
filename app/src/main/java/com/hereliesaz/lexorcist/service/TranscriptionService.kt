@@ -12,6 +12,7 @@ import com.google.cloud.speech.v1.SpeechClient
 import com.google.cloud.speech.v1.SpeechSettings
 import com.google.protobuf.ByteString
 import java.io.InputStream
+import com.google.auth.oauth2.AccessToken
 
 class TranscriptionService(
     private val context: Context,
@@ -20,8 +21,10 @@ class TranscriptionService(
 
     suspend fun transcribeAudio(uri: Uri): String {
         try {
+            val accessToken = credential.credential.accessToken
+            val googleCredentials = GoogleCredentials.create(AccessToken(accessToken, null))
             val speechSettings = SpeechSettings.newBuilder()
-                .setCredentialsProvider(FixedCredentialsProvider.create(credential))
+                .setCredentialsProvider(FixedCredentialsProvider.create(googleCredentials))
                 .build()
 
             SpeechClient.create(speechSettings).use { speechClient ->

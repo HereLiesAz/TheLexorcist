@@ -1,7 +1,7 @@
 package com.hereliesaz.lexorcist.data // Assuming this is the correct package
 
 import com.hereliesaz.lexorcist.GoogleApiService
-import com.hereliesaz.lexorcist.model.Case // Added import
+import com.hereliesaz.lexorcist.data.Case // Corrected import
 import com.hereliesaz.lexorcist.model.SpreadsheetSchema
 import javax.inject.Inject
 
@@ -12,13 +12,8 @@ class SpreadsheetParser @Inject constructor(
 ) {
 
     suspend fun parseAndStore(sheetData: Map<String, List<List<Any>>>): Case? {
-        val caseDetailsSheet = schema.sheets.find { it.name == "Case Details" }
-        val evidenceSheet = schema.sheets.find { it.name == "Evidence Log" }
-
-        if (caseDetailsSheet == null || evidenceSheet == null) {
-            // Log error: Schema definition missing for required sheets
-            return null
-        }
+        val caseDetailsSheet = schema.caseInfoSheet
+        val evidenceSheet = schema.evidenceSheet
 
         val caseDetailsData = sheetData[caseDetailsSheet.name]
         val evidenceLogData = sheetData[evidenceSheet.name]
@@ -28,14 +23,14 @@ class SpreadsheetParser @Inject constructor(
             return null
         }
 
-        val caseName = extractStringValue(caseDetailsData, caseDetailsSheet, "Case Name") ?: "Imported Case"
+        val caseName = extractStringValue(caseDetailsData, caseDetailsSheet.caseNameColumn) ?: "Imported Case"
         // Placeholder for the ID of the spreadsheet being parsed. This is a complex topic
         // as the map itself doesn't directly provide it. For now, empty.
-        val sourceSpreadsheetId = "" 
+        val sourceSpreadsheetId = ""
 
         val newCase = Case(
             name = caseName,
-            spreadsheetId = sourceSpreadsheetId 
+            spreadsheetId = sourceSpreadsheetId
             // Initialize other fields as needed based on your schema and extraction logic
         )
 
@@ -52,12 +47,8 @@ class SpreadsheetParser @Inject constructor(
 
     private fun extractStringValue(
         sheetData: List<List<Any>>,
-        sheetSchema: SpreadsheetSchema.SheetDefinition,
-        columnName: String
+        columnIndex: Int
     ): String? {
-        val columnIndex = sheetSchema.columns.indexOfFirst { it.name == columnName }
-        if (columnIndex == -1) return null
-        
         // This assumes actual data starts from the second row (index 1) of the sheetData list,
         // and that case details are typically single values in a specific row (e.g., the first data row).
         // Adjust indices if your sheet structure is different (e.g., headers are not in sheetData).
