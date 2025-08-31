@@ -49,6 +49,7 @@ fun getGitVersionCode(): Int {
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("kotlin-parcelize") // Added kotlin-parcelize plugin
     id("com.google.dagger.hilt.android")
     id("org.jetbrains.kotlin.plugin.compose") version "2.2.10"
     id("com.google.devtools.ksp") version "2.2.10-2.0.2"

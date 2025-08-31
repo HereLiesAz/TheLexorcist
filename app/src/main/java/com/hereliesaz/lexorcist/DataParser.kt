@@ -47,10 +47,10 @@ object DataParser {
     }
 
     private val timePatterns = mapOf(
-        """\b\d{1,2}:\d{2}\s*(?:AM|PM)\b""".toRegex() to SimpleDateFormat("h:mm a", Locale.US),
-        """\b\d{1,2}:\d{2}:\d{2}\s*(?:AM|PM)\b""".toRegex() to SimpleDateFormat("h:mm:ss a", Locale.US),
-        """\b\d{2}:\d{2}:\d{2}\b""".toRegex() to SimpleDateFormat("HH:mm:ss", Locale.US),
-        """\b\d{2}:\d{2}\b""".toRegex() to SimpleDateFormat("HH:mm", Locale.US)
+        """"\b\d{1,2}:\d{2}\s*(?:AM|PM)\b"""".toRegex() to SimpleDateFormat("h:mm a", Locale.US),
+        """"\b\d{1,2}:\d{2}:\d{2}\s*(?:AM|PM)\b"""".toRegex() to SimpleDateFormat("h:mm:ss a", Locale.US),
+        """"\b\d{2}:\d{2}:\d{2}\b"""".toRegex() to SimpleDateFormat("HH:mm:ss", Locale.US),
+        """"\b\d{2}:\d{2}\b"""".toRegex() to SimpleDateFormat("HH:mm", Locale.US)
     )
 
     fun parseTimestamps(text: String): List<String> {
@@ -91,45 +91,47 @@ object DataParser {
         )
     }
 
-    fun parseTextForCase(caseId: Int, text: String): CaseData {
-        val allegations = extractAllegations(caseId, text)
-        val evidence = extractEvidence(caseId, text, allegations)
+    fun parseTextForCase(spreadsheetId: String, text: String, caseId: Int): CaseData { // Added caseId here for now
+        val allegations = extractAllegations(spreadsheetId, text)
+        val evidence = extractEvidence(spreadsheetId, text, allegations, caseId) // Pass caseId to extractEvidence
         // ... extract other data types ...
 
         return CaseData(allegations, evidence)
     }
 
-    private fun extractAllegations(caseId: Int, text: String): List<Allegation> {
+    private fun extractAllegations(spreadsheetId: String, text: String): List<Allegation> {
         val allegationRegex = """"(?i)\b(alleges|claims|argues that)\b.*"""".toRegex()
         var currentId = 0 // Assuming Allegation needs an id and it's generated sequentially here
         return allegationRegex.findAll(text).map {
-            Allegation(id = currentId++, caseId = caseId, text = it.value) // Assuming Allegation(id: Int, caseId: Int, text: String)
+            Allegation(id = currentId++, spreadsheetId = spreadsheetId, text = it.value)
         }.toList()
     }
 
-    fun extractEvidence(caseId: Int, text: String, allegations: List<Allegation>): List<Evidence> {
+    fun extractEvidence(spreadsheetId: String, text: String, allegations: List<Allegation>, caseId: Int): List<Evidence> { // Added caseId here
         val entries = mutableListOf<Evidence>()
         val sentences = text.split("\n")
 
         for (sentence in sentences) {
             val date = parseDates(sentence).firstOrNull() ?: System.currentTimeMillis()
 
-            val linkedAllegation = allegations.find { sentence.contains(it.text, ignoreCase = true) }
+            val linkedAllegation = allegations.find { allegation -> sentence.contains(allegation.text, ignoreCase = true) }
             val categoryRegex = """"(?i)Category:\s*(\w+)"""".toRegex()
             val categoryMatch = categoryRegex.find(sentence)
             val category = categoryMatch?.groupValues?.get(1) ?: ""
 
             entries.add(
                 Evidence(
-                    id = entries.size, 
-                    caseId = caseId, 
+                    id = entries.size, // This should ideally be a unique ID from the data source
+                    spreadsheetId = spreadsheetId,
+                    caseId = caseId.toLong(), // Convert Int to Long as per Evidence data class
                     allegationId = linkedAllegation?.id,
                     content = sentence,
                     timestamp = System.currentTimeMillis(), 
                     sourceDocument = "Parsed from text",
                     documentDate = date, 
                     category = category,
-                    tags = emptyList() 
+                    tags = emptyList(),
+                    type = "" // Added missing 'type' parameter
                 )
             )
         }
