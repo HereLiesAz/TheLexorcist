@@ -1,5 +1,9 @@
 package com.hereliesaz.lexorcist.data
 
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
+
+@Parcelize
 data class Evidence(
     val id: Int = 0,
     val caseId: Long,
@@ -16,4 +20,4 @@ data class Evidence(
     val linkedEvidenceIds: List<Int> = emptyList(),
     val parentVideoId: String? = null,
     val entities: Map<String, List<String>> = emptyMap()
-)
+) : Parcelable
