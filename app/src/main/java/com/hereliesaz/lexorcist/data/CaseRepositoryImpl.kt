@@ -42,10 +42,10 @@ class CaseRepositoryImpl @Inject constructor(
         caseNumber: String,
         caseSection: String,
         caseJudge: String,
-        plaintiffs: String, 
-        defendants: String, 
-        court: String       
-    ): Case? { 
+        plaintiffs: String,
+        defendants: String,
+        court: String
+    ): Case? {
         val currentGoogleApiService = googleApiService ?: run {
             Log.e(tag, "GoogleApiService not available, cannot create case.")
             return null
@@ -65,7 +65,7 @@ class CaseRepositoryImpl @Inject constructor(
                     .replace("{{CASE_NUMBER}}", caseNumber)
                     .replace("{{CASE_SECTION}}", caseSection)
                     .replace("{{CASE_JUDGE}}", caseJudge)
-                
+
                 val scriptId = currentGoogleApiService.attachScript(caseSpreadsheetId, scriptContent, "")
 
                 val newCase = Case( // Assuming Case constructor matches these fields

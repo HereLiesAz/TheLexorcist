@@ -39,7 +39,7 @@ class CaseViewModel @Inject constructor(
             when (currentSortOrder) {
                 SortOrder.NAME_ASC -> cases.sortedBy { it.name }
                 SortOrder.NAME_DESC -> cases.sortedByDescending { it.name }
-                SortOrder.DATE_ASC -> cases.sortedBy { it.id } 
+                SortOrder.DATE_ASC -> cases.sortedBy { it.id }
                 SortOrder.DATE_DESC -> cases.sortedByDescending { it.id }
             }
         }
