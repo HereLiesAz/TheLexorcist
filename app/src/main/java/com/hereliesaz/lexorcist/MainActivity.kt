@@ -11,6 +11,7 @@ import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.navigation.compose.rememberNavController
+import com.google.android.gms.auth.api.identity.BeginSignInRequest // Added import
 import com.google.android.gms.auth.api.identity.Identity
 import com.hereliesaz.lexorcist.ui.theme.LexorcistTheme
 import com.hereliesaz.lexorcist.viewmodel.AuthViewModel
@@ -54,11 +55,9 @@ class MainActivity : ComponentActivity() {
                     authViewModel = authViewModel,
                     onSignInClick = {
                         authViewModel.clearSignInError()
-                        val signInRequest = authViewModel.getSignInRequest()
-                        // Corrected: call getPendingIntent()
+                        val signInRequest: BeginSignInRequest = authViewModel.getSignInRequest() // Explicitly typed
                         val pendingIntent: PendingIntent? = signInRequest.getPendingIntent()
                         if (pendingIntent != null) {
-                            // Corrected: Use pendingIntent.intentSender with the Builder
                             val intentSenderRequest = IntentSenderRequest.Builder(pendingIntent.intentSender).build()
                             signInLauncher.launch(intentSenderRequest)
                         } else {

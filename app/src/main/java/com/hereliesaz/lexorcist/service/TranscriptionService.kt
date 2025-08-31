@@ -16,13 +16,13 @@ import com.google.auth.oauth2.AccessToken
 
 class TranscriptionService(
     private val context: Context,
-    private val credential: GoogleAccountCredential
+    private val authCredentialParam: GoogleAccountCredential // Renamed parameter
 ) {
 
     suspend fun transcribeAudio(uri: Uri): String {
         try {
-            // Corrected: Use credential.credential.accessToken
-            val accessToken = credential.credential.accessToken
+            // Updated usage of the renamed parameter
+            val accessToken = authCredentialParam.credential.accessToken
             if (accessToken == null) {
                  return "Error: Could not retrieve access token."
             }
