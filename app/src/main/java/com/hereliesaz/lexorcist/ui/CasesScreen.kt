@@ -26,7 +26,6 @@ import androidx.compose.ui.unit.dp
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
-import com.hereliesaz.lexorcist.CreateCaseDialog // Import the dialog from the parent package
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,6 +34,7 @@ fun CasesScreen(caseViewModel: CaseViewModel) {
     val sortOrder by caseViewModel.sortOrder.collectAsState()
     var longPressedCase by remember { mutableStateOf<Case?>(null) }
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
+    var showCreateCaseDialog by remember { mutableStateOf(false) }
     var sortOrderState by remember { mutableStateOf(sortOrder) }
     var lastSortTap by remember { mutableStateOf(0L) }
 
@@ -44,8 +44,19 @@ fun CasesScreen(caseViewModel: CaseViewModel) {
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+    Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(onClick = { showCreateCaseDialog = true }) {
+                Icon(Icons.Filled.Add, contentDescription = "Add Case")
+            }
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(16.dp)
+        ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -120,6 +131,13 @@ fun CasesScreen(caseViewModel: CaseViewModel) {
                         Text("Cancel")
                     }
                 }
+            )
+        }
+
+        if (showCreateCaseDialog) {
+            CreateCaseDialog(
+                caseViewModel = caseViewModel,
+                onDismiss = { showCreateCaseDialog = false }
             )
         }
     }

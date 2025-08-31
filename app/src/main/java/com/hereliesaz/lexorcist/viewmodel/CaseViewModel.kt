@@ -206,11 +206,11 @@ class CaseViewModel @Inject constructor(
             .apply()
     }
 
-    fun archiveCaseWithRepository(case: Case) {
+    fun archiveCase(case: Case) {
         viewModelScope.launch { caseRepository.archiveExistingCase(case) }
     }
 
-    fun deleteCaseWithRepository(case: Case) {
+    fun deleteCase(case: Case) {
         viewModelScope.launch { caseRepository.deleteCase(case) }
     }
 }

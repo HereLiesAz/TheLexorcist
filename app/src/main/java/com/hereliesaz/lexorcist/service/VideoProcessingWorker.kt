@@ -16,6 +16,7 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.nio.ByteBuffer
 import android.app.Application
+import com.hereliesaz.lexorcist.data.SettingsManager
 import com.hereliesaz.lexorcist.viewmodel.OcrViewModel
 
 class VideoProcessingWorker(
@@ -24,7 +25,15 @@ class VideoProcessingWorker(
 ) : CoroutineWorker(appContext, workerParams) {
 
     // TODO: This is not a good practice. The OCR logic should be extracted into a repository.
-    private val ocrViewModel by lazy { OcrViewModel(applicationContext as Application) }
+    private val settingsManager by lazy { SettingsManager(applicationContext) }
+    private val scriptRunner by lazy { ScriptRunner() }
+    private val ocrViewModel by lazy {
+        OcrViewModel(
+            applicationContext as Application,
+            settingsManager,
+            scriptRunner
+        )
+    }
 
     override suspend fun doWork(): Result {
         val videoUriString = inputData.getString(KEY_VIDEO_URI)
@@ -59,7 +68,7 @@ class VideoProcessingWorker(
             return Result.failure()
         }
 
-        Log.d(TAG, "Video uploaded to Drive with ID: ${uploadedVideo.id}")
+        Log.d(TAG, "Video uploaded to Drive with ID: ${uploadedVideo?.id}")
 
 
         val audioUri = extractAudio(videoUri)
@@ -75,7 +84,7 @@ class VideoProcessingWorker(
         if (frameUris.isNotEmpty()) {
             Log.d(TAG, "Extracted ${frameUris.size} keyframes")
             frameUris.forEach { uri ->
-                ocrViewModel.performOcrOnUri(uri, applicationContext, caseId, uploadedVideo.id)
+                ocrViewModel.performOcrOnUri(uri, applicationContext, caseId, uploadedVideo?.id)
             }
         }
 

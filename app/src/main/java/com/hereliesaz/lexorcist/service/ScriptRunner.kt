@@ -3,8 +3,7 @@ package com.hereliesaz.lexorcist.service
 // Removed import for android.content.Context as it was unused after Context disambiguation
 // import com.google.api.client.json.webtoken.JsonWebSignature // No longer returning this type
 import com.hereliesaz.lexorcist.data.Evidence // Corrected import
-import com.hereliesaz.lexorcist.data.Evidence
-import com.hereliesaz.lexorcist.util.Result
+import com.hereliesaz.lexorcist.utils.Result
 import org.mozilla.javascript.Scriptable
 import org.mozilla.javascript.ScriptableObject
 
