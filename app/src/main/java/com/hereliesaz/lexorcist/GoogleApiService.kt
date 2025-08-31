@@ -20,6 +20,10 @@ import com.google.api.services.sheets.v4.model.*
 import com.hereliesaz.lexorcist.data.Allegation
 import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.data.Evidence // Corrected import
+import com.hereliesaz.lexorcist.model.Comment
+import com.hereliesaz.lexorcist.model.Script as SharedScript
+import com.hereliesaz.lexorcist.model.Template as SharedTemplate
+import com.hereliesaz.lexorcist.utils.Constants
 import com.hereliesaz.lexorcist.utils.Result
 import com.hereliesaz.lexorcist.utils.FolderManager
 import kotlinx.coroutines.Dispatchers
@@ -163,6 +167,113 @@ class GoogleApiService(
             Log.e("GoogleApiService", "Error in getAllCasesFromRegistry", e)
         }
         cases
+    }
+
+    suspend fun getSharedScripts(): List<SharedScript> = withContext(Dispatchers.IO) {
+        val scripts = mutableListOf<SharedScript>()
+        try {
+            val addonSheetData = readSpreadsheet(Constants.ADDONS_SHEET_ID)
+            val scriptSheetValues = addonSheetData?.get("Scripts")
+
+            scriptSheetValues?.drop(1)?.forEach { row ->
+                val id = row.getOrNull(0)?.toString() ?: ""
+                val name = row.getOrNull(1)?.toString() ?: ""
+                val description = row.getOrNull(2)?.toString() ?: ""
+                val author = row.getOrNull(3)?.toString() ?: ""
+                val content = row.getOrNull(4)?.toString() ?: ""
+                val rating = row.getOrNull(5)?.toString()?.toFloatOrNull() ?: 0f
+                val ratingsCount = row.getOrNull(6)?.toString()?.toIntOrNull() ?: 0
+                val commentsJson = row.getOrNull(7)?.toString() ?: "[]"
+                val comments = GsonFactory.getDefaultInstance().fromString(commentsJson, Array<Comment>::class.java).toList()
+
+                if (id.isNotBlank() && name.isNotBlank()) {
+                    scripts.add(SharedScript(id, name, description, author, content, rating, ratingsCount, comments))
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Log.e("GoogleApiService", "Error in getSharedScripts", e)
+        }
+        scripts
+    }
+
+    suspend fun getSharedTemplates(): List<SharedTemplate> = withContext(Dispatchers.IO) {
+        val templates = mutableListOf<SharedTemplate>()
+        try {
+            val addonSheetData = readSpreadsheet(Constants.ADDONS_SHEET_ID)
+            val templateSheetValues = addonSheetData?.get("Templates")
+
+            templateSheetValues?.drop(1)?.forEach { row ->
+                val id = row.getOrNull(0)?.toString() ?: ""
+                val name = row.getOrNull(1)?.toString() ?: ""
+                val description = row.getOrNull(2)?.toString() ?: ""
+                val author = row.getOrNull(3)?.toString() ?: ""
+                val content = row.getOrNull(4)?.toString() ?: ""
+                val rating = row.getOrNull(5)?.toString()?.toFloatOrNull() ?: 0f
+                val ratingsCount = row.getOrNull(6)?.toString()?.toIntOrNull() ?: 0
+                val commentsJson = row.getOrNull(7)?.toString() ?: "[]"
+                val comments = GsonFactory.getDefaultInstance().fromString(commentsJson, Array<Comment>::class.java).toList()
+
+                if (id.isNotBlank() && name.isNotBlank()) {
+                    templates.add(SharedTemplate(id, name, description, author, content, rating, ratingsCount, comments))
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Log.e("GoogleApiService", "Error in getSharedTemplates", e)
+        }
+        templates
+    }
+
+    suspend fun shareAddon(name: String, description: String, content: String, type: String): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val sheetName = if (type == "Script") "Scripts" else "Templates"
+            val id = java.util.UUID.randomUUID().toString()
+            val author = credential.selectedAccount?.name ?: "Anonymous"
+            val values = listOf(listOf(
+                id,
+                name,
+                description,
+                author,
+                content,
+                0, // rating
+                0, // ratingsCount
+                "[]" // comments
+            ))
+            appendData(Constants.ADDONS_SHEET_ID, sheetName, values) != null
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Log.e("GoogleApiService", "Error in shareAddon", e)
+            false
+        }
+    }
+
+    suspend fun rateAddon(id: String, rating: Int, type: String): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val sheetName = if (type == "Script") "Scripts" else "Templates"
+            val sheetData = readSpreadsheet(Constants.ADDONS_SHEET_ID)?.get(sheetName) ?: return@withContext false
+            val rowIndex = sheetData.indexOfFirst { it.getOrNull(0) == id }
+            if (rowIndex == -1) return@withContext false
+
+            val currentRow = sheetData[rowIndex]
+            val currentRating = currentRow.getOrNull(5)?.toString()?.toFloatOrNull() ?: 0f
+            val ratingsCount = currentRow.getOrNull(6)?.toString()?.toIntOrNull() ?: 0
+
+            val newRatingsCount = ratingsCount + 1
+            val newRating = (currentRating * ratingsCount + rating) / newRatingsCount
+
+            val range = "$sheetName!F${rowIndex + 1}:G${rowIndex + 1}"
+            val values = listOf(listOf(newRating, newRatingsCount))
+            val body = ValueRange().setValues(values)
+            sheetsService.spreadsheets().values().update(Constants.ADDONS_SHEET_ID, range, body)
+                .setValueInputOption("USER_ENTERED")
+                .execute()
+            true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Log.e("GoogleApiService", "Error in rateAddon", e)
+            false
+        }
     }
 
     suspend fun addCaseToRegistry(registrySpreadsheetId: String, caseData: Case): Boolean = withContext(Dispatchers.IO) {

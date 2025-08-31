@@ -102,6 +102,17 @@ fun MainScreen(
                         composable("timeline") { TimelineScreen(navController = navController, viewModel = evidenceViewModel) }
                         composable("data_review") { DataReviewScreen(evidenceViewModel = evidenceViewModel) }
                         composable("settings") { SettingsScreen(caseViewModel = caseViewModel) }
+                        composable("addons_browser") {
+                            AddonsBrowserScreen(onShare = { navController.navigate("share_addon") })
+                        }
+                        composable("share_addon") {
+                            ShareAddonScreen(onShare = { name, description, content, type ->
+                                // a little bit of a hack to get the viewmodel, but it's fine for now
+                                val addonsViewModel: AddonsBrowserViewModel = viewModel()
+                                addonsViewModel.shareAddon(name, description, content, type)
+                                navController.popBackStack()
+                            })
+                        }
                         composable("script_editor") { ScriptEditorScreen(viewModel = scriptEditorViewModel) }
                         composable("evidence_details/{evidenceId}") { backStackEntry ->
                             val evidenceId = backStackEntry.arguments?.getString("evidenceId")
