@@ -3,6 +3,9 @@ package com.hereliesaz.lexorcist
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -23,11 +26,11 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         val oneTapClient = Identity.getSignInClient(this)
-        val signInRequest = authViewModel.getSignInRequest()
+
 
         val signInLauncher = registerForActivityResult(
-            oneTapClient.getSignInIntentSenderRequest(),
-        ) { result ->
+            ActivityResultContracts.StartIntentSenderForResult()
+        ) { result: ActivityResult ->
             if (result.resultCode == RESULT_OK) {
                 try {
                     val credential = oneTapClient.getSignInCredentialFromIntent(result.data)
@@ -47,7 +50,9 @@ class MainActivity : ComponentActivity() {
                     mainViewModel = mainViewModel,
                     authViewModel = authViewModel,
                     onSignInClick = {
-                        signInLauncher.launch(signInRequest)
+                        authViewModel.getSignInRequest()?.let { signInRequest ->
+                            signInLauncher.launch(IntentSenderRequest.Builder(signInRequest.pendingIntent).build())
+                        }
                     },
                     onSignOutClick = {
                         authViewModel.signOut()

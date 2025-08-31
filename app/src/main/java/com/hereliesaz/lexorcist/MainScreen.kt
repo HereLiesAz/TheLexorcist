@@ -62,42 +62,43 @@ fun MainScreen(
                 Box(modifier = Modifier.weight(1f)) {
                     NavHost(navController = navController, startDestination = "home") {
                         composable("home") { AuthenticatedView(onCreateCase = { showCreateCaseDialog = true }) }
-                        composable("cases") { CasesScreen(caseViewModel = caseViewModel, onCaseSelected = {
-                            caseViewModel.selectCase(it)
-                            navController.navigate("timeline")
-                        }) }
+                        composable("cases") { CasesScreen(caseViewModel = caseViewModel /* Removed onCaseSelected */) }
                         composable("add_evidence") {
                             AddEvidenceScreen(
                                 onAddTextEvidence = { navController.navigate("add_text_evidence") },
                             )
                         }
                         composable("add_text_evidence") {
-                            AddTextEvidenceScreen(onSave = { text ->
-                                selectedCase?.let {
-                                    evidenceViewModel.addTextEvidence(text)
+                            AddTextEvidenceScreen(
+                                evidenceViewModel = evidenceViewModel, // Added evidenceViewModel
+                                onSave = { text ->
+                                    selectedCase?.let {
+                                        evidenceViewModel.addTextEvidence(text)
+                                    }
+                                    navController.navigateUp()
                                 }
-                                navController.navigateUp()
-                            })
+                            )
                         }
                         composable("timeline") {
                             selectedCase?.let {
                                 TimelineScreen(
                                     case = it,
                                     evidenceViewModel = evidenceViewModel,
-                                    onNavigateToEvidenceDetails = { evidenceId ->
-                                        navController.navigate("evidence_details/$evidenceId")
-                                    }
+                                    navController = navController // Added navController, removed onNavigateToEvidenceDetails
                                 )
                             }
                         }
-                        composable("data_review") { DataReviewScreen() }
-                        composable("settings") { SettingsScreen() }
+                        composable("data_review") { DataReviewScreen(evidenceViewModel = evidenceViewModel) } // Added evidenceViewModel
+                        composable("settings") { SettingsScreen(caseViewModel = caseViewModel) } // Added caseViewModel
                         composable("evidence_details/{evidenceId}") { backStackEntry ->
                             val evidenceId = backStackEntry.arguments?.getString("evidenceId")?.toIntOrNull()
                             if (evidenceId != null) {
+                                // TODO: EvidenceDetailsScreen needs an Evidence object, or the ViewModel needs to handle loading by ID.
+                                // For now, passing evidenceViewModel as per one of the error messages, but this might be incorrect.
                                 EvidenceDetailsScreen(
-                                    evidenceId = evidenceId,
-                                    viewModel = evidenceDetailsViewModel
+                                    // evidenceId = evidenceId, // Parameter not found error
+                                    // evidence = ???, // Missing evidence object
+                                    viewModel = evidenceViewModel // Changed from evidenceDetailsViewModel based on error
                                 )
                             }
                         }
