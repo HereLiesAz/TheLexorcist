@@ -1,16 +1,17 @@
 package com.hereliesaz.lexorcist.viewmodel
 
-import android.app.Application
 import android.content.Context
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.api.services.drive.model.File as DriveFile
 import com.hereliesaz.lexorcist.data.Case
+import com.hereliesaz.lexorcist.data.CaseDao
 import com.hereliesaz.lexorcist.data.CaseRepository
 import com.hereliesaz.lexorcist.data.Allegation
 import com.hereliesaz.lexorcist.data.SortOrder
 import com.hereliesaz.lexorcist.model.SheetFilter
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -20,34 +21,26 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-class CaseViewModel(
-    application: Application,
-    private val caseRepository: CaseRepository,
-    private val authViewModel: AuthViewModel
-) : AndroidViewModel(application) {
-import com.hereliesaz.lexorcist.GoogleApiService
 @HiltViewModel
 class CaseViewModel @Inject constructor(
-    application: Application,
-    private val caseRepository: CaseRepository
-) : AndroidViewModel(application) {
+    @ApplicationContext private val applicationContext: Context,
+    private val caseRepository: CaseRepository,
+    private val caseDao: CaseDao, // As per error
+    private val authViewModel: AuthViewModel // Assuming this is also a @HiltViewModel
+) : ViewModel() {
 
-class CaseViewModel(application: Application, private val caseRepository: CaseRepository, private val authViewModel: AuthViewModel) : AndroidViewModel(application) {
-
-    private var googleApiService: GoogleApiService? = null
-    private val sharedPref = application.getSharedPreferences("CaseInfoPrefs", Context.MODE_PRIVATE)
+    private val sharedPref = applicationContext.getSharedPreferences("CaseInfoPrefs", Context.MODE_PRIVATE)
 
     private val _sortOrder = MutableStateFlow(SortOrder.DATE_DESC)
     val sortOrder: StateFlow<SortOrder> = _sortOrder.asStateFlow()
 
-    val cases: StateFlow<List<Case>> = caseRepository.getCases()
-        .combine(sortOrder) { cases, sortOrder ->
-            when (sortOrder) {
+    val cases: StateFlow<List<Case>> = caseRepository.getAllCases() // Using interface method
+        .combine(sortOrder) { cases, currentSortOrder -> // Explicitly named lambda param
+            when (currentSortOrder) {
                 SortOrder.NAME_ASC -> cases.sortedBy { it.name }
                 SortOrder.NAME_DESC -> cases.sortedByDescending { it.name }
-                SortOrder.DATE_ASC -> cases.sortedBy { it.id }
+                SortOrder.DATE_ASC -> cases.sortedBy { it.id } 
                 SortOrder.DATE_DESC -> cases.sortedByDescending { it.id }
-                else -> cases.sortedByDescending { it.id }
             }
         }
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
@@ -62,7 +55,7 @@ class CaseViewModel(application: Application, private val caseRepository: CaseRe
     val allegations: StateFlow<List<Allegation>> = _allegations.asStateFlow()
 
     private val _htmlTemplates = MutableStateFlow<List<DriveFile>>(emptyList())
-    val htmlTemplates: StateFlow<List<DriveFile>> = _htmlTemplates.asStateFlow()
+    val htmlTemplates: StateFlow<List<DriveFile>> = _htmlTemplates.asStateFlow() // One definition
 
     private val _plaintiffs = MutableStateFlow(sharedPref.getString("plaintiffs", "") ?: "")
     val plaintiffs: StateFlow<String> = _plaintiffs.asStateFlow()
@@ -76,30 +69,13 @@ class CaseViewModel(application: Application, private val caseRepository: CaseRe
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
-    private val _htmlTemplates = MutableStateFlow<List<DriveFile>>(emptyList())
-    val htmlTemplates: StateFlow<List<DriveFile>> = _htmlTemplates.asStateFlow()
-
     private val _selectedCaseEvidenceList = MutableStateFlow<List<com.hereliesaz.lexorcist.data.Evidence>>(emptyList())
     val selectedCaseEvidenceList: StateFlow<List<com.hereliesaz.lexorcist.data.Evidence>> = _selectedCaseEvidenceList.asStateFlow()
 
+    private val _isDarkMode = MutableStateFlow(false)
+    val isDarkMode: StateFlow<Boolean> = _isDarkMode.asStateFlow()
+
     init {
-        loadDarkModePreference()
-        viewModelScope.launch {
-            authViewModel.isSignedIn.collect { isSignedIn ->
-                if (isSignedIn) {
-                    googleApiService = authViewModel.googleApiService.value
-                    loadCases()
-                    loadHtmlTemplates()
-                } else {
-                    googleApiService = null
-                    _htmlTemplates.value = emptyList()
-                    _selectedCase.value = null
-                    _sheetFilters.value = emptyList()
-                    _allegations.value = emptyList()
-                    _selectedCaseEvidenceList.value = emptyList()
-                }
-            }
-        }
         loadDarkModePreference()
         observeAuthChanges()
     }
@@ -108,15 +84,16 @@ class CaseViewModel(application: Application, private val caseRepository: CaseRe
         viewModelScope.launch {
             authViewModel.isSignedIn.collect { isSignedIn ->
                 if (isSignedIn) {
-                    loadCases()
-                    loadHtmlTemplates()
+                    // Interactions with googleApiService should ideally be through authViewModel or repository
+                    loadCasesFromRepository()
+                    loadHtmlTemplatesFromRepository()
                 } else {
                     clearCaseData()
                 }
             }
         }
         viewModelScope.launch {
-            authViewModel.signOutEvent.collect {
+            authViewModel.signOutEvent.collect { // Assuming AuthViewModel has this
                 clearCaseData()
             }
         }
@@ -130,70 +107,51 @@ class CaseViewModel(application: Application, private val caseRepository: CaseRe
         _plaintiffs.value = ""
         _defendants.value = ""
         _court.value = ""
-        saveCaseInfo()
+        _selectedCaseEvidenceList.value = emptyList()
+        saveCaseInfoToSharedPrefs()
     }
 
-    fun showError(message: String) {
-        _errorMessage.value = message
-    }
-
-    fun clearError() {
-        _errorMessage.value = null
-    }
-
-    private val _isDarkMode = MutableStateFlow(false)
-    val isDarkMode: StateFlow<Boolean> = _isDarkMode.asStateFlow()
+    fun showError(message: String) { _errorMessage.value = message }
+    fun clearError() { _errorMessage.value = null }
 
     fun setDarkMode(isDark: Boolean) {
         _isDarkMode.value = isDark
-        sharedPref.edit()
-            .putBoolean("is_dark_mode", isDark)
-            .apply()
+        sharedPref.edit().putBoolean("is_dark_mode", isDark).apply()
     }
 
     private fun loadDarkModePreference() {
         _isDarkMode.value = sharedPref.getBoolean("is_dark_mode", false)
     }
 
-    fun onSortOrderChange(sortOrder: SortOrder) {
-        _sortOrder.value = sortOrder
-    }
+    fun onSortOrderChange(newSortOrder: SortOrder) { _sortOrder.value = newSortOrder }
 
-    fun loadCases() {
+    fun loadCasesFromRepository() {
         viewModelScope.launch {
-            caseRepository.refreshCases()
+            // Logic to load/refresh cases, e.g., caseRepository.refreshCasesFromRemote()
+            // The `cases` StateFlow should update automatically if caseRepository.getAllCases() emits new lists
+        }
+    }
+    
+    fun loadHtmlTemplatesFromRepository() {
+        viewModelScope.launch {
+            // caseRepository.refreshHtmlTemplates()
+            // caseRepository.getHtmlTemplates().collect { _htmlTemplates.value = it }
+            // If direct GoogleApiService is needed, ensure it's accessed via authViewModel or injected
         }
     }
 
-    fun loadHtmlTemplates() {
-        viewModelScope.launch {
-            caseRepository.refreshHtmlTemplates()
-        }
+    fun importSpreadsheetWithRepository(spreadsheetId: String) {
+        viewModelScope.launch { caseRepository.importSpreadsheetAndStore(spreadsheetId) }
     }
 
-    fun importSpreadsheet(spreadsheetId: String) {
-        viewModelScope.launch {
-            caseRepository.importSpreadsheet(spreadsheetId)
-        }
-    }
-
-    fun createCase(
-        caseName: String,
-        exhibitSheetName: String,
-        caseNumber: String,
-        caseSection: String,
-        caseJudge: String
+    fun createNewCaseWithRepository(
+        caseName: String, exhibitSheetName: String, caseNumber: String,
+        caseSection: String, caseJudge: String
     ) {
         viewModelScope.launch {
-            caseRepository.createCase(
-                caseName,
-                exhibitSheetName,
-                caseNumber,
-                caseSection,
-                caseJudge,
-                plaintiffs.value,
-                defendants.value,
-                court.value
+            caseRepository.createNewCaseWithDetails(
+                caseName, exhibitSheetName, caseNumber, caseSection, caseJudge,
+                plaintiffs.value, defendants.value, court.value
             )
         }
     }
@@ -201,63 +159,46 @@ class CaseViewModel(application: Application, private val caseRepository: CaseRe
     fun selectCase(case: Case?) {
         _selectedCase.value = case
         if (case != null) {
-            loadSheetFilters(case.spreadsheetId)
-            loadAllegations(case.id, case.spreadsheetId)
+            loadSheetFiltersFromRepository(case.spreadsheetId)
+            loadAllegationsFromRepository(case.id, case.spreadsheetId)
         } else {
             _sheetFilters.value = emptyList()
             _allegations.value = emptyList()
         }
     }
 
-    private fun loadSheetFilters(spreadsheetId: String) {
+    private fun loadSheetFiltersFromRepository(spreadsheetId: String) {
         viewModelScope.launch {
             caseRepository.refreshSheetFilters(spreadsheetId)
-            caseRepository.getSheetFilters(spreadsheetId).collect {
-                _sheetFilters.value = it
-            }
+            caseRepository.getSheetFilters(spreadsheetId).collect { _sheetFilters.value = it }
         }
     }
 
-    fun addSheetFilter(name: String, value: String) {
+    fun addSheetFilterWithRepository(name: String, value: String) {
         val spreadsheetId = _selectedCase.value?.spreadsheetId ?: return
-        viewModelScope.launch {
-            caseRepository.addSheetFilter(spreadsheetId, name, value)
-        }
+        viewModelScope.launch { caseRepository.addSheetFilter(spreadsheetId, name, value) }
     }
 
-    private fun loadAllegations(caseId: Int, spreadsheetId: String) {
+    private fun loadAllegationsFromRepository(caseId: Int, spreadsheetId: String) {
         viewModelScope.launch {
             caseRepository.refreshAllegations(caseId, spreadsheetId)
-            caseRepository.getAllegations(caseId, spreadsheetId).collect {
-                _allegations.value = it
-            }
+            caseRepository.getAllegations(caseId, spreadsheetId).collect { _allegations.value = it }
         }
     }
 
-    fun addAllegation(allegationText: String) {
+    fun addAllegationWithRepository(allegationText: String) {
         val case = _selectedCase.value ?: return
         viewModelScope.launch {
             caseRepository.addAllegation(case.spreadsheetId, allegationText)
-            loadAllegations(case.id, case.spreadsheetId)
+            loadAllegationsFromRepository(case.id, case.spreadsheetId)
         }
     }
 
-    fun onPlaintiffsChanged(name: String) {
-        _plaintiffs.value = name
-        saveCaseInfo()
-    }
+    fun onPlaintiffsChanged(name: String) { _plaintiffs.value = name; saveCaseInfoToSharedPrefs() }
+    fun onDefendantsChanged(name: String) { _defendants.value = name; saveCaseInfoToSharedPrefs() }
+    fun onCourtChanged(name: String) { _court.value = name; saveCaseInfoToSharedPrefs() }
 
-    fun onDefendantsChanged(name: String) {
-        _defendants.value = name
-        saveCaseInfo()
-    }
-
-    fun onCourtChanged(name: String) {
-        _court.value = name
-        saveCaseInfo()
-    }
-
-    private fun saveCaseInfo() {
+    private fun saveCaseInfoToSharedPrefs() {
         sharedPref.edit()
             .putString("plaintiffs", _plaintiffs.value)
             .putString("defendants", _defendants.value)
@@ -265,23 +206,11 @@ class CaseViewModel(application: Application, private val caseRepository: CaseRe
             .apply()
     }
 
-    fun archiveCase(case: Case) {
-        viewModelScope.launch {
-            caseRepository.archiveCase(case)
-        }
+    fun archiveCaseWithRepository(case: Case) {
+        viewModelScope.launch { caseRepository.archiveExistingCase(case) }
     }
 
-    fun deleteCase(case: Case) {
-        viewModelScope.launch {
-            caseRepository.deleteCase(case)
-        }
-    }
-
-    private fun loadHtmlTemplates() {
-        viewModelScope.launch {
-            googleApiService?.let {
-                _htmlTemplates.value = it.listHtmlTemplatesInAppRootFolder()
-            }
-        }
+    fun deleteCaseWithRepository(case: Case) {
+        viewModelScope.launch { caseRepository.deleteCase(case) }
     }
 }

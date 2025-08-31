@@ -1,11 +1,17 @@
 package com.hereliesaz.lexorcist.data
 
 import android.content.Context
+import android.util.Log
 import com.google.api.services.drive.model.File as DriveFile
 import com.hereliesaz.lexorcist.GoogleApiService
 import com.hereliesaz.lexorcist.R
+import com.hereliesaz.lexorcist.model.Allegation
 import com.hereliesaz.lexorcist.model.SheetFilter
+import com.hereliesaz.lexorcist.model.SpreadsheetSchema
+import com.hereliesaz.lexorcist.SpreadsheetParser
 import com.hereliesaz.lexorcist.util.CacheManager
+import com.hereliesaz.lexorcist.util.Result
+import com.google.gson.Gson
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,147 +23,168 @@ import javax.inject.Singleton
 class CaseRepositoryImpl @Inject constructor(
     private val applicationContext: Context,
     private val caseDao: CaseDao,
-    private val googleApiService: GoogleApiService?
-class CaseRepositoryImpl(
-    private val caseDao: CaseDao,
-    private val applicationContext: Context
+    private var googleApiService: GoogleApiService?
 ) : CaseRepository {
 
-    override fun setGoogleApiService(googleApiService: GoogleApiService?) {
-    private var googleApiService: GoogleApiService? = null
-
-    fun setGoogleApiService(googleApiService: GoogleApiService?) {
-        this.googleApiService = googleApiService
+    fun setGoogleApiService(service: GoogleApiService?) { // No override
+        this.googleApiService = service
     }
 
     private val _sheetFilters = MutableStateFlow<List<SheetFilter>>(emptyList())
     private val _allegations = MutableStateFlow<List<Allegation>>(emptyList())
     private val cacheManager = CacheManager(applicationContext)
+    private val _htmlTemplates = MutableStateFlow<List<DriveFile>>(emptyList())
 
-    override fun getCases(): Flow<List<Case>> = caseDao.getAllCases()
+    // --- CaseRepository Interface Implementation ---
 
-    override suspend fun getCaseById(id: Int): Case? {
-        return _cases.value.find { it.id == id }
+    override suspend fun createCase(case: Case): Int {
+        return caseDao.insert(case).toInt()
     }
 
-    override suspend fun refreshCases() {
-        try {
-            val appRootFolderId = googleApiService?.getOrCreateAppRootFolder() ?: return
-            val registryId = googleApiService?.getOrCreateCaseRegistrySpreadsheetId(appRootFolderId) ?: return
-            val cases = googleApiService?.getAllCasesFromRegistry(registryId) ?: emptyList()
-            cases.forEach { caseDao.insert(it) }
-        } catch (e: Exception) {
-            // No action on exception, local data will be served
-        }
+    override suspend fun getCase(id: Int): Case? {
+        return caseDao.getCaseById(id)
     }
 
-    override suspend fun createCase(
-        caseName: String,
-        exhibitSheetName: String,
-        caseNumber: String,
-        caseSection: String,
-        caseJudge: String,
-        plaintiffs: String,
-        defendants: String,
-        court: String
-    ) {
-        val rootFolderId = googleApiService?.getOrCreateAppRootFolder() ?: return
-        val caseRegistryId = googleApiService?.getOrCreateCaseRegistrySpreadsheetId(rootFolderId) ?: return
-        val caseFolderId = googleApiService?.getOrCreateCaseFolder(caseName) ?: return
-        googleApiService.getOrCreateEvidenceFolder(caseName)
-
-        when (val result = googleApiService.createSpreadsheet(caseName, caseFolderId)) {
-            is com.hereliesaz.lexorcist.util.Result.Success -> {
-                val caseSpreadsheetId = result.data ?: return
-                val scriptTemplate = applicationContext.resources.openRawResource(R.raw.apps_script_template).use { InputStreamReader(it).readText() }
-        val scriptContent = scriptTemplate
-            .replace("{{EXHIBIT_SHEET_NAME}}", exhibitSheetName)
-            .replace("{{CASE_NUMBER}}", caseNumber)
-            .replace("{{CASE_SECTION}}", caseSection)
-            .replace("{{CASE_JUDGE}}", caseJudge)
-
-        val scriptId = googleApiService.attachScript(caseSpreadsheetId, scriptContent, "")
-        googleApiService.attachScript(caseSpreadsheetId, scriptContent, "")
-
-        val newCase = Case(
-            name = caseName,
-            spreadsheetId = caseSpreadsheetId,
-            generatedPdfId = null,
-            sourceHtmlSnapshotId = null
-        )
-        if (googleApiService?.addCaseToRegistry(caseRegistryId, newCase) == true) {
-            refreshCases()
-        }
+    override fun getAllCases(): Flow<List<Case>> { // Matches interface
+        return caseDao.getAllCases()
     }
 
-    override suspend fun archiveCase(case: Case) {
-        val updatedCase = case.copy(isArchived = true)
-        googleApiService?.updateCaseInRegistry(updatedCase)
-        caseDao.insert(updatedCase)
+    override suspend fun updateCase(case: Case) {
+        caseDao.update(case)
     }
 
     override suspend fun deleteCase(case: Case) {
         googleApiService?.deleteCaseFromRegistry(case)
-        googleApiService?.deleteFolder(case.spreadsheetId)
-        caseDao.deleteCaseById(case.id)
+        val folderIdToDelete = case.folderId ?: case.spreadsheetId
+        googleApiService?.deleteFolder(folderIdToDelete)
+        caseDao.delete(case)
     }
 
-    override fun getSheetFilters(spreadsheetId: String): Flow<List<SheetFilter>> = _sheetFilters.asStateFlow()
+    // --- Other Public Methods (Not part of CaseRepository interface) ---
 
-    override suspend fun refreshSheetFilters(spreadsheetId: String) {
+    suspend fun refreshCasesFromRemote() { // No override
+        try {
+            val currentGoogleApiService = googleApiService ?: return
+            val appRootFolderId = currentGoogleApiService.getOrCreateAppRootFolder() ?: return
+            val registryId = currentGoogleApiService.getOrCreateCaseRegistrySpreadsheetId(appRootFolderId) ?: return
+            val casesFromRegistry = currentGoogleApiService.getAllCasesFromRegistry(registryId)
+            casesFromRegistry.forEach { caseDao.insert(it) } // Assumes onConflict strategy handles duplicates
+        } catch (e: Exception) {
+            Log.e("CaseRepoImpl", "Error refreshing cases from remote", e)
+        }
+    }
+
+    suspend fun createNewCaseWithDetails( // No override
+        caseName: String, exhibitSheetName: String, caseNumber: String, caseSection: String,
+        caseJudge: String, plaintiffs: String, defendants: String, court: String
+    ): Case? {
+        val currentGoogleApiService = googleApiService ?: return null
+        val rootFolderId = currentGoogleApiService.getOrCreateAppRootFolder() ?: return null
+        val caseRegistryId = currentGoogleApiService.getOrCreateCaseRegistrySpreadsheetId(rootFolderId) ?: return null
+        val caseFolderId = currentGoogleApiService.getOrCreateCaseFolder(caseName) ?: return null
+        currentGoogleApiService.getOrCreateEvidenceFolder(caseName) // Ensure evidence folder exists
+
+        return when (val result = currentGoogleApiService.createSpreadsheet(caseName, caseFolderId)) {
+            is Result.Success -> {
+                val caseSpreadsheetId = result.data ?: return null
+                val scriptTemplate = applicationContext.resources.openRawResource(R.raw.apps_script_template)
+                    .use { InputStreamReader(it).readText() }
+                val scriptContent = scriptTemplate
+                    .replace("{{EXHIBIT_SHEET_NAME}}", exhibitSheetName)
+                    .replace("{{CASE_NUMBER}}", caseNumber)
+                    .replace("{{CASE_SECTION}}", caseSection)
+                    .replace("{{CASE_JUDGE}}", caseJudge)
+                
+                val scriptId = currentGoogleApiService.attachScript(caseSpreadsheetId, scriptContent, "")
+
+                val newCase = Case(
+                    name = caseName, spreadsheetId = caseSpreadsheetId, scriptId = scriptId,
+                    folderId = caseFolderId, plaintiffs = plaintiffs, defendants = defendants, court = court
+                )
+                if (currentGoogleApiService.addCaseToRegistry(caseRegistryId, newCase)) {
+                    caseDao.insert(newCase) // Save to local DB as well
+                    newCase
+                } else { 
+                    Log.e("CaseRepoImpl", "Failed to add case to registry: ${newCase.name}")
+                    // TODO: Consider cleanup of created Drive items if registry addition fails
+                    null 
+                }
+            }
+            is Result.Error -> {
+                Log.e("CaseRepoImpl", "Error creating spreadsheet: ${result.error}")
+                null
+            }
+        }
+    }
+
+    suspend fun archiveExistingCase(case: Case) { // No override
+        val updatedCase = case.copy(isArchived = true)
+        googleApiService?.updateCaseInRegistry(updatedCase)
+        caseDao.update(updatedCase) // Update local DB
+    }
+
+    fun getSheetFilters(spreadsheetId: String): Flow<List<SheetFilter>> = _sheetFilters.asStateFlow()
+
+    suspend fun refreshSheetFilters(spreadsheetId: String) { // No override
         val allSheetData = googleApiService?.readSpreadsheet(spreadsheetId)
         val filterSheetData = allSheetData?.get("Filters")
-        _sheetFilters.value = filterSheetData?.mapNotNull {
-            if (it.size >= 2) SheetFilter(it.getOrNull(0)?.toString() ?: "", it.getOrNull(1)?.toString() ?: "") else null
+        _sheetFilters.value = filterSheetData?.mapNotNull { row ->
+            if (row.size >= 2) SheetFilter(row.getOrNull(0)?.toString() ?: "", row.getOrNull(1)?.toString() ?: "") else null
         } ?: emptyList()
     }
 
-    override suspend fun addSheetFilter(spreadsheetId: String, name: String, value: String) {
-        googleApiService?.addSheet(spreadsheetId, "Filters")
-        if (googleApiService?.appendData(spreadsheetId, "Filters", listOf(listOf(name, value))) != null) {
-            refreshSheetFilters(spreadsheetId)
+    suspend fun addSheetFilter(spreadsheetId: String, name: String, value: String) { // No override
+        if (googleApiService?.addSheet(spreadsheetId, "Filters") != null) { // Ensure sheet exists
+            if (googleApiService?.appendData(spreadsheetId, "Filters", listOf(listOf(name, value))) != null) {
+                refreshSheetFilters(spreadsheetId)
+            }
         }
     }
 
-    override fun getAllegations(caseId: Int, spreadsheetId: String): Flow<List<Allegation>> = _allegations.asStateFlow()
+    fun getAllegations(caseId: Int, spreadsheetId: String): Flow<List<Allegation>> = _allegations.asStateFlow()
 
-    override suspend fun refreshAllegations(caseId: Int, spreadsheetId: String) {
+    suspend fun refreshAllegations(caseId: Int, spreadsheetId: String) { // No override
         _allegations.value = googleApiService?.getAllegationsForCase(spreadsheetId, caseId) ?: emptyList()
     }
 
-    override suspend fun addAllegation(spreadsheetId: String, allegationText: String) {
+    suspend fun addAllegation(spreadsheetId: String, allegationText: String) { // No override
         if (googleApiService?.addAllegationToCase(spreadsheetId, allegationText) == true) {
-            // This is tricky without the caseId. The calling ViewModel will need to trigger the refresh.
-            // For now, the refresh is not called automatically after adding an allegation.
+            // Consider how to refresh; may need caseId to trigger specific refresh
         }
     }
 
-    private val _htmlTemplates = MutableStateFlow<List<DriveFile>>(emptyList())
-    override fun getHtmlTemplates(): Flow<List<DriveFile>> = _htmlTemplates.asStateFlow()
+    fun getHtmlTemplates(): Flow<List<DriveFile>> = _htmlTemplates.asStateFlow()
 
-    override suspend fun refreshHtmlTemplates() {
+    suspend fun refreshHtmlTemplates() { // No override
         try {
             _htmlTemplates.value = googleApiService?.listHtmlTemplatesInAppRootFolder() ?: emptyList()
         } catch (e: Exception) {
-            // Log error
+            Log.e("CaseRepoImpl", "Error refreshing HTML templates", e)
         }
     }
 
-    override suspend fun importSpreadsheet(spreadsheetId: String): Case? {
-        val sheetsData = googleApiService?.readSpreadsheet(spreadsheetId)
+    suspend fun importSpreadsheetAndStore(spreadsheetId: String): Case? { // No override
+        val currentGoogleApiService = googleApiService // Use a local val for smart cast and null safety
+        if (currentGoogleApiService == null) {
+            Log.e("CaseRepoImpl", "GoogleApiService is null, cannot import spreadsheet.")
+            return null
+        }
+
+        val sheetsData = currentGoogleApiService.readSpreadsheet(spreadsheetId)
         if (sheetsData != null) {
             try {
-                val schemaJson = applicationContext.resources.openRawResource(R.raw.spreadsheet_schema).bufferedReader().use { it.readText() }
-                val schema = com.google.gson.Gson().fromJson(schemaJson, com.hereliesaz.lexorcist.model.SpreadsheetSchema::class.java)
-
-                val spreadsheetParser = com.hereliesaz.lexorcist.SpreadsheetParser(googleApiService!!, schema)
-                val newCase = spreadsheetParser.parseAndStore(sheetsData)
-                if (newCase != null) {
-                    refreshCases()
-                    return newCase
-                }
+                val schemaJson = applicationContext.resources.openRawResource(R.raw.spreadsheet_schema)
+                    .bufferedReader().use { it.readText() }
+                val schema = Gson().fromJson(schemaJson, SpreadsheetSchema::class.java)
+                
+                // currentGoogleApiService is guaranteed non-null here
+                val spreadsheetParser = SpreadsheetParser(currentGoogleApiService, schema, caseDao) 
+                
+                val importedCase = spreadsheetParser.parseAndStore(sheetsData)
+                // if (importedCase != null && !wasSavedByParser) { caseDao.insert(importedCase) }
+                return importedCase
             } catch (e: Exception) {
-                // Log error
+                Log.e("CaseRepoImpl", "Error parsing spreadsheet $spreadsheetId: ${e.message}", e)
             }
         }
         return null

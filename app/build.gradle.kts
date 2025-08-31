@@ -115,12 +115,6 @@ dependencies {
 
     implementation("com.google.android.gms:play-services-mlkit-text-recognition:19.0.1")
 
-    // Room components
-    val roomVersion = "2.7.2"
-    implementation("androidx.room:room-runtime:$roomVersion")
-    implementation("androidx.room:room-ktx:$roomVersion")
-    ksp("androidx.room:room-compiler:$roomVersion")
-
     // Gson
     implementation("com.google.code.gson:gson:2.13.1")
 
