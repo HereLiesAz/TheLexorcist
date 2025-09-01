@@ -59,7 +59,7 @@ class AuthViewModelTest {
 
         // Then
         assertTrue(state is SignInState.Success)
-        assertEquals("Test User", (state as SignInState.Success).userInfo.displayName)
+        assertEquals("Test User", (state as SignInState.Success).userInfo!!.displayName)
     }
 
     @Test
