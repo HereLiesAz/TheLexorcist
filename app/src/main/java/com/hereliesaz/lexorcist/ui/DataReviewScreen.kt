@@ -26,6 +26,7 @@ fun DataReviewScreen(
 ) {
     val evidenceList by evidenceViewModel.evidenceList.collectAsState()
     val selectedCase by caseViewModel.selectedCase.collectAsState()
+    val isLoading by evidenceViewModel.isLoading.collectAsState()
 
     LaunchedEffect(selectedCase) {
         selectedCase?.let {
@@ -50,13 +51,17 @@ fun DataReviewScreen(
         }
     ) { padding ->
         Column(modifier = Modifier.padding(padding)) {
-            if (selectedCase == null) {
+            if (isLoading) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            } else if (selectedCase == null) {
                 Box(modifier = Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
                     Text("Please select a case to review its evidence.")
                 }
             } else if (evidenceList.isEmpty()) {
                  Box(modifier = Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
-                    Text("No evidence found for this case, or still loading.")
+                    Text("No evidence found for this case.")
                 }
             } else {
                 LazyColumn(modifier = Modifier.padding(16.dp)) {

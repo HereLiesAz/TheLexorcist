@@ -27,11 +27,11 @@ class VideoProcessingWorker(
     workerParams: WorkerParameters
 ) : CoroutineWorker(appContext, workerParams) {
 
-    // OcrViewModel is a HiltViewModel, ideally it (or its repository) would be injected 
+    // OcrViewModel is a HiltViewModel, ideally it (or its repository) would be injected
     // if this Worker was a HiltWorker.
     // For now, we instantiate it directly, which is not ideal for Hilt ViewModels.
     private val ocrViewModel by lazy {
-        OcrViewModel(applicationContext as Application)
+        OcrViewModel(applicationContext as Application, null, null, null)
     }
 
     override suspend fun doWork(): Result {

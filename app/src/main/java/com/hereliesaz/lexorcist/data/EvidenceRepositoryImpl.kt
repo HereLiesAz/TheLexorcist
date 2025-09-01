@@ -1,8 +1,11 @@
 package com.hereliesaz.lexorcist.data
 
 import com.hereliesaz.lexorcist.GoogleApiService
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class EvidenceRepositoryImpl @Inject constructor(
@@ -10,9 +13,40 @@ class EvidenceRepositoryImpl @Inject constructor(
 ) : EvidenceRepository {
 
     override fun getEvidenceForCase(spreadsheetId: String, caseId: Long): Flow<List<Evidence>> {
-        // TODO: Implement using googleApiService to fetch all evidence for a case from Google Sheets
-        // Example: return googleApiService?.readSpreadsheet(spreadsheetId) and parse
-        return flowOf(emptyList()) // Placeholder
+        return flow {
+            val sheetData = withContext(Dispatchers.IO) {
+                googleApiService?.readSpreadsheet(spreadsheetId)
+            }
+            val evidenceSheet = sheetData?.get("Evidence")
+            if (evidenceSheet != null) {
+                val evidenceList = evidenceSheet.mapNotNull { row ->
+                    try {
+                        Evidence(
+                            id = row[0].toString().toInt(),
+                            caseId = row[1].toString().toLong(),
+                            spreadsheetId = spreadsheetId,
+                            type = row[2].toString(),
+                            content = row[3].toString(),
+                            timestamp = row[4].toString().toLong(),
+                            sourceDocument = row[5].toString(),
+                            documentDate = row[6].toString().toLong(),
+                            allegationId = row.getOrNull(7)?.toString()?.toIntOrNull(),
+                            category = row[8].toString(),
+                            tags = row[9].toString().split(",").map { it.trim() },
+                            commentary = row.getOrNull(10)?.toString(),
+                            linkedEvidenceIds = row.getOrNull(11)?.toString()?.split(",")?.mapNotNull { it.trim().toIntOrNull() } ?: emptyList(),
+                            parentVideoId = row.getOrNull(12)?.toString(),
+                            entities = emptyMap() // TODO: Parse entities
+                        )
+                    } catch (e: Exception) {
+                        null
+                    }
+                }
+                emit(evidenceList)
+            } else {
+                emit(emptyList())
+            }
+        }
     }
 
     override suspend fun getEvidenceById(id: Int): Evidence? {
@@ -34,14 +68,44 @@ class EvidenceRepositoryImpl @Inject constructor(
     }
 
     override suspend fun updateEvidence(evidence: Evidence) {
-        // TODO: Implement using googleApiService to update existing evidence in Google Sheets
-        // This is complex: requires finding the row, then updating it.
-        // May need googleApiService.batchUpdateSpreadsheet or similar.
+        val sheetData = googleApiService?.readSpreadsheet(evidence.spreadsheetId)
+        val evidenceSheet = sheetData?.get("Evidence")
+        if (evidenceSheet != null) {
+            val evidenceList = evidenceSheet.map { row ->
+                if (row[0].toString().toInt() == evidence.id) {
+                    listOf(
+                        evidence.id.toString(),
+                        evidence.caseId.toString(),
+                        evidence.type,
+                        evidence.content,
+                        evidence.timestamp.toString(),
+                        evidence.sourceDocument,
+                        evidence.documentDate.toString(),
+                        evidence.allegationId?.toString() ?: "",
+                        evidence.category,
+                        evidence.tags.joinToString(","),
+                        evidence.commentary ?: "",
+                        evidence.linkedEvidenceIds.joinToString(","),
+                        evidence.parentVideoId ?: ""
+                    )
+                } else {
+                    row
+                }
+            }
+            googleApiService.writeData(evidence.spreadsheetId, "Evidence", evidenceList)
+        }
     }
 
     override suspend fun deleteEvidence(evidence: Evidence) {
-        // TODO: Implement using googleApiService to delete evidence from Google Sheets
-        // This is complex: requires finding the row, then deleting/clearing it.
+        val sheetData = googleApiService?.readSpreadsheet(evidence.spreadsheetId)
+        val evidenceSheet = sheetData?.get("Evidence")
+        if (evidenceSheet != null) {
+            val evidenceList = evidenceSheet.filter { row ->
+                row[0].toString().toInt() != evidence.id
+            }
+            googleApiService.clearSheet(evidence.spreadsheetId, "Evidence")
+            googleApiService.writeData(evidence.spreadsheetId, "Evidence", evidenceList)
+        }
     }
 
     override suspend fun updateCommentary(id: Int, commentary: String) {
