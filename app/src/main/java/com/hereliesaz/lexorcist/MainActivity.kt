@@ -2,6 +2,7 @@ package com.hereliesaz.lexorcist
 
 // import android.app.PendingIntent // No longer directly used here
 import android.content.IntentSender
+import android.credentials.CredentialManager
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
@@ -17,6 +18,7 @@ import androidx.compose.runtime.getValue // Added import
 import androidx.navigation.compose.rememberNavController
 // import com.google.android.gms.auth.api.identity.BeginSignInRequest // No longer built here
 import com.google.android.gms.auth.api.identity.Identity
+import com.google.android.gms.auth.api.identity.SignInCredential // Added for getFromIntent
 import com.hereliesaz.lexorcist.ui.theme.LexorcistTheme
 import com.hereliesaz.lexorcist.viewmodel.AuthViewModel
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
@@ -27,7 +29,7 @@ class MainActivity : ComponentActivity() {
 
     private val authViewModel: AuthViewModel by viewModels()
     private val mainViewModel: MainViewModel by viewModels()
-    private val oneTapClient by lazy { Identity.getSignInClient(this) } // Initialize once
+    // private val oneTapClient by lazy { Identity.getSignInClient(this) } // No longer needed for getSignInCredentialFromIntent
 
     companion object {
         private const val TAG = "MainActivity"
@@ -36,12 +38,12 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val signInLauncher = registerForActivityResult(
+        private val signInLauncher = registerForActivityResult(
             ActivityResultContracts.StartIntentSenderForResult()
         ) { result: ActivityResult ->
             if (result.resultCode == RESULT_OK) {
                 try {
-                    val credential = oneTapClient.getSignInCredentialFromIntent(result.data)
+                    val credentialManager = CredentialManager.create(context)
                     authViewModel.onSignInResult(credential)
                 } catch (e: Exception) {
                     Log.e(TAG, "Error getting credential from intent", e)

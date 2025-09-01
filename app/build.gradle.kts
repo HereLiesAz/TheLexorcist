@@ -46,113 +46,116 @@ android {
         resources.excludes.add("META-INF/INDEX.LIST")
         resources.excludes.add("META-INF/DEPENDENCIES")
     }
+    lint {
+        baseline = file("lint-baseline.xml")
+    }
 }
 
 dependencies {
 
-    implementation("androidx.core:core-ktx:1.17.0")
-    implementation("androidx.appcompat:appcompat:1.7.1")
-    implementation("com.google.android.material:material:1.12.0")
-    implementation("androidx.compose.runtime:runtime:1.9.0")
-    implementation("androidx.navigation:navigation-runtime-ktx:2.9.3")
-    implementation("androidx.compose.ui:ui:1.9.0")
-    implementation("androidx.compose.foundation:foundation:1.9.0")
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.google.android.material)
+    implementation(libs.androidx.compose.runtime)
+    implementation(libs.androidx.navigation.runtime.ktx)
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.compose.foundation)
 
     // Core testing dependencies
-    testImplementation("junit:junit:4.13.2")
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.13.4")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.13.4")
-    testImplementation("io.mockk:mockk-android:1.14.5")
-    testImplementation("androidx.arch.core:core-testing:2.2.0")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
-    testImplementation("app.cash.turbine:turbine:1.2.1")
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:2.2.10")
+    testImplementation(libs.junit)
+    testImplementation(libs.junit.jupiter.api)
+    testRuntimeOnly(libs.junit.jupiter.engine)
+    testImplementation(libs.mockk.android)
+    testImplementation(libs.androidx.arch.core.testing)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.turbine)
+    testImplementation(libs.kotlin.test.junit)
 
     // AndroidX Test dependencies (androidTest)
-    androidTestImplementation("androidx.test.ext:junit:1.3.0")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
-    androidTestImplementation("androidx.compose.ui:ui-test-junit4:1.9.0")
-    debugImplementation("androidx.compose.ui:ui-test-manifest")
-    androidTestImplementation("androidx.test.uiautomator:uiautomator:2.3.0")
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    debugImplementation(libs.androidx.ui.test.manifest)
+    androidTestImplementation(libs.androidx.test.uiautomator)
 
-    implementation("com.google.android.gms:play-services-mlkit-text-recognition:19.0.1")
+    implementation(libs.google.play.services.mlkit.text.recognition)
 
 
     // Gson
-    implementation("com.google.code.gson:gson:2.13.1")
+    implementation(libs.google.code.gson)
 
     // Lifecycle components
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.9.3")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.3")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.9.3")
-    implementation("androidx.work:work-runtime-ktx:2.10.3")
-    implementation("androidx.compose.runtime:runtime-livedata:1.9.0")
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.androidx.compose.runtime.livedata)
 
     // Jetpack Compose
-    val composeBom = "2025.08.01"
-    implementation(platform("androidx.compose:compose-bom:$composeBom"))
-    implementation("androidx.compose.ui:ui")
-    implementation("androidx.compose.ui:ui-graphics")
-    implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.compose.material3:material3")
-    implementation("androidx.compose.material:material-icons-extended")
-    implementation("androidx.exifinterface:exifinterface:1.4.1")
-    implementation("androidx.activity:activity-compose:1.10.1")
+
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.ui)
+    implementation(libs.androidx.ui.graphics)
+    implementation(libs.androidx.ui.tooling.preview)
+    implementation(libs.androidx.material3)
+    implementation(libs.androidx.material.icons.extended)
+    implementation(libs.androidx.exifinterface)
+    implementation(libs.androidx.activity.compose)
 
     // Coil for image loading
-    implementation("io.coil-kt:coil-compose:2.7.0")
+    implementation(libs.coil.compose)
 
     // Navigation Compose
-    implementation("androidx.navigation:navigation-compose:2.9.3")
+    implementation(libs.androidx.navigation.compose)
     // iText and POI
-    implementation("com.itextpdf:itext7-core:9.2.0")
-    implementation("org.apache.poi:poi:5.4.1")
-    implementation("org.apache.poi:poi-ooxml:5.4.1")
-    implementation("org.apache.poi:poi-scratchpad:5.4.1")
+    implementation(libs.itext7.core)
+    implementation(libs.apache.poi)
+    implementation(libs.apache.poi.ooxml)
+    implementation(libs.apache.poi.scratchpad)
 
     // Google Sign-In
-    implementation("com.google.android.gms:play-services-auth:21.4.0")
+    implementation(libs.google.play.services.auth)
 
     // Google APIs
-    implementation("com.google.api-client:google-api-client:2.8.1")
-    implementation("com.google.api-client:google-api-client-android:2.8.1")
-    implementation("com.google.apis:google-api-services-drive:v3-rev20250819-2.0.0")
-    implementation("com.google.apis:google-api-services-sheets:v4-rev20250616-2.0.0")
-    implementation("com.google.apis:google-api-services-script:v1-rev20250623-2.0.0")
-    implementation("com.google.apis:google-api-services-docs:v1-rev20250325-2.0.0")
+    implementation(libs.google.api.client)
+    implementation(libs.google.api.client.android)
+    implementation(libs.google.api.services.drive)
+    implementation(libs.google.api.services.sheets)
+    implementation(libs.google.api.services.script)
+    implementation(libs.google.api.services.docs)
 
-    implementation("com.google.http-client:google-http-client-jackson2:2.0.0")
-    implementation("com.github.HereLiesAz:AzNavRail:1.9")
-    implementation(platform("com.google.firebase:firebase-bom:34.2.0"))
-    implementation("com.google.firebase:firebase-analytics")
-    implementation("com.google.guava:guava:33.4.8-android")
-    implementation("com.quickbirdstudios:opencv:4.5.3")
+    implementation(libs.google.http.client.jackson2)
+    implementation(libs.az.navrail)
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.google.firebase.analytics)
+    implementation(libs.google.guava)
+    implementation(libs.quickbirdstudios.opencv)
 
     // Mozilla Rhino for JavaScript execution
-    implementation("org.mozilla:rhino:1.8.0")
-    implementation("com.materialkolor:material-kolor:3.0.1")
+    implementation(libs.mozilla.rhino)
+    implementation(libs.materialkolor)
     
     // Vico Charting Library
-    implementation("com.patrykandpatrick.vico:compose:2.1.3")
-    implementation("com.patrykandpatrick.vico:core:2.1.3")
+    implementation(libs.vico.compose)
+    implementation(libs.vico.core)
 
     // JetLime Timeline Library
-    implementation("io.github.pushpalroy:jetlime:4.0.0")
-    implementation("io.github.pushpalroy:jetlime-android:4.0.0")
+    implementation(libs.jetlime)
+    implementation(libs.jetlime.android)
 
     // Hilt
-    implementation("com.google.dagger:hilt-android:2.57.1")
-    ksp("com.google.dagger:hilt-compiler:2.57.1")
-    implementation("androidx.hilt:hilt-work:1.2.0")
-    ksp("androidx.hilt:hilt-compiler:1.2.0")
-    testImplementation("com.google.dagger:hilt-android-testing:2.57.1")
-    kspTest("com.google.dagger:hilt-android-compiler:2.57.1")
+    implementation(libs.google.dagger.hilt.android)
+    ksp(libs.google.dagger.hilt.compiler)
+    implementation(libs.androidx.hilt.work)
+    ksp(libs.androidx.hilt.compiler)
+    testImplementation(libs.google.dagger.hilt.android.testing)
+    kspTest(libs.hilt.android.compiler)
 
 
     // Room IS NOT ALLOWED IN THIS PROJECT!!!!!
 
     // Google Cloud Speech-to-Text
-    implementation("com.google.cloud:google-cloud-speech:4.68.0")
+    implementation(libs.google.cloud.speech)
 }
 
 kotlin {
