@@ -40,7 +40,7 @@ class EvidenceViewModelTest {
         Dispatchers.setMain(testDispatcher)
         application = mockk(relaxed = true)
         evidenceRepository = mockk(relaxed = true)
-        evidenceViewModel = EvidenceViewModel(application, evidenceRepository)
+        evidenceViewModel = EvidenceViewModel(application, evidenceRepository, mockk(relaxed = true), mockk(relaxed = true))
     }
 
     @After
@@ -54,8 +54,8 @@ class EvidenceViewModelTest {
         val caseId = 1L
         val spreadsheetId = "spreadsheet_id"
         val evidenceList = listOf(
-            Evidence(id = 1, caseId = 1, content = "Evidence 1", timestamp = System.currentTimeMillis(), sourceDocument = "doc1", documentDate = System.currentTimeMillis(), type = "type", allegationId = 1, category = "cat", tags = listOf(), commentary = "com", spreadsheetId = "s1", linkedEvidenceIds = emptyList(), parentVideoId = null, entities = emptyMap()),
-            Evidence(id = 2, caseId = 1, content = "Evidence 2", timestamp = System.currentTimeMillis(), sourceDocument = "doc2", documentDate = System.currentTimeMillis(), type = "type", allegationId = 1, category = "cat", tags = listOf(), commentary = "com", spreadsheetId = "s1", linkedEvidenceIds = emptyList(), parentVideoId = null, entities = emptyMap())
+            Evidence(id = 1, caseId = 1, content = "Evidence 1", timestamp = 1672531200000L, sourceDocument = "doc1", documentDate = 1672531200000L, type = "type", allegationId = 1, category = "cat", tags = listOf(), commentary = "com", spreadsheetId = "s1", linkedEvidenceIds = emptyList(), parentVideoId = null, entities = emptyMap()),
+            Evidence(id = 2, caseId = 1, content = "Evidence 2", timestamp = 1672531200001L, sourceDocument = "doc2", documentDate = 1672531200001L, type = "type", allegationId = 1, category = "cat", tags = listOf(), commentary = "com", spreadsheetId = "s1", linkedEvidenceIds = emptyList(), parentVideoId = null, entities = emptyMap())
         )
         coEvery { evidenceRepository.getEvidenceForCase(spreadsheetId, caseId) } returns flowOf(evidenceList)
 
@@ -85,7 +85,7 @@ class EvidenceViewModelTest {
     @Test
     fun `deleteEvidence calls repository`() = runTest {
         // Given
-        val evidence = Evidence(id = 1, caseId = 1, content = "Evidence 1", timestamp = System.currentTimeMillis(), sourceDocument = "doc1", documentDate = System.currentTimeMillis(), type = "type", allegationId = 1, category = "cat", tags = listOf(), commentary = "com", spreadsheetId = "s1", linkedEvidenceIds = emptyList(), parentVideoId = null, entities = emptyMap())
+        val evidence = Evidence(id = 1, caseId = 1, content = "Evidence 1", timestamp = 1672531200000L, sourceDocument = "doc1", documentDate = 1672531200000L, type = "type", allegationId = 1, category = "cat", tags = listOf(), commentary = "com", spreadsheetId = "s1", linkedEvidenceIds = emptyList(), parentVideoId = null, entities = emptyMap())
 
         // When
         evidenceViewModel.deleteEvidence(evidence)

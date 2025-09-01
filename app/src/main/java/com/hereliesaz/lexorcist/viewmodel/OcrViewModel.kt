@@ -21,9 +21,9 @@ import javax.inject.Inject
 @HiltViewModel
 class OcrViewModel @Inject constructor(
     application: Application,
-    private val evidenceRepository: EvidenceRepository?,
-    private val settingsManager: SettingsManager?,
-    private val scriptRunner: ScriptRunner?
+    private val evidenceRepository: EvidenceRepository,
+    private val settingsManager: SettingsManager,
+    private val scriptRunner: ScriptRunner
 ) : AndroidViewModel(application) {
 
     // Placeholder for actual OCR processing and evidence creation logic
@@ -54,8 +54,8 @@ class OcrViewModel @Inject constructor(
                 parentVideoId = parentVideoId,
                 entities = entities
             )
-            val script = settingsManager?.getScript()
-            if (script != null && scriptRunner != null) {
+            val script = settingsManager.getScript()
+            if (script != null) {
                 val result = scriptRunner.runScript(script, newEvidence)
                 if (result is Result.Success) {
                     newEvidence = newEvidence.copy(tags = newEvidence.tags + result.data.tags)
@@ -63,7 +63,8 @@ class OcrViewModel @Inject constructor(
                     Toast.makeText(getApplication(), "Script error: ${result.exception.message}", Toast.LENGTH_LONG).show()
                 }
             }
-            // evidenceRepository?.addEvidence(newEvidence)
+            Log.d("OcrViewModel", "Calling addEvidence")
+            evidenceRepository.addEvidence(newEvidence)
         }
     }
 
