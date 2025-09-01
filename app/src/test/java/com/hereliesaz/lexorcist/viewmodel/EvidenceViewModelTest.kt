@@ -2,7 +2,6 @@ package com.hereliesaz.lexorcist.viewmodel
 
 import android.app.Application
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
-import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.data.EvidenceRepository
 import io.mockk.coEvery
@@ -35,19 +34,13 @@ class EvidenceViewModelTest {
     private lateinit var evidenceViewModel: EvidenceViewModel
     private lateinit var evidenceRepository: EvidenceRepository
     private lateinit var application: Application
-    private lateinit var authViewModel: AuthViewModel
-    private lateinit var caseViewModel: CaseViewModel
-    private lateinit var ocrViewModel: OcrViewModel
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         application = mockk(relaxed = true)
         evidenceRepository = mockk(relaxed = true)
-        authViewModel = mockk(relaxed = true)
-        caseViewModel = mockk(relaxed = true)
-        ocrViewModel = mockk(relaxed = true)
-        evidenceViewModel = EvidenceViewModel(application, evidenceRepository, authViewModel, caseViewModel, ocrViewModel)
+        evidenceViewModel = EvidenceViewModel(application, evidenceRepository)
     }
 
     @After
@@ -59,14 +52,15 @@ class EvidenceViewModelTest {
     fun `loadEvidenceForCase returns evidence from repository`() = runTest {
         // Given
         val caseId = 1L
+        val spreadsheetId = "spreadsheet_id"
         val evidenceList = listOf(
-            Evidence(id = 1, caseId = 1, content = "Evidence 1", timestamp = System.currentTimeMillis(), sourceDocument = "doc1", documentDate = System.currentTimeMillis()),
-            Evidence(id = 2, caseId = 1, content = "Evidence 2", timestamp = System.currentTimeMillis(), sourceDocument = "doc2", documentDate = System.currentTimeMillis())
+            Evidence(id = 1, caseId = 1, content = "Evidence 1", timestamp = System.currentTimeMillis(), sourceDocument = "doc1", documentDate = System.currentTimeMillis(), type = "type", allegationId = 1, category = "cat", tags = listOf(), commentary = "com", spreadsheetId = "s1", linkedEvidenceIds = emptyList(), parentVideoId = null, entities = emptyMap()),
+            Evidence(id = 2, caseId = 1, content = "Evidence 2", timestamp = System.currentTimeMillis(), sourceDocument = "doc2", documentDate = System.currentTimeMillis(), type = "type", allegationId = 1, category = "cat", tags = listOf(), commentary = "com", spreadsheetId = "s1", linkedEvidenceIds = emptyList(), parentVideoId = null, entities = emptyMap())
         )
-        coEvery { evidenceRepository.getEvidenceForCase(caseId) } returns flowOf(evidenceList)
+        coEvery { evidenceRepository.getEvidenceForCase(spreadsheetId, caseId) } returns flowOf(evidenceList)
 
         // When
-        evidenceViewModel.loadEvidenceForCase(caseId)
+        evidenceViewModel.loadEvidenceForCase(caseId, spreadsheetId)
         testDispatcher.scheduler.advanceUntilIdle()
 
         // Then
@@ -74,22 +68,24 @@ class EvidenceViewModelTest {
     }
 
     @Test
-    fun `addEvidence calls repository`() = runTest {
+    fun `addTextEvidence calls repository`() = runTest {
         // Given
-        val evidence = Evidence(id = 3, caseId = 1, content = "Evidence 3", timestamp = System.currentTimeMillis(), sourceDocument = "doc3", documentDate = System.currentTimeMillis())
+        val text = "New Evidence"
+        val caseId = 1L
+        val spreadsheetId = "spreadsheet_id"
 
         // When
-        evidenceViewModel.addEvidence(evidence)
+        evidenceViewModel.addTextEvidence(text, caseId, spreadsheetId)
         testDispatcher.scheduler.advanceUntilIdle()
 
         // Then
-        coVerify { evidenceRepository.addEvidence(evidence) }
+        coVerify { evidenceRepository.addEvidence(any()) }
     }
 
     @Test
     fun `deleteEvidence calls repository`() = runTest {
         // Given
-        val evidence = Evidence(id = 1, caseId = 1, content = "Evidence 1", timestamp = System.currentTimeMillis(), sourceDocument = "doc1", documentDate = System.currentTimeMillis())
+        val evidence = Evidence(id = 1, caseId = 1, content = "Evidence 1", timestamp = System.currentTimeMillis(), sourceDocument = "doc1", documentDate = System.currentTimeMillis(), type = "type", allegationId = 1, category = "cat", tags = listOf(), commentary = "com", spreadsheetId = "s1", linkedEvidenceIds = emptyList(), parentVideoId = null, entities = emptyMap())
 
         // When
         evidenceViewModel.deleteEvidence(evidence)

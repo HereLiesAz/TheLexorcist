@@ -20,7 +20,9 @@ object SchemaModule {
     @Singleton
     fun provideSpreadsheetSchema(@ApplicationContext context: Context, gson: Gson): SpreadsheetSchema {
         val inputStream = context.resources.openRawResource(R.raw.spreadsheet_schema)
-        return gson.fromJson(InputStreamReader(inputStream), SpreadsheetSchema::class.java)
+        return InputStreamReader(inputStream).use { reader ->
+            gson.fromJson(reader, SpreadsheetSchema::class.java)
+        }
     }
 
     @Provides

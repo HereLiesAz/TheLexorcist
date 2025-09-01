@@ -26,8 +26,7 @@ class AddonsBrowserViewModelTest {
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
-        googleApiService = mockk(relaxed = true)
-        viewModel = AddonsBrowserViewModel(googleApiService)
+        googleApiService = mockk()
     }
 
     @After
@@ -42,6 +41,7 @@ class AddonsBrowserViewModelTest {
         val fakeTemplates = listOf(Template("1", "Template 1", "", "", "", 0.0, 0))
         coEvery { googleApiService.getSharedScripts() } returns fakeScripts
         coEvery { googleApiService.getSharedTemplates() } returns fakeTemplates
+        viewModel = AddonsBrowserViewModel(googleApiService)
 
         // When
         // The loadAddons function is called in the init block, so we just need to advance the dispatcher
