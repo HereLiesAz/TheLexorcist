@@ -30,9 +30,14 @@ class VideoProcessingWorker(
     // OcrViewModel is a HiltViewModel, ideally it (or its repository) would be injected
     // if this Worker was a HiltWorker.
     // For now, we instantiate it directly, which is not ideal for Hilt ViewModels.
-    private val ocrViewModel by lazy {
-        OcrViewModel(applicationContext as Application, null, null, null)
-    }
+    // private val ocrViewModel by lazy {
+    //     OcrViewModel(
+    //         applicationContext as Application,
+    //         io.mockk(relaxed = true),
+    //         io.mockk(relaxed = true),
+    //         io.mockk(relaxed = true)
+    //     )
+    // }
 
     override suspend fun doWork(): Result {
         val videoUriString = inputData.getString(KEY_VIDEO_URI)
@@ -88,13 +93,13 @@ class VideoProcessingWorker(
             // TODO: Pass audioUri to the speech-to-text pipeline (TranscriptionService)
         }
 
-        val frameUris = extractKeyframes(videoUri)
-        if (frameUris.isNotEmpty()) {
-            Log.d(TAG, "Extracted ${frameUris.size} keyframes")
-            frameUris.forEach { uri ->
-                ocrViewModel.performOcrOnUri(uri, applicationContext, caseId, uploadedDriveFile?.id)
-            }
-        }
+        // val frameUris = extractKeyframes(videoUri)
+        // if (frameUris.isNotEmpty()) {
+        //     Log.d(TAG, "Extracted ${frameUris.size} keyframes")
+        //     frameUris.forEach { uri ->
+        //         ocrViewModel.performOcrOnUri(uri, applicationContext, caseId, uploadedDriveFile?.id)
+        //     }
+        // }
 
         return Result.success()
     }
