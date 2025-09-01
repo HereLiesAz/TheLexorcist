@@ -68,7 +68,7 @@ class EvidenceRepositoryImplTest {
     @Test
     fun `updateEvidence calls writeData on googleApiService`() = runTest {
         // Given
-        val evidence = Evidence(id = 1, caseId = 1L, spreadsheetId = "sheet1", type = "text", content = "Test", timestamp = 0, sourceDocument = "doc", documentDate = 0, category = "cat", tags = listOf("tag"))
+        val evidence = Evidence(id = 1, caseId = 1L, spreadsheetId = "sheet1", type = "text", content = "Test", timestamp = 0, sourceDocument = "doc", documentDate = 0, allegationId = null, category = "cat", tags = listOf("tag"))
         val sheetData = mapOf(
             "Evidence" to listOf(
                 listOf("1", "1", "text", "old content", "0", "doc", "0", "", "cat", "tag")
