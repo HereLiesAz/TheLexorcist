@@ -70,7 +70,7 @@ fun MainScreen(
                     // Content area to the right of the NavRail
                     BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxHeight()) {
                         val halfContentAreaHeight = this@BoxWithConstraints.maxHeight / 2
-                        // val contentAreaMaxHeight = this@BoxWithConstraints.maxHeight // Not strictly needed here for NavHost modifier
+                        val contentAreaViewportHeight = this@BoxWithConstraints.maxHeight
 
                         Column(
                             modifier = Modifier
@@ -82,7 +82,9 @@ fun MainScreen(
                             NavHost(
                                 navController = navController, 
                                 startDestination = "home",
-                                modifier = Modifier.fillMaxHeight() // NavHost fills the remaining space in the scrollable column
+                                // NavHost is given the full height of the content area's viewport.
+                                // The Spacer above ensures its content starts rendering halfway down.
+                                modifier = Modifier.height(contentAreaViewportHeight) 
                             ) {
                                 composable("home") { AuthenticatedView(onCreateCase = { showCreateCaseDialog = true }) }
                                 composable("cases") { CasesScreen(caseViewModel = caseViewModel) }
@@ -173,7 +175,8 @@ fun MainScreen(
                             .fillMaxSize()
                             .verticalScroll(rememberScrollState())
                             .padding(horizontal = 16.dp), // Padding for the content itself
-                        horizontalAlignment = Alignment.End
+                        horizontalAlignment = Alignment.End,
+                        verticalArrangement = Arrangement.Top // Content starts at top after spacer
                     ) {
                         Spacer(Modifier.height(halfScreenHeight))
                         Button(onClick = onSignInClick) {
@@ -204,13 +207,15 @@ fun MainScreen(
 fun AuthenticatedView(
     onCreateCase: () -> Unit
 ) {
+    // This Column fills the space given by NavHost and scrolls its own content.
+    // No internal "start halfway down" logic here.
     Column(
         modifier = Modifier
             .fillMaxSize() 
             .verticalScroll(rememberScrollState()) 
             .padding(16.dp),
         horizontalAlignment = Alignment.End, 
-        verticalArrangement = Arrangement.Top // Reverted to Arrangement.Top
+        verticalArrangement = Arrangement.Top // Content starts from the top of this view's area
     ) {
         Text(
             text = stringResource(R.string.app_name),
@@ -292,26 +297,43 @@ fun CreateCaseDialog(
             }
         },
         confirmButton = {
-            Button(
-                onClick = {
-                    if (caseName.isNotBlank()) {
-                        caseViewModel.createCase(
-                            caseName = caseName,
-                            exhibitSheetName = exhibitSheetName.ifBlank { defaultExhibitSheetNameStr },
-                            caseNumber = caseNumber,
-                            caseSection = caseSection,
-                            caseJudge = caseJudge
-                        )
-                        onDismiss()
-                    }
-                },
-                enabled = caseName.isNotBlank()
-            ) {
-                Text(stringResource(R.string.create))
+            Column(horizontalAlignment = Alignment.End, modifier = Modifier.fillMaxWidth()) { // Changed to Column
+                Button(
+                    onClick = {
+                        if (caseName.isNotBlank()) {
+                            caseViewModel.createCase(
+                                caseName = caseName,
+                                exhibitSheetName = exhibitSheetName.ifBlank { defaultExhibitSheetNameStr },
+                                caseNumber = caseNumber,
+                                caseSection = caseSection,
+                                caseJudge = caseJudge
+                            )
+                            onDismiss()
+                        }
+                    },
+                    enabled = caseName.isNotBlank(),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(stringResource(R.string.create))
+                }
+                Spacer(modifier = Modifier.height(8.dp)) // Spacer between buttons
+                OutlinedButton(
+                    onClick = { 
+                        // TODO: Implement open existing case functionality
+                        // For now, it can just dismiss the dialog or do nothing.
+                        onDismiss() // Example: dismisses for now
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Open Existing Case")
+                }
             }
         },
         dismissButton = {
-            OutlinedButton(onClick = onDismiss) {
+            OutlinedButton(
+                onClick = onDismiss, 
+                modifier = Modifier.fillMaxWidth() // Also make cancel button full width for consistency
+            ) {
                 Text(stringResource(R.string.cancel))
             }
         }
