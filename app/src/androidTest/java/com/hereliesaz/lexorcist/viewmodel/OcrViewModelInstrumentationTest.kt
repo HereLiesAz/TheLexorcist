@@ -56,9 +56,9 @@ class OcrViewModelInstrumentationTest {
         // Then
         verify {
             evidenceRepository.addEvidence(withArg { evidence ->
-                assert(evidence.sourceDocument == uri.toString())
-                assert(evidence.caseId == caseId.toLong())
-                assert(evidence.parentVideoId == parentVideoId)
+                org.junit.Assert.assertEquals(uri.toString(), evidence.sourceDocument)
+                org.junit.Assert.assertEquals(caseId.toLong(), evidence.caseId)
+                org.junit.Assert.assertEquals(parentVideoId, evidence.parentVideoId)
                 // Timestamps will be checked in the unit test where we can control the clock
             })
         }
