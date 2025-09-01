@@ -1,9 +1,8 @@
 package com.hereliesaz.lexorcist.viewmodel
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
-import com.hereliesaz.lexorcist.GoogleApiService
-import com.google.api.services.script.model.Content
-import com.google.api.services.script.model.File
+import com.hereliesaz.lexorcist.data.SettingsManager
+import com.hereliesaz.lexorcist.model.SaveState
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -31,14 +30,12 @@ class ScriptEditorViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
 
     private lateinit var scriptEditorViewModel: ScriptEditorViewModel
-    private lateinit var googleApiService: GoogleApiService
+    private lateinit var settingsManager: SettingsManager
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
-        googleApiService = mockk(relaxed = true)
-        scriptEditorViewModel = ScriptEditorViewModel()
-        scriptEditorViewModel.initialize(googleApiService, "test_script_id")
+        settingsManager = mockk(relaxed = true)
     }
 
     @After
@@ -47,32 +44,35 @@ class ScriptEditorViewModelTest {
     }
 
     @Test
-    fun `saveScript calls googleApiService to update script`() = runTest {
+    fun `saveScript calls settingsManager to save script`() = runTest {
         // Given
         val script = "test script"
+        coEvery { settingsManager.getScript() } returns ""
+        scriptEditorViewModel = ScriptEditorViewModel(settingsManager)
+        testDispatcher.scheduler.advanceUntilIdle()
         scriptEditorViewModel.onScriptTextChanged(script)
-        coEvery { googleApiService.updateScript(any(), any()) } returns true
+        coEvery { settingsManager.saveScript(any()) } returns Unit
 
         // When
         scriptEditorViewModel.saveScript()
         testDispatcher.scheduler.advanceUntilIdle()
 
         // Then
-        coVerify { googleApiService.updateScript("test_script_id", script) }
+        coVerify { settingsManager.saveScript(script) }
         assertEquals(SaveState.Success, scriptEditorViewModel.saveState.value)
     }
 
     @Test
     fun `loadScript updates scriptText`() = runTest {
         // Given
-        val scriptContent = Content().setFiles(listOf(File().setSource("test script")))
-        coEvery { googleApiService.getScript(any()) } returns scriptContent
+        val script = "test script"
+        coEvery { settingsManager.getScript() } returns script
+        scriptEditorViewModel = ScriptEditorViewModel(settingsManager)
 
         // When
-        scriptEditorViewModel.initialize(googleApiService, "test_script_id") // loadScript is called in initialize
         testDispatcher.scheduler.advanceUntilIdle()
 
         // Then
-        assertEquals("test script", scriptEditorViewModel.scriptText.value)
+        assertEquals(script, scriptEditorViewModel.scriptText.value)
     }
 }

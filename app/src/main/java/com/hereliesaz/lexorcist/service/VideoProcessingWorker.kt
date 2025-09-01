@@ -132,7 +132,9 @@ class VideoProcessingWorker(
                     bufferInfo.size = sampleSize
                     bufferInfo.presentationTimeUs = extractor.sampleTime
                     if ((extractor.sampleFlags and MediaExtractor.SAMPLE_FLAG_SYNC) != 0) {
-                        bufferInfo.flags = MediaCodec.BUFFER_FLAG_KEY_FRAME
+                        bufferInfo.flags = extractor.sampleFlags or MediaCodec.BUFFER_FLAG_KEY_FRAME
+                    } else {
+                        bufferInfo.flags = extractor.sampleFlags
                     }
 
                     muxer.writeSampleData(muxerTrackIndex, buffer, bufferInfo)

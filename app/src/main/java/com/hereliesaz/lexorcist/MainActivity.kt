@@ -4,6 +4,7 @@ import android.app.PendingIntent
 import android.content.IntentSender
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResult
@@ -64,10 +65,22 @@ class MainActivity : ComponentActivity() {
                                     signInLauncher.launch(intentSenderRequest)
                                 } catch (e: IntentSender.SendIntentException) {
                                     Log.e("MainActivity", "Couldn't start One Tap UI: ${e.localizedMessage}")
+                                    // Show user-facing feedback for sign-in error
+                                    Toast.makeText(
+                                        this@MainActivity,
+                                        "Sign-in failed: Couldn't start One Tap UI.",
+                                        Toast.LENGTH_LONG
+                                    ).show()
                                 }
                             }
                             .addOnFailureListener { e ->
-                                Log.e("MainActivity", "Sign-in failed", e)
+                                Log.e("MainActivity", "Sign-in failed: ${e.localizedMessage}")
+                                // Show user-facing feedback for sign-in error
+                                Toast.makeText(
+                                    this@MainActivity,
+                                    "Sign-in failed: ${e.localizedMessage ?: "Unknown error"}",
+                                    Toast.LENGTH_LONG
+                                ).show()
                                 authViewModel.onSignInError(e)
                             }
                     },

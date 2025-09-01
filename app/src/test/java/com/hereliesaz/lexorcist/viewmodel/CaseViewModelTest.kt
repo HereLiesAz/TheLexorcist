@@ -1,6 +1,7 @@
 package com.hereliesaz.lexorcist.viewmodel
 
 import android.app.Application
+import android.content.Context
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.data.CaseRepository
@@ -31,18 +32,17 @@ class CaseViewModelTest {
     private lateinit var caseViewModel: CaseViewModel
     private lateinit var caseRepository: CaseRepository
     private lateinit var application: Application
-    private lateinit var authViewModel: AuthViewModel
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         application = mockk(relaxed = true)
+        val context: Context = mockk(relaxed = true)
+        val sharedPrefs: android.content.SharedPreferences = mockk(relaxed = true)
+        io.mockk.every { application.getSharedPreferences(any(), any()) } returns sharedPrefs
+        io.mockk.every { application.applicationContext } returns context
         caseRepository = mockk(relaxed = true)
-        authViewModel = mockk(relaxed = true)
-        caseViewModel = CaseViewModel(application, caseRepository, authViewModel)
-        caseRepository = mockk()
-        authViewModel = mockk(relaxed = true)
-        caseViewModel = CaseViewModel(application, caseRepository, authViewModel)
+        caseViewModel = CaseViewModel(application, caseRepository)
     }
 
     @After
@@ -70,10 +70,10 @@ class CaseViewModelTest {
     @Test
     fun `archiveCase calls repository to archive case`() = runTest {
         // Given
-        val case = Case(id = 1, name = "Test Case", spreadsheetId = "123")
+        val case = Case(id = 1, name = "Test Case", spreadsheetId = "123", folderId = "f1", plaintiffs = "p1", defendants = "d1", court = "c1", isArchived = false, lastModifiedTime = 1L, scriptId = "s1", generatedPdfId = "g1", sourceHtmlSnapshotId = "sh1", originalMasterHtmlTemplateId = "om1")
 
         // When
-        caseViewModel.archiveCase(case)
+        caseViewModel.archiveCaseWithRepository(case)
         testDispatcher.scheduler.advanceUntilIdle()
 
         // Then
@@ -83,10 +83,10 @@ class CaseViewModelTest {
     @Test
     fun `deleteCase calls repository to delete case`() = runTest {
         // Given
-        val case = Case(id = 1, name = "Test Case", spreadsheetId = "123")
+        val case = Case(id = 1, name = "Test Case", spreadsheetId = "123", folderId = "f1", plaintiffs = "p1", defendants = "d1", court = "c1", isArchived = false, lastModifiedTime = 1L, scriptId = "s1", generatedPdfId = "g1", sourceHtmlSnapshotId = "sh1", originalMasterHtmlTemplateId = "om1")
 
         // When
-        caseViewModel.deleteCase(case)
+        caseViewModel.deleteCaseWithRepository(case)
         testDispatcher.scheduler.advanceUntilIdle()
 
         // Then

@@ -3,6 +3,7 @@ package com.hereliesaz.lexorcist.viewmodel
 import android.app.Application
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.hereliesaz.lexorcist.data.EvidenceRepository
 import com.hereliesaz.lexorcist.data.SettingsManager
