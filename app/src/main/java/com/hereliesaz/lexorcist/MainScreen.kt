@@ -17,12 +17,11 @@ import com.hereliesaz.lexorcist.model.SignInState
 import com.hereliesaz.lexorcist.viewmodel.AuthViewModel
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
-// import com.hereliesaz.lexorcist.viewmodel.OcrViewModel // Not directly used in MainScreen params
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-// import com.hereliesaz.lexorcist.viewmodel.EvidenceDetailsViewModel // Not directly used in MainScreen params
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,27 +62,24 @@ fun MainScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(paddingValues) // Apply scaffold padding to the Row
+                        .padding(paddingValues) 
                 ) {
                     AppNavRail(onNavigate = { screen -> navController.navigate(screen) })
                     
-                    // Content area to the right of the NavRail
                     BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxHeight()) {
                         val halfContentAreaHeight = this@BoxWithConstraints.maxHeight / 2
                         val contentAreaViewportHeight = this@BoxWithConstraints.maxHeight
 
                         Column(
                             modifier = Modifier
-                                .fillMaxSize() // Fills the BoxWithConstraints
+                                .fillMaxSize() 
                                 .verticalScroll(rememberScrollState())
                         ) {
-                            Spacer(Modifier.height(halfContentAreaHeight)) // Spacer for NavHost content area
+                            Spacer(Modifier.height(halfContentAreaHeight)) 
 
                             NavHost(
                                 navController = navController, 
                                 startDestination = "home",
-                                // NavHost is given the full height of the content area's viewport.
-                                // The Spacer above ensures its content starts rendering halfway down.
                                 modifier = Modifier.height(contentAreaViewportHeight) 
                             ) {
                                 composable("home") { AuthenticatedView(onCreateCase = { showCreateCaseDialog = true }) }
@@ -154,17 +150,11 @@ fun MainScreen(
                 }
             }
             is SignInState.InProgress -> {
-                 BoxWithConstraints(modifier = Modifier.fillMaxSize().padding(paddingValues)){
-                    val halfScreenHeight = this@BoxWithConstraints.maxHeight / 2
-                    Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-                        Spacer(Modifier.height(halfScreenHeight))
-                        Box(
-                            modifier = Modifier.fillMaxWidth(),
-                            contentAlignment = Alignment.CenterEnd
-                        ) {
-                            CircularProgressIndicator()
-                        }
-                    }
+                Box(
+                    modifier = Modifier.fillMaxSize().padding(paddingValues),
+                    contentAlignment = Alignment.Center 
+                ) {
+                    CircularProgressIndicator()
                 }
             }
             is SignInState.Idle, is SignInState.Error -> {
@@ -174,13 +164,13 @@ fun MainScreen(
                         modifier = Modifier
                             .fillMaxSize()
                             .verticalScroll(rememberScrollState())
-                            .padding(horizontal = 16.dp), // Padding for the content itself
+                            .padding(horizontal = 16.dp), 
                         horizontalAlignment = Alignment.End,
-                        verticalArrangement = Arrangement.Top // Content starts at top after spacer
+                        verticalArrangement = Arrangement.Top 
                     ) {
                         Spacer(Modifier.height(halfScreenHeight))
                         Button(onClick = onSignInClick) {
-                            Text(stringResource(R.string.sign_in_with_google))
+                            Text(stringResource(R.string.sign_in_with_google).uppercase(Locale.getDefault())) // ALL CAPS
                         }
                         if (currentSignInState is SignInState.Error) {
                             Spacer(modifier = Modifier.height(16.dp))
@@ -207,18 +197,16 @@ fun MainScreen(
 fun AuthenticatedView(
     onCreateCase: () -> Unit
 ) {
-    // This Column fills the space given by NavHost and scrolls its own content.
-    // No internal "start halfway down" logic here.
     Column(
         modifier = Modifier
             .fillMaxSize() 
             .verticalScroll(rememberScrollState()) 
             .padding(16.dp),
         horizontalAlignment = Alignment.End, 
-        verticalArrangement = Arrangement.Top // Content starts from the top of this view's area
+        verticalArrangement = Arrangement.Top 
     ) {
         Text(
-            text = stringResource(R.string.app_name),
+            text = stringResource(R.string.app_name), // App name usually not all caps
             style = MaterialTheme.typography.headlineMedium
         )
         Spacer(modifier = Modifier.height(16.dp))
@@ -233,7 +221,7 @@ fun AuthenticatedView(
         )
         Spacer(modifier = Modifier.height(32.dp))
         Button(onClick = onCreateCase) {
-            Text(stringResource(R.string.create_new_case))
+            Text(stringResource(R.string.create_new_case).uppercase(Locale.getDefault())) // ALL CAPS
         }
     }
 }
@@ -244,7 +232,6 @@ fun CreateCaseDialog(
     caseViewModel: CaseViewModel,
     onDismiss: () -> Unit
 ) {
-    val context = LocalContext.current
     var caseName by remember { mutableStateOf("") }
     val defaultExhibitSheetNameStr = stringResource(R.string.default_exhibit_sheet_name)
     var exhibitSheetName by remember { mutableStateOf(defaultExhibitSheetNameStr) }
@@ -254,7 +241,7 @@ fun CreateCaseDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.create_new_case)) },
+        title = { Text(stringResource(R.string.create_new_case).uppercase(Locale.getDefault())) }, // ALL CAPS
         text = {
             Column(
                 modifier = Modifier
@@ -266,7 +253,7 @@ fun CreateCaseDialog(
                 OutlinedTextField(
                     value = caseName,
                     onValueChange = { caseName = it },
-                    label = { Text(stringResource(R.string.case_name_required)) },
+                    label = { Text(stringResource(R.string.case_name_required)) }, // Labels not typically all caps
                     isError = caseName.isBlank(),
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -297,7 +284,7 @@ fun CreateCaseDialog(
             }
         },
         confirmButton = {
-            Column(horizontalAlignment = Alignment.End, modifier = Modifier.fillMaxWidth()) { // Changed to Column
+            Column(horizontalAlignment = Alignment.End, modifier = Modifier.fillMaxWidth()) { 
                 Button(
                     onClick = {
                         if (caseName.isNotBlank()) {
@@ -314,27 +301,25 @@ fun CreateCaseDialog(
                     enabled = caseName.isNotBlank(),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(stringResource(R.string.create))
+                    Text(stringResource(R.string.create).uppercase(Locale.getDefault())) // ALL CAPS
                 }
-                Spacer(modifier = Modifier.height(8.dp)) // Spacer between buttons
+                Spacer(modifier = Modifier.height(8.dp)) 
                 OutlinedButton(
                     onClick = { 
-                        // TODO: Implement open existing case functionality
-                        // For now, it can just dismiss the dialog or do nothing.
-                        onDismiss() // Example: dismisses for now
+                        onDismiss() 
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Open Existing Case")
+                    Text("OPEN EXISTING CASE".uppercase(Locale.getDefault())) // ALL CAPS
                 }
             }
         },
         dismissButton = {
             OutlinedButton(
                 onClick = onDismiss, 
-                modifier = Modifier.fillMaxWidth() // Also make cancel button full width for consistency
+                modifier = Modifier.fillMaxWidth() 
             ) {
-                Text(stringResource(R.string.cancel))
+                Text(stringResource(R.string.cancel).uppercase(Locale.getDefault())) // ALL CAPS
             }
         }
     )

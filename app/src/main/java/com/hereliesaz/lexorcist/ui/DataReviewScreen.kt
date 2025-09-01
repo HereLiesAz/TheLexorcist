@@ -12,11 +12,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,7 +45,14 @@ fun DataReviewScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (selectedCase != null) "Review: ${selectedCase!!.name}" else "Data Review") },
+                title = { 
+                    Text(
+                        (if (selectedCase != null) 
+                            stringResource(R.string.data_review_title_case, selectedCase!!.name) 
+                        else 
+                            stringResource(R.string.data_review)).uppercase(Locale.getDefault()) // ALL CAPS
+                    )
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.primary,
@@ -58,28 +68,35 @@ fun DataReviewScreen(
                 horizontalAlignment = Alignment.End 
             ) {
                 if (isLoading) {
-                    Spacer(modifier = Modifier.height(halfScreenHeight))
                     Box(
-                        modifier = Modifier.fillMaxWidth(), 
-                        contentAlignment = Alignment.CenterEnd // Changed to CenterEnd
+                        modifier = Modifier.fillMaxSize(), 
+                        contentAlignment = Alignment.Center 
                     ) {
                         CircularProgressIndicator()
                     }
                 } else if (selectedCase == null) {
-                    Spacer(modifier = Modifier.height(halfScreenHeight))
-                    Box(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                        contentAlignment = Alignment.CenterEnd 
-                    ) {
-                        Text("Please select a case to review its evidence.")
+                    Column(
+                         modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState()) 
+                            .padding(horizontal = 16.dp),
+                        horizontalAlignment = Alignment.End,
+                        verticalArrangement = Arrangement.Top
+                    ){
+                        Spacer(modifier = Modifier.height(halfScreenHeight))
+                        Text(stringResource(R.string.please_select_case_for_evidence).uppercase(Locale.getDefault())) // ALL CAPS
                     }
                 } else if (evidenceList.isEmpty()) {
-                    Spacer(modifier = Modifier.height(halfScreenHeight))
-                     Box(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                        contentAlignment = Alignment.CenterEnd 
-                    ) {
-                        Text("No evidence found for this case.")
+                     Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
+                            .padding(horizontal = 16.dp),
+                        horizontalAlignment = Alignment.End,
+                        verticalArrangement = Arrangement.Top
+                    ){
+                        Spacer(modifier = Modifier.height(halfScreenHeight))
+                        Text(stringResource(R.string.no_evidence_for_case).uppercase(Locale.getDefault())) // ALL CAPS
                     }
                 } else {
                     LazyColumn(
@@ -119,19 +136,19 @@ fun DataReviewScreen(
     if (showDeleteConfirmDialog && evidenceToDelete != null) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirmDialog = false },
-            title = { Text("Delete Evidence") },
-            text = { Text("Are you sure you want to delete this evidence?") },
+            title = { Text(stringResource(R.string.delete_evidence).uppercase(Locale.getDefault())) }, // ALL CAPS
+            text = { Text(stringResource(R.string.delete_evidence_confirmation)) }, // Confirmation usually not all caps
             confirmButton = {
-                Button(onClick = { // Changed to Button
+                Button(onClick = { 
                     evidenceViewModel.deleteEvidence(evidenceToDelete!!)
                     showDeleteConfirmDialog = false
                 }) {
-                    Text("Delete")
+                    Text(stringResource(R.string.delete).uppercase(Locale.getDefault())) // ALL CAPS
                 }
             },
             dismissButton = {
-                OutlinedButton(onClick = { showDeleteConfirmDialog = false }) { // Changed to OutlinedButton
-                    Text("Cancel")
+                OutlinedButton(onClick = { showDeleteConfirmDialog = false }) { 
+                    Text(stringResource(R.string.cancel).uppercase(Locale.getDefault())) // ALL CAPS
                 }
             }
         )
@@ -166,13 +183,15 @@ fun EvidenceItem(
                     text = evidence.sourceDocument,
                     style = MaterialTheme.typography.titleMedium,
                     maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.fillMaxWidth() 
                 )
                 if (evidence.category.isNotBlank()) {
                     Text(
                         text = "Category: ${evidence.category}",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.fillMaxWidth()
                     )
                 }
                 if (evidence.tags.isNotEmpty()) {
@@ -180,7 +199,8 @@ fun EvidenceItem(
                         text = "Tags: ${evidence.tags.joinToString()}",
                         style = MaterialTheme.typography.bodySmall,
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.fillMaxWidth()
                     )
                 }
                 Text(
@@ -188,15 +208,16 @@ fun EvidenceItem(
                     style = MaterialTheme.typography.bodySmall,
                     maxLines = 3, 
                     overflow = TextOverflow.Ellipsis,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
             Column(horizontalAlignment = Alignment.End) { 
                 IconButton(onClick = { onEditClick(evidence) }) {
-                    Icon(Icons.Default.Edit, contentDescription = "Edit")
+                    Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.edit).uppercase(Locale.getDefault()))
                 }
                 IconButton(onClick = { onDeleteClick(evidence) }) {
-                    Icon(Icons.Default.Delete, contentDescription = "Delete")
+                    Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.delete).uppercase(Locale.getDefault()))
                 }
             }
         }
@@ -216,7 +237,7 @@ fun EditEvidenceDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Edit Evidence") },
+        title = { Text(stringResource(R.string.edit_evidence).uppercase(Locale.getDefault())) }, // ALL CAPS
         text = {
             Column(
                 modifier = Modifier.verticalScroll(rememberScrollState()), 
@@ -226,33 +247,33 @@ fun EditEvidenceDialog(
                 OutlinedTextField(
                     value = content,
                     onValueChange = { content = it },
-                    label = { Text("Content") },
+                    label = { Text(stringResource(R.string.content)) }, // Labels not typically all caps
                     modifier = Modifier.fillMaxWidth(),
                     maxLines = 5 
                 )
                  OutlinedTextField(
                     value = sourceDocument,
                     onValueChange = { sourceDocument = it },
-                    label = { Text("Source Document") },
+                    label = { Text(stringResource(R.string.source_document)) }, // Needs string R.string.source_document
                     modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
                     value = category,
                     onValueChange = { category = it },
-                    label = { Text("Category") },
-                    placeholder = { Text("Enter a category for this evidence") },
+                    label = { Text(stringResource(R.string.category)) },
+                    placeholder = { Text(stringResource(R.string.enter_category)) },
                     modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
                     value = tags,
                     onValueChange = { tags = it },
-                    label = { Text("Tags (comma-separated)") },
+                    label = { Text(stringResource(R.string.tags_comma_separated)) }, // Needs string R.string.tags_comma_separated
                     modifier = Modifier.fillMaxWidth()
                 )
             }
         },
         confirmButton = {
-            Button(onClick = { // Changed to Button
+            Button(onClick = { 
                 val updatedEvidence = evidence.copy(
                     content = content,
                     sourceDocument = sourceDocument,
@@ -261,13 +282,20 @@ fun EditEvidenceDialog(
                 )
                 onSave(updatedEvidence)
             }) {
-                Text("Save")
+                Text(stringResource(R.string.save).uppercase(Locale.getDefault())) // ALL CAPS
             }
         },
         dismissButton = {
-            OutlinedButton(onClick = onDismiss) { // Changed to OutlinedButton
-                Text("Cancel")
+            OutlinedButton(onClick = onDismiss) { 
+                Text(stringResource(R.string.cancel).uppercase(Locale.getDefault())) // ALL CAPS
             }
         }
     )
 }
+
+// Need to add these to strings.xml:
+// R.string.data_review_title_case = "REVIEW: %1$s"
+// R.string.please_select_case_for_evidence = "Please select a case to review its evidence."
+// R.string.no_evidence_for_case = "No evidence found for this case."
+// R.string.source_document = "Source Document"
+// R.string.tags_comma_separated = "Tags (comma-separated)"

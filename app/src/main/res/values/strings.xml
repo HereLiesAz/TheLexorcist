@@ -83,6 +83,9 @@
     <string name="create">Create</string>
     <string name="cancel">Cancel</string>
     <string name="no_cases_found">No cases found. Click the \'\+\' button to create a new case.</string>
+    <string name="no_cases_match_search">No cases match your search.</string>
+    <string name="no_cases_found_line1">No cases found.</string>
+    <string name="no_cases_found_line2">Create a new case or open an existing one.</string>
     <string name="dark_mode">Dark Mode</string>
     <string name="delete_evidence">Delete Evidence</string>
     <string name="delete_evidence_confirmation">Are you sure you want to delete this evidence?</string>
@@ -121,6 +124,13 @@
     <string name="sort">Sort</string>
     <string name="delete_case">Delete Case</string>
     <string name="delete_case_confirmation">Are you sure you want to delete case %1$s?</string>
+
+    <string name="data_review_title_case">REVIEW: %1$s</string>
+    <string name="please_select_case_for_evidence">Please select a case to review its evidence.</string>
+    <string name="no_evidence_for_case">No evidence found for this case.</string>
+    <string name="source_document">Source Document</string>
+    <string name="tags_comma_separated">Tags (comma-separated)</string>
+    <string name="evidence_text_label">Evidence Text</string>
 
     <string name="select_image_to_scan">Select Image to Scan</string>
     <string name="load_case">Load Case</string>

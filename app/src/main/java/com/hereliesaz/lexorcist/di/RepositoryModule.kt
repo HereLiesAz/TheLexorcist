@@ -16,9 +16,13 @@ abstract class RepositoryModule {
 
     @Binds
     @Singleton
-    abstract fun bindCaseRepository(impl: CaseRepositoryImpl): CaseRepository
+    abstract fun bindEvidenceRepository(
+        evidenceRepositoryImpl: EvidenceRepositoryImpl
+    ): EvidenceRepository
 
     @Binds
     @Singleton
-    abstract fun bindEvidenceRepository(impl: EvidenceRepositoryImpl): EvidenceRepository
+    abstract fun bindCaseRepository(
+        caseRepositoryImpl: CaseRepositoryImpl
+    ): CaseRepository
 }

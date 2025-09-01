@@ -9,31 +9,30 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
+import java.util.Locale
 
 @Composable
 fun AddEvidenceScreen(
-    evidenceViewModel: EvidenceViewModel = viewModel(), // Parameter kept
+    evidenceViewModel: EvidenceViewModel = viewModel(),
     onAddTextEvidence: () -> Unit,
 ) {
-    // Removed BoxWithConstraints and internal Spacer for "start halfway down"
-    // MainScreen.kt now handles the "start halfway down" for the NavHost area.
     Column(
         modifier = Modifier
-            .fillMaxSize() // Fills the space given by NavHost
-            .verticalScroll(rememberScrollState()) // Make content scrollable
-            .padding(16.dp), // Apply padding to the Column for its content
-        horizontalAlignment = Alignment.End, // Right-align children of this Column
-        verticalArrangement = Arrangement.Top // Content should start from the top of this screen's area
+            .fillMaxSize() 
+            .verticalScroll(rememberScrollState()) 
+            .padding(16.dp), 
+        horizontalAlignment = Alignment.End, 
+        verticalArrangement = Arrangement.Top 
     ) {
-        // Content of AddEvidenceScreen starts here, at the top of the area NavHost provides
         Button(onClick = onAddTextEvidence) {
-            Icon(Icons.Default.Add, contentDescription = "Add Text Evidence")
+            Icon(Icons.Default.Add, contentDescription = stringResource(R.string.add_text_evidence).uppercase(Locale.getDefault()))
             Spacer(modifier = Modifier.width(8.dp))
-            Text("Add Text Evidence")
+            Text(stringResource(R.string.add_text_evidence).uppercase(Locale.getDefault())) // ALL CAPS
         }
-        // Add other UI elements for this screen here if needed, they will be right-aligned.
     }
 }

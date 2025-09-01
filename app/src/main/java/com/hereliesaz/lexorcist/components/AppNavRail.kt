@@ -12,12 +12,12 @@ import android.content.Intent
 import android.net.Uri
 import androidx.compose.ui.res.stringResource
 import com.hereliesaz.lexorcist.R
+import java.util.Locale
 
 @Composable
 fun AppNavRail(onNavigate: (String) -> Unit) {
     val context = LocalContext.current
 
-    // Resolve strings for lambdas in the Composable scope
     val appNameStr = stringResource(R.string.app_name)
     val navHomeStr = stringResource(R.string.nav_home)
     val navSettingsStr = stringResource(R.string.nav_settings)
@@ -28,23 +28,24 @@ fun AppNavRail(onNavigate: (String) -> Unit) {
     val navCasesStr = stringResource(R.string.nav_cases)
     val navTimelineStr = stringResource(R.string.nav_timeline)
     val navDataReviewStr = stringResource(R.string.nav_data_review)
-    val navEvidenceStr = stringResource(R.string.nav_evidence)
+    val navEvidenceStr = stringResource(R.string.nav_evidence) 
     val navAddEvidenceStr = stringResource(R.string.nav_add_evidence)
-    val navAddonsBrowserStr = stringResource(R.string.nav_addons_browser) // Kept for navigation route, text changed below
+    val navAddonsBrowserStr = stringResource(R.string.nav_addons_browser)
+    val navScriptEditorStr = stringResource(R.string.nav_script_editor) // Added for route
 
-    // NavItem texts (these were likely fine as they are resolved in Composable scope before being passed)
-    val casesText = stringResource(R.string.cases)
-    val timelineText = stringResource(R.string.timeline)
-    val dataReviewText = stringResource(R.string.data_review)
-    val evidenceText = stringResource(R.string.evidence)
-    val addText = stringResource(R.string.add)
-    // val addonsBrowserText = stringResource(R.string.addons_browser) // Text changed to "Extras" directly
-    val settingsText = stringResource(R.string.settings)
-    val aboutText = stringResource(R.string.about)
-    val feedbackText = stringResource(R.string.feedback)
+    val casesText = stringResource(R.string.cases).uppercase(Locale.getDefault())
+    val timelineText = stringResource(R.string.timeline).uppercase(Locale.getDefault())
+    val dataReviewText = stringResource(R.string.data_review).uppercase(Locale.getDefault())
+    val evidenceText = stringResource(R.string.evidence).uppercase(Locale.getDefault())
+    val addText = stringResource(R.string.add).uppercase(Locale.getDefault())
+    val extrasText = "EXTRAS" // Already uppercase, kept for clarity
+    val scriptText = "SCRIPT".uppercase(Locale.getDefault())
+    val settingsText = stringResource(R.string.settings).uppercase(Locale.getDefault())
+    val aboutText = stringResource(R.string.about).uppercase(Locale.getDefault())
+    val feedbackText = stringResource(R.string.feedback).uppercase(Locale.getDefault())
 
     AzNavRail(
-        appName = appNameStr,
+        appName = appNameStr, // App name in header, usually not all caps
         useAppIconAsHeader = true,
         header = NavRailHeader { /* ... */ },
         onPredefinedAction = { action ->
@@ -70,7 +71,7 @@ fun AppNavRail(onNavigate: (String) -> Unit) {
         },
         menuSections = listOf(
             NavRailMenuSection(
-                title = "", // Assuming empty title is intentional
+                title = "", 
                 items = listOf(
                     NavItem(
                         text = casesText,
@@ -98,13 +99,13 @@ fun AppNavRail(onNavigate: (String) -> Unit) {
                         showOnRail = true
                     ),
                     NavItem(
-                        text = "Extras", // Changed from addonsBrowserText
-                        data = NavItemData.Action(onClick = { onNavigate(navAddonsBrowserStr) }), // Route remains the same
+                        text = extrasText,
+                        data = NavItemData.Action(onClick = { onNavigate(navAddonsBrowserStr) }), 
                         showOnRail = true
                     ),
                     NavItem(
-                        text = "Script", // Changed from "Script Editor"
-                        data = NavItemData.Action(onClick = { onNavigate("script_editor") }),
+                        text = scriptText,
+                        data = NavItemData.Action(onClick = { onNavigate(navScriptEditorStr) }),
                         showOnRail = true
                     ),
                     NavItem(
