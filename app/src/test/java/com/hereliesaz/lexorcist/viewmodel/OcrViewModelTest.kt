@@ -5,9 +5,11 @@ import android.content.Context
 import android.net.Uri
 import android.util.Log
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
-import io.mockk.every
+import com.hereliesaz.lexorcist.data.EvidenceRepository
+import com.hereliesaz.lexorcist.data.SettingsManager
+import com.hereliesaz.lexorcist.service.ScriptRunner
+import io.mockk.coVerify
 import io.mockk.mockk
-import io.mockk.mockkStatic
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -31,15 +33,19 @@ class OcrViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
 
     private lateinit var ocrViewModel: OcrViewModel
+    private lateinit var evidenceRepository: EvidenceRepository
+    private lateinit var settingsManager: SettingsManager
+    private lateinit var scriptRunner: ScriptRunner
     private lateinit var application: Application
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         application = mockk(relaxed = true)
-        mockkStatic(Log::class)
-        every { Log.d(any(), any()) } returns 0
-        ocrViewModel = OcrViewModel(application)
+        evidenceRepository = mockk(relaxed = true)
+        settingsManager = mockk(relaxed = true)
+        scriptRunner = mockk(relaxed = true)
+        ocrViewModel = OcrViewModel(application, evidenceRepository, settingsManager, scriptRunner)
     }
 
     @After
@@ -48,16 +54,18 @@ class OcrViewModelTest {
     }
 
     @Test
-    fun `performOcrOnUri does not crash`() = runTest {
+    fun `performOcrOnUri calls addEvidence`() = runTest {
         // Given
         val uri: Uri = mockk()
         val context: Context = mockk(relaxed = true)
+        val caseId = 1
+        val parentVideoId = "video1"
 
         // When
-        ocrViewModel.performOcrOnUri(uri, context, 1, "video1")
-        testDispatcher.scheduler.advanceUntilIdle()
+        ocrViewModel.performOcrOnUri(uri, context, caseId, parentVideoId)
+        testDispatcher.scheduler.runCurrent()
 
         // Then
-        // No crash
+        coVerify { evidenceRepository.addEvidence(any()) }
     }
 }

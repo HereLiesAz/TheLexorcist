@@ -63,7 +63,8 @@ class OcrViewModel @Inject constructor(
                     Toast.makeText(getApplication(), "Script error: ${result.exception.message}", Toast.LENGTH_LONG).show()
                 }
             }
-            // evidenceRepository?.addEvidence(newEvidence)
+            println("Calling addEvidence")
+            evidenceRepository?.addEvidence(newEvidence)
         }
     }
 
