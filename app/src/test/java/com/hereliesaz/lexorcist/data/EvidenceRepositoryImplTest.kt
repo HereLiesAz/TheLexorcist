@@ -116,8 +116,8 @@ class EvidenceRepositoryImplTest {
         evidenceRepository.updateEvidence(updatedEvidence)
 
         // Then
-        val expectedSheetData = createMockSheet(listOf(updatedEvidence, evidence2))["Evidence"]
-        coVerify { googleApiService.writeData(updatedEvidence.spreadsheetId, "Evidence", expectedSheetData!!) }
+        val expectedSheet = createMockSheet(listOf(updatedEvidence, evidence2))
+        coVerify { googleApiService.writeData(updatedEvidence.spreadsheetId, "Evidence", expectedSheet.getValue("Evidence")) }
     }
 
     @Test
