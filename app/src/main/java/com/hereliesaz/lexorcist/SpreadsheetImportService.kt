@@ -2,9 +2,10 @@ package com.hereliesaz.lexorcist
 
 import android.util.Log
 import com.hereliesaz.lexorcist.data.Case
-import com.hereliesaz.lexorcist.data.Evidence
+// import com.hereliesaz.lexorcist.data.Evidence // Not directly used in the changed section
 import com.hereliesaz.lexorcist.model.SpreadsheetSchema
-import com.hereliesaz.lexorcist.utils.Result // Assuming Result is in this package
+import com.hereliesaz.lexorcist.utils.Result
+import java.io.IOException // Added
 
 class SpreadsheetImportService(
     private val googleApiService: GoogleApiService,
@@ -12,24 +13,37 @@ class SpreadsheetImportService(
 ) {
     private val TAG = "SpreadsheetImportSvc"
 
-    // Renamed from parseAndStore to importAndSetupNewCaseFromData
     suspend fun importAndSetupNewCaseFromData(sheetsData: Map<String, List<List<Any>>>): Case? {
         // 1. Get Root Folder and Registry IDs
-        val appRootFolderId = googleApiService.getOrCreateAppRootFolder()
+        val appRootFolderId: String? = try {
+            googleApiService.getOrCreateAppRootFolder()
+        } catch (e: IOException) {
+            Log.e(TAG, "importAndSetup: Failed to get or create app root folder.", e)
+            null
+        }
+
         if (appRootFolderId == null) {
-            Log.e(TAG, "importAndSetup: Failed to get or create app root folder.")
+            // Log message already handled in catch or if function truly returns null
             return null
         }
-        val caseRegistrySpreadsheetId = googleApiService.getOrCreateCaseRegistrySpreadsheetId(appRootFolderId)
+
+        val caseRegistrySpreadsheetId: String? = try {
+            googleApiService.getOrCreateCaseRegistrySpreadsheetId(appRootFolderId)
+        } catch (e: IOException) {
+            Log.e(TAG, "importAndSetup: Failed to get or create case registry spreadsheet for folder $appRootFolderId.", e)
+            null
+        }
+
         if (caseRegistrySpreadsheetId == null) {
-            Log.e(TAG, "importAndSetup: Failed to get or create case registry spreadsheet.")
+            // Log message already handled in catch
             return null
         }
 
         // 2. Extract Case Name from imported sheet
         val caseInfoSheet = sheetsData[schema.caseInfoSheet.name]
-        val importedCaseName = caseInfoSheet?.find { it.getOrNull(0)?.toString()?.equals(schema.caseInfoSheet.caseNameLabel, ignoreCase = true) == true }
-            ?.getOrNull(schema.caseInfoSheet.caseNameColumn)?.toString() ?: "Imported Case ${System.currentTimeMillis()}"
+        val importedCaseName = caseInfoSheet?.find {
+            it.getOrNull(0)?.toString()?.equals(schema.caseInfoSheet.caseNameLabel, ignoreCase = true) ?: false
+        }?.getOrNull(schema.caseInfoSheet.caseNameColumn)?.toString() ?: "Imported Case ${System.currentTimeMillis()}"
         Log.d(TAG, "importAndSetup: Determined case name from import data: $importedCaseName")
 
         // 2.1 Check for Existing Case with the same name in the registry
@@ -43,7 +57,13 @@ class SpreadsheetImportService(
         // 3. Create New Case Structure
         Log.d(TAG, "importAndSetup: No existing case found with name '$importedCaseName'. Proceeding to create new case structure.")
         
-        val newCaseFolderId = googleApiService.getOrCreateCaseFolder(importedCaseName)
+        val newCaseFolderId: String? = try { // Also wrap this, as it can throw IOException
+            googleApiService.getOrCreateCaseFolder(importedCaseName)
+        } catch (e: IOException) {
+            Log.e(TAG, "importAndSetup: Failed to create folder for new case: $importedCaseName", e)
+            null
+        }
+
         if (newCaseFolderId == null) {
             Log.e(TAG, "importAndSetup: Failed to create folder for new case: $importedCaseName")
             return null
@@ -69,19 +89,16 @@ class SpreadsheetImportService(
         Log.d(TAG, "importAndSetup: Created new case structure: Folder ID $newCaseFolderId, Spreadsheet ID $newCaseSpreadsheetId")
         
         val placeholderScriptContent = "// Default script for imported case\nfunction onOpen() {}\n"
-        googleApiService.attachScript(newCaseSpreadsheetId, placeholderScriptContent, "ImportedCaseScript") // Provide a default script name/ID
+        googleApiService.attachScript(newCaseSpreadsheetId, placeholderScriptContent, "ImportedCaseScript")
 
-        // 4. Add to Case Registry
-        // Create a basic Case object for registry. ID will be assigned by registry logic or is row-based.
         val newCaseForRegistry = Case(id = 0, name = importedCaseName, spreadsheetId = newCaseSpreadsheetId, folderId = newCaseFolderId)
         val addedToRegistry = googleApiService.addCaseToRegistry(caseRegistrySpreadsheetId, newCaseForRegistry)
         if (!addedToRegistry) {
             Log.w(TAG, "importAndSetup: Failed to add new case '$importedCaseName' to registry. Data import will proceed, but case won't be auto-listed.")
         }
 
-        // 5. Parse and Store Allegations from the imported data into the new spreadsheet
         val allegationsSheetName = schema.allegationsSheet.name
-        googleApiService.addSheet(newCaseSpreadsheetId, allegationsSheetName) // Ensure sheet exists
+        googleApiService.addSheet(newCaseSpreadsheetId, allegationsSheetName) 
         val allegationsDataToAppend = sheetsData[allegationsSheetName]?.drop(1)?.mapNotNull { row ->
             val allegationText = row.getOrNull(schema.allegationsSheet.allegationColumn)?.toString()
             if (!allegationText.isNullOrBlank()) listOf(allegationText) else null
@@ -89,46 +106,39 @@ class SpreadsheetImportService(
 
         if (allegationsDataToAppend.isNotEmpty()) {
              Log.d(TAG, "Attempting to append ${allegationsDataToAppend.size} allegations to $allegationsSheetName in $newCaseSpreadsheetId")
-            // TODO: Ensure GoogleApiService.appendData is suitable or if a batch update is needed
             // googleApiService.appendData(newCaseSpreadsheetId, allegationsSheetName + "!A1", allegationsDataToAppend)
         }
 
-        // 6. Parse and Store Evidence from the imported data into the new spreadsheet
         val evidenceSheetName = schema.evidenceSheet.name
-        googleApiService.addSheet(newCaseSpreadsheetId, evidenceSheetName) // Ensure sheet exists
-        val evidenceHeader = listOf("Content", "Timestamp", "Source Document", "Document Date", "Tags", "Allegation ID", "Category", "Type", "SpreadsheetID")
-        // TODO: appendData for header
+        googleApiService.addSheet(newCaseSpreadsheetId, evidenceSheetName) 
+        // val evidenceHeader = listOf("Content", "Timestamp", "Source Document", "Document Date", "Tags", "Allegation ID", "Category", "Type", "SpreadsheetID")
         // googleApiService.appendData(newCaseSpreadsheetId, evidenceSheetName + "!A1", listOf(evidenceHeader))
 
         val evidenceDataToAppend = sheetsData[evidenceSheetName]?.drop(1)?.mapNotNull { row ->
             val content = row.getOrNull(schema.evidenceSheet.contentColumn)?.toString()
             if (content.isNullOrBlank()) null
             else {
-                val tagsStr = row.getOrNull(schema.evidenceSheet.tagsColumn)?.toString()
-                // Construct the row for the new sheet
+                // val tagsStr = row.getOrNull(schema.evidenceSheet.tagsColumn)?.toString()
                 listOf(
                     content,
-                    System.currentTimeMillis().toString(), // Timestamp
-                    "Imported from spreadsheet", // Source Document
-                    System.currentTimeMillis().toString(), // Document Date (or parse if available)
-                    tagsStr ?: "", // Tags
-                    "", // Allegation ID (needs linking logic)
-                    "Imported", // Category
-                    "imported_text_evidence", // Type
-                    newCaseSpreadsheetId // SpreadsheetID (redundant but for schema consistency)
+                    System.currentTimeMillis().toString(), 
+                    "Imported from spreadsheet", 
+                    System.currentTimeMillis().toString(), 
+                    row.getOrNull(schema.evidenceSheet.tagsColumn)?.toString() ?: "",
+                    "", 
+                    "Imported", 
+                    "imported_text_evidence", 
+                    newCaseSpreadsheetId 
                 )
             }
         } ?: emptyList()
 
         if (evidenceDataToAppend.isNotEmpty()) {
             Log.d(TAG, "Attempting to append ${evidenceDataToAppend.size} evidence items to $evidenceSheetName in $newCaseSpreadsheetId")
-            // TODO: appendData for evidence rows
-            // googleApiService.appendData(newCaseSpreadsheetId, evidenceSheetName + "!A2", evidenceDataToAppend) // A2 if header is in A1
+            // googleApiService.appendData(newCaseSpreadsheetId, evidenceSheetName + "!A2", evidenceDataToAppend)
         }
 
         Log.i(TAG, "importAndSetup: Finished importing and setting up data for case: $importedCaseName, New Spreadsheet ID: $newCaseSpreadsheetId")
-        // The returned Case object should reflect the newly created and registered case
-        // It might be beneficial to re-fetch the case from registry to get any server-assigned ID or confirm details
         return Case(name = importedCaseName, spreadsheetId = newCaseSpreadsheetId, folderId = newCaseFolderId, id = newCaseForRegistry.id) 
     }
 }

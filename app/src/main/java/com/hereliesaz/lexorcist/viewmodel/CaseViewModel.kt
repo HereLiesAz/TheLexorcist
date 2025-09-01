@@ -23,7 +23,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class CaseViewModel @Inject constructor(
-    @param:ApplicationContext private val applicationContext: Context, // Changed here
+    @param:ApplicationContext private val applicationContext: Context,
     private val caseRepository: CaseRepository
     // private val caseDao: CaseDao // Removed CaseDao
     // private val authViewModel: AuthViewModel // Assuming this is also a @HiltViewModel

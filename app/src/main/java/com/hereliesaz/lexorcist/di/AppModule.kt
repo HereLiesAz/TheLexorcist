@@ -1,13 +1,13 @@
 package com.hereliesaz.lexorcist.di
 
 import android.content.Context
-import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInClient
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions
-import com.hereliesaz.lexorcist.GoogleApiService // Assuming this is the correct import
+import android.content.SharedPreferences // Added
+import com.google.android.gms.auth.api.identity.Identity
+import com.google.android.gms.auth.api.identity.SignInClient
+import com.hereliesaz.lexorcist.GoogleApiService
 import com.hereliesaz.lexorcist.R
-import com.hereliesaz.lexorcist.data.SettingsManager // Assuming this is the correct import
-import com.hereliesaz.lexorcist.service.ScriptRunner // Assuming this is the correct import
+import com.hereliesaz.lexorcist.data.SettingsManager
+import com.hereliesaz.lexorcist.service.ScriptRunner
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -20,25 +20,26 @@ import javax.inject.Singleton
 class AppModule {
 
     @Provides
-    fun provideGoogleSignInClient(@ApplicationContext context: Context): GoogleSignInClient {
-        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestIdToken(context.getString(R.string.default_web_client_id))
-            .requestEmail()
-            .build()
-        return GoogleSignIn.getClient(context, gso)
+    @Singleton
+    fun provideOneTapClient(@ApplicationContext context: Context): SignInClient {
+        return Identity.getSignInClient(context)
     }
 
     @Provides
-    @Singleton // Or appropriate scope
+    @Singleton
+    fun provideSharedPreferences(@ApplicationContext context: Context): SharedPreferences {
+        return context.getSharedPreferences("LexorcistAppPrefs", Context.MODE_PRIVATE) // Added
+    }
+
+    @Provides
+    @Singleton
     fun provideSettingsManager(@ApplicationContext context: Context): SettingsManager {
-        // TODO: Replace with actual constructor and dependencies if any
         return SettingsManager(context)
     }
 
     @Provides
-    @Singleton // Or appropriate scope
+    @Singleton
     fun provideScriptRunner(): ScriptRunner {
-        // TODO: Replace with actual constructor and dependencies if any
-        return ScriptRunner() // Assuming a default constructor for now
+        return ScriptRunner()
     }
 }

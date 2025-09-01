@@ -11,17 +11,16 @@ import com.google.cloud.speech.v1.RecognizeRequest
 import com.google.cloud.speech.v1.SpeechClient
 import com.google.cloud.speech.v1.SpeechSettings
 import com.google.protobuf.ByteString
-import java.io.InputStream
+// import java.io.InputStream // No longer needed as audioBytes is directly used
 import com.google.auth.oauth2.AccessToken
 
 class TranscriptionService(
     private val context: Context,
-    private val authCredentialParam: GoogleAccountCredential // Renamed parameter
+    private val authCredentialParam: GoogleAccountCredential
 ) {
 
     suspend fun transcribeAudio(uri: Uri): String {
         try {
-            // Updated usage of the renamed parameter
             val accessToken = authCredentialParam.token
             if (accessToken == null) {
                  return "Error: Could not retrieve access token."

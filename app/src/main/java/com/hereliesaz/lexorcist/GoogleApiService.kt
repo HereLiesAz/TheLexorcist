@@ -3,14 +3,15 @@ package com.hereliesaz.lexorcist
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
 import com.google.api.client.http.FileContent
 import com.google.api.client.http.javanet.NetHttpTransport
-import com.google.api.client.json.jackson2.JacksonFactory
+// import com.google.api.client.json.jackson2.JacksonFactory // Removed
+import com.google.api.client.json.gson.GsonFactory // Added
 import com.google.api.services.drive.Drive
 import com.google.api.services.drive.model.File
 import com.google.api.services.sheets.v4.Sheets
 import com.google.api.services.sheets.v4.model.*
 import com.hereliesaz.lexorcist.data.Case
-import com.hereliesaz.lexorcist.model.Script // Added import
-import com.hereliesaz.lexorcist.model.Template // Added import
+import com.hereliesaz.lexorcist.model.Script
+import com.hereliesaz.lexorcist.model.Template
 import com.hereliesaz.lexorcist.utils.Result
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -22,10 +23,10 @@ class GoogleApiService(
 ) {
 
     constructor(credential: GoogleAccountCredential, applicationName: String) : this(
-        Drive.Builder(NetHttpTransport(), JacksonFactory.getDefaultInstance(), credential)
+        Drive.Builder(NetHttpTransport(), GsonFactory.getDefaultInstance(), credential) // Changed here
             .setApplicationName(applicationName)
             .build(),
-        Sheets.Builder(NetHttpTransport(), JacksonFactory.getDefaultInstance(), credential)
+        Sheets.Builder(NetHttpTransport(), GsonFactory.getDefaultInstance(), credential) // Changed here
             .setApplicationName(applicationName)
             .build()
     )
