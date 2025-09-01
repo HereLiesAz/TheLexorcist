@@ -1,4 +1,4 @@
-package com.hereliesaz.lexorcist.model
+package com.hereliesaz.lexorcist.common.state
 
 sealed class SaveState {
     object Idle : SaveState()
