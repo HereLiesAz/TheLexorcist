@@ -26,7 +26,7 @@ class AddonsBrowserViewModelTest {
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
-        googleApiService = mockk()
+        googleApiService = mockk(relaxed = true)
         viewModel = AddonsBrowserViewModel(googleApiService)
     }
 
@@ -38,8 +38,8 @@ class AddonsBrowserViewModelTest {
     @Test
     fun `loadAddons updates scripts and templates state`() = runTest {
         // Given
-        val fakeScripts = listOf(Script("1", "Script 1", "", "", "", 0f, 0, emptyList()))
-        val fakeTemplates = listOf(Template("1", "Template 1", "", "", "", 0f, 0, emptyList()))
+        val fakeScripts = listOf(Script("1", "Script 1", "", "", "", 0.0, 0))
+        val fakeTemplates = listOf(Template("1", "Template 1", "", "", "", 0.0, 0))
         coEvery { googleApiService.getSharedScripts() } returns fakeScripts
         coEvery { googleApiService.getSharedTemplates() } returns fakeTemplates
 

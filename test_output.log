@@ -1,0 +1,134 @@
+WARNING: The following problems were found when resolving the SDK location:
+Where: sdk.dir property in local.properties file. Problem: Directory does not exist
+
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:checkDebugAarMetadata UP-TO-DATE
+> Task :app:processDebugNavigationResources UP-TO-DATE
+> Task :app:compileDebugNavigationResources UP-TO-DATE
+> Task :app:generateDebugResValues UP-TO-DATE
+> Task :app:mapDebugSourceSetPaths UP-TO-DATE
+> Task :app:generateDebugResources UP-TO-DATE
+> Task :app:mergeDebugResources UP-TO-DATE
+> Task :app:packageDebugResources UP-TO-DATE
+> Task :app:parseDebugLocalResources UP-TO-DATE
+> Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksDebug UP-TO-DATE
+> Task :app:processDebugMainManifest UP-TO-DATE
+> Task :app:processDebugManifest UP-TO-DATE
+> Task :app:processDebugManifestForPackage UP-TO-DATE
+> Task :app:processDebugResources UP-TO-DATE
+> Task :app:kspDebugKotlin UP-TO-DATE
+> Task :app:compileDebugKotlin UP-TO-DATE
+> Task :app:javaPreCompileDebug UP-TO-DATE
+> Task :app:compileDebugJavaWithJavac UP-TO-DATE
+> Task :app:hiltAggregateDepsDebug UP-TO-DATE
+> Task :app:hiltJavaCompileDebug UP-TO-DATE
+> Task :app:transformDebugClassesWithAsm UP-TO-DATE
+> Task :app:bundleDebugClassesToRuntimeJar UP-TO-DATE
+> Task :app:preDebugUnitTestBuild UP-TO-DATE
+> Task :app:processDebugJavaRes UP-TO-DATE
+> Task :app:bundleDebugClassesToCompileJar UP-TO-DATE
+> Task :app:javaPreCompileDebugUnitTest UP-TO-DATE
+> Task :app:kspDebugUnitTestKotlin
+
+> Task :app:compileDebugUnitTestKotlin FAILED
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/data/EvidenceRepositoryImplTest.kt:71:188 No value passed for parameter 'allegationId'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/data/EvidenceRepositoryImplTest.kt:89:188 No value passed for parameter 'allegationId'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/AuthViewModelTest.kt:62:74 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'UserInfo?'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/CaseViewModelTest.kt:42:68 Too many arguments for 'constructor(applicationContext: Context, caseRepository: CaseRepository): CaseViewModel'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/CaseViewModelTest.kt:45:68 Too many arguments for 'constructor(applicationContext: Context, caseRepository: CaseRepository): CaseViewModel'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/CaseViewModelTest.kt:76:23 Unresolved reference 'archiveCase'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/CaseViewModelTest.kt:89:23 Unresolved reference 'deleteCase'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/EvidenceViewModelTest.kt:50:80 Argument type mismatch: actual type is 'AuthViewModel', but 'SettingsManager' was expected.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/EvidenceViewModelTest.kt:50:95 Argument type mismatch: actual type is 'CaseViewModel', but 'ScriptRunner' was expected.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/EvidenceViewModelTest.kt:50:110 Too many arguments for 'constructor(application: Application, evidenceRepository: EvidenceRepository, settingsManager: SettingsManager, scriptRunner: ScriptRunner): EvidenceViewModel'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/EvidenceViewModelTest.kt:63:131 No value passed for parameter 'spreadsheetId'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/EvidenceViewModelTest.kt:63:131 No value passed for parameter 'type'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/EvidenceViewModelTest.kt:63:131 No value passed for parameter 'allegationId'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/EvidenceViewModelTest.kt:63:131 No value passed for parameter 'category'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/EvidenceViewModelTest.kt:63:131 No value passed for parameter 'tags'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/EvidenceViewModelTest.kt:64:131 No value passed for parameter 'spreadsheetId'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/EvidenceViewModelTest.kt:64:131 No value passed for parameter 'type'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/EvidenceViewModelTest.kt:64:131 No value passed for parameter 'allegationId'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/EvidenceViewModelTest.kt:64:131 No value passed for parameter 'category'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/EvidenceViewModelTest.kt:64:131 No value passed for parameter 'tags'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/EvidenceViewModelTest.kt:66:57 Argument type mismatch: actual type is 'Long', but 'String' was expected.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/EvidenceViewModelTest.kt:66:57 No value passed for parameter 'caseId'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/EvidenceViewModelTest.kt:69:47 No value passed for parameter 'spreadsheetId'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/EvidenceViewModelTest.kt:79:142 No value passed for parameter 'spreadsheetId'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/EvidenceViewModelTest.kt:79:142 No value passed for parameter 'type'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/EvidenceViewModelTest.kt:79:142 No value passed for parameter 'allegationId'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/EvidenceViewModelTest.kt:79:142 No value passed for parameter 'category'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/EvidenceViewModelTest.kt:79:142 No value passed for parameter 'tags'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/EvidenceViewModelTest.kt:82:27 Unresolved reference 'addEvidence'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/EvidenceViewModelTest.kt:92:142 No value passed for parameter 'spreadsheetId'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/EvidenceViewModelTest.kt:92:142 No value passed for parameter 'type'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/EvidenceViewModelTest.kt:92:142 No value passed for parameter 'allegationId'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/EvidenceViewModelTest.kt:92:142 No value passed for parameter 'category'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/EvidenceViewModelTest.kt:92:142 No value passed for parameter 'tags'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:53:37 No value passed for parameter 'evidenceRepository'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:53:37 No value passed for parameter 'settingsManager'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:53:37 No value passed for parameter 'scriptRunner'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:64:13 Conflicting declarations:
+local val uri: Uri
+local val uri: Uri
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:65:13 Conflicting declarations:
+local val bitmap: Bitmap
+local val bitmap: Bitmap
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:68:13 Conflicting declarations:
+local val bitmap: Bitmap
+local val bitmap: Bitmap
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:69:13 Conflicting declarations:
+local val uri: Uri
+local val uri: Uri
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:73:26 Unresolved reference 'Task'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:74:31 Unresolved reference 'slot'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:74:36 Unresolved reference 'OnSuccessListener'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:75:9 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:75:17 Unresolved reference 'textRecognizer'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:75:40 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:76:9 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:76:22 Unresolved reference 'addOnSuccessListener'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:77:29 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:77:38 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:77:48 Argument type mismatch: actual type is 'Text', but 'Function1<uninferred T (of fun <T> Result<T>.onSuccess), Unit>' was expected.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:80:9 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:80:22 Unresolved reference 'addOnFailureListener'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:80:47 Unresolved reference 'OnFailureListener'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:83:22 Unresolved reference 'startImageReview'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:87:36 Unresolved reference 'imageBitmapForReview'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:104:22 Unresolved reference 'startImageReview'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:108:22 Unresolved reference 'confirmImageReview'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:112:36 Unresolved reference 'newlyCreatedEvidence'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:113:9 Unresolved reference 'assertEquals'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:113:46 Unresolved reference 'newlyCreatedEvidence'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/ScriptEditorViewModelTest.kt:40:54 No value passed for parameter 'settingsManager'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/ScriptEditorViewModelTest.kt:41:31 Unresolved reference 'initialize'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/ScriptEditorViewModelTest.kt:54:9 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/ScriptEditorViewModelTest.kt:54:36 Unresolved reference 'updateScript'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/ScriptEditorViewModelTest.kt:54:49 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/ScriptEditorViewModelTest.kt:54:56 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/ScriptEditorViewModelTest.kt:61:37 Unresolved reference 'updateScript'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/ScriptEditorViewModelTest.kt:62:32 Unresolved reference 'Success'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/ScriptEditorViewModelTest.kt:69:9 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/ScriptEditorViewModelTest.kt:69:36 Unresolved reference 'getScript'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/ScriptEditorViewModelTest.kt:69:46 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/ScriptEditorViewModelTest.kt:72:31 Unresolved reference 'initialize'.
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileDebugUnitTestKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 4s
+28 actionable tasks: 2 executed, 26 up-to-date

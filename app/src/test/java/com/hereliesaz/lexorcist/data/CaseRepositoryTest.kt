@@ -8,7 +8,6 @@ import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -30,16 +29,18 @@ class CaseRepositoryTest {
 
     private val testDispatcher = StandardTestDispatcher()
 
-    private lateinit var caseRepository: CaseRepositoryImpl
-    private lateinit var caseDao: CaseDao
+    private lateinit var caseRepository: CaseRepository
+    private lateinit var googleApiService: GoogleApiService
+    private lateinit var spreadsheetParser: SpreadsheetParser
     private lateinit var context: Context
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
-        caseDao = mockk()
+        googleApiService = mockk(relaxed = true)
+        spreadsheetParser = mockk(relaxed = true)
         context = mockk(relaxed = true)
-        caseRepository = CaseRepositoryImpl(caseDao, context)
+        caseRepository = CaseRepositoryImpl(context, googleApiService, spreadsheetParser)
     }
 
     @After
@@ -48,18 +49,20 @@ class CaseRepositoryTest {
     }
 
     @Test
-    fun `getCases returns cases from dao`() = runTest {
+    fun `getAllCases returns cases after refresh`() = runTest {
         // Given
         val cases = listOf(
             Case(id = 1, name = "Case 1", spreadsheetId = "sheet1"),
             Case(id = 2, name = "Case 2", spreadsheetId = "sheet2")
         )
-        coEvery { caseDao.getAllCases() } returns flowOf(cases)
+        coEvery { googleApiService.getOrCreateAppRootFolder() } returns "root_id"
+        coEvery { googleApiService.getOrCreateCaseRegistrySpreadsheetId("root_id") } returns "registry_id"
+        coEvery { googleApiService.getAllCasesFromRegistry("registry_id") } returns cases
 
         // When
-        val result = caseRepository.getCases().first()
+        caseRepository.refreshCases()
+        val result = caseRepository.getAllCases().first()
         testDispatcher.scheduler.advanceUntilIdle()
-
 
         // Then
         assertEquals(cases, result)

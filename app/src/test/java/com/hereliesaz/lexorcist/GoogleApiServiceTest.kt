@@ -1,63 +1,80 @@
 package com.hereliesaz.lexorcist
 
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
+import com.google.api.client.http.javanet.NetHttpTransport
+import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.services.drive.Drive
 import com.google.api.services.drive.model.File
 import com.google.api.services.drive.model.FileList
 import com.google.api.services.sheets.v4.Sheets
 import com.google.api.services.sheets.v4.model.Spreadsheet
-import com.google.api.services.sheets.v4.model.Sheet
-import com.google.api.services.sheets.v4.model.SheetProperties
-import com.google.api.services.sheets.v4.model.BatchUpdateSpreadsheetRequest
-import com.google.api.services.sheets.v4.model.Request
-import com.google.api.services.sheets.v4.model.AddSheetRequest
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.eq
-import io.mockk.mockk
+import com.google.api.services.sheets.v4.model.ValueRange
+import io.mockk.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import java.io.IOException
 
 @ExperimentalCoroutinesApi
-@RunWith(JUnit4::class)
 class GoogleApiServiceTest {
 
     private lateinit var googleApiService: GoogleApiService
-    private lateinit var credential: GoogleAccountCredential
-    private lateinit var driveService: Drive
-    private lateinit var sheetsService: Sheets
+    private val credential: GoogleAccountCredential = mockk(relaxed = true)
+    private val drive: Drive = mockk(relaxed = true)
+    private val sheets: Sheets = mockk(relaxed = true)
 
     @Before
-    fun setup() {
-        credential = mockk(relaxed = true)
-        driveService = mockk(relaxed = true)
-        sheetsService = mockk(relaxed = true)
-        googleApiService = GoogleApiService(credential, "TestApp")
-        // This is a hack to replace the real services with mocks
-        val driveServiceField = googleApiService.javaClass.getDeclaredField("driveService")
-        driveServiceField.isAccessible = true
-        driveServiceField.set(googleApiService, driveService)
-        val sheetsServiceField = googleApiService.javaClass.getDeclaredField("sheetsService")
-        sheetsServiceField.isAccessible = true
-        sheetsServiceField.set(googleApiService, sheetsService)
+    fun setUp() {
+        mockkConstructor(Drive.Builder::class)
+        mockkConstructor(Sheets.Builder::class)
+
+        every {
+            constructedWith<Drive.Builder>(
+                any(),
+                any(),
+                any()
+            ).setApplicationName(any())
+                .build()
+        } returns drive
+
+        every {
+            constructedWith<Sheets.Builder>(
+                any(),
+                any(),
+                any()
+            ).setApplicationName(any())
+                .build()
+        } returns sheets
+
+        googleApiService = GoogleApiService(credential, "The Lexorcist")
+    }
+
+    @After
+    fun tearDown() {
+        unmockkAll()
     }
 
     @Test
     fun `getOrCreateAppRootFolder when folder exists returns existing folder id`() = runTest {
         // Given
         val fileList = FileList().setFiles(listOf(File().setId("test_id")))
-        coEvery { driveService.files().list().setQ(any()).setSpaces(any()).execute() } returns fileList
+        val filesListMock = mockk<Drive.Files.List>()
+        every { filesListMock.execute() } returns fileList
+        every { filesListMock.setSpaces("drive") } returns filesListMock
+        every { filesListMock.setQ(any()) } returns filesListMock
+        val filesMock = mockk<Drive.Files>()
+        every { filesMock.list() } returns filesListMock
+        every { drive.files() } returns filesMock
 
         // When
         val folderId = googleApiService.getOrCreateAppRootFolder()
 
         // Then
         assertEquals("test_id", folderId)
+        verify { filesListMock.setQ("mimeType='application/vnd.google-apps.folder' and name='Lexorcist' and trashed=false") }
     }
 
     @Test
@@ -65,8 +82,21 @@ class GoogleApiServiceTest {
         // Given
         val fileList = FileList().setFiles(emptyList())
         val newFile = File().setId("new_test_id")
-        coEvery { driveService.files().list().setQ(any()).setSpaces(any()).execute() } returns fileList
-        coEvery { driveService.files().create(any()).setFields("id").execute() } returns newFile
+
+        val filesListMock = mockk<Drive.Files.List>()
+        every { filesListMock.execute() } returns fileList
+        every { filesListMock.setSpaces("drive") } returns filesListMock
+        every { filesListMock.setQ(any()) } returns filesListMock
+
+        val fileCreateMock = mockk<Drive.Files.Create>()
+        every { fileCreateMock.setFields("id") } returns fileCreateMock
+        every { fileCreateMock.execute() } returns newFile
+
+        val filesMock = mockk<Drive.Files>()
+        every { filesMock.list() } returns filesListMock
+        every { filesMock.create(any()) } returns fileCreateMock
+
+        every { drive.files() } returns filesMock
 
         // When
         val folderId = googleApiService.getOrCreateAppRootFolder()
@@ -76,46 +106,127 @@ class GoogleApiServiceTest {
     }
 
     @Test
-    fun `createSpreadsheet returns new spreadsheet id`() = runTest {
+    fun `getOrCreateAppRootFolder handles IOException and returns null`() = runTest {
         // Given
-        val newFile = File().setId("new_spreadsheet_id")
-        coEvery { driveService.files().create(any()).setFields("id").execute() } returns newFile
+        val filesListMock = mockk<Drive.Files.List>()
+        every { filesListMock.execute() } throws IOException()
+        every { filesListMock.setSpaces("drive") } returns filesListMock
+        every { filesListMock.setQ(any()) } returns filesListMock
+        val filesMock = mockk<Drive.Files>()
+        every { filesMock.list() } returns filesListMock
+        every { drive.files() } returns filesMock
 
         // When
-        val spreadsheetId = googleApiService.createSpreadsheet("Test Spreadsheet", "test_folder_id")
+        val folderId = googleApiService.getOrCreateAppRootFolder()
 
         // Then
-        assertEquals("new_spreadsheet_id", spreadsheetId)
+        assertEquals(null, folderId)
     }
 
     @Test
-    fun `addSheet calls sheets service to add sheet`() = runTest {
+    fun `getOrCreateCaseRegistrySpreadsheetId when sheet exists returns id`() = runTest {
         // Given
-        val spreadsheetId = "test_spreadsheet_id"
-        val sheetTitle = "Test Sheet"
-        val spreadsheet = Spreadsheet().setSheets(emptyList())
-        coEvery { sheetsService.spreadsheets().get(spreadsheetId).execute() } returns spreadsheet
-        coEvery { sheetsService.spreadsheets().batchUpdate(any(), any()).execute() } returns mockk()
+        val fileList = FileList().setFiles(listOf(File().setId("sheet_id")))
+        val filesListMock = mockk<Drive.Files.List>()
+        every { filesListMock.execute() } returns fileList
+        every { filesListMock.setSpaces(any()) } returns filesListMock
+        every { filesListMock.setQ(any()) } returns filesListMock
+        val filesMock = mockk<Drive.Files>()
+        every { filesMock.list() } returns filesListMock
+        every { drive.files() } returns filesMock
 
         // When
-        googleApiService.addSheet(spreadsheetId, sheetTitle)
+        val spreadsheetId = googleApiService.getOrCreateCaseRegistrySpreadsheetId("folder_id")
 
         // Then
-        coVerify { sheetsService.spreadsheets().batchUpdate(eq(spreadsheetId), any()) }
+        assertEquals("sheet_id", spreadsheetId)
     }
 
     @Test
-    fun `appendData calls sheets service to append data`() = runTest {
+    fun `getOrCreateCaseRegistrySpreadsheetId when sheet does not exist creates it`() = runTest {
         // Given
-        val spreadsheetId = "test_spreadsheet_id"
-        val sheetTitle = "Test Sheet"
-        val values = listOf(listOf("a", "b"), listOf("c", "d"))
-        coEvery { sheetsService.spreadsheets().values().append(any(), any(), any()).execute() } returns mockk()
+        val fileList = FileList().setFiles(emptyList())
+        val filesListMock = mockk<Drive.Files.List>()
+        every { filesListMock.execute() } returns fileList
+        every { filesListMock.setSpaces(any()) } returns filesListMock
+        every { filesListMock.setQ(any()) } returns filesListMock
+
+        val spreadsheet = mockk<Spreadsheet>()
+        every { spreadsheet.setProperties(any()) } returns spreadsheet
+        val createRequest = mockk<Sheets.Spreadsheets.Create>()
+        val createdSheet = mockk<Spreadsheet>()
+        every { createdSheet.spreadsheetId } returns "new_sheet_id"
+        every { createRequest.setFields("spreadsheetId") } returns createRequest
+        every { createRequest.execute() } returns createdSheet
+        val spreadsheetsMock = mockk<Sheets.Spreadsheets>()
+        every { spreadsheetsMock.create(any()) } returns createRequest
+        every { sheets.spreadsheets() } returns spreadsheetsMock
+
+        val updateRequest = mockk<Drive.Files.Update>()
+        every { updateRequest.setAddParents(any()) } returns updateRequest
+        every { updateRequest.execute() } returns mockk()
+        val filesMock = mockk<Drive.Files>()
+        every { filesMock.list() } returns filesListMock
+        every { filesMock.update(any(), any()) } returns updateRequest
+        every { drive.files() } returns filesMock
+
 
         // When
-        googleApiService.appendData(spreadsheetId, sheetTitle, values)
+        val spreadsheetId = googleApiService.getOrCreateCaseRegistrySpreadsheetId("folder_id")
 
         // Then
-        coVerify { sheetsService.spreadsheets().values().append(eq(spreadsheetId), eq("$sheetTitle!A1"), any()) }
+        assertEquals("new_sheet_id", spreadsheetId)
+    }
+
+    @Test
+    fun `createSpreadsheet returns success result`() = runTest {
+        // Given
+        val createdSheet = mockk<Spreadsheet>()
+        every { createdSheet.spreadsheetId } returns "new_sheet_id"
+        val createRequest = mockk<Sheets.Spreadsheets.Create>()
+        every { createRequest.setFields("spreadsheetId") } returns createRequest
+        every { createRequest.execute() } returns createdSheet
+        val spreadsheetsMock = mockk<Sheets.Spreadsheets>()
+        every { spreadsheetsMock.create(any()) } returns createRequest
+        every { sheets.spreadsheets() } returns spreadsheetsMock
+
+        val updateRequest = mockk<Drive.Files.Update>()
+        every { updateRequest.setAddParents(any()) } returns updateRequest
+        every { updateRequest.execute() } returns mockk()
+        val filesMock = mockk<Drive.Files>()
+        every { filesMock.update(any(), any()) } returns updateRequest
+        every { drive.files() } returns filesMock
+
+        // When
+        val result = googleApiService.createSpreadsheet("title", "folder_id")
+
+        // Then
+        assert(result is com.hereliesaz.lexorcist.utils.Result.Success)
+        assertEquals("new_sheet_id", (result as com.hereliesaz.lexorcist.utils.Result.Success).data)
+    }
+
+    @Test
+    fun `getAllCasesFromRegistry returns list of cases`() = runTest {
+        // Given
+        val values = listOf(
+            listOf("1", "Case 1", "sheet1", "script1", "pdf1", "html1", "template1", "folder1", "p1", "d1", "c1", "false", "123"),
+            listOf("2", "Case 2", "sheet2") // less columns
+        )
+        val valueRange = ValueRange().setValues(values)
+        val getRequest = mockk<Sheets.Spreadsheets.Values.Get>()
+        every { getRequest.execute() } returns valueRange
+        val valuesMock = mockk<Sheets.Spreadsheets.Values>()
+        every { valuesMock.get(eq("registry_id"), eq("Sheet1!A:M")) } returns getRequest
+        val spreadsheetsMock = mockk<Sheets.Spreadsheets>()
+        every { spreadsheetsMock.values() } returns valuesMock
+        every { sheets.spreadsheets() } returns spreadsheetsMock
+
+        // When
+        val cases = googleApiService.getAllCasesFromRegistry("registry_id")
+
+        // Then
+        assertEquals(2, cases.size)
+        assertEquals("Case 1", cases[0].name)
+        assertEquals("Case 2", cases[1].name)
     }
 }
