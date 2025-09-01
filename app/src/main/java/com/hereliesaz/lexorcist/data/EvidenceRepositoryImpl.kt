@@ -62,9 +62,8 @@ class EvidenceRepositoryImpl @Inject constructor(
     }
 
     override suspend fun addEvidence(evidence: Evidence) {
-        // TODO: Implement using googleApiService to add new evidence to Google Sheets
-        // Example: googleApiService?.appendData(evidence.spreadsheetId, "SheetName!A1", listOf(listOf(...)))
-        // This will require knowing the sheet name and range, and formatting 'evidence' into a list of lists.
+        val values = listOf(evidence.toSheetRow())
+        googleApiService?.appendData(evidence.spreadsheetId, "Evidence", values)
     }
 
     override suspend fun updateEvidence(evidence: Evidence) {
@@ -73,21 +72,7 @@ class EvidenceRepositoryImpl @Inject constructor(
         if (evidenceSheet != null) {
             val evidenceList = evidenceSheet.map { row ->
                 if (row[0].toString().toInt() == evidence.id) {
-                    listOf(
-                        evidence.id.toString(),
-                        evidence.caseId.toString(),
-                        evidence.type,
-                        evidence.content,
-                        evidence.timestamp.toString(),
-                        evidence.sourceDocument,
-                        evidence.documentDate.toString(),
-                        evidence.allegationId?.toString() ?: "",
-                        evidence.category,
-                        evidence.tags.joinToString(","),
-                        evidence.commentary ?: "",
-                        evidence.linkedEvidenceIds.joinToString(","),
-                        evidence.parentVideoId ?: ""
-                    )
+                    evidence.toSheetRow()
                 } else {
                     row
                 }

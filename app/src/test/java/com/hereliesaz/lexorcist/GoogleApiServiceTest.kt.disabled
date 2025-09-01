@@ -82,7 +82,7 @@ class GoogleApiServiceTest {
         coEvery { driveService.files().create(any()).setFields("id").execute() } returns newFile
 
         // When
-        val spreadsheetId = googleApiService.createSpreadsheet("Test Spreadsheet")
+        val spreadsheetId = googleApiService.createSpreadsheet("Test Spreadsheet", "test_folder_id")
 
         // Then
         assertEquals("new_spreadsheet_id", spreadsheetId)
