@@ -8,6 +8,7 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.hereliesaz.lexorcist.data.EvidenceRepository
 import com.hereliesaz.lexorcist.data.SettingsManager
 import com.hereliesaz.lexorcist.service.ScriptRunner
+import io.mockk.every
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
@@ -51,8 +52,6 @@ class OcrViewModelTest {
         evidenceRepository = mockk(relaxed = true)
         settingsManager = mockk(relaxed = true)
         scriptRunner = mockk(relaxed = true)
-        mockkStatic(Log::class)
-        every { Log.d(any(), any()) } returns 0
         ocrViewModel = OcrViewModel(application, evidenceRepository, settingsManager, scriptRunner)
     }
 
