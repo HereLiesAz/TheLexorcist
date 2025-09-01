@@ -83,6 +83,32 @@ class GoogleApiService(
             }
         }
     }
+
+    suspend fun writeData(spreadsheetId: String, sheetName: String, values: List<List<Any>>): Boolean {
+        return withContext(Dispatchers.IO) {
+            try {
+                val body = ValueRange().setValues(values)
+                sheets.spreadsheets().values().update(spreadsheetId, sheetName, body)
+                    .setValueInputOption("RAW")
+                    .execute()
+                true
+            } catch (e: IOException) {
+                false
+            }
+        }
+    }
+
+    suspend fun clearSheet(spreadsheetId: String, sheetName: String): Boolean {
+        return withContext(Dispatchers.IO) {
+            try {
+                val request = ClearValuesRequest()
+                sheets.spreadsheets().values().clear(spreadsheetId, sheetName, request).execute()
+                true
+            } catch (e: IOException) {
+                false
+            }
+        }
+    }
     
     suspend fun getOrCreateCaseFolder(caseName: String): String? {
         val appRootFolderId = getOrCreateAppRootFolder() ?: return null

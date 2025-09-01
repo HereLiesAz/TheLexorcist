@@ -28,6 +28,7 @@ import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 fun CasesScreen(caseViewModel: CaseViewModel) {
     val cases by caseViewModel.cases.collectAsState()
     val sortOrder by caseViewModel.sortOrder.collectAsState()
+    val searchQuery by caseViewModel.searchQuery.collectAsState()
     var longPressedCase by remember { mutableStateOf<Case?>(null) }
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
     var showCreateCaseDialog by remember { mutableStateOf(false) }
@@ -59,14 +60,12 @@ fun CasesScreen(caseViewModel: CaseViewModel) {
                 horizontalArrangement = Arrangement.spacedBy(8.dp) // dp usage
             ) {
                 OutlinedTextField(
-                    value = "",
-                    onValueChange = { },
+                    value = searchQuery,
+                    onValueChange = { caseViewModel.onSearchQueryChanged(it) },
                     label = { Text("Search Cases") },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    leadingIcon = { Icon(Icons.Filled.Search, contentDescription = "Search") }
                 )
-                IconButton(onClick = { /* TODO: Implement search */ }) {
-                    Icon(Icons.Filled.Search, contentDescription = "Search")
-                }
                 IconButton(onClick = {
                     lastSortTap = System.currentTimeMillis()
                     sortOrderState = when (sortOrderState) {
