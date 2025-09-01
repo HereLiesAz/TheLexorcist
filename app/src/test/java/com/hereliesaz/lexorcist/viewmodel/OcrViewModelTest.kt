@@ -5,9 +5,11 @@ import android.content.Context
 import android.net.Uri
 import android.util.Log
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
-import io.mockk.every
+import com.hereliesaz.lexorcist.data.EvidenceRepository
+import com.hereliesaz.lexorcist.data.SettingsManager
+import com.hereliesaz.lexorcist.service.ScriptRunner
+import io.mockk.coVerify
 import io.mockk.mockk
-import io.mockk.mockkStatic
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -40,6 +42,9 @@ class OcrViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
 
     private lateinit var ocrViewModel: OcrViewModel
+    private lateinit var evidenceRepository: EvidenceRepository
+    private lateinit var settingsManager: SettingsManager
+    private lateinit var scriptRunner: ScriptRunner
     private lateinit var application: Application
     private lateinit var evidenceRepository: EvidenceRepository
     private lateinit var settingsManager: SettingsManager

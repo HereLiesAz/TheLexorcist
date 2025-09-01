@@ -65,6 +65,7 @@ class OcrViewModel @Inject constructor(
             }
             Log.d("OcrViewModel", "Calling addEvidence")
             evidenceRepository.addEvidence(newEvidence)
+
         }
     }
 

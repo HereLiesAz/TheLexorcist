@@ -22,7 +22,7 @@ android {
         versionName = System.getenv("VERSION_NAME") ?: "1.0"
 
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "com.hereliesaz.lexorcist.HiltTestRunner"
     }
 
     buildTypes {
@@ -143,6 +143,9 @@ dependencies {
     // Hilt
     implementation("com.google.dagger:hilt-android:2.57.1")
     ksp("com.google.dagger:hilt-compiler:2.57.1")
+    testImplementation("com.google.dagger:hilt-android-testing:2.57.1")
+    kspTest("com.google.dagger:hilt-android-compiler:2.57.1")
+
 
     // Room IS NOT ALLOWED IN THIS PROJECT!!!!!
 
