@@ -106,8 +106,8 @@ class EvidenceViewModel @Inject constructor(
             _isLoading.value = true
             evidenceRepository.getEvidenceForCase(spreadsheetId, caseId).collectLatest {
                 _evidenceList.value = it
-                _isLoading.value = false
             }
+            _isLoading.value = false
         }
     }
 
