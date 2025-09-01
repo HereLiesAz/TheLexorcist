@@ -16,6 +16,8 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.nio.ByteBuffer
 import android.app.Application
+import com.hereliesaz.lexorcist.data.EvidenceRepositoryImpl
+import com.hereliesaz.lexorcist.data.SettingsManager
 import com.hereliesaz.lexorcist.viewmodel.OcrViewModel
 import com.hereliesaz.lexorcist.utils.Result as LexResult // Alias for your Result class
 import com.google.api.services.drive.model.File as DriveFile // Alias for Google Drive File
@@ -27,11 +29,16 @@ class VideoProcessingWorker(
     workerParams: WorkerParameters
 ) : CoroutineWorker(appContext, workerParams) {
 
-    // OcrViewModel is a HiltViewModel, ideally it (or its repository) would be injected
-    // if this Worker was a HiltWorker.
-    // For now, we instantiate it directly, which is not ideal for Hilt ViewModels.
     private val ocrViewModel by lazy {
-        OcrViewModel(applicationContext as Application, null, null, null)
+        val evidenceRepository = EvidenceRepositoryImpl(null)
+        val settingsManager = SettingsManager(applicationContext)
+        val scriptRunner = ScriptRunner()
+        OcrViewModel(
+            applicationContext as Application,
+            evidenceRepository,
+            settingsManager,
+            scriptRunner
+        )
     }
 
     override suspend fun doWork(): Result {

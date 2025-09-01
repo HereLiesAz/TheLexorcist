@@ -6,14 +6,15 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import com.hereliesaz.lexorcist.data.Evidence
+import com.hereliesaz.lexorcist.data.EvidenceRepository
+import com.hereliesaz.lexorcist.data.SettingsManager
+import com.hereliesaz.lexorcist.service.ScriptRunner
+import com.hereliesaz.lexorcist.utils.ExifUtils
 import io.mockk.every
-import com.google.mlkit.vision.common.InputImage
-import com.google.mlkit.vision.text.Text
-import com.google.mlkit.vision.text.TextRecognition
-import com.google.mlkit.vision.text.TextRecognizer
-import com.google.android.gms.tasks.Tasks
 import io.mockk.mockk
 import io.mockk.mockkStatic
+import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -21,7 +22,6 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
-import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -39,6 +39,9 @@ class OcrViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
 
     private lateinit var ocrViewModel: OcrViewModel
+    private lateinit var evidenceRepository: EvidenceRepository
+    private lateinit var settingsManager: SettingsManager
+    private lateinit var scriptRunner: ScriptRunner
     private lateinit var application: Application
     private lateinit var context: Context
     private lateinit var contentResolver: ContentResolver
@@ -50,7 +53,10 @@ class OcrViewModelTest {
         context = mockk(relaxed = true)
         contentResolver = mockk(relaxed = true)
         every { context.contentResolver } returns contentResolver
-        ocrViewModel = OcrViewModel(application)
+        evidenceRepository = mockk(relaxed = true)
+        settingsManager = mockk(relaxed = true)
+        scriptRunner = mockk(relaxed = true)
+        ocrViewModel = OcrViewModel(application, evidenceRepository, settingsManager, scriptRunner)
     }
 
     @After
@@ -59,57 +65,23 @@ class OcrViewModelTest {
     }
 
     @Test
-    fun `startImageReview with valid uri sets imageBitmapForReview`() = runTest {
+    fun `performOcrOnUri returns evidence with correct data`() = runTest {
         // Given
         val uri: Uri = mockk()
         val bitmap: Bitmap = mockk()
         mockkStatic(ImageDecoder::class)
         every { ImageDecoder.decodeBitmap(any<ImageDecoder.Source>()) } returns bitmap
-        val bitmap = mockk<Bitmap>(relaxed = true)
-        val uri = mockk<Uri>(relaxed = true)
-        val visionText = mockk<Text> {
-            every { text } returns "Recognized Text"
-        }
-        val task = mockk<Task<Text>>()
-        val successListener = slot<OnSuccessListener<Text>>()
-        every { textRecognizer.process(any()) } returns task
-        every { task.addOnSuccessListener(capture(successListener)) } answers {
-            successListener.captured.onSuccess(visionText)
-            task
-        }
-        every { task.addOnFailureListener(any<OnFailureListener>()) } returns task
+        mockkStatic(ExifUtils::class)
+        every { ExifUtils.getExifDate(any(), any()) } returns 0L
+        val caseId = 1
+        val parentVideoId = "video1"
 
         // When
-        ocrViewModel.startImageReview(uri, context)
-        testDispatcher.scheduler.advanceUntilIdle()
+        val evidence = ocrViewModel.performOcrOnUri(uri, context, caseId, parentVideoId)
 
         // Then
-        assertNotNull(ocrViewModel.imageBitmapForReview.value)
-    }
-
-    @Test
-    fun `confirmImageReview with valid bitmap adds evidence to uiEvidenceList`() = runTest {
-        // Given
-        val uri: Uri = mockk()
-        val bitmap: Bitmap = mockk(relaxed = true)
-        mockkStatic(ImageDecoder::class)
-        every { ImageDecoder.decodeBitmap(any<ImageDecoder.Source>()) } returns bitmap
-
-        val textRecognizer: TextRecognizer = mockk()
-        val text: Text = mockk(relaxed = true)
-        mockkStatic(TextRecognition::class)
-        every { TextRecognition.getClient(any()) } returns textRecognizer
-        every { textRecognizer.process(any<InputImage>()) } returns Tasks.forResult(text)
-
-        ocrViewModel.startImageReview(uri, context)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        // When
-        ocrViewModel.confirmImageReview(context)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        // Then
-        assertNotNull(ocrViewModel.newlyCreatedEvidence.value)
-        assertEquals(text.text, ocrViewModel.newlyCreatedEvidence.value?.content)
+        assertEquals(caseId.toLong(), evidence.caseId)
+        assertEquals(parentVideoId, evidence.parentVideoId)
+        assertEquals(uri.toString(), evidence.sourceDocument)
     }
 }
