@@ -4,23 +4,21 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.hereliesaz.lexorcist.GoogleApiService
 import io.mockk.coEvery
 import io.mockk.coVerify
-import io.mockk.every
 import io.mockk.mockk
-import io.mockk.slot
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import io.mockk.any
-import io.mockk.eq
 
 @ExperimentalCoroutinesApi
 @RunWith(JUnit4::class)
@@ -31,19 +29,14 @@ class EvidenceRepositoryImplTest {
 
     private val testDispatcher = StandardTestDispatcher()
 
-    private lateinit var evidenceRepository: EvidenceRepositoryImpl
-    private lateinit var evidenceDao: EvidenceDao
+    private lateinit var evidenceRepository: EvidenceRepository
     private lateinit var googleApiService: GoogleApiService
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
-        evidenceDao = mockk(relaxed = true)
         googleApiService = mockk(relaxed = true)
-        evidenceRepository = EvidenceRepositoryImpl(evidenceDao)
-        evidenceRepository.setGoogleApiService(googleApiService)
-        evidenceRepository.setCaseSpreadsheetId("test_spreadsheet_id")
-        evidenceRepository.setCaseScriptId("test_script_id")
+        evidenceRepository = EvidenceRepositoryImpl(googleApiService)
     }
 
     @After
@@ -52,48 +45,61 @@ class EvidenceRepositoryImplTest {
     }
 
     @Test
-    fun `deleteEvidence calls dao and googleApiService`() = runTest {
+    fun `getEvidenceForCase returns evidence from googleApiService`() = runTest {
         // Given
-        val evidence = Evidence(id = 1, caseId = 1, content = "Test", timestamp = 0, sourceDocument = "doc", documentDate = 0)
+        val spreadsheetId = "test_spreadsheet_id"
+        val caseId = 1L
+        val sheetData = mapOf(
+            "Evidence" to listOf(
+                listOf("1", "1", "text", "content", "123", "doc", "456", "1", "cat", "tag1", "comment", "", "")
+            )
+        )
+        coEvery { googleApiService.readSpreadsheet(spreadsheetId) } returns sheetData
 
         // When
-        evidenceRepository.deleteEvidence(evidence)
+        val result = evidenceRepository.getEvidenceForCase(spreadsheetId, caseId).first()
+        testDispatcher.scheduler.advanceUntilIdle()
 
         // Then
-        coVerify { evidenceDao.delete(evidence) }
-        coVerify { googleApiService.deleteEvidenceFromCase("test_spreadsheet_id", 1) }
+        assertEquals(1, result.size)
+        assertEquals("content", result[0].content)
     }
 
     @Test
-    fun `updateEvidence calls scriptRunner, dao, and googleApiService`() = runTest {
+    fun `updateEvidence calls writeData on googleApiService`() = runTest {
         // Given
-        val evidence = Evidence(id = 1, caseId = 1, content = "Test", timestamp = 0, sourceDocument = "doc", documentDate = 0, tags = listOf("old_tag"))
-        val scriptFile = com.google.api.services.script.model.File().setSource("parser.tags.add('new_tag');")
-        val scriptContent = com.google.api.services.script.model.Content().setFiles(listOf(scriptFile))
-        coEvery { googleApiService.getScript("test_script_id") } returns scriptContent
+        val evidence = Evidence(id = 1, caseId = 1L, spreadsheetId = "sheet1", type = "text", content = "Test", timestamp = 0, sourceDocument = "doc", documentDate = 0, category = "cat", tags = listOf("tag"))
+        val sheetData = mapOf(
+            "Evidence" to listOf(
+                listOf("1", "1", "text", "old content", "0", "doc", "0", "", "cat", "tag")
+            )
+        )
+        coEvery { googleApiService.readSpreadsheet("sheet1") } returns sheetData
 
         // When
         evidenceRepository.updateEvidence(evidence)
 
         // Then
-        val expectedEvidence = evidence.copy(tags = listOf("new_tag"))
-        coVerify { evidenceDao.update(expectedEvidence) }
-        coVerify { googleApiService.updateEvidenceInCase("test_spreadsheet_id", expectedEvidence) }
+        coVerify { googleApiService.writeData(eq("sheet1"), eq("Evidence"), any()) }
     }
 
     @Test
-    fun `addEvidence calls scriptRunner, googleApiService, and dao`() = runTest {
+    fun `deleteEvidence calls clearSheet and writeData on googleApiService`() = runTest {
         // Given
-        val scriptFile = com.google.api.services.script.model.File().setSource("parser.tags.add('new_tag');")
-        val scriptContent = com.google.api.services.script.model.Content().setFiles(listOf(scriptFile))
-        coEvery { googleApiService.getScript("test_script_id") } returns scriptContent
-        coEvery { googleApiService.addEvidenceToCase(any(), any()) } returns 5 // New row index
+        val evidence = Evidence(id = 1, caseId = 1L, spreadsheetId = "sheet1", type = "text", content = "Test", timestamp = 0, sourceDocument = "doc", documentDate = 0, category = "cat", tags = listOf("tag"))
+        val sheetData = mapOf(
+            "Evidence" to listOf(
+                listOf("1", "1", "text", "content", "0", "doc", "0", "", "cat", "tag"),
+                listOf("2", "1", "text", "other content", "0", "doc", "0", "", "cat", "tag")
+            )
+        )
+        coEvery { googleApiService.readSpreadsheet("sheet1") } returns sheetData
 
         // When
-        evidenceRepository.addEvidence(1, "New Content", "new_doc", "new_cat", null)
+        evidenceRepository.deleteEvidence(evidence)
 
         // Then
-        coVerify { googleApiService.addEvidenceToCase(eq("test_spreadsheet_id"), any()) }
-        coVerify { evidenceDao.insert(any()) }
+        coVerify { googleApiService.clearSheet("sheet1", "Evidence") }
+        coVerify { googleApiService.writeData("sheet1", "Evidence", any()) }
     }
 }
