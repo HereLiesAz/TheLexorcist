@@ -1,9 +1,8 @@
 package com.hereliesaz.lexorcist.ui
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.* 
+import androidx.compose.foundation.rememberScrollState // Added import
+import androidx.compose.foundation.verticalScroll // Added import
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -17,20 +16,29 @@ fun RecordAudioScreen(
     onStopRecording: () -> Unit,
     isRecording: Boolean
 ) {
-    Column(
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+            .padding(16.dp) // Apply padding to the outer Box
     ) {
-        if (isRecording) {
-            Button(onClick = onStopRecording) {
-                Text("Stop Recording")
-            }
-        } else {
-            Button(onClick = onStartRecording) {
-                Text("Start Recording")
+        val halfScreenHeight = this@BoxWithConstraints.maxHeight / 2
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize() // Column fills the BoxWithConstraints
+                .verticalScroll(rememberScrollState()), // Make content scrollable
+            horizontalAlignment = Alignment.End // Right-align children of this Column
+        ) {
+            Spacer(modifier = Modifier.height(halfScreenHeight)) // Push content to start halfway down
+
+            if (isRecording) {
+                Button(onClick = onStopRecording) {
+                    Text("Stop Recording")
+                }
+            } else {
+                Button(onClick = onStartRecording) {
+                    Text("Start Recording")
+                }
             }
         }
     }

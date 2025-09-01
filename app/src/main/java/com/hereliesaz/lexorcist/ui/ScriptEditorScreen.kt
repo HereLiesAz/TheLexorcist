@@ -2,6 +2,8 @@ package com.hereliesaz.lexorcist.ui
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -11,7 +13,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.viewmodel.ScriptEditorViewModel
-import com.hereliesaz.lexorcist.model.SaveState // Changed import from viewmodel.SaveState to model.SaveState
+import com.hereliesaz.lexorcist.model.SaveState
 
 @Composable
 fun ScriptEditorScreen(viewModel: ScriptEditorViewModel) {
@@ -25,7 +27,7 @@ fun ScriptEditorScreen(viewModel: ScriptEditorViewModel) {
     val snippetDateLessStr = stringResource(R.string.script_snippet_date_less)
 
     LaunchedEffect(saveState) {
-        when (val currentState = saveState) { // Use 'currentState' for smart casting
+        when (val currentState = saveState) {
             is SaveState.Success -> {
                 Toast.makeText(context, R.string.script_saved_successfully, Toast.LENGTH_SHORT).show()
             }
@@ -37,13 +39,16 @@ fun ScriptEditorScreen(viewModel: ScriptEditorViewModel) {
     }
 
     Row(modifier = Modifier.fillMaxSize()) {
+        // Editor Column
         Column(
             modifier = Modifier
                 .weight(1f)
+                .fillMaxHeight()
+                .verticalScroll(rememberScrollState())
                 .padding(16.dp),
-            horizontalAlignment = Alignment.End, // This seems odd for a text field column, usually Start
-            verticalArrangement = Arrangement.Center
+            horizontalAlignment = Alignment.End
         ) {
+            // Spacer removed - content starts at the top of this panel
             OutlinedTextField(
                 value = scriptText,
                 onValueChange = { viewModel.onScriptTextChanged(it) },
@@ -51,28 +56,32 @@ fun ScriptEditorScreen(viewModel: ScriptEditorViewModel) {
                 placeholder = { Text(stringResource(R.string.script_editor_placeholder)) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f) // This makes the TextField take available vertical space
+                    .weight(1f) // TextField takes available vertical space in this Column
             )
             Spacer(modifier = Modifier.height(8.dp))
             OutlinedButton(
                 onClick = { viewModel.saveScript() },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = saveState !is SaveState.Saving // Corrected condition check for sealed class object
+                enabled = saveState !is SaveState.Saving
             ) {
-                if (saveState is SaveState.Saving) { // Corrected condition check for sealed class object
+                if (saveState is SaveState.Saving) {
                     CircularProgressIndicator(modifier = Modifier.size(24.dp))
                 } else {
                     Text(stringResource(R.string.save_script))
                 }
             }
         }
+
+        // Script Builder Column
         Column(
             modifier = Modifier
                 .weight(1f)
+                .fillMaxHeight()
+                .verticalScroll(rememberScrollState())
                 .padding(16.dp),
-            horizontalAlignment = Alignment.End,
-            verticalArrangement = Arrangement.Center
+            horizontalAlignment = Alignment.End
         ) {
+            // Spacer removed - content starts at the top of this panel
             Text(stringResource(R.string.script_builder), style = MaterialTheme.typography.headlineSmall)
             Spacer(modifier = Modifier.height(16.dp))
             OutlinedButton(onClick = { viewModel.insertText(snippetTextIncludesStr) }) {

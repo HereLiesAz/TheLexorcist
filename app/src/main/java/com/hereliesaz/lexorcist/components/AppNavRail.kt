@@ -30,7 +30,7 @@ fun AppNavRail(onNavigate: (String) -> Unit) {
     val navDataReviewStr = stringResource(R.string.nav_data_review)
     val navEvidenceStr = stringResource(R.string.nav_evidence)
     val navAddEvidenceStr = stringResource(R.string.nav_add_evidence)
-    val navAddonsBrowserStr = stringResource(R.string.nav_addons_browser)
+    val navAddonsBrowserStr = stringResource(R.string.nav_addons_browser) // Kept for navigation route, text changed below
 
     // NavItem texts (these were likely fine as they are resolved in Composable scope before being passed)
     val casesText = stringResource(R.string.cases)
@@ -38,7 +38,7 @@ fun AppNavRail(onNavigate: (String) -> Unit) {
     val dataReviewText = stringResource(R.string.data_review)
     val evidenceText = stringResource(R.string.evidence)
     val addText = stringResource(R.string.add)
-    val addonsBrowserText = stringResource(R.string.addons_browser)
+    // val addonsBrowserText = stringResource(R.string.addons_browser) // Text changed to "Extras" directly
     val settingsText = stringResource(R.string.settings)
     val aboutText = stringResource(R.string.about)
     val feedbackText = stringResource(R.string.feedback)
@@ -98,12 +98,12 @@ fun AppNavRail(onNavigate: (String) -> Unit) {
                         showOnRail = true
                     ),
                     NavItem(
-                        text = addonsBrowserText,
-                        data = NavItemData.Action(onClick = { onNavigate(navAddonsBrowserStr) }),
+                        text = "Extras", // Changed from addonsBrowserText
+                        data = NavItemData.Action(onClick = { onNavigate(navAddonsBrowserStr) }), // Route remains the same
                         showOnRail = true
                     ),
                     NavItem(
-                        text = "Script Editor",
+                        text = "Script", // Changed from "Script Editor"
                         data = NavItemData.Action(onClick = { onNavigate("script_editor") }),
                         showOnRail = true
                     ),

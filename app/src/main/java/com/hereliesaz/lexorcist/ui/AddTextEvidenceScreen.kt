@@ -1,6 +1,8 @@
 package com.hereliesaz.lexorcist.ui
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState // Added import
+import androidx.compose.foundation.verticalScroll // Added import
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -12,29 +14,38 @@ import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
 
 @Composable
 fun AddTextEvidenceScreen(
-    evidenceViewModel: EvidenceViewModel,
+    evidenceViewModel: EvidenceViewModel, // Parameter kept
     onSave: (String) -> Unit
 ) {
     var text by remember { mutableStateOf("") }
 
-    Column(
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.End, // Align children to the End (right)
-        verticalArrangement = Arrangement.Center // Center children vertically as a group
+            .padding(16.dp) // Apply padding to the outer Box
     ) {
-        OutlinedTextField(
-            value = text,
-            onValueChange = { text = it },
-            label = { Text("Evidence Text") },
+        val halfScreenHeight = this@BoxWithConstraints.maxHeight / 2
+
+        Column(
             modifier = Modifier
-                .fillMaxWidth() // TextField still fills width
-                .weight(1f)      // TextField takes available vertical space
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        OutlinedButton(onClick = { onSave(text) }) {
-            Text("Save")
+                .fillMaxSize() // Column fills the BoxWithConstraints
+                .verticalScroll(rememberScrollState()), // Make content scrollable
+            horizontalAlignment = Alignment.End // Existing: Align children to the End (right)
+        ) {
+            Spacer(modifier = Modifier.height(halfScreenHeight)) // Push content to start halfway down
+
+            OutlinedTextField(
+                value = text,
+                onValueChange = { text = it },
+                label = { Text("Evidence Text") },
+                modifier = Modifier
+                    .fillMaxWidth() // TextField still fills width
+                    .weight(1f)      // TextField takes available vertical space after the Spacer
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            OutlinedButton(onClick = { onSave(text) }) {
+                Text("Save")
+            }
         }
     }
 }

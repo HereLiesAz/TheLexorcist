@@ -20,9 +20,11 @@ abstract class SheetModule {
     companion object {
         @Provides
         @Singleton
-        fun provideGoogleApiService(@ApplicationContext context: Context): GoogleApiService {
+        fun provideGoogleApiService(@ApplicationContext context: Context): GoogleApiService? { // Return nullable type
             val account = GoogleSignIn.getLastSignedInAccount(context)
-            checkNotNull(account) { "User must be signed in to use GoogleApiService" }
+            if (account == null) {
+                return null // User is not signed in, provide null
+            }
             val credential = GoogleAccountCredential.usingOAuth2(
                 context,
                 listOf(DriveScopes.DRIVE, SheetsScopes.SPREADSHEETS)

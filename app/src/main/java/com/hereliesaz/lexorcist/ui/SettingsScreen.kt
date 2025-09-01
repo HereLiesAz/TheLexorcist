@@ -1,6 +1,8 @@
 package com.hereliesaz.lexorcist.ui
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState // Added import
+import androidx.compose.foundation.verticalScroll // Added import
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -18,23 +20,37 @@ import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 fun SettingsScreen(caseViewModel: CaseViewModel) {
     val isDarkMode by caseViewModel.isDarkMode.collectAsState()
 
-    Column(
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.End,
-        verticalArrangement = Arrangement.Center
+            .padding(16.dp) // Apply padding to the outer Box
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.End
+        val halfScreenHeight = this@BoxWithConstraints.maxHeight / 2
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize() // Column fills the BoxWithConstraints
+                .verticalScroll(rememberScrollState()), // Make content scrollable
+            horizontalAlignment = Alignment.End // Align children (the Row) to the End (right)
         ) {
-        Text(stringResource(R.string.dark_mode), style = MaterialTheme.typography.bodyLarge)
-            Switch(
-                checked = isDarkMode,
-                onCheckedChange = { caseViewModel.setDarkMode(it) }
-            )
+            Spacer(modifier = Modifier.height(halfScreenHeight)) // Push content to start halfway down
+
+            Row(
+                modifier = Modifier.fillMaxWidth(), // Row takes full width to allow its content to be aligned to End
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.End // Align content of Row (Text + Switch) to the End
+            ) {
+                Text(
+                    text = stringResource(R.string.dark_mode),
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                Spacer(modifier = Modifier.width(16.dp)) // Added Spacer for better visual separation
+                Switch(
+                    checked = isDarkMode,
+                    onCheckedChange = { caseViewModel.setDarkMode(it) }
+                )
+            }
+            // Add other settings here if needed, they will follow the same alignment rules
         }
     }
 }

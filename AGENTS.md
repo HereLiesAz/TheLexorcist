@@ -18,15 +18,22 @@ Your primary objective is to develop "The Lexorcist" into a fully functional leg
 
 ### **CRITICAL ARCHITECTURAL DIRECTIVE**
 
-> **DO NOT USE LOCAL DATABASES.**
->
-> Under **NO CIRCUMSTANCES** should you attempt to implement a local database, such as **Room** or **SQLite**. The application's core design relies **exclusively** on the Google Sheets API for data storage.
->
-> **This is a non-negotiable architectural constraint.**
->
-> Any attempt to introduce a local database will be considered a fundamental misunderstanding of the project's design and will be rejected. This approach ensures that the user maintains full control and visibility of their data in a familiar format (Google Sheets) and simplifies the application by avoiding complex data synchronization logic.
->
-> If a task appears to require data persistence, the solution **must** involve the Google Sheets API. If you are uncertain how to proceed, you must ask for clarification.
+ **DO NOT USE LOCAL DATABASES.**
+
+ Under **NO CIRCUMSTANCES** should you attempt to implement a local database, such as **Room** or **SQLite**. The application's core design relies **exclusively** on the Google Sheets API for data storage.
+
+ **This is a non-negotiable architectural constraint.**
+
+ Any attempt to introduce a local database will be considered a fundamental misunderstanding of the project's design and will be rejected. This approach ensures that the user maintains full control and visibility of their data in a familiar format (Google Sheets) and simplifies the application by avoiding complex data synchronization logic.
+
+ If a task appears to require data persistence, the solution **must** involve the Google Sheets API. If you are uncertain how to proceed, you must ask for clarification.
+
+---
+
+### UI and UX
+
+1. Except for the AzNavRail, all components on every screen (text boxes, not text) need to be right aligned.
+2. The topmost component on every screen that scrolls should have a default vertical initial position at halfway down the screen. When scrolling, the items should still scroll to the top of the screen. We're only talking about the topmost component's initial starting position.
 
 ---
 

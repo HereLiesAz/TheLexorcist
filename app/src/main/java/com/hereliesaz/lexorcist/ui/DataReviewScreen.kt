@@ -3,8 +3,8 @@ package com.hereliesaz.lexorcist.ui
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState // Added import
-import androidx.compose.foundation.verticalScroll // Added import
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -50,33 +50,55 @@ fun DataReviewScreen(
             )
         }
     ) { padding ->
-        Column(modifier = Modifier.padding(padding)) {
-            if (isLoading) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
-            } else if (selectedCase == null) {
-                Box(modifier = Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
-                    Text("Please select a case to review its evidence.")
-                }
-            } else if (evidenceList.isEmpty()) {
-                 Box(modifier = Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
-                    Text("No evidence found for this case.")
-                }
-            } else {
-                LazyColumn(modifier = Modifier.padding(16.dp)) {
-                    items(evidenceList) { evidence ->
-                        EvidenceItem(
-                            evidence = evidence,
-                            onEditClick = {
-                                evidenceToEdit = it
-                                showEditDialog = true
-                            },
-                            onDeleteClick = {
-                                evidenceToDelete = it
-                                showDeleteConfirmDialog = true
-                            }
-                        )
+        BoxWithConstraints(modifier = Modifier.padding(padding).fillMaxSize()) {
+            val halfScreenHeight = this@BoxWithConstraints.maxHeight / 2
+
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.End 
+            ) {
+                if (isLoading) {
+                    Spacer(modifier = Modifier.height(halfScreenHeight))
+                    Box(
+                        modifier = Modifier.fillMaxWidth(), // Changed from fillMaxSize to respect Column's End alignment
+                        contentAlignment = Alignment.Center // CircularProgressIndicator should be centered within its space
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                } else if (selectedCase == null) {
+                    Spacer(modifier = Modifier.height(halfScreenHeight))
+                    Box(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp), // Use horizontal for text padding
+                        contentAlignment = Alignment.CenterEnd 
+                    ) {
+                        Text("Please select a case to review its evidence.")
+                    }
+                } else if (evidenceList.isEmpty()) {
+                    Spacer(modifier = Modifier.height(halfScreenHeight))
+                     Box(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp), // Use horizontal for text padding
+                        contentAlignment = Alignment.CenterEnd 
+                    ) {
+                        Text("No evidence found for this case.")
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp), // Use horizontal for item padding
+                        contentPadding = PaddingValues(top = halfScreenHeight) 
+                    ) {
+                        items(evidenceList) { evidence ->
+                            EvidenceItem(
+                                evidence = evidence,
+                                onEditClick = {
+                                    evidenceToEdit = it
+                                    showEditDialog = true
+                                },
+                                onDeleteClick = {
+                                    evidenceToDelete = it
+                                    showDeleteConfirmDialog = true
+                                }
+                            )
+                        }
                     }
                 }
             }
@@ -124,7 +146,7 @@ fun EvidenceItem(
 ) {
     Card(
         modifier = Modifier
-            .padding(vertical = 4.dp, horizontal = 8.dp)
+            .padding(vertical = 4.dp) // Horizontal padding handled by LazyColumn
             .fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         shape = MaterialTheme.shapes.medium
@@ -137,7 +159,7 @@ fun EvidenceItem(
         ) {
             Column(
                 modifier = Modifier.weight(1f),
-                 horizontalAlignment = Alignment.Start, 
+                 horizontalAlignment = Alignment.End, 
                  verticalArrangement = Arrangement.spacedBy(4.dp) 
             ) {
                 Text(
@@ -196,8 +218,11 @@ fun EditEvidenceDialog(
         onDismissRequest = onDismiss,
         title = { Text("Edit Evidence") },
         text = {
-            Column(modifier = Modifier.verticalScroll(rememberScrollState()), 
-                   verticalArrangement = Arrangement.spacedBy(8.dp)) { 
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()), 
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalAlignment = Alignment.End
+            ) { 
                 OutlinedTextField(
                     value = content,
                     onValueChange = { content = it },
