@@ -9,7 +9,7 @@ import javax.inject.Singleton
 
 @Singleton
 class EvidenceRepositoryImpl @Inject constructor(
-    private val googleApiService: GoogleApiService,
+    private val googleApiService: GoogleApiService?, // Changed to nullable
     private val evidenceCacheManager: com.hereliesaz.lexorcist.utils.EvidenceCacheManager
 ) : EvidenceRepository {
 
@@ -30,9 +30,11 @@ class EvidenceRepositoryImpl @Inject constructor(
     }
 
     private suspend fun refreshEvidence(spreadsheetId: String, caseId: Long) {
-        val remoteEvidence = googleApiService.getEvidenceForCase(spreadsheetId, caseId)
-        evidenceCacheManager.saveEvidence(caseId, remoteEvidence)
-        _evidenceByCase[caseId]?.value = remoteEvidence
+        // Null-safe call needed here after the change
+        googleApiService?.getEvidenceForCase(spreadsheetId, caseId)?.let { remoteEvidence ->
+            evidenceCacheManager.saveEvidence(caseId, remoteEvidence)
+            _evidenceByCase[caseId]?.value = remoteEvidence
+        }
     }
 
     override suspend fun getEvidenceById(id: Int): Evidence? {
@@ -46,19 +48,25 @@ class EvidenceRepositoryImpl @Inject constructor(
     }
 
     override suspend fun addEvidence(evidence: Evidence) {
-        googleApiService.addEvidenceToCase(evidence)
-        refreshEvidence(evidence.spreadsheetId, evidence.caseId)
+        // Null-safe call needed here after the change
+        googleApiService?.addEvidenceToCase(evidence)
+        // refreshEvidence might also need to be conditional on googleApiService not being null
+        // if it strictly relies on a successful remote operation.
+        // For now, keeping existing logic, but this is a point of attention.
+        if (googleApiService != null) { // Only refresh if service was available to add
+            refreshEvidence(evidence.spreadsheetId, evidence.caseId)
+        }
     }
 
     override suspend fun updateEvidence(evidence: Evidence) {
-        // TODO: Implement actual logic to update evidence in Google Sheets
+        // TODO: Implement actual logic to update evidence in Google Sheets (with null safety for googleApiService)
     }
 
     override suspend fun deleteEvidence(evidence: Evidence) {
-        // TODO: Implement actual logic to delete evidence from Google Sheets
+        // TODO: Implement actual logic to delete evidence from Google Sheets (with null safety for googleApiService)
     }
 
     override suspend fun updateCommentary(id: Int, commentary: String) {
-        // TODO: Implement actual logic to update commentary for an evidence item
+        // TODO: Implement actual logic to update commentary for an evidence item (with null safety for googleApiService)
     }
 }

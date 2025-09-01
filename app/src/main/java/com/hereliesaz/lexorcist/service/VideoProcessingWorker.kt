@@ -15,7 +15,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.nio.ByteBuffer
-import android.app.Application
+// import android.app.Application // Not used directly
 import com.hereliesaz.lexorcist.viewmodel.OcrViewModel
 import com.hereliesaz.lexorcist.utils.Result as LexResult // Alias for your Result class
 import com.google.api.services.drive.model.File as DriveFile // Alias for Google Drive File
@@ -30,7 +30,7 @@ class VideoProcessingWorker @AssistedInject constructor(
     @Assisted appContext: Context,
     @Assisted workerParams: WorkerParameters,
     private val ocrViewModel: OcrViewModel,
-    private val googleApiService: GoogleApiService
+    private val googleApiService: GoogleApiService? // Changed to nullable
 ) : CoroutineWorker(appContext, workerParams) {
 
     override suspend fun doWork(): Result {
@@ -54,21 +54,26 @@ class VideoProcessingWorker @AssistedInject constructor(
         }
 
         var uploadedDriveFile: DriveFile? = null
-        val evidenceFolderId = googleApiService.getOrCreateEvidenceFolder(caseName)
-        if (evidenceFolderId != null) {
-            when (val uploadResult = googleApiService.uploadFile(videoFile, evidenceFolderId, "video/mp4")) {
-                is LexResult.Success -> {
-                    uploadedDriveFile = uploadResult.data
-                    Log.d(TAG, "Video uploaded to Drive with ID: ${uploadedDriveFile?.id}")
-                }
-                is LexResult.Error -> {
-                    Log.e(TAG, "Failed to upload video: ${uploadResult.exception.message}")
-                    // Decide if this is a fatal error for the worker
-                    // return Result.failure()
-                }
-            }
+        if (googleApiService == null) {
+            Log.e(TAG, "GoogleApiService is not available. Skipping Drive upload.")
+            // Decide if this is a fatal error or if processing can continue without upload
+            // For now, let's allow it to continue to process audio/frames locally if possible
         } else {
-            Log.e(TAG, "Failed to get or create evidence folder for case: $caseName")
+            val evidenceFolderId = googleApiService.getOrCreateEvidenceFolder(caseName)
+            if (evidenceFolderId != null) {
+                when (val uploadResult = googleApiService.uploadFile(videoFile, evidenceFolderId, "video/mp4")) {
+                    is LexResult.Success -> {
+                        uploadedDriveFile = uploadResult.data
+                        Log.d(TAG, "Video uploaded to Drive with ID: ${uploadedDriveFile?.id}")
+                    }
+                    is LexResult.Error -> {
+                        Log.e(TAG, "Failed to upload video: ${uploadResult.exception.message}")
+                        // Decide if this is a fatal error for the worker
+                    }
+                }
+            } else {
+                Log.e(TAG, "Failed to get or create evidence folder for case: $caseName")
+            }
         }
 
         val audioUri = extractAudio(videoUri)
@@ -122,11 +127,9 @@ class VideoProcessingWorker @AssistedInject constructor(
                     bufferInfo.offset = 0
                     bufferInfo.size = sampleSize
                     bufferInfo.presentationTimeUs = extractor.sampleTime
-                    if ((extractor.sampleFlags and MediaExtractor.SAMPLE_FLAG_SYNC) != 0) {
-                        bufferInfo.flags = extractor.sampleFlags or MediaCodec.BUFFER_FLAG_KEY_FRAME
-                    } else {
-                        bufferInfo.flags = extractor.sampleFlags
-                    }
+                    // Corrected flag setting: BUFFER_FLAG_KEY_FRAME is already part of sampleFlags if it's a key frame.
+                    // MediaCodec.BUFFER_FLAG_KEY_FRAME is 1. MediaExtractor.SAMPLE_FLAG_SYNC is 1.
+                    bufferInfo.flags = extractor.sampleFlags 
 
                     muxer.writeSampleData(muxerTrackIndex, buffer, bufferInfo)
                     extractor.advance()

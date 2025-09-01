@@ -4,9 +4,15 @@ import android.content.Context
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.hereliesaz.lexorcist.data.Evidence
+import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class EvidenceCacheManager(private val context: Context) {
+@Singleton // Added Singleton annotation
+class EvidenceCacheManager @Inject constructor( // Added @Inject
+    @ApplicationContext private val context: Context // Added @ApplicationContext
+) {
 
     private val gson = Gson()
 

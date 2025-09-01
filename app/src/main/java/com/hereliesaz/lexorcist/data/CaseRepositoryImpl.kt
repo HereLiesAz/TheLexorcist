@@ -11,7 +11,7 @@ import javax.inject.Singleton
 
 @Singleton
 class CaseRepositoryImpl @Inject constructor(
-    private val googleApiService: GoogleApiService,
+    private val googleApiService: GoogleApiService?, // Changed to nullable
     private val settingsManager: SettingsManager,
     private val errorReporter: com.hereliesaz.lexorcist.utils.ErrorReporter
 ) : CaseRepository {
@@ -26,9 +26,11 @@ class CaseRepositoryImpl @Inject constructor(
 
     override suspend fun refreshCases() {
         try {
-            val appRootFolderId = googleApiService.getOrCreateAppRootFolder()
-            val registryId = googleApiService.getOrCreateCaseRegistrySpreadsheetId(appRootFolderId)
-            _cases.value = googleApiService.getAllCasesFromRegistry(registryId)
+            googleApiService?.let { service -> // Null check
+                val appRootFolderId = service.getOrCreateAppRootFolder()
+                val registryId = service.getOrCreateCaseRegistrySpreadsheetId(appRootFolderId)
+                _cases.value = service.getAllCasesFromRegistry(registryId)
+            } ?: errorReporter.reportError(Exception("GoogleApiService not available in refreshCases"))
         } catch (e: java.io.IOException) {
             errorReporter.reportError(e)
         }
@@ -45,78 +47,87 @@ class CaseRepositoryImpl @Inject constructor(
         court: String
     ) {
         try {
-            val appRootFolderId = googleApiService.getOrCreateAppRootFolder()
-            val caseFolderId = googleApiService.getOrCreateCaseFolder(caseName) ?: return
-            val spreadsheetResult = googleApiService.createSpreadsheet(caseName, caseFolderId)
+            googleApiService?.let { service -> // Null check
+                val appRootFolderId = service.getOrCreateAppRootFolder()
+                val caseFolderId = service.getOrCreateCaseFolder(caseName) ?: run {
+                    errorReporter.reportError(Exception("Failed to create or get case folder in createCase"))
+                    return
+                }
+                val spreadsheetResult = service.createSpreadsheet(caseName, caseFolderId)
 
-            if (spreadsheetResult is com.hereliesaz.lexorcist.utils.Result.Success) {
-                val spreadsheetId = spreadsheetResult.data ?: return
-                val newCase = Case(
-                    id = 0, // ID will be assigned by registry
-                    name = caseName,
-                    spreadsheetId = spreadsheetId,
-                    folderId = caseFolderId,
-                    plaintiffs = plaintiffs,
-                    defendants = defendants,
-                    court = court,
-                    lastModifiedTime = System.currentTimeMillis()
-                )
-                val registryId = googleApiService.getOrCreateCaseRegistrySpreadsheetId(appRootFolderId)
-                googleApiService.addCaseToRegistry(registryId, newCase)
-                refreshCases()
-            } else {
-                // Handle error
-            }
+                if (spreadsheetResult is com.hereliesaz.lexorcist.utils.Result.Success) {
+                    val spreadsheetId = spreadsheetResult.data ?: run {
+                        errorReporter.reportError(Exception("Spreadsheet ID is null after creation in createCase"))
+                        return
+                    }
+                    val newCase = Case(
+                        id = 0, // ID will be assigned by registry
+                        name = caseName,
+                        spreadsheetId = spreadsheetId,
+                        folderId = caseFolderId,
+                        plaintiffs = plaintiffs,
+                        defendants = defendants,
+                        court = court,
+                        lastModifiedTime = System.currentTimeMillis()
+                    )
+                    val registryId = service.getOrCreateCaseRegistrySpreadsheetId(appRootFolderId)
+                    service.addCaseToRegistry(registryId, newCase)
+                    refreshCases() // This will also need googleApiService
+                } else {
+                    val error = (spreadsheetResult as com.hereliesaz.lexorcist.utils.Result.Error).exception
+                    errorReporter.reportError(error ?: Exception("Unknown error creating spreadsheet in createCase"))
+                }
+            } ?: errorReporter.reportError(Exception("GoogleApiService not available in createCase"))
         } catch (e: java.io.IOException) {
             errorReporter.reportError(e)
         }
     }
 
     override suspend fun archiveCase(case: Case) {
-        // TODO: Implement actual logic
+        // TODO: Implement actual logic (with null safety for googleApiService)
     }
 
     override suspend fun deleteCase(case: Case) {
-        // TODO: Implement actual logic
+        // TODO: Implement actual logic (with null safety for googleApiService)
     }
 
     override fun getSheetFilters(spreadsheetId: String): Flow<List<SheetFilter>> {
-        // TODO: Implement actual logic
+        // TODO: Implement actual logic (with null safety for googleApiService)
         return emptyFlow()
     }
 
     override suspend fun refreshSheetFilters(spreadsheetId: String) {
-        // TODO: Implement actual logic
+        // TODO: Implement actual logic (with null safety for googleApiService)
     }
 
     override suspend fun addSheetFilter(spreadsheetId: String, name: String, value: String) {
-        // TODO: Implement actual logic
+        // TODO: Implement actual logic (with null safety for googleApiService)
     }
 
     override fun getAllegations(caseId: Int, spreadsheetId: String): Flow<List<Allegation>> {
-        // TODO: Implement actual logic
+        // TODO: Implement actual logic (with null safety for googleApiService)
         return emptyFlow()
     }
 
     override suspend fun refreshAllegations(caseId: Int, spreadsheetId: String) {
-        // TODO: Implement actual logic
+        // TODO: Implement actual logic (with null safety for googleApiService)
     }
 
     override suspend fun addAllegation(spreadsheetId: String, allegationText: String) {
-        // TODO: Implement actual logic
+        // TODO: Implement actual logic (with null safety for googleApiService)
     }
 
     override fun getHtmlTemplates(): Flow<List<DriveFile>> {
-        // TODO: Implement actual logic
+        // TODO: Implement actual logic (with null safety for googleApiService)
         return emptyFlow()
     }
 
     override suspend fun refreshHtmlTemplates() {
-        // TODO: Implement actual logic
+        // TODO: Implement actual logic (with null safety for googleApiService)
     }
 
     override suspend fun importSpreadsheet(spreadsheetId: String): Case? {
-        // TODO: Implement actual logic
+        // TODO: Implement actual logic (with null safety for googleApiService)
         return null
     }
 }
