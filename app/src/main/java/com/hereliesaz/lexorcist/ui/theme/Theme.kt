@@ -5,8 +5,6 @@ package com.hereliesaz.lexorcist.ui.theme
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
 import com.materialkolor.DynamicMaterialTheme 
 import kotlin.random.Random
 

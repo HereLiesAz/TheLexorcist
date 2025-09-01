@@ -41,7 +41,7 @@ class EvidenceViewModelTest {
         Dispatchers.setMain(testDispatcher)
         application = mockk(relaxed = true)
         evidenceRepository = mockk(relaxed = true)
-        evidenceViewModel = EvidenceViewModel(application, evidenceRepository, mockk(relaxed = true), mockk(relaxed = true), mockk(relaxed = true), mockk(relaxed = true))
+        evidenceViewModel = EvidenceViewModel(application, evidenceRepository, mockk(relaxed = true), mockk(relaxed = true))
     }
 
     @After

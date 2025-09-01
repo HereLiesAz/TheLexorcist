@@ -18,12 +18,12 @@ import javax.inject.Inject
 import com.hereliesaz.lexorcist.service.OcrProcessingService
 import com.hereliesaz.lexorcist.service.TranscriptionService
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
-import com.google.api.services.drive.Drive
-import com.google.api.services.sheets.v4.Sheets
+import com.google.api.services.drive.DriveScopes // Added import
+import com.google.api.services.sheets.v4.SheetsScopes // Added import
 import android.net.Uri
-import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.data.SettingsManager
 import com.hereliesaz.lexorcist.service.ScriptRunner
+import com.hereliesaz.lexorcist.utils.Result
 import android.content.SharedPreferences
 
 @HiltViewModel
@@ -130,7 +130,7 @@ class EvidenceViewModel @Inject constructor(
             evidenceRepository.updateEvidence(evidence)
             val script = settingsManager.getScript()
             val result = scriptRunner.runScript(script, evidence)
-            if (result is com.hereliesaz.lexorcist.utils.Result.Success) {
+            if (result is Result.Success) {
                 val updatedEvidence = evidence.copy(tags = evidence.tags + result.data.tags)
                 evidenceRepository.updateEvidence(updatedEvidence)
             }
@@ -176,10 +176,7 @@ class EvidenceViewModel @Inject constructor(
                 if (userEmail != null) {
                     val credential = GoogleAccountCredential.usingOAuth2(
                         getApplication(),
-                        listOf(
-                            getApplication<Application>().getString(R.string.google_api_scope_drive_file),
-                            getApplication<Application>().getString(R.string.google_api_scope_sheets)
-                        )
+                        listOf(DriveScopes.DRIVE_FILE, SheetsScopes.SPREADSHEETS) // Changed to correct scope constants
                     ).setSelectedAccountName(userEmail)
 
                     val transcriptionService = TranscriptionService(getApplication(), credential)

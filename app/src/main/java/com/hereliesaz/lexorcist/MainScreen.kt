@@ -9,13 +9,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hereliesaz.lexorcist.components.AppNavRail
+import com.hereliesaz.lexorcist.ui.EvidenceScreen
 import com.hereliesaz.lexorcist.ui.AddonsBrowserScreen
 import com.hereliesaz.lexorcist.ui.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import android.content.Intent
+import androidx.compose.ui.platform.LocalContext
 import com.hereliesaz.lexorcist.model.SignInState
 import com.hereliesaz.lexorcist.viewmodel.AuthViewModel
-import com.hereliesaz.lexorcist.viewmodel.ScriptEditorViewModel
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
 import androidx.navigation.NavHostController
@@ -85,9 +87,11 @@ fun MainScreen(
                             ) {
                                 composable("home") { AuthenticatedView(onCreateCase = { showCreateCaseDialog = true }) }
                                 composable("cases") { CasesScreen(caseViewModel = caseViewModel) }
+                                composable("evidence") { EvidenceScreen(evidenceViewModel = evidenceViewModel) }
                                 composable("addons_browser") { AddonsBrowserScreen(onShare = {}) }
                                 composable("script_editor") {
-                                    ScriptEditorScreen(viewModel = viewModel())
+                                    val context = LocalContext.current
+                                    context.startActivity(Intent(context, ScriptEditorActivity::class.java))
                                 }
                                 composable("add_evidence") {
                                     AddEvidenceScreen(

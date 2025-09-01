@@ -2,12 +2,10 @@ package com.hereliesaz.lexorcist
 
 // import android.app.PendingIntent // No longer directly used here
 import android.content.IntentSender
-<<<<<<< HEAD
 import androidx.credentials.CredentialManager // Changed to AndroidX import
-=======
->>>>>>> origin/fix-build-errors
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResult
@@ -37,27 +35,9 @@ class MainActivity : ComponentActivity() {
         private const val TAG = "MainActivity"
     }
 
-    private val signInLauncher = registerForActivityResult(
-        ActivityResultContracts.StartIntentSenderForResult()
-    ) { result ->
-        if (result.resultCode == RESULT_OK) {
-            try {
-                val credential = Identity.getSignInClient(this).getSignInCredentialFromIntent(result.data)
-                authViewModel.onSignInResult(credential)
-            } catch (e: Exception) {
-                Log.e(TAG, "Sign-in credential retrieval failed", e)
-                authViewModel.onSignInError(e)
-            }
-        } else {
-            Log.w(TAG, "Sign-in flow failed. Result code: ${result.resultCode}")
-            authViewModel.onSignInError(Exception("Sign-in flow failed or was cancelled by user."))
-        }
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-<<<<<<< HEAD
         val signInLauncher = registerForActivityResult(
             ActivityResultContracts.StartIntentSenderForResult()
         ) { result: ActivityResult ->
@@ -81,8 +61,6 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-=======
->>>>>>> origin/fix-build-errors
         // Attempt silent sign-in when the app starts
         authViewModel.attemptSilentSignIn()
 
