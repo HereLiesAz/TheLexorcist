@@ -2,7 +2,7 @@ package com.hereliesaz.lexorcist
 
 // import android.app.PendingIntent // No longer directly used here
 import android.content.IntentSender
-import android.credentials.CredentialManager
+import androidx.credentials.CredentialManager // Changed to AndroidX import
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
@@ -38,12 +38,13 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        private val signInLauncher = registerForActivityResult(
+        val signInLauncher = registerForActivityResult(
             ActivityResultContracts.StartIntentSenderForResult()
         ) { result: ActivityResult ->
             if (result.resultCode == RESULT_OK) {
                 try {
-                    val credentialManager = CredentialManager.create(context)
+                    val credentialManager = CredentialManager.create(this@MainActivity)
+                    val credential = Identity.getSignInClient(this).getSignInCredentialFromIntent(result.data)
                     authViewModel.onSignInResult(credential)
                 } catch (e: Exception) {
                     Log.e(TAG, "Error getting credential from intent", e)

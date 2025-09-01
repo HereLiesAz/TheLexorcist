@@ -60,6 +60,7 @@ dependencies {
     implementation(libs.androidx.navigation.runtime.ktx)
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.foundation)
+    implementation(libs.androidx.credentials) // Added AndroidX Credentials
 
     // Core testing dependencies
     testImplementation(libs.junit)
