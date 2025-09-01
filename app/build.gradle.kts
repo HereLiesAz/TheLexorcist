@@ -11,8 +11,22 @@ plugins {
 }
 
 android {
+    signingConfigs {
+        getByName("debug") {
+            storeFile = file("G:\\My Drive\\az_apk_keystore.jks")
+            storePassword = "store_password" // Changed from string(...)
+            keyAlias = "key0"
+            keyPassword = "key_password"   // Changed from string(...)
+        }
+        create("release") {
+            storeFile = file("G:\\My Drive\\az_apk_keystore.jks")
+            storePassword = "store_password" // Changed from string(...)
+            keyAlias = "key0"
+            keyPassword = "key_password"   // Changed from string(...)
+        }
+    }
     namespace = "com.hereliesaz.lexorcist"
-    compileSdk = 36
+    compileSdkPreview = "CANARY"
 
     defaultConfig {
         applicationId = "com.hereliesaz.lexorcist"
@@ -29,14 +43,14 @@ android {
         getByName("release") {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            signingConfig = signingConfigs.getByName("debug") // Assuming debug for release, adjust if needed
         }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions {
-    }
+    // Removed deprecated kotlinOptions block
     buildFeatures {
         compose = true
     }
@@ -49,6 +63,8 @@ android {
     lint {
         baseline = file("lint-baseline.xml")
     }
+    buildToolsVersion = "36.1.0 rc1"
+    ndkVersion = "29.0.13599879 rc2"
 }
 
 dependencies {
@@ -61,6 +77,7 @@ dependencies {
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.credentials) // Added AndroidX Credentials
+    implementation(libs.google.identity.googleid) // Added Google Identity Services Google ID
 
     // Core testing dependencies
     testImplementation(libs.junit)
@@ -115,7 +132,7 @@ dependencies {
     implementation(libs.apache.poi.scratchpad)
 
     // Google Sign-In
-    implementation(libs.google.play.services.auth)
+    implementation(libs.google.play.services.auth) 
 
     // Google APIs
     implementation(libs.google.api.client)
@@ -151,7 +168,8 @@ dependencies {
     ksp(libs.androidx.hilt.compiler)
     testImplementation(libs.google.dagger.hilt.android.testing)
     kspTest(libs.hilt.android.compiler)
-
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services.auth)
 
     // Room IS NOT ALLOWED IN THIS PROJECT!!!!!
 
