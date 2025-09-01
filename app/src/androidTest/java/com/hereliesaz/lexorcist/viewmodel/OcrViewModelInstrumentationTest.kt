@@ -37,7 +37,7 @@ class OcrViewModelInstrumentationTest {
     fun setup() {
         hiltRule.inject()
         application = ApplicationProvider.getApplicationContext()
-        ocrViewModel = OcrViewModel(application, evidenceRepository, mockk(relaxed = true), mockk(relaxed = true))
+        ocrViewModel = OcrViewModel(application, evidenceRepository, settingsManager, scriptRunner)
     }
 
     @Test
