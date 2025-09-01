@@ -17,17 +17,18 @@ import kotlinx.coroutines.withContext
 import java.io.IOException
 
 class GoogleApiService(
-    credential: GoogleAccountCredential,
-    applicationName: String
+    private val drive: Drive,
+    private val sheets: Sheets
 ) {
 
-    private val drive: Drive = Drive.Builder(NetHttpTransport(), JacksonFactory.getDefaultInstance(), credential)
-        .setApplicationName(applicationName)
-        .build()
-
-    private val sheets: Sheets = Sheets.Builder(NetHttpTransport(), JacksonFactory.getDefaultInstance(), credential)
-        .setApplicationName(applicationName)
-        .build()
+    constructor(credential: GoogleAccountCredential, applicationName: String) : this(
+        Drive.Builder(NetHttpTransport(), JacksonFactory.getDefaultInstance(), credential)
+            .setApplicationName(applicationName)
+            .build(),
+        Sheets.Builder(NetHttpTransport(), JacksonFactory.getDefaultInstance(), credential)
+            .setApplicationName(applicationName)
+            .build()
+    )
 
     suspend fun getOrCreateAppRootFolder(): String? = withContext(Dispatchers.IO) {
         try {
