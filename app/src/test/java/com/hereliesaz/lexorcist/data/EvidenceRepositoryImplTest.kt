@@ -129,7 +129,7 @@ class EvidenceRepositoryImplTest {
         evidenceRepository.addEvidence(newEvidence)
 
         // Then
-        val expectedSheetData = createMockSheet(listOf(newEvidence))["Evidence"]
-        coVerify { googleApiService.appendData(newEvidence.spreadsheetId, "Evidence", expectedSheetData!!) }
+        val expectedSheet = createMockSheet(listOf(newEvidence))
+        coVerify { googleApiService.appendData(newEvidence.spreadsheetId, "Evidence", expectedSheet.getValue("Evidence")) }
     }
 }
