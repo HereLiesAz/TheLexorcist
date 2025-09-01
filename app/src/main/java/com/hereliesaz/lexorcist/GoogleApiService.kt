@@ -30,7 +30,7 @@ class GoogleApiService(
             .build()
     )
 
-    suspend fun getOrCreateAppRootFolder(): String? = withContext(Dispatchers.IO) {
+    suspend fun getOrCreateAppRootFolder(): String = withContext(Dispatchers.IO) {
         try {
             val folderName = "Lexorcist"
             val query = "mimeType='application/vnd.google-apps.folder' and name='$folderName' and trashed=false"
@@ -40,16 +40,17 @@ class GoogleApiService(
                     name = folderName
                     mimeType = "application/vnd.google-apps.folder"
                 }
-                drive.files().create(fileMetadata).setFields("id").execute().id
+                val createdFile = drive.files().create(fileMetadata).setFields("id").execute()
+                createdFile.id
             } else {
                 files[0].id
             }
         } catch (e: IOException) {
-            null
+            throw IOException("Failed to get or create app root folder", e)
         }
     }
 
-    suspend fun getOrCreateCaseRegistrySpreadsheetId(folderId: String): String? = withContext(Dispatchers.IO) {
+    suspend fun getOrCreateCaseRegistrySpreadsheetId(folderId: String): String = withContext(Dispatchers.IO) {
         try {
             val fileName = "CaseRegistry"
             val query = "mimeType='application/vnd.google-apps.spreadsheet' and name='$fileName' and trashed=false and '$folderId' in parents"
@@ -65,7 +66,7 @@ class GoogleApiService(
                 files[0].id
             }
         } catch (e: IOException) {
-            null
+            throw IOException("Failed to get or create case registry spreadsheet", e)
         }
     }
 
@@ -328,6 +329,68 @@ class GoogleApiService(
         // This is a complex operation. You need to read the sheet and parse the data.
         // For simplicity, this is not implemented.
         return emptyList()
+    }
+
+    suspend fun getEvidenceForCase(spreadsheetId: String, caseId: Long): List<com.hereliesaz.lexorcist.data.Evidence> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val range = "Evidence!A:Z" // Assuming evidence is in a sheet named "Evidence"
+                val response = sheets.spreadsheets().values().get(spreadsheetId, range).execute()
+                val values = response.getValues()
+                if (values.isNullOrEmpty()) {
+                    emptyList()
+                } else {
+                    values.mapNotNull { row ->
+                        try {
+                            com.hereliesaz.lexorcist.data.Evidence(
+                                id = row[0].toString().toInt(),
+                                caseId = caseId,
+                                spreadsheetId = spreadsheetId,
+                                type = row[1].toString(),
+                                content = row[2].toString(),
+                                timestamp = row[3].toString().toLong(),
+                                sourceDocument = row[4].toString(),
+                                documentDate = row[5].toString().toLong(),
+                                allegationId = row[6].toString().toIntOrNull(),
+                                category = row[7].toString(),
+                                tags = row[8].toString().split(",").map { it.trim() }
+                            )
+                        } catch (e: Exception) {
+                            null // Skip row if parsing fails
+                        }
+                    }
+                }
+            } catch (e: IOException) {
+                emptyList()
+            }
+        }
+    }
+
+    suspend fun addEvidenceToCase(evidence: com.hereliesaz.lexorcist.data.Evidence): Boolean {
+        return withContext(Dispatchers.IO) {
+            try {
+                val values = listOf(
+                    listOf(
+                        evidence.id.toString(),
+                        evidence.type,
+                        evidence.content,
+                        evidence.timestamp.toString(),
+                        evidence.sourceDocument,
+                        evidence.documentDate.toString(),
+                        evidence.allegationId?.toString() ?: "",
+                        evidence.category,
+                        evidence.tags.joinToString(",")
+                    )
+                )
+                val body = ValueRange().setValues(values)
+                sheets.spreadsheets().values().append(evidence.spreadsheetId, "Evidence!A1", body)
+                    .setValueInputOption("RAW")
+                    .execute()
+                true
+            } catch (e: IOException) {
+                false
+            }
+        }
     }
 
     suspend fun addAllegationToCase(spreadsheetId: String, allegationText: String): Boolean {

@@ -48,8 +48,9 @@ class EvidenceViewModel @Inject constructor(
 
     fun addTextEvidence(text: String, caseId: Long, spreadsheetId: String) {
         viewModelScope.launch {
+            val entities = com.hereliesaz.lexorcist.DataParser.tagData(text)
             val newEvidence = Evidence(
-                id = 0, 
+                id = 0,
                 caseId = caseId,
                 spreadsheetId = spreadsheetId,
                 type = "text",
@@ -63,7 +64,7 @@ class EvidenceViewModel @Inject constructor(
                 commentary = null,
                 linkedEvidenceIds = emptyList(),
                 parentVideoId = null,
-                entities = emptyMap()
+                entities = entities
             )
             evidenceRepository.addEvidence(newEvidence)
             // Refresh list if it's for the same case

@@ -3,7 +3,7 @@ package com.hereliesaz.lexorcist.data
 import kotlinx.coroutines.flow.Flow
 
 interface EvidenceRepository {
-    fun getEvidenceForCase(spreadsheetId: String, caseId: Long): Flow<List<Evidence>>
+    suspend fun getEvidenceForCase(spreadsheetId: String, caseId: Long): Flow<List<Evidence>>
     suspend fun getEvidenceById(id: Int): Evidence?
     fun getEvidence(id: Int): Flow<Evidence>
     suspend fun addEvidence(evidence: Evidence)

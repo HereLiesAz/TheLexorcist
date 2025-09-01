@@ -6,12 +6,11 @@ import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.model.SpreadsheetSchema
 import com.hereliesaz.lexorcist.utils.Result // Assuming Result is in this package
 
-// Renamed from SpreadsheetParser to SpreadsheetImportService
 class SpreadsheetImportService(
     private val googleApiService: GoogleApiService,
     private val schema: SpreadsheetSchema
 ) {
-    private val TAG = "SpreadsheetImportSvc" // Updated TAG
+    private val TAG = "SpreadsheetImportSvc"
 
     // Renamed from parseAndStore to importAndSetupNewCaseFromData
     suspend fun importAndSetupNewCaseFromData(sheetsData: Map<String, List<List<Any>>>): Case? {

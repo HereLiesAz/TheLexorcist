@@ -4,12 +4,11 @@ import android.util.Log
 import com.hereliesaz.lexorcist.model.SpreadsheetSchema
 import javax.inject.Inject
 
-// Renamed from SpreadsheetParser to CaseSheetParser
 class CaseSheetParser @Inject constructor(
     private val schema: SpreadsheetSchema
 ) {
 
-    private val tag = "CaseSheetParser" // Updated tag
+    private val tag = "CaseSheetParser"
 
     // Renamed from parseAndStore to parseCaseFromData
     suspend fun parseCaseFromData(spreadsheetId: String, sheetData: Map<String, List<List<Any>>>): Case? {
