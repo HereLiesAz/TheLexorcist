@@ -60,15 +60,15 @@ fun DataReviewScreen(
                 if (isLoading) {
                     Spacer(modifier = Modifier.height(halfScreenHeight))
                     Box(
-                        modifier = Modifier.fillMaxWidth(), // Changed from fillMaxSize to respect Column's End alignment
-                        contentAlignment = Alignment.Center // CircularProgressIndicator should be centered within its space
+                        modifier = Modifier.fillMaxWidth(), 
+                        contentAlignment = Alignment.CenterEnd // Changed to CenterEnd
                     ) {
                         CircularProgressIndicator()
                     }
                 } else if (selectedCase == null) {
                     Spacer(modifier = Modifier.height(halfScreenHeight))
                     Box(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp), // Use horizontal for text padding
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                         contentAlignment = Alignment.CenterEnd 
                     ) {
                         Text("Please select a case to review its evidence.")
@@ -76,14 +76,14 @@ fun DataReviewScreen(
                 } else if (evidenceList.isEmpty()) {
                     Spacer(modifier = Modifier.height(halfScreenHeight))
                      Box(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp), // Use horizontal for text padding
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                         contentAlignment = Alignment.CenterEnd 
                     ) {
                         Text("No evidence found for this case.")
                     }
                 } else {
                     LazyColumn(
-                        modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp), // Use horizontal for item padding
+                        modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp), 
                         contentPadding = PaddingValues(top = halfScreenHeight) 
                     ) {
                         items(evidenceList) { evidence ->
@@ -122,7 +122,7 @@ fun DataReviewScreen(
             title = { Text("Delete Evidence") },
             text = { Text("Are you sure you want to delete this evidence?") },
             confirmButton = {
-                TextButton(onClick = {
+                Button(onClick = { // Changed to Button
                     evidenceViewModel.deleteEvidence(evidenceToDelete!!)
                     showDeleteConfirmDialog = false
                 }) {
@@ -130,7 +130,7 @@ fun DataReviewScreen(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteConfirmDialog = false }) {
+                OutlinedButton(onClick = { showDeleteConfirmDialog = false }) { // Changed to OutlinedButton
                     Text("Cancel")
                 }
             }
@@ -146,7 +146,7 @@ fun EvidenceItem(
 ) {
     Card(
         modifier = Modifier
-            .padding(vertical = 4.dp) // Horizontal padding handled by LazyColumn
+            .padding(vertical = 4.dp) 
             .fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         shape = MaterialTheme.shapes.medium
@@ -252,7 +252,7 @@ fun EditEvidenceDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = {
+            Button(onClick = { // Changed to Button
                 val updatedEvidence = evidence.copy(
                     content = content,
                     sourceDocument = sourceDocument,
@@ -265,7 +265,7 @@ fun EditEvidenceDialog(
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            OutlinedButton(onClick = onDismiss) { // Changed to OutlinedButton
                 Text("Cancel")
             }
         }

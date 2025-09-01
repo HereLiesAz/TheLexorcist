@@ -17,11 +17,11 @@ import com.hereliesaz.lexorcist.model.SignInState
 import com.hereliesaz.lexorcist.viewmodel.AuthViewModel
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
-import com.hereliesaz.lexorcist.viewmodel.OcrViewModel
+// import com.hereliesaz.lexorcist.viewmodel.OcrViewModel // Not directly used in MainScreen params
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.hereliesaz.lexorcist.viewmodel.EvidenceDetailsViewModel
+// import com.hereliesaz.lexorcist.viewmodel.EvidenceDetailsViewModel // Not directly used in MainScreen params
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -31,8 +31,6 @@ fun MainScreen(
     authViewModel: AuthViewModel = viewModel(),
     caseViewModel: CaseViewModel = viewModel(),
     evidenceViewModel: EvidenceViewModel = viewModel(),
-    // evidenceDetailsViewModel: EvidenceDetailsViewModel = viewModel(), // Not directly used in MainScreen params
-    // ocrViewModel: OcrViewModel = viewModel(), // Not directly used in MainScreen params
     mainViewModel: MainViewModel = viewModel(),
     onSignInClick: () -> Unit,
     onSignOutClick: () -> Unit,
@@ -60,115 +58,133 @@ fun MainScreen(
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
-        BoxWithConstraints(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-            val halfScreenHeight = this@BoxWithConstraints.maxHeight / 2
+        when (val currentSignInState = signInState) {
+            is SignInState.Success -> {
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues) // Apply scaffold padding to the Row
+                ) {
+                    AppNavRail(onNavigate = { screen -> navController.navigate(screen) })
+                    
+                    // Content area to the right of the NavRail
+                    BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                        val halfContentAreaHeight = this@BoxWithConstraints.maxHeight / 2
+                        // val contentAreaMaxHeight = this@BoxWithConstraints.maxHeight // Not strictly needed here for NavHost modifier
 
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-            ) {
-                Spacer(Modifier.height(halfScreenHeight)) // Push all content down initially
-
-                when (signInState) {
-                    is SignInState.Success -> {
-                        Row(
-                            modifier = Modifier.fillMaxSize() // This Row is now after the Spacer
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize() // Fills the BoxWithConstraints
+                                .verticalScroll(rememberScrollState())
                         ) {
-                            AppNavRail(onNavigate = { screen -> navController.navigate(screen) })
-                            Box(modifier = Modifier.weight(1f)) {
-                                NavHost(navController = navController, startDestination = "home") {
-                                    composable("home") { AuthenticatedView(onCreateCase = { showCreateCaseDialog = true }) }
-                                    composable("cases") { CasesScreen(caseViewModel = caseViewModel) }
-                                    composable("add_evidence") {
-                                        AddEvidenceScreen(
-                                            onAddTextEvidence = { navController.navigate("add_text_evidence") },
-                                        )
-                                    }
-                                    composable("add_text_evidence") {
-                                        AddTextEvidenceScreen(
-                                            evidenceViewModel = evidenceViewModel,
-                                            onSave = { text ->
-                                                selectedCase?.let { case ->
-                                                    evidenceViewModel.addTextEvidence(
-                                                        text = text,
-                                                        caseId = case.id.toLong(),
-                                                        spreadsheetId = case.spreadsheetId
-                                                    )
-                                                }
-                                                navController.navigateUp()
-                                            }
-                                        )
-                                    }
-                                    composable("timeline") {
-                                        selectedCase?.let {
-                                            TimelineScreen(
-                                                case = it,
-                                                evidenceViewModel = evidenceViewModel,
-                                                navController = navController
-                                            )
-                                        }
-                                    }
-                                    composable("data_review") { 
-                                        DataReviewScreen(
-                                            evidenceViewModel = evidenceViewModel, 
-                                            caseViewModel = caseViewModel
-                                        ) 
-                                    }
-                                    composable("settings") { SettingsScreen(caseViewModel = caseViewModel) }
-                                    composable("evidence_details/{evidenceId}") { backStackEntry ->
-                                        val evidenceIdString = backStackEntry.arguments?.getString("evidenceId")
-                                        val evidenceId = remember(evidenceIdString) { evidenceIdString?.toIntOrNull() }
+                            Spacer(Modifier.height(halfContentAreaHeight)) // Spacer for NavHost content area
 
-                                        if (evidenceId != null) {
-                                            LaunchedEffect(evidenceId) {
-                                                evidenceViewModel.loadEvidenceDetails(evidenceId)
-                                            }
-                                            val evidence by evidenceViewModel.selectedEvidenceDetails.collectAsState()
-                                            evidence?.let { ev ->
-                                                EvidenceDetailsScreen(
-                                                    evidence = ev,
-                                                    viewModel = evidenceViewModel
+                            NavHost(
+                                navController = navController, 
+                                startDestination = "home",
+                                modifier = Modifier.fillMaxHeight() // NavHost fills the remaining space in the scrollable column
+                            ) {
+                                composable("home") { AuthenticatedView(onCreateCase = { showCreateCaseDialog = true }) }
+                                composable("cases") { CasesScreen(caseViewModel = caseViewModel) }
+                                composable("add_evidence") {
+                                    AddEvidenceScreen(
+                                        onAddTextEvidence = { navController.navigate("add_text_evidence") },
+                                    )
+                                }
+                                composable("add_text_evidence") {
+                                    AddTextEvidenceScreen(
+                                        evidenceViewModel = evidenceViewModel,
+                                        onSave = { text ->
+                                            selectedCase?.let { case ->
+                                                evidenceViewModel.addTextEvidence(
+                                                    text = text,
+                                                    caseId = case.id.toLong(),
+                                                    spreadsheetId = case.spreadsheetId
                                                 )
                                             }
-                                            DisposableEffect(Unit) {
-                                                onDispose {
-                                                    evidenceViewModel.clearEvidenceDetails()
-                                                }
-                                            }
-                                        } else {
-                                            Text("Error: Evidence ID not found or invalid.")
+                                            navController.navigateUp()
                                         }
+                                    )
+                                }
+                                composable("timeline") {
+                                    selectedCase?.let {
+                                        TimelineScreen(
+                                            case = it,
+                                            evidenceViewModel = evidenceViewModel,
+                                            navController = navController
+                                        )
+                                    }
+                                }
+                                composable("data_review") { 
+                                    DataReviewScreen(
+                                        evidenceViewModel = evidenceViewModel, 
+                                        caseViewModel = caseViewModel
+                                    ) 
+                                }
+                                composable("settings") { SettingsScreen(caseViewModel = caseViewModel) }
+                                composable("evidence_details/{evidenceId}") { backStackEntry ->
+                                    val evidenceIdString = backStackEntry.arguments?.getString("evidenceId")
+                                    val evidenceId = remember(evidenceIdString) { evidenceIdString?.toIntOrNull() }
+
+                                    if (evidenceId != null) {
+                                        LaunchedEffect(evidenceId) {
+                                            evidenceViewModel.loadEvidenceDetails(evidenceId)
+                                        }
+                                        val evidence by evidenceViewModel.selectedEvidenceDetails.collectAsState()
+                                        evidence?.let { ev ->
+                                            EvidenceDetailsScreen(
+                                                evidence = ev,
+                                                viewModel = evidenceViewModel
+                                            )
+                                        }
+                                        DisposableEffect(Unit) {
+                                            onDispose {
+                                                evidenceViewModel.clearEvidenceDetails()
+                                            }
+                                        }
+                                    } else {
+                                        Text("Error: Evidence ID not found or invalid.")
                                     }
                                 }
                             }
                         }
                     }
-                    is SignInState.InProgress -> {
+                }
+            }
+            is SignInState.InProgress -> {
+                 BoxWithConstraints(modifier = Modifier.fillMaxSize().padding(paddingValues)){
+                    val halfScreenHeight = this@BoxWithConstraints.maxHeight / 2
+                    Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+                        Spacer(Modifier.height(halfScreenHeight))
                         Box(
-                            modifier = Modifier.fillMaxWidth(), // Box takes full width to align content within it
-                            contentAlignment = Alignment.CenterEnd // Right-align the CircularProgressIndicator
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.CenterEnd
                         ) {
                             CircularProgressIndicator()
                         }
                     }
-                    is SignInState.Idle, is SignInState.Error -> {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth() // Column takes full width for alignment
-                                .padding(horizontal = 16.dp), // Keep horizontal padding for content
-                            horizontalAlignment = Alignment.End // Right-align Button and Text
-                        ) {
-                            Button(onClick = onSignInClick) {
-                                Text(stringResource(R.string.sign_in_with_google))
-                            }
-                            if (signInState is SignInState.Error) {
-                                Spacer(modifier = Modifier.height(16.dp))
-                                Text(
-                                    text = (signInState as SignInState.Error).message,
-                                    color = MaterialTheme.colorScheme.error
-                                )
-                            }
+                }
+            }
+            is SignInState.Idle, is SignInState.Error -> {
+                BoxWithConstraints(modifier = Modifier.fillMaxSize().padding(paddingValues)){
+                    val halfScreenHeight = this@BoxWithConstraints.maxHeight / 2
+                     Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
+                            .padding(horizontal = 16.dp), // Padding for the content itself
+                        horizontalAlignment = Alignment.End
+                    ) {
+                        Spacer(Modifier.height(halfScreenHeight))
+                        Button(onClick = onSignInClick) {
+                            Text(stringResource(R.string.sign_in_with_google))
+                        }
+                        if (currentSignInState is SignInState.Error) {
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = currentSignInState.message,
+                                color = MaterialTheme.colorScheme.error
+                            )
                         }
                     }
                 }
@@ -188,37 +204,31 @@ fun MainScreen(
 fun AuthenticatedView(
     onCreateCase: () -> Unit
 ) {
-    BoxWithConstraints(modifier = Modifier.fillMaxSize()) { // AuthenticatedView also starts halfway
-        val halfViewHeight = this@BoxWithConstraints.maxHeight / 2
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            horizontalAlignment = Alignment.End, // Right-align Text and Button
-            // verticalArrangement = Arrangement.Center - Replaced by Spacer
-        ) {
-            Spacer(Modifier.height(halfViewHeight)) // Push content down
-            Text(
-                text = stringResource(R.string.app_name),
-                style = MaterialTheme.typography.headlineMedium,
-                // modifier = Modifier.padding(bottom = 16.dp) // padding handled by Spacers or direct layout
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = stringResource(R.string.use_navigation_rail),
-                style = MaterialTheme.typography.bodyLarge
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = stringResource(R.string.tap_icon_to_open_menu),
-                style = MaterialTheme.typography.bodyLarge,
-                // modifier = Modifier.padding(bottom = 32.dp)
-            )
-            Spacer(modifier = Modifier.height(32.dp))
-            Button(onClick = onCreateCase) {
-                Text(stringResource(R.string.create_new_case))
-            }
+    Column(
+        modifier = Modifier
+            .fillMaxSize() 
+            .verticalScroll(rememberScrollState()) 
+            .padding(16.dp),
+        horizontalAlignment = Alignment.End, 
+        verticalArrangement = Arrangement.Top // Reverted to Arrangement.Top
+    ) {
+        Text(
+            text = stringResource(R.string.app_name),
+            style = MaterialTheme.typography.headlineMedium
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = stringResource(R.string.use_navigation_rail),
+            style = MaterialTheme.typography.bodyLarge
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = stringResource(R.string.tap_icon_to_open_menu),
+            style = MaterialTheme.typography.bodyLarge
+        )
+        Spacer(modifier = Modifier.height(32.dp))
+        Button(onClick = onCreateCase) {
+            Text(stringResource(R.string.create_new_case))
         }
     }
 }
@@ -246,7 +256,7 @@ fun CreateCaseDialog(
                     .verticalScroll(rememberScrollState())
                     .fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
-                horizontalAlignment = Alignment.End // Right-align TextFields
+                horizontalAlignment = Alignment.End 
             ) {
                 OutlinedTextField(
                     value = caseName,
