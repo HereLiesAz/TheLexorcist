@@ -23,8 +23,12 @@ import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.hereliesaz.lexorcist.ui.ScriptEditorScreen
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
+import com.hereliesaz.lexorcist.viewmodel.ScriptEditorViewModel
 import java.util.Locale
+import com.hereliesaz.lexorcist.ui.CreateCaseDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -81,17 +85,47 @@ fun MainScreen(
                             Spacer(Modifier.height(halfContentAreaHeight)) 
 
                             NavHost(
-                                navController = navController, 
+                                navController = navController,
                                 startDestination = "home",
-                                modifier = Modifier.height(contentAreaViewportHeight) 
+                                modifier = Modifier.height(contentAreaViewportHeight)
                             ) {
-                                composable("home") { AuthenticatedView(onCreateCase = { showCreateCaseDialog = true }) }
+                                composable("home") {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .verticalScroll(rememberScrollState())
+                                            .padding(16.dp),
+                                        horizontalAlignment = Alignment.End,
+                                        verticalArrangement = Arrangement.Top
+                                    ) {
+                                        Text(
+                                            text = stringResource(R.string.app_name),
+                                            style = MaterialTheme.typography.headlineMedium
+                                        )
+                                        Spacer(modifier = Modifier.height(16.dp))
+                                        Text(
+                                            text = stringResource(R.string.use_navigation_rail),
+                                            style = MaterialTheme.typography.bodyLarge
+                                        )
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Text(
+                                            text = stringResource(R.string.tap_icon_to_open_menu),
+                                            style = MaterialTheme.typography.bodyLarge
+                                        )
+                                        Spacer(modifier = Modifier.height(32.dp))
+                                        Button(onClick = { showCreateCaseDialog = true }) {
+                                            Text(stringResource(R.string.create_new_case))
+                                        }
+                                    }
+                                }
                                 composable("cases") { CasesScreen(caseViewModel = caseViewModel) }
-                                composable("evidence") { EvidenceScreen(evidenceViewModel = evidenceViewModel) }
+                                composable("evidence") {
+                                    EvidenceScreen(evidenceViewModel = evidenceViewModel)
+                                }
                                 composable("addons_browser") { AddonsBrowserScreen(onShare = {}) }
                                 composable("script_editor") {
-                                    val context = LocalContext.current
-                                    context.startActivity(Intent(context, ScriptEditorActivity::class.java))
+                                    val scriptEditorViewModel: ScriptEditorViewModel = hiltViewModel()
+                                    ScriptEditorScreen(viewModel = scriptEditorViewModel)
                                 }
                                 composable("add_evidence") {
                                     AddEvidenceScreen(
@@ -179,7 +213,7 @@ fun MainScreen(
                     ) {
                         Spacer(Modifier.height(halfScreenHeight))
                         Button(onClick = onSignInClick) {
-                            Text(stringResource(R.string.sign_in_with_google).uppercase(Locale.getDefault())) // ALL CAPS
+                            Text(stringResource(R.string.sign_in_with_google))
                         }
                         if (currentSignInState is SignInState.Error) {
                             Spacer(modifier = Modifier.height(16.dp))
@@ -202,134 +236,3 @@ fun MainScreen(
     }
 }
 
-@Composable
-fun AuthenticatedView(
-    onCreateCase: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize() 
-            .verticalScroll(rememberScrollState()) 
-            .padding(16.dp),
-        horizontalAlignment = Alignment.End, 
-        verticalArrangement = Arrangement.Top 
-    ) {
-        Text(
-            text = stringResource(R.string.app_name), // App name usually not all caps
-            style = MaterialTheme.typography.headlineMedium
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = stringResource(R.string.use_navigation_rail),
-            style = MaterialTheme.typography.bodyLarge
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = stringResource(R.string.tap_icon_to_open_menu),
-            style = MaterialTheme.typography.bodyLarge
-        )
-        Spacer(modifier = Modifier.height(32.dp))
-        Button(onClick = onCreateCase) {
-            Text(stringResource(R.string.create_new_case).uppercase(Locale.getDefault())) // ALL CAPS
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun CreateCaseDialog(
-    caseViewModel: CaseViewModel,
-    onDismiss: () -> Unit
-) {
-    var caseName by remember { mutableStateOf("") }
-    val defaultExhibitSheetNameStr = stringResource(R.string.default_exhibit_sheet_name)
-    var exhibitSheetName by remember { mutableStateOf(defaultExhibitSheetNameStr) }
-    var caseNumber by remember { mutableStateOf("") }
-    var caseSection by remember { mutableStateOf("") }
-    var caseJudge by remember { mutableStateOf("") }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.create_new_case).uppercase(Locale.getDefault())) }, // ALL CAPS
-        text = {
-            Column(
-                modifier = Modifier
-                    .verticalScroll(rememberScrollState())
-                    .fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                horizontalAlignment = Alignment.End 
-            ) {
-                OutlinedTextField(
-                    value = caseName,
-                    onValueChange = { caseName = it },
-                    label = { Text(stringResource(R.string.case_name_required)) }, // Labels not typically all caps
-                    isError = caseName.isBlank(),
-                    modifier = Modifier.fillMaxWidth()
-                )
-                OutlinedTextField(
-                    value = exhibitSheetName,
-                    onValueChange = { exhibitSheetName = it },
-                    label = { Text(stringResource(R.string.exhibit_sheet_name)) },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                OutlinedTextField(
-                    value = caseNumber,
-                    onValueChange = { caseNumber = it },
-                    label = { Text(stringResource(R.string.case_number)) },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                OutlinedTextField(
-                    value = caseSection,
-                    onValueChange = { caseSection = it },
-                    label = { Text(stringResource(R.string.case_section)) },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                OutlinedTextField(
-                    value = caseJudge,
-                    onValueChange = { caseJudge = it },
-                    label = { Text(stringResource(R.string.judge)) },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-        },
-        confirmButton = {
-            Column(horizontalAlignment = Alignment.End, modifier = Modifier.fillMaxWidth()) { 
-                Button(
-                    onClick = {
-                        if (caseName.isNotBlank()) {
-                            caseViewModel.createCase(
-                                caseName = caseName,
-                                exhibitSheetName = exhibitSheetName.ifBlank { defaultExhibitSheetNameStr },
-                                caseNumber = caseNumber,
-                                caseSection = caseSection,
-                                caseJudge = caseJudge
-                            )
-                            onDismiss()
-                        }
-                    },
-                    enabled = caseName.isNotBlank(),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(stringResource(R.string.create).uppercase(Locale.getDefault())) // ALL CAPS
-                }
-                Spacer(modifier = Modifier.height(8.dp)) 
-                OutlinedButton(
-                    onClick = { 
-                        onDismiss() 
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("OPEN EXISTING CASE".uppercase(Locale.getDefault())) // ALL CAPS
-                }
-            }
-        },
-        dismissButton = {
-            OutlinedButton(
-                onClick = onDismiss, 
-                modifier = Modifier.fillMaxWidth() 
-            ) {
-                Text(stringResource(R.string.cancel).uppercase(Locale.getDefault())) // ALL CAPS
-            }
-        }
-    )
-}

@@ -62,7 +62,7 @@ fun CasesScreen(caseViewModel: CaseViewModel) {
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { caseViewModel.onSearchQueryChanged(it) },
-                    label = { Text(stringResource(R.string.search).uppercase(Locale.getDefault())) }, // ALL CAPS
+                    label = { Text(stringResource(R.string.search)) },
                     modifier = Modifier.weight(1f),
                     leadingIcon = { Icon(Icons.Filled.Search, contentDescription = stringResource(R.string.search)) },
                     singleLine = true
@@ -70,19 +70,19 @@ fun CasesScreen(caseViewModel: CaseViewModel) {
                 Spacer(modifier = Modifier.width(8.dp))
                 IconButton(onClick = {
                     currentSortOrderState = when (currentSortOrderState) {
-                        SortOrder.DATE_DESC -> SortOrder.DATE_ASC
+                        SortOrder.DATE_DESC -> Sort_Order.DATE_ASC
                         SortOrder.DATE_ASC -> SortOrder.NAME_DESC
                         SortOrder.NAME_DESC -> SortOrder.NAME_ASC
                         SortOrder.NAME_ASC -> SortOrder.DATE_DESC
                     }
                 }) {
-                    Icon(Icons.AutoMirrored.Filled.Sort, contentDescription = stringResource(R.string.sort).uppercase(Locale.getDefault())) // ALL CAPS for accessibility if desired, though usually not for CD
+                    Icon(Icons.AutoMirrored.Filled.Sort, contentDescription = stringResource(R.string.sort))
                 }
             }
         },
         floatingActionButton = {
             FloatingActionButton(onClick = { showCreateCaseDialog = true }) {
-                Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.create_new_case).uppercase(Locale.getDefault())) // ALL CAPS
+                Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.create_new_case))
             }
         },
         floatingActionButtonPosition = FabPosition.End
@@ -106,10 +106,10 @@ fun CasesScreen(caseViewModel: CaseViewModel) {
                 ) {
                     Spacer(Modifier.height(scrollOffset)) 
                     val noCasesText = if (searchQuery.isNotBlank()) {
-                        stringResource(R.string.no_cases_match_search).uppercase(Locale.getDefault())
+                        stringResource(R.string.no_cases_match_search)
                     } else {
-                        stringResource(R.string.no_cases_found_line1).uppercase(Locale.getDefault()) + "\n" +
-                        stringResource(R.string.no_cases_found_line2).uppercase(Locale.getDefault())
+                        stringResource(R.string.no_cases_found_line1) + "\n" +
+                        stringResource(R.string.no_cases_found_line2)
                     }
                     Text(
                         text = noCasesText,
@@ -156,27 +156,27 @@ fun CasesScreen(caseViewModel: CaseViewModel) {
 
     if (showDeleteConfirmDialog && longPressedCase != null) {
         AlertDialog(
-            onDismissRequest = { 
-                showDeleteConfirmDialog = false 
+            onDismissRequest = {
+                showDeleteConfirmDialog = false
                 longPressedCase = null
             },
-            title = { Text((stringResource(R.string.delete_case) + ": ${longPressedCase?.name ?: ""}").uppercase(Locale.getDefault())) }, // ALL CAPS
-            text = { Text(stringResource(R.string.delete_case_confirmation, longPressedCase?.name ?: "")) }, // Confirmation text usually not all caps
+            title = { Text((stringResource(R.string.delete_case) + ": ${longPressedCase?.name ?: ""}")) },
+            text = { Text(stringResource(R.string.delete_case_confirmation, longPressedCase?.name ?: "")) },
             confirmButton = {
                 Button(onClick = {
                     longPressedCase?.let { caseViewModel.deleteCaseWithRepository(it) }
                     showDeleteConfirmDialog = false
                     longPressedCase = null
                 }) {
-                    Text(stringResource(R.string.delete).uppercase(Locale.getDefault())) // ALL CAPS
+                    Text(stringResource(R.string.delete))
                 }
             },
             dismissButton = {
-                OutlinedButton(onClick = { 
+                OutlinedButton(onClick = {
                     showDeleteConfirmDialog = false
                     longPressedCase = null
                 }) {
-                    Text(stringResource(R.string.cancel).uppercase(Locale.getDefault())) // ALL CAPS
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )

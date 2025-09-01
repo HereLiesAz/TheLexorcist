@@ -10,6 +10,7 @@ import com.hereliesaz.lexorcist.data.CaseRepository
 import com.hereliesaz.lexorcist.data.Allegation
 import com.hereliesaz.lexorcist.data.SortOrder
 import com.hereliesaz.lexorcist.model.SheetFilter
+import com.hereliesaz.lexorcist.utils.FolderManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,9 +25,8 @@ import javax.inject.Inject
 @HiltViewModel
 class CaseViewModel @Inject constructor(
     @param:ApplicationContext private val applicationContext: Context,
-    private val caseRepository: CaseRepository
-    // private val caseDao: CaseDao // Removed CaseDao
-    // private val authViewModel: AuthViewModel // Assuming this is also a @HiltViewModel
+    private val caseRepository: CaseRepository,
+    private val folderManager: FolderManager?
 ) : ViewModel() {
 
     private val sharedPref = applicationContext.getSharedPreferences("CaseInfoPrefs", Context.MODE_PRIVATE)
@@ -88,6 +88,7 @@ class CaseViewModel @Inject constructor(
 
     init {
         loadDarkModePreference()
+        folderManager?.getOrCreateLocalLexorcistFolder()
         // observeAuthChanges() //TODO: Re-enable this once AuthViewModel is provided correctly
     }
 

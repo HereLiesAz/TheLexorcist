@@ -6,6 +6,9 @@ import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
 
+import android.content.Context;
+import android.os.Environment;
+
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -14,9 +17,26 @@ public class FolderManager {
 
     private static final String TAG = "FolderManager";
     private final Drive googleDriveService;
+    private final Context context;
 
-    public FolderManager(Drive googleDriveService) {
+    public FolderManager(Drive googleDriveService, Context context) {
         this.googleDriveService = googleDriveService;
+        this.context = context;
+    }
+
+    public java.io.File getOrCreateLocalLexorcistFolder() {
+        java.io.File documentsDir = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS);
+        if (documentsDir == null) {
+            // Fallback to internal storage if external is not available
+            documentsDir = context.getFilesDir();
+        }
+        java.io.File lexorcistFolder = new java.io.File(documentsDir, "Lexorcist");
+        if (!lexorcistFolder.exists()) {
+            if (!lexorcistFolder.mkdirs()) {
+                Log.e(TAG, "Failed to create local Lexorcist directory");
+            }
+        }
+        return lexorcistFolder;
     }
 
     public String getOrCreateFolder(String folderName, String parentFolderId) throws IOException {

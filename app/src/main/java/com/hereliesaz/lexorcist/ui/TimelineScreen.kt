@@ -10,10 +10,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 // import androidx.compose.ui.graphics.Color // Not used directly here anymore
-import androidx.compose.ui.res.stringResource // Not used directly here anymore
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.hereliesaz.lexorcist.R
 // import com.hereliesaz.lexorcist.R // Not used directly here anymore
 import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.data.Evidence
@@ -53,21 +54,31 @@ fun TimelineScreen(
         BoxWithConstraints(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             val halfScreenHeight = this@BoxWithConstraints.maxHeight / 2
 
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(), // LazyColumn fills the BoxWithConstraints
-                contentPadding = PaddingValues(
-                    top = halfScreenHeight,
-                    start = 16.dp,
-                    end = 16.dp,
-                    bottom = 16.dp
-                ),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                items(evidenceList) { evidence ->
-                    EvidenceCard(
-                        evidence = evidence,
-                        onClick = { showEvidenceDetailsDialog = evidence }
-                    )
+            if (evidenceList.isEmpty()) {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(stringResource(R.string.no_evidence_placeholder))
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(), // LazyColumn fills the BoxWithConstraints
+                    contentPadding = PaddingValues(
+                        top = halfScreenHeight,
+                        start = 16.dp,
+                        end = 16.dp,
+                        bottom = 16.dp
+                    ),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    items(evidenceList) { evidence ->
+                        EvidenceCard(
+                            evidence = evidence,
+                            onClick = { showEvidenceDetailsDialog = evidence }
+                        )
+                    }
                 }
             }
         }

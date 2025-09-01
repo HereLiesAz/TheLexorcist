@@ -33,16 +33,16 @@ fun AppNavRail(onNavigate: (String) -> Unit) {
     val navAddonsBrowserStr = stringResource(R.string.nav_addons_browser)
     val navScriptEditorStr = stringResource(R.string.nav_script_editor) // Added for route
 
-    val casesText = stringResource(R.string.cases).uppercase(Locale.getDefault())
-    val timelineText = stringResource(R.string.timeline).uppercase(Locale.getDefault())
-    val dataReviewText = stringResource(R.string.data_review).uppercase(Locale.getDefault())
-    val evidenceText = stringResource(R.string.evidence).uppercase(Locale.getDefault())
-    val addText = stringResource(R.string.add).uppercase(Locale.getDefault())
-    val extrasText = "EXTRAS" // Already uppercase, kept for clarity
-    val scriptText = "SCRIPT".uppercase(Locale.getDefault())
-    val settingsText = stringResource(R.string.settings).uppercase(Locale.getDefault())
-    val aboutText = stringResource(R.string.about).uppercase(Locale.getDefault())
-    val feedbackText = stringResource(R.string.feedback).uppercase(Locale.getDefault())
+    val casesText = stringResource(R.string.cases)
+    val timelineText = stringResource(R.string.timeline)
+    val dataReviewText = stringResource(R.string.data_review)
+    val evidenceText = stringResource(R.string.evidence)
+    val addText = stringResource(R.string.add)
+    val extrasText = "Extras"
+    val scriptText = "Script"
+    val settingsText = stringResource(R.string.settings)
+    val aboutText = stringResource(R.string.about)
+    val feedbackText = stringResource(R.string.feedback)
 
     AzNavRail(
         // App name in header, usually not all caps
@@ -80,6 +80,16 @@ fun AppNavRail(onNavigate: (String) -> Unit) {
                         showOnRail = true
                     ),
                     NavItem(
+                        text = addText,
+                        data = NavItemData.Action(onClick = { onNavigate(navAddEvidenceStr) }),
+                        showOnRail = true
+                    ),
+                    NavItem(
+                        text = evidenceText,
+                        data = NavItemData.Action(onClick = { onNavigate(navEvidenceStr) }),
+                        showOnRail = true
+                    ),
+                    NavItem(
                         text = timelineText,
                         data = NavItemData.Action(onClick = { onNavigate(navTimelineStr) }),
                         showOnRail = true
@@ -90,18 +100,8 @@ fun AppNavRail(onNavigate: (String) -> Unit) {
                         showOnRail = false
                     ),
                     NavItem(
-                        text = evidenceText,
-                        data = NavItemData.Action(onClick = { onNavigate(navEvidenceStr) }),
-                        showOnRail = true
-                    ),
-                    NavItem(
-                        text = addText,
-                        data = NavItemData.Action(onClick = { onNavigate(navAddEvidenceStr) }),
-                        showOnRail = true
-                    ),
-                    NavItem(
                         text = extrasText,
-                        data = NavItemData.Action(onClick = { onNavigate(navAddonsBrowserStr) }), 
+                        data = NavItemData.Action(onClick = { onNavigate(navAddonsBrowserStr) }),
                         showOnRail = true
                     ),
                     NavItem(

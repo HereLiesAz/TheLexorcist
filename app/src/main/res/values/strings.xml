@@ -199,6 +199,7 @@
     <string name="load_templates_error_no_api">loadHtmlTemplates: No API service.</string>
     <string name="load_sheet_filters_error_no_api">loadSelectedCaseSheetFilters: No API service.</string>
     <string name="load_allegations_error_no_api">loadAllegations: No API service.</string>
+    <string name="no_evidence_placeholder">There is no evidence in this case yet. Add some evidence to see it on the timeline.</string>
 
     <string-array name="sort_options">
         <item>Sort by Date (Newest)</item>
