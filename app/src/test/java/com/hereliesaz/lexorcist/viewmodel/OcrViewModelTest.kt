@@ -8,8 +8,9 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.hereliesaz.lexorcist.data.EvidenceRepository
 import com.hereliesaz.lexorcist.data.SettingsManager
 import com.hereliesaz.lexorcist.service.ScriptRunner
-import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkStatic
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -22,12 +23,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-
-import com.hereliesaz.lexorcist.data.EvidenceRepository
-import com.hereliesaz.lexorcist.data.SettingsManager
-import com.hereliesaz.lexorcist.service.ScriptRunner
-import io.mockk.coVerify
-import io.mockk.verify
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
@@ -46,9 +41,6 @@ class OcrViewModelTest {
     private lateinit var settingsManager: SettingsManager
     private lateinit var scriptRunner: ScriptRunner
     private lateinit var application: Application
-    private lateinit var evidenceRepository: EvidenceRepository
-    private lateinit var settingsManager: SettingsManager
-    private lateinit var scriptRunner: ScriptRunner
 
     @Before
     fun setup() {
@@ -57,8 +49,6 @@ class OcrViewModelTest {
         evidenceRepository = mockk(relaxed = true)
         settingsManager = mockk(relaxed = true)
         scriptRunner = mockk(relaxed = true)
-        mockkStatic(Log::class)
-        every { Log.d(any(), any()) } returns 0
         ocrViewModel = OcrViewModel(application, evidenceRepository, settingsManager, scriptRunner)
     }
 

@@ -61,7 +61,7 @@ class EvidenceViewModelTest {
 
         // When
         evidenceViewModel.loadEvidenceForCase(caseId, spreadsheetId)
-        testDispatcher.scheduler.advanceUntilIdle()
+        testDispatcher.scheduler.runCurrent()
 
         // Then
         assertEquals(evidenceList, evidenceViewModel.evidenceList.value)

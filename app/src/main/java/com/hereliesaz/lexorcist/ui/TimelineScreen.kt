@@ -35,12 +35,17 @@ fun TimelineScreen(
             TopAppBar(
                 title = { Text(text = case.name) },
                 actions = {
-                    OutlinedTextField(
-                        value = searchQuery,
-                        onValueChange = { evidenceViewModel.onSearchQueryChanged(it) },
-                        label = { Text("Search") },
-                        modifier = Modifier.padding(end = 16.dp) // Keep padding for the search field in TopAppBar
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        OutlinedTextField(
+                            value = searchQuery,
+                            onValueChange = { evidenceViewModel.onSearchQueryChanged(it) },
+                            label = { Text("Search") },
+                            modifier = Modifier.padding(end = 16.dp) // Keep padding for the search field in TopAppBar
+                        )
+                    }
                 }
             )
         }
