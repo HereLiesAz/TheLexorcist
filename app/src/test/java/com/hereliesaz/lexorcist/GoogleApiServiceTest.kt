@@ -216,7 +216,7 @@ class GoogleApiServiceTest {
         val getRequest = mockk<Sheets.Spreadsheets.Values.Get>()
         every { getRequest.execute() } returns valueRange
         val valuesMock = mockk<Sheets.Spreadsheets.Values>()
-        every { valuesMock.get(any(), any()) } returns getRequest
+        every { valuesMock.get(eq("registry_id"), eq("Sheet1!A:M")) } returns getRequest
         val spreadsheetsMock = mockk<Sheets.Spreadsheets>()
         every { spreadsheetsMock.values() } returns valuesMock
         every { sheets.spreadsheets() } returns spreadsheetsMock
