@@ -62,8 +62,24 @@ class EvidenceRepositoryImpl @Inject constructor(
     }
 
     override suspend fun addEvidence(evidence: Evidence) {
-        val values = listOf(evidence.toSheetRow())
-        googleApiService?.appendData(evidence.spreadsheetId, "Evidence", values)
+        val values = listOf(
+            listOf(
+                evidence.id.toString(),
+                evidence.caseId.toString(),
+                evidence.type,
+                evidence.content,
+                evidence.timestamp.toString(),
+                evidence.sourceDocument,
+                evidence.documentDate.toString(),
+                evidence.allegationId?.toString() ?: "",
+                evidence.category,
+                evidence.tags.joinToString(","),
+                evidence.commentary ?: "",
+                evidence.linkedEvidenceIds.joinToString(","),
+                evidence.parentVideoId ?: ""
+            )
+        )
+        googleApiService?.appendData(evidence.spreadsheetId, "Evidence!A1", values)
     }
 
     override suspend fun updateEvidence(evidence: Evidence) {
@@ -72,7 +88,21 @@ class EvidenceRepositoryImpl @Inject constructor(
         if (evidenceSheet != null) {
             val evidenceList = evidenceSheet.map { row ->
                 if (row[0].toString().toInt() == evidence.id) {
-                    evidence.toSheetRow()
+                    listOf(
+                        evidence.id.toString(),
+                        evidence.caseId.toString(),
+                        evidence.type,
+                        evidence.content,
+                        evidence.timestamp.toString(),
+                        evidence.sourceDocument,
+                        evidence.documentDate.toString(),
+                        evidence.allegationId?.toString() ?: "",
+                        evidence.category,
+                        evidence.tags.joinToString(","),
+                        evidence.commentary ?: "",
+                        evidence.linkedEvidenceIds.joinToString(","),
+                        evidence.parentVideoId ?: ""
+                    )
                 } else {
                     row
                 }
