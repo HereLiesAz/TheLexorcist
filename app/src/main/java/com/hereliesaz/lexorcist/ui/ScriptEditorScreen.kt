@@ -13,7 +13,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.viewmodel.ScriptEditorViewModel
-import com.hereliesaz.lexorcist.model.SaveState
+import com.hereliesaz.lexorcist.common.state.SaveState
 
 @Composable
 fun ScriptEditorScreen(viewModel: ScriptEditorViewModel) {

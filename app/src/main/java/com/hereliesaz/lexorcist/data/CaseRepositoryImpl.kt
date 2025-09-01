@@ -11,14 +11,14 @@ import javax.inject.Singleton
 
 @Singleton
 class CaseRepositoryImpl @Inject constructor(
-    private val googleApiService: GoogleApiService?, // Changed to nullable
+    // Changed to nullable
+    private val googleApiService: GoogleApiService?,
     private val settingsManager: SettingsManager,
     private val errorReporter: com.hereliesaz.lexorcist.utils.ErrorReporter
 ) : CaseRepository {
 
     private val _cases = kotlinx.coroutines.flow.MutableStateFlow<List<Case>>(emptyList())
-
-    override fun getAllCases(): Flow<List<Case>> = _cases.asStateFlow()
+    override val cases: Flow<List<Case>> = _cases.asStateFlow()
 
     override suspend fun getCaseBySpreadsheetId(spreadsheetId: String): Case? {
         return _cases.value.find { it.spreadsheetId == spreadsheetId }
@@ -61,7 +61,8 @@ class CaseRepositoryImpl @Inject constructor(
                         return
                     }
                     val newCase = Case(
-                        id = 0, // ID will be assigned by registry
+                        // ID will be assigned by registry
+                        id = 0,
                         name = caseName,
                         spreadsheetId = spreadsheetId,
                         folderId = caseFolderId,

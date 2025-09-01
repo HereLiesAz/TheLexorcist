@@ -5,7 +5,7 @@ import com.hereliesaz.lexorcist.model.SheetFilter
 import kotlinx.coroutines.flow.Flow
 
 interface CaseRepository {
-    fun getAllCases(): Flow<List<Case>> // Renamed from getCases
+    val cases: Flow<List<Case>> // Renamed from getCases
     suspend fun getCaseBySpreadsheetId(spreadsheetId: String): Case?
     suspend fun refreshCases()
     suspend fun createCase(
