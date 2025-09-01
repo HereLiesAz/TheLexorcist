@@ -1,39 +1,34 @@
-// --- GLOBAL CONFIGURATION ---
-const TEMPLATE_IDS = {
-  'Cover Sheet': '1UXHuHvU3BzzIRr27ih9NT1QZPOA7t_WOwl7u89wAo8M',
-  'Metadata': '1tG9AjZKirK0lUfvCqQG-5KB2T6x4IueMjFEJVX_STFM',
-  'Affidavit': '13dSwwRSUjqHKFno6BKtnqNInujWmH89_blMMxtRdfxA',
-  'Chain of Custody': '1WEow0qDAz2hxyR3CuXuVMf9Z9uTK5XbcpBG4sXI1scA',
-  'Table of Exhibits': '128Yj6DagYMm-6TvTPvX_ok8qoLhd73ozpFqmCZy9NKM'
-};
-const EXHIBIT_SHEET_NAME = 'Exhibit Matrix - Exhibit List';
-const CASE_INFO_SHEET_NAME = 'Case Info';
-
+/**
+ * @fileoverview Main script file for the Lexorcist Google Apps Script.
+ * This script is responsible for generating legal documents from a Google Sheet.
+ * It uses a configuration object 'CONFIG' which is expected to be in the global scope.
+ * The 'CONFIG' object is defined in 'apps_script_config.js'.
+ */
 
 // --- MASTER MENU ---
 
 function onOpen() {
   const ui = SpreadsheetApp.getUi();
-  const menu = ui.createMenu('Case Tools');
+  const menu = ui.createMenu(CONFIG.MENU_LABELS.MAIN_MENU);
 
-  const docMenu = ui.createMenu('Document Generation');
-  docMenu.addItem('Generate Cover Sheet', 'generateCoverSheetForRow');
-  docMenu.addItem('Generate Supporting Docs (Metadata/CoC)', 'generateSupportingDocs');
-  docMenu.addItem('Generate Affidavit of Authenticity', 'generateAffidavit');
-  docMenu.addItem('Generate Table of Exhibits', 'generateTableOfExhibits');
+  const docMenu = ui.createMenu(CONFIG.MENU_LABELS.DOC_MENU);
+  docMenu.addItem(CONFIG.MENU_LABELS.GENERATE_COVER_SHEET, 'generateCoverSheetForRow');
+  docMenu.addItem(CONFIG.MENU_LABELS.GENERATE_SUPPORTING_DOCS, 'generateSupportingDocs');
+  docMenu.addItem(CONFIG.MENU_LABELS.GENERATE_AFFIDAVIT, 'generateAffidavit');
+  docMenu.addItem(CONFIG.MENU_LABELS.GENERATE_TABLE_OF_EXHIBITS, 'generateTableOfExhibits');
   docMenu.addSeparator();
-  docMenu.addItem('Assemble Final Exhibit', 'assembleFinalExhibit');
+  docMenu.addItem(CONFIG.MENU_LABELS.ASSEMBLE_FINAL_EXHIBIT, 'assembleFinalExhibit');
   menu.addSubMenu(docMenu);
 
-  const analysisMenu = ui.createMenu('Analysis & Tools');
-  analysisMenu.addItem('Calculate Payroll Damages', 'calculatePayrollDamages');
-  analysisMenu.addItem('Generate Master Index', 'generateMasterIndex');
+  const analysisMenu = ui.createMenu(CONFIG.MENU_LABELS.ANALYSIS_MENU);
+  analysisMenu.addItem(CONFIG.MENU_LABELS.CALCULATE_PAYROLL_DAMAGES, 'calculatePayrollDamages');
+  analysisMenu.addItem(CONFIG.MENU_LABELS.GENERATE_MASTER_INDEX, 'generateMasterIndex');
   analysisMenu.addSeparator();
-  analysisMenu.addItem('Run Full Test Suite', 'runFullTestSuite');
+  analysisMenu.addItem(CONFIG.MENU_LABELS.RUN_FULL_TEST_SUITE, 'runFullTestSuite');
   menu.addSubMenu(analysisMenu);
 
   menu.addSeparator();
-  menu.addItem('Create Instructions Sheet', 'createInstructionsSheet');
+  menu.addItem(CONFIG.MENU_LABELS.CREATE_INSTRUCTIONS_SHEET, 'createInstructionsSheet');
   menu.addToUi();
 }
 
@@ -73,7 +68,7 @@ function runFullTestSuite() {
       body.replaceText('{{EXHIBIT_NUMBER}}', testData.exhibitNumber);
       body.replaceText('{{EXHIBIT_NAME}}', testData.exhibitName);
       body.replaceText('{{EXHIBIT_DATE}}', testData.exhibitDate);
-      createPdfFromDoc(coverDoc, getOrCreateFolder('Generated Cover Sheets'), `${testData.exhibitNumber} - Cover Sheet.pdf`);
+      createPdfFromDoc(coverDoc, getOrCreateFolder(CONFIG.FOLDER_NAMES.COVER_SHEETS), `${testData.exhibitNumber} - Cover Sheet.pdf`);
     }
 
     // Generate Supporting Docs
@@ -89,7 +84,7 @@ function runFullTestSuite() {
       body.replaceText('{{AFFIANT_NAME}}', testData.affiantName);
       body.replaceText('{{AFFIANT_TITLE}}', testData.affiantTitle);
       body.replaceText('{{CURRENT_DATE}}', new Date().toLocaleDateString("en-US"));
-      createPdfFromDoc(affDoc, getOrCreateFolder('Generated Affidavits'), `${testData.exhibitNumber} - Affidavit.pdf`);
+      createPdfFromDoc(affDoc, getOrCreateFolder(CONFIG.FOLDER_NAMES.AFFIDAVITS), `${testData.exhibitNumber} - Affidavit.pdf`);
     }
 
     // Generate Table of Exhibits
@@ -114,8 +109,8 @@ function runFullTestSuite() {
 
 function generateCoverSheetForRow() {
   const ui = SpreadsheetApp.getUi();
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(EXHIBIT_SHEET_NAME);
-  if (!sheet) { ui.alert(`Error: Sheet named "${EXHIBIT_SHEET_NAME}" not found.`); return; }
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CONFIG.SHEET_NAMES.EXHIBIT_SHEET_NAME);
+  if (!sheet) { ui.alert(`Error: Sheet named "${CONFIG.SHEET_NAMES.EXHIBIT_SHEET_NAME}" not found.`); return; }
   
   const activeRow = sheet.getActiveRange().getRow();
   const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
@@ -132,7 +127,7 @@ function generateCoverSheetForRow() {
     body.replaceText('{{EXHIBIT_NAME}}', data.exhibitName);
     body.replaceText('{{EXHIBIT_DATE}}', data.exhibitDate);
     
-    const pdfFile = createPdfFromDoc(doc, getOrCreateFolder('Generated Cover Sheets'));
+    const pdfFile = createPdfFromDoc(doc, getOrCreateFolder(CONFIG.FOLDER_NAMES.COVER_SHEETS));
     updateLinkInSheet(sheet, activeRow, 'Link: Cover Sheet', pdfFile.getUrl(), headers);
     ui.alert(`Cover Sheet for ${data.exhibitNumber} has been generated and linked.`);
   } catch (e) {
@@ -143,8 +138,8 @@ function generateCoverSheetForRow() {
 
 function generateSupportingDocs(isTest, testData) {
   const ui = SpreadsheetApp.getUi();
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(EXHIBIT_SHEET_NAME);
-  if (!sheet && !isTest) { ui.alert(`Error: Sheet named "${EXHIBIT_SHEET_NAME}" not found.`); return; }
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CONFIG.SHEET_NAMES.EXHIBIT_SHEET_NAME);
+  if (!sheet && !isTest) { ui.alert(`Error: Sheet named "${CONFIG.SHEET_NAMES.EXHIBIT_SHEET_NAME}" not found.`); return; }
   
   let data, activeRow, headers;
   if(isTest){
@@ -160,7 +155,7 @@ function generateSupportingDocs(isTest, testData) {
   let metaDoc, cocDoc;
   try {
     const exhibitFile = DriveApp.getFileById(data.exhibitFileId);
-    const outputFolder = getOrCreateFolder('Generated Supporting Docs');
+    const outputFolder = getOrCreateFolder(CONFIG.FOLDER_NAMES.SUPPORTING_DOCS);
     const stampDate = new Date().toLocaleString();
 
     metaDoc = getDocFromTab('Metadata', `TEMP - ${data.exhibitNumber} - Metadata`);
@@ -207,8 +202,8 @@ function generateSupportingDocs(isTest, testData) {
 
 function generateAffidavit() {
   const ui = SpreadsheetApp.getUi();
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(EXHIBIT_SHEET_NAME);
-  if (!sheet) { ui.alert(`Error: Sheet named "${EXHIBIT_SHEET_NAME}" not found.`); return; }
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CONFIG.SHEET_NAMES.EXHIBIT_SHEET_NAME);
+  if (!sheet) { ui.alert(`Error: Sheet named "${CONFIG.SHEET_NAMES.EXHIBIT_SHEET_NAME}" not found.`); return; }
   
   const activeRow = sheet.getActiveRange().getRow();
   const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
@@ -227,7 +222,7 @@ function generateAffidavit() {
     body.replaceText('{{AFFIANT_NAME}}', data.affiantName);
     body.replaceText('{{AFFIANT_TITLE}}', data.affiantTitle);
     body.replaceText('{{CURRENT_DATE}}', new Date().toLocaleDateString("en-US"));
-    const pdfFile = createPdfFromDoc(doc, getOrCreateFolder('Generated Affidavits'), `${data.exhibitNumber} - Affidavit.pdf`);
+    const pdfFile = createPdfFromDoc(doc, getOrCreateFolder(CONFIG.FOLDER_NAMES.AFFIDAVITS), `${data.exhibitNumber} - Affidavit.pdf`);
     updateLinkInSheet(sheet, activeRow, 'Link: Affidavit', pdfFile.getUrl(), headers);
     ui.alert(`Affidavit for ${data.exhibitNumber} has been generated and linked.`);
   } catch (e) {
@@ -238,8 +233,8 @@ function generateAffidavit() {
 
 function generateTableOfExhibits() {
   const ui = SpreadsheetApp.getUi();
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(EXHIBIT_SHEET_NAME);
-  if (!sheet) { ui.alert(`Error: Sheet named "${EXHIBIT_SHEET_NAME}" not found.`); return; }
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CONFIG.SHEET_NAMES.EXHIBIT_SHEET_NAME);
+  if (!sheet) { ui.alert(`Error: Sheet named "${CONFIG.SHEET_NAMES.EXHIBIT_SHEET_NAME}" not found.`); return; }
   
   const allData = sheet.getDataRange().getValues();
   allData.shift();
@@ -266,7 +261,7 @@ function generateTableOfExhibits() {
       table.getRow(0).editAsText().setBold(true);
       parentContainer.removeChild(placeholderElement);
     }
-    const pdfFile = createPdfFromDoc(doc, getOrCreateFolder('Generated Exhibits'), 'Table of Exhibits.pdf');
+    const pdfFile = createPdfFromDoc(doc, getOrCreateFolder(CONFIG.FOLDER_NAMES.EXHIBITS), 'Table of Exhibits.pdf');
     if(SpreadsheetApp.getUi()){ ui.alert(`"${pdfFile.getName()}" has been generated successfully.`); }
   } catch (e) {
     ui.alert(`An error occurred: ${e.message}`);
@@ -276,8 +271,8 @@ function generateTableOfExhibits() {
 
 function assembleFinalExhibit(isTest, testData) {
   const ui = SpreadsheetApp.getUi();
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(EXHIBIT_SHEET_NAME);
-  if (!sheet && !isTest) { ui.alert(`Error: Sheet named "${EXHIBIT_SHEET_NAME}" not found.`); return; }
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CONFIG.SHEET_NAMES.EXHIBIT_SHEET_NAME);
+  if (!sheet && !isTest) { ui.alert(`Error: Sheet named "${CONFIG.SHEET_NAMES.EXHIBIT_SHEET_NAME}" not found.`); return; }
   
   let data, activeRow, headers;
   if(isTest){
@@ -296,7 +291,7 @@ function assembleFinalExhibit(isTest, testData) {
   try {
     const exhibitFile = DriveApp.getFileById(data.exhibitFileId);
     const mimeType = exhibitFile.getMimeType();
-    const outputFolder = getOrCreateFolder('Generated Exhibits [FINAL]');
+    const outputFolder = getOrCreateFolder(CONFIG.FOLDER_NAMES.FINAL_EXHIBITS);
 
     const coverBody = coverDoc.getBody();
     replaceCasePlaceholders(coverBody, data);
@@ -343,7 +338,7 @@ let caseInfoMap = null;
 function getCaseInfo() {
   if (caseInfoMap === null) {
     caseInfoMap = {}; // Initialize to avoid re-fetching on failure
-    const caseInfoSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CASE_INFO_SHEET_NAME);
+    const caseInfoSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CONFIG.SHEET_NAMES.CASE_INFO_SHEET_NAME);
     if (caseInfoSheet) {
       const caseInfoData = caseInfoSheet.getDataRange().getValues();
       caseInfoData.forEach(row => {
@@ -394,7 +389,7 @@ function getActiveRowData(sheet, activeRow, headers) {
 }
 
 function getDocFromTab(tabTitle, newDocName) {
-  const templateId = TEMPLATE_IDS[tabTitle];
+  const templateId = CONFIG.TEMPLATE_IDS[tabTitle];
   if (!templateId) {
     Logger.log('Template not found for title: ' + tabTitle);
     return null;
