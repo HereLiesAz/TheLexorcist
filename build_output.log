@@ -1,4 +1,3 @@
-Starting a Gradle Daemon (subsequent builds will be faster)
 WARNING: The following problems were found when resolving the SDK location:
 Where: sdk.dir property in local.properties file. Problem: Directory does not exist
 
@@ -19,6 +18,8 @@ Where: sdk.dir property in local.properties file. Problem: Directory does not ex
 > Task :app:extractDeepLinksDebug UP-TO-DATE
 > Task :app:processDebugMainManifest UP-TO-DATE
 > Task :app:processDebugManifest UP-TO-DATE
+> Task :app:processDebugManifestForPackage UP-TO-DATE
+> Task :app:processDebugResources UP-TO-DATE
 > Task :app:javaPreCompileDebug UP-TO-DATE
 > Task :app:mergeDebugShaders UP-TO-DATE
 > Task :app:compileDebugShaders NO-SOURCE
@@ -26,52 +27,253 @@ Where: sdk.dir property in local.properties file. Problem: Directory does not ex
 > Task :app:mergeDebugAssets UP-TO-DATE
 > Task :app:compressDebugAssets UP-TO-DATE
 > Task :app:desugarDebugFileDependencies UP-TO-DATE
-> Task :app:mergeDebugJniLibFolders
-> Task :app:checkDebugDuplicateClasses
-> Task :app:processDebugManifestForPackage
-> Task :app:mergeExtDexDebug
-> Task :app:mergeLibDexDebug
-> Task :app:mergeDebugNativeLibs
-
-> Task :app:stripDebugDebugSymbols
-Unable to strip the following libraries, packaging them as they are: libandroidx.graphics.path.so, libc++_shared.so, libdatastore_shared_counter.so, libopencv_java4.so. Run with --info option to learn more.
-
-> Task :app:processDebugResources
-> Task :app:validateSigningDebug
-> Task :app:writeDebugAppMetadata
-> Task :app:writeDebugSigningConfigVersions
+> Task :app:checkDebugDuplicateClasses UP-TO-DATE
+> Task :app:mergeExtDexDebug UP-TO-DATE
+> Task :app:mergeLibDexDebug UP-TO-DATE
+> Task :app:mergeDebugJniLibFolders UP-TO-DATE
+> Task :app:mergeDebugNativeLibs UP-TO-DATE
+> Task :app:stripDebugDebugSymbols UP-TO-DATE
+> Task :app:validateSigningDebug UP-TO-DATE
+> Task :app:writeDebugAppMetadata UP-TO-DATE
+> Task :app:writeDebugSigningConfigVersions UP-TO-DATE
 > Task :app:preReleaseBuild UP-TO-DATE
-> Task :app:mergeReleaseJniLibFolders
-> Task :app:checkReleaseDuplicateClasses
-> Task :app:buildKotlinToolingMetadata
-> Task :app:checkReleaseAarMetadata
-> Task :app:mergeReleaseNativeLibs
-> Task :app:processReleaseNavigationResources
-
-> Task :app:stripReleaseDebugSymbols
-Unable to strip the following libraries, packaging them as they are: libandroidx.graphics.path.so, libc++_shared.so, libdatastore_shared_counter.so, libopencv_java4.so. Run with --info option to learn more.
-
-> Task :app:compileReleaseNavigationResources
-> Task :app:generateReleaseResValues
-> Task :app:extractReleaseNativeSymbolTables
-> Task :app:mapReleaseSourceSetPaths
+> Task :app:mergeReleaseJniLibFolders UP-TO-DATE
+> Task :app:mergeReleaseNativeLibs UP-TO-DATE
+> Task :app:stripReleaseDebugSymbols UP-TO-DATE
+> Task :app:extractReleaseNativeSymbolTables UP-TO-DATE
 > Task :app:mergeReleaseNativeDebugMetadata NO-SOURCE
-> Task :app:generateReleaseResources
+> Task :app:checkReleaseDuplicateClasses UP-TO-DATE
+> Task :app:buildKotlinToolingMetadata UP-TO-DATE
+> Task :app:checkReleaseAarMetadata UP-TO-DATE
+> Task :app:processReleaseNavigationResources UP-TO-DATE
+> Task :app:compileReleaseNavigationResources UP-TO-DATE
+> Task :app:generateReleaseResValues UP-TO-DATE
+> Task :app:mapReleaseSourceSetPaths UP-TO-DATE
+> Task :app:generateReleaseResources UP-TO-DATE
+> Task :app:mergeReleaseResources UP-TO-DATE
+> Task :app:packageReleaseResources UP-TO-DATE
+> Task :app:parseReleaseLocalResources UP-TO-DATE
+> Task :app:createReleaseCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksRelease UP-TO-DATE
+> Task :app:processReleaseMainManifest UP-TO-DATE
+> Task :app:processReleaseManifest UP-TO-DATE
+> Task :app:processReleaseManifestForPackage UP-TO-DATE
+> Task :app:processReleaseResources UP-TO-DATE
 > Task :app:kspDebugKotlin
-> Task :app:packageReleaseResources
-> Task :app:createReleaseCompatibleScreenManifests
-> Task :app:extractDeepLinksRelease
-> Task :app:parseReleaseLocalResources
-> Task :app:mergeReleaseResources
+> Task :app:javaPreCompileRelease UP-TO-DATE
+> Task :app:desugarReleaseFileDependencies UP-TO-DATE
+> Task :app:mergeReleaseStartupProfile UP-TO-DATE
+> Task :app:mergeExtDexRelease UP-TO-DATE
+> Task :app:mergeReleaseArtProfile UP-TO-DATE
+> Task :app:mergeReleaseShaders UP-TO-DATE
+> Task :app:compileReleaseShaders NO-SOURCE
+> Task :app:generateReleaseAssets UP-TO-DATE
+> Task :app:mergeReleaseAssets UP-TO-DATE
+> Task :app:compressReleaseAssets UP-TO-DATE
+> Task :app:extractReleaseVersionControlInfo
+> Task :app:extractProguardFiles UP-TO-DATE
+> Task :app:optimizeReleaseResources UP-TO-DATE
+> Task :app:collectReleaseDependencies UP-TO-DATE
+> Task :app:sdkReleaseDependencyData UP-TO-DATE
+> Task :app:writeReleaseAppMetadata UP-TO-DATE
+> Task :app:writeReleaseSigningConfigVersions UP-TO-DATE
+> Task :app:preDebugAndroidTestBuild SKIPPED
+> Task :app:generateDebugAndroidTestResValues UP-TO-DATE
+> Task :app:preDebugUnitTestBuild UP-TO-DATE
+> Task :app:javaPreCompileDebugUnitTest UP-TO-DATE
+> Task :app:preReleaseUnitTestBuild UP-TO-DATE
+> Task :app:javaPreCompileReleaseUnitTest UP-TO-DATE
+> Task :app:kspReleaseKotlin
 
-> Task :app:processReleaseMainManifest
-/app/app/src/main/AndroidManifest.xml:9:5-71 Warning:
-	Element uses-permission#android.permission.RECORD_AUDIO at AndroidManifest.xml:9:5-71 duplicated with element declared at AndroidManifest.xml:6:5-71
+> Task :app:compileDebugKotlin
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/GoogleApiService.kt:6:8 'class JacksonFactory : JsonFactory' is deprecated. Deprecated in Java.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/GoogleApiService.kt:25:43 'class JacksonFactory : JsonFactory' is deprecated. Deprecated in Java.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/GoogleApiService.kt:28:44 'class JacksonFactory : JsonFactory' is deprecated. Deprecated in Java.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainActivity.kt:44:51 'fun getSignInCredentialFromIntent(p0: Intent?): SignInCredential' is deprecated. Deprecated in Java.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/data/SettingsManager.kt:19:43 This annotation is currently applied to the value parameter only, but in the future it will also be applied to field.
+- To opt in to applying to both value parameter and field, add '-Xannotation-default-target=param-property' to your compiler arguments.
+- To keep applying to the value parameter only, use the '@param:' annotation target.
 
-> Task :app:processReleaseManifest
-> Task :app:desugarReleaseFileDependencies
-> Task :app:mergeReleaseStartupProfile
-> Task :app:javaPreCompileRelease
-> Task :app:processReleaseManifestForPackage
-> Task :app:processReleaseResources
-> Task :app:mergeExtDexRelease
+See https://youtrack.jetbrains.com/issue/KT-73255 for more details.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/di/AppModule.kt:4:8 'class GoogleSignIn : Any' is deprecated. Deprecated in Java.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/di/AppModule.kt:5:8 'class GoogleSignInClient : GoogleApi<GoogleSignInOptions!>' is deprecated. Deprecated in Java.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/di/AppModule.kt:6:8 'class GoogleSignInOptions : AbstractSafeParcelable, Api.ApiOptions.Optional, ReflectedParcelable' is deprecated. Deprecated in Java.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/di/AppModule.kt:23:74 'class GoogleSignInClient : GoogleApi<GoogleSignInOptions!>' is deprecated. Deprecated in Java.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/di/AppModule.kt:24:19 'class GoogleSignInOptions : AbstractSafeParcelable, Api.ApiOptions.Optional, ReflectedParcelable' is deprecated. Deprecated in Java.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/di/AppModule.kt:24:47 'class GoogleSignInOptions : AbstractSafeParcelable, Api.ApiOptions.Optional, ReflectedParcelable' is deprecated. Deprecated in Java.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/di/AppModule.kt:28:16 'class GoogleSignIn : Any' is deprecated. Deprecated in Java.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/di/SheetModule.kt:4:8 'class GoogleSignIn : Any' is deprecated. Deprecated in Java.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/di/SheetModule.kt:24:27 'class GoogleSignIn : Any' is deprecated. Deprecated in Java.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/CasesScreen.kt:79:39 'val Icons.Filled.Sort: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.Sort.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/AuthViewModel.kt:8:8 'class BeginSignInRequest : AbstractSafeParcelable' is deprecated. Deprecated in Java.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/AuthViewModel.kt:11:8 'class SignInCredential : AbstractSafeParcelable' is deprecated. Deprecated in Java.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/AuthViewModel.kt:44:35 'class BeginSignInRequest : AbstractSafeParcelable' is deprecated. Deprecated in Java.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/AuthViewModel.kt:46:17 'class BeginSignInRequest : AbstractSafeParcelable' is deprecated. Deprecated in Java.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/AuthViewModel.kt:46:36 'class GoogleIdTokenRequestOptions : AbstractSafeParcelable' is deprecated. Deprecated in Java.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/AuthViewModel.kt:55:22 'fun beginSignIn(p0: BeginSignInRequest): Task<BeginSignInResult!>' is deprecated. Deprecated in Java.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/AuthViewModel.kt:74:35 'class BeginSignInRequest : AbstractSafeParcelable' is deprecated. Deprecated in Java.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/AuthViewModel.kt:76:17 'class BeginSignInRequest : AbstractSafeParcelable' is deprecated. Deprecated in Java.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/AuthViewModel.kt:76:36 'class GoogleIdTokenRequestOptions : AbstractSafeParcelable' is deprecated. Deprecated in Java.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/AuthViewModel.kt:85:22 'fun beginSignIn(p0: BeginSignInRequest): Task<BeginSignInResult!>' is deprecated. Deprecated in Java.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/AuthViewModel.kt:97:36 'class SignInCredential : AbstractSafeParcelable' is deprecated. Deprecated in Java.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/AuthViewModel.kt:113:22 'fun signOut(): Task<Void!>' is deprecated. Deprecated in Java.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/CaseViewModel.kt:26:5 This annotation is currently applied to the value parameter only, but in the future it will also be applied to field.
+- To opt in to applying to both value parameter and field, add '-Xannotation-default-target=param-property' to your compiler arguments.
+- To keep applying to the value parameter only, use the '@param:' annotation target.
+
+See https://youtrack.jetbrains.com/issue/KT-73255 for more details.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModel.kt:58:17 Condition is always 'true'.
+
+> Task :app:compileReleaseKotlin
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/GoogleApiService.kt:6:8 'class JacksonFactory : JsonFactory' is deprecated. Deprecated in Java.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/GoogleApiService.kt:25:43 'class JacksonFactory : JsonFactory' is deprecated. Deprecated in Java.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/GoogleApiService.kt:28:44 'class JacksonFactory : JsonFactory' is deprecated. Deprecated in Java.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/MainActivity.kt:44:51 'fun getSignInCredentialFromIntent(p0: Intent?): SignInCredential' is deprecated. Deprecated in Java.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/data/SettingsManager.kt:19:43 This annotation is currently applied to the value parameter only, but in the future it will also be applied to field.
+- To opt in to applying to both value parameter and field, add '-Xannotation-default-target=param-property' to your compiler arguments.
+- To keep applying to the value parameter only, use the '@param:' annotation target.
+
+See https://youtrack.jetbrains.com/issue/KT-73255 for more details.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/di/AppModule.kt:4:8 'class GoogleSignIn : Any' is deprecated. Deprecated in Java.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/di/AppModule.kt:5:8 'class GoogleSignInClient : GoogleApi<GoogleSignInOptions!>' is deprecated. Deprecated in Java.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/di/AppModule.kt:6:8 'class GoogleSignInOptions : AbstractSafeParcelable, Api.ApiOptions.Optional, ReflectedParcelable' is deprecated. Deprecated in Java.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/di/AppModule.kt:23:74 'class GoogleSignInClient : GoogleApi<GoogleSignInOptions!>' is deprecated. Deprecated in Java.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/di/AppModule.kt:24:19 'class GoogleSignInOptions : AbstractSafeParcelable, Api.ApiOptions.Optional, ReflectedParcelable' is deprecated. Deprecated in Java.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/di/AppModule.kt:24:47 'class GoogleSignInOptions : AbstractSafeParcelable, Api.ApiOptions.Optional, ReflectedParcelable' is deprecated. Deprecated in Java.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/di/AppModule.kt:28:16 'class GoogleSignIn : Any' is deprecated. Deprecated in Java.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/di/SheetModule.kt:4:8 'class GoogleSignIn : Any' is deprecated. Deprecated in Java.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/di/SheetModule.kt:24:27 'class GoogleSignIn : Any' is deprecated. Deprecated in Java.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/CasesScreen.kt:79:39 'val Icons.Filled.Sort: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.Sort.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/AuthViewModel.kt:8:8 'class BeginSignInRequest : AbstractSafeParcelable' is deprecated. Deprecated in Java.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/AuthViewModel.kt:11:8 'class SignInCredential : AbstractSafeParcelable' is deprecated. Deprecated in Java.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/AuthViewModel.kt:44:35 'class BeginSignInRequest : AbstractSafeParcelable' is deprecated. Deprecated in Java.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/AuthViewModel.kt:46:17 'class BeginSignInRequest : AbstractSafeParcelable' is deprecated. Deprecated in Java.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/AuthViewModel.kt:46:36 'class GoogleIdTokenRequestOptions : AbstractSafeParcelable' is deprecated. Deprecated in Java.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/AuthViewModel.kt:55:22 'fun beginSignIn(p0: BeginSignInRequest): Task<BeginSignInResult!>' is deprecated. Deprecated in Java.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/AuthViewModel.kt:74:35 'class BeginSignInRequest : AbstractSafeParcelable' is deprecated. Deprecated in Java.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/AuthViewModel.kt:76:17 'class BeginSignInRequest : AbstractSafeParcelable' is deprecated. Deprecated in Java.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/AuthViewModel.kt:76:36 'class GoogleIdTokenRequestOptions : AbstractSafeParcelable' is deprecated. Deprecated in Java.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/AuthViewModel.kt:85:22 'fun beginSignIn(p0: BeginSignInRequest): Task<BeginSignInResult!>' is deprecated. Deprecated in Java.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/AuthViewModel.kt:97:36 'class SignInCredential : AbstractSafeParcelable' is deprecated. Deprecated in Java.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/AuthViewModel.kt:113:22 'fun signOut(): Task<Void!>' is deprecated. Deprecated in Java.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/CaseViewModel.kt:26:5 This annotation is currently applied to the value parameter only, but in the future it will also be applied to field.
+- To opt in to applying to both value parameter and field, add '-Xannotation-default-target=param-property' to your compiler arguments.
+- To keep applying to the value parameter only, use the '@param:' annotation target.
+
+See https://youtrack.jetbrains.com/issue/KT-73255 for more details.
+w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModel.kt:58:17 Condition is always 'true'.
+
+> Task :app:compileDebugJavaWithJavac
+
+> Task :app:hiltAggregateDepsDebug
+WARNING: [Processor] Library '/home/jules/.gradle/caches/8.13/transforms/1e429271221620f39ddb924b8ed62ac6/transformed/core-1.17.0-api.jar' contains references to both AndroidX and old support library. This seems like the library is partially migrated. Jetifier will try to rewrite the library anyway.
+ Example of androidX reference: 'androidx/core/util/Supplier'
+ Example of support library reference: 'android/support/v4/app/INotificationSideChannel$Default'
+
+> Task :app:compileReleaseJavaWithJavac
+> Task :app:hiltJavaCompileDebug
+> Task :app:processDebugJavaRes
+> Task :app:transformDebugClassesWithAsm
+> Task :app:dexBuilderDebug
+> Task :app:mergeDebugGlobalSynthetics
+> Task :app:mergeProjectDexDebug
+> Task :app:hiltAggregateDepsRelease
+> Task :app:bundleDebugClassesToCompileJar
+> Task :app:hiltJavaCompileRelease
+> Task :app:transformReleaseClassesWithAsm
+> Task :app:mergeDebugJavaResource
+> Task :app:generateReleaseLintVitalReportModel
+> Task :app:dexBuilderRelease
+> Task :app:packageDebug
+> Task :app:mergeReleaseGlobalSynthetics
+> Task :app:mergeDexRelease
+> Task :app:lintVitalAnalyzeRelease
+> Task :app:processReleaseJavaRes
+> Task :app:createDebugApkListingFileRedirect
+> Task :app:assembleDebug
+> Task :app:mergeReleaseJavaResource
+> Task :app:generateDebugAndroidTestLintModel
+> Task :app:generateDebugLintReportModel
+> Task :app:compileReleaseArtProfile
+> Task :app:generateDebugUnitTestLintModel
+> Task :app:bundleDebugClassesToRuntimeJar
+> Task :app:lintVitalReportRelease SKIPPED
+> Task :app:lintVitalRelease SKIPPED
+> Task :app:packageRelease
+> Task :app:createReleaseApkListingFileRedirect
+> Task :app:assembleRelease
+> Task :app:assemble
+> Task :app:kspDebugUnitTestKotlin
+> Task :app:lintAnalyzeDebugAndroidTest
+> Task :app:bundleReleaseClassesToRuntimeJar
+> Task :app:bundleReleaseClassesToCompileJar
+> Task :app:lintAnalyzeDebugUnitTest
+
+> Task :app:compileDebugUnitTestKotlin FAILED
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:8:38 Conflicting import: imported name 'EvidenceRepository' is ambiguous.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:9:38 Conflicting import: imported name 'SettingsManager' is ambiguous.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:10:41 Conflicting import: imported name 'ScriptRunner' is ambiguous.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:26:38 Conflicting import: imported name 'EvidenceRepository' is ambiguous.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:27:38 Conflicting import: imported name 'SettingsManager' is ambiguous.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:28:41 Conflicting import: imported name 'ScriptRunner' is ambiguous.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:45:26 Conflicting declarations:
+var evidenceRepository: EvidenceRepository
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:46:26 Conflicting declarations:
+var settingsManager: SettingsManager
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:47:26 Conflicting declarations:
+var scriptRunner: ScriptRunner
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:49:26 Conflicting declarations:
+var evidenceRepository: EvidenceRepository
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:50:26 Conflicting declarations:
+var settingsManager: SettingsManager
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:51:26 Conflicting declarations:
+var scriptRunner: ScriptRunner
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:57:9 Overload resolution ambiguity between candidates:
+var evidenceRepository: EvidenceRepository
+var evidenceRepository: EvidenceRepository
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:57:30 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:57:30 Not enough information to infer type argument for 'T'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:58:9 Overload resolution ambiguity between candidates:
+var settingsManager: SettingsManager
+var settingsManager: SettingsManager
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:58:27 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:58:27 Not enough information to infer type argument for 'T'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:59:9 Overload resolution ambiguity between candidates:
+var scriptRunner: ScriptRunner
+var scriptRunner: ScriptRunner
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:59:24 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:59:24 Not enough information to infer type argument for 'T'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:60:9 Unresolved reference 'mockkStatic'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:61:9 Unresolved reference 'every'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:61:23 Unresolved reference 'any'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:61:30 Unresolved reference 'any'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:62:50 Overload resolution ambiguity between candidates:
+var evidenceRepository: EvidenceRepository
+var evidenceRepository: EvidenceRepository
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:62:70 Overload resolution ambiguity between candidates:
+var settingsManager: SettingsManager
+var settingsManager: SettingsManager
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:62:87 Overload resolution ambiguity between candidates:
+var scriptRunner: ScriptRunner
+var scriptRunner: ScriptRunner
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:78:9 Unresolved reference 'mockkStatic'.
+e: file:///app/app/src/test/java/com/hereliesaz/lexorcist/viewmodel/OcrViewModelTest.kt:79:9 Unresolved reference 'every'.
+
+> Task :app:kspReleaseUnitTestKotlin
+> Task :app:lintAnalyzeDebug
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileDebugUnitTestKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 5m 28s
+110 actionable tasks: 43 executed, 67 up-to-date
