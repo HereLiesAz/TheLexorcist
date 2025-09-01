@@ -15,8 +15,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.nio.ByteBuffer
-// import android.app.Application // Not used directly
-import com.hereliesaz.lexorcist.viewmodel.OcrViewModel
+// import com.hereliesaz.lexorcist.viewmodel.OcrViewModel // Replaced
+import com.hereliesaz.lexorcist.service.OcrProcessingService // Added
 import com.hereliesaz.lexorcist.utils.Result as LexResult // Alias for your Result class
 import com.google.api.services.drive.model.File as DriveFile // Alias for Google Drive File
 
@@ -27,24 +27,25 @@ import dagger.assisted.AssistedInject
 
 @HiltWorker
 class VideoProcessingWorker @AssistedInject constructor(
-    @Assisted appContext: Context,
+    @Assisted private val appContext: Context, // Made private val as it's used in methods
     @Assisted workerParams: WorkerParameters,
-    private val ocrViewModel: OcrViewModel,
-    private val googleApiService: GoogleApiService? // Changed to nullable
+    private val ocrProcessingService: OcrProcessingService, // Changed from OcrViewModel
+    private val googleApiService: GoogleApiService?
 ) : CoroutineWorker(appContext, workerParams) {
 
     override suspend fun doWork(): Result {
         val videoUriString = inputData.getString(KEY_VIDEO_URI)
         val caseId = inputData.getInt(KEY_CASE_ID, -1)
         val caseName = inputData.getString(KEY_CASE_NAME)
+        val spreadsheetId = inputData.getString(KEY_SPREADSHEET_ID) // Added
 
-        if (videoUriString.isNullOrEmpty() || caseId == -1 || caseName.isNullOrEmpty()) {
-            Log.e(TAG, "Invalid input data")
+        if (videoUriString.isNullOrEmpty() || caseId == -1 || caseName.isNullOrEmpty() || spreadsheetId.isNullOrEmpty()) {
+            Log.e(TAG, "Invalid input data: videoUriString=$videoUriString, caseId=$caseId, caseName=$caseName, spreadsheetId=$spreadsheetId")
             return Result.failure()
         }
 
         val videoUri = Uri.parse(videoUriString)
-        Log.d(TAG, "Processing video: $videoUri for case: $caseName ($caseId)")
+        Log.d(TAG, "Processing video: $videoUri for case: $caseName ($caseId), spreadsheetId: $spreadsheetId")
 
         val videoFile = File(applicationContext.cacheDir, "video_${System.currentTimeMillis()}.mp4")
         applicationContext.contentResolver.openInputStream(videoUri)?.use { input ->
@@ -56,8 +57,6 @@ class VideoProcessingWorker @AssistedInject constructor(
         var uploadedDriveFile: DriveFile? = null
         if (googleApiService == null) {
             Log.e(TAG, "GoogleApiService is not available. Skipping Drive upload.")
-            // Decide if this is a fatal error or if processing can continue without upload
-            // For now, let's allow it to continue to process audio/frames locally if possible
         } else {
             val evidenceFolderId = googleApiService.getOrCreateEvidenceFolder(caseName)
             if (evidenceFolderId != null) {
@@ -68,7 +67,6 @@ class VideoProcessingWorker @AssistedInject constructor(
                     }
                     is LexResult.Error -> {
                         Log.e(TAG, "Failed to upload video: ${uploadResult.exception.message}")
-                        // Decide if this is a fatal error for the worker
                     }
                 }
             } else {
@@ -88,7 +86,13 @@ class VideoProcessingWorker @AssistedInject constructor(
         if (frameUris.isNotEmpty()) {
             Log.d(TAG, "Extracted ${frameUris.size} keyframes")
             frameUris.forEach { uri ->
-                ocrViewModel.performOcrOnUri(uri, applicationContext, caseId, uploadedDriveFile?.id)
+                ocrProcessingService.processImageFrame(
+                    uri = uri,
+                    context = appContext,
+                    caseId = caseId,
+                    spreadsheetId = spreadsheetId, // Pass spreadsheetId
+                    parentVideoId = uploadedDriveFile?.id
+                )
             }
         }
 
@@ -98,11 +102,11 @@ class VideoProcessingWorker @AssistedInject constructor(
     private suspend fun extractAudio(videoUri: Uri): Uri? {
         return withContext(Dispatchers.IO) {
             val extractor = MediaExtractor()
-            val outputFile = File(applicationContext.cacheDir, "audio_${System.currentTimeMillis()}.m4a")
+            val outputFile = File(appContext.cacheDir, "audio_${System.currentTimeMillis()}.m4a")
             var muxer: MediaMuxer? = null
 
             try {
-                extractor.setDataSource(applicationContext, videoUri, null)
+                extractor.setDataSource(appContext, videoUri, null)
                 val audioTrackIndex = findAudioTrack(extractor)
                 if (audioTrackIndex == -1) {
                     Log.e(TAG, "No audio track found in video")
@@ -127,9 +131,7 @@ class VideoProcessingWorker @AssistedInject constructor(
                     bufferInfo.offset = 0
                     bufferInfo.size = sampleSize
                     bufferInfo.presentationTimeUs = extractor.sampleTime
-                    // Corrected flag setting: BUFFER_FLAG_KEY_FRAME is already part of sampleFlags if it's a key frame.
-                    // MediaCodec.BUFFER_FLAG_KEY_FRAME is 1. MediaExtractor.SAMPLE_FLAG_SYNC is 1.
-                    bufferInfo.flags = extractor.sampleFlags 
+                    bufferInfo.flags = extractor.sampleFlags
 
                     muxer.writeSampleData(muxerTrackIndex, buffer, bufferInfo)
                     extractor.advance()
@@ -163,26 +165,30 @@ class VideoProcessingWorker @AssistedInject constructor(
             val retriever = MediaMetadataRetriever()
             val frameUris = mutableListOf<Uri>()
             try {
-                retriever.setDataSource(applicationContext, videoUri)
+                retriever.setDataSource(appContext, videoUri)
                 val durationString = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
-                val durationMs = durationString?.toLongOrNull() ?: 0
+                val durationMs = durationString?.toLongOrNull() ?: 0L // Ensure default to Long
                 val intervalUs = 60 * 1000 * 1000L // 1 minute
 
-                for (timeUs in 0 until durationMs * 1000 step intervalUs) {
+                for (timeUs in 0L until durationMs * 1000L step intervalUs) { // Ensure timeUs is Long
                     val bitmap = retriever.getFrameAtTime(timeUs, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
                     if (bitmap != null) {
-                        val outputFile = File(applicationContext.cacheDir, "frame_${System.currentTimeMillis()}.jpg")
+                        val outputFile = File(appContext.cacheDir, "frame_${System.currentTimeMillis()}.jpg")
                         outputFile.outputStream().use { out ->
                             bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out)
                         }
                         frameUris.add(Uri.fromFile(outputFile))
-                        bitmap.recycle()
+                        bitmap.recycle() // Important to recycle bitmap
                     }
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Error extracting keyframes", e)
             } finally {
-                retriever.release()
+                try {
+                    retriever.release()
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error releasing MediaMetadataRetriever", e)
+                }
             }
             frameUris
         }
@@ -193,6 +199,7 @@ class VideoProcessingWorker @AssistedInject constructor(
         const val KEY_VIDEO_URI = "KEY_VIDEO_URI"
         const val KEY_CASE_ID = "KEY_CASE_ID"
         const val KEY_CASE_NAME = "KEY_CASE_NAME"
+        const val KEY_SPREADSHEET_ID = "KEY_SPREADSHEET_ID" // Added key
         private const val TAG = "VideoProcessingWorker"
     }
 }

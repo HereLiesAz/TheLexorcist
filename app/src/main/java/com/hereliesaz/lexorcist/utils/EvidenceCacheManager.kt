@@ -11,7 +11,7 @@ import javax.inject.Singleton
 
 @Singleton // Added Singleton annotation
 class EvidenceCacheManager @Inject constructor( // Added @Inject
-    @ApplicationContext private val context: Context // Added @ApplicationContext
+    @param:ApplicationContext private val context: Context // Changed here
 ) {
 
     private val gson = Gson()

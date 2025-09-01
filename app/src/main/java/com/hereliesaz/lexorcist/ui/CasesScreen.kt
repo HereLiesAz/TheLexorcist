@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Sort // Changed import
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.Delete
@@ -12,7 +13,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Sort
+// import androidx.compose.material.icons.filled.Sort // Original import removed or commented
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -76,7 +77,7 @@ fun CasesScreen(caseViewModel: CaseViewModel) {
                         SortOrder.NAME_ASC -> SortOrder.DATE_DESC
                     }
                 }) {
-                    Icon(Icons.Filled.Sort, contentDescription = stringResource(R.string.sort).uppercase(Locale.getDefault())) // ALL CAPS for accessibility if desired, though usually not for CD
+                    Icon(Icons.AutoMirrored.Filled.Sort, contentDescription = stringResource(R.string.sort).uppercase(Locale.getDefault())) // ALL CAPS for accessibility if desired, though usually not for CD
                 }
             }
         },

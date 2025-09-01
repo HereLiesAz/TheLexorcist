@@ -16,7 +16,7 @@ import javax.inject.Singleton
  * @param context The application context, used to access [SharedPreferences].
  */
 @Singleton
-class SettingsManager @Inject constructor(@ApplicationContext private val context: Context) {
+class SettingsManager @Inject constructor(@param:ApplicationContext private val context: Context) { // Changed here
 
     private val sharedPreferences: SharedPreferences =
         context.getSharedPreferences(context.getString(R.string.settings_preferences_name), Context.MODE_PRIVATE)
