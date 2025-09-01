@@ -60,14 +60,26 @@ class EvidenceRepositoryImpl @Inject constructor(
     }
 
     override suspend fun updateEvidence(evidence: Evidence) {
-        // TODO: Implement actual logic to update evidence in Google Sheets (with null safety for googleApiService)
+        googleApiService?.let {
+            if (it.updateEvidenceInSheet(evidence)) {
+                refreshEvidence(evidence.spreadsheetId, evidence.caseId)
+            }
+        }
     }
 
     override suspend fun deleteEvidence(evidence: Evidence) {
-        // TODO: Implement actual logic to delete evidence from Google Sheets (with null safety for googleApiService)
+        googleApiService?.let {
+            if (it.deleteEvidenceFromSheet(evidence)) {
+                refreshEvidence(evidence.spreadsheetId, evidence.caseId)
+            }
+        }
     }
 
     override suspend fun updateCommentary(id: Int, commentary: String) {
-        // TODO: Implement actual logic to update commentary for an evidence item (with null safety for googleApiService)
+        val evidence = getEvidenceById(id)
+        if (evidence != null) {
+            val updatedEvidence = evidence.copy(commentary = commentary)
+            updateEvidence(updatedEvidence)
+        }
     }
 }

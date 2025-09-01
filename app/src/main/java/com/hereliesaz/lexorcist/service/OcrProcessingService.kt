@@ -68,4 +68,49 @@ class OcrProcessingService @Inject constructor(
         Log.d("OcrProcessingService", "Adding evidence for frame: $uri")
         evidenceRepository.addEvidence(newEvidence)
     }
+
+    suspend fun processImage(
+        uri: Uri,
+        context: Context,
+        caseId: Long,
+        spreadsheetId: String
+    ) {
+        val ocrText = "Placeholder OCR text from image $uri" // Replace with actual OCR logic
+        val entities = DataParser.tagData(ocrText)
+        val documentDate = ExifUtils.getExifDate(context, uri)
+            ?: DataParser.parseDates(ocrText).firstOrNull()
+            ?: System.currentTimeMillis()
+
+        var newEvidence = Evidence(
+            id = 0,
+            caseId = caseId,
+            spreadsheetId = spreadsheetId,
+            type = "image",
+            content = ocrText,
+            timestamp = System.currentTimeMillis(),
+            sourceDocument = uri.toString(),
+            documentDate = documentDate,
+            allegationId = null,
+            category = "Image OCR",
+            tags = listOf("ocr", "image"),
+            commentary = null,
+            parentVideoId = null,
+            entities = entities
+        )
+
+        val script = settingsManager.getScript()
+        if (script.isNotBlank()) {
+            val scriptResult = scriptRunner.runScript(script, newEvidence)
+            when (scriptResult) {
+                is Result.Success -> {
+                    newEvidence = newEvidence.copy(tags = newEvidence.tags + scriptResult.data.tags)
+                }
+                is Result.Error -> {
+                    Log.e("OcrProcessingService", "Script error for $uri: ${scriptResult.exception.message}", scriptResult.exception)
+                }
+            }
+        }
+
+        evidenceRepository.addEvidence(newEvidence)
+    }
 }

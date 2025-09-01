@@ -15,12 +15,21 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+import com.hereliesaz.lexorcist.service.OcrProcessingService
+import com.hereliesaz.lexorcist.service.TranscriptionService
+import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
+import com.google.api.services.drive.Drive
+import com.google.api.services.sheets.v4.Sheets
+import android.net.Uri
+
 @HiltViewModel
 class EvidenceViewModel @Inject constructor(
     application: Application,
     private val evidenceRepository: EvidenceRepository,
     private val settingsManager: com.hereliesaz.lexorcist.data.SettingsManager,
-    private val scriptRunner: com.hereliesaz.lexorcist.service.ScriptRunner
+    private val scriptRunner: com.hereliesaz.lexorcist.service.ScriptRunner,
+    private val ocrProcessingService: OcrProcessingService,
+    private val sharedPreferences: android.content.SharedPreferences
 ) : AndroidViewModel(application) {
 
     private val _selectedEvidenceDetails = MutableStateFlow<Evidence?>(null)
@@ -140,5 +149,55 @@ class EvidenceViewModel @Inject constructor(
 
     fun onSearchQueryChanged(query: String) {
         _searchQuery.value = query
+    }
+
+    fun processImageEvidence(uri: Uri) {
+        viewModelScope.launch {
+            if (currentCaseIdForList != null && currentSpreadsheetIdForList != null) {
+                ocrProcessingService.processImage(
+                    uri = uri,
+                    context = getApplication(),
+                    caseId = currentCaseIdForList!!,
+                    spreadsheetId = currentSpreadsheetIdForList!!
+                )
+                loadEvidenceForCase(currentCaseIdForList!!, currentSpreadsheetIdForList!!)
+            }
+        }
+    }
+
+    fun processAudioEvidence(uri: Uri) {
+        viewModelScope.launch {
+            if (currentCaseIdForList != null && currentSpreadsheetIdForList != null) {
+                val userEmail = sharedPreferences.getString(AuthViewModel.PREF_USER_EMAIL_KEY, null)
+                if (userEmail != null) {
+                    val credential = GoogleAccountCredential.usingOAuth2(
+                        getApplication(),
+                        listOf(Drive.DRIVE_FILE_SCOPE, Sheets.SPREADSHEETS_SCOPE)
+                    ).setSelectedAccountName(userEmail)
+
+                    val transcriptionService = TranscriptionService(getApplication(), credential)
+                    val transcribedText = transcriptionService.transcribeAudio(uri)
+
+                    val newEvidence = Evidence(
+                        id = 0,
+                        caseId = currentCaseIdForList!!,
+                        spreadsheetId = currentSpreadsheetIdForList!!,
+                        type = "audio",
+                        content = transcribedText,
+                        timestamp = System.currentTimeMillis(),
+                        sourceDocument = uri.toString(),
+                        documentDate = System.currentTimeMillis(),
+                        allegationId = null,
+                        category = "Audio Transcription",
+                        tags = listOf("audio", "transcription"),
+                        commentary = null,
+                        parentVideoId = null,
+                        entities = emptyMap()
+                    )
+                    evidenceRepository.addEvidence(newEvidence)
+                    loadEvidenceForCase(currentCaseIdForList!!, currentSpreadsheetIdForList!!)
+                }
+            }
+        }
     }
 }

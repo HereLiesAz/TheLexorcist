@@ -9,6 +9,8 @@ import com.google.api.services.drive.Drive
 import com.google.api.services.drive.model.File
 import com.google.api.services.sheets.v4.Sheets
 import com.google.api.services.sheets.v4.model.*
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.model.Script
 import com.hereliesaz.lexorcist.model.Template
@@ -230,15 +232,77 @@ class GoogleApiService(
     }
     
     suspend fun updateCaseInRegistry(case: Case): Boolean {
-        // This is a complex operation. You need to find the row to update.
-        // For simplicity, this is not implemented.
-        return false
+        return withContext(Dispatchers.IO) {
+            try {
+                val registryId = getOrCreateCaseRegistrySpreadsheetId(getOrCreateAppRootFolder())
+                val range = "Sheet1!A:A" // Assuming IDs are in column A
+                val response = sheets.spreadsheets().values().get(registryId, range).execute()
+                val values = response.getValues()
+                if (values.isNullOrEmpty()) return@withContext false
+
+                val rowIndex = values.indexOfFirst { it.isNotEmpty() && it[0].toString() == case.id.toString() }
+                if (rowIndex == -1) return@withContext false
+
+                val rowData = listOf(
+                    case.id.toString(),
+                    case.name,
+                    case.spreadsheetId,
+                    case.scriptId ?: "",
+                    case.generatedPdfId ?: "",
+                    case.sourceHtmlSnapshotId ?: "",
+                    case.originalMasterHtmlTemplateId ?: "",
+                    case.folderId ?: "",
+                    case.plaintiffs ?: "",
+                    case.defendants ?: "",
+                    case.court ?: "",
+                    case.isArchived.toString(),
+                    System.currentTimeMillis().toString()
+                )
+                val valueRange = ValueRange().setValues(listOf(rowData))
+                val updateRange = "Sheet1!A${rowIndex + 1}"
+                sheets.spreadsheets().values().update(registryId, updateRange, valueRange)
+                    .setValueInputOption("RAW")
+                    .execute()
+                true
+            } catch (e: IOException) {
+                false
+            }
+        }
     }
 
     suspend fun deleteCaseFromRegistry(case: Case): Boolean {
-        // This is a complex operation. You need to find the row to delete.
-        // For simplicity, this is not implemented.
-        return false
+        return withContext(Dispatchers.IO) {
+            try {
+                val registryId = getOrCreateCaseRegistrySpreadsheetId(getOrCreateAppRootFolder())
+                val range = "Sheet1!A:A" // Assuming IDs are in column A
+                val response = sheets.spreadsheets().values().get(registryId, range).execute()
+                val values = response.getValues()
+                if (values.isNullOrEmpty()) return@withContext false
+
+                val rowIndex = values.indexOfFirst { it.isNotEmpty() && it[0].toString() == case.id.toString() }
+                if (rowIndex == -1) return@withContext false
+
+                val sheetId = sheets.spreadsheets().get(registryId).execute()
+                    .sheets.firstOrNull { it.properties.title == "Sheet1" }?.properties?.sheetId ?: 0
+
+                val request = Request().setDeleteDimension(
+                    DeleteDimensionRequest()
+                        .setRange(
+                            DimensionRange()
+                                .setSheetId(sheetId)
+                                .setDimension("ROWS")
+                                .setStartIndex(rowIndex)
+                                .setEndIndex(rowIndex + 1)
+                        )
+                )
+
+                val batchUpdateRequest = BatchUpdateSpreadsheetRequest().setRequests(listOf(request))
+                sheets.spreadsheets().batchUpdate(registryId, batchUpdateRequest).execute()
+                true
+            } catch (e: IOException) {
+                false
+            }
+        }
     }
     
     suspend fun deleteFolder(folderId: String): Boolean {
@@ -352,9 +416,15 @@ class GoogleApiService(
                                 timestamp = row[3].toString().toLong(),
                                 sourceDocument = row[4].toString(),
                                 documentDate = row[5].toString().toLong(),
-                                allegationId = row[6].toString().toIntOrNull(),
-                                category = row[7].toString(),
-                                tags = row[8].toString().split(",").map { it.trim() }
+                                allegationId = row.getOrNull(6)?.toString()?.toIntOrNull(),
+                                category = row.getOrNull(7).toString(),
+                                tags = row.getOrNull(8).toString().split(",").map { it.trim() },
+                                commentary = row.getOrNull(9)?.toString(),
+                                linkedEvidenceIds = row.getOrNull(10).toString().split(",").mapNotNull { it.trim().toIntOrNull() },
+                                parentVideoId = row.getOrNull(11)?.toString(),
+                                entities = row.getOrNull(12)?.toString()
+                                    ?.let { Gson().fromJson(it, object : TypeToken<Map<String, List<String>>>() {}.type) }
+                                    ?: emptyMap()
                             )
                         } catch (e: Exception) {
                             null // Skip row if parsing fails
@@ -380,7 +450,11 @@ class GoogleApiService(
                         evidence.documentDate.toString(),
                         evidence.allegationId?.toString() ?: "",
                         evidence.category,
-                        evidence.tags.joinToString(",")
+                        evidence.tags.joinToString(","),
+                        evidence.commentary ?: "",
+                        evidence.linkedEvidenceIds.joinToString(","),
+                        evidence.parentVideoId ?: "",
+                        Gson().toJson(evidence.entities)
                     )
                 )
                 val body = ValueRange().setValues(values)
@@ -398,6 +472,78 @@ class GoogleApiService(
         // This is a complex operation. You need to append data to the sheet.
         // For simplicity, this is not implemented.
         return false
+    }
+
+    suspend fun updateEvidenceInSheet(evidence: com.hereliesaz.lexorcist.data.Evidence): Boolean {
+        return withContext(Dispatchers.IO) {
+            try {
+                val range = "Evidence!A:A" // Assuming IDs are in column A
+                val response = sheets.spreadsheets().values().get(evidence.spreadsheetId, range).execute()
+                val values = response.getValues()
+                if (values.isNullOrEmpty()) return@withContext false
+
+                val rowIndex = values.indexOfFirst { it.isNotEmpty() && it[0].toString() == evidence.id.toString() }
+                if (rowIndex == -1) return@withContext false
+
+                val rowData = listOf(
+                    evidence.id.toString(),
+                    evidence.type,
+                    evidence.content,
+                    evidence.timestamp.toString(),
+                    evidence.sourceDocument,
+                    evidence.documentDate.toString(),
+                    evidence.allegationId?.toString() ?: "",
+                    evidence.category,
+                    evidence.tags.joinToString(","),
+                    evidence.commentary ?: "",
+                    evidence.linkedEvidenceIds.joinToString(","),
+                    evidence.parentVideoId ?: "",
+                    Gson().toJson(evidence.entities)
+                )
+                val valueRange = ValueRange().setValues(listOf(rowData))
+                val updateRange = "Evidence!A${rowIndex + 1}"
+                sheets.spreadsheets().values().update(evidence.spreadsheetId, updateRange, valueRange)
+                    .setValueInputOption("RAW")
+                    .execute()
+                true
+            } catch (e: IOException) {
+                false
+            }
+        }
+    }
+
+    suspend fun deleteEvidenceFromSheet(evidence: com.hereliesaz.lexorcist.data.Evidence): Boolean {
+        return withContext(Dispatchers.IO) {
+            try {
+                val range = "Evidence!A:A" // Assuming IDs are in column A
+                val response = sheets.spreadsheets().values().get(evidence.spreadsheetId, range).execute()
+                val values = response.getValues()
+                if (values.isNullOrEmpty()) return@withContext false
+
+                val rowIndex = values.indexOfFirst { it.isNotEmpty() && it[0].toString() == evidence.id.toString() }
+                if (rowIndex == -1) return@withContext false
+
+                val sheetId = sheets.spreadsheets().get(evidence.spreadsheetId).execute()
+                    .sheets.firstOrNull { it.properties.title == "Evidence" }?.properties?.sheetId ?: 0
+
+                val request = Request().setDeleteDimension(
+                    DeleteDimensionRequest()
+                        .setRange(
+                            DimensionRange()
+                                .setSheetId(sheetId)
+                                .setDimension("ROWS")
+                                .setStartIndex(rowIndex)
+                                .setEndIndex(rowIndex + 1)
+                        )
+                )
+
+                val batchUpdateRequest = BatchUpdateSpreadsheetRequest().setRequests(listOf(request))
+                sheets.spreadsheets().batchUpdate(evidence.spreadsheetId, batchUpdateRequest).execute()
+                true
+            } catch (e: IOException) {
+                false
+            }
+        }
     }
 
     suspend fun listHtmlTemplatesInAppRootFolder(): List<File> {

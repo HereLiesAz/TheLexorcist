@@ -89,11 +89,21 @@ class CaseRepositoryImpl @Inject constructor(
     }
 
     override suspend fun archiveCase(case: Case) {
-        // TODO: Implement actual logic (with null safety for googleApiService)
+        googleApiService?.let {
+            val archivedCase = case.copy(isArchived = true)
+            if (it.updateCaseInRegistry(archivedCase)) {
+                refreshCases()
+            }
+        }
     }
 
     override suspend fun deleteCase(case: Case) {
-        // TODO: Implement actual logic (with null safety for googleApiService)
+        googleApiService?.let {
+            if (it.deleteCaseFromRegistry(case)) {
+                case.folderId?.let { folderId -> it.deleteFolder(folderId) }
+                refreshCases()
+            }
+        }
     }
 
     override fun getSheetFilters(spreadsheetId: String): Flow<List<SheetFilter>> {
