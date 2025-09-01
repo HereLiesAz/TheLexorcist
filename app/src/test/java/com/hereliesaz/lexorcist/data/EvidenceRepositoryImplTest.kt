@@ -100,8 +100,8 @@ class EvidenceRepositoryImplTest {
         coVerify { googleApiService.clearSheet(evidence1.spreadsheetId, "Evidence") }
 
         // Verify that the remaining evidence is written back to the sheet
-        val expectedSheetData = createMockSheet(listOf(evidence2))["Evidence"]
-        coVerify { googleApiService.writeData(evidence1.spreadsheetId, "Evidence", expectedSheetData!!) }
+        val expectedSheet = createMockSheet(listOf(evidence2))
+        coVerify { googleApiService.writeData(evidence1.spreadsheetId, "Evidence", expectedSheet.getValue("Evidence")) }
     }
 
     @Test
