@@ -28,6 +28,7 @@ fun TimelineScreen(
     navController: NavController
 ) {
     val evidenceList by evidenceViewModel.evidenceList.collectAsState()
+    val searchQuery by evidenceViewModel.searchQuery.collectAsState()
     var showEvidenceDetailsDialog by remember { mutableStateOf<Evidence?>(null) }
 
     Scaffold(
@@ -35,9 +36,12 @@ fun TimelineScreen(
             TopAppBar(
                 title = { Text(text = case.name) },
                 actions = {
-                    IconButton(onClick = { /* TODO: Implement search */ }) {
-                        Icon(Icons.Filled.Search, contentDescription = "Search")
-                    }
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { evidenceViewModel.onSearchQueryChanged(it) },
+                        label = { Text("Search") },
+                        modifier = Modifier.padding(end = 16.dp)
+                    )
                 }
             )
         }

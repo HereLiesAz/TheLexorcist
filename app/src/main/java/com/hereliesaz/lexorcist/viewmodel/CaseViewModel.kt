@@ -34,14 +34,24 @@ class CaseViewModel @Inject constructor(
     private val _sortOrder = MutableStateFlow(SortOrder.DATE_DESC)
     val sortOrder: StateFlow<SortOrder> = _sortOrder.asStateFlow()
 
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
     // Assuming caseRepository.getAllCases() exists and returns Flow<List<Case>>
     val cases: StateFlow<List<Case>> = caseRepository.getAllCases()
         .combine(sortOrder) { cases, currentSortOrder ->
             when (currentSortOrder) {
                 SortOrder.NAME_ASC -> cases.sortedBy { it.name }
                 SortOrder.NAME_DESC -> cases.sortedByDescending { it.name }
-                SortOrder.DATE_ASC -> cases.sortedBy { it.id } 
+                SortOrder.DATE_ASC -> cases.sortedBy { it.id }
                 SortOrder.DATE_DESC -> cases.sortedByDescending { it.id }
+            }
+        }
+        .combine(searchQuery) { cases, query ->
+            if (query.isBlank()) {
+                cases
+            } else {
+                cases.filter { it.name.contains(query, ignoreCase = true) }
             }
         }
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
@@ -106,6 +116,10 @@ class CaseViewModel @Inject constructor(
     }
 
     fun onSortOrderChange(newSortOrder: SortOrder) { _sortOrder.value = newSortOrder }
+
+    fun onSearchQueryChanged(query: String) {
+        _searchQuery.value = query
+    }
 
     fun loadCasesFromRepository() {
         viewModelScope.launch {
