@@ -9,37 +9,38 @@ import javax.inject.Singleton
 
 @Singleton
 class EvidenceRepositoryImpl @Inject constructor(
-    private val googleApiService: GoogleApiService?, // Changed to nullable
+    // Changed to nullable
+    private val googleApiService: GoogleApiService?,
     private val evidenceCacheManager: com.hereliesaz.lexorcist.utils.EvidenceCacheManager
 ) : EvidenceRepository {
 
-    private val _evidenceByCase = mutableMapOf<Long, kotlinx.coroutines.flow.MutableStateFlow<List<Evidence>>>()
+    private val evidenceByCaseMap = mutableMapOf<Long, kotlinx.coroutines.flow.MutableStateFlow<List<Evidence>>>()
 
     override suspend fun getEvidenceForCase(spreadsheetId: String, caseId: Long): Flow<List<Evidence>> {
-        if (!_evidenceByCase.containsKey(caseId)) {
-            _evidenceByCase[caseId] = kotlinx.coroutines.flow.MutableStateFlow(emptyList())
+        if (!evidenceByCaseMap.containsKey(caseId)) {
+            evidenceByCaseMap[caseId] = kotlinx.coroutines.flow.MutableStateFlow(emptyList())
             // Load from cache or remote
             val cachedEvidence = evidenceCacheManager.loadEvidence(caseId)
             if (cachedEvidence != null) {
-                _evidenceByCase[caseId]?.value = cachedEvidence
+                evidenceByCaseMap[caseId]?.value = cachedEvidence
             } else {
                 refreshEvidence(spreadsheetId, caseId)
             }
         }
-        return _evidenceByCase[caseId]!!.asStateFlow()
+        return evidenceByCaseMap[caseId]!!.asStateFlow()
     }
 
     private suspend fun refreshEvidence(spreadsheetId: String, caseId: Long) {
         // Null-safe call needed here after the change
         googleApiService?.getEvidenceForCase(spreadsheetId, caseId)?.let { remoteEvidence ->
             evidenceCacheManager.saveEvidence(caseId, remoteEvidence)
-            _evidenceByCase[caseId]?.value = remoteEvidence
+            evidenceByCaseMap[caseId]?.value = remoteEvidence
         }
     }
 
     override suspend fun getEvidenceById(id: Int): Evidence? {
         // This is inefficient, should be improved if needed
-        return _evidenceByCase.values.flatMap { it.value }.find { it.id == id }
+        return evidenceByCaseMap.values.flatMap { it.value }.find { it.id == id }
     }
 
     override fun getEvidence(id: Int): Flow<Evidence> {

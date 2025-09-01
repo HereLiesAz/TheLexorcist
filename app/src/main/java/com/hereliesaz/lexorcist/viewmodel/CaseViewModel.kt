@@ -38,7 +38,7 @@ class CaseViewModel @Inject constructor(
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
     // Assuming caseRepository.getAllCases() exists and returns Flow<List<Case>>
-    val cases: StateFlow<List<Case>> = caseRepository.getAllCases()
+    val cases: StateFlow<List<Case>> = caseRepository.cases
         .combine(sortOrder) { cases, currentSortOrder ->
             when (currentSortOrder) {
                 SortOrder.NAME_ASC -> cases.sortedBy { it.name }

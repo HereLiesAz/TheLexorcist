@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Configuration file for the Lexorcist Apps Script.
+ * This file contains all the hardcoded strings and template IDs used in the script.
+ * Externalizing this configuration makes the script more maintainable and easier to configure.
+ */
 const CONFIG = {
   "TEMPLATE_IDS": {
     "Cover Sheet": "1UXHuHvU3BzzIRr27ih9NT1QZPOA7t_WOwl7u89wAo8M",

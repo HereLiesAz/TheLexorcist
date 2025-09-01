@@ -15,7 +15,10 @@ object DataParser {
         """"\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s\d{1,2},?\s\d{4}\b"""".toRegex() to SimpleDateFormat("MMM d, yyyy", Locale.US),
         """"\b\d{1,2}\s(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s\d{4}\b"""".toRegex() to SimpleDateFormat("dd MMM yyyy", Locale.US),
         """"\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\s\d{1,2},?\s\d{4}\b"""".toRegex() to SimpleDateFormat("MMMM d, yyyy", Locale.US),
-        """"\b\d{1,2}\s(?:January|February|March|April|May|June|July|August|September|October|November|December)\s\d{4}\b"""".toRegex() to SimpleDateFormat("dd MMMM yyyy", Locale.US),
+        (
+            "\"\\b\\d{1,2}\\s(?:January|February|March|April|May|June|July|August|" +
+                "September|October|November|December)\\s\\d{4}\\b\""
+        ).toRegex() to SimpleDateFormat("dd MMMM yyyy", Locale.US),
         """"\b\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z\b"""".toRegex() to SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
     )
 
@@ -58,7 +61,8 @@ object DataParser {
         for ((regex, format) in timePatterns) {
             regex.findAll(text).forEach { matchResult ->
                 try {
-                    format.timeZone = TimeZone.getDefault() // Use local timezone for times
+                    // Use local timezone for times
+                    format.timeZone = TimeZone.getDefault()
                     format.isLenient = false
                     val date = format.parse(matchResult.value.trim())
                     if (date != null) {
@@ -91,9 +95,11 @@ object DataParser {
         )
     }
 
-    fun parseTextForCase(spreadsheetId: String, text: String, caseId: Int): CaseData { // Added caseId here for now
+    // Added caseId here for now
+    fun parseTextForCase(spreadsheetId: String, text: String, caseId: Int): CaseData {
         val allegations = extractAllegations(spreadsheetId, text)
-        val evidence = extractEvidence(spreadsheetId, text, allegations, caseId) // Pass caseId to extractEvidence
+        // Pass caseId to extractEvidence
+        val evidence = extractEvidence(spreadsheetId, text, allegations, caseId)
         // ... extract other data types ...
 
         return CaseData(allegations, evidence)
@@ -101,13 +107,15 @@ object DataParser {
 
     private fun extractAllegations(spreadsheetId: String, text: String): List<Allegation> {
         val allegationRegex = """"(?i)\b(alleges|claims|argues that)\b.*"""".toRegex()
-        var currentId = 0 // Assuming Allegation needs an id and it's generated sequentially here
+        // Assuming Allegation needs an id and it's generated sequentially here
+        var currentId = 0
         return allegationRegex.findAll(text).map {
             Allegation(id = currentId++, spreadsheetId = spreadsheetId, text = it.value)
         }.toList()
     }
 
-    fun extractEvidence(spreadsheetId: String, text: String, allegations: List<Allegation>, caseId: Int): List<Evidence> { // Added caseId here
+    // Added caseId here
+    fun extractEvidence(spreadsheetId: String, text: String, allegations: List<Allegation>, caseId: Int): List<Evidence> {
         val entries = mutableListOf<Evidence>()
         val sentences = text.split("\n")
 
@@ -121,17 +129,20 @@ object DataParser {
 
             entries.add(
                 Evidence(
-                    id = entries.size, // This should ideally be a unique ID from the data source
+                    // This should ideally be a unique ID from the data source
+                    id = entries.size,
                     spreadsheetId = spreadsheetId,
-                    caseId = caseId.toLong(), // Convert Int to Long as per Evidence data class
+                    // Convert Int to Long as per Evidence data class
+                    caseId = caseId.toLong(),
                     allegationId = linkedAllegation?.id,
                     content = sentence,
-                    timestamp = System.currentTimeMillis(), 
+                    timestamp = System.currentTimeMillis(),
                     sourceDocument = "Parsed from text",
-                    documentDate = date, 
+                    documentDate = date,
                     category = category,
                     tags = emptyList(),
-                    type = "" // Added missing 'type' parameter
+                    // Added missing 'type' parameter
+                    type = ""
                 )
             )
         }

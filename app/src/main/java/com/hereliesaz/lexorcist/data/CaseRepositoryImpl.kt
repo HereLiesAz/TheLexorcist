@@ -18,6 +18,10 @@ class CaseRepositoryImpl @Inject constructor(
 ) : CaseRepository {
 
     private val _cases = kotlinx.coroutines.flow.MutableStateFlow<List<Case>>(emptyList())
+    /**
+     * A flow of the list of cases.
+     * This is the implementation of the [CaseRepository.cases] property.
+     */
     override val cases: Flow<List<Case>> = _cases.asStateFlow()
 
     override suspend fun getCaseBySpreadsheetId(spreadsheetId: String): Case? {

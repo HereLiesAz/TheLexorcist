@@ -8,7 +8,6 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.hereliesaz.lexorcist.data.EvidenceRepository
 import com.hereliesaz.lexorcist.data.SettingsManager
 import com.hereliesaz.lexorcist.service.ScriptRunner
-import io.mockk.every
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
@@ -40,19 +39,17 @@ class OcrViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
 
     private lateinit var ocrViewModel: OcrViewModel
-    private lateinit var evidenceRepository: EvidenceRepository
-    private lateinit var settingsManager: SettingsManager
-    private lateinit var scriptRunner: ScriptRunner
+    private lateinit var ocrProcessingService: com.hereliesaz.lexorcist.service.OcrProcessingService
     private lateinit var application: Application
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         application = mockk(relaxed = true)
-        evidenceRepository = mockk(relaxed = true)
-        settingsManager = mockk(relaxed = true)
-        scriptRunner = mockk(relaxed = true)
-        ocrViewModel = OcrViewModel(application, evidenceRepository, settingsManager, scriptRunner)
+        ocrProcessingService = mockk(relaxed = true)
+        mockkStatic(Log::class)
+        every { Log.d(any(), any()) } returns 0
+        ocrViewModel = OcrViewModel(application, ocrProcessingService)
     }
 
     @After
@@ -66,6 +63,7 @@ class OcrViewModelTest {
         val uri: Uri = Uri.parse("content://media/picker/0/com.android.providers.media.photopicker/media/1000000033")
         val context: Context = mockk(relaxed = true)
         val caseId = 123
+        val spreadsheetId = "spreadsheet-123"
         val parentVideoId = "video-456"
         val fixedClock = Clock.fixed(Instant.ofEpochMilli(1672531200000L), ZoneId.systemDefault())
         mockkStatic(System::class)
@@ -73,11 +71,11 @@ class OcrViewModelTest {
 
 
         // When
-        ocrViewModel.performOcrOnUri(uri, context, caseId, parentVideoId)
+        ocrViewModel.performOcrOnUri(uri, context, caseId, spreadsheetId, parentVideoId)
         testDispatcher.scheduler.advanceUntilIdle()
 
         // Then
         testDispatcher.scheduler.advanceUntilIdle()
-        // No crash
+        coVerify { ocrProcessingService.processImageFrame(uri, context, caseId, spreadsheetId, parentVideoId) }
     }
 }

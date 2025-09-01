@@ -1,3 +1,10 @@
+/**
+ * @fileoverview Main script file for the Lexorcist Google Apps Script.
+ * This script is responsible for generating legal documents from a Google Sheet.
+ * It uses a configuration object 'CONFIG' which is expected to be in the global scope.
+ * The 'CONFIG' object is defined in 'apps_script_config.js'.
+ */
+
 // --- MASTER MENU ---
 
 function onOpen() {
