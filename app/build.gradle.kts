@@ -7,6 +7,7 @@ plugins {
     id("com.google.dagger.hilt.android")
     id("org.jetbrains.kotlin.plugin.compose") version "2.2.10"
     id("com.google.devtools.ksp") version "2.2.10-2.0.2"
+    id("com.diffplug.spotless")
 }
 
 android {
@@ -158,5 +159,12 @@ kotlin {
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_17)
         freeCompilerArgs.add("-opt-in=androidx.compose.material3.ExperimentalMaterial3Api")
+    }
+}
+
+spotless {
+    kotlin {
+        target("src/**/*.kt")
+        ktlint()
     }
 }
