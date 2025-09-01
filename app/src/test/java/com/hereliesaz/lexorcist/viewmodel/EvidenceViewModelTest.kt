@@ -60,12 +60,16 @@ class EvidenceViewModelTest {
         )
         coEvery { evidenceRepository.getEvidenceForCase(spreadsheetId, caseId) } returns flowOf(evidenceList)
 
-        // When
-        evidenceViewModel.loadEvidenceForCase(caseId, spreadsheetId)
-        testDispatcher.scheduler.runCurrent()
+        evidenceViewModel.evidenceList.test {
+            assertEquals(emptyList<Evidence>(), awaitItem()) // Consume initial empty list
 
-        // Then
-        assertEquals(evidenceList, evidenceViewModel.evidenceList.value)
+            // When
+            evidenceViewModel.loadEvidenceForCase(caseId, spreadsheetId)
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            // Then
+            assertEquals(evidenceList, awaitItem())
+        }
     }
 
     @Test
