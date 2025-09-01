@@ -45,7 +45,8 @@ fun AppNavRail(onNavigate: (String) -> Unit) {
     val feedbackText = stringResource(R.string.feedback).uppercase(Locale.getDefault())
 
     AzNavRail(
-        appName = appNameStr, // App name in header, usually not all caps
+        // App name in header, usually not all caps
+        appName = appNameStr,
         useAppIconAsHeader = true,
         header = NavRailHeader { /* ... */ },
         onPredefinedAction = { action ->
