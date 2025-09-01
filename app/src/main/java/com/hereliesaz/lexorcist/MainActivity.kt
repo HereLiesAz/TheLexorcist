@@ -2,10 +2,8 @@ package com.hereliesaz.lexorcist
 
 // import android.app.PendingIntent // No longer directly used here
 import android.content.IntentSender
-import android.credentials.CredentialManager
 import android.os.Bundle
 import android.util.Log
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResult
@@ -35,30 +33,25 @@ class MainActivity : ComponentActivity() {
         private const val TAG = "MainActivity"
     }
 
+    private val signInLauncher = registerForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            try {
+                val credential = Identity.getSignInClient(this).getSignInCredentialFromIntent(result.data)
+                authViewModel.onSignInResult(credential)
+            } catch (e: Exception) {
+                Log.e(TAG, "Sign-in credential retrieval failed", e)
+                authViewModel.onSignInError(e)
+            }
+        } else {
+            Log.w(TAG, "Sign-in flow failed. Result code: ${result.resultCode}")
+            authViewModel.onSignInError(Exception("Sign-in flow failed or was cancelled by user."))
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        private val signInLauncher = registerForActivityResult(
-            ActivityResultContracts.StartIntentSenderForResult()
-        ) { result: ActivityResult ->
-            if (result.resultCode == RESULT_OK) {
-                try {
-                    val credentialManager = CredentialManager.create(context)
-                    authViewModel.onSignInResult(credential)
-                } catch (e: Exception) {
-                    Log.e(TAG, "Error getting credential from intent", e)
-                    authViewModel.onSignInError(e)
-                }
-            } else {
-                // Handle cancellation or failure from the IntentSender UI
-                Log.w(TAG, "Sign-in flow was cancelled or failed. Result code: ${result.resultCode}")
-                // authViewModel.onSignInError(Exception("Sign-in cancelled or failed."))
-                // Potentially update UI or clear InProgress state if coming from a specific flow
-                if (authViewModel.signInState.value is com.hereliesaz.lexorcist.model.SignInState.InProgress) {
-                     authViewModel.clearSignInError() // Or set to Idle to allow retry
-                }
-            }
-        }
 
         // Attempt silent sign-in when the app starts
         authViewModel.attemptSilentSignIn()

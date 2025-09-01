@@ -34,6 +34,8 @@
     <string name="select_image">Select Image</string>
     <string name="take_picture">Take Picture</string>
     <string name="add_text_evidence">Add Text Evidence</string>
+    <string name="add_image_evidence">Add Image Evidence</string>
+    <string name="add_audio_evidence">Add Audio Evidence</string>
     <string name="add_document">Add Document</string>
     <string name="add_spreadsheet">Add Spreadsheet</string>
     <string name="image_for_review">Image for review</string>

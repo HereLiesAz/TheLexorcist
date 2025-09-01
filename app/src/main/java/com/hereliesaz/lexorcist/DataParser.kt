@@ -14,10 +14,13 @@ object DataParser {
         """"\b\d{2}[-/]\d{2}[-/]\d{2}\b"""".toRegex() to SimpleDateFormat("MM-dd-yy", Locale.US),
         """"\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s\d{1,2},?\s\d{4}\b"""".toRegex() to SimpleDateFormat("MMM d, yyyy", Locale.US),
         """"\b\d{1,2}\s(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s\d{4}\b"""".toRegex() to SimpleDateFormat("dd MMM yyyy", Locale.US),
-        """"\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\s\d{1,2},?\s\d{4}\b"""".toRegex() to SimpleDateFormat("MMMM d, yyyy", Locale.US),
         (
-            "\"\\b\\d{1,2}\\s(?:January|February|March|April|May|June|July|August|" +
-                "September|October|November|December)\\s\\d{4}\\b\""
+            "\"\\b(?:January|February|March|April|May|June|July|August|September" +
+                "|October|November|December)\\s\\d{1,2},?\\s\\d{4}\\b\""
+        ).toRegex() to SimpleDateFormat("MMMM d, yyyy", Locale.US),
+        (
+            "\"\\b\\d{1,2}\\s(?:January|February|March|April|May|June|July|August" +
+                "|September|October|November|December)\\s\\d{4}\\b\""
         ).toRegex() to SimpleDateFormat("dd MMMM yyyy", Locale.US),
         """"\b\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z\b"""".toRegex() to SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
     )

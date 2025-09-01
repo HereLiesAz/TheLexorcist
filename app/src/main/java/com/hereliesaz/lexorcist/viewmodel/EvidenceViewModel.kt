@@ -21,15 +21,19 @@ import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccoun
 import com.google.api.services.drive.Drive
 import com.google.api.services.sheets.v4.Sheets
 import android.net.Uri
+import com.hereliesaz.lexorcist.R
+import com.hereliesaz.lexorcist.data.SettingsManager
+import com.hereliesaz.lexorcist.service.ScriptRunner
+import android.content.SharedPreferences
 
 @HiltViewModel
 class EvidenceViewModel @Inject constructor(
     application: Application,
     private val evidenceRepository: EvidenceRepository,
-    private val settingsManager: com.hereliesaz.lexorcist.data.SettingsManager,
-    private val scriptRunner: com.hereliesaz.lexorcist.service.ScriptRunner,
+    private val settingsManager: SettingsManager,
+    private val scriptRunner: ScriptRunner,
     private val ocrProcessingService: OcrProcessingService,
-    private val sharedPreferences: android.content.SharedPreferences
+    private val sharedPreferences: SharedPreferences
 ) : AndroidViewModel(application) {
 
     private val _selectedEvidenceDetails = MutableStateFlow<Evidence?>(null)
@@ -172,7 +176,10 @@ class EvidenceViewModel @Inject constructor(
                 if (userEmail != null) {
                     val credential = GoogleAccountCredential.usingOAuth2(
                         getApplication(),
-                        listOf(Drive.DRIVE_FILE_SCOPE, Sheets.SPREADSHEETS_SCOPE)
+                        listOf(
+                            getApplication<Application>().getString(R.string.google_api_scope_drive_file),
+                            getApplication<Application>().getString(R.string.google_api_scope_sheets)
+                        )
                     ).setSelectedAccountName(userEmail)
 
                     val transcriptionService = TranscriptionService(getApplication(), credential)
