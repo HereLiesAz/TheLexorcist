@@ -11,8 +11,10 @@ This document outlines the tasks required to bring The Lexorcist to a fully func
 These tasks are the highest priority and must be completed before adding new features. The primary goal is to get the application into a runnable, stable state and ensure all existing architectural components are properly integrated.
 
 - [ ] **1.1. Fix Build Errors:**
-    - The project currently fails to compile due to unresolved references (`TheLexorcistTheme`, `Icons.filled`).
-    - **Action:** Investigate the `MainActivity.kt`, `ScriptEditorActivity.kt`, and `CasesScreen.kt` files to correct the theme and icon import/reference issues identified in the build log. Ensure the project can be built and deployed to a device or emulator.
+    - The project currently fails to compile. The build command is timing out, but manual inspection suggests the following issues:
+    - **`LexorcistTheme`:** An unresolved reference to `TheLexorcistTheme` is mentioned in the old `TODO.md`. The theme is now defined as `LexorcistTheme` in `app/src/main/java/com/hereliesaz/lexorcist/ui/theme/Theme.kt` and used in `MainActivity.kt`. The import might be incorrect or there might be other issues.
+    - **`Icons.filled`:** An unresolved reference to `Icons.filled` is mentioned. `CasesScreen.kt` uses `Icons.Filled.Search`, `Icons.Filled.Add`, etc. and also `Icons.AutoMirrored.Filled.Sort`. There might be an issue with the Material Icons dependency or imports.
+    - **Action:** Investigate and fix the build errors. The relevant files are `MainActivity.kt`, `app/src/main/java/com/hereliesaz/lexorcist/ui/CasesScreen.kt`, and the theme files in `app/src/main/java/com/hereliesaz/lexorcist/ui/theme/`. The file `ScriptEditorActivity.kt` has been replaced with `app/src/main/java/com/hereliesaz/lexorcist/ui/ScriptEditorScreen.kt`.
 
 - [ ] **1.2. Integrate `DataParser.kt`:**
     - The `DataParser.kt` file, which is designed to extract generic entities like names, dates, and locations, is currently unused.
