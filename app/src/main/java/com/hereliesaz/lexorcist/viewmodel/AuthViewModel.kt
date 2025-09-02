@@ -4,6 +4,7 @@ import android.app.Activity
 import android.app.Application
 import android.content.SharedPreferences
 import android.util.Log
+import androidx.core.content.edit
 import androidx.credentials.ClearCredentialStateRequest
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
@@ -25,92 +26,97 @@ import kotlinx.coroutines.launch
 import java.security.MessageDigest
 import java.util.UUID
 import javax.inject.Inject
-import androidx.core.content.edit
 
 @HiltViewModel
-class AuthViewModel @Inject constructor(
-    private val application: Application,
-    private val sharedPreferences: SharedPreferences,
-    private val credentialManager: CredentialManager
-) : AndroidViewModel(application) {
+class AuthViewModel
+    @Inject
+    constructor(
+        private val application: Application,
+        private val sharedPreferences: SharedPreferences,
+        private val credentialManager: CredentialManager,
+    ) : AndroidViewModel(application) {
+        private val _signInState = MutableStateFlow<SignInState>(SignInState.Idle)
+        val signInState: StateFlow<SignInState> = _signInState.asStateFlow()
 
-    private val _signInState = MutableStateFlow<SignInState>(SignInState.Idle)
-    val signInState: StateFlow<SignInState> = _signInState.asStateFlow()
+        companion object {
+            private const val TAG = "AuthViewModel"
+            const val PREF_USER_EMAIL_KEY = "user_email"
+        }
 
-    companion object {
-        private const val TAG = "AuthViewModel"
-        const val PREF_USER_EMAIL_KEY = "user_email"
-    }
+        fun signIn(activity: Activity) {
+            viewModelScope.launch {
+                _signInState.value = SignInState.InProgress
 
-    fun signIn(activity: Activity) {
-        viewModelScope.launch {
-            _signInState.value = SignInState.InProgress
+                // Generate a nonce
+                val rawNonce = UUID.randomUUID().toString()
+                val bytes = rawNonce.toByteArray()
+                val md = MessageDigest.getInstance("SHA-256")
+                val digest = md.digest(bytes)
+                val nonce = digest.fold("") { str, it -> str + "%02x".format(it) }
 
-            // Generate a nonce
-            val rawNonce = UUID.randomUUID().toString()
-            val bytes = rawNonce.toByteArray()
-            val md = MessageDigest.getInstance("SHA-256")
-            val digest = md.digest(bytes)
-            val nonce = digest.fold("") { str, it -> str + "%02x".format(it) }
+                val googleIdOption: GetGoogleIdOption =
+                    GetGoogleIdOption
+                        .Builder()
+                        .setFilterByAuthorizedAccounts(false) // Set to false to allow new accounts to sign up
+                        .setServerClientId(application.getString(R.string.default_web_client_id))
+                        .setNonce(nonce)
+                        .build()
 
-            val googleIdOption: GetGoogleIdOption = GetGoogleIdOption.Builder()
-                .setFilterByAuthorizedAccounts(false) // Set to false to allow new accounts to sign up
-                .setServerClientId(application.getString(R.string.default_web_client_id))
-                .setNonce(nonce)
-                .build()
+                val request: GetCredentialRequest =
+                    GetCredentialRequest
+                        .Builder()
+                        .addCredentialOption(googleIdOption)
+                        .build()
 
-            val request: GetCredentialRequest = GetCredentialRequest.Builder()
-                .addCredentialOption(googleIdOption)
-                .build()
-
-            try {
-                val result = credentialManager.getCredential(activity, request)
-                val credential = result.credential
-                if (credential is CustomCredential && credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
-                    try {
-                        val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
-                        onSignInResult(googleIdTokenCredential)
-                    } catch (e: GoogleIdTokenParsingException) {
-                        Log.e(TAG, "Received an invalid google id token response", e)
-                        onSignInError(e)
+                try {
+                    val result = credentialManager.getCredential(activity, request)
+                    val credential = result.credential
+                    if (credential is CustomCredential && credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
+                        try {
+                            val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
+                            onSignInResult(googleIdTokenCredential)
+                        } catch (e: GoogleIdTokenParsingException) {
+                            Log.e(TAG, "Received an invalid google id token response", e)
+                            onSignInError(e)
+                        }
+                    } else {
+                        onSignInError(Exception("Unexpected credential type"))
                     }
-                } else {
-                    onSignInError(Exception("Unexpected credential type"))
+                } catch (e: GetCredentialException) {
+                    Log.e(TAG, "GetCredentialException", e)
+                    onSignInError(e)
                 }
-            } catch (e: GetCredentialException) {
-                Log.e(TAG, "GetCredentialException", e)
-                onSignInError(e)
+            }
+        }
+
+        private fun onSignInResult(credential: GoogleIdTokenCredential) {
+            val userInfo =
+                UserInfo(
+                    displayName = credential.displayName,
+                    email = credential.id, // This is the user's email/ID
+                    photoUrl = credential.profilePictureUri?.toString(),
+                )
+            _signInState.value = SignInState.Success(userInfo)
+            sharedPreferences.edit { putString(PREF_USER_EMAIL_KEY, credential.id) }
+            Log.d(TAG, "User email saved to SharedPreferences: ${credential.id}")
+        }
+
+        fun onSignInError(error: Exception) {
+            _signInState.value = SignInState.Error("Sign-in attempt failed. Please try again.", error)
+        }
+
+        fun signOut() {
+            viewModelScope.launch {
+                credentialManager.clearCredentialState(ClearCredentialStateRequest())
+                _signInState.value = SignInState.Idle
+                sharedPreferences.edit { remove(PREF_USER_EMAIL_KEY) }
+                Log.d(TAG, "User email cleared from SharedPreferences.")
+            }
+        }
+
+        fun clearSignInError() {
+            if (_signInState.value is SignInState.Error) {
+                _signInState.value = SignInState.Idle
             }
         }
     }
-
-    private fun onSignInResult(credential: GoogleIdTokenCredential) {
-        val userInfo = UserInfo(
-            displayName = credential.displayName,
-            email = credential.id, // This is the user's email/ID
-            photoUrl = credential.profilePictureUri?.toString()
-        )
-        _signInState.value = SignInState.Success(userInfo)
-        sharedPreferences.edit { putString(PREF_USER_EMAIL_KEY, credential.id) }
-        Log.d(TAG, "User email saved to SharedPreferences: ${credential.id}")
-    }
-
-    fun onSignInError(error: Exception) {
-        _signInState.value = SignInState.Error("Sign-in attempt failed. Please try again.", error)
-    }
-
-    fun signOut() {
-        viewModelScope.launch {
-            credentialManager.clearCredentialState(ClearCredentialStateRequest())
-            _signInState.value = SignInState.Idle
-            sharedPreferences.edit { remove(PREF_USER_EMAIL_KEY) }
-            Log.d(TAG, "User email cleared from SharedPreferences.")
-        }
-    }
-
-    fun clearSignInError() {
-        if (_signInState.value is SignInState.Error) {
-            _signInState.value = SignInState.Idle
-        }
-    }
-}

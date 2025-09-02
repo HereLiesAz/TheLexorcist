@@ -4,5 +4,5 @@ data class Filter(
     val id: Int,
     val spreadsheetId: String,
     val name: String,
-    val value: String
+    val value: String,
 )

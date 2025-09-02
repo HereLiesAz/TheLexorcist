@@ -7,11 +7,15 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button // Kept for dialog buttons
-import androidx.compose.material3.OutlinedButton // Could be used for dialog buttons for consistency
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Text
+import androidx.compose.material3.OutlinedButton // Could be used for dialog buttons for consistency
 import androidx.compose.material3.OutlinedTextField // Changed from TextField
-import androidx.compose.runtime.*
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment // Added import
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -24,7 +28,7 @@ import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 @Composable
 fun CreateCaseDialog(
     caseViewModel: CaseViewModel,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
 ) {
     val context = LocalContext.current
     var caseName by remember { mutableStateOf("") }
@@ -39,42 +43,44 @@ fun CreateCaseDialog(
         title = { Text(stringResource(R.string.create_new_case)) },
         text = {
             Column(
-                modifier = Modifier
-                    .verticalScroll(rememberScrollState())
-                    .fillMaxWidth(), // Ensure Column itself takes full width for alignment reference
+                modifier =
+                    Modifier
+                        .verticalScroll(rememberScrollState())
+                        .fillMaxWidth(),
+                // Ensure Column itself takes full width for alignment reference
                 verticalArrangement = Arrangement.spacedBy(8.dp),
-                horizontalAlignment = Alignment.End // Right-align children (TextFields)
+                horizontalAlignment = Alignment.End, // Right-align children (TextFields)
             ) {
                 OutlinedTextField(
                     value = caseName,
                     onValueChange = { caseName = it },
                     label = { Text(stringResource(R.string.case_name_required)) },
                     isError = caseName.isBlank(),
-                    modifier = Modifier.fillMaxWidth() // TextField takes full width
+                    modifier = Modifier.fillMaxWidth(), // TextField takes full width
                 )
                 OutlinedTextField(
                     value = exhibitSheetName,
                     onValueChange = { exhibitSheetName = it },
                     label = { Text(stringResource(R.string.exhibit_sheet_name)) },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 )
                 OutlinedTextField(
                     value = caseNumber,
                     onValueChange = { caseNumber = it },
                     label = { Text(stringResource(R.string.case_number)) },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 )
                 OutlinedTextField(
                     value = caseSection,
                     onValueChange = { caseSection = it },
                     label = { Text(stringResource(R.string.case_section)) },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 )
                 OutlinedTextField(
                     value = caseJudge,
                     onValueChange = { caseJudge = it },
                     label = { Text(stringResource(R.string.judge)) },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
         },
@@ -87,20 +93,21 @@ fun CreateCaseDialog(
                             exhibitSheetName = exhibitSheetName.ifBlank { context.getString(R.string.default_exhibit_sheet_name) },
                             caseNumber = caseNumber,
                             caseSection = caseSection,
-                            caseJudge = caseJudge
+                            caseJudge = caseJudge,
                         )
                         onDismiss()
                     }
                 },
-                enabled = caseName.isNotBlank()
+                enabled = caseName.isNotBlank(),
             ) {
                 Text(stringResource(R.string.create))
             }
         },
         dismissButton = {
-            OutlinedButton(onClick = onDismiss) { // Using OutlinedButton for secondary action
+            OutlinedButton(onClick = onDismiss) {
+                // Using OutlinedButton for secondary action
                 Text(stringResource(R.string.cancel))
             }
-        }
+        },
     )
 }

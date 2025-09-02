@@ -1,18 +1,17 @@
 package com.hereliesaz.lexorcist.components
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import com.hereliesaz.aznavrail.model.NavItem
 import com.hereliesaz.aznavrail.model.NavItemData
 import com.hereliesaz.aznavrail.model.NavRailHeader
 import com.hereliesaz.aznavrail.model.NavRailMenuSection
 import com.hereliesaz.aznavrail.model.PredefinedAction
 import com.hereliesaz.aznavrail.ui.AzNavRail
-import android.content.Intent
-import android.net.Uri
-import androidx.compose.ui.res.stringResource
 import com.hereliesaz.lexorcist.R
-import java.util.Locale
 
 @Composable
 fun AppNavRail(onNavigate: (String) -> Unit) {
@@ -53,83 +52,88 @@ fun AppNavRail(onNavigate: (String) -> Unit) {
                 PredefinedAction.HOME -> onNavigate(navHomeStr)
                 PredefinedAction.SETTINGS -> onNavigate(navSettingsStr)
                 PredefinedAction.ABOUT -> {
-                    val intent = Intent(
-                        Intent.ACTION_VIEW,
-                        Uri.parse(githubUrlStr)
-                    )
+                    val intent =
+                        Intent(
+                            Intent.ACTION_VIEW,
+                            Uri.parse(githubUrlStr),
+                        )
                     context.startActivity(intent)
                 }
                 PredefinedAction.FEEDBACK -> {
-                    val intent = Intent(Intent.ACTION_SENDTO).apply {
-                        data = Uri.parse(feedbackEmailStr)
-                        putExtra(Intent.EXTRA_SUBJECT, feedbackSubjectStr)
-                    }
+                    val intent =
+                        Intent(Intent.ACTION_SENDTO).apply {
+                            data = Uri.parse(feedbackEmailStr)
+                            putExtra(Intent.EXTRA_SUBJECT, feedbackSubjectStr)
+                        }
                     context.startActivity(intent)
                 }
                 else -> {}
             }
         },
-        menuSections = listOf(
-            NavRailMenuSection(
-                title = "", 
-                items = listOf(
-                    NavItem(
-                        text = casesText,
-                        data = NavItemData.Action(onClick = { onNavigate(navCasesStr) }),
-                        showOnRail = true
-                    ),
-                    NavItem(
-                        text = evidenceText,
-                        data = NavItemData.Action(onClick = { onNavigate(navEvidenceStr) }),
-                        showOnRail = true
-                    ),
-                    NavItem(
-                        text = "Allegations",
-                        data = NavItemData.Action(onClick = { onNavigate("allegations") }),
-                        showOnRail = true
-                    ),
-                    NavItem(
-                        text = "Templates",
-                        data = NavItemData.Action(onClick = { onNavigate("templates") }),
-                        showOnRail = true
-                    ),
-                    NavItem(
-                        text = timelineText,
-                        data = NavItemData.Action(onClick = { onNavigate(navTimelineStr) }),
-                        showOnRail = true
-                    ),
-                    NavItem(
-                        text = "Review",
-                        data = NavItemData.Action(onClick = { onNavigate(navReviewStr) }),
-                        showOnRail = false
-                    ),
-                    NavItem(
-                        text = extrasText,
-                        data = NavItemData.Action(onClick = { onNavigate(navExtrasStr) }),
-                        showOnRail = true
-                    ),
-                    NavItem(
-                        text = scriptText,
-                        data = NavItemData.Action(onClick = { onNavigate(navScriptEditorStr) }),
-                        showOnRail = true
-                    ),
-                    NavItem(
-                        text = settingsText,
-                        data = NavItemData.Action(predefinedAction = PredefinedAction.SETTINGS),
-                        showOnRail = false
-                    )
-                )
-            )
-        ),
-        footerItems = listOf(
-            NavItem(
-                text = aboutText,
-                data = NavItemData.Action(predefinedAction = PredefinedAction.ABOUT)
+        menuSections =
+            listOf(
+                NavRailMenuSection(
+                    title = "",
+                    items =
+                        listOf(
+                            NavItem(
+                                text = casesText,
+                                data = NavItemData.Action(onClick = { onNavigate(navCasesStr) }),
+                                showOnRail = true,
+                            ),
+                            NavItem(
+                                text = evidenceText,
+                                data = NavItemData.Action(onClick = { onNavigate(navEvidenceStr) }),
+                                showOnRail = true,
+                            ),
+                            NavItem(
+                                text = "Allegations",
+                                data = NavItemData.Action(onClick = { onNavigate("allegations") }),
+                                showOnRail = true,
+                            ),
+                            NavItem(
+                                text = "Templates",
+                                data = NavItemData.Action(onClick = { onNavigate("templates") }),
+                                showOnRail = true,
+                            ),
+                            NavItem(
+                                text = timelineText,
+                                data = NavItemData.Action(onClick = { onNavigate(navTimelineStr) }),
+                                showOnRail = true,
+                            ),
+                            NavItem(
+                                text = "Review",
+                                data = NavItemData.Action(onClick = { onNavigate(navReviewStr) }),
+                                showOnRail = false,
+                            ),
+                            NavItem(
+                                text = extrasText,
+                                data = NavItemData.Action(onClick = { onNavigate(navExtrasStr) }),
+                                showOnRail = true,
+                            ),
+                            NavItem(
+                                text = scriptText,
+                                data = NavItemData.Action(onClick = { onNavigate(navScriptEditorStr) }),
+                                showOnRail = true,
+                            ),
+                            NavItem(
+                                text = settingsText,
+                                data = NavItemData.Action(predefinedAction = PredefinedAction.SETTINGS),
+                                showOnRail = false,
+                            ),
+                        ),
+                ),
             ),
-            NavItem(
-                text = feedbackText,
-                data = NavItemData.Action(predefinedAction = PredefinedAction.FEEDBACK)
-            )
-        )
+        footerItems =
+            listOf(
+                NavItem(
+                    text = aboutText,
+                    data = NavItemData.Action(predefinedAction = PredefinedAction.ABOUT),
+                ),
+                NavItem(
+                    text = feedbackText,
+                    data = NavItemData.Action(predefinedAction = PredefinedAction.FEEDBACK),
+                ),
+            ),
     )
 }

@@ -6,8 +6,9 @@ import com.google.gson.reflect.TypeToken
 import com.hereliesaz.lexorcist.data.Case
 import java.io.File
 
-class CacheManager(private val context: Context) {
-
+class CacheManager(
+    private val context: Context,
+) {
     private val gson = Gson()
     private val caseCacheFile = File(context.cacheDir, "case_cache.json")
 

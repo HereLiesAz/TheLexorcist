@@ -15,10 +15,12 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object SchemaModule {
-
     @Provides
     @Singleton
-    fun provideSpreadsheetSchema(@ApplicationContext context: Context, gson: Gson): SpreadsheetSchema {
+    fun provideSpreadsheetSchema(
+        @ApplicationContext context: Context,
+        gson: Gson,
+    ): SpreadsheetSchema {
         val inputStream = context.resources.openRawResource(R.raw.spreadsheet_schema)
         return InputStreamReader(inputStream).use { reader ->
             gson.fromJson(reader, SpreadsheetSchema::class.java)
@@ -27,7 +29,5 @@ object SchemaModule {
 
     @Provides
     @Singleton
-    fun provideGson(): Gson {
-        return Gson()
-    }
+    fun provideGson(): Gson = Gson()
 }

@@ -3,21 +3,30 @@ package com.hereliesaz.lexorcist
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
 import com.google.api.client.http.FileContent
 import com.google.api.client.http.javanet.NetHttpTransport
-// import com.google.api.client.json.jackson2.JacksonFactory // Removed
-import com.google.api.client.json.gson.GsonFactory // Added
+import com.google.api.client.json.gson.GsonFactory
 import com.google.api.services.drive.Drive
 import com.google.api.services.drive.model.File
 import com.google.api.services.sheets.v4.Sheets
-import com.google.api.services.sheets.v4.model.*
+import com.google.api.services.sheets.v4.model.AddSheetRequest
+import com.google.api.services.sheets.v4.model.AppendValuesResponse
+import com.google.api.services.sheets.v4.model.BatchUpdateSpreadsheetRequest
+import com.google.api.services.sheets.v4.model.ClearValuesRequest
+import com.google.api.services.sheets.v4.model.DeleteDimensionRequest
+import com.google.api.services.sheets.v4.model.DimensionRange
+import com.google.api.services.sheets.v4.model.Request
+import com.google.api.services.sheets.v4.model.SheetProperties
+import com.google.api.services.sheets.v4.model.Spreadsheet
+import com.google.api.services.sheets.v4.model.SpreadsheetProperties
+import com.google.api.services.sheets.v4.model.ValueRange
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.model.Script
 import com.hereliesaz.lexorcist.model.Template
 import com.hereliesaz.lexorcist.utils.Result
+import java.io.IOException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.io.IOException
 
 class GoogleApiService(
     private val drive: Drive,
@@ -655,15 +664,48 @@ class GoogleApiService(
         }
     }
 
-    // Placeholder methods for AddonsBrowserViewModel
-    suspend fun getSharedScripts(): List<Script> = withContext(Dispatchers.IO) {
-        // TODO: Implement actual logic to fetch shared scripts
-        emptyList()
+    suspend fun getSharedScripts(): List<Script> {
+        val spreadsheetId = "18hB2Kx5Le1uaF2pImeITgWntcBB-JfYxvpU2aqTzRr8"
+        val sheetData = readSpreadsheet(spreadsheetId)
+        val scriptSheet = sheetData?.get("Scripts") ?: return emptyList()
+
+        return scriptSheet.mapNotNull { row ->
+            if (row.size >= 7) {
+                Script(
+                    id = row[0].toString(),
+                    name = row[1].toString(),
+                    description = row[2].toString(),
+                    content = row[3].toString(),
+                    author = row[4].toString(),
+                    rating = row[5].toString().toDoubleOrNull() ?: 0.0,
+                    numRatings = row[6].toString().toIntOrNull() ?: 0
+                )
+            } else {
+                null
+            }
+        }
     }
 
-    suspend fun getSharedTemplates(): List<Template> = withContext(Dispatchers.IO) {
-        // TODO: Implement actual logic to fetch shared templates
-        emptyList()
+    suspend fun getSharedTemplates(): List<Template> {
+        val spreadsheetId = "18hB2Kx5Le1uaF2pImeITgWntcBB-JfYxvpU2aqTzRr8"
+        val sheetData = readSpreadsheet(spreadsheetId)
+        val templateSheet = sheetData?.get("Templates") ?: return emptyList()
+
+        return templateSheet.mapNotNull { row ->
+            if (row.size >= 7) {
+                Template(
+                    id = row[0].toString(),
+                    name = row[1].toString(),
+                    description = row[2].toString(),
+                    content = row[3].toString(),
+                    author = row[4].toString(),
+                    rating = row[5].toString().toDoubleOrNull() ?: 0.0,
+                    numRatings = row[6].toString().toIntOrNull() ?: 0
+                )
+            } else {
+                null
+            }
+        }
     }
 
     suspend fun shareAddon(name: String, description: String, content: String, type: String): Boolean = withContext(Dispatchers.IO) {

@@ -11,9 +11,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class TranscriptionViewModel(
-    application: Application
+    application: Application,
 ) : AndroidViewModel(application) {
-
     private var transcriptionService: TranscriptionService? = null
 
     fun setCredential(credential: GoogleAccountCredential) {
@@ -42,7 +41,14 @@ class TranscriptionViewModel(
 
 sealed class TranscriptionState {
     object Idle : TranscriptionState()
+
     object Loading : TranscriptionState()
-    data class Success(val transcript: String) : TranscriptionState()
-    data class Error(val message: String) : TranscriptionState()
+
+    data class Success(
+        val transcript: String,
+    ) : TranscriptionState()
+
+    data class Error(
+        val message: String,
+    ) : TranscriptionState()
 }

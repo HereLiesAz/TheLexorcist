@@ -12,24 +12,26 @@ import kotlin.random.Random
 @Composable
 fun LexorcistTheme(
     themeMode: ThemeMode,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
-    val useDarkTheme = when (themeMode) {
-        ThemeMode.LIGHT -> false
-        ThemeMode.DARK -> true
-        ThemeMode.SYSTEM -> isSystemInDarkTheme()
-    }
+    val useDarkTheme =
+        when (themeMode) {
+            ThemeMode.LIGHT -> false
+            ThemeMode.DARK -> true
+            ThemeMode.SYSTEM -> isSystemInDarkTheme()
+        }
 
-    val randomColor = Color(
-        red = Random.nextInt(256),
-        green = Random.nextInt(256),
-        blue = Random.nextInt(256)
-    )
+    val randomColor =
+        Color(
+            red = Random.nextInt(256),
+            green = Random.nextInt(256),
+            blue = Random.nextInt(256),
+        )
     DynamicMaterialTheme(
         seedColor = randomColor,
         typography = Typography,
         shapes = Shapes,
         isDark = useDarkTheme,
-        content = content
+        content = content,
     )
 }
