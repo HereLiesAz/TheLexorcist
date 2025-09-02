@@ -38,30 +38,103 @@ fun ScriptEditorScreen(viewModel: ScriptEditorViewModel) {
         }
     }
 
-    Row(modifier = Modifier.fillMaxSize()) {
-        // Editor Column
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxHeight()
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            horizontalAlignment = Alignment.End
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.End
+    ) {
+        // Script Builder Section
+        Text(stringResource(R.string.script_builder), style = MaterialTheme.typography.headlineSmall)
+        Spacer(modifier = Modifier.height(16.dp))
+        FlowRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Spacer removed - content starts at the top of this panel
-            OutlinedTextField(
-                value = scriptText,
-                onValueChange = { viewModel.onScriptTextChanged(it) },
-                label = { Text(stringResource(R.string.enter_your_script)) },
-                placeholder = { Text(stringResource(R.string.script_editor_placeholder)) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f) // TextField takes available vertical space in this Column
-            )
-            Spacer(modifier = Modifier.height(8.dp))
+            OutlinedButton(onClick = { viewModel.insertText(snippetTextIncludesStr) }) {
+                Text(stringResource(R.string.script_snippet_text_includes_label))
+            }
+            OutlinedButton(onClick = { viewModel.insertText(snippetTagsIncludesStr) }) {
+                Text(stringResource(R.string.script_snippet_tags_includes_label))
+            }
+            OutlinedButton(onClick = { viewModel.insertText(snippetDateGreaterStr) }) {
+                Text(stringResource(R.string.script_snippet_date_greater_label))
+            }
+            OutlinedButton(onClick = { viewModel.insertText(snippetDateLessStr) }) {
+                Text(stringResource(R.string.script_snippet_date_less_label))
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Editor Section with Tabs
+        var tabIndex by remember { mutableStateOf(0) }
+        val tabs = listOf(stringResource(R.string.script_tab_description), stringResource(R.string.script_tab_editor))
+
+        Column(modifier = Modifier.weight(1f).fillMaxWidth()) {
+            TabRow(selectedTabIndex = tabIndex) {
+                tabs.forEachIndexed { index, title ->
+                    Tab(
+                        text = { Text(title) },
+                        selected = tabIndex == index,
+                        onClick = { tabIndex = index }
+                    )
+                }
+            }
+            when (tabIndex) {
+                0 -> { // Description Tab
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp)
+                            .verticalScroll(rememberScrollState()),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = stringResource(R.string.script_description_placeholder),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
+                }
+                1 -> { // Editor Tab
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        Text(
+                            text = stringResource(R.string.script_editor_instructions),
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(top = 16.dp, bottom = 8.dp, start = 16.dp, end = 16.dp)
+                        )
+                        OutlinedTextField(
+                            value = scriptText,
+                            onValueChange = { viewModel.onScriptTextChanged(it) },
+                            label = { Text(stringResource(R.string.enter_your_script)) },
+                            placeholder = { Text(stringResource(R.string.script_editor_placeholder)) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                                .padding(horizontal = 16.dp)
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Action Buttons
+        var showShareDialog by remember { mutableStateOf(false) }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
+        ) {
+            OutlinedButton(
+                onClick = { showShareDialog = true }
+            ) {
+                Text(stringResource(R.string.share))
+            }
             OutlinedButton(
                 onClick = { viewModel.saveScript() },
-                modifier = Modifier.fillMaxWidth(),
                 enabled = saveState !is SaveState.Saving
             ) {
                 if (saveState is SaveState.Saving) {
@@ -71,34 +144,28 @@ fun ScriptEditorScreen(viewModel: ScriptEditorViewModel) {
                 }
             }
         }
+    }
 
-        // Script Builder Column
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxHeight()
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            horizontalAlignment = Alignment.End
-        ) {
-            // Spacer removed - content starts at the top of this panel
-            Text(stringResource(R.string.script_builder), style = MaterialTheme.typography.headlineSmall)
-            Spacer(modifier = Modifier.height(16.dp))
-            OutlinedButton(onClick = { viewModel.insertText(snippetTextIncludesStr) }) {
-                Text(stringResource(R.string.script_snippet_text_includes_label))
+    if (showShareDialog) {
+        AlertDialog(
+            onDismissRequest = { showShareDialog = false },
+            title = { Text(stringResource(R.string.share_script_title)) },
+            text = { Text(stringResource(R.string.share_script_confirmation)) },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        // TODO: Implement sharing logic with AddonsBrowserViewModel
+                        showShareDialog = false
+                    }
+                ) {
+                    Text(stringResource(R.string.share))
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { showShareDialog = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
             }
-            Spacer(modifier = Modifier.height(8.dp))
-            OutlinedButton(onClick = { viewModel.insertText(snippetTagsIncludesStr) }) {
-                Text(stringResource(R.string.script_snippet_tags_includes_label))
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            OutlinedButton(onClick = { viewModel.insertText(snippetDateGreaterStr) }) {
-                Text(stringResource(R.string.script_snippet_date_greater_label))
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            OutlinedButton(onClick = { viewModel.insertText(snippetDateLessStr) }) {
-                Text(stringResource(R.string.script_snippet_date_less_label))
-            }
-        }
+        )
     }
 }
