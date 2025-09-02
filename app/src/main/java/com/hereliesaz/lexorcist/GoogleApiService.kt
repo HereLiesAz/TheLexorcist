@@ -664,15 +664,48 @@ class GoogleApiService(
         }
     }
 
-    // Placeholder methods for AddonsBrowserViewModel
-    suspend fun getSharedScripts(): List<Script> = withContext(Dispatchers.IO) {
-        // TODO: Implement actual logic to fetch shared scripts
-        emptyList()
+    suspend fun getSharedScripts(): List<Script> {
+        val spreadsheetId = "18hB2Kx5Le1uaF2pImeITgWntcBB-JfYxvpU2aqTzRr8"
+        val sheetData = readSpreadsheet(spreadsheetId)
+        val scriptSheet = sheetData?.get("Scripts") ?: return emptyList()
+
+        return scriptSheet.mapNotNull { row ->
+            if (row.size >= 7) {
+                Script(
+                    id = row[0].toString(),
+                    name = row[1].toString(),
+                    description = row[2].toString(),
+                    content = row[3].toString(),
+                    author = row[4].toString(),
+                    rating = row[5].toString().toDoubleOrNull() ?: 0.0,
+                    numRatings = row[6].toString().toIntOrNull() ?: 0
+                )
+            } else {
+                null
+            }
+        }
     }
 
-    suspend fun getSharedTemplates(): List<Template> = withContext(Dispatchers.IO) {
-        // TODO: Implement actual logic to fetch shared templates
-        emptyList()
+    suspend fun getSharedTemplates(): List<Template> {
+        val spreadsheetId = "18hB2Kx5Le1uaF2pImeITgWntcBB-JfYxvpU2aqTzRr8"
+        val sheetData = readSpreadsheet(spreadsheetId)
+        val templateSheet = sheetData?.get("Templates") ?: return emptyList()
+
+        return templateSheet.mapNotNull { row ->
+            if (row.size >= 7) {
+                Template(
+                    id = row[0].toString(),
+                    name = row[1].toString(),
+                    description = row[2].toString(),
+                    content = row[3].toString(),
+                    author = row[4].toString(),
+                    rating = row[5].toString().toDoubleOrNull() ?: 0.0,
+                    numRatings = row[6].toString().toIntOrNull() ?: 0
+                )
+            } else {
+                null
+            }
+        }
     }
 
     suspend fun shareAddon(name: String, description: String, content: String, type: String): Boolean = withContext(Dispatchers.IO) {

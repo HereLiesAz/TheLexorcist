@@ -94,6 +94,24 @@ class EvidenceViewModel
             }
         }
 
+        fun toggleEvidenceSelection(evidenceId: Int) {
+            val list = _evidenceList.value.map {
+                if (it.id == evidenceId) {
+                    it.copy(isSelected = !it.isSelected)
+                } else {
+                    it
+                }
+            }
+            _evidenceList.value = list
+        }
+
+        fun clearEvidenceSelection() {
+            val list = _evidenceList.value.map {
+                it.copy(isSelected = false)
+            }
+            _evidenceList.value = list
+        }
+
         fun loadEvidenceDetails(evidenceId: Int) {
             viewModelScope.launch {
                 _selectedEvidenceDetails.value = evidenceRepository.getEvidenceById(evidenceId)
@@ -166,6 +184,20 @@ class EvidenceViewModel
 
         fun onSearchQueryChanged(query: String) {
             _searchQuery.value = query
+        }
+
+        fun assignAllegationToEvidence(evidenceId: Int, allegationId: Int) {
+            viewModelScope.launch {
+                val evidence = evidenceRepository.getEvidenceById(evidenceId)
+                if (evidence != null) {
+                    val updatedEvidence = evidence.copy(allegationId = allegationId)
+                    evidenceRepository.updateEvidence(updatedEvidence)
+                    // Refresh list if it's for the same case
+                    if (evidence.caseId == currentCaseIdForList && evidence.spreadsheetId == currentSpreadsheetIdForList) {
+                        loadEvidenceForCase(evidence.caseId, evidence.spreadsheetId)
+                    }
+                }
+            }
         }
 
         fun processImageEvidence(uri: Uri) {

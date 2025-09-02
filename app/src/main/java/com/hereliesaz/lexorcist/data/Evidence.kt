@@ -20,4 +20,5 @@ data class Evidence(
     val linkedEvidenceIds: List<Int> = emptyList(),
     val parentVideoId: String? = null,
     val entities: Map<String, List<String>> = emptyMap(),
+    val isSelected: Boolean = false,
 ) : Parcelable

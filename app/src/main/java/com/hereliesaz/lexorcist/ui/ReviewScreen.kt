@@ -1,5 +1,8 @@
 package com.hereliesaz.lexorcist.ui
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -17,7 +20,21 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -27,19 +44,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.hereliesaz.lexorcist.R
+import com.hereliesaz.lexorcist.data.Allegation
 import com.hereliesaz.lexorcist.data.Evidence
+import com.hereliesaz.lexorcist.viewmodel.AllegationsViewModel
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
 import java.util.Locale
-
-import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.ui.input.pointer.pointerInput
-import com.hereliesaz.lexorcist.viewmodel.AllegationsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -68,12 +84,12 @@ fun ReviewScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { 
+                title = {
                     Text(
-                        (if (selectedCase != null) 
-                            stringResource(R.string.data_review_title_case, selectedCase!!.name) 
-                        else 
-                            stringResource(R.string.data_review)).uppercase(Locale.getDefault()) // ALL CAPS
+                        (if (selectedCase != null)
+                            stringResource(R.string.data_review_title_case, selectedCase!!.name)
+                        else
+                            stringResource(R.string.data_review)).uppercase(Locale.getDefault())
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -88,38 +104,38 @@ fun ReviewScreen(
 
             Column(
                 modifier = Modifier.fillMaxSize(),
-                horizontalAlignment = Alignment.End 
+                horizontalAlignment = Alignment.End
             ) {
                 if (isLoading) {
                     Box(
-                        modifier = Modifier.fillMaxSize(), 
-                        contentAlignment = Alignment.Center 
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
                     ) {
                         CircularProgressIndicator()
                     }
                 } else if (selectedCase == null) {
                     Column(
-                         modifier = Modifier
-                            .fillMaxSize()
-                            .verticalScroll(rememberScrollState()) 
-                            .padding(horizontal = 16.dp),
-                        horizontalAlignment = Alignment.End,
-                        verticalArrangement = Arrangement.Top
-                    ){
-                        Spacer(modifier = Modifier.height(halfScreenHeight))
-                        Text(stringResource(R.string.please_select_case_for_evidence).uppercase(Locale.getDefault())) // ALL CAPS
-                    }
-                } else if (evidenceList.isEmpty()) {
-                     Column(
                         modifier = Modifier
                             .fillMaxSize()
                             .verticalScroll(rememberScrollState())
                             .padding(horizontal = 16.dp),
                         horizontalAlignment = Alignment.End,
                         verticalArrangement = Arrangement.Top
-                    ){
+                    ) {
                         Spacer(modifier = Modifier.height(halfScreenHeight))
-                        Text(stringResource(R.string.no_evidence_for_case).uppercase(Locale.getDefault())) // ALL CAPS
+                        Text(stringResource(R.string.please_select_case_for_evidence).uppercase(Locale.getDefault()))
+                    }
+                } else if (evidenceList.isEmpty()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
+                            .padding(horizontal = 16.dp),
+                        horizontalAlignment = Alignment.End,
+                        verticalArrangement = Arrangement.Top
+                    ) {
+                        Spacer(modifier = Modifier.height(halfScreenHeight))
+                        Text(stringResource(R.string.no_evidence_for_case).uppercase(Locale.getDefault()))
                     }
                 } else {
                     ReviewScreenContent(
@@ -143,7 +159,7 @@ fun ReviewScreen(
 
 @Composable
 fun ReviewScreenContent(
-    allegations: List<com.hereliesaz.lexorcist.data.Allegation>,
+    allegations: List<Allegation>,
     evidenceList: List<Evidence>,
     evidenceViewModel: EvidenceViewModel,
     showEditDialog: Boolean,
@@ -156,27 +172,75 @@ fun ReviewScreenContent(
     onEvidenceToDeleteChange: (Evidence?) -> Unit
 ) {
     var draggedEvidence by remember { mutableStateOf<Evidence?>(null) }
+    var selectionMode by remember { mutableStateOf(false) }
 
     Row(modifier = Modifier.fillMaxSize()) {
         LazyColumn(modifier = Modifier.weight(1f)) {
             items(allegations) { allegation ->
-                Text(allegation.text, modifier = Modifier.padding(16.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                        .pointerInput(allegation) {
+                            detectDragGestures(
+                                onDragEnd = {
+                                    draggedEvidence?.let {
+                                        evidenceViewModel.assignAllegationToEvidence(it.id, allegation.id)
+                                    }
+                                    draggedEvidence = null
+                                },
+                                onDrag = { _, _ -> }
+                            )
+                        }
+                ) {
+                    Text(allegation.text)
+                }
             }
         }
         LazyColumn(modifier = Modifier.weight(1f)) {
             items(evidenceList) { evidence ->
-                Text(
-                    text = evidence.content,
+                val isSelected = evidence.isSelected
+                Box(
                     modifier = Modifier
                         .padding(16.dp)
-                        .pointerInput(Unit) {
-                            detectDragGestures { change, dragAmount ->
-                                change.consume()
-                                draggedEvidence = evidence
-                            }
+                        .background(if (isSelected) Color.LightGray else Color.Transparent)
+                        .pointerInput(evidence) {
+                            detectTapGestures(
+                                onLongPress = {
+                                    selectionMode = true
+                                    evidenceViewModel.toggleEvidenceSelection(evidence.id)
+                                },
+                                onTap = {
+                                    if (selectionMode) {
+                                        evidenceViewModel.toggleEvidenceSelection(evidence.id)
+                                    }
+                                }
+                            )
                         }
-                )
+                        .pointerInput(evidence) {
+                             detectDragGestures(
+                                 onDragStart = {
+                                     draggedEvidence = evidence
+                                 },
+                                 onDrag = { _, _ -> }
+                             )
+                        }
+                ) {
+                    Text(text = evidence.content)
+                }
             }
+        }
+    }
+
+    if (selectionMode) {
+        Button(
+            onClick = {
+                selectionMode = false
+                evidenceViewModel.clearEvidenceSelection()
+            },
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Text("Exit Selection Mode")
         }
     }
 
@@ -194,19 +258,19 @@ fun ReviewScreenContent(
     if (showDeleteConfirmDialog && evidenceToDelete != null) {
         AlertDialog(
             onDismissRequest = { onShowDeleteConfirmDialogChange(false) },
-            title = { Text(stringResource(R.string.delete_evidence).uppercase(Locale.getDefault())) }, // ALL CAPS
-            text = { Text(stringResource(R.string.delete_evidence_confirmation)) }, // Confirmation usually not all caps
+            title = { Text(stringResource(R.string.delete_evidence).uppercase(Locale.getDefault())) },
+            text = { Text(stringResource(R.string.delete_evidence_confirmation)) },
             confirmButton = {
                 Button(onClick = {
                     evidenceViewModel.deleteEvidence(evidenceToDelete)
                     onShowDeleteConfirmDialogChange(false)
                 }) {
-                    Text(stringResource(R.string.delete).uppercase(Locale.getDefault())) // ALL CAPS
+                    Text(stringResource(R.string.delete).uppercase(Locale.getDefault()))
                 }
             },
             dismissButton = {
                 OutlinedButton(onClick = { onShowDeleteConfirmDialogChange(false) }) {
-                    Text(stringResource(R.string.cancel).uppercase(Locale.getDefault())) // ALL CAPS
+                    Text(stringResource(R.string.cancel).uppercase(Locale.getDefault()))
                 }
             }
         )
@@ -215,13 +279,13 @@ fun ReviewScreenContent(
 
 @Composable
 fun EvidenceItem(
-    evidence: Evidence, 
+    evidence: Evidence,
     onEditClick: (Evidence) -> Unit,
     onDeleteClick: (Evidence) -> Unit
 ) {
     Card(
         modifier = Modifier
-            .padding(vertical = 4.dp) 
+            .padding(vertical = 4.dp)
             .fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         shape = MaterialTheme.shapes.medium
@@ -234,15 +298,15 @@ fun EvidenceItem(
         ) {
             Column(
                 modifier = Modifier.weight(1f),
-                 horizontalAlignment = Alignment.End, 
-                 verticalArrangement = Arrangement.spacedBy(4.dp) 
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(
                     text = evidence.sourceDocument,
                     style = MaterialTheme.typography.titleMedium,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.fillMaxWidth() 
+                    modifier = Modifier.fillMaxWidth()
                 )
                 if (evidence.category.isNotBlank()) {
                     Text(
@@ -264,13 +328,13 @@ fun EvidenceItem(
                 Text(
                     text = evidence.content,
                     style = MaterialTheme.typography.bodySmall,
-                    maxLines = 3, 
+                    maxLines = 3,
                     overflow = TextOverflow.Ellipsis,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.fillMaxWidth()
                 )
             }
-            Column(horizontalAlignment = Alignment.End) { 
+            Column(horizontalAlignment = Alignment.End) {
                 IconButton(onClick = { onEditClick(evidence) }) {
                     Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.edit).uppercase(Locale.getDefault()))
                 }
@@ -284,7 +348,7 @@ fun EvidenceItem(
 
 @Composable
 fun EditEvidenceDialog(
-    evidence: Evidence, 
+    evidence: Evidence,
     onDismiss: () -> Unit,
     onSave: (Evidence) -> Unit
 ) {
@@ -295,24 +359,24 @@ fun EditEvidenceDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.edit_evidence).uppercase(Locale.getDefault())) }, // ALL CAPS
+        title = { Text(stringResource(R.string.edit_evidence).uppercase(Locale.getDefault())) },
         text = {
             Column(
-                modifier = Modifier.verticalScroll(rememberScrollState()), 
+                modifier = Modifier.verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 horizontalAlignment = Alignment.End
-            ) { 
+            ) {
                 OutlinedTextField(
                     value = content,
                     onValueChange = { content = it },
-                    label = { Text(stringResource(R.string.content)) }, // Labels not typically all caps
+                    label = { Text(stringResource(R.string.content)) },
                     modifier = Modifier.fillMaxWidth(),
-                    maxLines = 5 
+                    maxLines = 5
                 )
-                 OutlinedTextField(
+                OutlinedTextField(
                     value = sourceDocument,
                     onValueChange = { sourceDocument = it },
-                    label = { Text(stringResource(R.string.source_document)) }, // Needs string R.string.source_document
+                    label = { Text(stringResource(R.string.source_document)) },
                     modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
@@ -325,13 +389,13 @@ fun EditEvidenceDialog(
                 OutlinedTextField(
                     value = tags,
                     onValueChange = { tags = it },
-                    label = { Text(stringResource(R.string.tags_comma_separated)) }, // Needs string R.string.tags_comma_separated
+                    label = { Text(stringResource(R.string.tags_comma_separated)) },
                     modifier = Modifier.fillMaxWidth()
                 )
             }
         },
         confirmButton = {
-            Button(onClick = { 
+            Button(onClick = {
                 val updatedEvidence = evidence.copy(
                     content = content,
                     sourceDocument = sourceDocument,
@@ -340,20 +404,13 @@ fun EditEvidenceDialog(
                 )
                 onSave(updatedEvidence)
             }) {
-                Text(stringResource(R.string.save).uppercase(Locale.getDefault())) // ALL CAPS
+                Text(stringResource(R.string.save).uppercase(Locale.getDefault()))
             }
         },
         dismissButton = {
-            OutlinedButton(onClick = onDismiss) { 
-                Text(stringResource(R.string.cancel).uppercase(Locale.getDefault())) // ALL CAPS
+            OutlinedButton(onClick = onDismiss) {
+                Text(stringResource(R.string.cancel).uppercase(Locale.getDefault()))
             }
         }
     )
 }
-
-// Need to add these to strings.xml:
-// R.string.data_review_title_case = "REVIEW: %1$s"
-// R.string.please_select_case_for_evidence = "Please select a case to review its evidence."
-// R.string.no_evidence_for_case = "No evidence found for this case."
-// R.string.source_document = "Source Document"
-// R.string.tags_comma_separated = "Tags (comma-separated)"
