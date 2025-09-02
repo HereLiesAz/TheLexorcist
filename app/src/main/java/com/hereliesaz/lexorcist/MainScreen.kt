@@ -150,7 +150,7 @@ fun MainScreen(
                                         )
                                     }
                                 }
-                                composable("review") {
+                                composable("data_review") { // Changed "review" to "data_review"
                                     val allegationsViewModel: com.hereliesaz.lexorcist.viewmodel.AllegationsViewModel = hiltViewModel()
                                     ReviewScreen(
                                         evidenceViewModel = evidenceViewModel,

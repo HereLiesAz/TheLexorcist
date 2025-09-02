@@ -149,11 +149,19 @@ dependencies {
     // Hilt
     implementation(libs.google.dagger.hilt.android)
     ksp(libs.google.dagger.hilt.compiler)
+
     implementation(libs.androidx.hilt.work)
-    ksp(libs.androidx.hilt.compiler)
+    ksp(libs.androidx.hilt.compiler) // KSP for Hilt's AndroidX extensions
+
     implementation(libs.androidx.hilt.navigation.compose)
+
+    // Hilt For Unit Tests (src/test)
     testImplementation(libs.google.dagger.hilt.android.testing)
-    kspTest(libs.hilt.android.compiler)
+    kspTest(libs.google.dagger.hilt.compiler) // Corrected alias
+
+    // Hilt For Android Instrumentation Tests (src/androidTest)
+    androidTestImplementation(libs.google.dagger.hilt.android.testing)
+    kspAndroidTest(libs.google.dagger.hilt.compiler)
 
 
     // Room IS NOT ALLOWED IN THIS PROJECT!!!!!
