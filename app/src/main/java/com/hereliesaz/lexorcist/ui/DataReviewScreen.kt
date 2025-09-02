@@ -42,69 +42,47 @@ fun DataReviewScreen(
     var evidenceToEdit by remember { mutableStateOf<Evidence?>(null) }
     var evidenceToDelete by remember { mutableStateOf<Evidence?>(null) }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { 
-                    Text(
-                        (if (selectedCase != null) 
-                            stringResource(R.string.data_review_title_case, selectedCase!!.name) 
-                        else 
-                            stringResource(R.string.data_review)).uppercase(Locale.getDefault()) // ALL CAPS
-                    )
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.primary,
-                ),
-            )
-        }
-    ) { padding ->
-        BoxWithConstraints(modifier = Modifier.padding(padding).fillMaxSize()) {
-            val halfScreenHeight = this@BoxWithConstraints.maxHeight / 2
-
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                horizontalAlignment = Alignment.End 
-            ) {
-                if (isLoading) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(), 
-                        contentAlignment = Alignment.Center 
-                    ) {
-                        CircularProgressIndicator()
-                    }
-                } else if (selectedCase == null) {
-                    Column(
-                         modifier = Modifier
-                            .fillMaxSize()
-                            .verticalScroll(rememberScrollState()) 
-                            .padding(horizontal = 16.dp),
-                        horizontalAlignment = Alignment.End,
-                        verticalArrangement = Arrangement.Top
-                    ){
-                        Spacer(modifier = Modifier.height(halfScreenHeight))
-                        Text(stringResource(R.string.please_select_case_for_evidence).uppercase(Locale.getDefault())) // ALL CAPS
-                    }
-                } else if (evidenceList.isEmpty()) {
-                     Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .verticalScroll(rememberScrollState())
-                            .padding(horizontal = 16.dp),
-                        horizontalAlignment = Alignment.End,
-                        verticalArrangement = Arrangement.Top
-                    ){
-                        Spacer(modifier = Modifier.height(halfScreenHeight))
-                        Text(stringResource(R.string.no_evidence_for_case).uppercase(Locale.getDefault())) // ALL CAPS
-                    }
-                } else {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp), 
-                        contentPadding = PaddingValues(top = halfScreenHeight) 
-                    ) {
-                        items(evidenceList) { evidence ->
-                            EvidenceItem(
+    Scaffold { padding ->
+        Column(
+            modifier = Modifier.padding(padding).fillMaxSize(),
+            horizontalAlignment = Alignment.End
+        ) {
+            if (isLoading) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            } else if (selectedCase == null) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 16.dp),
+                    horizontalAlignment = Alignment.End,
+                    verticalArrangement = Arrangement.Center
+                ){
+                    Text(stringResource(R.string.please_select_case_for_evidence).uppercase(Locale.getDefault())) // ALL CAPS
+                }
+            } else if (evidenceList.isEmpty()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 16.dp),
+                    horizontalAlignment = Alignment.End,
+                    verticalArrangement = Arrangement.Center
+                ){
+                    Text(stringResource(R.string.no_evidence_for_case).uppercase(Locale.getDefault())) // ALL CAPS
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
+                    contentPadding = PaddingValues(top = 16.dp)
+                ) {
+                    items(evidenceList) { evidence ->
+                        EvidenceItem(
                                 evidence = evidence,
                                 onEditClick = {
                                     evidenceToEdit = it

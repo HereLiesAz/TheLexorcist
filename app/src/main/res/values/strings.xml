@@ -89,6 +89,11 @@
     <string name="no_cases_match_search">No cases match your search.</string>
     <string name="no_cases_found_line1">No cases found.</string>
     <string name="no_cases_found_line2">Create a new case or open an existing one.</string>
+    <string name="theme_settings">Theme</string>
+    <string name="cache_settings">Cache</string>
+    <string name="clear_cache">Clear Cache</string>
+    <string name="clear_cache_title">Clear Cache</string>
+    <string name="clear_cache_confirmation">Are you sure you want to clear the application cache? This action cannot be undone.</string>
     <string name="dark_mode">Dark Mode</string>
     <string name="delete_evidence">Delete Evidence</string>
     <string name="delete_evidence_confirmation">Are you sure you want to delete this evidence?</string>
@@ -127,6 +132,14 @@
     <string name="sort">Sort</string>
     <string name="delete_case">Delete Case</string>
     <string name="delete_case_confirmation">Are you sure you want to delete case %1$s?</string>
+
+    <string name="script_tab_description">Description</string>
+    <string name="script_tab_editor">Editor</string>
+    <string name="script_description_placeholder">This script does not yet have a description. Save the script to generate one.</string>
+    <string name="script_editor_instructions">Use the buttons above to insert snippets or write your own Javascript code below. The `evidence` object and a `parser` object are available to you.</string>
+    <string name="share">Share</string>
+    <string name="share_script_title">Share Script</string>
+    <string name="share_script_confirmation">Share this script with other users? Make sure it contains no private information!</string>
 
     <string name="data_review_title_case">REVIEW: %1$s</string>
     <string name="please_select_case_for_evidence">Please select a case to review its evidence.</string>

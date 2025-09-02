@@ -22,11 +22,14 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+import com.hereliesaz.lexorcist.utils.CacheManager
+
 @HiltViewModel
 class CaseViewModel @Inject constructor(
     @param:ApplicationContext private val applicationContext: Context,
     private val caseRepository: CaseRepository,
-    private val folderManager: FolderManager?
+    private val folderManager: FolderManager?,
+    private val cacheManager: CacheManager
 ) : ViewModel() {
 
     private val sharedPref = applicationContext.getSharedPreferences("CaseInfoPrefs", Context.MODE_PRIVATE)
@@ -83,11 +86,11 @@ class CaseViewModel @Inject constructor(
     private val _selectedCaseEvidenceList = MutableStateFlow<List<com.hereliesaz.lexorcist.data.Evidence>>(emptyList())
     val selectedCaseEvidenceList: StateFlow<List<com.hereliesaz.lexorcist.data.Evidence>> = _selectedCaseEvidenceList.asStateFlow()
 
-    private val _isDarkMode = MutableStateFlow(false)
-    val isDarkMode: StateFlow<Boolean> = _isDarkMode.asStateFlow()
+    private val _themeMode = MutableStateFlow(com.hereliesaz.lexorcist.ui.theme.ThemeMode.SYSTEM)
+    val themeMode: StateFlow<com.hereliesaz.lexorcist.ui.theme.ThemeMode> = _themeMode.asStateFlow()
 
     init {
-        loadDarkModePreference()
+        loadThemeModePreference()
         folderManager?.getOrCreateLocalLexorcistFolder()
         // observeAuthChanges() //TODO: Re-enable this once AuthViewModel is provided correctly
     }
@@ -107,13 +110,14 @@ class CaseViewModel @Inject constructor(
     fun showError(message: String) { _errorMessage.value = message }
     fun clearError() { _errorMessage.value = null }
 
-    fun setDarkMode(isDark: Boolean) {
-        _isDarkMode.value = isDark
-        sharedPref.edit().putBoolean("is_dark_mode", isDark).apply()
+    fun setThemeMode(themeMode: com.hereliesaz.lexorcist.ui.theme.ThemeMode) {
+        _themeMode.value = themeMode
+        sharedPref.edit().putString("theme_mode", themeMode.name).apply()
     }
 
-    private fun loadDarkModePreference() {
-        _isDarkMode.value = sharedPref.getBoolean("is_dark_mode", false)
+    private fun loadThemeModePreference() {
+        val themeName = sharedPref.getString("theme_mode", com.hereliesaz.lexorcist.ui.theme.ThemeMode.SYSTEM.name)
+        _themeMode.value = com.hereliesaz.lexorcist.ui.theme.ThemeMode.valueOf(themeName ?: com.hereliesaz.lexorcist.ui.theme.ThemeMode.SYSTEM.name)
     }
 
     fun onSortOrderChange(newSortOrder: SortOrder) { _sortOrder.value = newSortOrder }
@@ -208,5 +212,9 @@ class CaseViewModel @Inject constructor(
 
     fun deleteCaseWithRepository(case: Case) {
         viewModelScope.launch { caseRepository.deleteCase(case) }
+    }
+
+    fun clearCache() {
+        cacheManager.clearCache()
     }
 }

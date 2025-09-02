@@ -8,6 +8,7 @@ import com.hereliesaz.lexorcist.GoogleApiService
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.data.SettingsManager
 import com.hereliesaz.lexorcist.service.ScriptRunner
+import com.hereliesaz.lexorcist.utils.CacheManager
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -41,5 +42,11 @@ class AppModule {
     @Singleton
     fun provideScriptRunner(): ScriptRunner {
         return ScriptRunner()
+    }
+
+    @Provides
+    @Singleton
+    fun provideCacheManager(@ApplicationContext context: Context): CacheManager {
+        return CacheManager(context)
     }
 }

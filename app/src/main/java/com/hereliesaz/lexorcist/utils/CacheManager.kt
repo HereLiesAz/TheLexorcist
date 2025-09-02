@@ -24,4 +24,10 @@ class CacheManager(private val context: Context) {
         val type = object : TypeToken<List<Case>>() {}.type
         return gson.fromJson(json, type)
     }
+
+    fun clearCache() {
+        if (caseCacheFile.exists()) {
+            caseCacheFile.delete()
+        }
+    }
 }

@@ -70,7 +70,7 @@ fun CasesScreen(caseViewModel: CaseViewModel) {
                 Spacer(modifier = Modifier.width(8.dp))
                 IconButton(onClick = {
                     currentSortOrderState = when (currentSortOrderState) {
-                        SortOrder.DATE_DESC -> Sort_Order.DATE_ASC
+                        SortOrder.DATE_DESC -> SortOrder.DATE_ASC
                         SortOrder.DATE_ASC -> SortOrder.NAME_DESC
                         SortOrder.NAME_DESC -> SortOrder.NAME_ASC
                         SortOrder.NAME_ASC -> SortOrder.DATE_DESC
@@ -86,25 +86,21 @@ fun CasesScreen(caseViewModel: CaseViewModel) {
             }
         },
         floatingActionButtonPosition = FabPosition.End
-    ) { innerPadding -> 
-        BoxWithConstraints(
+    ) { innerPadding ->
+        Column(
             modifier = Modifier
-                .padding(innerPadding) 
-                .fillMaxSize()         
+                .padding(innerPadding)
+                .fillMaxSize()
         ) {
-            val contentAreaHeight = this.maxHeight 
-            val scrollOffset = contentAreaHeight / 2
-
             if (unarchivedCases.isEmpty()) {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .verticalScroll(rememberScrollState()) 
-                        .padding(horizontal = 16.dp),         
-                    horizontalAlignment = Alignment.End,
-                    verticalArrangement = Arrangement.Top 
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
                 ) {
-                    Spacer(Modifier.height(scrollOffset)) 
                     val noCasesText = if (searchQuery.isNotBlank()) {
                         stringResource(R.string.no_cases_match_search)
                     } else {
@@ -120,10 +116,9 @@ fun CasesScreen(caseViewModel: CaseViewModel) {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(
-                        top = scrollOffset, 
                         start = 16.dp,
                         end = 16.dp,
-                        bottom = 16.dp 
+                        bottom = 16.dp
                     )
                 ) {
                     items(unarchivedCases, key = { it.id }) { case ->
