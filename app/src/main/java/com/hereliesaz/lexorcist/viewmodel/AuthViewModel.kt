@@ -25,6 +25,7 @@ import kotlinx.coroutines.launch
 import java.security.MessageDigest
 import java.util.UUID
 import javax.inject.Inject
+import androidx.core.content.edit
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
@@ -90,7 +91,7 @@ class AuthViewModel @Inject constructor(
             photoUrl = credential.profilePictureUri?.toString()
         )
         _signInState.value = SignInState.Success(userInfo)
-        sharedPreferences.edit().putString(PREF_USER_EMAIL_KEY, credential.id).apply()
+        sharedPreferences.edit { putString(PREF_USER_EMAIL_KEY, credential.id) }
         Log.d(TAG, "User email saved to SharedPreferences: ${credential.id}")
     }
 
@@ -102,7 +103,7 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
             credentialManager.clearCredentialState(ClearCredentialStateRequest())
             _signInState.value = SignInState.Idle
-            sharedPreferences.edit().remove(PREF_USER_EMAIL_KEY).apply()
+            sharedPreferences.edit { remove(PREF_USER_EMAIL_KEY) }
             Log.d(TAG, "User email cleared from SharedPreferences.")
         }
     }

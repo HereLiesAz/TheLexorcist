@@ -137,7 +137,7 @@
     <string name="script_tab_editor">Editor</string>
     <string name="script_description_placeholder">This script does not yet have a description. Save the script to generate one.</string>
     <string name="script_editor_instructions">Use the buttons above to insert snippets or write your own Javascript code below. The `evidence` object and a `parser` object are available to you.</string>
-    <string name="share">Share</string>
+
     <string name="share_script_title">Share Script</string>
     <string name="share_script_confirmation">Share this script with other users? Make sure it contains no private information!</string>
 
@@ -213,6 +213,7 @@
     <string name="load_sheet_filters_error_no_api">loadSelectedCaseSheetFilters: No API service.</string>
     <string name="load_allegations_error_no_api">loadAllegations: No API service.</string>
     <string name="no_evidence_placeholder">There is no evidence in this case yet. Add some evidence to see it on the timeline.</string>
+    <string name="share">Share</string>
 
     <string-array name="sort_options">
         <item>Sort by Date (Newest)</item>

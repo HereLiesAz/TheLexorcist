@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -71,19 +72,28 @@ fun ScriptEditorScreen(viewModel: ScriptEditorViewModel) {
         Spacer(modifier = Modifier.height(16.dp))
 
         // Editor Section with Tabs
-        var tabIndex by remember { mutableStateOf(0) }
+        var tabIndex by remember { mutableIntStateOf(0) }
         val tabs = listOf(stringResource(R.string.script_tab_description), stringResource(R.string.script_tab_editor))
 
         Column(modifier = Modifier.weight(1f).fillMaxWidth()) {
-            TabRow(selectedTabIndex = tabIndex) {
-                tabs.forEachIndexed { index, title ->
-                    Tab(
-                        text = { Text(title) },
-                        selected = tabIndex == index,
-                        onClick = { tabIndex = index }
-                    )
-                }
-            }
+            SecondaryTabRow(
+                tabIndex,
+                Modifier,
+                TabRowDefaults.primaryContainerColor,
+                TabRowDefaults.primaryContentColor,
+                @Composable {
+                    TabRowDefaults.SecondaryIndicator(Modifier.tabIndicatorOffset(tabIndex))
+                },
+                @Composable { HorizontalDivider() },
+                {
+                            tabs.forEachIndexed { index, title ->
+                                Tab(
+                                    text = { Text(title) },
+                                    selected = tabIndex == index,
+                                    onClick = { tabIndex = index }
+                                )
+                            }
+                        })
             when (tabIndex) {
                 0 -> { // Description Tab
                     Column(
