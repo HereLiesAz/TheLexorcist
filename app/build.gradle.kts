@@ -45,6 +45,8 @@ android {
     packaging {
         resources.excludes.add("META-INF/INDEX.LIST")
         resources.excludes.add("META-INF/DEPENDENCIES")
+        resources.excludes.add("META-INF/LICENSE.md")
+        resources.excludes.add("META-INF/LICENSE-notice.md")
     }
     lint {
         baseline = file("lint-baseline.xml")
@@ -80,6 +82,7 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.ui.test.manifest)
     androidTestImplementation(libs.androidx.test.uiautomator)
+    androidTestImplementation(libs.mockk.android)
 
     implementation(libs.google.play.services.mlkit.text.recognition)
 
@@ -149,19 +152,13 @@ dependencies {
     // Hilt
     implementation(libs.google.dagger.hilt.android)
     ksp(libs.google.dagger.hilt.compiler)
-
     implementation(libs.androidx.hilt.work)
-    ksp(libs.androidx.hilt.compiler) // KSP for Hilt's AndroidX extensions
-
+    ksp(libs.androidx.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
-
-    // Hilt For Unit Tests (src/test)
     testImplementation(libs.google.dagger.hilt.android.testing)
-    kspTest(libs.google.dagger.hilt.compiler) // Corrected alias
-
-    // Hilt For Android Instrumentation Tests (src/androidTest)
+    kspTest(libs.hilt.android.compiler)
     androidTestImplementation(libs.google.dagger.hilt.android.testing)
-    kspAndroidTest(libs.google.dagger.hilt.compiler)
+    kspAndroidTest(libs.hilt.android.compiler)
 
 
     // Room IS NOT ALLOWED IN THIS PROJECT!!!!!
