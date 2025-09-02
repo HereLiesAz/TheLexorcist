@@ -13,25 +13,18 @@ import javax.inject.Singleton
 @Module
 @TestInstallIn(
     components = [SingletonComponent::class],
-    replaces = [AppModule::class]
+    replaces = [AppModule::class],
 )
 object TestAppModule {
+    @Provides
+    @Singleton
+    fun provideEvidenceRepository(): EvidenceRepository = mockk(relaxed = true)
 
     @Provides
     @Singleton
-    fun provideEvidenceRepository(): EvidenceRepository {
-        return mockk(relaxed = true)
-    }
+    fun provideSettingsManager(): SettingsManager = mockk(relaxed = true)
 
     @Provides
     @Singleton
-    fun provideSettingsManager(): SettingsManager {
-        return mockk(relaxed = true)
-    }
-
-    @Provides
-    @Singleton
-    fun provideScriptRunner(): ScriptRunner {
-        return mockk(relaxed = true)
-    }
+    fun provideScriptRunner(): ScriptRunner = mockk(relaxed = true)
 }

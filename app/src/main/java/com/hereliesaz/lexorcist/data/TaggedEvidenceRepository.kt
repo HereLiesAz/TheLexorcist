@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.StateFlow
  */
 object TaggedEvidenceRepository {
     private val _taggedEvidenceList = MutableStateFlow<List<TaggedEvidence>>(emptyList())
+
     /**
      * A [StateFlow] that emits the current list of tagged evidence.
      *

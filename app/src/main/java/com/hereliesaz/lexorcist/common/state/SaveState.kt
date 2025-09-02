@@ -8,10 +8,15 @@ package com.hereliesaz.lexorcist.common.state
 sealed class SaveState {
     /** The operation is idle and has not started yet. */
     object Idle : SaveState()
+
     /** The operation is in progress. */
     object Saving : SaveState()
+
     /** The operation has completed successfully. */
     object Success : SaveState()
+
     /** The operation has failed with an error. */
-    data class Error(val message: String) : SaveState()
+    data class Error(
+        val message: String,
+    ) : SaveState()
 }

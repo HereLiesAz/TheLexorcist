@@ -10,7 +10,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hereliesaz.lexorcist.components.AppNavRail
 import com.hereliesaz.lexorcist.ui.EvidenceScreen
-import com.hereliesaz.lexorcist.ui.AddonsBrowserScreen
+// import com.hereliesaz.lexorcist.ui.AddonsBrowserScreen // Removed this unused import
 import com.hereliesaz.lexorcist.ui.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -247,4 +247,3 @@ fun MainScreen(
         }
     }
 }
-

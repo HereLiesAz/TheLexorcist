@@ -221,4 +221,6 @@
         <item>Sort by Amount (High to Low)</item>
         <item>Sort by Amount (Low to High)</item>
     </string-array>
+    <string name="no_review_data_for_case">No allegations or evidence found for this case.</string>
+    <string name="no_allegations_for_case">No allegations found for this case.</string>
 </resources>

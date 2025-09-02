@@ -32,27 +32,30 @@ import java.util.Locale
 @Composable
 fun EvidenceScreen(
     evidenceViewModel: EvidenceViewModel = viewModel(),
-    navController: NavController
+    navController: NavController,
 ) {
-    val imagePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri ->
-        uri?.let { evidenceViewModel::processImageEvidence }
-    }
+    val imagePickerLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.GetContent(),
+        ) { uri ->
+            uri?.let { evidenceViewModel::processImageEvidence }
+        }
 
-    val audioPickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri ->
-        uri?.let { evidenceViewModel::processAudioEvidence }
-    }
+    val audioPickerLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.GetContent(),
+        ) { uri ->
+            uri?.let { evidenceViewModel::processAudioEvidence }
+        }
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
         horizontalAlignment = Alignment.End,
-        verticalArrangement = Arrangement.Top
+        verticalArrangement = Arrangement.Top,
     ) {
         Button(onClick = { navController.navigate("add_text_evidence") }) {
             Icon(Icons.Default.Add, contentDescription = stringResource(R.string.add_text_evidence).uppercase(Locale.getDefault()))
