@@ -30,7 +30,7 @@ import com.hereliesaz.lexorcist.viewmodel.ScriptEditorViewModel
 import java.util.Locale
 import com.hereliesaz.lexorcist.ui.CreateCaseDialog
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class) // Added annotation
 @Composable
 fun MainScreen(
     navController: NavHostController,
@@ -197,7 +197,7 @@ fun MainScreen(
                     modifier = Modifier.fillMaxSize().padding(paddingValues),
                     contentAlignment = Alignment.Center 
                 ) {
-                    CircularProgressIndicator()
+                    LoadingIndicator(progress = { 1.0f }) // Replaced
                 }
             }
             is SignInState.Idle, is SignInState.Error -> {
