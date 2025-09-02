@@ -16,41 +16,81 @@ import androidx.compose.ui.unit.dp
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 
+import com.hereliesaz.lexorcist.ui.theme.ThemeMode
+
 @Composable
 fun SettingsScreen(caseViewModel: CaseViewModel) {
-    val isDarkMode by caseViewModel.isDarkMode.collectAsState()
+    val themeMode by caseViewModel.themeMode.collectAsState()
+    var showClearCacheDialog by remember { mutableStateOf(false) }
 
-    BoxWithConstraints(
+    Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp) // Apply padding to the outer Box
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
+        horizontalAlignment = Alignment.End
     ) {
-        val halfScreenHeight = this@BoxWithConstraints.maxHeight / 2
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize() // Column fills the BoxWithConstraints
-                .verticalScroll(rememberScrollState()), // Make content scrollable
-            horizontalAlignment = Alignment.End // Align children (the Row) to the End (right)
-        ) {
-            Spacer(modifier = Modifier.height(halfScreenHeight)) // Push content to start halfway down
-
-            Row(
-                modifier = Modifier.fillMaxWidth(), // Row takes full width to allow its content to be aligned to End
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.End // Align content of Row (Text + Switch) to the End
-            ) {
-                Text(
-                    text = stringResource(R.string.dark_mode),
-                    style = MaterialTheme.typography.bodyLarge
-                )
-                Spacer(modifier = Modifier.width(16.dp)) // Added Spacer for better visual separation
-                Switch(
-                    checked = isDarkMode,
-                    onCheckedChange = { caseViewModel.setDarkMode(it) }
-                )
+        // Theme Settings
+        Text(
+            text = stringResource(R.string.theme_settings),
+            style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Column(Modifier.fillMaxWidth()) {
+            ThemeMode.values().forEach { mode ->
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    Text(text = mode.name.lowercase().replaceFirstChar { it.uppercase() })
+                    RadioButton(
+                        selected = (themeMode == mode),
+                        onClick = { caseViewModel.setThemeMode(mode) }
+                    )
+                }
             }
-            // Add other settings here if needed, they will follow the same alignment rules
         }
+
+        Spacer(modifier = Modifier.height(24.dp))
+        Divider()
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Cache Settings
+        Text(
+            text = stringResource(R.string.cache_settings),
+            style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        OutlinedButton(onClick = { showClearCacheDialog = true }) {
+            Text(text = stringResource(R.string.clear_cache))
+        }
+    }
+
+    if (showClearCacheDialog) {
+        AlertDialog(
+            onDismissRequest = { showClearCacheDialog = false },
+            title = { Text(stringResource(R.string.clear_cache_title)) },
+            text = { Text(stringResource(R.string.clear_cache_confirmation)) },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        // caseViewModel.clearCache() // TODO: Implement in ViewModel
+                        showClearCacheDialog = false
+                    }
+                ) {
+                    Text(stringResource(R.string.clear))
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { showClearCacheDialog = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
     }
 }

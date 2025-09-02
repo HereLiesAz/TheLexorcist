@@ -149,6 +149,7 @@ dependencies {
     ksp(libs.google.dagger.hilt.compiler)
     implementation(libs.androidx.hilt.work)
     ksp(libs.androidx.hilt.compiler)
+    implementation(libs.androidx.hilt.navigation.compose)
     testImplementation(libs.google.dagger.hilt.android.testing)
     kspTest(libs.hilt.android.compiler)
 
