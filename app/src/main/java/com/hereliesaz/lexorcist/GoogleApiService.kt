@@ -88,6 +88,103 @@ class GoogleApiService(
         }
     }
 
+    suspend fun populateAllegationsSheet(spreadsheetId: String) {
+        val civilAllegations = listOf(
+            // Personal injury (Torts)
+            listOf("Civil", "Personal injury (Torts)", "Negligence", "Failure to exercise reasonable care, e.g., car accidents, slip-and-fall, medical malpractice, wrongful death."),
+            listOf("Civil", "Personal injury (Torts)", "Assault and battery", "Intentional act causing fear of attack (assault) or unlawful physical contact (battery)."),
+            listOf("Civil", "Personal injury (Torts)", "False imprisonment", "Unlawful confinement of a person without their consent."),
+            listOf("Civil", "Personal injury (Torts)", "Intentional infliction of emotional distress", "Extreme or outrageous conduct that causes severe emotional harm."),
+            listOf("Civil", "Personal injury (Torts)", "Trespass", "Intentional entry onto the land of another without permission."),
+            listOf("Civil", "Personal injury (Torts)", "Product Liability", "Holds manufacturers, distributors, or sellers responsible for a defective product that causes harm."),
+            // Contract disputes
+            listOf("Civil", "Contract disputes", "Breach of contract", "Failure to perform the duties stipulated in a valid and binding contract."),
+            listOf("Civil", "Contract disputes", "Fraudulent inducement", "Alleging that a party was intentionally deceived into entering a contract."),
+            listOf("Civil", "Contract disputes", "Duress", "Claiming a party was coerced into an agreement."),
+            listOf("Civil", "Contract disputes", "Lesion", "An allegation where a contract's price is unfairly low, typically for immovable property."),
+            listOf("Civil", "Contract disputes", "Specific performance", "Seeking a court order for the other party to fulfill their part of the contract, rather than paying monetary damages."),
+            // Property disputes
+            listOf("Civil", "Property disputes", "Boundary disputes", "When neighbors disagree on the exact location of their property lines."),
+            listOf("Civil", "Property disputes", "Servitude disputes", "Disagreements over the right to use another person's property for a specific purpose, similar to an easement in other states."),
+            listOf("Civil", "Property disputes", "Acquisitive prescription (Adverse Possession)", "A claim to ownership of property by someone who has openly occupied it for an extended period."),
+            listOf("Civil", "Property disputes", "Landlord-Tenant disputes", "Allegations concerning rent, property maintenance, or eviction."),
+            listOf("Civil", "Property disputes", "Co-ownership disputes", "Disagreements among multiple owners of a single property."),
+            // Family law
+            listOf("Civil", "Family law", "Divorce", "Allegations related to fault or no-fault grounds for ending a marriage."),
+            listOf("Civil", "Family law", "Custody proceedings", "Actions to determine child custody and support."),
+            listOf("Civil", "Family law", "Filiation actions", "Claims to establish or disavow the legal relationship between a child and a parent."),
+            listOf("Civil", "Family law", "Child abuse and neglect", "Legal services are mandated in cases of alleged abuse, neglect, or exploitation."),
+            listOf("Civil", "Family law", "Protective orders", "Allegations involving domestic violence that require a protective order."),
+            // Civil rights violations
+            listOf("Civil", "Civil rights violations", "Discrimination", "Claims of discrimination based on a protected characteristic in employment, housing, or public accommodation."),
+            listOf("Civil", "Civil rights violations", "Violations under 42 U.S.C. § 1983", "This covers constitutional violations by state actors, such as allegations of excessive force by law enforcement."),
+            // Other civil allegations
+            listOf("Civil", "Other civil allegations", "Open account or promissory note actions", "Claims to collect on unpaid commercial accounts or promissory notes."),
+            listOf("Civil", "Other civil allegations", "Insurance policy disputes", "Disputes over claims against an insurance company."),
+            listOf("Civil", "Other civil allegations", "Suits on a judicial bond", "Actions to recover damages from a bond.")
+        )
+
+        val criminalAllegations = listOf(
+            // Offenses Against Persons
+            listOf("Criminal", "Offenses Against Persons", "Homicide", "First degree murder, second degree murder, manslaughter, negligent homicide, vehicular homicide."),
+            listOf("Criminal", "Offenses Against Persons", "Feticide", "First degree feticide, second degree feticide, third degree feticide."),
+            listOf("Criminal", "Offenses Against Persons", "Assault and Battery", "Aggravated assault, simple assault, aggravated battery, second degree battery, simple battery."),
+            listOf("Criminal", "Offenses Against Persons", "Rape and Sexual Offenses", "Forcible rape, simple rape, sexual battery, oral sexual battery, etc."),
+            listOf("Criminal", "Offenses Against Persons", "Kidnapping", "Aggravated kidnapping, second degree kidnapping, simple kidnapping."),
+            listOf("Criminal", "Offenses Against Persons", "Robbery", "First degree robbery, second degree robbery, simple robbery, carjacking."),
+            // Offenses Affecting Property
+            listOf("Criminal", "Offenses Affecting Property", "Arson and Use of Explosives", "Aggravated arson, simple arson."),
+            listOf("Criminal", "Offenses Affecting Property", "Burglary", "Aggravated burglary, simple burglary."),
+            listOf("Criminal", "Offenses Affecting Property", "Theft", "Theft, theft of a firearm, theft of livestock, etc."),
+            listOf("Criminal", "Offenses Affecting Property", "Fraud and Forgery", "Issuing worthless checks, forgery, identity theft, etc."),
+            // Offenses Affecting the Public Morals
+            listOf("Criminal", "Offenses Affecting the Public Morals", "Gambling", "Gambling, gambling in public, etc."),
+            listOf("Criminal", "Offenses Affecting the Public Morals", "Obscenity", "Obscenity, pornography involving juveniles."),
+            listOf("Criminal", "Offenses Affecting the Public Morals", "Prostitution", "Prostitution, soliciting for prostitutes, etc."),
+            // Offenses Affecting the Public Generally
+            listOf("Criminal", "Offenses Affecting the Public Generally", "Bribery and Corrupt Influencing", "Public bribery, bribery of sports participants, etc."),
+            listOf("Criminal", "Offenses Affecting the Public Generally", "Treason and Disloyal Acts", "Treason, misprision of treason."),
+            listOf("Criminal", "Offenses Affecting the Public Generally", "Weapons", "Illegal carrying of weapons, illegal use of weapons or dangerous instrumentalities.")
+        )
+
+        val allAllegations = civilAllegations + criminalAllegations
+        val header = listOf("AllegationType", "Category", "AllegationName", "Description")
+        val dataToWrite = listOf(header) + allAllegations
+
+        withContext(Dispatchers.IO) {
+            try {
+                clearSheet(spreadsheetId, "Sheet1")
+                writeData(spreadsheetId, "Sheet1", dataToWrite)
+            } catch (e: IOException) {
+                // Handle error
+            }
+        }
+    }
+
+    suspend fun createAllegationsSheet(): String? {
+        return withContext(Dispatchers.IO) {
+            try {
+                val folderId = getOrCreateAppRootFolder()
+                val fileName = "Lexorcist - Allegations"
+                val query = "mimeType='application/vnd.google-apps.spreadsheet' and name='$fileName' and trashed=false and '$folderId' in parents"
+                val files = drive.files().list().setQ(query).setSpaces("drive").execute().files
+                if (files.isNullOrEmpty()) {
+                    val spreadsheet = Spreadsheet().setProperties(SpreadsheetProperties().setTitle(fileName))
+                    val createdSheet = sheets.spreadsheets().create(spreadsheet).setFields("spreadsheetId").execute()
+                    drive.files().update(createdSheet.spreadsheetId, null)
+                        .setAddParents(folderId)
+                        .execute()
+                    android.util.Log.d("GoogleApiService", "Created allegations sheet with ID: ${createdSheet.spreadsheetId}")
+                    createdSheet.spreadsheetId
+                } else {
+                    files[0].id
+                }
+            } catch (e: IOException) {
+                null
+            }
+        }
+    }
+
     suspend fun writeData(spreadsheetId: String, sheetName: String, values: List<List<Any>>): Boolean {
         return withContext(Dispatchers.IO) {
             try {

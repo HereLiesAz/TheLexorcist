@@ -27,10 +27,9 @@ fun AppNavRail(onNavigate: (String) -> Unit) {
 
     val navCasesStr = stringResource(R.string.nav_cases)
     val navTimelineStr = stringResource(R.string.nav_timeline)
-    val navDataReviewStr = stringResource(R.string.nav_data_review)
-    val navEvidenceStr = stringResource(R.string.nav_evidence) 
-    val navAddEvidenceStr = stringResource(R.string.nav_add_evidence)
-    val navAddonsBrowserStr = stringResource(R.string.nav_addons_browser)
+    val navReviewStr = "review"
+    val navEvidenceStr = stringResource(R.string.nav_evidence)
+    val navExtrasStr = "extras"
     val navScriptEditorStr = stringResource(R.string.nav_script_editor) // Added for route
 
     val casesText = stringResource(R.string.cases)
@@ -80,13 +79,18 @@ fun AppNavRail(onNavigate: (String) -> Unit) {
                         showOnRail = true
                     ),
                     NavItem(
-                        text = addText,
-                        data = NavItemData.Action(onClick = { onNavigate(navAddEvidenceStr) }),
+                        text = evidenceText,
+                        data = NavItemData.Action(onClick = { onNavigate(navEvidenceStr) }),
                         showOnRail = true
                     ),
                     NavItem(
-                        text = evidenceText,
-                        data = NavItemData.Action(onClick = { onNavigate(navEvidenceStr) }),
+                        text = "Allegations",
+                        data = NavItemData.Action(onClick = { onNavigate("allegations") }),
+                        showOnRail = true
+                    ),
+                    NavItem(
+                        text = "Templates",
+                        data = NavItemData.Action(onClick = { onNavigate("templates") }),
                         showOnRail = true
                     ),
                     NavItem(
@@ -95,13 +99,13 @@ fun AppNavRail(onNavigate: (String) -> Unit) {
                         showOnRail = true
                     ),
                     NavItem(
-                        text = dataReviewText,
-                        data = NavItemData.Action(onClick = { onNavigate(navDataReviewStr) }),
+                        text = "Review",
+                        data = NavItemData.Action(onClick = { onNavigate(navReviewStr) }),
                         showOnRail = false
                     ),
                     NavItem(
                         text = extrasText,
-                        data = NavItemData.Action(onClick = { onNavigate(navAddonsBrowserStr) }),
+                        data = NavItemData.Action(onClick = { onNavigate(navExtrasStr) }),
                         showOnRail = true
                     ),
                     NavItem(

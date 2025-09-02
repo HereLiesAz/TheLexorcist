@@ -47,6 +47,12 @@ fun MainScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     var showCreateCaseDialog by remember { mutableStateOf(false) }
 
+    LaunchedEffect(Unit) {
+        mainViewModel.createAllegationsSheet()
+        // The user will need to get the spreadsheet ID from the logs and replace the placeholder
+        mainViewModel.populateAllegationsSheet("PLACEHOLDER_SPREADSHEET_ID")
+    }
+
     LaunchedEffect(caseSpecificErrorMessage) {
         caseSpecificErrorMessage?.let {
             snackbarHostState.showSnackbar(it)
@@ -120,17 +126,21 @@ fun MainScreen(
                                 }
                                 composable("cases") { CasesScreen(caseViewModel = caseViewModel) }
                                 composable("evidence") {
-                                    EvidenceScreen(evidenceViewModel = evidenceViewModel)
+                                    EvidenceScreen(
+                                        evidenceViewModel = evidenceViewModel,
+                                        navController = navController
+                                    )
                                 }
-                                composable("addons_browser") { AddonsBrowserScreen(onShare = {}) }
+                                composable("extras") { ExtrasScreen(onShare = {}) }
                                 composable("script_editor") {
                                     val scriptEditorViewModel: ScriptEditorViewModel = hiltViewModel()
                                     ScriptEditorScreen(viewModel = scriptEditorViewModel)
                                 }
-                                composable("add_evidence") {
-                                    AddEvidenceScreen(
-                                        onAddTextEvidence = { navController.navigate("add_text_evidence") },
-                                    )
+                                composable("allegations") {
+                                    AllegationsScreen()
+                                }
+                                composable("templates") {
+                                    TemplatesScreen()
                                 }
                                 composable("add_text_evidence") {
                                     AddTextEvidenceScreen(
@@ -156,11 +166,13 @@ fun MainScreen(
                                         )
                                     }
                                 }
-                                composable("data_review") { 
-                                    DataReviewScreen(
-                                        evidenceViewModel = evidenceViewModel, 
-                                        caseViewModel = caseViewModel
-                                    ) 
+                                composable("review") {
+                                    val allegationsViewModel: com.hereliesaz.lexorcist.viewmodel.AllegationsViewModel = hiltViewModel()
+                                    ReviewScreen(
+                                        evidenceViewModel = evidenceViewModel,
+                                        caseViewModel = caseViewModel,
+                                        allegationsViewModel = allegationsViewModel
+                                    )
                                 }
                                 composable("settings") { SettingsScreen(caseViewModel = caseViewModel) }
                                 composable("evidence_details/{evidenceId}") { backStackEntry ->

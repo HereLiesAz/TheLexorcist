@@ -21,19 +21,27 @@ import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
 import java.util.Locale
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import com.hereliesaz.lexorcist.viewmodel.AllegationsViewModel
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DataReviewScreen(
+fun ReviewScreen(
     evidenceViewModel: EvidenceViewModel,
-    caseViewModel: CaseViewModel
+    caseViewModel: CaseViewModel,
+    allegationsViewModel: AllegationsViewModel
 ) {
     val evidenceList by evidenceViewModel.evidenceList.collectAsState()
     val selectedCase by caseViewModel.selectedCase.collectAsState()
     val isLoading by evidenceViewModel.isLoading.collectAsState()
+    val allegations by allegationsViewModel.allegations.collectAsState()
 
     LaunchedEffect(selectedCase) {
         selectedCase?.let {
             evidenceViewModel.loadEvidenceForCase(it.id.toLong(), it.spreadsheetId)
+            allegationsViewModel.loadAllegations(it.id.toString())
         }
     }
 
@@ -99,25 +107,42 @@ fun DataReviewScreen(
                         Text(stringResource(R.string.no_evidence_for_case).uppercase(Locale.getDefault())) // ALL CAPS
                     }
                 } else {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp), 
-                        contentPadding = PaddingValues(top = halfScreenHeight) 
-                    ) {
-                        items(evidenceList) { evidence ->
-                            EvidenceItem(
-                                evidence = evidence,
-                                onEditClick = {
-                                    evidenceToEdit = it
-                                    showEditDialog = true
-                                },
-                                onDeleteClick = {
-                                    evidenceToDelete = it
-                                    showDeleteConfirmDialog = true
-                                }
-                            )
-                        }
-                    }
+                    ReviewScreenContent(
+                        allegations = allegations,
+                        evidenceList = evidenceList
+                    )
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun ReviewScreenContent(
+    allegations: List<com.hereliesaz.lexorcist.data.Allegation>,
+    evidenceList: List<Evidence>
+) {
+    var draggedEvidence by remember { mutableStateOf<Evidence?>(null) }
+
+    Row(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(modifier = Modifier.weight(1f)) {
+            items(allegations) { allegation ->
+                Text(allegation.name, modifier = Modifier.padding(16.dp))
+            }
+        }
+        LazyColumn(modifier = Modifier.weight(1f)) {
+            items(evidenceList) { evidence ->
+                Text(
+                    text = evidence.content,
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .pointerInput(Unit) {
+                            detectDragGestures { change, dragAmount ->
+                                change.consume()
+                                draggedEvidence = evidence
+                            }
+                        }
+                )
             }
         }
     }

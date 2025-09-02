@@ -1,16 +1,19 @@
 package com.hereliesaz.lexorcist.viewmodel
 
+import android.app.Activity
 import android.app.Application
-import android.content.Context // Added
-import android.content.IntentSender
-import android.content.SharedPreferences // Added
+import android.content.SharedPreferences
 import android.util.Log
+import androidx.credentials.ClearCredentialStateRequest
+import androidx.credentials.CredentialManager
+import androidx.credentials.CustomCredential
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.GetCredentialException
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.android.gms.auth.api.identity.BeginSignInRequest
-import com.google.android.gms.auth.api.identity.Identity
-import com.google.android.gms.auth.api.identity.SignInClient
-import com.google.android.gms.auth.api.identity.SignInCredential
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.model.SignInState
 import com.hereliesaz.lexorcist.model.UserInfo
@@ -19,89 +22,74 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.security.MessageDigest
+import java.util.UUID
 import javax.inject.Inject
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
     private val application: Application,
-    private val sharedPreferences: SharedPreferences // Added
+    private val sharedPreferences: SharedPreferences,
+    private val credentialManager: CredentialManager
 ) : AndroidViewModel(application) {
-
-    private val oneTapClient: SignInClient = Identity.getSignInClient(application)
 
     private val _signInState = MutableStateFlow<SignInState>(SignInState.Idle)
     val signInState: StateFlow<SignInState> = _signInState.asStateFlow()
 
-    private val _pendingIntentSenderToLaunch = MutableStateFlow<IntentSender?>(null)
-    val pendingIntentSenderToLaunch: StateFlow<IntentSender?> = _pendingIntentSenderToLaunch.asStateFlow()
-
     companion object {
         private const val TAG = "AuthViewModel"
-        const val PREF_USER_EMAIL_KEY = "user_email" // Added for SharedPreferences
+        const val PREF_USER_EMAIL_KEY = "user_email"
     }
 
-    // Call this on app start to attempt silent sign-in
-    fun attemptSilentSignIn() {
-        if (_signInState.value is SignInState.Success) return // Already signed in
+    fun signIn(activity: Activity) {
+        viewModelScope.launch {
+            _signInState.value = SignInState.InProgress
 
-        _signInState.value = SignInState.InProgress // Indicate an attempt is happening
-        val silentSignInRequest = BeginSignInRequest.builder()
-            .setGoogleIdTokenRequestOptions(
-                BeginSignInRequest.GoogleIdTokenRequestOptions.builder()
-                    .setSupported(true)
-                    .setServerClientId(application.getString(R.string.default_web_client_id))
-                    .setFilterByAuthorizedAccounts(true)
-                    .build()
-            )
-            .setAutoSelectEnabled(true) // Key for silent/automatic sign-in attempt
-            .build()
+            // Generate a nonce
+            val rawNonce = UUID.randomUUID().toString()
+            val bytes = rawNonce.toByteArray()
+            val md = MessageDigest.getInstance("SHA-256")
+            val digest = md.digest(bytes)
+            val nonce = digest.fold("") { str, it -> str + "%02x".format(it) }
 
-        oneTapClient.beginSignIn(silentSignInRequest)
-            .addOnSuccessListener { result ->
-                viewModelScope.launch {
-                    _pendingIntentSenderToLaunch.value = result.pendingIntent.intentSender
+            val googleIdOption: GetGoogleIdOption = GetGoogleIdOption.Builder()
+                .setFilterByAuthorizedAccounts(false) // Set to false to allow new accounts to sign up
+                .setServerClientId(application.getString(R.string.default_web_client_id))
+                .setNonce(nonce)
+                .build()
+
+            val request: GetCredentialRequest = GetCredentialRequest.Builder()
+                .addCredentialOption(googleIdOption)
+                .build()
+
+            try {
+                val result = credentialManager.getCredential(activity, request)
+                val credential = result.credential
+                if (credential is CustomCredential && credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
+                    try {
+                        val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
+                        onSignInResult(googleIdTokenCredential)
+                    } catch (e: GoogleIdTokenParsingException) {
+                        Log.e(TAG, "Received an invalid google id token response", e)
+                        onSignInError(e)
+                    }
+                } else {
+                    onSignInError(Exception("Unexpected credential type"))
                 }
-            }
-            .addOnFailureListener { e ->
-                Log.w(TAG, "Silent sign-in attempt failed. User may need to sign in manually.", e)
-                if (_signInState.value == SignInState.InProgress) {
-                    _signInState.value = SignInState.Idle
-                }
-            }
-    }
-
-    fun requestManualSignIn() {
-        _signInState.value = SignInState.InProgress
-        val manualSignInRequest = BeginSignInRequest.builder()
-            .setGoogleIdTokenRequestOptions(
-                BeginSignInRequest.GoogleIdTokenRequestOptions.builder()
-                    .setSupported(true)
-                    .setServerClientId(application.getString(R.string.default_web_client_id))
-                    .setFilterByAuthorizedAccounts(true)
-                    .build()
-            )
-            .build()
-
-        oneTapClient.beginSignIn(manualSignInRequest)
-            .addOnSuccessListener { result ->
-                 viewModelScope.launch {
-                    _pendingIntentSenderToLaunch.value = result.pendingIntent.intentSender
-                }
-            }
-            .addOnFailureListener { e ->
-                Log.e(TAG, "Manual sign-in request failed", e)
+            } catch (e: GetCredentialException) {
+                Log.e(TAG, "GetCredentialException", e)
                 onSignInError(e)
             }
+        }
     }
 
-    fun onSignInResult(credential: SignInCredential) {
+    private fun onSignInResult(credential: GoogleIdTokenCredential) {
         val userInfo = UserInfo(
             displayName = credential.displayName,
             email = credential.id, // This is the user's email/ID
             photoUrl = credential.profilePictureUri?.toString()
         )
         _signInState.value = SignInState.Success(userInfo)
-        // Save email to SharedPreferences
         sharedPreferences.edit().putString(PREF_USER_EMAIL_KEY, credential.id).apply()
         Log.d(TAG, "User email saved to SharedPreferences: ${credential.id}")
     }
@@ -111,10 +99,9 @@ class AuthViewModel @Inject constructor(
     }
 
     fun signOut() {
-        oneTapClient.signOut().addOnCompleteListener {
-            Log.i(TAG, "OneTapClient sign out complete.")
+        viewModelScope.launch {
+            credentialManager.clearCredentialState(ClearCredentialStateRequest())
             _signInState.value = SignInState.Idle
-            // Clear email from SharedPreferences
             sharedPreferences.edit().remove(PREF_USER_EMAIL_KEY).apply()
             Log.d(TAG, "User email cleared from SharedPreferences.")
         }
@@ -124,9 +111,5 @@ class AuthViewModel @Inject constructor(
         if (_signInState.value is SignInState.Error) {
             _signInState.value = SignInState.Idle
         }
-    }
-
-    fun consumedPendingIntentSender() {
-        _pendingIntentSenderToLaunch.value = null
     }
 }

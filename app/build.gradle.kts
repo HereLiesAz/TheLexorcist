@@ -61,6 +61,8 @@ dependencies {
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.credentials) // Added AndroidX Credentials
+    implementation(libs.androidx.credentials.play.services.auth)
+    implementation(libs.google.id)
 
     // Core testing dependencies
     testImplementation(libs.junit)
@@ -149,6 +151,7 @@ dependencies {
     ksp(libs.google.dagger.hilt.compiler)
     implementation(libs.androidx.hilt.work)
     ksp(libs.androidx.hilt.compiler)
+    implementation(libs.androidx.hilt.navigation.compose)
     testImplementation(libs.google.dagger.hilt.android.testing)
     kspTest(libs.hilt.android.compiler)
 

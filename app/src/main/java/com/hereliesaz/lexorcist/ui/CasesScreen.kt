@@ -70,7 +70,7 @@ fun CasesScreen(caseViewModel: CaseViewModel) {
                 Spacer(modifier = Modifier.width(8.dp))
                 IconButton(onClick = {
                     currentSortOrderState = when (currentSortOrderState) {
-                        SortOrder.DATE_DESC -> Sort_Order.DATE_ASC
+                        SortOrder.DATE_DESC -> SortOrder.DATE_ASC
                         SortOrder.DATE_ASC -> SortOrder.NAME_DESC
                         SortOrder.NAME_DESC -> SortOrder.NAME_ASC
                         SortOrder.NAME_ASC -> SortOrder.DATE_DESC
