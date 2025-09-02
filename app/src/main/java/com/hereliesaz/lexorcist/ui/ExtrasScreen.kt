@@ -24,14 +24,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel // Changed from androidx.lifecycle.viewmodel.compose.viewModel
 import com.hereliesaz.lexorcist.model.Script
 import com.hereliesaz.lexorcist.model.Template
 import com.hereliesaz.lexorcist.viewmodel.AddonsBrowserViewModel
 
 @Composable
 fun ExtrasScreen(
-    viewModel: AddonsBrowserViewModel = viewModel(),
+    viewModel: AddonsBrowserViewModel = hiltViewModel(), // Changed to hiltViewModel()
     onShare: () -> Unit
 ) {
     val scripts by viewModel.scripts.collectAsState()
@@ -45,7 +45,7 @@ fun ExtrasScreen(
         }
     ) { paddingValues ->
         BoxWithConstraints(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-            val halfScreenHeight = this@BoxWithConstraints.maxHeight / 2
+            // val halfScreenHeight = this@BoxWithConstraints.maxHeight / 2 // REMOVED
 
             Column(
                 modifier = Modifier
@@ -54,7 +54,7 @@ fun ExtrasScreen(
                     .padding(horizontal = 16.dp), // Add horizontal padding for content within the Column
                 horizontalAlignment = Alignment.End // Right-align children of this Column
             ) {
-                Spacer(modifier = Modifier.height(halfScreenHeight)) // Push content to start halfway down
+                // Spacer(modifier = Modifier.height(halfScreenHeight)) // REMOVED
 
                 Text("Scripts", style = MaterialTheme.typography.headlineSmall)
                 // Note: LazyColumn inside a verticalScroll can have performance issues if lists are very long.

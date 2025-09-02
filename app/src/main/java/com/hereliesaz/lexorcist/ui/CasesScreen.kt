@@ -5,23 +5,23 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+// import androidx.compose.foundation.layout.Spacer // Might not be needed if search/sort are removed
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.statusBarsPadding // Keep for direct application
+// import androidx.compose.foundation.layout.width // Might not be needed
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Sort
+// import androidx.compose.material.icons.automirrored.filled.Sort // Will be removed with topBar
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Search // Uncommented for search bar
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -37,7 +37,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.hereliesaz.lexorcist.R
-import com.hereliesaz.lexorcist.data.SortOrder
+import com.hereliesaz.lexorcist.data.SortOrder // Still needed for state
 import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import java.util.Locale
@@ -46,7 +46,7 @@ import java.util.Locale
 @Composable
 fun CasesScreen(caseViewModel: CaseViewModel) {
     val casesState by caseViewModel.cases.collectAsState()
-    val sortOrder by caseViewModel.sortOrder.collectAsState()
+    val sortOrder by caseViewModel.sortOrder.collectAsState() // Retain for logic if sort is re-added
     val searchQuery by caseViewModel.searchQuery.collectAsState()
     var longPressedCase by remember { mutableStateOf<Case?>(null) }
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
@@ -65,36 +65,7 @@ fun CasesScreen(caseViewModel: CaseViewModel) {
     }
 
     Scaffold(
-        topBar = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
-                    .statusBarsPadding(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.End 
-            ) {
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { caseViewModel.onSearchQueryChanged(it) },
-                    label = { Text(stringResource(R.string.search)) },
-                    modifier = Modifier.weight(1f),
-                    leadingIcon = { Icon(Icons.Filled.Search, contentDescription = stringResource(R.string.search)) },
-                    singleLine = true
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                IconButton(onClick = {
-                    currentSortOrderState = when (currentSortOrderState) {
-                        SortOrder.DATE_DESC -> SortOrder.DATE_ASC
-                        SortOrder.DATE_ASC -> SortOrder.NAME_DESC
-                        SortOrder.NAME_DESC -> SortOrder.NAME_ASC
-                        SortOrder.NAME_ASC -> SortOrder.DATE_DESC
-                    }
-                }) {
-                    Icon(Icons.AutoMirrored.Filled.Sort, contentDescription = stringResource(R.string.sort))
-                }
-            }
-        },
+        // topBar = { ... }  // This section is removed
         floatingActionButton = {
             FloatingActionButton(onClick = { showCreateCaseDialog = true }) {
                 Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.create_new_case))
@@ -104,9 +75,21 @@ fun CasesScreen(caseViewModel: CaseViewModel) {
     ) { innerPadding ->
         Column(
             modifier = Modifier
-                .padding(innerPadding)
+                .padding(innerPadding) // Apply padding from Scaffold (e.g., for FAB)
+                .statusBarsPadding()  // Add status bar padding directly to the content
                 .fillMaxSize()
         ) {
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { caseViewModel.onSearchQueryChanged(it) },
+                label = { Text(stringResource(R.string.search)) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 8.dp), // Padding for the search field
+                leadingIcon = { Icon(Icons.Filled.Search, contentDescription = stringResource(R.string.search)) },
+                singleLine = true
+            )
+
             if (unarchivedCases.isEmpty()) {
                 Column(
                     modifier = Modifier
@@ -130,9 +113,10 @@ fun CasesScreen(caseViewModel: CaseViewModel) {
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(
+                    contentPadding = PaddingValues( // Adjust padding as needed now that topBar is gone
                         start = 16.dp,
                         end = 16.dp,
+                        top = 8.dp, // Adjusted top padding
                         bottom = 16.dp
                     )
                 ) {
@@ -140,7 +124,7 @@ fun CasesScreen(caseViewModel: CaseViewModel) {
                         CaseItem(
                             case = case,
                             isLongPressed = longPressedCase == case,
-                            onLongPress = { longPressedCase = it },
+                            onLongPress = { longPressedCase = case },
                             onDelete = {
                                 longPressedCase = case 
                                 showDeleteConfirmDialog = true
@@ -170,7 +154,7 @@ fun CasesScreen(caseViewModel: CaseViewModel) {
                 showDeleteConfirmDialog = false
                 longPressedCase = null
             },
-            title = { Text((stringResource(R.string.delete_case) + ": ${longPressedCase?.name ?: ""}")) },
+            title = { Text(stringResource(R.string.delete_case) + ": ${longPressedCase?.name ?: ""}") },
             text = { Text(stringResource(R.string.delete_case_confirmation, longPressedCase?.name ?: "")) },
             confirmButton = {
                 Button(onClick = {
@@ -233,13 +217,12 @@ fun CaseItem(
         ) {
             Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.End) { 
                 Text(
-                    text = case.name, // Case name is data, not a title, so not uppercased
+                    text = case.name,
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.fillMaxWidth()
                 )
             }
             if (isLongPressed) {
-                // Content descriptions for IconButtons are for accessibility, not typically uppercased.
                 IconButton(onClick = onDelete) {
                     Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.delete_case))
                 }
@@ -258,3 +241,4 @@ fun CaseItem(
 // R.string.no_cases_match_search = "No cases match your search."
 // R.string.no_cases_found_line1 = "No cases found."
 // R.string.no_cases_found_line2 = "Create a new case or open an existing one."
+

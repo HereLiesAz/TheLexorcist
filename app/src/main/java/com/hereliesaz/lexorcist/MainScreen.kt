@@ -22,6 +22,7 @@ import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState // Added import
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.hereliesaz.lexorcist.ui.ScriptEditorScreen
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
@@ -71,6 +72,9 @@ fun MainScreen(
     ) { paddingValues ->
         when (val currentSignInState = signInState) {
             is SignInState.Success -> {
+                val navBackStackEntry by navController.currentBackStackEntryAsState()
+                val currentRoute = navBackStackEntry?.destination?.route
+
                 Row(
                     modifier = Modifier
                         .fillMaxSize()
@@ -87,7 +91,9 @@ fun MainScreen(
                                 .fillMaxSize() 
                                 .verticalScroll(rememberScrollState())
                         ) {
-                            Spacer(Modifier.height(halfContentAreaHeight)) 
+                            if (currentRoute == "home") {
+                                Spacer(Modifier.height(halfContentAreaHeight))
+                            }
 
                             NavHost(
                                 navController = navController,
@@ -101,7 +107,7 @@ fun MainScreen(
                                             .verticalScroll(rememberScrollState())
                                             .padding(16.dp),
                                         horizontalAlignment = Alignment.End,
-                                        verticalArrangement = Arrangement.Top
+                                        verticalArrangement = Arrangement.Top // Content aligns to its top
                                     ) {
                                         Text(
                                             text = stringResource(R.string.app_name),

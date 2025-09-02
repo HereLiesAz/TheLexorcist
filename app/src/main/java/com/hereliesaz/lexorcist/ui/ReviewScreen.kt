@@ -134,7 +134,6 @@ fun ReviewScreen(
                         horizontalAlignment = Alignment.End,
                         verticalArrangement = Arrangement.Top
                     ) {
-                        Spacer(modifier = Modifier.height(halfScreenHeight))
                         Text(stringResource(R.string.no_evidence_for_case).uppercase(Locale.getDefault()))
                     }
                 } else {

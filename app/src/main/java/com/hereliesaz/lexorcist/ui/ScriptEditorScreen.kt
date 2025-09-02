@@ -60,7 +60,7 @@ fun ScriptEditorScreen(viewModel: ScriptEditorViewModel) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(8.dp),
         horizontalAlignment = Alignment.End
     ) {
         // Script Builder Section

@@ -104,7 +104,7 @@ fun AppNavRail(onNavigate: (String) -> Unit) {
                             NavItem(
                                 text = "Review",
                                 data = NavItemData.Action(onClick = { onNavigate(navReviewStr) }),
-                                showOnRail = false,
+                                showOnRail = true,
                             ),
                             NavItem(
                                 text = extrasText,

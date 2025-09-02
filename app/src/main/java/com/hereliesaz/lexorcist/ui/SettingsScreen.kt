@@ -52,7 +52,7 @@ fun SettingsScreen(caseViewModel: CaseViewModel) {
         )
         Spacer(modifier = Modifier.height(8.dp))
         Column(Modifier.fillMaxWidth()) {
-            ThemeMode.values().forEach { mode ->
+            ThemeMode.entries.forEach { mode ->
                 Row(
                     Modifier
                         .fillMaxWidth()
