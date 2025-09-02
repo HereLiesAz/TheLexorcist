@@ -33,7 +33,6 @@ Your primary objective is to develop "The Lexorcist" into a fully functional leg
 ### UI and UX
 
 1. Except for the AzNavRail, all components on every screen (text boxes, not text) need to be right aligned.
-2. The topmost component on every screen that scrolls should have a default vertical initial position at halfway down the screen. When scrolling, the items should still scroll to the top of the screen. We're only talking about the topmost component's initial starting position.
 
 ---
 
