@@ -27,7 +27,6 @@ import org.junit.runners.JUnit4
 @ExperimentalCoroutinesApi
 @RunWith(JUnit4::class)
 class OcrViewModelTest {
-
     @get:Rule
     val instantTaskExecutorRule = InstantTaskExecutorRule()
 
@@ -53,20 +52,21 @@ class OcrViewModelTest {
     }
 
     @Test
-    fun `performOcrOnUri delegates to OcrProcessingService`() = runTest {
-        // Given
-        val uri: Uri = mockk()
-        val context: Context = mockk()
-        val caseId = 123
-        val spreadsheetId = "spreadsheet-123"
-        val parentVideoId = "video-456"
-        coEvery { ocrProcessingService.processImageFrame(any(), any(), any(), any(), any()) } returns Unit
+    fun `performOcrOnUri delegates to OcrProcessingService`() =
+        runTest {
+            // Given
+            val uri: Uri = mockk()
+            val context: Context = mockk()
+            val caseId = 123
+            val spreadsheetId = "spreadsheet-123"
+            val parentVideoId = "video-456"
+            coEvery { ocrProcessingService.processImageFrame(any(), any(), any(), any(), any()) } returns Unit
 
-        // When
-        ocrViewModel.performOcrOnUri(uri, context, caseId, spreadsheetId, parentVideoId)
-        testDispatcher.scheduler.advanceUntilIdle()
+            // When
+            ocrViewModel.performOcrOnUri(uri, context, caseId, spreadsheetId, parentVideoId)
+            testDispatcher.scheduler.advanceUntilIdle()
 
-        // Then
-        coVerify { ocrProcessingService.processImageFrame(uri, context, caseId, spreadsheetId, parentVideoId) }
-    }
+            // Then
+            coVerify { ocrProcessingService.processImageFrame(uri, context, caseId, spreadsheetId, parentVideoId) }
+        }
 }

@@ -16,16 +16,15 @@ import com.hereliesaz.lexorcist.data.AllegationsRepositoryImpl
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class RepositoryModule {
+    @Binds
+    @Singleton
+    abstract fun bindEvidenceRepository(evidenceRepositoryImpl: EvidenceRepositoryImpl): EvidenceRepository
 
     @Binds
     @Singleton
-    abstract fun bindEvidenceRepository(
-        evidenceRepositoryImpl: EvidenceRepositoryImpl
-    ): EvidenceRepository
+    abstract fun bindCaseRepository(caseRepositoryImpl: CaseRepositoryImpl): CaseRepository
 
     @Binds
     @Singleton
-    abstract fun bindCaseRepository(
-        caseRepositoryImpl: CaseRepositoryImpl
-    ): CaseRepository
+    abstract fun bindAllegationsRepository(allegationsRepositoryImpl: AllegationsRepositoryImpl): AllegationsRepository
 }

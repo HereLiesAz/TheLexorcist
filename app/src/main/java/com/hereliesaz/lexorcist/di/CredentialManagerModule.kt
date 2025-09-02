@@ -12,10 +12,9 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object CredentialManagerModule {
-
     @Provides
     @Singleton
-    fun provideCredentialManager(@ApplicationContext context: Context): CredentialManager {
-        return CredentialManager.create(context)
-    }
+    fun provideCredentialManager(
+        @ApplicationContext context: Context,
+    ): CredentialManager = CredentialManager.create(context)
 }

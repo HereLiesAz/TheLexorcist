@@ -6,5 +6,5 @@ package com.hereliesaz.lexorcist.model
 
 data class Comment(
     val author: String,
-    val comment: String
+    val comment: String,
 )

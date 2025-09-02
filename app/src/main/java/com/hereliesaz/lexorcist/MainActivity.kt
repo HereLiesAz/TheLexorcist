@@ -8,19 +8,23 @@ import androidx.navigation.compose.rememberNavController
 import com.hereliesaz.lexorcist.ui.theme.LexorcistTheme
 import com.hereliesaz.lexorcist.viewmodel.AuthViewModel
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
+import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-
     private val authViewModel: AuthViewModel by viewModels()
     private val mainViewModel: MainViewModel by viewModels()
+    private val caseViewModel: CaseViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContent {
-            LexorcistTheme {
+            val themeMode by caseViewModel.themeMode.collectAsState()
+            LexorcistTheme(themeMode = themeMode) {
                 val navController = rememberNavController()
 
                 MainScreen(
@@ -32,7 +36,7 @@ class MainActivity : ComponentActivity() {
                     },
                     onSignOutClick = {
                         authViewModel.signOut()
-                    }
+                    },
                 )
             }
         }
