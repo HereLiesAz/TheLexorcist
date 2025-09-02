@@ -10,7 +10,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hereliesaz.lexorcist.components.AppNavRail
 import com.hereliesaz.lexorcist.ui.EvidenceScreen
-// import com.hereliesaz.lexorcist.ui.AddonsBrowserScreen // Removed this unused import
 import com.hereliesaz.lexorcist.ui.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -142,21 +141,6 @@ fun MainScreen(
                                 composable("templates") {
                                     TemplatesScreen()
                                 }
-                                composable("add_text_evidence") {
-                                    AddTextEvidenceScreen(
-                                        evidenceViewModel = evidenceViewModel,
-                                        onSave = { text ->
-                                            selectedCase?.let { case ->
-                                                evidenceViewModel.addTextEvidence(
-                                                    text = text,
-                                                    caseId = case.id.toLong(),
-                                                    spreadsheetId = case.spreadsheetId
-                                                )
-                                            }
-                                            navController.navigateUp()
-                                        }
-                                    )
-                                }
                                 composable("timeline") {
                                     selectedCase?.let {
                                         TimelineScreen(
@@ -247,3 +231,4 @@ fun MainScreen(
         }
     }
 }
+

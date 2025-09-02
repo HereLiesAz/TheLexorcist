@@ -1,6 +1,15 @@
 package com.hereliesaz.lexorcist.ui
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -9,7 +18,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -20,7 +35,10 @@ import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
 import java.util.Locale
-// Removed unused background, gestures, pointerInput imports for now, can be re-added if drag is reimplemented
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.ui.input.pointer.pointerInput
 import com.hereliesaz.lexorcist.viewmodel.AllegationsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -35,17 +53,17 @@ fun ReviewScreen(
     val isLoading by evidenceViewModel.isLoading.collectAsState()
     val allegations by allegationsViewModel.allegations.collectAsState()
 
-    var showEditDialog by remember { mutableStateOf(false) }
-    var showDeleteConfirmDialog by remember { mutableStateOf(false) }
-    var evidenceToEdit by remember { mutableStateOf<Evidence?>(null) }
-    var evidenceToDelete by remember { mutableStateOf<Evidence?>(null) }
-
     LaunchedEffect(selectedCase) {
         selectedCase?.let {
             evidenceViewModel.loadEvidenceForCase(it.id.toLong(), it.spreadsheetId)
             allegationsViewModel.loadAllegations(it.id.toString())
         }
     }
+
+    var showEditDialog by remember { mutableStateOf(false) }
+    var showDeleteConfirmDialog by remember { mutableStateOf(false) }
+    var evidenceToEdit by remember { mutableStateOf<Evidence?>(null) }
+    var evidenceToDelete by remember { mutableStateOf<Evidence?>(null) }
 
     Scaffold(
         topBar = {
@@ -55,7 +73,7 @@ fun ReviewScreen(
                         (if (selectedCase != null) 
                             stringResource(R.string.data_review_title_case, selectedCase!!.name) 
                         else 
-                            stringResource(R.string.data_review)).uppercase(Locale.getDefault())
+                            stringResource(R.string.data_review)).uppercase(Locale.getDefault()) // ALL CAPS
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -89,9 +107,9 @@ fun ReviewScreen(
                         verticalArrangement = Arrangement.Top
                     ){
                         Spacer(modifier = Modifier.height(halfScreenHeight))
-                        Text(stringResource(R.string.please_select_case_for_evidence).uppercase(Locale.getDefault()))
+                        Text(stringResource(R.string.please_select_case_for_evidence).uppercase(Locale.getDefault())) // ALL CAPS
                     }
-                } else if (evidenceList.isEmpty() && allegations.isEmpty()) { // Check both
+                } else if (evidenceList.isEmpty()) {
                      Column(
                         modifier = Modifier
                             .fillMaxSize()
@@ -101,56 +119,24 @@ fun ReviewScreen(
                         verticalArrangement = Arrangement.Top
                     ){
                         Spacer(modifier = Modifier.height(halfScreenHeight))
-                        Text(stringResource(R.string.no_review_data_for_case).uppercase(Locale.getDefault()))
+                        Text(stringResource(R.string.no_evidence_for_case).uppercase(Locale.getDefault())) // ALL CAPS
                     }
                 } else {
                     ReviewScreenContent(
                         allegations = allegations,
                         evidenceList = evidenceList,
-                        onEditEvidence = { evidence ->
-                            evidenceToEdit = evidence
-                            showEditDialog = true
-                        },
-                        onDeleteEvidence = { evidence ->
-                            evidenceToDelete = evidence
-                            showDeleteConfirmDialog = true
-                        }
+                        evidenceViewModel = evidenceViewModel,
+                        showEditDialog = showEditDialog,
+                        onShowEditDialogChange = { showEditDialog = it },
+                        evidenceToEdit = evidenceToEdit,
+                        onEvidenceToEditChange = { evidenceToEdit = it },
+                        showDeleteConfirmDialog = showDeleteConfirmDialog,
+                        onShowDeleteConfirmDialogChange = { showDeleteConfirmDialog = it },
+                        evidenceToDelete = evidenceToDelete,
+                        onEvidenceToDeleteChange = { evidenceToDelete = it }
                     )
                 }
             }
-        }
-
-        // Dialogs are now part of ReviewScreen's scope
-        if (showEditDialog && evidenceToEdit != null) {
-            EditEvidenceDialog(
-                evidence = evidenceToEdit!!,
-                onDismiss = { showEditDialog = false },
-                onSave = { updatedEvidence ->
-                    evidenceViewModel.updateEvidence(updatedEvidence)
-                    showEditDialog = false
-                }
-            )
-        }
-
-        if (showDeleteConfirmDialog && evidenceToDelete != null) {
-            AlertDialog(
-                onDismissRequest = { showDeleteConfirmDialog = false },
-                title = { Text(stringResource(R.string.delete_evidence).uppercase(Locale.getDefault())) }, 
-                text = { Text(stringResource(R.string.delete_evidence_confirmation)) }, 
-                confirmButton = {
-                    Button(onClick = { 
-                        evidenceViewModel.deleteEvidence(evidenceToDelete!!)
-                        showDeleteConfirmDialog = false
-                    }) {
-                        Text(stringResource(R.string.delete).uppercase(Locale.getDefault()))
-                    }
-                },
-                dismissButton = {
-                    OutlinedButton(onClick = { showDeleteConfirmDialog = false }) { 
-                        Text(stringResource(R.string.cancel).uppercase(Locale.getDefault()))
-                    }
-                }
-            )
         }
     }
 }
@@ -159,55 +145,72 @@ fun ReviewScreen(
 fun ReviewScreenContent(
     allegations: List<com.hereliesaz.lexorcist.data.Allegation>,
     evidenceList: List<Evidence>,
-    onEditEvidence: (Evidence) -> Unit, // Callback for edit
-    onDeleteEvidence: (Evidence) -> Unit // Callback for delete
+    evidenceViewModel: EvidenceViewModel,
+    showEditDialog: Boolean,
+    onShowEditDialogChange: (Boolean) -> Unit,
+    evidenceToEdit: Evidence?,
+    onEvidenceToEditChange: (Evidence?) -> Unit,
+    showDeleteConfirmDialog: Boolean,
+    onShowDeleteConfirmDialogChange: (Boolean) -> Unit,
+    evidenceToDelete: Evidence?,
+    onEvidenceToDeleteChange: (Evidence?) -> Unit
 ) {
-    // var draggedEvidence by remember { mutableStateOf<Evidence?>(null) } // Removed for now to focus on errors
+    var draggedEvidence by remember { mutableStateOf<Evidence?>(null) }
 
     Row(modifier = Modifier.fillMaxSize()) {
-        LazyColumn(
-            modifier = Modifier.weight(1f).padding(horizontal = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            if (allegations.isEmpty()) {
-                item {
-                    Text(
-                        stringResource(R.string.no_allegations_for_case).uppercase(Locale.getDefault()),
-                        modifier = Modifier.padding(16.dp)
-                    )
-                }
-            } else {
-                items(allegations) { allegation ->
-                    // Corrected: allegation.name to allegation.text
-                    Text(allegation.text, modifier = Modifier.padding(16.dp))
-                }
+        LazyColumn(modifier = Modifier.weight(1f)) {
+            items(allegations) { allegation ->
+                Text(allegation.text, modifier = Modifier.padding(16.dp))
             }
         }
-        LazyColumn(
-            modifier = Modifier.weight(1f).padding(horizontal = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-             if (evidenceList.isEmpty()) {
-                item {
-                    Text(
-                        stringResource(R.string.no_evidence_for_case).uppercase(Locale.getDefault()),
-                        modifier = Modifier.padding(16.dp)
-                    )
-                }
-            } else {
-                items(evidenceList) { evidence ->
-                    // Use EvidenceItem and pass callbacks
-                    EvidenceItem(
-                        evidence = evidence,
-                        onEditClick = { onEditEvidence(evidence) },
-                        onDeleteClick = { onDeleteEvidence(evidence) }
-                    )
-                    // Removed old Text composable with pointerInput for evidence
-                }
+        LazyColumn(modifier = Modifier.weight(1f)) {
+            items(evidenceList) { evidence ->
+                Text(
+                    text = evidence.content,
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .pointerInput(Unit) {
+                            detectDragGestures { change, dragAmount ->
+                                change.consume()
+                                draggedEvidence = evidence
+                            }
+                        }
+                )
             }
         }
     }
-    // Dialogs have been moved out of ReviewScreenContent
+
+    if (showEditDialog && evidenceToEdit != null) {
+        EditEvidenceDialog(
+            evidence = evidenceToEdit,
+            onDismiss = { onShowEditDialogChange(false) },
+            onSave = { updatedEvidence ->
+                evidenceViewModel.updateEvidence(updatedEvidence)
+                onShowEditDialogChange(false)
+            }
+        )
+    }
+
+    if (showDeleteConfirmDialog && evidenceToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { onShowDeleteConfirmDialogChange(false) },
+            title = { Text(stringResource(R.string.delete_evidence).uppercase(Locale.getDefault())) }, // ALL CAPS
+            text = { Text(stringResource(R.string.delete_evidence_confirmation)) }, // Confirmation usually not all caps
+            confirmButton = {
+                Button(onClick = {
+                    evidenceViewModel.deleteEvidence(evidenceToDelete)
+                    onShowDeleteConfirmDialogChange(false)
+                }) {
+                    Text(stringResource(R.string.delete).uppercase(Locale.getDefault())) // ALL CAPS
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { onShowDeleteConfirmDialogChange(false) }) {
+                    Text(stringResource(R.string.cancel).uppercase(Locale.getDefault())) // ALL CAPS
+                }
+            }
+        )
+    }
 }
 
 @Composable
@@ -292,7 +295,7 @@ fun EditEvidenceDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.edit_evidence).uppercase(Locale.getDefault())) }, 
+        title = { Text(stringResource(R.string.edit_evidence).uppercase(Locale.getDefault())) }, // ALL CAPS
         text = {
             Column(
                 modifier = Modifier.verticalScroll(rememberScrollState()), 
@@ -302,14 +305,14 @@ fun EditEvidenceDialog(
                 OutlinedTextField(
                     value = content,
                     onValueChange = { content = it },
-                    label = { Text(stringResource(R.string.content)) }, 
+                    label = { Text(stringResource(R.string.content)) }, // Labels not typically all caps
                     modifier = Modifier.fillMaxWidth(),
                     maxLines = 5 
                 )
                  OutlinedTextField(
                     value = sourceDocument,
                     onValueChange = { sourceDocument = it },
-                    label = { Text(stringResource(R.string.source_document)) }, 
+                    label = { Text(stringResource(R.string.source_document)) }, // Needs string R.string.source_document
                     modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
@@ -322,7 +325,7 @@ fun EditEvidenceDialog(
                 OutlinedTextField(
                     value = tags,
                     onValueChange = { tags = it },
-                    label = { Text(stringResource(R.string.tags_comma_separated)) }, 
+                    label = { Text(stringResource(R.string.tags_comma_separated)) }, // Needs string R.string.tags_comma_separated
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -337,12 +340,12 @@ fun EditEvidenceDialog(
                 )
                 onSave(updatedEvidence)
             }) {
-                Text(stringResource(R.string.save).uppercase(Locale.getDefault()))
+                Text(stringResource(R.string.save).uppercase(Locale.getDefault())) // ALL CAPS
             }
         },
         dismissButton = {
             OutlinedButton(onClick = onDismiss) { 
-                Text(stringResource(R.string.cancel).uppercase(Locale.getDefault()))
+                Text(stringResource(R.string.cancel).uppercase(Locale.getDefault())) // ALL CAPS
             }
         }
     )
@@ -352,7 +355,5 @@ fun EditEvidenceDialog(
 // R.string.data_review_title_case = "REVIEW: %1$s"
 // R.string.please_select_case_for_evidence = "Please select a case to review its evidence."
 // R.string.no_evidence_for_case = "No evidence found for this case."
-// R.string.no_allegations_for_case = "No allegations found for this case."
-// R.string.no_review_data_for_case = "No allegations or evidence found for this case."
 // R.string.source_document = "Source Document"
 // R.string.tags_comma_separated = "Tags (comma-separated)"
