@@ -1,6 +1,5 @@
-WARNING: The following problems were found when resolving the SDK location:
-Where: sdk.dir property in local.properties file. Problem: Directory does not exist
-
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.13/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build
 > Task :app:preBuild UP-TO-DATE
 > Task :app:preDebugBuild UP-TO-DATE
 > Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
@@ -19,8 +18,17 @@ Where: sdk.dir property in local.properties file. Problem: Directory does not ex
 > Task :app:processDebugManifest UP-TO-DATE
 > Task :app:processDebugManifestForPackage UP-TO-DATE
 > Task :app:processDebugResources UP-TO-DATE
+> Task :app:kspDebugKotlin UP-TO-DATE
+> Task :app:compileDebugKotlin UP-TO-DATE
 > Task :app:javaPreCompileDebug UP-TO-DATE
+> Task :app:compileDebugJavaWithJavac UP-TO-DATE
+> Task :app:hiltAggregateDepsDebug UP-TO-DATE
+> Task :app:hiltJavaCompileDebug UP-TO-DATE
+> Task :app:transformDebugClassesWithAsm UP-TO-DATE
+> Task :app:bundleDebugClassesToRuntimeJar UP-TO-DATE
 > Task :app:preDebugUnitTestBuild UP-TO-DATE
+> Task :app:processDebugJavaRes UP-TO-DATE
+> Task :app:bundleDebugClassesToCompileJar UP-TO-DATE
 > Task :app:javaPreCompileDebugUnitTest UP-TO-DATE
 > Task :app:preReleaseBuild UP-TO-DATE
 > Task :app:buildKotlinToolingMetadata UP-TO-DATE
@@ -39,47 +47,43 @@ Where: sdk.dir property in local.properties file. Problem: Directory does not ex
 > Task :app:processReleaseManifest UP-TO-DATE
 > Task :app:processReleaseManifestForPackage UP-TO-DATE
 > Task :app:processReleaseResources UP-TO-DATE
+> Task :app:kspReleaseKotlin UP-TO-DATE
+> Task :app:compileReleaseKotlin UP-TO-DATE
 > Task :app:javaPreCompileRelease UP-TO-DATE
-> Task :app:preReleaseUnitTestBuild UP-TO-DATE
-> Task :app:javaPreCompileReleaseUnitTest UP-TO-DATE
-> Task :app:kspReleaseKotlin
-> Task :app:kspDebugKotlin
-> Task :app:compileDebugKotlin
-> Task :app:compileReleaseKotlin
-> Task :app:compileDebugJavaWithJavac UP-TO-DATE
-> Task :app:hiltAggregateDepsDebug UP-TO-DATE
-> Task :app:hiltJavaCompileDebug UP-TO-DATE
-> Task :app:processDebugJavaRes UP-TO-DATE
-> Task :app:bundleDebugClassesToCompileJar
-> Task :app:transformDebugClassesWithAsm
 > Task :app:compileReleaseJavaWithJavac UP-TO-DATE
-> Task :app:bundleDebugClassesToRuntimeJar
 > Task :app:hiltAggregateDepsRelease UP-TO-DATE
 > Task :app:hiltJavaCompileRelease UP-TO-DATE
+> Task :app:transformReleaseClassesWithAsm UP-TO-DATE
+> Task :app:bundleReleaseClassesToRuntimeJar UP-TO-DATE
+> Task :app:preReleaseUnitTestBuild UP-TO-DATE
 > Task :app:processReleaseJavaRes UP-TO-DATE
-> Task :app:transformReleaseClassesWithAsm
-> Task :app:bundleReleaseClassesToCompileJar
-> Task :app:bundleReleaseClassesToRuntimeJar
-> Task :app:kspDebugUnitTestKotlin
+> Task :app:bundleReleaseClassesToCompileJar UP-TO-DATE
+> Task :app:javaPreCompileReleaseUnitTest UP-TO-DATE
 > Task :app:kspReleaseUnitTestKotlin
+> Task :app:kspDebugUnitTestKotlin
 > Task :app:compileDebugUnitTestKotlin
+> Task :app:compileReleaseUnitTestKotlin
 > Task :app:compileDebugUnitTestJavaWithJavac UP-TO-DATE
 > Task :app:hiltAggregateDepsDebugUnitTest UP-TO-DATE
 > Task :app:hiltJavaCompileDebugUnitTest NO-SOURCE
 > Task :app:processDebugUnitTestJavaRes UP-TO-DATE
 > Task :app:transformDebugUnitTestClassesWithAsm
+> Task :app:compileReleaseUnitTestJavaWithJavac UP-TO-DATE
 OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
-> Task :app:compileReleaseUnitTestKotlin
 
 > Task :app:testDebugUnitTest
 
-EvidenceViewModelTest > loadEvidenceForCase returns evidence from repository FAILED
-    java.lang.AssertionError at EvidenceViewModelTest.kt:52
+AuthViewModelTest > signIn success FAILED
+    com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException at AuthViewModelTest.kt:100
+        Caused by: java.lang.RuntimeException at AuthViewModelTest.kt:100
 
-OcrViewModelTest > performOcrOnUri adds evidence with correct details FAILED
-    java.lang.RuntimeException at OcrViewModelTest.kt:61
+AuthViewModelTest > signOut clears credential state and user data FAILED
+    java.lang.RuntimeException at AuthViewModelTest.kt:71
 
-4 tests completed, 2 failed
+AuthViewModelTest > signIn failure FAILED
+    java.lang.AssertionError at AuthViewModelTest.kt:126
+
+5 tests completed, 3 failed
 
 > Task :app:testDebugUnitTest FAILED
 
@@ -92,5 +96,5 @@ Execution failed for task ':app:testDebugUnitTest'.
 * Try:
 > Run with --scan to get full insights.
 
-BUILD FAILED in 59s
-62 actionable tasks: 16 executed, 46 up-to-date
+BUILD FAILED in 44s
+63 actionable tasks: 6 executed, 57 up-to-date

@@ -22,7 +22,7 @@ import com.hereliesaz.lexorcist.model.Template
 import com.hereliesaz.lexorcist.viewmodel.AddonsBrowserViewModel
 
 @Composable
-fun AddonsBrowserScreen(
+fun ExtrasScreen(
     viewModel: AddonsBrowserViewModel = viewModel(),
     onShare: () -> Unit
 ) {

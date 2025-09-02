@@ -7,11 +7,27 @@ import com.hereliesaz.lexorcist.data.EvidenceRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
+import com.hereliesaz.lexorcist.GoogleApiService
+import kotlinx.coroutines.launch
+import androidx.lifecycle.viewModelScope
+
 @HiltViewModel
 class MainViewModel @Inject constructor(
     application: Application,
     private val evidenceRepository: EvidenceRepository,
-    private val caseRepository: CaseRepository
+    private val caseRepository: CaseRepository,
+    private val googleApiService: GoogleApiService?
 ) : AndroidViewModel(application) {
-    // ... all the other code from the original file
+
+    fun createAllegationsSheet() {
+        viewModelScope.launch {
+            googleApiService?.createAllegationsSheet()
+        }
+    }
+
+    fun populateAllegationsSheet(spreadsheetId: String) {
+        viewModelScope.launch {
+            googleApiService?.populateAllegationsSheet(spreadsheetId)
+        }
+    }
 }

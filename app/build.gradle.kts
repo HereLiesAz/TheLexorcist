@@ -61,6 +61,8 @@ dependencies {
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.credentials) // Added AndroidX Credentials
+    implementation(libs.androidx.credentials.play.services.auth)
+    implementation(libs.google.id)
 
     // Core testing dependencies
     testImplementation(libs.junit)

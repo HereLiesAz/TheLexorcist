@@ -21,19 +21,27 @@ import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
 import java.util.Locale
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import com.hereliesaz.lexorcist.viewmodel.AllegationsViewModel
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DataReviewScreen(
+fun ReviewScreen(
     evidenceViewModel: EvidenceViewModel,
-    caseViewModel: CaseViewModel
+    caseViewModel: CaseViewModel,
+    allegationsViewModel: AllegationsViewModel
 ) {
     val evidenceList by evidenceViewModel.evidenceList.collectAsState()
     val selectedCase by caseViewModel.selectedCase.collectAsState()
     val isLoading by evidenceViewModel.isLoading.collectAsState()
+    val allegations by allegationsViewModel.allegations.collectAsState()
 
     LaunchedEffect(selectedCase) {
         selectedCase?.let {
             evidenceViewModel.loadEvidenceForCase(it.id.toLong(), it.spreadsheetId)
+            allegationsViewModel.loadAllegations(it.id.toString())
         }
     }
 
@@ -42,60 +50,99 @@ fun DataReviewScreen(
     var evidenceToEdit by remember { mutableStateOf<Evidence?>(null) }
     var evidenceToDelete by remember { mutableStateOf<Evidence?>(null) }
 
-    Scaffold { padding ->
-        Column(
-            modifier = Modifier.padding(padding).fillMaxSize(),
-            horizontalAlignment = Alignment.End
-        ) {
-            if (isLoading) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
-            } else if (selectedCase == null) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                        .padding(horizontal = 16.dp),
-                    horizontalAlignment = Alignment.End,
-                    verticalArrangement = Arrangement.Center
-                ){
-                    Text(stringResource(R.string.please_select_case_for_evidence).uppercase(Locale.getDefault())) // ALL CAPS
-                }
-            } else if (evidenceList.isEmpty()) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                        .padding(horizontal = 16.dp),
-                    horizontalAlignment = Alignment.End,
-                    verticalArrangement = Arrangement.Center
-                ){
-                    Text(stringResource(R.string.no_evidence_for_case).uppercase(Locale.getDefault())) // ALL CAPS
-                }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
-                    contentPadding = PaddingValues(top = 16.dp)
-                ) {
-                    items(evidenceList) { evidence ->
-                        EvidenceItem(
-                                evidence = evidence,
-                                onEditClick = {
-                                    evidenceToEdit = it
-                                    showEditDialog = true
-                                },
-                                onDeleteClick = {
-                                    evidenceToDelete = it
-                                    showDeleteConfirmDialog = true
-                                }
-                            )
-                        }
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { 
+                    Text(
+                        (if (selectedCase != null) 
+                            stringResource(R.string.data_review_title_case, selectedCase!!.name) 
+                        else 
+                            stringResource(R.string.data_review)).uppercase(Locale.getDefault()) // ALL CAPS
+                    )
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    titleContentColor = MaterialTheme.colorScheme.primary,
+                ),
+            )
+        }
+    ) { padding ->
+        BoxWithConstraints(modifier = Modifier.padding(padding).fillMaxSize()) {
+            val halfScreenHeight = this@BoxWithConstraints.maxHeight / 2
+
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.End 
+            ) {
+                if (isLoading) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(), 
+                        contentAlignment = Alignment.Center 
+                    ) {
+                        CircularProgressIndicator()
                     }
+                } else if (selectedCase == null) {
+                    Column(
+                         modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState()) 
+                            .padding(horizontal = 16.dp),
+                        horizontalAlignment = Alignment.End,
+                        verticalArrangement = Arrangement.Top
+                    ){
+                        Spacer(modifier = Modifier.height(halfScreenHeight))
+                        Text(stringResource(R.string.please_select_case_for_evidence).uppercase(Locale.getDefault())) // ALL CAPS
+                    }
+                } else if (evidenceList.isEmpty()) {
+                     Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
+                            .padding(horizontal = 16.dp),
+                        horizontalAlignment = Alignment.End,
+                        verticalArrangement = Arrangement.Top
+                    ){
+                        Spacer(modifier = Modifier.height(halfScreenHeight))
+                        Text(stringResource(R.string.no_evidence_for_case).uppercase(Locale.getDefault())) // ALL CAPS
+                    }
+                } else {
+                    ReviewScreenContent(
+                        allegations = allegations,
+                        evidenceList = evidenceList
+                    )
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun ReviewScreenContent(
+    allegations: List<com.hereliesaz.lexorcist.data.Allegation>,
+    evidenceList: List<Evidence>
+) {
+    var draggedEvidence by remember { mutableStateOf<Evidence?>(null) }
+
+    Row(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(modifier = Modifier.weight(1f)) {
+            items(allegations) { allegation ->
+                Text(allegation.name, modifier = Modifier.padding(16.dp))
+            }
+        }
+        LazyColumn(modifier = Modifier.weight(1f)) {
+            items(evidenceList) { evidence ->
+                Text(
+                    text = evidence.content,
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .pointerInput(Unit) {
+                            detectDragGestures { change, dragAmount ->
+                                change.consume()
+                                draggedEvidence = evidence
+                            }
+                        }
+                )
             }
         }
     }

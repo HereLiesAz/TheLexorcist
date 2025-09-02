@@ -10,6 +10,9 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
+import com.hereliesaz.lexorcist.data.AllegationsRepository
+import com.hereliesaz.lexorcist.data.AllegationsRepositoryImpl
+
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class RepositoryModule {
