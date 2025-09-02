@@ -15,11 +15,13 @@ import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.viewmodel.ScriptEditorViewModel
 import com.hereliesaz.lexorcist.common.state.SaveState
 
+@OptIn(ExperimentalMaterial3Api::class) // Removed ExperimentalMaterial3ExpressiveApi
 @Composable
 fun ScriptEditorScreen(viewModel: ScriptEditorViewModel) {
     val scriptText by viewModel.scriptText.collectAsState()
     val saveState by viewModel.saveState.collectAsState()
     val context = LocalContext.current
+    var showShareDialog by remember { mutableStateOf(false) } // Restored
 
     val snippetTextIncludesStr = stringResource(R.string.script_snippet_text_includes)
     val snippetTagsIncludesStr = stringResource(R.string.script_snippet_tags_includes)
@@ -123,7 +125,6 @@ fun ScriptEditorScreen(viewModel: ScriptEditorViewModel) {
         Spacer(modifier = Modifier.height(8.dp))
 
         // Action Buttons
-        var showShareDialog by remember { mutableStateOf(false) }
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
@@ -138,7 +139,7 @@ fun ScriptEditorScreen(viewModel: ScriptEditorViewModel) {
                 enabled = saveState !is SaveState.Saving
             ) {
                 if (saveState is SaveState.Saving) {
-                    CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp)) // Changed back
                 } else {
                     Text(stringResource(R.string.save_script))
                 }

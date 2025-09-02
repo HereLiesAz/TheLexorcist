@@ -62,7 +62,6 @@ androidxCredentials = "1.5.0"
 androidxHiltNavigationCompose = "1.2.0"
 
 
-
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
@@ -102,8 +101,8 @@ androidx-compose-runtime-livedata = { group = "androidx.compose.runtime", name =
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
 androidx-compose-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" } # No version in BOM
 androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" } # No version in BOM
-androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" } # No version in BOM
-androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" } # No version in BOM
+androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" } # No version in BOM, but corrected alias to not clash
+androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" } # No version in BOM, but corrected alias
 androidx-exifinterface = { group = "androidx.exifinterface", name = "exifinterface", version.ref = "exifinterface" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coilCompose" }

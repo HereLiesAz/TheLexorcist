@@ -1,7 +1,7 @@
 package com.hereliesaz.lexorcist
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
+import androidx.compose.material3.* // Covers CircularProgressIndicator
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -14,8 +14,8 @@ import com.hereliesaz.lexorcist.ui.AddonsBrowserScreen
 import com.hereliesaz.lexorcist.ui.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import android.content.Intent
-import androidx.compose.ui.platform.LocalContext
+// import android.content.Intent // Not used directly in this snippet
+// import androidx.compose.ui.platform.LocalContext // Not used directly in this snippet
 import com.hereliesaz.lexorcist.model.SignInState
 import com.hereliesaz.lexorcist.viewmodel.AuthViewModel
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
@@ -27,10 +27,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.hereliesaz.lexorcist.ui.ScriptEditorScreen
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 import com.hereliesaz.lexorcist.viewmodel.ScriptEditorViewModel
-import java.util.Locale
+// import java.util.Locale // Not used directly in this snippet
 import com.hereliesaz.lexorcist.ui.CreateCaseDialog
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class) // Added annotation
+@OptIn(ExperimentalMaterial3Api::class) // ENSURED THIS IS CORRECT
 @Composable
 fun MainScreen(
     navController: NavHostController,
@@ -197,7 +197,7 @@ fun MainScreen(
                     modifier = Modifier.fillMaxSize().padding(paddingValues),
                     contentAlignment = Alignment.Center 
                 ) {
-                    LoadingIndicator(progress = { 1.0f }) // Replaced
+                    CircularProgressIndicator() // ENSURED THIS IS CORRECT
                 }
             }
             is SignInState.Idle, is SignInState.Error -> {
