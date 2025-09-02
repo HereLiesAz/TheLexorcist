@@ -2,15 +2,24 @@
 
 package com.hereliesaz.lexorcist.ui.theme
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import com.materialkolor.DynamicMaterialTheme 
+import com.materialkolor.DynamicMaterialTheme
 import kotlin.random.Random
 
 @Composable
-fun LexorcistTheme(content: @Composable()
-() -> Unit) {
+fun LexorcistTheme(
+    themeMode: ThemeMode,
+    content: @Composable () -> Unit
+) {
+    val useDarkTheme = when (themeMode) {
+        ThemeMode.LIGHT -> false
+        ThemeMode.DARK -> true
+        ThemeMode.SYSTEM -> isSystemInDarkTheme()
+    }
+
     val randomColor = Color(
         red = Random.nextInt(256),
         green = Random.nextInt(256),
@@ -18,8 +27,9 @@ fun LexorcistTheme(content: @Composable()
     )
     DynamicMaterialTheme(
         seedColor = randomColor,
-        typography = Typography, 
-        shapes = Shapes,       
+        typography = Typography,
+        shapes = Shapes,
+        isDark = useDarkTheme,
         content = content
     )
 }

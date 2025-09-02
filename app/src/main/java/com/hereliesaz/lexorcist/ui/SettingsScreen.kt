@@ -1,32 +1,31 @@
 package com.hereliesaz.lexorcist.ui
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog // Added import
-import androidx.compose.material3.Button // Added import
-import androidx.compose.material3.Divider // Added import
-import androidx.compose.material3.ExperimentalMaterial3Api // Added
+import androidx.compose.foundation.rememberScrollState // Added import
+import androidx.compose.foundation.verticalScroll // Added import
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton // Added import
-import androidx.compose.material3.RadioButton // Added import
-import androidx.compose.material3.Switch // Keep if used, seems not from snippet
-import androidx.compose.material3.Text // Added import (explicit)
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Divider
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf // Added import
-import androidx.compose.runtime.remember // Added import
-import androidx.compose.runtime.setValue // Added import (implicitly used by `by` delegate for mutableStateOf)
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
+
 import com.hereliesaz.lexorcist.ui.theme.ThemeMode
 
-@OptIn(ExperimentalMaterial3Api::class) // Added
 @Composable
 fun SettingsScreen(caseViewModel: CaseViewModel) {
     val themeMode by caseViewModel.themeMode.collectAsState()
@@ -88,11 +87,11 @@ fun SettingsScreen(caseViewModel: CaseViewModel) {
             confirmButton = {
                 Button(
                     onClick = {
-                        // caseViewModel.clearCache() // TODO: Implement in ViewModel
+                        caseViewModel.clearCache()
                         showClearCacheDialog = false
                     }
                 ) {
-                    Text(stringResource(R.string.delete)) // Changed to R.string.delete as a placeholder
+                    Text(stringResource(R.string.delete))
                 }
             },
             dismissButton = {

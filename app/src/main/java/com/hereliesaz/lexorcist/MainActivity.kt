@@ -21,6 +21,7 @@ import com.google.android.gms.auth.api.identity.Identity
 import com.google.android.gms.auth.api.identity.SignInCredential // Added for getFromIntent
 import com.hereliesaz.lexorcist.ui.theme.LexorcistTheme
 import com.hereliesaz.lexorcist.viewmodel.AuthViewModel
+import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -29,6 +30,7 @@ class MainActivity : ComponentActivity() {
 
     private val authViewModel: AuthViewModel by viewModels()
     private val mainViewModel: MainViewModel by viewModels()
+    private val caseViewModel: CaseViewModel by viewModels()
     // private val oneTapClient by lazy { Identity.getSignInClient(this) } // No longer needed for getSignInCredentialFromIntent
 
     companion object {
@@ -65,7 +67,8 @@ class MainActivity : ComponentActivity() {
         authViewModel.attemptSilentSignIn()
 
         setContent {
-            LexorcistTheme {
+            val themeMode by caseViewModel.themeMode.collectAsState()
+            LexorcistTheme(themeMode = themeMode) {
                 val navController = rememberNavController()
                 val pendingIntentSender by authViewModel.pendingIntentSenderToLaunch.collectAsState()
 

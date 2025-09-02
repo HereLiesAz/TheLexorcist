@@ -21,7 +21,7 @@ import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
 import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class) 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DataReviewScreen(
     evidenceViewModel: EvidenceViewModel,
@@ -42,7 +42,7 @@ fun DataReviewScreen(
     var evidenceToEdit by remember { mutableStateOf<Evidence?>(null) }
     var evidenceToDelete by remember { mutableStateOf<Evidence?>(null) }
 
-    Scaffold() { padding ->
+    Scaffold { padding ->
         Column(
             modifier = Modifier.padding(padding).fillMaxSize(),
             horizontalAlignment = Alignment.End
@@ -63,7 +63,7 @@ fun DataReviewScreen(
                     horizontalAlignment = Alignment.End,
                     verticalArrangement = Arrangement.Center
                 ){
-                    Text(stringResource(R.string.please_select_case_for_evidence).uppercase(Locale.getDefault()))
+                    Text(stringResource(R.string.please_select_case_for_evidence).uppercase(Locale.getDefault())) // ALL CAPS
                 }
             } else if (evidenceList.isEmpty()) {
                 Column(
@@ -74,12 +74,12 @@ fun DataReviewScreen(
                     horizontalAlignment = Alignment.End,
                     verticalArrangement = Arrangement.Center
                 ){
-                    Text(stringResource(R.string.no_evidence_for_case).uppercase(Locale.getDefault()))
+                    Text(stringResource(R.string.no_evidence_for_case).uppercase(Locale.getDefault())) // ALL CAPS
                 }
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
-                    contentPadding = PaddingValues(top = 16.dp) 
+                    contentPadding = PaddingValues(top = 16.dp)
                 ) {
                     items(evidenceList) { evidence ->
                         EvidenceItem(
@@ -97,10 +97,9 @@ fun DataReviewScreen(
                     }
                 }
             }
-        } // Closing brace for the Scaffold's main Column
-     // } Closing brace for the Scaffold's content lambda
+        }
+    }
 
-    // Dialogs are now correctly placed within the DataReviewScreen composable scope
     if (showEditDialog && evidenceToEdit != null) {
         EditEvidenceDialog(
             evidence = evidenceToEdit!!,
@@ -115,25 +114,24 @@ fun DataReviewScreen(
     if (showDeleteConfirmDialog && evidenceToDelete != null) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirmDialog = false },
-            title = { Text(stringResource(R.string.delete_evidence).uppercase(Locale.getDefault())) },
-            text = { Text(stringResource(R.string.delete_evidence_confirmation)) },
+            title = { Text(stringResource(R.string.delete_evidence).uppercase(Locale.getDefault())) }, // ALL CAPS
+            text = { Text(stringResource(R.string.delete_evidence_confirmation)) }, // Confirmation usually not all caps
             confirmButton = {
-                Button(onClick = {
+                Button(onClick = { 
                     evidenceViewModel.deleteEvidence(evidenceToDelete!!)
                     showDeleteConfirmDialog = false
                 }) {
-                    Text(stringResource(R.string.delete).uppercase(Locale.getDefault()))
+                    Text(stringResource(R.string.delete).uppercase(Locale.getDefault())) // ALL CAPS
                 }
             },
             dismissButton = {
-                OutlinedButton(onClick = { showDeleteConfirmDialog = false }) {
-                    Text(stringResource(R.string.cancel).uppercase(Locale.getDefault()))
+                OutlinedButton(onClick = { showDeleteConfirmDialog = false }) { 
+                    Text(stringResource(R.string.cancel).uppercase(Locale.getDefault())) // ALL CAPS
                 }
             }
         )
     }
 }
-
 
 @Composable
 fun EvidenceItem(
@@ -217,7 +215,7 @@ fun EditEvidenceDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.edit_evidence).uppercase(Locale.getDefault())) }, 
+        title = { Text(stringResource(R.string.edit_evidence).uppercase(Locale.getDefault())) }, // ALL CAPS
         text = {
             Column(
                 modifier = Modifier.verticalScroll(rememberScrollState()), 
@@ -227,14 +225,14 @@ fun EditEvidenceDialog(
                 OutlinedTextField(
                     value = content,
                     onValueChange = { content = it },
-                    label = { Text(stringResource(R.string.content)) }, 
+                    label = { Text(stringResource(R.string.content)) }, // Labels not typically all caps
                     modifier = Modifier.fillMaxWidth(),
                     maxLines = 5 
                 )
                  OutlinedTextField(
                     value = sourceDocument,
                     onValueChange = { sourceDocument = it },
-                    label = { Text(stringResource(R.string.source_document)) }, 
+                    label = { Text(stringResource(R.string.source_document)) }, // Needs string R.string.source_document
                     modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
@@ -247,7 +245,7 @@ fun EditEvidenceDialog(
                 OutlinedTextField(
                     value = tags,
                     onValueChange = { tags = it },
-                    label = { Text(stringResource(R.string.tags_comma_separated)) }, 
+                    label = { Text(stringResource(R.string.tags_comma_separated)) }, // Needs string R.string.tags_comma_separated
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -262,12 +260,12 @@ fun EditEvidenceDialog(
                 )
                 onSave(updatedEvidence)
             }) {
-                Text(stringResource(R.string.save).uppercase(Locale.getDefault())) 
+                Text(stringResource(R.string.save).uppercase(Locale.getDefault())) // ALL CAPS
             }
         },
         dismissButton = {
             OutlinedButton(onClick = onDismiss) { 
-                Text(stringResource(R.string.cancel).uppercase(Locale.getDefault())) 
+                Text(stringResource(R.string.cancel).uppercase(Locale.getDefault())) // ALL CAPS
             }
         }
     )

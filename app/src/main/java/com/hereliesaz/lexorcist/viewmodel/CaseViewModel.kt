@@ -22,11 +22,14 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+import com.hereliesaz.lexorcist.utils.CacheManager
+
 @HiltViewModel
 class CaseViewModel @Inject constructor(
     @param:ApplicationContext private val applicationContext: Context,
     private val caseRepository: CaseRepository,
-    private val folderManager: FolderManager?
+    private val folderManager: FolderManager?,
+    private val cacheManager: CacheManager
 ) : ViewModel() {
 
     private val sharedPref = applicationContext.getSharedPreferences("CaseInfoPrefs", Context.MODE_PRIVATE)
@@ -209,5 +212,9 @@ class CaseViewModel @Inject constructor(
 
     fun deleteCaseWithRepository(case: Case) {
         viewModelScope.launch { caseRepository.deleteCase(case) }
+    }
+
+    fun clearCache() {
+        cacheManager.clearCache()
     }
 }
