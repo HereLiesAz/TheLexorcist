@@ -33,5 +33,5 @@ data class Case(
     val defendants: String? = null,
     val court: String? = null,
     val isArchived: Boolean = false,
-    val lastModifiedTime: Long? = null
+    val lastModifiedTime: Long? = null,
 )

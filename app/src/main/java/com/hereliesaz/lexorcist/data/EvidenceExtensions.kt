@@ -1,7 +1,7 @@
 package com.hereliesaz.lexorcist.data
 
-fun Evidence.toSheetRow(): List<Any> {
-    return listOf(
+fun Evidence.toSheetRow(): List<Any> =
+    listOf(
         id.toString(),
         caseId.toString(),
         type,
@@ -14,6 +14,5 @@ fun Evidence.toSheetRow(): List<Any> {
         tags.joinToString(","),
         commentary ?: "",
         linkedEvidenceIds.joinToString(","),
-        parentVideoId ?: ""
+        parentVideoId ?: "",
     )
-}

@@ -9,7 +9,6 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class EvidenceProcessingTest {
-
     @get:Rule
     val composeTestRule = createAndroidComposeRule<MainActivity>()
 

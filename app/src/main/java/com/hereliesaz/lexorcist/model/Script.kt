@@ -11,5 +11,5 @@ data class Script(
     val content: String, // The actual script code
     val author: String, // User who shared it
     val rating: Double = 0.0,
-    val numRatings: Int = 0
+    val numRatings: Int = 0,
 ) : Parcelable

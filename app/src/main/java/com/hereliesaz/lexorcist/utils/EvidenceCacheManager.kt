@@ -10,28 +10,31 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton // Added Singleton annotation
-class EvidenceCacheManager @Inject constructor( // Added @Inject
-    @param:ApplicationContext private val context: Context // Changed here
-) {
+class EvidenceCacheManager
+    @Inject
+    constructor( // Added @Inject
+        // Changed here
+        @param:ApplicationContext private val context: Context,
+    ) {
+        private val gson = Gson()
 
-    private val gson = Gson()
+        private fun getCacheFile(caseId: Long): File = File(context.cacheDir, "evidence_cache_$caseId.json")
 
-    private fun getCacheFile(caseId: Long): File {
-        return File(context.cacheDir, "evidence_cache_${caseId}.json")
-    }
-
-    fun saveEvidence(caseId: Long, evidence: List<Evidence>) {
-        val json = gson.toJson(evidence)
-        getCacheFile(caseId).writeText(json)
-    }
-
-    fun loadEvidence(caseId: Long): List<Evidence>? {
-        val cacheFile = getCacheFile(caseId)
-        if (!cacheFile.exists()) {
-            return null
+        fun saveEvidence(
+            caseId: Long,
+            evidence: List<Evidence>,
+        ) {
+            val json = gson.toJson(evidence)
+            getCacheFile(caseId).writeText(json)
         }
-        val json = cacheFile.readText()
-        val type = object : TypeToken<List<Evidence>>() {}.type
-        return gson.fromJson(json, type)
+
+        fun loadEvidence(caseId: Long): List<Evidence>? {
+            val cacheFile = getCacheFile(caseId)
+            if (!cacheFile.exists()) {
+                return null
+            }
+            val json = cacheFile.readText()
+            val type = object : TypeToken<List<Evidence>>() {}.type
+            return gson.fromJson(json, type)
+        }
     }
-}

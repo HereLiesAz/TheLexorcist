@@ -6,10 +6,13 @@ package com.hereliesaz.lexorcist.data
 enum class SortOrder {
     /** Sort by name in ascending order. */
     NAME_ASC,
+
     /** Sort by name in descending order. */
     NAME_DESC,
+
     /** Sort by date in ascending order. */
     DATE_ASC,
+
     /** Sort by date in descending order. */
-    DATE_DESC
+    DATE_DESC,
 }

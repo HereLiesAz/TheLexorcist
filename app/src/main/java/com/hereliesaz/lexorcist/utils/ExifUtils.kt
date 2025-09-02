@@ -8,9 +8,11 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 
 object ExifUtils {
-
-    fun getExifDate(context: Context, uri: Uri): Long? {
-        return try {
+    fun getExifDate(
+        context: Context,
+        uri: Uri,
+    ): Long? =
+        try {
             context.contentResolver.openInputStream(uri)?.use { inputStream ->
                 val exifInterface = ExifInterface(inputStream)
                 val dateString = exifInterface.getAttribute(ExifInterface.TAG_DATETIME_ORIGINAL)
@@ -25,5 +27,4 @@ object ExifUtils {
             e.printStackTrace()
             null
         }
-    }
 }

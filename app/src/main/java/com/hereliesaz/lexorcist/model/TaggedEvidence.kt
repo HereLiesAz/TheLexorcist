@@ -20,5 +20,5 @@ data class TaggedEvidence(
     val tags: List<String>,
     val content: String,
     val relevance: Int = 0,
-    val notes: String = ""
+    val notes: String = "",
 )

@@ -11,14 +11,13 @@ import androidx.lifecycle.ViewModelProvider
  */
 @Suppress("UNCHECKED_CAST")
 class TranscriptionViewModelFactory(
-    private val application: Application
+    private val application: Application,
 ) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        return when {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T =
+        when {
             modelClass.isAssignableFrom(TranscriptionViewModel::class.java) -> {
                 TranscriptionViewModel(application) as T
             }
             else -> throw IllegalArgumentException("Unknown ViewModel class. This factory only creates TranscriptionViewModel.")
         }
-    }
 }

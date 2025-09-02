@@ -8,7 +8,7 @@ import com.hereliesaz.lexorcist.data.EvidenceRepository
 // Factory now needs Application
 class EvidenceDetailsViewModelFactory(
     private val application: Application, // Added Application parameter
-    private val evidenceRepository: EvidenceRepository
+    private val evidenceRepository: EvidenceRepository,
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(EvidenceDetailsViewModel::class.java)) {
