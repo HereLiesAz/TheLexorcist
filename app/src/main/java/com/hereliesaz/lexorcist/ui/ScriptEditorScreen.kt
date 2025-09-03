@@ -27,10 +27,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.hereliesaz.lexorcist.R
-import com.hereliesaz.lexorcist.viewmodel.ScriptEditorViewModel
 import com.hereliesaz.lexorcist.common.state.SaveState
+import com.hereliesaz.lexorcist.viewmodel.ScriptEditorViewModel
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class) // Removed ExperimentalMaterial3ExpressiveApi
 @Composable
@@ -57,12 +59,27 @@ fun ScriptEditorScreen(viewModel: ScriptEditorViewModel) {
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(8.dp),
-        horizontalAlignment = Alignment.End
-    ) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        stringResource(R.string.script_editor).uppercase(Locale.getDefault()),
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.End,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            )
+        }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(8.dp),
+            horizontalAlignment = Alignment.End
+        ) {
         // Script Builder Section
         Text(stringResource(R.string.script_builder), style = MaterialTheme.typography.headlineSmall)
         Spacer(modifier = Modifier.height(16.dp))
@@ -170,7 +187,9 @@ fun ScriptEditorScreen(viewModel: ScriptEditorViewModel) {
                     Text(stringResource(R.string.save_script))
                 }
             }
+            }
         }
+    }
     }
 
     if (showShareDialog) {

@@ -1,4 +1,4 @@
-package com.hereliesaz.lexorcist
+package com.hereliesaz.lexorcist.service
 
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
 import com.google.api.client.http.FileContent
@@ -65,7 +65,10 @@ class GoogleApiService(
     suspend fun getOrCreateCaseRegistrySpreadsheetId(folderId: String): String = withContext(Dispatchers.IO) {
         try {
             val fileName = "CaseRegistry"
-            val query = "mimeType='application/vnd.google-apps.spreadsheet' and name='$fileName' and trashed=false and '$folderId' in parents"
+            val query = "mimeType='application/vnd.google-apps.spreadsheet' " +
+                "and name='$fileName' " +
+                "and trashed=false " +
+                "and '$folderId' in parents"
             val files = drive.files().list().setQ(query).setSpaces("drive").execute().files
             if (files.isNullOrEmpty()) {
                 val spreadsheet = Spreadsheet().setProperties(SpreadsheetProperties().setTitle(fileName))
@@ -497,9 +500,30 @@ class GoogleApiService(
     }
 
     suspend fun getAllegationsForCase(spreadsheetId: String, caseId: Int): List<com.hereliesaz.lexorcist.data.Allegation> {
-        // This is a complex operation. You need to read the sheet and parse the data.
-        // For simplicity, this is not implemented.
-        return emptyList()
+        return withContext(Dispatchers.IO) {
+            try {
+                val range = "Allegations!A:C" // Assuming allegations are in a sheet named "Allegations"
+                val response = sheets.spreadsheets().values().get(spreadsheetId, range).execute()
+                val values = response.getValues()
+                if (values.isNullOrEmpty()) {
+                    emptyList()
+                } else {
+                    values.mapNotNull { row ->
+                        try {
+                            com.hereliesaz.lexorcist.data.Allegation(
+                                id = row[0].toString().toInt(),
+                                spreadsheetId = spreadsheetId,
+                                text = row[2].toString(),
+                            )
+                        } catch (e: Exception) {
+                            null // Skip row if parsing fails
+                        }
+                    }
+                }
+            } catch (e: IOException) {
+                emptyList()
+            }
+        }
     }
 
     suspend fun getEvidenceForCase(spreadsheetId: String, caseId: Long): List<com.hereliesaz.lexorcist.data.Evidence> {
@@ -575,9 +599,25 @@ class GoogleApiService(
     }
 
     suspend fun addAllegationToCase(spreadsheetId: String, allegationText: String): Boolean {
-        // This is a complex operation. You need to append data to the sheet.
-        // For simplicity, this is not implemented.
-        return false
+        return withContext(Dispatchers.IO) {
+            try {
+                val values = listOf(
+                    listOf(
+                        // This is not ideal, we should get the last id and increment it
+                        (System.currentTimeMillis() / 1000).toInt(),
+                        spreadsheetId,
+                        allegationText
+                    )
+                )
+                val body = ValueRange().setValues(values)
+                sheets.spreadsheets().values().append(spreadsheetId, "Allegations!A1", body)
+                    .setValueInputOption("RAW")
+                    .execute()
+                true
+            } catch (e: IOException) {
+                false
+            }
+        }
     }
 
     suspend fun updateEvidenceInSheet(evidence: com.hereliesaz.lexorcist.data.Evidence): Boolean {

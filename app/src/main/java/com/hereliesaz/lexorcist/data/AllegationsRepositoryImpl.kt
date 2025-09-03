@@ -1,6 +1,6 @@
 package com.hereliesaz.lexorcist.data
 
-import com.hereliesaz.lexorcist.GoogleApiService
+import com.hereliesaz.lexorcist.service.GoogleApiService
 import javax.inject.Inject
 
 class AllegationsRepositoryImpl
@@ -22,7 +22,7 @@ class AllegationsRepositoryImpl
                     Allegation(
                         id = index,
                         spreadsheetId = spreadsheetId,
-                        text = row[2].toString()
+                        text = row[2].toString(),
                     )
                 } else {
                     null

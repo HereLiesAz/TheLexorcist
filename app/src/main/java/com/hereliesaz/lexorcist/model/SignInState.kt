@@ -10,8 +10,14 @@ data class UserInfo(
 sealed class SignInState {
     // Initial state or after sign out
     object Idle : SignInState()
-    object InProgress : SignInState() // Sign-in process has started
-    data class Success(val userInfo: UserInfo?) : SignInState() // Sign-in successful
-    data class Error(val message: String, val exception: Exception? = null) : SignInState() // Sign-in failed
+
+    // Sign-in process has started
+    object InProgress : SignInState()
+
+    // Sign-in successful
+    data class Success(val userInfo: UserInfo?) : SignInState()
+
+    // Sign-in failed
+    data class Error(val message: String, val exception: Exception? = null) : SignInState()
     // SignedOut can be represented by Idle, or explicitly if needed for specific UI
 }
