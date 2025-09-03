@@ -2,8 +2,6 @@ package com.hereliesaz.lexorcist.di
 
 import android.content.Context
 import android.content.SharedPreferences // Added
-import com.google.android.gms.auth.api.identity.Identity
-import com.google.android.gms.auth.api.identity.SignInClient
 import com.hereliesaz.lexorcist.data.SettingsManager
 import com.hereliesaz.lexorcist.service.ScriptRunner
 import com.hereliesaz.lexorcist.utils.CacheManager
@@ -17,11 +15,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 class AppModule {
-    @Provides
-    @Singleton
-    fun provideOneTapClient(
-        @ApplicationContext context: Context,
-    ): SignInClient = Identity.getSignInClient(context)
 
     @Provides
     @Singleton

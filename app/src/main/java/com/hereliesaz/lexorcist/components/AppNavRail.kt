@@ -26,7 +26,7 @@ fun AppNavRail(onNavigate: (String) -> Unit) {
 
     val navCasesStr = stringResource(R.string.nav_cases)
     val navTimelineStr = stringResource(R.string.nav_timeline)
-    val navReviewStr = "review"
+    val navReviewStr = "data_review"
     val navEvidenceStr = stringResource(R.string.nav_evidence)
     val navExtrasStr = "extras"
     val navScriptEditorStr = stringResource(R.string.nav_script_editor) // Added for route
@@ -102,7 +102,7 @@ fun AppNavRail(onNavigate: (String) -> Unit) {
                                 showOnRail = true,
                             ),
                             NavItem(
-                                text = "Review",
+                                text = dataReviewText,
                                 data = NavItemData.Action(onClick = { onNavigate(navReviewStr) }),
                                 showOnRail = true,
                             ),

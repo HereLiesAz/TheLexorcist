@@ -21,7 +21,7 @@ import com.hereliesaz.lexorcist.utils.Result as LexResult // Alias for your Resu
 import com.google.api.services.drive.model.File as DriveFile // Alias for Google Drive File
 
 import androidx.hilt.work.HiltWorker
-import com.hereliesaz.lexorcist.GoogleApiService
+import com.hereliesaz.lexorcist.service.GoogleApiService
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 

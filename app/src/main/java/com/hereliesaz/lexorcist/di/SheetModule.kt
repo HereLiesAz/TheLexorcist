@@ -1,9 +1,8 @@
 package com.hereliesaz.lexorcist.di
 
-import android.accounts.Account // Added
+import android.accounts.Account
 import android.content.Context
-import android.content.SharedPreferences // Added
-// Removed: import com.google.android.gms.auth.api.signin.GoogleSignIn
+import android.content.SharedPreferences
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
 import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.gson.GsonFactory
@@ -11,8 +10,8 @@ import com.google.api.services.drive.Drive
 import com.google.api.services.drive.DriveScopes
 import com.google.api.services.sheets.v4.Sheets
 import com.google.api.services.sheets.v4.SheetsScopes
-import com.hereliesaz.lexorcist.GoogleApiService
 import com.hereliesaz.lexorcist.R
+import com.hereliesaz.lexorcist.service.GoogleApiService
 import com.hereliesaz.lexorcist.utils.FolderManager
 import com.hereliesaz.lexorcist.viewmodel.AuthViewModel
 import dagger.Module
@@ -25,37 +24,37 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object SheetModule {
-
     @Provides
     @Singleton
     fun provideGoogleAccountCredential(
         @ApplicationContext context: Context,
-        sharedPreferences: SharedPreferences
+        sharedPreferences: SharedPreferences,
     ): GoogleAccountCredential? {
         val userEmail = sharedPreferences.getString(AuthViewModel.PREF_USER_EMAIL_KEY, null)
         if (userEmail.isNullOrBlank()) {
             return null
         }
         val account = Account(userEmail, "com.google")
-        return GoogleAccountCredential.usingOAuth2(
-            context,
-            listOf(DriveScopes.DRIVE, SheetsScopes.SPREADSHEETS)
-        ).also { it.selectedAccount = account }
+        return GoogleAccountCredential
+            .usingOAuth2(
+                context,
+                listOf(DriveScopes.DRIVE, SheetsScopes.SPREADSHEETS),
+            ).also { it.selectedAccount = account }
     }
 
     @Provides
     @Singleton
     fun provideDriveService(
         credential: GoogleAccountCredential?,
-        @ApplicationContext context: Context
+        @ApplicationContext context: Context,
     ): Drive? {
         if (credential == null) return null
-        return Drive.Builder(
-            NetHttpTransport(),
-            GsonFactory.getDefaultInstance(),
-            credential
-        )
-            .setApplicationName(context.getString(R.string.app_name))
+        return Drive
+            .Builder(
+                NetHttpTransport(),
+                GsonFactory.getDefaultInstance(),
+                credential,
+            ).setApplicationName(context.getString(R.string.app_name))
             .build()
     }
 
@@ -63,15 +62,15 @@ object SheetModule {
     @Singleton
     fun provideSheetsService(
         credential: GoogleAccountCredential?,
-        @ApplicationContext context: Context
+        @ApplicationContext context: Context,
     ): Sheets? {
         if (credential == null) return null
-        return Sheets.Builder(
-            NetHttpTransport(),
-            GsonFactory.getDefaultInstance(),
-            credential
-        )
-            .setApplicationName(context.getString(R.string.app_name))
+        return Sheets
+            .Builder(
+                NetHttpTransport(),
+                GsonFactory.getDefaultInstance(),
+                credential,
+            ).setApplicationName(context.getString(R.string.app_name))
             .build()
     }
 
@@ -79,7 +78,7 @@ object SheetModule {
     @Singleton
     fun provideGoogleApiService(
         drive: Drive?,
-        sheets: Sheets?
+        sheets: Sheets?,
     ): GoogleApiService? {
         if (drive == null || sheets == null) {
             return null
@@ -91,7 +90,7 @@ object SheetModule {
     @Singleton
     fun provideFolderManager(
         drive: Drive?,
-        @ApplicationContext context: Context
+        @ApplicationContext context: Context,
     ): FolderManager? {
         if (drive == null) return null
         return FolderManager(drive, context)

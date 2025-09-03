@@ -35,9 +35,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.hereliesaz.lexorcist.R
-import com.hereliesaz.lexorcist.data.SortOrder // Still needed for state
+import com.hereliesaz.lexorcist.data.SortOrder
 import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import java.util.Locale
@@ -65,7 +66,18 @@ fun CasesScreen(caseViewModel: CaseViewModel) {
     }
 
     Scaffold(
-        // topBar = { ... }  // This section is removed
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        stringResource(R.string.cases).uppercase(Locale.getDefault()),
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.End,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            )
+        },
         floatingActionButton = {
             FloatingActionButton(onClick = { showCreateCaseDialog = true }) {
                 Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.create_new_case))
