@@ -91,58 +91,75 @@ fun EvidenceScreen(
             horizontalAlignment = Alignment.End,
             verticalArrangement = Arrangement.Top,
         ) {
-        if (showAddTextEvidence) {
-            OutlinedTextField(
-                value = text,
-                onValueChange = { text = it },
-                label = { Text(stringResource(R.string.evidence_text_label)) },
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                placeholder = { Text(stringResource(R.string.enter_evidence_content)) },
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(
-                onClick = {
-                    selectedCase?.let {
-                        evidenceViewModel.addTextEvidence(text, it.id.toLong(), it.spreadsheetId)
-                    }
-                    text = ""
-                    showAddTextEvidence = false
-                },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = selectedCase != null,
-            ) {
-                Text(stringResource(R.string.save).uppercase(Locale.getDefault()))
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(
-                onClick = { showAddTextEvidence = false },
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text(stringResource(R.string.cancel).uppercase(Locale.getDefault()))
-            }
-        } else {
-            Button(onClick = { showAddTextEvidence = true }) {
-                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.add_text_evidence).uppercase(Locale.getDefault()))
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(stringResource(R.string.add_text_evidence).uppercase(Locale.getDefault()))
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = { imagePickerLauncher.launch("image/*") }) {
-                Icon(Icons.Default.Image, contentDescription = stringResource(R.string.add_image_evidence).uppercase(Locale.getDefault()))
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(stringResource(R.string.add_image_evidence).uppercase(Locale.getDefault()))
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = { audioPickerLauncher.launch("audio/*") }) {
-                Icon(
-                    Icons.Default.Audiotrack,
-                    contentDescription = stringResource(R.string.add_audio_evidence).uppercase(Locale.getDefault()),
+            if (showAddTextEvidence) {
+                OutlinedTextField(
+                    value = text,
+                    onValueChange = { text = it },
+                    label = { Text(stringResource(R.string.evidence_text_label)) },
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                    placeholder = { Text(stringResource(R.string.enter_evidence_content)) },
                 )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(stringResource(R.string.add_audio_evidence).uppercase(Locale.getDefault()))
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(
+                    onClick = {
+                        selectedCase?.let {
+                            evidenceViewModel.addTextEvidence(
+                                text,
+                                it.id.toLong(),
+                                it.spreadsheetId
+                            )
+                        }
+                        text = ""
+                        showAddTextEvidence = false
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = selectedCase != null,
+                ) {
+                    Text(stringResource(R.string.save).uppercase(Locale.getDefault()))
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(
+                    onClick = { showAddTextEvidence = false },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(stringResource(R.string.cancel).uppercase(Locale.getDefault()))
+                }
+            } else {
+                Button(onClick = { showAddTextEvidence = true }) {
+                    Icon(
+                        Icons.Default.Add,
+                        contentDescription = stringResource(R.string.add_text_evidence).uppercase(
+                            Locale.getDefault()
+                        )
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(R.string.add_text_evidence).uppercase(Locale.getDefault()))
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(onClick = { imagePickerLauncher.launch("image/*") }) {
+                    Icon(
+                        Icons.Default.Image,
+                        contentDescription = stringResource(R.string.add_image_evidence).uppercase(
+                            Locale.getDefault()
+                        )
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(R.string.add_image_evidence).uppercase(Locale.getDefault()))
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(onClick = { audioPickerLauncher.launch("audio/*") }) {
+                    Icon(
+                        Icons.Default.Audiotrack,
+                        contentDescription = stringResource(R.string.add_audio_evidence).uppercase(
+                            Locale.getDefault()
+                        ),
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(R.string.add_audio_evidence).uppercase(Locale.getDefault()))
+                }
             }
         }
     }

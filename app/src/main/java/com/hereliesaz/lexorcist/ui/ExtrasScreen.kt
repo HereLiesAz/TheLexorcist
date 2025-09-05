@@ -85,7 +85,8 @@ fun ExtrasScreen(
                 // Note: LazyColumn inside a verticalScroll can have performance issues if lists are very long.
                 // For now, assuming lists are of manageable size or this is the desired scroll behavior.
                 LazyColumn(
-                    modifier = Modifier.fillMaxWidth().heightIn(max = 400.dp) // Example: Constrain height if needed, or let it wrap
+                    modifier = Modifier.fillMaxWidth()
+                        .heightIn(max = 400.dp) // Example: Constrain height if needed, or let it wrap
                 ) {
                     items(scripts) { script ->
                         AddonItem(
@@ -104,7 +105,8 @@ fun ExtrasScreen(
 
                 Text("Templates", style = MaterialTheme.typography.headlineSmall)
                 LazyColumn(
-                     modifier = Modifier.fillMaxWidth().heightIn(max = 400.dp) // Example: Constrain height if needed
+                    modifier = Modifier.fillMaxWidth()
+                        .heightIn(max = 400.dp) // Example: Constrain height if needed
                 ) {
                     items(templates) { template ->
                         AddonItem(

@@ -190,7 +190,7 @@ fun ScriptEditorScreen(viewModel: ScriptEditorViewModel) {
             }
         }
     }
-    }
+
 
     if (showShareDialog) {
         AlertDialog(

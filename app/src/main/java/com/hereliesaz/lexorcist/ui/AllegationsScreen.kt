@@ -110,4 +110,4 @@ fun AllegationsScreen(
             )
         }
     }
-}
+}}
