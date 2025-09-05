@@ -187,10 +187,9 @@ fun ScriptEditorScreen(viewModel: ScriptEditorViewModel) {
                     Text(stringResource(R.string.save_script))
                 }
             }
-            }
         }
     }
-    }
+}
 
     if (showShareDialog) {
         AlertDialog(
