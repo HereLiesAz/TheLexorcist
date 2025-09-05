@@ -92,6 +92,7 @@ class CaseViewModel @Inject constructor(
     init {
         loadThemeModePreference()
         folderManager?.getOrCreateLocalLexorcistFolder()
+        loadCasesFromRepository()
         // observeAuthChanges() //TODO: Re-enable this once AuthViewModel is provided correctly
     }
 
@@ -128,7 +129,7 @@ class CaseViewModel @Inject constructor(
 
     fun loadCasesFromRepository() {
         viewModelScope.launch {
-            // Logic to load/refresh cases, e.g., caseRepository.refreshCasesFromRemote()
+            caseRepository.refreshCases()
         }
     }
     

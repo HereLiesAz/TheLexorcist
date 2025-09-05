@@ -95,20 +95,22 @@ class EvidenceViewModel
         }
 
         fun toggleEvidenceSelection(evidenceId: Int) {
-            val list = _evidenceList.value.map {
-                if (it.id == evidenceId) {
-                    it.copy(isSelected = !it.isSelected)
-                } else {
-                    it
+            val list =
+                _evidenceList.value.map {
+                    if (it.id == evidenceId) {
+                        it.copy(isSelected = !it.isSelected)
+                    } else {
+                        it
+                    }
                 }
-            }
             _evidenceList.value = list
         }
 
         fun clearEvidenceSelection() {
-            val list = _evidenceList.value.map {
-                it.copy(isSelected = false)
-            }
+            val list =
+                _evidenceList.value.map {
+                    it.copy(isSelected = false)
+                }
             _evidenceList.value = list
         }
 
@@ -186,7 +188,10 @@ class EvidenceViewModel
             _searchQuery.value = query
         }
 
-        fun assignAllegationToEvidence(evidenceId: Int, allegationId: Int) {
+        fun assignAllegationToEvidence(
+            evidenceId: Int,
+            allegationId: Int,
+        ) {
             viewModelScope.launch {
                 val evidence = evidenceRepository.getEvidenceById(evidenceId)
                 if (evidence != null) {

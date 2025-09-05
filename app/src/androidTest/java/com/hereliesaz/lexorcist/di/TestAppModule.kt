@@ -9,7 +9,6 @@ import com.hereliesaz.lexorcist.service.ScriptRunner
 import com.hereliesaz.lexorcist.utils.CacheManager
 import dagger.Module
 import dagger.Provides
-import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import dagger.hilt.testing.TestInstallIn
@@ -44,9 +43,7 @@ object TestAppModule {
     @Singleton
     fun provideSharedPreferences(
         @ApplicationContext context: Context,
-    ): android.content.SharedPreferences {
-        return context.getSharedPreferences("LexorcistAppPrefs", Context.MODE_PRIVATE)
-    }
+    ): android.content.SharedPreferences = context.getSharedPreferences("LexorcistAppPrefs", Context.MODE_PRIVATE)
 
     @Provides
     @Singleton

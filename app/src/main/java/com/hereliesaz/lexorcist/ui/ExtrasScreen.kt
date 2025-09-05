@@ -16,28 +16,53 @@ import androidx.compose.foundation.verticalScroll // Added import
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel // Changed from androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.model.Script
 import com.hereliesaz.lexorcist.model.Template
 import com.hereliesaz.lexorcist.viewmodel.AddonsBrowserViewModel
+import java.util.Locale
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExtrasScreen(
-    viewModel: AddonsBrowserViewModel = hiltViewModel(), // Changed to hiltViewModel()
+    viewModel: AddonsBrowserViewModel = hiltViewModel(),
     onShare: () -> Unit
 ) {
     val scripts by viewModel.scripts.collectAsState()
     val templates by viewModel.templates.collectAsState()
 
     Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        stringResource(R.string.extras).uppercase(Locale.getDefault()),
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.End,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            )
+        },
         floatingActionButton = {
             FloatingActionButton(onClick = onShare) {
                 Icon(Icons.Default.Add, contentDescription = "Share")

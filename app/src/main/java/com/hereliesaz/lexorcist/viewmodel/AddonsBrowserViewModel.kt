@@ -2,10 +2,10 @@ package com.hereliesaz.lexorcist.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.hereliesaz.lexorcist.GoogleApiService
 import com.hereliesaz.lexorcist.common.state.SaveState
 import com.hereliesaz.lexorcist.model.Script
 import com.hereliesaz.lexorcist.model.Template
+import com.hereliesaz.lexorcist.service.GoogleApiService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

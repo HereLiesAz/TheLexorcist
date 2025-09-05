@@ -43,9 +43,14 @@ class AuthViewModel
             const val PREF_USER_EMAIL_KEY = "user_email"
         }
 
-        fun signIn(activity: Activity) {
+        fun signIn(
+            activity: Activity,
+            silent: Boolean = false,
+        ) {
             viewModelScope.launch {
-                _signInState.value = SignInState.InProgress
+                if (!silent) {
+                    _signInState.value = SignInState.InProgress
+                }
 
                 // Generate a nonce
                 val rawNonce = UUID.randomUUID().toString()
@@ -54,18 +59,29 @@ class AuthViewModel
                 val digest = md.digest(bytes)
                 val nonce = digest.fold("") { str, it -> str + "%02x".format(it) }
 
-                val googleIdOption: GetGoogleIdOption =
+                val googleIdOptionBuilder =
                     GetGoogleIdOption
                         .Builder()
-                        .setFilterByAuthorizedAccounts(false) // Set to false to allow new accounts to sign up
                         .setServerClientId(application.getString(R.string.default_web_client_id))
                         .setNonce(nonce)
-                        .build()
+
+                if (silent) {
+                    val userEmail = sharedPreferences.getString(PREF_USER_EMAIL_KEY, null)
+                    if (userEmail != null) {
+                        googleIdOptionBuilder.setFilterByAuthorizedAccounts(true)
+                    } else {
+                        // No user to silently sign in, so we just exit
+                        _signInState.value = SignInState.Idle
+                        return@launch
+                    }
+                } else {
+                    googleIdOptionBuilder.setFilterByAuthorizedAccounts(false)
+                }
 
                 val request: GetCredentialRequest =
                     GetCredentialRequest
                         .Builder()
-                        .addCredentialOption(googleIdOption)
+                        .addCredentialOption(googleIdOptionBuilder.build())
                         .build()
 
                 try {
@@ -84,7 +100,12 @@ class AuthViewModel
                     }
                 } catch (e: GetCredentialException) {
                     Log.e(TAG, "GetCredentialException", e)
-                    onSignInError(e)
+                    // If silent sign-in fails, we don't need to show an error, just go to manual sign-in
+                    if (!silent) {
+                        onSignInError(e)
+                    } else {
+                        _signInState.value = SignInState.Idle
+                    }
                 }
             }
         }

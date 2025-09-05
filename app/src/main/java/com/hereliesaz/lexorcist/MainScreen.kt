@@ -1,34 +1,61 @@
 package com.hereliesaz.lexorcist
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.* // Covers CircularProgressIndicator
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.hereliesaz.lexorcist.components.AppNavRail
-import com.hereliesaz.lexorcist.ui.EvidenceScreen
-import com.hereliesaz.lexorcist.ui.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-// import android.content.Intent // Not used directly in this snippet
-// import androidx.compose.ui.platform.LocalContext // Not used directly in this snippet
-import com.hereliesaz.lexorcist.model.SignInState
-import com.hereliesaz.lexorcist.viewmodel.AuthViewModel
-import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
-import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState // Added import
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.compose.currentBackStackEntryAsState
+import com.hereliesaz.lexorcist.components.AppNavRail
+import com.hereliesaz.lexorcist.model.SignInState
+import com.hereliesaz.lexorcist.ui.AllegationsScreen
+import com.hereliesaz.lexorcist.ui.CasesScreen
+import com.hereliesaz.lexorcist.ui.CreateCaseDialog
+import com.hereliesaz.lexorcist.ui.EvidenceDetailsScreen
+import com.hereliesaz.lexorcist.ui.EvidenceScreen
+import com.hereliesaz.lexorcist.ui.ExtrasScreen
+import com.hereliesaz.lexorcist.ui.ReviewScreen
 import com.hereliesaz.lexorcist.ui.ScriptEditorScreen
+import com.hereliesaz.lexorcist.ui.SettingsScreen
+import com.hereliesaz.lexorcist.ui.TemplatesScreen
+import com.hereliesaz.lexorcist.ui.TimelineScreen
+import com.hereliesaz.lexorcist.viewmodel.AuthViewModel
+import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
+import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 import com.hereliesaz.lexorcist.viewmodel.ScriptEditorViewModel
-// import java.util.Locale // Not used directly in this snippet
-import com.hereliesaz.lexorcist.ui.CreateCaseDialog
 
 @OptIn(ExperimentalMaterial3Api::class) // ENSURED THIS IS CORRECT
 @Composable
@@ -68,7 +95,7 @@ fun MainScreen(
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { paddingValues ->
         when (val currentSignInState = signInState) {
             is SignInState.Success -> {
@@ -76,20 +103,22 @@ fun MainScreen(
                 val currentRoute = navBackStackEntry?.destination?.route
 
                 Row(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues) 
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(paddingValues),
                 ) {
                     AppNavRail(onNavigate = { screen -> navController.navigate(screen) })
-                    
+
                     BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxHeight()) {
                         val halfContentAreaHeight = this@BoxWithConstraints.maxHeight / 2
                         val contentAreaViewportHeight = this@BoxWithConstraints.maxHeight
 
                         Column(
-                            modifier = Modifier
-                                .fillMaxSize() 
-                                .verticalScroll(rememberScrollState())
+                            modifier =
+                                Modifier
+                                    .fillMaxSize()
+                                    .verticalScroll(rememberScrollState()),
                         ) {
                             if (currentRoute == "home") {
                                 Spacer(Modifier.height(halfContentAreaHeight))
@@ -98,30 +127,31 @@ fun MainScreen(
                             NavHost(
                                 navController = navController,
                                 startDestination = "home",
-                                modifier = Modifier.height(contentAreaViewportHeight)
+                                modifier = Modifier.height(contentAreaViewportHeight),
                             ) {
                                 composable("home") {
                                     Column(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .verticalScroll(rememberScrollState())
-                                            .padding(16.dp),
+                                        modifier =
+                                            Modifier
+                                                .fillMaxSize()
+                                                .verticalScroll(rememberScrollState())
+                                                .padding(16.dp),
                                         horizontalAlignment = Alignment.End,
-                                        verticalArrangement = Arrangement.Top // Content aligns to its top
+                                        verticalArrangement = Arrangement.Top, // Content aligns to its top
                                     ) {
                                         Text(
                                             text = stringResource(R.string.app_name),
-                                            style = MaterialTheme.typography.headlineMedium
+                                            style = MaterialTheme.typography.headlineMedium,
                                         )
                                         Spacer(modifier = Modifier.height(16.dp))
                                         Text(
                                             text = stringResource(R.string.use_navigation_rail),
-                                            style = MaterialTheme.typography.bodyLarge
+                                            style = MaterialTheme.typography.bodyLarge,
                                         )
                                         Spacer(modifier = Modifier.height(8.dp))
                                         Text(
                                             text = stringResource(R.string.tap_icon_to_open_menu),
-                                            style = MaterialTheme.typography.bodyLarge
+                                            style = MaterialTheme.typography.bodyLarge,
                                         )
                                         Spacer(modifier = Modifier.height(32.dp))
                                         Button(onClick = { showCreateCaseDialog = true }) {
@@ -133,7 +163,7 @@ fun MainScreen(
                                 composable("evidence") {
                                     EvidenceScreen(
                                         evidenceViewModel = evidenceViewModel,
-                                        navController = navController
+                                        navController = navController,
                                     )
                                 }
                                 composable("extras") { ExtrasScreen(onShare = {}) }
@@ -152,16 +182,17 @@ fun MainScreen(
                                         TimelineScreen(
                                             case = it,
                                             evidenceViewModel = evidenceViewModel,
-                                            navController = navController
+                                            navController = navController,
                                         )
                                     }
                                 }
-                                composable("data_review") { // Changed "review" to "data_review"
+                                composable("data_review") {
+                                    // Changed "review" to "data_review"
                                     val allegationsViewModel: com.hereliesaz.lexorcist.viewmodel.AllegationsViewModel = hiltViewModel()
                                     ReviewScreen(
                                         evidenceViewModel = evidenceViewModel,
                                         caseViewModel = caseViewModel,
-                                        allegationsViewModel = allegationsViewModel
+                                        allegationsViewModel = allegationsViewModel,
                                     )
                                 }
                                 composable("settings") { SettingsScreen(caseViewModel = caseViewModel) }
@@ -177,7 +208,7 @@ fun MainScreen(
                                         evidence?.let { ev ->
                                             EvidenceDetailsScreen(
                                                 evidence = ev,
-                                                viewModel = evidenceViewModel
+                                                viewModel = evidenceViewModel,
                                             )
                                         }
                                         DisposableEffect(Unit) {
@@ -197,21 +228,22 @@ fun MainScreen(
             is SignInState.InProgress -> {
                 Box(
                     modifier = Modifier.fillMaxSize().padding(paddingValues),
-                    contentAlignment = Alignment.Center 
+                    contentAlignment = Alignment.Center,
                 ) {
                     CircularProgressIndicator() // ENSURED THIS IS CORRECT
                 }
             }
             is SignInState.Idle, is SignInState.Error -> {
-                BoxWithConstraints(modifier = Modifier.fillMaxSize().padding(paddingValues)){
+                BoxWithConstraints(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
                     val halfScreenHeight = this@BoxWithConstraints.maxHeight / 2
-                     Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .verticalScroll(rememberScrollState())
-                            .padding(horizontal = 16.dp), 
+                    Column(
+                        modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .verticalScroll(rememberScrollState())
+                                .padding(horizontal = 16.dp),
                         horizontalAlignment = Alignment.End,
-                        verticalArrangement = Arrangement.Top 
+                        verticalArrangement = Arrangement.Top,
                     ) {
                         Spacer(Modifier.height(halfScreenHeight))
                         Button(onClick = onSignInClick) {
@@ -221,7 +253,7 @@ fun MainScreen(
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
                                 text = currentSignInState.message,
-                                color = MaterialTheme.colorScheme.error
+                                color = MaterialTheme.colorScheme.error,
                             )
                         }
                     }
@@ -232,9 +264,8 @@ fun MainScreen(
         if (showCreateCaseDialog) {
             CreateCaseDialog(
                 caseViewModel = caseViewModel,
-                onDismiss = { showCreateCaseDialog = false }
+                onDismiss = { showCreateCaseDialog = false },
             )
         }
     }
 }
-

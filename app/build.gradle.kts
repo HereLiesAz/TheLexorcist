@@ -119,8 +119,7 @@ dependencies {
     implementation(libs.apache.poi.ooxml)
     implementation(libs.apache.poi.scratchpad)
 
-    // Google Sign-In
-    implementation(libs.google.play.services.auth)
+    // Google Sign-In (using the new Identity Services API)
 
     // Google APIs
     implementation(libs.google.api.client)

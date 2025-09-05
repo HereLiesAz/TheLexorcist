@@ -1,6 +1,6 @@
 package com.hereliesaz.lexorcist.data
 
-import com.hereliesaz.lexorcist.GoogleApiService
+import com.hereliesaz.lexorcist.service.GoogleApiService
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.emptyFlow

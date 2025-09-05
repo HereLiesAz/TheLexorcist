@@ -11,12 +11,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 // import androidx.compose.ui.graphics.Color // Not used directly here anymore
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.hereliesaz.lexorcist.R
-// import com.hereliesaz.lexorcist.R // Not used directly here anymore
 import com.hereliesaz.lexorcist.data.Case
+import java.util.Locale
 import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
 
@@ -31,22 +32,20 @@ fun TimelineScreen(
     val searchQuery by evidenceViewModel.searchQuery.collectAsState()
     var showEvidenceDetailsDialog by remember { mutableStateOf<Evidence?>(null) }
 
+    LaunchedEffect(case) {
+        evidenceViewModel.loadEvidenceForCase(case.id.toLong(), case.spreadsheetId)
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(text = case.name) },
-                actions = {
-                    Row(
+                title = {
+                    Text(
+                        stringResource(R.string.timeline).uppercase(Locale.getDefault()),
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End
-                    ) {
-                        OutlinedTextField(
-                            value = searchQuery,
-                            onValueChange = { evidenceViewModel.onSearchQueryChanged(it) },
-                            label = { Text("Search") },
-                            modifier = Modifier.padding(end = 16.dp) // Keep padding for the search field in TopAppBar
-                        )
-                    }
+                        textAlign = TextAlign.End,
+                        color = MaterialTheme.colorScheme.primary
+                    )
                 }
             )
         }
