@@ -102,10 +102,9 @@ fun TemplatesScreen(viewModel: AddonsBrowserViewModel = hiltViewModel()) {
                     }
                 }
             }
-            }
         }
     }
-
+}
 
     if (showEditor) {
         TemplateEditor(
