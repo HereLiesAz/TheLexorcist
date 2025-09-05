@@ -68,6 +68,10 @@
     <string name="settings">Settings</string>
     <string name="about">About</string>
     <string name="feedback">Feedback</string>
+    <string name="allegations">Allegations</string>
+    <string name="extras">Extras</string>
+    <string name="script_editor">Script Editor</string>
+    <string name="templates">Templates</string>
     <string name="sign_in_with_google">Sign in with Google</string>
     <string name="use_navigation_rail">Use the navigation rail to get started.</string>
     <string name="tap_icon_to_open_menu">Tap the icon at the top to open the menu.</string>
