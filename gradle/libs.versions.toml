@@ -59,8 +59,7 @@ hiltWork = "1.2.0"
 androidxHiltCompiler = "1.2.0"
 googleCloudSpeech = "4.68.0"
 androidxCredentials = "1.5.0"
-
-
+accompanist = "0.32.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }

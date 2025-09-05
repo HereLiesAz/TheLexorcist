@@ -58,7 +58,7 @@
     <string name="nav_visualization">visualization</string>
     <string name="nav_script_editor">script_editor</string>
     <string name="evidence">Evidence</string>
-    <string name="nav_evidence">data_review</string> <!-- Changed from "evidence" -->
+    <string name="nav_evidence">evidence</string>
     <string name="record_audio">record_audio</string>
     <string name="add">Add</string>
     <string name="nav_add_evidence">add_evidence</string>

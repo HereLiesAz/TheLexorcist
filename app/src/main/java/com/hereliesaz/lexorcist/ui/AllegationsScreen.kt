@@ -17,11 +17,13 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -30,21 +32,26 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.viewmodel.AllegationsViewModel
+import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AllegationsScreen(
-    viewModel: AllegationsViewModel = hiltViewModel()
+    allegationsViewModel: AllegationsViewModel = hiltViewModel(),
+    caseViewModel: CaseViewModel = hiltViewModel()
 ) {
-    val allegations by viewModel.allegations.collectAsState()
-    val searchQuery by viewModel.searchQuery.collectAsState()
-    val isDialogShown by viewModel.isDialogShown.collectAsState()
-    val selectedAllegation by viewModel.selectedAllegation.collectAsState()
+    val allegations by allegationsViewModel.allegations.collectAsState()
+    val searchQuery by allegationsViewModel.searchQuery.collectAsState()
+    val isDialogShown by allegationsViewModel.isDialogShown.collectAsState()
+    val selectedAllegation by allegationsViewModel.selectedAllegation.collectAsState()
+    val selectedCase by caseViewModel.selectedCase.collectAsState()
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    LaunchedEffect(Unit) {
-        viewModel.loadAllegations("some-case-id")
+    LaunchedEffect(selectedCase) {
+        selectedCase?.spreadsheetId?.let {
+            allegationsViewModel.loadAllegations(it)
+        }
     }
 
     Scaffold(
@@ -57,14 +64,17 @@ fun AllegationsScreen(
                         textAlign = TextAlign.End,
                         color = MaterialTheme.colorScheme.primary
                     )
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.Transparent
+                )
             )
         }
     ) { padding ->
         Column(modifier = Modifier.padding(padding).padding(16.dp)) {
             OutlinedTextField(
                 value = searchQuery,
-                onValueChange = { viewModel.onSearchQueryChanged(it) },
+                onValueChange = { allegationsViewModel.onSearchQueryChanged(it) },
                 label = { Text("Search Allegations") },
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
@@ -75,13 +85,14 @@ fun AllegationsScreen(
                 )
             )
             LazyColumn {
-            items(allegations) { allegation ->
-                Text(
-                    text = allegation.text,
-                    modifier = Modifier
-                        .padding(8.dp)
-                        .clickable { viewModel.onAllegationSelected(allegation) }
-                )
+                items(allegations) { allegation ->
+                    Text(
+                        text = allegation.text,
+                        modifier = Modifier
+                            .padding(8.dp)
+                            .clickable { allegationsViewModel.onAllegationSelected(allegation) }
+                    )
+                }
             }
         }
     }
@@ -89,25 +100,25 @@ fun AllegationsScreen(
     if (isDialogShown) {
         selectedAllegation?.let {
             AlertDialog(
-                onDismissRequest = { viewModel.onDialogDismiss() },
+                onDismissRequest = { allegationsViewModel.onDialogDismiss() },
                 title = { Text(it.text) },
                 text = { Text(it.text) }, // Using text as description for now
                 confirmButton = {
                     Row {
-                        Button(onClick = { /* TODO: Implement Similar To */ viewModel.onDialogDismiss() }) {
+                        Button(onClick = { /* TODO: Implement Similar To */ allegationsViewModel.onDialogDismiss() }) {
                             Text("Similar to")
                         }
-                        Button(onClick = { /* TODO: Implement Add */ viewModel.onDialogDismiss() }) {
+                        Button(onClick = { /* TODO: Implement Add */ allegationsViewModel.onDialogDismiss() }) {
                             Text("Add")
                         }
                     }
                 },
                 dismissButton = {
-                    Button(onClick = { viewModel.onDialogDismiss() }) {
+                    Button(onClick = { allegationsViewModel.onDialogDismiss() }) {
                         Text("Cancel")
                     }
                 },
             )
         }
     }
-}}
+}
