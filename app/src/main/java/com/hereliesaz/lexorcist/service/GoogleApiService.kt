@@ -103,10 +103,25 @@ class GoogleApiService(
     suspend fun populateAllegationsSheet(spreadsheetId: String) {
         val civilAllegations = listOf(
             // Personal injury (Torts)
-            listOf("Civil", "Personal injury (Torts)", "Negligence", "Failure to exercise reasonable care, e.g., car accidents, slip-and-fall, medical malpractice, wrongful death."),
-            listOf("Civil", "Personal injury (Torts)", "Assault and battery", "Intentional act causing fear of attack (assault) or unlawful physical contact (battery)."),
+            listOf(
+                "Civil",
+                "Personal injury (Torts)",
+                "Negligence",
+                "Failure to exercise reasonable care, e.g., car accidents, slip-and-fall, medical malpractice, wrongful death."
+            ),
+            listOf(
+                "Civil",
+                "Personal injury (Torts)",
+                "Assault and battery",
+                "Intentional act causing fear of attack (assault) or unlawful physical contact (battery)."
+            ),
             listOf("Civil", "Personal injury (Torts)", "False imprisonment", "Unlawful confinement of a person without their consent."),
-            listOf("Civil", "Personal injury (Torts)", "Intentional infliction of emotional distress", "Extreme or outrageous conduct that causes severe emotional harm."),
+            listOf(
+                "Civil",
+                "Personal injury (Torts)",
+                "Intentional infliction of emotional distress",
+                "Extreme or outrageous conduct that causes severe emotional harm."
+            ),
             listOf("Civil", "Personal injury (Torts)", "Trespass", "Intentional entry onto the land of another without permission."),
             listOf("Civil", "Personal injury (Torts)", "Product Liability", "Holds manufacturers, distributors, or sellers responsible for a defective product that causes harm."),
             // Contract disputes
@@ -156,7 +171,12 @@ class GoogleApiService(
             // Offenses Affecting the Public Generally
             listOf("Criminal", "Offenses Affecting the Public Generally", "Bribery and Corrupt Influencing", "Public bribery, bribery of sports participants, etc."),
             listOf("Criminal", "Offenses Affecting the Public Generally", "Treason and Disloyal Acts", "Treason, misprision of treason."),
-            listOf("Criminal", "Offenses Affecting the Public Generally", "Weapons", "Illegal carrying of weapons, illegal use of weapons or dangerous instrumentalities.")
+            listOf(
+                "Criminal",
+                "Offenses Affecting the Public Generally",
+                "Weapons",
+                "Illegal carrying of weapons, illegal use of weapons or dangerous instrumentalities."
+            )
         )
 
         val allAllegations = civilAllegations + criminalAllegations

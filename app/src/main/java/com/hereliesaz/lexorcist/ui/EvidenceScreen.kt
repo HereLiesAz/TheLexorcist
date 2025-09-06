@@ -75,11 +75,11 @@ fun EvidenceScreen(
                         stringResource(R.string.evidence).uppercase(Locale.getDefault()),
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.End,
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.primary,
                     )
-                }
+                },
             )
-        }
+        },
     ) { padding ->
         Column(
             modifier =
@@ -109,7 +109,7 @@ fun EvidenceScreen(
                             evidenceViewModel.addTextEvidence(
                                 text,
                                 it.id.toLong(),
-                                it.spreadsheetId
+                                it.spreadsheetId,
                             )
                         }
                         text = ""
@@ -131,9 +131,10 @@ fun EvidenceScreen(
                 Button(onClick = { showAddTextEvidence = true }) {
                     Icon(
                         Icons.Default.Add,
-                        contentDescription = stringResource(R.string.add_text_evidence).uppercase(
-                            Locale.getDefault()
-                        )
+                        contentDescription =
+                            stringResource(R.string.add_text_evidence).uppercase(
+                                Locale.getDefault(),
+                            ),
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(stringResource(R.string.add_text_evidence).uppercase(Locale.getDefault()))
@@ -142,9 +143,10 @@ fun EvidenceScreen(
                 Button(onClick = { imagePickerLauncher.launch("image/*") }) {
                     Icon(
                         Icons.Default.Image,
-                        contentDescription = stringResource(R.string.add_image_evidence).uppercase(
-                            Locale.getDefault()
-                        )
+                        contentDescription =
+                            stringResource(R.string.add_image_evidence).uppercase(
+                                Locale.getDefault(),
+                            ),
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(stringResource(R.string.add_image_evidence).uppercase(Locale.getDefault()))
@@ -153,9 +155,10 @@ fun EvidenceScreen(
                 Button(onClick = { audioPickerLauncher.launch("audio/*") }) {
                     Icon(
                         Icons.Default.Audiotrack,
-                        contentDescription = stringResource(R.string.add_audio_evidence).uppercase(
-                            Locale.getDefault()
-                        ),
+                        contentDescription =
+                            stringResource(R.string.add_audio_evidence).uppercase(
+                                Locale.getDefault(),
+                            ),
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(stringResource(R.string.add_audio_evidence).uppercase(Locale.getDefault()))

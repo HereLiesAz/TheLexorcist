@@ -38,11 +38,10 @@ fun AppNavRail(onNavigate: (String) -> Unit) {
     val allegationsText = stringResource(id = R.string.allegations)
     val templatesText = stringResource(id = R.string.templates)
 
-
     AzNavRail {
         azSettings(
             displayAppNameInHeader = true,
-            packRailButtons = false
+            packRailButtons = false,
         )
 
         azMenuItem(id = "home", text = homeText.replaceFirstChar { it.uppercase() }, onClick = { onNavigate(navHomeStr) })
@@ -62,10 +61,11 @@ fun AppNavRail(onNavigate: (String) -> Unit) {
         })
 
         azMenuItem(id = "feedback", text = feedbackText, onClick = {
-            val intent = Intent(Intent.ACTION_SENDTO).apply {
-                data = Uri.parse(feedbackEmailStr)
-                putExtra(Intent.EXTRA_SUBJECT, feedbackSubjectStr)
-            }
+            val intent =
+                Intent(Intent.ACTION_SENDTO).apply {
+                    data = Uri.parse(feedbackEmailStr)
+                    putExtra(Intent.EXTRA_SUBJECT, feedbackSubjectStr)
+                }
             context.startActivity(intent)
         })
     }

@@ -50,11 +50,11 @@ fun SettingsScreen(caseViewModel: CaseViewModel) {
                         stringResource(R.string.settings).uppercase(Locale.getDefault()),
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.End,
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.primary,
                     )
-                }
+                },
             )
-        }
+        },
     ) { padding ->
         Column(
             modifier =
@@ -65,46 +65,46 @@ fun SettingsScreen(caseViewModel: CaseViewModel) {
                     .padding(16.dp),
             horizontalAlignment = Alignment.End,
         ) {
-        // Theme Settings
-        Text(
-            text = stringResource(R.string.theme_settings),
-            style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Column(Modifier.fillMaxWidth()) {
-            ThemeMode.entries.forEach { mode ->
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.End,
-                ) {
-                    Text(text = mode.name.lowercase().replaceFirstChar { it.uppercase() })
-                    RadioButton(
-                        selected = (themeMode == mode),
-                        onClick = { caseViewModel.setThemeMode(mode) },
-                    )
+            // Theme Settings
+            Text(
+                text = stringResource(R.string.theme_settings),
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Column(Modifier.fillMaxWidth()) {
+                ThemeMode.entries.forEach { mode ->
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.End,
+                    ) {
+                        Text(text = mode.name.lowercase().replaceFirstChar { it.uppercase() })
+                        RadioButton(
+                            selected = (themeMode == mode),
+                            onClick = { caseViewModel.setThemeMode(mode) },
+                        )
+                    }
                 }
             }
-        }
 
-        Spacer(modifier = Modifier.height(24.dp))
-        Divider()
-        Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(24.dp))
+            Divider()
+            Spacer(modifier = Modifier.height(24.dp))
 
-        // Cache Settings
-        Text(
-            text = stringResource(R.string.cache_settings),
-            style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        OutlinedButton(onClick = { showClearCacheDialog = true }) {
-            Text(text = stringResource(R.string.clear_cache))
+            // Cache Settings
+            Text(
+                text = stringResource(R.string.cache_settings),
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            OutlinedButton(onClick = { showClearCacheDialog = true }) {
+                Text(text = stringResource(R.string.clear_cache))
+            }
         }
-    }
     }
 
     if (showClearCacheDialog) {

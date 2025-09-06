@@ -227,8 +227,4 @@
     </string-array>
     <string name="no_review_data_for_case">No allegations or evidence found for this case.</string>
     <string name="no_allegations_for_case">No allegations found for this case.</string>
-    <string name="allegations">Allegations</string>
-    <string name="extras">Extras</string>
-    <string name="script_editor">Script Editor</string>
-    <string name="templates">Templates</string>
 </resources>

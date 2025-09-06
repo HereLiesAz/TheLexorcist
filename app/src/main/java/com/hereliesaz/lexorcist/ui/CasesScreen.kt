@@ -5,24 +5,35 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-// import androidx.compose.foundation.layout.Spacer // Might not be needed if search/sort are removed
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding // Keep for direct application
-// import androidx.compose.foundation.layout.width // Might not be needed
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-// import androidx.compose.material.icons.automirrored.filled.Sort // Will be removed with topBar
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Search // Uncommented for search bar
-import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FabPosition
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -38,7 +49,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.hereliesaz.lexorcist.R
-import com.hereliesaz.lexorcist.data.SortOrder
 import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import java.util.Locale
@@ -54,12 +64,13 @@ fun CasesScreen(caseViewModel: CaseViewModel) {
     var showCreateCaseDialog by remember { mutableStateOf(false) }
     var currentSortOrderState by remember { mutableStateOf(sortOrder) }
 
-    val unarchivedCases = remember(casesState, searchQuery) {
-        casesState.filter { case ->
-            !case.isArchived &&
-            (searchQuery.isBlank() || case.name.contains(searchQuery, ignoreCase = true))
+    val unarchivedCases =
+        remember(casesState, searchQuery) {
+            casesState.filter { case ->
+                !case.isArchived &&
+                    (searchQuery.isBlank() || case.name.contains(searchQuery, ignoreCase = true))
+            }
         }
-    }
 
     LaunchedEffect(currentSortOrderState) {
         caseViewModel.onSortOrderChange(currentSortOrderState)
@@ -73,9 +84,9 @@ fun CasesScreen(caseViewModel: CaseViewModel) {
                         stringResource(R.string.cases).uppercase(Locale.getDefault()),
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.End,
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.primary,
                     )
-                }
+                },
             )
         },
         floatingActionButton = {
@@ -83,54 +94,60 @@ fun CasesScreen(caseViewModel: CaseViewModel) {
                 Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.create_new_case))
             }
         },
-        floatingActionButtonPosition = FabPosition.End
+        floatingActionButtonPosition = FabPosition.End,
     ) { innerPadding ->
         Column(
-            modifier = Modifier
-                .padding(innerPadding) // Apply padding from Scaffold (e.g., for FAB)
-                .statusBarsPadding()  // Add status bar padding directly to the content
-                .fillMaxSize()
+            modifier =
+                Modifier
+                    .padding(innerPadding) // Apply padding from Scaffold (e.g., for FAB)
+                    .statusBarsPadding() // Add status bar padding directly to the content
+                    .fillMaxSize(),
         ) {
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { caseViewModel.onSearchQueryChanged(it) },
                 label = { Text(stringResource(R.string.search)) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 8.dp), // Padding for the search field
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 8.dp),
+                // Padding for the search field
                 leadingIcon = { Icon(Icons.Filled.Search, contentDescription = stringResource(R.string.search)) },
-                singleLine = true
+                singleLine = true,
             )
 
             if (unarchivedCases.isEmpty()) {
                 Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                        .padding(horizontal = 16.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
+                            .padding(horizontal = 16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
+                    verticalArrangement = Arrangement.Center,
                 ) {
-                    val noCasesText = if (searchQuery.isNotBlank()) {
-                        stringResource(R.string.no_cases_match_search)
-                    } else {
-                        stringResource(R.string.no_cases_found_line1) + "\n" +
-                        stringResource(R.string.no_cases_found_line2)
-                    }
+                    val noCasesText =
+                        if (searchQuery.isNotBlank()) {
+                            stringResource(R.string.no_cases_match_search)
+                        } else {
+                            stringResource(R.string.no_cases_found_line1) + "\n" +
+                                stringResource(R.string.no_cases_found_line2)
+                        }
                     Text(
                         text = noCasesText,
-                        style = MaterialTheme.typography.bodyLarge
+                        style = MaterialTheme.typography.bodyLarge,
                     )
                 }
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues( // Adjust padding as needed now that topBar is gone
-                        start = 16.dp,
-                        end = 16.dp,
-                        top = 8.dp, // Adjusted top padding
-                        bottom = 16.dp
-                    )
+                    contentPadding =
+                        PaddingValues( // Adjust padding as needed now that topBar is gone
+                            start = 16.dp,
+                            end = 16.dp,
+                            top = 8.dp, // Adjusted top padding
+                            bottom = 16.dp,
+                        ),
                 ) {
                     items(unarchivedCases, key = { it.id }) { case ->
                         CaseItem(
@@ -138,21 +155,21 @@ fun CasesScreen(caseViewModel: CaseViewModel) {
                             isLongPressed = longPressedCase == case,
                             onLongPress = { longPressedCase = case },
                             onDelete = {
-                                longPressedCase = case 
+                                longPressedCase = case
                                 showDeleteConfirmDialog = true
                             },
                             onArchive = {
-                                caseViewModel.archiveCaseWithRepository(case) 
-                                longPressedCase = null 
+                                caseViewModel.archiveCaseWithRepository(case)
+                                longPressedCase = null
                             },
                             onCancel = { longPressedCase = null },
                             onClick = {
                                 if (longPressedCase == null) {
                                     caseViewModel.selectCase(case)
                                 } else {
-                                    longPressedCase = null 
+                                    longPressedCase = null
                                 }
-                            }
+                            },
                         )
                     }
                 }
@@ -184,14 +201,14 @@ fun CasesScreen(caseViewModel: CaseViewModel) {
                 }) {
                     Text(stringResource(R.string.cancel))
                 }
-            }
+            },
         )
     }
 
     if (showCreateCaseDialog) {
         CreateCaseDialog(
             caseViewModel = caseViewModel,
-            onDismiss = { showCreateCaseDialog = false }
+            onDismiss = { showCreateCaseDialog = false },
         )
     }
 }
@@ -201,37 +218,38 @@ fun CaseItem(
     case: Case,
     isLongPressed: Boolean,
     onLongPress: (Case) -> Unit,
-    onDelete: () -> Unit, 
-    onArchive: () -> Unit, 
+    onDelete: () -> Unit,
+    onArchive: () -> Unit,
     onCancel: () -> Unit,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     val backgroundColor = if (isLongPressed) MaterialTheme.colorScheme.surfaceVariant else Color.Transparent
     val contentColor = if (isLongPressed) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
 
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp)
-            .pointerInput(Unit) {
-                detectTapGestures(
-                    onLongPress = { onLongPress(case) },
-                    onTap = { onClick() }
-                )
-            },
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp)
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onLongPress = { onLongPress(case) },
+                        onTap = { onClick() },
+                    )
+                },
         shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(containerColor = backgroundColor, contentColor = contentColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = if(isLongPressed) 4.dp else 1.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = if (isLongPressed) 4.dp else 1.dp),
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.End) { 
+            Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.End) {
                 Text(
                     text = case.name,
                     style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
             if (isLongPressed) {
@@ -253,4 +271,3 @@ fun CaseItem(
 // R.string.no_cases_match_search = "No cases match your search."
 // R.string.no_cases_found_line1 = "No cases found."
 // R.string.no_cases_found_line2 = "Create a new case or open an existing one."
-

@@ -36,8 +36,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.hereliesaz.lexorcist.R
-import com.hereliesaz.lexorcist.model.Script
-import com.hereliesaz.lexorcist.model.Template
 import com.hereliesaz.lexorcist.viewmodel.AddonsBrowserViewModel
 import java.util.Locale
 
@@ -45,7 +43,7 @@ import java.util.Locale
 @Composable
 fun ExtrasScreen(
     viewModel: AddonsBrowserViewModel = hiltViewModel(),
-    onShare: () -> Unit
+    onShare: () -> Unit,
 ) {
     val scripts by viewModel.scripts.collectAsState()
     val templates by viewModel.templates.collectAsState()
@@ -58,26 +56,28 @@ fun ExtrasScreen(
                         stringResource(R.string.extras).uppercase(Locale.getDefault()),
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.End,
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.primary,
                     )
-                }
+                },
             )
         },
         floatingActionButton = {
             FloatingActionButton(onClick = onShare) {
                 Icon(Icons.Default.Add, contentDescription = "Share")
             }
-        }
+        },
     ) { paddingValues ->
         BoxWithConstraints(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             // val halfScreenHeight = this@BoxWithConstraints.maxHeight / 2 // REMOVED
 
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState()) // Make the whole content area scrollable
-                    .padding(horizontal = 16.dp), // Add horizontal padding for content within the Column
-                horizontalAlignment = Alignment.End // Right-align children of this Column
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState()) // Make the whole content area scrollable
+                        .padding(horizontal = 16.dp),
+                // Add horizontal padding for content within the Column
+                horizontalAlignment = Alignment.End, // Right-align children of this Column
             ) {
                 // Spacer(modifier = Modifier.height(halfScreenHeight)) // REMOVED
 
@@ -85,8 +85,10 @@ fun ExtrasScreen(
                 // Note: LazyColumn inside a verticalScroll can have performance issues if lists are very long.
                 // For now, assuming lists are of manageable size or this is the desired scroll behavior.
                 LazyColumn(
-                    modifier = Modifier.fillMaxWidth()
-                        .heightIn(max = 400.dp) // Example: Constrain height if needed, or let it wrap
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 400.dp), // Example: Constrain height if needed, or let it wrap
                 ) {
                     items(scripts) { script ->
                         AddonItem(
@@ -96,7 +98,7 @@ fun ExtrasScreen(
                             rating = script.rating.toFloat(),
                             onRate = {
                                 viewModel.rateAddon(script.id, it, "Script")
-                            }
+                            },
                         )
                     }
                 }
@@ -105,8 +107,10 @@ fun ExtrasScreen(
 
                 Text("Templates", style = MaterialTheme.typography.headlineSmall)
                 LazyColumn(
-                    modifier = Modifier.fillMaxWidth()
-                        .heightIn(max = 400.dp) // Example: Constrain height if needed
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 400.dp), // Example: Constrain height if needed
                 ) {
                     items(templates) { template ->
                         AddonItem(
@@ -116,7 +120,7 @@ fun ExtrasScreen(
                             rating = template.rating.toFloat(),
                             onRate = {
                                 viewModel.rateAddon(template.id, it, "Template")
-                            }
+                            },
                         )
                     }
                 }
@@ -131,16 +135,17 @@ fun AddonItem(
     description: String,
     author: String,
     rating: Float,
-    onRate: (Int) -> Unit
+    onRate: (Int) -> Unit,
 ) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth() // Card takes full width available from LazyColumn item
-            .padding(vertical = 4.dp)
+        modifier =
+            Modifier
+                .fillMaxWidth() // Card takes full width available from LazyColumn item
+                .padding(vertical = 4.dp),
     ) {
         Column(
             modifier = Modifier.padding(16.dp).fillMaxWidth(), // Fill width for internal alignment
-            horizontalAlignment = Alignment.End // Right-align content within the Card
+            horizontalAlignment = Alignment.End, // Right-align content within the Card
         ) {
             Text(text = name, style = MaterialTheme.typography.titleMedium)
             Text(text = "by $author", style = MaterialTheme.typography.bodySmall)
@@ -153,7 +158,7 @@ fun AddonItem(
 @Composable
 fun RatingBar(
     rating: Float,
-    onRate: (Int) -> Unit
+    onRate: (Int) -> Unit,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -165,7 +170,7 @@ fun RatingBar(
                 Icon(
                     Icons.Default.Star,
                     contentDescription = "Rate $index",
-                    tint = if (index <= rating) Color.Yellow else Color.Gray
+                    tint = if (index <= rating) Color.Yellow else Color.Gray,
                 )
             }
         }
