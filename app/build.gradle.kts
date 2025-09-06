@@ -47,6 +47,7 @@ android {
         resources.excludes.add("META-INF/DEPENDENCIES")
         resources.excludes.add("META-INF/LICENSE.md")
         resources.excludes.add("META-INF/LICENSE-notice.md")
+        resources.excludes.add("META-INF/NOTICE.md")
     }
     lint {
         baseline = file("lint-baseline.xml")
@@ -130,7 +131,7 @@ dependencies {
     implementation(libs.google.api.services.docs)
 
     implementation(libs.google.http.client.jackson2)
-    implementation("com.github.HereLiesAz:AzNavRail:2.3")
+    implementation(libs.az.navrail)
     implementation(platform(libs.firebase.bom))
     implementation(libs.google.firebase.analytics)
     implementation(libs.google.guava)
@@ -164,7 +165,6 @@ dependencies {
 
     // Google Cloud Speech-to-Text
     implementation(libs.google.cloud.speech)
-    implementation(libs.accompanist.webview)
 }
 
 kotlin {
