@@ -63,9 +63,10 @@ fun TemplatesScreen(viewModel: AddonsBrowserViewModel = hiltViewModel()) {
                         color = MaterialTheme.colorScheme.primary,
                     )
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent
-                )
+                colors =
+                    TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.Transparent,
+                    ),
             )
         },
     ) { padding ->
@@ -94,7 +95,7 @@ fun TemplatesScreen(viewModel: AddonsBrowserViewModel = hiltViewModel()) {
                                 content = template.content,
                                 type = "Template",
                             )
-                        }
+                        },
                     )
                 }
             }
@@ -117,18 +118,19 @@ fun TemplatesScreen(viewModel: AddonsBrowserViewModel = hiltViewModel()) {
 fun TemplateItem(
     template: Template,
     onEdit: () -> Unit,
-    onShare: () -> Unit
+    onShare: () -> Unit,
 ) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp)
-            .clickable(onClick = onEdit)
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp)
+                .clickable(onClick = onEdit),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
                 text = template.name,
-                style = MaterialTheme.typography.headlineSmall
+                style = MaterialTheme.typography.headlineSmall,
             )
             Spacer(modifier = Modifier.height(8.dp))
             AndroidView(
@@ -137,9 +139,10 @@ fun TemplateItem(
                         loadDataWithBaseURL(null, template.content, "text/html", "UTF-8", null)
                     }
                 },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(100.dp)
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(100.dp),
             )
             Spacer(modifier = Modifier.height(8.dp))
             Row {
@@ -147,7 +150,7 @@ fun TemplateItem(
                     text = template.description,
                     modifier = Modifier.weight(1f),
                     maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Button(onClick = onShare) {

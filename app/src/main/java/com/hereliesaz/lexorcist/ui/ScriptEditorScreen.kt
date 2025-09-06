@@ -13,8 +13,21 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SecondaryTabRow
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -67,129 +80,133 @@ fun ScriptEditorScreen(viewModel: ScriptEditorViewModel) {
                         stringResource(R.string.script_editor).uppercase(Locale.getDefault()),
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.End,
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.primary,
                     )
-                }
+                },
             )
-        }
+        },
     ) { padding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(8.dp),
-            horizontalAlignment = Alignment.End
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .padding(8.dp),
+            horizontalAlignment = Alignment.End,
         ) {
-        // Script Builder Section
-        Text(stringResource(R.string.script_builder), style = MaterialTheme.typography.headlineSmall)
-        Spacer(modifier = Modifier.height(16.dp))
-        FlowRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            OutlinedButton(onClick = { viewModel.insertText(snippetTextIncludesStr) }) {
-                Text(stringResource(R.string.script_snippet_text_includes_label))
-            }
-            OutlinedButton(onClick = { viewModel.insertText(snippetTagsIncludesStr) }) {
-                Text(stringResource(R.string.script_snippet_tags_includes_label))
-            }
-            OutlinedButton(onClick = { viewModel.insertText(snippetDateGreaterStr) }) {
-                Text(stringResource(R.string.script_snippet_date_greater_label))
-            }
-            OutlinedButton(onClick = { viewModel.insertText(snippetDateLessStr) }) {
-                Text(stringResource(R.string.script_snippet_date_less_label))
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Editor Section with Tabs
-        var tabIndex by remember { mutableIntStateOf(0) }
-        val tabs = listOf(stringResource(R.string.script_tab_description), stringResource(R.string.script_tab_editor))
-
-        Column(modifier = Modifier.weight(1f).fillMaxWidth()) {
-            SecondaryTabRow(
-                tabIndex,
-                Modifier,
-                TabRowDefaults.primaryContainerColor,
-                TabRowDefaults.primaryContentColor,
-                @Composable {
-                    TabRowDefaults.SecondaryIndicator(Modifier.tabIndicatorOffset(tabIndex))
-                },
-                @Composable { HorizontalDivider() },
-                {
-                            tabs.forEachIndexed { index, title ->
-                                Tab(
-                                    text = { Text(title) },
-                                    selected = tabIndex == index,
-                                    onClick = { tabIndex = index }
-                                )
-                            }
-                        })
-            when (tabIndex) {
-                0 -> { // Description Tab
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(16.dp)
-                            .verticalScroll(rememberScrollState()),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Text(
-                            text = stringResource(R.string.script_description_placeholder),
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                    }
+            // Script Builder Section
+            Text(stringResource(R.string.script_builder), style = MaterialTheme.typography.headlineSmall)
+            Spacer(modifier = Modifier.height(16.dp))
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                OutlinedButton(onClick = { viewModel.insertText(snippetTextIncludesStr) }) {
+                    Text(stringResource(R.string.script_snippet_text_includes_label))
                 }
-                1 -> { // Editor Tab
-                    Column(modifier = Modifier.fillMaxSize()) {
-                        Text(
-                            text = stringResource(R.string.script_editor_instructions),
-                            style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier.padding(top = 16.dp, bottom = 8.dp, start = 16.dp, end = 16.dp)
-                        )
-                        OutlinedTextField(
-                            value = scriptText,
-                            onValueChange = { viewModel.onScriptTextChanged(it) },
-                            label = { Text(stringResource(R.string.enter_your_script)) },
-                            placeholder = { Text(stringResource(R.string.script_editor_placeholder)) },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f)
-                                .padding(horizontal = 16.dp)
-                        )
-                    }
+                OutlinedButton(onClick = { viewModel.insertText(snippetTagsIncludesStr) }) {
+                    Text(stringResource(R.string.script_snippet_tags_includes_label))
+                }
+                OutlinedButton(onClick = { viewModel.insertText(snippetDateGreaterStr) }) {
+                    Text(stringResource(R.string.script_snippet_date_greater_label))
+                }
+                OutlinedButton(onClick = { viewModel.insertText(snippetDateLessStr) }) {
+                    Text(stringResource(R.string.script_snippet_date_less_label))
                 }
             }
-        }
 
-        Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-        // Action Buttons
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
-        ) {
-            OutlinedButton(
-                onClick = { showShareDialog = true }
-            ) {
-                Text(stringResource(R.string.share))
+            // Editor Section with Tabs
+            var tabIndex by remember { mutableIntStateOf(0) }
+            val tabs = listOf(stringResource(R.string.script_tab_description), stringResource(R.string.script_tab_editor))
+
+            Column(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                SecondaryTabRow(
+                    tabIndex,
+                    Modifier,
+                    TabRowDefaults.primaryContainerColor,
+                    TabRowDefaults.primaryContentColor,
+                    @Composable {
+                        TabRowDefaults.SecondaryIndicator(Modifier.tabIndicatorOffset(tabIndex))
+                    },
+                    @Composable { HorizontalDivider() },
+                    {
+                        tabs.forEachIndexed { index, title ->
+                            Tab(
+                                text = { Text(title) },
+                                selected = tabIndex == index,
+                                onClick = { tabIndex = index },
+                            )
+                        }
+                    },
+                )
+                when (tabIndex) {
+                    0 -> { // Description Tab
+                        Column(
+                            modifier =
+                                Modifier
+                                    .fillMaxSize()
+                                    .padding(16.dp)
+                                    .verticalScroll(rememberScrollState()),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center,
+                        ) {
+                            Text(
+                                text = stringResource(R.string.script_description_placeholder),
+                                style = MaterialTheme.typography.bodyLarge,
+                            )
+                        }
+                    }
+                    1 -> { // Editor Tab
+                        Column(modifier = Modifier.fillMaxSize()) {
+                            Text(
+                                text = stringResource(R.string.script_editor_instructions),
+                                style = MaterialTheme.typography.bodySmall,
+                                modifier = Modifier.padding(top = 16.dp, bottom = 8.dp, start = 16.dp, end = 16.dp),
+                            )
+                            OutlinedTextField(
+                                value = scriptText,
+                                onValueChange = { viewModel.onScriptTextChanged(it) },
+                                label = { Text(stringResource(R.string.enter_your_script)) },
+                                placeholder = { Text(stringResource(R.string.script_editor_placeholder)) },
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .weight(1f)
+                                        .padding(horizontal = 16.dp),
+                            )
+                        }
+                    }
+                }
             }
-            OutlinedButton(
-                onClick = { viewModel.saveScript() },
-                enabled = saveState !is SaveState.Saving
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Action Buttons
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
             ) {
-                if (saveState is SaveState.Saving) {
-                    CircularProgressIndicator(modifier = Modifier.size(24.dp)) // Changed back
-                } else {
-                    Text(stringResource(R.string.save_script))
+                OutlinedButton(
+                    onClick = { showShareDialog = true },
+                ) {
+                    Text(stringResource(R.string.share))
+                }
+                OutlinedButton(
+                    onClick = { viewModel.saveScript() },
+                    enabled = saveState !is SaveState.Saving,
+                ) {
+                    if (saveState is SaveState.Saving) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp)) // Changed back
+                    } else {
+                        Text(stringResource(R.string.save_script))
+                    }
                 }
             }
         }
     }
-}
 
     if (showShareDialog) {
         AlertDialog(
@@ -201,7 +218,7 @@ fun ScriptEditorScreen(viewModel: ScriptEditorViewModel) {
                     onClick = {
                         // TODO: Implement sharing logic with AddonsBrowserViewModel
                         showShareDialog = false
-                    }
+                    },
                 ) {
                     Text(stringResource(R.string.share))
                 }
@@ -210,7 +227,7 @@ fun ScriptEditorScreen(viewModel: ScriptEditorViewModel) {
                 OutlinedButton(onClick = { showShareDialog = false }) {
                     Text(stringResource(R.string.cancel))
                 }
-            }
+            },
         )
     }
 }

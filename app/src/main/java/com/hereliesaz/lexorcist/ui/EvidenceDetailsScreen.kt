@@ -1,7 +1,13 @@
 package com.hereliesaz.lexorcist.ui
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState // Added import
 import androidx.compose.foundation.verticalScroll // Added import
 import androidx.compose.material3.Button
@@ -24,22 +30,25 @@ import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
 @Composable
 fun EvidenceDetailsScreen(
     evidence: Evidence,
-    viewModel: EvidenceViewModel
+    viewModel: EvidenceViewModel,
 ) {
     var commentary by remember { mutableStateOf(evidence.commentary ?: "") }
 
     BoxWithConstraints(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp) // Apply padding to the outer Box
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .padding(16.dp), // Apply padding to the outer Box
     ) {
         val halfScreenHeight = this@BoxWithConstraints.maxHeight / 2
 
         Column(
-            modifier = Modifier
-                .fillMaxSize() // Column fills the BoxWithConstraints
-                .verticalScroll(rememberScrollState()), // Make content scrollable
-            horizontalAlignment = Alignment.End // Right-align children of this Column
+            modifier =
+                Modifier
+                    .fillMaxSize() // Column fills the BoxWithConstraints
+                    .verticalScroll(rememberScrollState()),
+            // Make content scrollable
+            horizontalAlignment = Alignment.End, // Right-align children of this Column
         ) {
             Spacer(modifier = Modifier.height(halfScreenHeight)) // Push content to start halfway down
 
@@ -48,7 +57,7 @@ fun EvidenceDetailsScreen(
                     painter = rememberAsyncImagePainter(model = evidence.sourceDocument.toUri()),
                     contentDescription = "Evidence Image",
                     modifier = Modifier.fillMaxWidth(), // Image takes full width
-                    contentScale = ContentScale.Fit
+                    contentScale = ContentScale.Fit,
                 )
                 Spacer(modifier = Modifier.height(16.dp))
             }
@@ -62,7 +71,7 @@ fun EvidenceDetailsScreen(
                 value = commentary ?: "",
                 onValueChange = { commentary = it },
                 label = { Text("Commentary") },
-                modifier = Modifier.fillMaxWidth() // TextField takes full width
+                modifier = Modifier.fillMaxWidth(), // TextField takes full width
             )
             Spacer(modifier = Modifier.height(16.dp))
             Button(onClick = { viewModel.updateCommentary(evidence.id, commentary ?: "") }) {
