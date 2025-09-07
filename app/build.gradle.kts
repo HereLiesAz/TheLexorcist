@@ -130,7 +130,7 @@ dependencies {
     implementation(libs.google.api.services.docs)
 
     implementation(libs.google.http.client.jackson2)
-    implementation("com.github.HereLiesAz:AzNavRail:2.3")
+    implementation(libs.az.navrail)
     implementation(platform(libs.firebase.bom))
     implementation(libs.google.firebase.analytics)
     implementation(libs.google.guava)
