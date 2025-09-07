@@ -4,7 +4,8 @@ package com.hereliesaz.lexorcist.model
 data class UserInfo(
     val displayName: String?,
     val email: String?,
-    val photoUrl: String? // Can be a String URL or Uri
+    // Can be a String URL or Uri
+    val photoUrl: String?,
 )
 
 sealed class SignInState {
@@ -15,9 +16,14 @@ sealed class SignInState {
     object InProgress : SignInState()
 
     // Sign-in successful
-    data class Success(val userInfo: UserInfo?) : SignInState()
+    data class Success(
+        val userInfo: UserInfo?,
+    ) : SignInState()
 
     // Sign-in failed
-    data class Error(val message: String, val exception: Exception? = null) : SignInState()
+    data class Error(
+        val message: String,
+        val exception: Exception? = null,
+    ) : SignInState()
     // SignedOut can be represented by Idle, or explicitly if needed for specific UI
 }

@@ -45,7 +45,6 @@ fun AppNavRail(onNavigate: (String) -> Unit) {
                 displayAppNameInHeader = true,
                 packRailButtons = false
             )
-
             azMenuItem(id = "home", text = homeText.replaceFirstChar { it.uppercase() }, onClick = { onNavigate(navHomeStr) })
             azMenuItem(id = "cases", text = casesText, onClick = { onNavigate(navCasesStr) })
             azMenuItem(id = "evidence", text = evidenceText, onClick = { onNavigate(navEvidenceStr) })
@@ -56,19 +55,6 @@ fun AppNavRail(onNavigate: (String) -> Unit) {
             azMenuItem(id = "extras", text = extrasText, onClick = { onNavigate(navExtrasStr) })
             azMenuItem(id = "script", text = scriptText, onClick = { onNavigate(navScriptEditorStr) })
             azMenuItem(id = "settings", text = settingsText, onClick = { onNavigate(navSettingsStr) })
-
-            azMenuItem(id = "about", text = aboutText, onClick = {
-                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(githubUrlStr))
-                context.startActivity(intent)
-            })
-
-            azMenuItem(id = "feedback", text = feedbackText, onClick = {
-                val intent = Intent(Intent.ACTION_SENDTO).apply {
-                    data = Uri.parse(feedbackEmailStr)
-                    putExtra(Intent.EXTRA_SUBJECT, feedbackSubjectStr)
-                }
-                context.startActivity(intent)
-            })
-        }
+         }
     }
 }

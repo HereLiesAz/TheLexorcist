@@ -6,13 +6,12 @@ import com.hereliesaz.lexorcist.data.Allegation
 import com.hereliesaz.lexorcist.data.AllegationsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
-import javax.inject.Inject
-
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @HiltViewModel
 class AllegationsViewModel
@@ -21,21 +20,22 @@ class AllegationsViewModel
         private val allegationsRepository: AllegationsRepository,
     ) : ViewModel() {
         private val _allAllegations = MutableStateFlow<List<Allegation>>(emptyList())
+        val allAllegations: StateFlow<List<Allegation>> = _allAllegations
 
         private val _searchQuery = MutableStateFlow("")
         val searchQuery: StateFlow<String> = _searchQuery
 
-        val allegations: StateFlow<List<Allegation>> = combine(
-            _allAllegations,
-            _searchQuery
-        ) { allegations, query ->
-            if (query.isBlank()) {
-                allegations
-            } else {
-                allegations.filter { it.text.contains(query, ignoreCase = true) }
-            }
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
+        val allegations: StateFlow<List<Allegation>> =
+            combine(
+                _allAllegations,
+                _searchQuery,
+            ) { allegations, query ->
+                if (query.isBlank()) {
+                    allegations
+                } else {
+                    allegations.filter { it.text.contains(query, ignoreCase = true) }
+                }
+            }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
         fun onSearchQueryChanged(query: String) {
             _searchQuery.value = query

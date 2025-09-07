@@ -9,7 +9,7 @@ ksp = "2.2.10-2.0.2" # from com.google.devtools.ksp
 spotless = "7.2.1" # A common version, adjust if you have it specified in project level build.gradle
 coreKtx = "1.17.0"
 appcompat = "1.7.1"
-material = "1.12.0"
+material = "1.13.0"
 composeRuntime = "1.9.0"
 navigationRuntimeKtx = "2.9.3"
 composeUi = "1.9.0"
@@ -38,7 +38,7 @@ exifinterface = "1.4.1"
 activityCompose = "1.10.1"
 coilCompose = "2.7.0"
 navigationCompose = "2.9.3"
-itext7Core = "9.2.0"
+itext7Core = "9.3.0"
 poi = "5.4.1"
 playServicesAuth = "21.4.0"
 googleApiClient = "2.8.1"
@@ -59,7 +59,6 @@ hiltWork = "1.2.0"
 androidxHiltCompiler = "1.2.0"
 googleCloudSpeech = "4.68.0"
 androidxCredentials = "1.5.0"
-accompanist = "0.32.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -139,6 +138,7 @@ google-cloud-speech = { group = "com.google.cloud", name = "google-cloud-speech"
 androidx-credentials = { group = "androidx.credentials", name = "credentials", version.ref = "androidxCredentials" }
 androidx-credentials-play-services-auth = { group = "androidx.credentials", name = "credentials-play-services-auth", version.ref = "androidxCredentials" }
 google-id = { group = "com.google.android.libraries.identity.googleid", name = "googleid", version = "1.1.1" }
+accompanist-webview = { group = "com.google.accompanist", name = "accompanist-webview", version.ref = "accompanist" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "androidApplication" }

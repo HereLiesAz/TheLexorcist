@@ -7,10 +7,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -39,7 +39,7 @@ import java.util.Locale
 @Composable
 fun AllegationsScreen(
     allegationsViewModel: AllegationsViewModel = hiltViewModel(),
-    caseViewModel: CaseViewModel = hiltViewModel()
+    caseViewModel: CaseViewModel = hiltViewModel(),
 ) {
     val allegations by allegationsViewModel.allegations.collectAsState()
     val searchQuery by allegationsViewModel.searchQuery.collectAsState()
@@ -62,14 +62,15 @@ fun AllegationsScreen(
                         stringResource(R.string.allegations).uppercase(Locale.getDefault()),
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.End,
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.primary,
                     )
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent
-                )
+                colors =
+                    TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.Transparent,
+                    ),
             )
-        }
+        },
     ) { padding ->
         Column(modifier = Modifier.padding(padding).padding(16.dp)) {
             OutlinedTextField(
@@ -78,19 +79,21 @@ fun AllegationsScreen(
                 label = { Text("Search Allegations") },
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                keyboardActions = KeyboardActions(
-                    onSearch = {
-                        keyboardController?.hide()
-                    }
-                )
+                keyboardActions =
+                    KeyboardActions(
+                        onSearch = {
+                            keyboardController?.hide()
+                        },
+                    ),
             )
             LazyColumn {
                 items(allegations) { allegation ->
                     Text(
                         text = allegation.text,
-                        modifier = Modifier
-                            .padding(8.dp)
-                            .clickable { allegationsViewModel.onAllegationSelected(allegation) }
+                        modifier =
+                            Modifier
+                                .padding(8.dp)
+                                .clickable { allegationsViewModel.onAllegationSelected(allegation) },
                     )
                 }
             }
@@ -105,10 +108,12 @@ fun AllegationsScreen(
                 text = { Text(it.text) }, // Using text as description for now
                 confirmButton = {
                     Row {
-                        Button(onClick = { /* TODO: Implement Similar To */ allegationsViewModel.onDialogDismiss() }) {
+                        // TODO: Implement Similar To
+                        Button(onClick = { allegationsViewModel.onDialogDismiss() }) {
                             Text("Similar to")
                         }
-                        Button(onClick = { /* TODO: Implement Add */ allegationsViewModel.onDialogDismiss() }) {
+                        // TODO: Implement Add
+                        Button(onClick = { allegationsViewModel.onDialogDismiss() }) {
                             Text("Add")
                         }
                     }

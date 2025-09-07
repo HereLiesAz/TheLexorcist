@@ -47,6 +47,7 @@ android {
         resources.excludes.add("META-INF/DEPENDENCIES")
         resources.excludes.add("META-INF/LICENSE.md")
         resources.excludes.add("META-INF/LICENSE-notice.md")
+        resources.excludes.add("META-INF/NOTICE.md")
     }
     lint {
         baseline = file("lint-baseline.xml")
@@ -164,7 +165,6 @@ dependencies {
 
     // Google Cloud Speech-to-Text
     implementation(libs.google.cloud.speech)
-    implementation(libs.accompanist.webview)
 }
 
 kotlin {
