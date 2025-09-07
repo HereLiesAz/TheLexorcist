@@ -2,6 +2,7 @@ package com.hereliesaz.lexorcist.components
 
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -38,35 +39,22 @@ fun AppNavRail(onNavigate: (String) -> Unit) {
     val allegationsText = stringResource(id = R.string.allegations)
     val templatesText = stringResource(id = R.string.templates)
 
-    AzNavRail {
-        azSettings(
-            displayAppNameInHeader = true,
-            packRailButtons = false,
-        )
-
-        azMenuItem(id = "home", text = homeText.replaceFirstChar { it.uppercase() }, onClick = { onNavigate(navHomeStr) })
-        azMenuItem(id = "cases", text = casesText, onClick = { onNavigate(navCasesStr) })
-        azMenuItem(id = "evidence", text = evidenceText, onClick = { onNavigate(navEvidenceStr) })
-        azMenuItem(id = "allegations", text = allegationsText, onClick = { onNavigate("allegations") })
-        azMenuItem(id = "templates", text = templatesText, onClick = { onNavigate("templates") })
-        azMenuItem(id = "timeline", text = timelineText, onClick = { onNavigate(navTimelineStr) })
-        azMenuItem(id = "review", text = dataReviewText, onClick = { onNavigate(navReviewStr) })
-        azMenuItem(id = "extras", text = extrasText, onClick = { onNavigate(navExtrasStr) })
-        azMenuItem(id = "script", text = scriptText, onClick = { onNavigate(navScriptEditorStr) })
-        azMenuItem(id = "settings", text = settingsText, onClick = { onNavigate(navSettingsStr) })
-
-        azMenuItem(id = "about", text = aboutText, onClick = {
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(githubUrlStr))
-            context.startActivity(intent)
-        })
-
-        azMenuItem(id = "feedback", text = feedbackText, onClick = {
-            val intent =
-                Intent(Intent.ACTION_SENDTO).apply {
-                    data = Uri.parse(feedbackEmailStr)
-                    putExtra(Intent.EXTRA_SUBJECT, feedbackSubjectStr)
-                }
-            context.startActivity(intent)
-        })
+    Scaffold { padding ->
+        AzNavRail {
+            azSettings(
+                displayAppNameInHeader = true,
+                packRailButtons = false
+            )
+            azMenuItem(id = "home", text = homeText.replaceFirstChar { it.uppercase() }, onClick = { onNavigate(navHomeStr) })
+            azMenuItem(id = "cases", text = casesText, onClick = { onNavigate(navCasesStr) })
+            azMenuItem(id = "evidence", text = evidenceText, onClick = { onNavigate(navEvidenceStr) })
+            azMenuItem(id = "allegations", text = allegationsText, onClick = { onNavigate("allegations") })
+            azMenuItem(id = "templates", text = templatesText, onClick = { onNavigate("templates") })
+            azMenuItem(id = "timeline", text = timelineText, onClick = { onNavigate(navTimelineStr) })
+            azMenuItem(id = "review", text = dataReviewText, onClick = { onNavigate(navReviewStr) })
+            azMenuItem(id = "extras", text = extrasText, onClick = { onNavigate(navExtrasStr) })
+            azMenuItem(id = "script", text = scriptText, onClick = { onNavigate(navScriptEditorStr) })
+            azMenuItem(id = "settings", text = settingsText, onClick = { onNavigate(navSettingsStr) })
+         }
     }
 }
