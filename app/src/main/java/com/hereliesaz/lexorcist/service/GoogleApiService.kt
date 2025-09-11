@@ -289,6 +289,7 @@ class GoogleApiService(
     }
 
     suspend fun addCaseToRegistry(registryId: String, case: Case): Boolean {
+        android.util.Log.d("GoogleApiService", "addCaseToRegistry called for case: ${case.name}")
         return withContext(Dispatchers.IO) {
             try {
                 val values = listOf(
@@ -312,22 +313,27 @@ class GoogleApiService(
                 sheets.spreadsheets().values().append(registryId, "Sheet1", body)
                     .setValueInputOption("RAW")
                     .execute()
+                android.util.Log.d("GoogleApiService", "addCaseToRegistry successful")
                 true
             } catch (e: IOException) {
+                android.util.Log.e("GoogleApiService", "IOException in addCaseToRegistry: $e")
                 false
             }
         }
     }
 
     suspend fun getAllCasesFromRegistry(registryId: String): List<Case> {
+        android.util.Log.d("GoogleApiService", "getAllCasesFromRegistry called")
         return withContext(Dispatchers.IO) {
             try {
                 val range = "Sheet1!A:M"
                 val response = sheets.spreadsheets().values().get(registryId, range).execute()
                 val values = response.getValues()
                 if (values.isNullOrEmpty()) {
+                    android.util.Log.d("GoogleApiService", "Registry is empty")
                     emptyList()
                 } else {
+                    android.util.Log.d("GoogleApiService", "Found ${values.size} rows in registry")
                     values.mapNotNull { row ->
                         if (row.size >= 3) {
                             try {
@@ -347,14 +353,17 @@ class GoogleApiService(
                                     lastModifiedTime = row.getOrNull(12)?.toString()?.toLongOrNull()
                                 )
                             } catch (e: Exception) {
+                                android.util.Log.e("GoogleApiService", "Error parsing row: $row", e)
                                 null // Skip row if parsing fails
                             }
                         } else {
+                            android.util.Log.w("GoogleApiService", "Skipping row with not enough columns: $row")
                             null // Skip row if not enough columns
                         }
                     }
                 }
             } catch (e: IOException) {
+                android.util.Log.e("GoogleApiService", "IOException in getAllCasesFromRegistry: $e")
                 emptyList()
             }
         }

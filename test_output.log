@@ -1,5 +1,6 @@
-To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.13/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
-Daemon will be stopped at the end of the build
+WARNING: The following problems were found when resolving the SDK location:
+Where: sdk.dir property in local.properties file. Problem: Directory does not exist
+
 > Task :app:preBuild UP-TO-DATE
 > Task :app:preDebugBuild UP-TO-DATE
 > Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
@@ -29,7 +30,15 @@ Daemon will be stopped at the end of the build
 > Task :app:preDebugUnitTestBuild UP-TO-DATE
 > Task :app:processDebugJavaRes UP-TO-DATE
 > Task :app:bundleDebugClassesToCompileJar UP-TO-DATE
+> Task :app:kspDebugUnitTestKotlin UP-TO-DATE
+> Task :app:compileDebugUnitTestKotlin UP-TO-DATE
 > Task :app:javaPreCompileDebugUnitTest UP-TO-DATE
+> Task :app:compileDebugUnitTestJavaWithJavac UP-TO-DATE
+> Task :app:hiltAggregateDepsDebugUnitTest UP-TO-DATE
+> Task :app:hiltJavaCompileDebugUnitTest NO-SOURCE
+> Task :app:processDebugUnitTestJavaRes UP-TO-DATE
+> Task :app:transformDebugUnitTestClassesWithAsm UP-TO-DATE
+> Task :app:testDebugUnitTest UP-TO-DATE
 > Task :app:preReleaseBuild UP-TO-DATE
 > Task :app:buildKotlinToolingMetadata UP-TO-DATE
 > Task :app:checkReleaseAarMetadata UP-TO-DATE
@@ -58,43 +67,16 @@ Daemon will be stopped at the end of the build
 > Task :app:preReleaseUnitTestBuild UP-TO-DATE
 > Task :app:processReleaseJavaRes UP-TO-DATE
 > Task :app:bundleReleaseClassesToCompileJar UP-TO-DATE
+> Task :app:kspReleaseUnitTestKotlin UP-TO-DATE
+> Task :app:compileReleaseUnitTestKotlin UP-TO-DATE
 > Task :app:javaPreCompileReleaseUnitTest UP-TO-DATE
-> Task :app:kspReleaseUnitTestKotlin
-> Task :app:kspDebugUnitTestKotlin
-> Task :app:compileDebugUnitTestKotlin
-> Task :app:compileReleaseUnitTestKotlin
-> Task :app:compileDebugUnitTestJavaWithJavac UP-TO-DATE
-> Task :app:hiltAggregateDepsDebugUnitTest UP-TO-DATE
-> Task :app:hiltJavaCompileDebugUnitTest NO-SOURCE
-> Task :app:processDebugUnitTestJavaRes UP-TO-DATE
-> Task :app:transformDebugUnitTestClassesWithAsm
 > Task :app:compileReleaseUnitTestJavaWithJavac UP-TO-DATE
-OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+> Task :app:hiltAggregateDepsReleaseUnitTest UP-TO-DATE
+> Task :app:hiltJavaCompileReleaseUnitTest NO-SOURCE
+> Task :app:processReleaseUnitTestJavaRes UP-TO-DATE
+> Task :app:transformReleaseUnitTestClassesWithAsm UP-TO-DATE
+> Task :app:testReleaseUnitTest UP-TO-DATE
+> Task :app:test UP-TO-DATE
 
-> Task :app:testDebugUnitTest
-
-AuthViewModelTest > signIn success FAILED
-    com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException at AuthViewModelTest.kt:100
-        Caused by: java.lang.RuntimeException at AuthViewModelTest.kt:100
-
-AuthViewModelTest > signOut clears credential state and user data FAILED
-    java.lang.RuntimeException at AuthViewModelTest.kt:71
-
-AuthViewModelTest > signIn failure FAILED
-    java.lang.AssertionError at AuthViewModelTest.kt:126
-
-5 tests completed, 3 failed
-
-> Task :app:testDebugUnitTest FAILED
-
-FAILURE: Build failed with an exception.
-
-* What went wrong:
-Execution failed for task ':app:testDebugUnitTest'.
-> There were failing tests. See the report at: file:///app/app/build/reports/tests/testDebugUnitTest/index.html
-
-* Try:
-> Run with --scan to get full insights.
-
-BUILD FAILED in 44s
-63 actionable tasks: 6 executed, 57 up-to-date
+BUILD SUCCESSFUL in 16s
+67 actionable tasks: 67 up-to-date
