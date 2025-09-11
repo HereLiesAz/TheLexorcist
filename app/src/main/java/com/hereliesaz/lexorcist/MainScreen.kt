@@ -38,7 +38,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.hereliesaz.lexorcist.components.AppNavRail
+import com.hereliesaz.aznavrail.*
 import com.hereliesaz.lexorcist.model.SignInState
 import com.hereliesaz.lexorcist.ui.AllegationsScreen
 import com.hereliesaz.lexorcist.ui.CasesScreen
@@ -108,7 +108,12 @@ fun MainScreen(
                             .fillMaxSize()
                             .padding(paddingValues),
                 ) {
-                    AppNavRail(onNavigate = { screen -> navController.navigate(screen) })
+                    AzNavRail {
+                        azRailItem(id = "cases", text = "Cases", onClick = { navController.navigate("cases") })
+                        azRailItem(id = "extras", text = "Addons", onClick = { navController.navigate("extras") })
+                        azRailItem(id = "settings", text = "Settings", onClick = { navController.navigate("settings") })
+                        azMenuItem(id = "logout", text = "Logout", onClick = { authViewModel.signOut() })
+                    }
 
                     BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxHeight()) {
                         val halfContentAreaHeight = this@BoxWithConstraints.maxHeight / 2

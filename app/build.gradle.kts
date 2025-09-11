@@ -164,6 +164,7 @@ dependencies {
 
     // Google Cloud Speech-to-Text
     implementation(libs.google.cloud.speech)
+    implementation("com.github.hereliesaz:aznavrail:2.7")
 }
 
 kotlin {

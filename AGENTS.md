@@ -45,7 +45,4 @@ Your primary objective is to develop "The Lexorcist" into a fully functional leg
     * **UI:** Jetpack Compose, Material 3 Expressive, right-aligned elements (except the NavRail), and outlined buttons.
     * **Theme:** The color scheme is generated dynamically from a random seed color.
     * **Documentation:**
-    * **Code Style:** This project uses `ktlint` to enforce a consistent code style. Before committing any changes, please run the following command to format your code:
-      ```bash
-      ./gradlew spotlessApply
-      ```
+    * **Code Style:** This project uses `ktlint` to enforce a consistent code style.
