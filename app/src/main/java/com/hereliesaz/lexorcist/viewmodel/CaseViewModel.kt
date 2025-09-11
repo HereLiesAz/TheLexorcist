@@ -8,7 +8,6 @@ import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.data.CaseRepository
 import com.hereliesaz.lexorcist.data.SortOrder
 import com.hereliesaz.lexorcist.model.SheetFilter
-import com.hereliesaz.lexorcist.utils.CacheManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,7 +26,6 @@ class CaseViewModel
     constructor(
         @param:ApplicationContext private val applicationContext: Context,
         private val caseRepository: CaseRepository,
-        private val cacheManager: CacheManager,
     ) : ViewModel() {
         private val sharedPref = applicationContext.getSharedPreferences("CaseInfoPrefs", Context.MODE_PRIVATE)
 
@@ -248,6 +246,13 @@ class CaseViewModel
         }
 
         fun clearCache() {
-            cacheManager.clearCache()
+            viewModelScope.launch {
+                caseRepository.clearCache()
+                clearCaseData()
+                // Clear shared preferences
+                sharedPref.edit().clear().apply()
+                // After clearing, reload the theme preference as it's also stored in sharedPref
+                loadThemeModePreference()
+            }
         }
     }

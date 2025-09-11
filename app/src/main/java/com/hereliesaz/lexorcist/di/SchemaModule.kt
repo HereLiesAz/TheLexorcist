@@ -26,8 +26,4 @@ object SchemaModule {
             gson.fromJson(reader, SpreadsheetSchema::class.java)
         }
     }
-
-    @Provides
-    @Singleton
-    fun provideGson(): Gson = Gson()
 }

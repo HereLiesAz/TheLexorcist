@@ -3,7 +3,6 @@ package com.hereliesaz.lexorcist.di
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.credentials.CredentialManager
-import com.hereliesaz.lexorcist.auth.CredentialHolder
 import com.hereliesaz.lexorcist.data.SettingsManager
 import com.hereliesaz.lexorcist.service.ScriptRunner
 import com.hereliesaz.lexorcist.utils.CacheManager
@@ -41,11 +40,11 @@ class AppModule {
 
     @Provides
     @Singleton
-    fun provideCredentialHolder(): CredentialHolder = CredentialHolder()
-
-    @Provides
-    @Singleton
     fun provideCredentialManager(
         @ApplicationContext context: Context,
     ): CredentialManager = CredentialManager.create(context)
+
+    @Provides
+    @Singleton
+    fun provideGson(): com.google.gson.Gson = com.google.gson.Gson()
 }

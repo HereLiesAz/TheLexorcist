@@ -171,4 +171,8 @@ class CaseRepositoryImpl
             // TODO: Implement actual logic (with null safety for googleApiService)
             return null
         }
+
+        override suspend fun clearCache() {
+            _cases.value = emptyList()
+        }
     }

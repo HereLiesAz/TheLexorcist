@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.hereliesaz.lexorcist.data.MasterAllegation
 import com.hereliesaz.lexorcist.data.MasterAllegationRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -13,6 +14,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
+@OptIn(ExperimentalCoroutinesApi::class)
 enum class AllegationSortType {
     TYPE,
     CATEGORY,
@@ -65,12 +67,12 @@ class MasterAllegationsViewModel
         }
 
         fun toggleAllegationSelection(allegation: MasterAllegation) {
-            val currentSelection = _selectedAllegations.value.toMutableSet()
-            if (currentSelection.contains(allegation)) {
-                currentSelection.remove(allegation)
-            } else {
-                currentSelection.add(allegation)
-            }
-            _selectedAllegations.value = currentSelection
+            val currentSelection = _selectedAllegations.value
+            _selectedAllegations.value =
+                if (allegation in currentSelection) {
+                    currentSelection - allegation
+                } else {
+                    currentSelection + allegation
+                }
         }
     }

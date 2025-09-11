@@ -62,7 +62,6 @@ Where: sdk.dir property in local.properties file. Problem: Directory does not ex
 > Task :app:javaPreCompileRelease UP-TO-DATE
 > Task :app:desugarReleaseFileDependencies UP-TO-DATE
 > Task :app:mergeReleaseStartupProfile UP-TO-DATE
-> Task :app:kspDebugKotlin
 > Task :app:mergeExtDexRelease UP-TO-DATE
 > Task :app:mergeReleaseArtProfile UP-TO-DATE
 > Task :app:mergeReleaseShaders UP-TO-DATE
@@ -81,45 +80,54 @@ Where: sdk.dir property in local.properties file. Problem: Directory does not ex
 > Task :app:generateDebugAndroidTestResValues UP-TO-DATE
 > Task :app:preDebugUnitTestBuild UP-TO-DATE
 > Task :spotlessInternalRegisterDependencies UP-TO-DATE
-> Task :app:kspReleaseKotlin
 > Task :app:spotlessKotlin
-> Task :app:spotlessKotlinCheck FAILED
+> Task :app:spotlessKotlinCheck
+> Task :app:spotlessCheck
+> Task :app:javaPreCompileDebugUnitTest UP-TO-DATE
+> Task :app:preReleaseUnitTestBuild UP-TO-DATE
+> Task :app:javaPreCompileReleaseUnitTest UP-TO-DATE
+> Task :app:kspDebugKotlin
+> Task :app:kspReleaseKotlin
 
-> Task :app:compileDebugKotlin
-w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/AllegationsScreen.kt:52:63 'fun <reified VM : ViewModel> hiltViewModel(viewModelStoreOwner: ViewModelStoreOwner = ..., key: String? = ...): VM' is deprecated. Moved to package: androidx.hilt.lifecycle.viewmodel.compose.
-w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/EvidenceScreen.kt:48:44 'fun <reified VM : ViewModel> hiltViewModel(viewModelStoreOwner: ViewModelStoreOwner = ..., key: String? = ...): VM' is deprecated. Moved to package: androidx.hilt.lifecycle.viewmodel.compose.
-w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/EvidenceScreen.kt:49:36 'fun <reified VM : ViewModel> hiltViewModel(viewModelStoreOwner: ViewModelStoreOwner = ..., key: String? = ...): VM' is deprecated. Moved to package: androidx.hilt.lifecycle.viewmodel.compose.
-w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/ExtrasScreen.kt:45:41 'fun <reified VM : ViewModel> hiltViewModel(viewModelStoreOwner: ViewModelStoreOwner = ..., key: String? = ...): VM' is deprecated. Moved to package: androidx.hilt.lifecycle.viewmodel.compose.
-w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/SettingsScreen.kt:94:13 'fun Divider(modifier: Modifier = ..., thickness: Dp = ..., color: Color = ...): Unit' is deprecated. Renamed to HorizontalDivider.
-w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/TemplatesScreen.kt:42:57 'fun <reified VM : ViewModel> hiltViewModel(viewModelStoreOwner: ViewModelStoreOwner = ..., key: String? = ...): VM' is deprecated. Moved to package: androidx.hilt.lifecycle.viewmodel.compose.
+> Task :app:compileDebugKotlin FAILED
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/SettingsScreen.kt:118:39 Unresolved reference 'clearCache'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MasterAllegationsViewModel.kt:70:34 Unresolved reference 'update'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MasterAllegationsViewModel.kt:70:43 Cannot infer type for this parameter. Specify it explicitly.
 
-> Task :app:compileReleaseKotlin
-w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/AllegationsScreen.kt:52:63 'fun <reified VM : ViewModel> hiltViewModel(viewModelStoreOwner: ViewModelStoreOwner = ..., key: String? = ...): VM' is deprecated. Moved to package: androidx.hilt.lifecycle.viewmodel.compose.
-w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/EvidenceScreen.kt:48:44 'fun <reified VM : ViewModel> hiltViewModel(viewModelStoreOwner: ViewModelStoreOwner = ..., key: String? = ...): VM' is deprecated. Moved to package: androidx.hilt.lifecycle.viewmodel.compose.
-w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/EvidenceScreen.kt:49:36 'fun <reified VM : ViewModel> hiltViewModel(viewModelStoreOwner: ViewModelStoreOwner = ..., key: String? = ...): VM' is deprecated. Moved to package: androidx.hilt.lifecycle.viewmodel.compose.
-w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/ExtrasScreen.kt:45:41 'fun <reified VM : ViewModel> hiltViewModel(viewModelStoreOwner: ViewModelStoreOwner = ..., key: String? = ...): VM' is deprecated. Moved to package: androidx.hilt.lifecycle.viewmodel.compose.
-w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/SettingsScreen.kt:94:13 'fun Divider(modifier: Modifier = ..., thickness: Dp = ..., color: Color = ...): Unit' is deprecated. Renamed to HorizontalDivider.
-w: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/TemplatesScreen.kt:42:57 'fun <reified VM : ViewModel> hiltViewModel(viewModelStoreOwner: ViewModelStoreOwner = ..., key: String? = ...): VM' is deprecated. Moved to package: androidx.hilt.lifecycle.viewmodel.compose.
+> Task :app:compileReleaseKotlin FAILED
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/SettingsScreen.kt:118:39 Unresolved reference 'clearCache'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MasterAllegationsViewModel.kt:70:34 Unresolved reference 'update'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/MasterAllegationsViewModel.kt:70:43 Cannot infer type for this parameter. Specify it explicitly.
 
-FAILURE: Build failed with an exception.
+FAILURE: Build completed with 2 failures.
 
+1: Task failed with an exception.
+-----------
 * What went wrong:
-Execution failed for task ':app:spotlessKotlinCheck'.
-> The following files had format violations:
-      src/main/java/com/hereliesaz/lexorcist/MainScreen.kt
-          @@ -1,4 +1,5 @@
-           @file:Suppress("ktlint:standard:no-wildcard-imports")
-          +
-           package·com.hereliesaz.lexorcist
-
-           import·androidx.compose.foundation.layout.Arrangement
-  Run './gradlew :app:spotlessApply' to fix these violations.
+Execution failed for task ':app:compileDebugKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
 
 * Try:
 > Run with --stacktrace option to get the stack trace.
 > Run with --info or --debug option to get more log output.
 > Run with --scan to get full insights.
 > Get more help at https://help.gradle.org.
+==============================================================================
 
-BUILD FAILED in 30s
-73 actionable tasks: 7 executed, 66 up-to-date
+2: Task failed with an exception.
+-----------
+* What went wrong:
+Execution failed for task ':app:compileReleaseKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+==============================================================================
+
+BUILD FAILED in 18s
+75 actionable tasks: 7 executed, 68 up-to-date

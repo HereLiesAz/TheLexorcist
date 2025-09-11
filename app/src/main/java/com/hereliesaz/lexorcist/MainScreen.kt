@@ -1,4 +1,5 @@
 @file:Suppress("ktlint:standard:no-wildcard-imports")
+
 package com.hereliesaz.lexorcist
 
 import androidx.compose.foundation.layout.Arrangement

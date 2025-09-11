@@ -127,13 +127,13 @@ class AuthViewModel
             Log.d(TAG, "User email saved to SharedPreferences: ${credential.id}")
 
             // Create and store the GoogleAccountCredential
-            val scopes = listOf(DriveScopes.DRIVE_FILE, SheetsScopes.SPREADSHEETS)
+            val scopes = listOf(DriveScopes.DRIVE, SheetsScopes.SPREADSHEETS)
             val accountCredential = GoogleAccountCredential.usingOAuth2(application, scopes)
             accountCredential.selectedAccountName = credential.id
             credentialHolder.credential = accountCredential
             credentialHolder.googleApiService =
                 com.hereliesaz.lexorcist.service
-                    .GoogleApiService(accountCredential, application.packageName)
+                    .GoogleApiService(accountCredential, application.getString(R.string.app_name))
         }
 
         fun onSignInError(error: Exception) {

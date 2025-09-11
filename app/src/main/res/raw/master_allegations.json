@@ -1,0 +1,254 @@
+[
+  {
+    "type": "Civil",
+    "category": "Personal injury (Torts)",
+    "name": "Negligence",
+    "description": "Failure to exercise reasonable care, e.g., car accidents, slip-and-fall, medical malpractice, wrongful death."
+  },
+  {
+    "type": "Civil",
+    "category": "Personal injury (Torts)",
+    "name": "Assault and battery",
+    "description": "Intentional act causing fear of attack (assault) or unlawful physical contact (battery)."
+  },
+  {
+    "type": "Civil",
+    "category": "Personal injury (Torts)",
+    "name": "False imprisonment",
+    "description": "Unlawful confinement of a person without their consent."
+  },
+  {
+    "type": "Civil",
+    "category": "Personal injury (Torts)",
+    "name": "Intentional infliction of emotional distress",
+    "description": "Extreme or outrageous conduct that causes severe emotional harm."
+  },
+  {
+    "type": "Civil",
+    "category": "Personal injury (Torts)",
+    "name": "Trespass",
+    "description": "Intentional entry onto the land of another without permission."
+  },
+  {
+    "type": "Civil",
+    "category": "Personal injury (Torts)",
+    "name": "Product Liability",
+    "description": "Holds manufacturers, distributors, or sellers responsible for a defective product that causes harm."
+  },
+  {
+    "type": "Civil",
+    "category": "Contract disputes",
+    "name": "Breach of contract",
+    "description": "Failure to perform the duties stipulated in a valid and binding contract."
+  },
+  {
+    "type": "Civil",
+    "category": "Contract disputes",
+    "name": "Fraudulent inducement",
+    "description": "Alleging that a party was intentionally deceived into entering a contract."
+  },
+  {
+    "type": "Civil",
+    "category": "Contract disputes",
+    "name": "Duress",
+    "description": "Claiming a party was coerced into an agreement."
+  },
+  {
+    "type": "Civil",
+    "category": "Contract disputes",
+    "name": "Lesion",
+    "description": "An allegation where a contract's price is unfairly low, typically for immovable property."
+  },
+  {
+    "type": "Civil",
+    "category": "Contract disputes",
+    "name": "Specific performance",
+    "description": "Seeking a court order for the other party to fulfill their part of the contract, rather than paying monetary damages."
+  },
+  {
+    "type": "Civil",
+    "category": "Property disputes",
+    "name": "Boundary disputes",
+    "description": "When neighbors disagree on the exact location of their property lines."
+  },
+  {
+    "type": "Civil",
+    "category": "Property disputes",
+    "name": "Servitude disputes",
+    "description": "Disagreements over the right to use another person's property for a specific purpose, similar to an easement in other states."
+  },
+  {
+    "type": "Civil",
+    "category": "Property disputes",
+    "name": "Acquisitive prescription (Adverse Possession)",
+    "description": "A claim to ownership of property by someone who has openly occupied it for an extended period."
+  },
+  {
+    "type": "Civil",
+    "category": "Property disputes",
+    "name": "Landlord-Tenant disputes",
+    "description": "Allegations concerning rent, property maintenance, or eviction."
+  },
+  {
+    "type": "Civil",
+    "category": "Property disputes",
+    "name": "Co-ownership disputes",
+    "description": "Disagreements among multiple owners of a single property."
+  },
+  {
+    "type": "Civil",
+    "category": "Family law",
+    "name": "Divorce",
+    "description": "Allegations related to fault or no-fault grounds for ending a marriage."
+  },
+  {
+    "type": "Civil",
+    "category": "Family law",
+    "name": "Custody proceedings",
+    "description": "Actions to determine child custody and support."
+  },
+  {
+    "type": "Civil",
+    "category": "Family law",
+    "name": "Filiation actions",
+    "description": "Claims to establish or disavow the legal relationship between a child and a parent."
+  },
+  {
+    "type": "Civil",
+    "category": "Family law",
+    "name": "Child abuse and neglect",
+    "description": "Legal services are mandated in cases of alleged abuse, neglect, or exploitation."
+  },
+  {
+    "type": "Civil",
+    "category": "Family law",
+    "name": "Protective orders",
+    "description": "Allegations involving domestic violence that require a protective order."
+  },
+  {
+    "type": "Civil",
+    "category": "Civil rights violations",
+    "name": "Discrimination",
+    "description": "Claims of discrimination based on a protected characteristic in employment, housing, or public accommodation."
+  },
+  {
+    "type": "Civil",
+    "category": "Civil rights violations",
+    "name": "Violations under 42 U.S.C. § 1983",
+    "description": "This covers constitutional violations by state actors, such as allegations of excessive force by law enforcement."
+  },
+  {
+    "type": "Civil",
+    "category": "Other civil allegations",
+    "name": "Open account or promissory note actions",
+    "description": "Claims to collect on unpaid commercial accounts or promissory notes."
+  },
+  {
+    "type": "Civil",
+    "category": "Other civil allegations",
+    "name": "Insurance policy disputes",
+    "description": "Disputes over claims against an insurance company."
+  },
+  {
+    "type": "Civil",
+    "category": "Other civil allegations",
+    "name": "Suits on a judicial bond",
+    "description": "Actions to recover damages from a bond."
+  },
+  {
+    "type": "Criminal",
+    "category": "Offenses Against Persons",
+    "name": "Homicide",
+    "description": "First degree murder, second degree murder, manslaughter, negligent homicide, vehicular homicide."
+  },
+  {
+    "type": "Criminal",
+    "category": "Offenses Against Persons",
+    "name": "Feticide",
+    "description": "First degree feticide, second degree feticide, third degree feticide."
+  },
+  {
+    "type": "Criminal",
+    "category": "Offenses Against Persons",
+    "name": "Assault and Battery",
+    "description": "Aggravated assault, simple assault, aggravated battery, second degree battery, simple battery."
+  },
+  {
+    "type": "Criminal",
+    "category": "Offenses Against Persons",
+    "name": "Rape and Sexual Offenses",
+    "description": "Forcible rape, simple rape, sexual battery, oral sexual battery, etc."
+  },
+  {
+    "type": "Criminal",
+    "category": "Offenses Against Persons",
+    "name": "Kidnapping",
+    "description": "Aggravated kidnapping, second degree kidnapping, simple kidnapping."
+  },
+  {
+    "type": "Criminal",
+    "category": "Offenses Against Persons",
+    "name": "Robbery",
+    "description": "First degree robbery, second degree robbery, simple robbery, carjacking."
+  },
+  {
+    "type": "Criminal",
+    "category": "Offenses Affecting Property",
+    "name": "Arson and Use of Explosives",
+    "description": "Aggravated arson, simple arson."
+  },
+  {
+    "type": "Criminal",
+    "category": "Offenses Affecting Property",
+    "name": "Burglary",
+    "description": "Aggravated burglary, simple burglary."
+  },
+  {
+    "type": "Criminal",
+    "category": "Offenses Affecting Property",
+    "name": "Theft",
+    "description": "Theft, theft of a firearm, theft of livestock, etc."
+  },
+  {
+    "type": "Criminal",
+    "category": "Offenses Affecting Property",
+    "name": "Fraud and Forgery",
+    "description": "Issuing worthless checks, forgery, identity theft, etc."
+  },
+  {
+    "type": "Criminal",
+    "category": "Offenses Affecting the Public Morals",
+    "name": "Gambling",
+    "description": "Gambling, gambling in public, etc."
+  },
+  {
+    "type": "Criminal",
+    "category": "Offenses Affecting the Public Morals",
+    "name": "Obscenity",
+    "description": "Obscenity, pornography involving juveniles."
+  },
+  {
+    "type": "Criminal",
+    "category": "Offenses Affecting the Public Morals",
+    "name": "Prostitution",
+    "description": "Prostitution, soliciting for prostitutes, etc."
+  },
+  {
+    "type": "Criminal",
+    "category": "Offenses Affecting the Public Generally",
+    "name": "Bribery and Corrupt Influencing",
+    "description": "Public bribery, bribery of sports participants, etc."
+  },
+  {
+    "type": "Criminal",
+    "category": "Offenses Affecting the Public Generally",
+    "name": "Treason and Disloyal Acts",
+    "description": "Treason, misprision of treason."
+  },
+  {
+    "type": "Criminal",
+    "category": "Offenses Affecting the Public Generally",
+    "name": "Weapons",
+    "description": "Illegal carrying of weapons, illegal use of weapons or dangerous instrumentalities."
+  }
+]
