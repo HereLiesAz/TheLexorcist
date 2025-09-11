@@ -12,6 +12,9 @@ import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialException
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
+import com.google.api.services.drive.DriveScopes
+import com.google.api.services.sheets.v4.SheetsScopes
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
@@ -75,7 +78,6 @@ class AuthViewModel
                     if (userEmail != null) {
                         googleIdOptionBuilder.setFilterByAuthorizedAccounts(true)
                     } else {
-                        // No user to silently sign in, so we just exit
                         _signInState.value = SignInState.Idle
                         return@launch
                     }
@@ -105,7 +107,6 @@ class AuthViewModel
                     }
                 } catch (e: GetCredentialException) {
                     Log.e(TAG, "GetCredentialException", e)
-                    // If silent sign-in fails, we don't need to show an error, just go to manual sign-in
                     if (!silent) {
                         onSignInError(e)
                     } else {
@@ -115,12 +116,20 @@ class AuthViewModel
             }
         }
 
-        private fun onSignInResult(credential: GoogleIdTokenCredential) {
+        private fun onSignInResult(googleIdTokenCredential: GoogleIdTokenCredential) {
+            val userId = googleIdTokenCredential.id // Use .id, which is the email/unique identifier
+
+            if (userId.isNullOrBlank()) { // Check if userId (email) is null or blank
+                Log.e(TAG, "User ID (email) is null or blank from GoogleIdTokenCredential. Cannot proceed.")
+                onSignInError(Exception("User email not available. Please ensure email permission is granted or try again."))
+                return
+            }
+
             val userInfo =
                 UserInfo(
-                    displayName = credential.displayName,
-                    email = credential.id, // This is the user's email/ID
-                    photoUrl = credential.profilePictureUri?.toString(),
+                    displayName = googleIdTokenCredential.displayName,
+                    email = userId, // Use userId (which is the email)
+                    photoUrl = googleIdTokenCredential.profilePictureUri?.toString(),
                 )
             _signInState.value = SignInState.Success(userInfo)
             sharedPreferences.edit { putString(PREF_USER_EMAIL_KEY, credential.id) }
@@ -137,7 +146,7 @@ class AuthViewModel
         }
 
         fun onSignInError(error: Exception) {
-            _signInState.value = SignInState.Error("Sign-in attempt failed. Please try again.", error)
+            _signInState.value = SignInState.Error("Sign-in attempt failed. Details: ${error.message}", error)
         }
 
         fun signOut() {

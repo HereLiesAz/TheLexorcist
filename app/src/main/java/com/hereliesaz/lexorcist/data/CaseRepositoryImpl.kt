@@ -18,13 +18,13 @@ class CaseRepositoryImpl
     ) : CaseRepository {
         private val _cases = kotlinx.coroutines.flow.MutableStateFlow<List<Case>>(emptyList())
 
-        /**
-         * A flow of the list of cases.
-         * This is the implementation of the [CaseRepository.cases] property.
-         */
-        override val cases: Flow<List<Case>> = _cases.asStateFlow()
+    /**
+     * A flow of the list of cases.
+     * This is the implementation of the [CaseRepository.cases] property.
+     */
+    override val cases: Flow<List<Case>> = _cases.asStateFlow()
 
-        override suspend fun getCaseBySpreadsheetId(spreadsheetId: String): Case? = _cases.value.find { it.spreadsheetId == spreadsheetId }
+    override suspend fun getCaseBySpreadsheetId(spreadsheetId: String): Case? = _cases.value.find { it.spreadsheetId == spreadsheetId }
 
         override suspend fun refreshCases() {
             android.util.Log.d("CaseRepositoryImpl", "refreshCases called")
@@ -100,6 +100,7 @@ class CaseRepositoryImpl
                 android.util.Log.e("CaseRepositoryImpl", "IOException in createCase: $e")
             }
         }
+    }
 
         override suspend fun archiveCase(case: Case) {
             credentialHolder.googleApiService?.let {
@@ -119,53 +120,53 @@ class CaseRepositoryImpl
             }
         }
 
-        override fun getSheetFilters(spreadsheetId: String): Flow<List<SheetFilter>> {
-            // TODO: Implement actual logic (with null safety for googleApiService)
-            return emptyFlow()
-        }
+    override fun getSheetFilters(spreadsheetId: String): Flow<List<SheetFilter>> {
+        // TODO: Implement actual logic (with null safety for googleApiService)
+        return emptyFlow()
+    }
 
-        override suspend fun refreshSheetFilters(spreadsheetId: String) {
-            // TODO: Implement actual logic (with null safety for googleApiService)
-        }
+    override suspend fun refreshSheetFilters(spreadsheetId: String) {
+        // TODO: Implement actual logic (with null safety for googleApiService)
+    }
 
-        override suspend fun addSheetFilter(
-            spreadsheetId: String,
-            name: String,
-            value: String,
-        ) {
-            // TODO: Implement actual logic (with null safety for googleApiService)
-        }
+    override suspend fun addSheetFilter(
+        spreadsheetId: String,
+        name: String,
+        value: String,
+    ) {
+        // TODO: Implement actual logic (with null safety for googleApiService)
+    }
 
-        override fun getAllegations(
-            caseId: Int,
-            spreadsheetId: String,
-        ): Flow<List<Allegation>> {
-            // TODO: Implement actual logic (with null safety for googleApiService)
-            return emptyFlow()
-        }
+    override fun getAllegations(
+        caseId: Int,
+        spreadsheetId: String,
+    ): Flow<List<Allegation>> {
+        // TODO: Implement actual logic (with null safety for googleApiService)
+        return emptyFlow()
+    }
 
-        override suspend fun refreshAllegations(
-            caseId: Int,
-            spreadsheetId: String,
-        ) {
-            // TODO: Implement actual logic (with null safety for googleApiService)
-        }
+    override suspend fun refreshAllegations(
+        caseId: Int,
+        spreadsheetId: String,
+    ) {
+        // TODO: Implement actual logic (with null safety for googleApiService)
+    }
 
-        override suspend fun addAllegation(
-            spreadsheetId: String,
-            allegationText: String,
-        ) {
-            // TODO: Implement actual logic (with null safety for googleApiService)
-        }
+    override suspend fun addAllegation(
+        spreadsheetId: String,
+        allegationText: String,
+    ) {
+        // TODO: Implement actual logic (with null safety for googleApiService)
+    }
 
-        override fun getHtmlTemplates(): Flow<List<DriveFile>> {
-            // TODO: Implement actual logic (with null safety for googleApiService)
-            return emptyFlow()
-        }
+    override fun getHtmlTemplates(): Flow<List<DriveFile>> {
+        // TODO: Implement actual logic (with null safety for googleApiService)
+        return emptyFlow()
+    }
 
-        override suspend fun refreshHtmlTemplates() {
-            // TODO: Implement actual logic (with null safety for googleApiService)
-        }
+    override suspend fun refreshHtmlTemplates() {
+        // TODO: Implement actual logic (with null safety for googleApiService)
+    }
 
         override suspend fun importSpreadsheet(spreadsheetId: String): Case? {
             // TODO: Implement actual logic (with null safety for googleApiService)
@@ -176,3 +177,4 @@ class CaseRepositoryImpl
             _cases.value = emptyList()
         }
     }
+}

@@ -48,6 +48,7 @@ import com.hereliesaz.lexorcist.ui.CreateCaseDialog
 import com.hereliesaz.lexorcist.ui.EvidenceDetailsScreen
 import com.hereliesaz.lexorcist.ui.EvidenceScreen
 import com.hereliesaz.lexorcist.ui.ExtrasScreen
+import com.hereliesaz.lexorcist.ui.MasterAllegationsScreen
 import com.hereliesaz.lexorcist.ui.ReviewScreen
 import com.hereliesaz.lexorcist.ui.ScriptEditorScreen
 import com.hereliesaz.lexorcist.ui.SettingsScreen
@@ -57,9 +58,10 @@ import com.hereliesaz.lexorcist.viewmodel.AuthViewModel
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
+import com.hereliesaz.lexorcist.viewmodel.MasterAllegationsViewModel
 import com.hereliesaz.lexorcist.viewmodel.ScriptEditorViewModel
 
-@OptIn(ExperimentalMaterial3Api::class) // ENSURED THIS IS CORRECT
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
     navController: NavHostController,
@@ -106,7 +108,9 @@ fun MainScreen(
                     AzNavRail {
                         azRailItem(id = "cases", text = "Cases", onClick = { navController.navigate("cases") })
                         azRailItem(id = "evidence", text = "Evidence", onClick = { navController.navigate("evidence") })
-                        azRailItem(id = "allegations", text = "Allegations", onClick = { navController.navigate("allegations") })
+                        // Renamed item id and route for case-specific allegations
+                        azRailItem(id = "case_allegations_item", text = "Allegations", onClick = { navController.navigate("case_allegations_route") })
+                        azRailItem(id = "master_allegations", text = "Master Allegations", onClick = { navController.navigate("master_allegations") })
                         azRailItem(id = "templates", text = "Templates", onClick = { navController.navigate("templates") })
                         azRailItem(id = "timeline", text = "Timeline", onClick = { navController.navigate("timeline") })
                         azRailItem(id = "data_review", text = "Review", onClick = { navController.navigate("data_review") })
@@ -177,8 +181,12 @@ fun MainScreen(
                                     val scriptEditorViewModel: ScriptEditorViewModel = hiltViewModel()
                                     ScriptEditorScreen(viewModel = scriptEditorViewModel)
                                 }
-                                composable("allegations") {
+                                // Renamed route for case-specific allegations
+                                composable("case_allegations_route") {
                                     AllegationsScreen()
+                                }
+                                composable("master_allegations") { 
+                                    MasterAllegationsScreen(viewModel = hiltViewModel<MasterAllegationsViewModel>())
                                 }
                                 composable("templates") {
                                     TemplatesScreen()
@@ -193,7 +201,6 @@ fun MainScreen(
                                     }
                                 }
                                 composable("data_review") {
-                                    // Changed "review" to "data_review"
                                     val allegationsViewModel: com.hereliesaz.lexorcist.viewmodel.AllegationsViewModel = hiltViewModel()
                                     ReviewScreen(
                                         evidenceViewModel = evidenceViewModel,
@@ -236,7 +243,7 @@ fun MainScreen(
                     modifier = Modifier.fillMaxSize().padding(paddingValues),
                     contentAlignment = Alignment.Center,
                 ) {
-                    CircularProgressIndicator() // ENSURED THIS IS CORRECT
+                    CircularProgressIndicator()
                 }
             }
             is SignInState.Idle, is SignInState.Error -> {
