@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 
@@ -28,6 +29,7 @@ import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 @Composable
 fun CreateCaseDialog(
     caseViewModel: CaseViewModel,
+    navController: NavController,
     onDismiss: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -96,6 +98,7 @@ fun CreateCaseDialog(
                             caseJudge = caseJudge,
                         )
                         onDismiss()
+                        navController.navigate("cases")
                     }
                 },
                 enabled = caseName.isNotBlank(),

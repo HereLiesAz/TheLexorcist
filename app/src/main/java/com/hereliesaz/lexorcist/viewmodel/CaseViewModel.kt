@@ -28,7 +28,6 @@ class CaseViewModel
     constructor(
         @param:ApplicationContext private val applicationContext: Context,
         private val caseRepository: CaseRepository,
-        private val folderManager: FolderManager?,
         private val cacheManager: CacheManager,
     ) : ViewModel() {
         private val sharedPref = applicationContext.getSharedPreferences("CaseInfoPrefs", Context.MODE_PRIVATE)
@@ -89,7 +88,6 @@ class CaseViewModel
 
         init {
             loadThemeModePreference()
-            folderManager?.getOrCreateLocalLexorcistFolder()
             loadCasesFromRepository()
             // observeAuthChanges() //TODO: Re-enable this once AuthViewModel is provided correctly
         }

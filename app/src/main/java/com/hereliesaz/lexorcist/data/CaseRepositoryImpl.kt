@@ -13,8 +13,7 @@ import com.google.api.services.drive.model.File as DriveFile
 class CaseRepositoryImpl
     @Inject
     constructor(
-        // Changed to nullable
-        private val googleApiService: GoogleApiService?,
+        private val credentialHolder: com.hereliesaz.lexorcist.auth.CredentialHolder,
         private val settingsManager: SettingsManager,
         private val errorReporter: com.hereliesaz.lexorcist.utils.ErrorReporter,
     ) : CaseRepository {
@@ -30,6 +29,7 @@ class CaseRepositoryImpl
 
         override suspend fun refreshCases() {
             android.util.Log.d("CaseRepositoryImpl", "refreshCases called")
+            val googleApiService = credentialHolder.googleApiService
             try {
                 googleApiService?.let { service ->
                     // Null check
@@ -55,6 +55,7 @@ class CaseRepositoryImpl
             court: String,
         ) {
             android.util.Log.d("CaseRepositoryImpl", "createCase called with name: $caseName")
+            val googleApiService = credentialHolder.googleApiService
             try {
                 googleApiService?.let { service ->
                     // Null check
@@ -102,7 +103,7 @@ class CaseRepositoryImpl
         }
 
         override suspend fun archiveCase(case: Case) {
-            googleApiService?.let {
+            credentialHolder.googleApiService?.let {
                 val archivedCase = case.copy(isArchived = true)
                 if (it.updateCaseInRegistry(archivedCase)) {
                     refreshCases()
@@ -111,7 +112,7 @@ class CaseRepositoryImpl
         }
 
         override suspend fun deleteCase(case: Case) {
-            googleApiService?.let {
+            credentialHolder.googleApiService?.let {
                 if (it.deleteCaseFromRegistry(case)) {
                     case.folderId?.let { folderId -> it.deleteFolder(folderId) }
                     refreshCases()

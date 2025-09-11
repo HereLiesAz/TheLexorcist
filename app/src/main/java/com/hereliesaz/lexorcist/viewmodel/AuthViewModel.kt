@@ -131,6 +131,7 @@ class AuthViewModel
             val accountCredential = GoogleAccountCredential.usingOAuth2(application, scopes)
             accountCredential.selectedAccountName = credential.id
             credentialHolder.credential = accountCredential
+            credentialHolder.googleApiService = com.hereliesaz.lexorcist.service.GoogleApiService(accountCredential, application.packageName)
         }
 
         fun onSignInError(error: Exception) {
@@ -144,6 +145,7 @@ class AuthViewModel
                 sharedPreferences.edit { remove(PREF_USER_EMAIL_KEY) }
                 Log.d(TAG, "User email cleared from SharedPreferences.")
                 credentialHolder.credential = null
+                credentialHolder.googleApiService = null
             }
         }
 
