@@ -12,12 +12,12 @@ import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialException
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
-import com.google.api.services.drive.DriveScopes
-import com.google.api.services.sheets.v4.SheetsScopes
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
+import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
+import com.google.api.services.drive.DriveScopes
+import com.google.api.services.sheets.v4.SheetsScopes
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.auth.CredentialHolder
 import com.hereliesaz.lexorcist.model.SignInState
@@ -131,7 +131,9 @@ class AuthViewModel
             val accountCredential = GoogleAccountCredential.usingOAuth2(application, scopes)
             accountCredential.selectedAccountName = credential.id
             credentialHolder.credential = accountCredential
-            credentialHolder.googleApiService = com.hereliesaz.lexorcist.service.GoogleApiService(accountCredential, application.packageName)
+            credentialHolder.googleApiService =
+                com.hereliesaz.lexorcist.service
+                    .GoogleApiService(accountCredential, application.packageName)
         }
 
         fun onSignInError(error: Exception) {

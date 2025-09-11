@@ -16,61 +16,61 @@ import javax.inject.Inject
 enum class AllegationSortType {
     TYPE,
     CATEGORY,
-    NAME
+    NAME,
 }
 
 @HiltViewModel
-class MasterAllegationsViewModel @Inject constructor(
-    private val repository: MasterAllegationRepository
-) : ViewModel() {
+class MasterAllegationsViewModel
+    @Inject
+    constructor(
+        private val repository: MasterAllegationRepository,
+    ) : ViewModel() {
+        private val _searchQuery = MutableStateFlow("")
+        val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
-    private val _searchQuery = MutableStateFlow("")
-    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+        private val _selectedAllegations = MutableStateFlow<Set<MasterAllegation>>(emptySet())
+        val selectedAllegations: StateFlow<Set<MasterAllegation>> = _selectedAllegations.asStateFlow()
 
-    private val _selectedAllegations = MutableStateFlow<Set<MasterAllegation>>(emptySet())
-    val selectedAllegations: StateFlow<Set<MasterAllegation>> = _selectedAllegations.asStateFlow()
+        private val _sortType = MutableStateFlow(AllegationSortType.TYPE)
+        val sortType: StateFlow<AllegationSortType> = _sortType.asStateFlow()
 
-    private val _sortType = MutableStateFlow(AllegationSortType.TYPE)
-    val sortType: StateFlow<AllegationSortType> = _sortType.asStateFlow()
-
-    val allegations: StateFlow<List<MasterAllegation>> =
-        repository.getMasterAllegations()
-            .combine(searchQuery) { allegations, query ->
-                if (query.isBlank()) {
-                    allegations
-                } else {
-                    allegations.filter {
-                        it.name.contains(query, ignoreCase = true) ||
-                        it.description.contains(query, ignoreCase = true) ||
-                        it.category.contains(query, ignoreCase = true) ||
-                        it.type.contains(query, ignoreCase = true)
+        val allegations: StateFlow<List<MasterAllegation>> =
+            repository
+                .getMasterAllegations()
+                .combine(searchQuery) { allegations, query ->
+                    if (query.isBlank()) {
+                        allegations
+                    } else {
+                        allegations.filter {
+                            it.name.contains(query, ignoreCase = true) ||
+                                it.description.contains(query, ignoreCase = true) ||
+                                it.category.contains(query, ignoreCase = true) ||
+                                it.type.contains(query, ignoreCase = true)
+                        }
                     }
-                }
-            }
-            .combine(_sortType) { allegations, sortType ->
-                when (sortType) {
-                    AllegationSortType.TYPE -> allegations.sortedWith(compareBy({ it.type }, { it.category }, { it.name }))
-                    AllegationSortType.CATEGORY -> allegations.sortedWith(compareBy({ it.category }, { it.type }, { it.name }))
-                    AllegationSortType.NAME -> allegations.sortedBy { it.name }
-                }
-            }
-            .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+                }.combine(_sortType) { allegations, sortType ->
+                    when (sortType) {
+                        AllegationSortType.TYPE -> allegations.sortedWith(compareBy({ it.type }, { it.category }, { it.name }))
+                        AllegationSortType.CATEGORY -> allegations.sortedWith(compareBy({ it.category }, { it.type }, { it.name }))
+                        AllegationSortType.NAME -> allegations.sortedBy { it.name }
+                    }
+                }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
-    fun onSearchQueryChanged(query: String) {
-        _searchQuery.value = query
-    }
-
-    fun onSortTypeChanged(sortType: AllegationSortType) {
-        _sortType.value = sortType
-    }
-
-    fun toggleAllegationSelection(allegation: MasterAllegation) {
-        val currentSelection = _selectedAllegations.value.toMutableSet()
-        if (currentSelection.contains(allegation)) {
-            currentSelection.remove(allegation)
-        } else {
-            currentSelection.add(allegation)
+        fun onSearchQueryChanged(query: String) {
+            _searchQuery.value = query
         }
-        _selectedAllegations.value = currentSelection
+
+        fun onSortTypeChanged(sortType: AllegationSortType) {
+            _sortType.value = sortType
+        }
+
+        fun toggleAllegationSelection(allegation: MasterAllegation) {
+            val currentSelection = _selectedAllegations.value.toMutableSet()
+            if (currentSelection.contains(allegation)) {
+                currentSelection.remove(allegation)
+            } else {
+                currentSelection.add(allegation)
+            }
+            _selectedAllegations.value = currentSelection
+        }
     }
-}

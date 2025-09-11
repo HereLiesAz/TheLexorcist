@@ -48,6 +48,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
@@ -55,7 +56,10 @@ import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CasesScreen(caseViewModel: CaseViewModel) {
+fun CasesScreen(
+    caseViewModel: CaseViewModel,
+    navController: NavController,
+) {
     val casesState by caseViewModel.cases.collectAsState()
     val sortOrder by caseViewModel.sortOrder.collectAsState() // Retain for logic if sort is re-added
     val searchQuery by caseViewModel.searchQuery.collectAsState()
@@ -208,6 +212,7 @@ fun CasesScreen(caseViewModel: CaseViewModel) {
     if (showCreateCaseDialog) {
         CreateCaseDialog(
             caseViewModel = caseViewModel,
+            navController = navController,
             onDismiss = { showCreateCaseDialog = false },
         )
     }

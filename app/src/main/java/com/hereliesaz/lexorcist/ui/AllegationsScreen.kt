@@ -49,9 +49,7 @@ import com.hereliesaz.lexorcist.viewmodel.MasterAllegationsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AllegationsScreen(
-    viewModel: MasterAllegationsViewModel = hiltViewModel()
-) {
+fun AllegationsScreen(viewModel: MasterAllegationsViewModel = hiltViewModel()) {
     val allegations by viewModel.allegations.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val selectedAllegations by viewModel.selectedAllegations.collectAsState()
@@ -64,24 +62,26 @@ fun AllegationsScreen(
     Scaffold(
         topBar = {
             TopAppBar(title = { Text(stringResource(R.string.allegations)) })
-        }
+        },
     ) { padding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(padding),
         ) {
             if (selectedAllegations.isNotEmpty()) {
                 Text(
                     text = "Selected Allegations:",
                     style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(start = 16.dp, top = 16.dp)
+                    modifier = Modifier.padding(start = 16.dp, top = 16.dp),
                 )
                 LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(100.dp)
-                        .padding(horizontal = 16.dp)
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .height(100.dp)
+                            .padding(horizontal = 16.dp),
                 ) {
                     items(selectedAllegations.toList()) { allegation ->
                         Text(text = allegation.name)
@@ -93,24 +93,26 @@ fun AllegationsScreen(
                 value = searchQuery,
                 onValueChange = { viewModel.onSearchQueryChanged(it) },
                 label = { Text(stringResource(R.string.search)) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = stringResource(R.string.search)) },
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                keyboardActions = KeyboardActions(onSearch = {
-                    keyboardController?.hide()
-                })
+                keyboardActions =
+                    KeyboardActions(onSearch = {
+                        keyboardController?.hide()
+                    }),
             )
 
             SortDropdown(
                 sortType = sortType,
                 onSortChange = { viewModel.onSortTypeChanged(it) },
-                modifier = Modifier.padding(horizontal = 16.dp)
+                modifier = Modifier.padding(horizontal = 16.dp),
             )
 
             LazyColumn(
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize(),
             ) {
                 if (groupedAllegations != null) {
                     groupedAllegations.forEach { (type, allegationsForType) ->
@@ -118,7 +120,7 @@ fun AllegationsScreen(
                             Text(
                                 text = type,
                                 style = MaterialTheme.typography.headlineSmall,
-                                modifier = Modifier.padding(16.dp)
+                                modifier = Modifier.padding(16.dp),
                             )
                         }
                         val allegationsByCategory = allegationsForType.groupBy { it.category }
@@ -127,14 +129,14 @@ fun AllegationsScreen(
                                 Text(
                                     text = category,
                                     style = MaterialTheme.typography.titleMedium,
-                                    modifier = Modifier.padding(start = 32.dp, top = 8.dp, bottom = 8.dp)
+                                    modifier = Modifier.padding(start = 32.dp, top = 8.dp, bottom = 8.dp),
                                 )
                             }
                             items(allegationList) { allegation ->
                                 AllegationItem(
                                     allegation = allegation,
                                     isSelected = selectedAllegations.contains(allegation),
-                                    onToggleSelection = { viewModel.toggleAllegationSelection(allegation) }
+                                    onToggleSelection = { viewModel.toggleAllegationSelection(allegation) },
                                 )
                             }
                         }
@@ -145,14 +147,14 @@ fun AllegationsScreen(
                             Text(
                                 text = category,
                                 style = MaterialTheme.typography.headlineSmall,
-                                modifier = Modifier.padding(16.dp)
+                                modifier = Modifier.padding(16.dp),
                             )
                         }
                         items(allegationList) { allegation ->
                             AllegationItem(
                                 allegation = allegation,
                                 isSelected = selectedAllegations.contains(allegation),
-                                onToggleSelection = { viewModel.toggleAllegationSelection(allegation) }
+                                onToggleSelection = { viewModel.toggleAllegationSelection(allegation) },
                             )
                         }
                     }
@@ -161,7 +163,7 @@ fun AllegationsScreen(
                         AllegationItem(
                             allegation = allegation,
                             isSelected = selectedAllegations.contains(allegation),
-                            onToggleSelection = { viewModel.toggleAllegationSelection(allegation) }
+                            onToggleSelection = { viewModel.toggleAllegationSelection(allegation) },
                         )
                     }
                 }
@@ -174,13 +176,13 @@ fun AllegationsScreen(
 fun SortDropdown(
     sortType: AllegationSortType,
     onSortChange: (AllegationSortType) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     var expanded by remember { mutableStateOf(false) }
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.End,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Text("Sort by: $sortType")
         Spacer(modifier = Modifier.height(8.dp))
@@ -190,28 +192,28 @@ fun SortDropdown(
         }
         DropdownMenu(
             expanded = expanded,
-            onDismissRequest = { expanded = false }
+            onDismissRequest = { expanded = false },
         ) {
             DropdownMenuItem(
                 text = { Text("Type") },
                 onClick = {
                     onSortChange(AllegationSortType.TYPE)
                     expanded = false
-                }
+                },
             )
             DropdownMenuItem(
                 text = { Text("Category") },
                 onClick = {
                     onSortChange(AllegationSortType.CATEGORY)
                     expanded = false
-                }
+                },
             )
             DropdownMenuItem(
                 text = { Text("Name") },
                 onClick = {
                     onSortChange(AllegationSortType.NAME)
                     expanded = false
-                }
+                },
             )
         }
     }
@@ -221,17 +223,19 @@ fun SortDropdown(
 fun AllegationItem(
     allegation: MasterAllegation,
     isSelected: Boolean,
-    onToggleSelection: () -> Unit
+    onToggleSelection: () -> Unit,
 ) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp)
-            .clickable { onToggleSelection() },
-        colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 4.dp)
+                .clickable { onToggleSelection() },
+        colors =
+            CardDefaults.cardColors(
+                containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+            ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(text = allegation.name, fontWeight = FontWeight.Bold)
