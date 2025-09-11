@@ -31,12 +31,21 @@ import kotlinx.coroutines.withContext
 // Removed @Inject from constructor
 class GoogleApiService constructor(credential: GoogleAccountCredential, applicationName: String) {
 
-    private val drive: Drive = Drive.Builder(NetHttpTransport(), GsonFactory.getDefaultInstance(), credential)
-        .setApplicationName(applicationName)
-        .build()
-    private val sheets: Sheets = Sheets.Builder(NetHttpTransport(), GsonFactory.getDefaultInstance(), credential)
-        .setApplicationName(applicationName)
-        .build()
+    private val drive: Drive
+    private val sheets: Sheets
+
+    init {
+        if (credential.selectedAccountName == null) {
+            throw IllegalArgumentException("Account name must not be empty. Please select an account.")
+        }
+        drive = Drive.Builder(NetHttpTransport(), GsonFactory.getDefaultInstance(), credential)
+            .setApplicationName(applicationName)
+            .build()
+        sheets = Sheets.Builder(NetHttpTransport(), GsonFactory.getDefaultInstance(), credential)
+            .setApplicationName(applicationName)
+            .build()
+    }
+
 
     // Secondary constructor if needed, but Hilt will use the @Inject annotated one.
     // constructor(drive: Drive, sheets: Sheets) : this( TODO: figure out how to get credential and app name from drive/sheets or remove this ctor

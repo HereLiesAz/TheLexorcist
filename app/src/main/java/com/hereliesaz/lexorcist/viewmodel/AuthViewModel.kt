@@ -135,9 +135,18 @@ class AuthViewModel
             val scopes = listOf(DriveScopes.DRIVE_FILE, SheetsScopes.SPREADSHEETS)
             val accountCredential = GoogleAccountCredential.usingOAuth2(application, scopes)
             accountCredential.selectedAccountName = userId // Use userId (email)
-            
+
             credentialHolder.credential = accountCredential
-            credentialHolder.googleApiService = com.hereliesaz.lexorcist.service.GoogleApiService(accountCredential, application.packageName)
+            try {
+                credentialHolder.googleApiService =
+                    com.hereliesaz.lexorcist.service.GoogleApiService(
+                        accountCredential,
+                        application.packageName,
+                    )
+            } catch (e: IllegalArgumentException) {
+                Log.e(TAG, "Error initializing GoogleApiService", e)
+                onSignInError(e)
+            }
         }
 
         fun onSignInError(error: Exception) {
