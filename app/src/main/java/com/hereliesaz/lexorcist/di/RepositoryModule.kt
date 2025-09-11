@@ -6,6 +6,8 @@ import com.hereliesaz.lexorcist.data.CaseRepository
 import com.hereliesaz.lexorcist.data.CaseRepositoryImpl
 import com.hereliesaz.lexorcist.data.EvidenceRepository
 import com.hereliesaz.lexorcist.data.EvidenceRepositoryImpl
+import com.hereliesaz.lexorcist.data.MasterAllegationRepository
+import com.hereliesaz.lexorcist.data.MasterAllegationRepositoryImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -26,4 +28,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindAllegationsRepository(allegationsRepositoryImpl: AllegationsRepositoryImpl): AllegationsRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindMasterAllegationRepository(impl: MasterAllegationRepositoryImpl): MasterAllegationRepository
 }

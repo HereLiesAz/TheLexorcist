@@ -274,6 +274,7 @@ fun MainScreen(
         if (showCreateCaseDialog) {
             CreateCaseDialog(
                 caseViewModel = caseViewModel,
+                navController = navController,
                 onDismiss = { showCreateCaseDialog = false },
             )
         }
