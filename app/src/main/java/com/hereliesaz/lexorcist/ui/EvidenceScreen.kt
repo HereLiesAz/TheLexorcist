@@ -35,7 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
@@ -45,8 +45,8 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EvidenceScreen(
-    evidenceViewModel: EvidenceViewModel = viewModel(),
-    caseViewModel: CaseViewModel = viewModel(),
+    evidenceViewModel: EvidenceViewModel = hiltViewModel(),
+    caseViewModel: CaseViewModel = hiltViewModel(),
     navController: NavController,
 ) {
     var showAddTextEvidence by remember { mutableStateOf(false) }
