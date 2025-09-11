@@ -185,7 +185,7 @@ fun SortDropdown(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text("Sort by: $sortType")
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.width(8.dp))
         Button(onClick = { expanded = true }) {
             Text("Change")
             Icon(Icons.Default.ArrowDropDown, contentDescription = "Sort")
