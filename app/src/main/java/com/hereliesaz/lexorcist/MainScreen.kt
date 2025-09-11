@@ -108,15 +108,14 @@ fun MainScreen(
                             .fillMaxSize(),
                 ) {
                     AzNavRail {
-                        azRailItem(id = "home", text = "Home", onClick = { navController.navigate("home") })
                         azRailItem(id = "cases", text = "Cases", onClick = { navController.navigate("cases") })
                         azRailItem(id = "evidence", text = "Evidence", onClick = { navController.navigate("evidence") })
                         azRailItem(id = "allegations", text = "Allegations", onClick = { navController.navigate("allegations") })
                         azRailItem(id = "templates", text = "Templates", onClick = { navController.navigate("templates") })
                         azRailItem(id = "timeline", text = "Timeline", onClick = { navController.navigate("timeline") })
-                        azRailItem(id = "data_review", text = "Data Review", onClick = { navController.navigate("data_review") })
+                        azRailItem(id = "data_review", text = "Review", onClick = { navController.navigate("data_review") })
                         azRailItem(id = "extras", text = "Extras", onClick = { navController.navigate("extras") })
-                        azRailItem(id = "script_editor", text = "Script Editor", onClick = { navController.navigate("script_editor") })
+                        azRailItem(id = "script_editor", text = "Editor", onClick = { navController.navigate("script_editor") })
                         azRailItem(id = "settings", text = "Settings", onClick = { navController.navigate("settings") })
                         azMenuItem(id = "logout", text = "Logout", onClick = { authViewModel.signOut() })
                     }
