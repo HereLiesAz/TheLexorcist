@@ -1,129 +1,105 @@
 package com.hereliesaz.lexorcist.ui
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.hereliesaz.lexorcist.R
-import com.hereliesaz.lexorcist.viewmodel.AllegationsViewModel
-import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
-import java.util.Locale
+import com.hereliesaz.lexorcist.data.MasterAllegation
+import com.hereliesaz.lexorcist.viewmodel.MasterAllegationsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AllegationsScreen(
-    allegationsViewModel: AllegationsViewModel = hiltViewModel(),
-    caseViewModel: CaseViewModel = hiltViewModel(),
+    viewModel: MasterAllegationsViewModel = hiltViewModel()
 ) {
-    val allegations by allegationsViewModel.allegations.collectAsState()
-    val searchQuery by allegationsViewModel.searchQuery.collectAsState()
-    val isDialogShown by allegationsViewModel.isDialogShown.collectAsState()
-    val selectedAllegation by allegationsViewModel.selectedAllegation.collectAsState()
-    val selectedCase by caseViewModel.selectedCase.collectAsState()
-    val keyboardController = LocalSoftwareKeyboardController.current
+    val allegations by viewModel.allegations.collectAsState()
+    val searchQuery by viewModel.searchQuery.collectAsState()
 
-    LaunchedEffect(selectedCase) {
-        selectedCase?.spreadsheetId?.let {
-            allegationsViewModel.loadAllegations(it)
-        }
-    }
+    val groupedAllegations = allegations.groupBy { it.type }
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        stringResource(R.string.allegations).uppercase(Locale.getDefault()),
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.End,
-                        color = MaterialTheme.colorScheme.primary,
-                    )
-                },
-                colors =
-                    TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color.Transparent,
-                    ),
-            )
-        },
+            TopAppBar(title = { Text(stringResource(R.string.allegations)) })
+        }
     ) { padding ->
-        Column(modifier = Modifier.padding(padding).padding(16.dp)) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+        ) {
             OutlinedTextField(
                 value = searchQuery,
-                onValueChange = { allegationsViewModel.onSearchQueryChanged(it) },
-                label = { Text("Search Allegations") },
-                modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                keyboardActions =
-                    KeyboardActions(
-                        onSearch = {
-                            keyboardController?.hide()
-                        },
-                    ),
+                onValueChange = { viewModel.onSearchQueryChanged(it) },
+                label = { Text(stringResource(R.string.search)) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = stringResource(R.string.search)) }
             )
-            LazyColumn {
-                items(allegations) { allegation ->
-                    Text(
-                        text = allegation.text,
-                        modifier =
-                            Modifier
-                                .padding(8.dp)
-                                .clickable { allegationsViewModel.onAllegationSelected(allegation) },
-                    )
+
+            LazyColumn(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                groupedAllegations.forEach { (type, allegationsForType) ->
+                    item {
+                        Text(
+                            text = type,
+                            style = MaterialTheme.typography.headlineSmall,
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    }
+                    val allegationsByCategory = allegationsForType.groupBy { it.category }
+                    allegationsByCategory.forEach { (category, allegationList) ->
+                        item {
+                            Text(
+                                text = category,
+                                style = MaterialTheme.typography.titleMedium,
+                                modifier = Modifier.padding(start = 32.dp, top = 8.dp, bottom = 8.dp)
+                            )
+                        }
+                        items(allegationList) { allegation ->
+                            AllegationItem(allegation = allegation)
+                        }
+                    }
                 }
             }
         }
     }
+}
 
-    if (isDialogShown) {
-        selectedAllegation?.let {
-            AlertDialog(
-                onDismissRequest = { allegationsViewModel.onDialogDismiss() },
-                title = { Text(it.text) },
-                text = { Text(it.text) }, // Using text as description for now
-                confirmButton = {
-                    Row {
-                        // TODO: Implement Similar To
-                        Button(onClick = { allegationsViewModel.onDialogDismiss() }) {
-                            Text("Similar to")
-                        }
-                        // TODO: Implement Add
-                        Button(onClick = { allegationsViewModel.onDialogDismiss() }) {
-                            Text("Add")
-                        }
-                    }
-                },
-                dismissButton = {
-                    Button(onClick = { allegationsViewModel.onDialogDismiss() }) {
-                        Text("Cancel")
-                    }
-                },
-            )
+@Composable
+fun AllegationItem(allegation: MasterAllegation) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(text = allegation.name, fontWeight = FontWeight.Bold)
+            Text(text = allegation.description, style = MaterialTheme.typography.bodyMedium)
         }
     }
 }

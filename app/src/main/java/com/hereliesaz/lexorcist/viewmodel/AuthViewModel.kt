@@ -12,10 +12,14 @@ import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialException
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
+import com.google.api.services.drive.DriveScopes
+import com.google.api.services.sheets.v4.SheetsScopes
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 import com.hereliesaz.lexorcist.R
+import com.hereliesaz.lexorcist.auth.CredentialHolder
 import com.hereliesaz.lexorcist.model.SignInState
 import com.hereliesaz.lexorcist.model.UserInfo
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -34,6 +38,7 @@ class AuthViewModel
         private val application: Application,
         private val sharedPreferences: SharedPreferences,
         private val credentialManager: CredentialManager,
+        private val credentialHolder: CredentialHolder,
     ) : AndroidViewModel(application) {
         private val _signInState = MutableStateFlow<SignInState>(SignInState.Idle)
         val signInState: StateFlow<SignInState> = _signInState.asStateFlow()
@@ -120,6 +125,12 @@ class AuthViewModel
             _signInState.value = SignInState.Success(userInfo)
             sharedPreferences.edit { putString(PREF_USER_EMAIL_KEY, credential.id) }
             Log.d(TAG, "User email saved to SharedPreferences: ${credential.id}")
+
+            // Create and store the GoogleAccountCredential
+            val scopes = listOf(DriveScopes.DRIVE_FILE, SheetsScopes.SPREADSHEETS)
+            val accountCredential = GoogleAccountCredential.usingOAuth2(application, scopes)
+            accountCredential.selectedAccountName = credential.id
+            credentialHolder.credential = accountCredential
         }
 
         fun onSignInError(error: Exception) {
@@ -132,6 +143,7 @@ class AuthViewModel
                 _signInState.value = SignInState.Idle
                 sharedPreferences.edit { remove(PREF_USER_EMAIL_KEY) }
                 Log.d(TAG, "User email cleared from SharedPreferences.")
+                credentialHolder.credential = null
             }
         }
 

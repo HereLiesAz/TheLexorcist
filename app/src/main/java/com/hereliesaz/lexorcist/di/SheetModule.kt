@@ -27,19 +27,9 @@ object SheetModule {
     @Provides
     @Singleton
     fun provideGoogleAccountCredential(
-        @ApplicationContext context: Context,
-        sharedPreferences: SharedPreferences,
+        credentialHolder: com.hereliesaz.lexorcist.auth.CredentialHolder
     ): GoogleAccountCredential? {
-        val userEmail = sharedPreferences.getString(AuthViewModel.PREF_USER_EMAIL_KEY, null)
-        if (userEmail.isNullOrBlank()) {
-            return null
-        }
-        val account = Account(userEmail, "com.google")
-        return GoogleAccountCredential
-            .usingOAuth2(
-                context,
-                listOf(DriveScopes.DRIVE, SheetsScopes.SPREADSHEETS),
-            ).also { it.selectedAccount = account }
+        return credentialHolder.credential
     }
 
     @Provides
