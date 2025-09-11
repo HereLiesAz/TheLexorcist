@@ -8,7 +8,6 @@ import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.data.CaseRepository
 import com.hereliesaz.lexorcist.data.SortOrder
 import com.hereliesaz.lexorcist.model.SheetFilter
-import com.hereliesaz.lexorcist.utils.CacheManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,73 +22,72 @@ import com.google.api.services.drive.model.File as DriveFile
 
 @HiltViewModel
 class CaseViewModel
-@Inject
-constructor(
-    @param:ApplicationContext private val applicationContext: Context,
-    private val caseRepository: CaseRepository,
-    private val cacheManager: CacheManager,
-) : ViewModel() {
-    private val sharedPref = applicationContext.getSharedPreferences("CaseInfoPrefs", Context.MODE_PRIVATE)
+    @Inject
+    constructor(
+        @param:ApplicationContext private val applicationContext: Context,
+        private val caseRepository: CaseRepository,
+    ) : ViewModel() {
+        private val sharedPref = applicationContext.getSharedPreferences("CaseInfoPrefs", Context.MODE_PRIVATE)
 
-    private val _sortOrder = MutableStateFlow(SortOrder.DATE_DESC)
-    val sortOrder: StateFlow<SortOrder> = _sortOrder.asStateFlow()
+        private val _sortOrder = MutableStateFlow(SortOrder.DATE_DESC)
+        val sortOrder: StateFlow<SortOrder> = _sortOrder.asStateFlow()
 
-    private val _searchQuery = MutableStateFlow("")
-    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+        private val _searchQuery = MutableStateFlow("")
+        val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
-    // Assuming caseRepository.getAllCases() exists and returns Flow<List<Case>>
-    val cases: StateFlow<List<Case>> =
-        caseRepository.cases
-            .combine(sortOrder) { cases, currentSortOrder ->
-                when (currentSortOrder) {
-                    SortOrder.NAME_ASC -> cases.sortedBy { it.name }
-                    SortOrder.NAME_DESC -> cases.sortedByDescending { it.name }
-                    SortOrder.DATE_ASC -> cases.sortedBy { it.id }
-                    SortOrder.DATE_DESC -> cases.sortedByDescending { it.id }
-                }
-            }.combine(searchQuery) { cases, query ->
-                if (query.isBlank()) {
-                    cases
-                } else {
-                    cases.filter { it.name.contains(query, ignoreCase = true) }
-                }
-            }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+        // Assuming caseRepository.getAllCases() exists and returns Flow<List<Case>>
+        val cases: StateFlow<List<Case>> =
+            caseRepository.cases
+                .combine(sortOrder) { cases, currentSortOrder ->
+                    when (currentSortOrder) {
+                        SortOrder.NAME_ASC -> cases.sortedBy { it.name }
+                        SortOrder.NAME_DESC -> cases.sortedByDescending { it.name }
+                        SortOrder.DATE_ASC -> cases.sortedBy { it.id }
+                        SortOrder.DATE_DESC -> cases.sortedByDescending { it.id }
+                    }
+                }.combine(searchQuery) { cases, query ->
+                    if (query.isBlank()) {
+                        cases
+                    } else {
+                        cases.filter { it.name.contains(query, ignoreCase = true) }
+                    }
+                }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
-    private val _selectedCase = MutableStateFlow<Case?>(null)
-    val selectedCase: StateFlow<Case?> = _selectedCase.asStateFlow()
+        private val _selectedCase = MutableStateFlow<Case?>(null)
+        val selectedCase: StateFlow<Case?> = _selectedCase.asStateFlow()
 
-    private val _sheetFilters = MutableStateFlow<List<SheetFilter>>(emptyList())
-    val sheetFilters: StateFlow<List<SheetFilter>> = _sheetFilters.asStateFlow()
+        private val _sheetFilters = MutableStateFlow<List<SheetFilter>>(emptyList())
+        val sheetFilters: StateFlow<List<SheetFilter>> = _sheetFilters.asStateFlow()
 
-    private val _allegations = MutableStateFlow<List<Allegation>>(emptyList())
-    val allegations: StateFlow<List<Allegation>> = _allegations.asStateFlow()
+        private val _allegations = MutableStateFlow<List<Allegation>>(emptyList())
+        val allegations: StateFlow<List<Allegation>> = _allegations.asStateFlow()
 
-    private val _htmlTemplates = MutableStateFlow<List<DriveFile>>(emptyList())
-    val htmlTemplates: StateFlow<List<DriveFile>> = _htmlTemplates.asStateFlow()
+        private val _htmlTemplates = MutableStateFlow<List<DriveFile>>(emptyList())
+        val htmlTemplates: StateFlow<List<DriveFile>> = _htmlTemplates.asStateFlow()
 
-    private val _plaintiffs = MutableStateFlow(sharedPref.getString("plaintiffs", "") ?: "")
-    val plaintiffs: StateFlow<String> = _plaintiffs.asStateFlow()
+        private val _plaintiffs = MutableStateFlow(sharedPref.getString("plaintiffs", "") ?: "")
+        val plaintiffs: StateFlow<String> = _plaintiffs.asStateFlow()
 
-    private val _defendants = MutableStateFlow(sharedPref.getString("defendants", "") ?: "")
-    val defendants: StateFlow<String> = _defendants.asStateFlow()
+        private val _defendants = MutableStateFlow(sharedPref.getString("defendants", "") ?: "")
+        val defendants: StateFlow<String> = _defendants.asStateFlow()
 
-    private val _court = MutableStateFlow(sharedPref.getString("court", "") ?: "")
-    val court: StateFlow<String> = _court.asStateFlow()
+        private val _court = MutableStateFlow(sharedPref.getString("court", "") ?: "")
+        val court: StateFlow<String> = _court.asStateFlow()
 
-    private val _errorMessage = MutableStateFlow<String?>(null)
-    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+        private val _errorMessage = MutableStateFlow<String?>(null)
+        val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
-    private val _selectedCaseEvidenceList = MutableStateFlow<List<com.hereliesaz.lexorcist.data.Evidence>>(emptyList())
-    val selectedCaseEvidenceList: StateFlow<List<com.hereliesaz.lexorcist.data.Evidence>> = _selectedCaseEvidenceList.asStateFlow()
+        private val _selectedCaseEvidenceList = MutableStateFlow<List<com.hereliesaz.lexorcist.data.Evidence>>(emptyList())
+        val selectedCaseEvidenceList: StateFlow<List<com.hereliesaz.lexorcist.data.Evidence>> = _selectedCaseEvidenceList.asStateFlow()
 
-    private val _themeMode = MutableStateFlow(com.hereliesaz.lexorcist.ui.theme.ThemeMode.SYSTEM)
-    val themeMode: StateFlow<com.hereliesaz.lexorcist.ui.theme.ThemeMode> = _themeMode.asStateFlow()
+        private val _themeMode = MutableStateFlow(com.hereliesaz.lexorcist.ui.theme.ThemeMode.SYSTEM)
+        val themeMode: StateFlow<com.hereliesaz.lexorcist.ui.theme.ThemeMode> = _themeMode.asStateFlow()
 
-    init {
-        loadThemeModePreference()
-        loadCasesFromRepository()
-        // observeAuthChanges() //TODO: Re-enable this once AuthViewModel is provided correctly
-    }
+        init {
+            loadThemeModePreference()
+            loadCasesFromRepository()
+            // observeAuthChanges() //TODO: Re-enable this once AuthViewModel is provided correctly
+        }
 
     private fun clearCaseData() {
         _selectedCase.value = null
@@ -148,26 +146,27 @@ constructor(
         viewModelScope.launch { caseRepository.importSpreadsheet(spreadsheetId) } // Corrected method name
     }
 
-    // Renamed from createNewCaseWithRepository
-    fun createCase(
-        caseName: String,
-        exhibitSheetName: String,
-        caseNumber: String,
-        caseSection: String,
-        caseJudge: String,
-    ) {
-        android.util.Log.d("CaseViewModel", "createCase called with name: $caseName")
-        viewModelScope.launch {
-            caseRepository.createCase( // Corrected method name
-                caseName,
-                exhibitSheetName,
-                caseNumber,
-                caseSection,
-                caseJudge,
-                plaintiffs.value,
-                defendants.value,
-                court.value,
-            )
+        // Renamed from createNewCaseWithRepository
+        fun createCase(
+            caseName: String,
+            exhibitSheetName: String,
+            caseNumber: String,
+            caseSection: String,
+            caseJudge: String,
+        ) {
+            android.util.Log.d("CaseViewModel", "createCase called with name: $caseName")
+            viewModelScope.launch {
+                caseRepository.createCase( // Corrected method name
+                    caseName,
+                    exhibitSheetName,
+                    caseNumber,
+                    caseSection,
+                    caseJudge,
+                    plaintiffs.value,
+                    defendants.value,
+                    court.value,
+                )
+            }
         }
     }
 
@@ -247,7 +246,15 @@ constructor(
         viewModelScope.launch { caseRepository.deleteCase(case) }
     }
 
-    fun clearCache() {
-        cacheManager.clearCache()
+        fun clearCache() {
+            viewModelScope.launch {
+                caseRepository.clearCache()
+                clearCaseData()
+                // Clear shared preferences
+                sharedPref.edit().clear().apply()
+                // After clearing, reload the theme preference as it's also stored in sharedPref
+                loadThemeModePreference()
+            }
+        }
     }
 }

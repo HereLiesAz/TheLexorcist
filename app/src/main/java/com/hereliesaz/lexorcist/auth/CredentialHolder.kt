@@ -6,7 +6,10 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class CredentialHolder @Inject constructor() {
-    var credential: GoogleAccountCredential? = null
-    var googleApiService: GoogleApiService? = null
-}
+class CredentialHolder
+    @Inject
+    constructor() {
+        var credential: GoogleAccountCredential? = null
+        var googleApiService: GoogleApiService? = null
+    }
+

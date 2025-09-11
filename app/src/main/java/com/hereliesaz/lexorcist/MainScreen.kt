@@ -1,3 +1,5 @@
+@file:Suppress("ktlint:standard:no-wildcard-imports")
+
 package com.hereliesaz.lexorcist
 
 import androidx.compose.foundation.layout.Arrangement
@@ -75,13 +77,6 @@ fun MainScreen(
     val caseSpecificErrorMessage by caseViewModel.errorMessage.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     var showCreateCaseDialog by remember { mutableStateOf(false) }
-
-    LaunchedEffect(Unit) {
-        val masterSheetId = mainViewModel.createMasterAllegationsSheetAndInitializeRepository()
-        if (masterSheetId != null) {
-            mainViewModel.populateMasterAllegationsSheetInitially(masterSheetId)
-        }
-    }
 
     LaunchedEffect(caseSpecificErrorMessage) {
         caseSpecificErrorMessage?.let {
@@ -174,7 +169,7 @@ fun MainScreen(
                                         }
                                     }
                                 }
-                                composable("cases") { CasesScreen(caseViewModel = caseViewModel, navController = navController) } 
+                                composable("cases") { CasesScreen(caseViewModel = caseViewModel, navController = navController) }
                                 composable("evidence") {
                                     EvidenceScreen(
                                         evidenceViewModel = evidenceViewModel,

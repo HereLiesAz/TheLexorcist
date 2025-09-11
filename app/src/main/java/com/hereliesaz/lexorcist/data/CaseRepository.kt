@@ -60,4 +60,6 @@ interface CaseRepository {
     suspend fun refreshHtmlTemplates()
 
     suspend fun importSpreadsheet(spreadsheetId: String): Case?
+
+    suspend fun clearCache()
 }

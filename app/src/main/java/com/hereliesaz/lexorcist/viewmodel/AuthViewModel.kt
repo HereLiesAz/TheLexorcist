@@ -18,6 +18,9 @@ import com.google.api.services.sheets.v4.SheetsScopes
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
+import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
+import com.google.api.services.drive.DriveScopes
+import com.google.api.services.sheets.v4.SheetsScopes
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.auth.CredentialHolder
 import com.hereliesaz.lexorcist.model.SignInState
@@ -129,24 +132,17 @@ class AuthViewModel
                     photoUrl = googleIdTokenCredential.profilePictureUri?.toString(),
                 )
             _signInState.value = SignInState.Success(userInfo)
-            sharedPreferences.edit { putString(PREF_USER_EMAIL_KEY, userId) } // Use userId
-            Log.d(TAG, "User email saved to SharedPreferences: $userId")
+            sharedPreferences.edit { putString(PREF_USER_EMAIL_KEY, credential.id) }
+            Log.d(TAG, "User email saved to SharedPreferences: ${credential.id}")
 
-            val scopes = listOf(DriveScopes.DRIVE_FILE, SheetsScopes.SPREADSHEETS)
+            // Create and store the GoogleAccountCredential
+            val scopes = listOf(DriveScopes.DRIVE, SheetsScopes.SPREADSHEETS)
             val accountCredential = GoogleAccountCredential.usingOAuth2(application, scopes)
-            accountCredential.selectedAccountName = userId // Use userId (email)
-
+            accountCredential.selectedAccountName = credential.id
             credentialHolder.credential = accountCredential
-            try {
-                credentialHolder.googleApiService =
-                    com.hereliesaz.lexorcist.service.GoogleApiService(
-                        accountCredential,
-                        application.packageName,
-                    )
-            } catch (e: IllegalArgumentException) {
-                Log.e(TAG, "Error initializing GoogleApiService", e)
-                onSignInError(e)
-            }
+            credentialHolder.googleApiService =
+                com.hereliesaz.lexorcist.service
+                    .GoogleApiService(accountCredential, application.getString(R.string.app_name))
         }
 
         fun onSignInError(error: Exception) {

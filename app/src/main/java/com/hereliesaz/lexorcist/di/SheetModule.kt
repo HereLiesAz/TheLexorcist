@@ -11,12 +11,7 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object SheetModule {
-
     @Provides
     @Singleton
-    fun provideGoogleApiService(credentialHolder: CredentialHolder): GoogleApiService? {
-        // GoogleApiService is initialized in AuthViewModel and stored in CredentialHolder.
-        // This might be null if accessed before sign-in or after sign-out.
-        return credentialHolder.googleApiService
-    }
+    fun provideGoogleApiService(credentialHolder: CredentialHolder): GoogleApiService? = credentialHolder.googleApiService
 }

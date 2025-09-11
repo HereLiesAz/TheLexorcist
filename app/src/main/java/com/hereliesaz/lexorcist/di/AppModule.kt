@@ -3,7 +3,6 @@ package com.hereliesaz.lexorcist.di
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.credentials.CredentialManager
-import com.hereliesaz.lexorcist.auth.CredentialHolder
 import com.hereliesaz.lexorcist.data.SettingsManager
 import com.hereliesaz.lexorcist.service.GoogleApiService
 import com.hereliesaz.lexorcist.service.ScriptRunner
@@ -22,9 +21,7 @@ class AppModule {
     @Singleton
     fun provideSharedPreferences(
         @ApplicationContext context: Context,
-    ): SharedPreferences {
-        return context.getSharedPreferences("LexorcistAppPrefs", Context.MODE_PRIVATE)
-    }
+    ): SharedPreferences = context.getSharedPreferences("LexorcistAppPrefs", Context.MODE_PRIVATE)
 
     @Provides
     @Singleton
@@ -44,17 +41,11 @@ class AppModule {
 
     @Provides
     @Singleton
-    fun provideCredentialHolder(): CredentialHolder {
-        return CredentialHolder()
-    }
-
-
+    fun provideCredentialManager(
+        @ApplicationContext context: Context,
+    ): CredentialManager = CredentialManager.create(context)
 
     @Provides
     @Singleton
-    fun provideCredentialManager(
-        @ApplicationContext context: Context,
-    ): CredentialManager {
-        return CredentialManager.create(context)
-    }
+    fun provideGson(): com.google.gson.Gson = com.google.gson.Gson()
 }

@@ -1,7 +1,6 @@
 package com.hereliesaz.lexorcist.data
 
 import com.hereliesaz.lexorcist.model.SheetFilter
-import com.hereliesaz.lexorcist.service.GoogleApiService
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.emptyFlow
@@ -68,37 +67,38 @@ class CaseRepositoryImpl
                         }
                     val spreadsheetResult = service.createSpreadsheet(caseName, caseFolderId)
 
-                if (spreadsheetResult is com.hereliesaz.lexorcist.utils.Result.Success) {
-                    val spreadsheetId =
-                        spreadsheetResult.data ?: run {
-                            errorReporter.reportError(Exception("Spreadsheet ID is null after creation in createCase"))
-                            return
-                        }
-                    android.util.Log.d("CaseRepositoryImpl", "Spreadsheet created with id: $spreadsheetId")
-                    val newCase =
-                        Case(
-                            // ID will be assigned by registry
-                            id = 0,
-                            name = caseName,
-                            spreadsheetId = spreadsheetId,
-                            folderId = caseFolderId,
-                            plaintiffs = plaintiffs,
-                            defendants = defendants,
-                            court = court,
-                            lastModifiedTime = System.currentTimeMillis(),
-                        )
-                    val registryId = service.getOrCreateCaseRegistrySpreadsheetId(appRootFolderId)
-                    service.addCaseToRegistry(registryId, newCase)
-                    refreshCases() // This will also need googleApiService
-                } else {
-                    val error = (spreadsheetResult as com.hereliesaz.lexorcist.utils.Result.Error).exception
-                    errorReporter.reportError(error ?: Exception("Unknown error creating spreadsheet in createCase"))
-                    android.util.Log.e("CaseRepositoryImpl", "Error creating spreadsheet: $error")
-                }
-            } ?: errorReporter.reportError(Exception("GoogleApiService not available in createCase"))
-        } catch (e: java.io.IOException) {
-            errorReporter.reportError(e)
-            android.util.Log.e("CaseRepositoryImpl", "IOException in createCase: $e")
+                    if (spreadsheetResult is com.hereliesaz.lexorcist.utils.Result.Success) {
+                        val spreadsheetId =
+                            spreadsheetResult.data ?: run {
+                                errorReporter.reportError(Exception("Spreadsheet ID is null after creation in createCase"))
+                                return
+                            }
+                        android.util.Log.d("CaseRepositoryImpl", "Spreadsheet created with id: $spreadsheetId")
+                        val newCase =
+                            Case(
+                                // ID will be assigned by registry
+                                id = 0,
+                                name = caseName,
+                                spreadsheetId = spreadsheetId,
+                                folderId = caseFolderId,
+                                plaintiffs = plaintiffs,
+                                defendants = defendants,
+                                court = court,
+                                lastModifiedTime = System.currentTimeMillis(),
+                            )
+                        val registryId = service.getOrCreateCaseRegistrySpreadsheetId(appRootFolderId)
+                        service.addCaseToRegistry(registryId, newCase)
+                        refreshCases() // This will also need googleApiService
+                    } else {
+                        val error = (spreadsheetResult as com.hereliesaz.lexorcist.utils.Result.Error).exception
+                        errorReporter.reportError(error ?: Exception("Unknown error creating spreadsheet in createCase"))
+                        android.util.Log.e("CaseRepositoryImpl", "Error creating spreadsheet: $error")
+                    }
+                } ?: errorReporter.reportError(Exception("GoogleApiService not available in createCase"))
+            } catch (e: java.io.IOException) {
+                errorReporter.reportError(e)
+                android.util.Log.e("CaseRepositoryImpl", "IOException in createCase: $e")
+            }
         }
     }
 
@@ -168,8 +168,13 @@ class CaseRepositoryImpl
         // TODO: Implement actual logic (with null safety for googleApiService)
     }
 
-    override suspend fun importSpreadsheet(spreadsheetId: String): Case? {
-        // TODO: Implement actual logic (with null safety for googleApiService)
-        return null
+        override suspend fun importSpreadsheet(spreadsheetId: String): Case? {
+            // TODO: Implement actual logic (with null safety for googleApiService)
+            return null
+        }
+
+        override suspend fun clearCache() {
+            _cases.value = emptyList()
+        }
     }
 }

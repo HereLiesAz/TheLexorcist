@@ -56,7 +56,10 @@ import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CasesScreen(caseViewModel: CaseViewModel, navController: NavController) { // Added navController
+fun CasesScreen(
+    caseViewModel: CaseViewModel,
+    navController: NavController,
+) {
     val casesState by caseViewModel.cases.collectAsState()
     val sortOrder by caseViewModel.sortOrder.collectAsState() // Retain for logic if sort is re-added
     val searchQuery by caseViewModel.searchQuery.collectAsState()
@@ -209,7 +212,7 @@ fun CasesScreen(caseViewModel: CaseViewModel, navController: NavController) { //
     if (showCreateCaseDialog) {
         CreateCaseDialog(
             caseViewModel = caseViewModel,
-            navController = navController, // Pass navController here
+            navController = navController,
             onDismiss = { showCreateCaseDialog = false },
         )
     }
