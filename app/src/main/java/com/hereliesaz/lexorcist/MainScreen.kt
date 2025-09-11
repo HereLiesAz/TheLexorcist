@@ -38,7 +38,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.hereliesaz.lexorcist.components.AppNavRail
+import com.hereliesaz.aznavrail.*
 import com.hereliesaz.lexorcist.model.SignInState
 import com.hereliesaz.lexorcist.ui.AllegationsScreen
 import com.hereliesaz.lexorcist.ui.CasesScreen
@@ -105,12 +105,23 @@ fun MainScreen(
                 Row(
                     modifier =
                         Modifier
-                            .fillMaxSize()
-                            .padding(paddingValues),
+                            .fillMaxSize(),
                 ) {
-                    AppNavRail(onNavigate = { screen -> navController.navigate(screen) })
+                    AzNavRail {
+                        azRailItem(id = "home", text = "Home", onClick = { navController.navigate("home") })
+                        azRailItem(id = "cases", text = "Cases", onClick = { navController.navigate("cases") })
+                        azRailItem(id = "evidence", text = "Evidence", onClick = { navController.navigate("evidence") })
+                        azRailItem(id = "allegations", text = "Allegations", onClick = { navController.navigate("allegations") })
+                        azRailItem(id = "templates", text = "Templates", onClick = { navController.navigate("templates") })
+                        azRailItem(id = "timeline", text = "Timeline", onClick = { navController.navigate("timeline") })
+                        azRailItem(id = "data_review", text = "Data Review", onClick = { navController.navigate("data_review") })
+                        azRailItem(id = "extras", text = "Extras", onClick = { navController.navigate("extras") })
+                        azRailItem(id = "script_editor", text = "Script Editor", onClick = { navController.navigate("script_editor") })
+                        azRailItem(id = "settings", text = "Settings", onClick = { navController.navigate("settings") })
+                        azMenuItem(id = "logout", text = "Logout", onClick = { authViewModel.signOut() })
+                    }
 
-                    BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                    BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxHeight().padding(paddingValues)) {
                         val halfContentAreaHeight = this@BoxWithConstraints.maxHeight / 2
                         val contentAreaViewportHeight = this@BoxWithConstraints.maxHeight
 
