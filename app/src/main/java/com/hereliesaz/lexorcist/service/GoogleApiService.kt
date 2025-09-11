@@ -28,19 +28,22 @@ import java.io.IOException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class GoogleApiService(
-    private val drive: Drive,
-    private val sheets: Sheets
-) {
+// Removed @Inject from constructor
+class GoogleApiService constructor(credential: GoogleAccountCredential, applicationName: String) {
 
-    constructor(credential: GoogleAccountCredential, applicationName: String) : this(
-        Drive.Builder(NetHttpTransport(), GsonFactory.getDefaultInstance(), credential) // Changed here
-            .setApplicationName(applicationName)
-            .build(),
-        Sheets.Builder(NetHttpTransport(), GsonFactory.getDefaultInstance(), credential) // Changed here
-            .setApplicationName(applicationName)
-            .build()
-    )
+    private val drive: Drive = Drive.Builder(NetHttpTransport(), GsonFactory.getDefaultInstance(), credential)
+        .setApplicationName(applicationName)
+        .build()
+    private val sheets: Sheets = Sheets.Builder(NetHttpTransport(), GsonFactory.getDefaultInstance(), credential)
+        .setApplicationName(applicationName)
+        .build()
+
+    // Secondary constructor if needed, but Hilt will use the @Inject annotated one.
+    // constructor(drive: Drive, sheets: Sheets) : this( TODO: figure out how to get credential and app name from drive/sheets or remove this ctor
+    // ) {
+    //     this.drive = drive
+    //     this.sheets = sheets
+    // }
 
     suspend fun getOrCreateAppRootFolder(): String = withContext(Dispatchers.IO) {
         try {
@@ -66,9 +69,9 @@ class GoogleApiService(
         try {
             val fileName = "CaseRegistry"
             val query = "mimeType='application/vnd.google-apps.spreadsheet' " +
-                "and name='$fileName' " +
-                "and trashed=false " +
-                "and '$folderId' in parents"
+                    "and name='$fileName' " +
+                    "and trashed=false " +
+                    "and '$folderId' in parents"
             val files = drive.files().list().setQ(query).setSpaces("drive").execute().files
             if (files.isNullOrEmpty()) {
                 val spreadsheet = Spreadsheet().setProperties(SpreadsheetProperties().setTitle(fileName))
@@ -128,11 +131,11 @@ class GoogleApiService(
             listOf("Civil", "Contract disputes", "Breach of contract", "Failure to perform the duties stipulated in a valid and binding contract."),
             listOf("Civil", "Contract disputes", "Fraudulent inducement", "Alleging that a party was intentionally deceived into entering a contract."),
             listOf("Civil", "Contract disputes", "Duress", "Claiming a party was coerced into an agreement."),
-            listOf("Civil", "Contract disputes", "Lesion", "An allegation where a contract's price is unfairly low, typically for immovable property."),
+            listOf("Civil", "Contract disputes", "Lesion", "An allegation where a contract\'s price is unfairly low, typically for immovable property."),
             listOf("Civil", "Contract disputes", "Specific performance", "Seeking a court order for the other party to fulfill their part of the contract, rather than paying monetary damages."),
             // Property disputes
             listOf("Civil", "Property disputes", "Boundary disputes", "When neighbors disagree on the exact location of their property lines."),
-            listOf("Civil", "Property disputes", "Servitude disputes", "Disagreements over the right to use another person's property for a specific purpose, similar to an easement in other states."),
+            listOf("Civil", "Property disputes", "Servitude disputes", "Disagreements over the right to use another person\'s property for a specific purpose, similar to an easement in other states."),
             listOf("Civil", "Property disputes", "Acquisitive prescription (Adverse Possession)", "A claim to ownership of property by someone who has openly occupied it for an extended period."),
             listOf("Civil", "Property disputes", "Landlord-Tenant disputes", "Allegations concerning rent, property maintenance, or eviction."),
             listOf("Civil", "Property disputes", "Co-ownership disputes", "Disagreements among multiple owners of a single property."),
@@ -242,7 +245,7 @@ class GoogleApiService(
             }
         }
     }
-    
+
     suspend fun getOrCreateCaseFolder(caseName: String): String? {
         val appRootFolderId = getOrCreateAppRootFolder() ?: return null
         return withContext(Dispatchers.IO) {
@@ -368,7 +371,7 @@ class GoogleApiService(
             }
         }
     }
-    
+
     suspend fun updateCaseInRegistry(case: Case): Boolean {
         return withContext(Dispatchers.IO) {
             try {
@@ -442,7 +445,7 @@ class GoogleApiService(
             }
         }
     }
-    
+
     suspend fun deleteFolder(folderId: String): Boolean {
         return withContext(Dispatchers.IO) {
             try {
@@ -453,7 +456,7 @@ class GoogleApiService(
             }
         }
     }
-    
+
     suspend fun uploadFile(file: java.io.File, folderId: String, mimeType: String): Result<File?> {
         return withContext(Dispatchers.IO) {
             try {

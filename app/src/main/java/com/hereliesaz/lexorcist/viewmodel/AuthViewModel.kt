@@ -75,7 +75,6 @@ class AuthViewModel
                     if (userEmail != null) {
                         googleIdOptionBuilder.setFilterByAuthorizedAccounts(true)
                     } else {
-                        // No user to silently sign in, so we just exit
                         _signInState.value = SignInState.Idle
                         return@launch
                     }
@@ -105,7 +104,6 @@ class AuthViewModel
                     }
                 } catch (e: GetCredentialException) {
                     Log.e(TAG, "GetCredentialException", e)
-                    // If silent sign-in fails, we don't need to show an error, just go to manual sign-in
                     if (!silent) {
                         onSignInError(e)
                     } else {
@@ -115,27 +113,35 @@ class AuthViewModel
             }
         }
 
-        private fun onSignInResult(credential: GoogleIdTokenCredential) {
+        private fun onSignInResult(googleIdTokenCredential: GoogleIdTokenCredential) {
+            val userId = googleIdTokenCredential.id // Use .id, which is the email/unique identifier
+
+            if (userId.isNullOrBlank()) { // Check if userId (email) is null or blank
+                Log.e(TAG, "User ID (email) is null or blank from GoogleIdTokenCredential. Cannot proceed.")
+                onSignInError(Exception("User email not available. Please ensure email permission is granted or try again."))
+                return
+            }
+
             val userInfo =
                 UserInfo(
-                    displayName = credential.displayName,
-                    email = credential.id, // This is the user's email/ID
-                    photoUrl = credential.profilePictureUri?.toString(),
+                    displayName = googleIdTokenCredential.displayName,
+                    email = userId, // Use userId (which is the email)
+                    photoUrl = googleIdTokenCredential.profilePictureUri?.toString(),
                 )
             _signInState.value = SignInState.Success(userInfo)
-            sharedPreferences.edit { putString(PREF_USER_EMAIL_KEY, credential.id) }
-            Log.d(TAG, "User email saved to SharedPreferences: ${credential.id}")
+            sharedPreferences.edit { putString(PREF_USER_EMAIL_KEY, userId) } // Use userId
+            Log.d(TAG, "User email saved to SharedPreferences: $userId")
 
-            // Create and store the GoogleAccountCredential
             val scopes = listOf(DriveScopes.DRIVE_FILE, SheetsScopes.SPREADSHEETS)
             val accountCredential = GoogleAccountCredential.usingOAuth2(application, scopes)
-            accountCredential.selectedAccountName = credential.id
+            accountCredential.selectedAccountName = userId // Use userId (email)
+            
             credentialHolder.credential = accountCredential
             credentialHolder.googleApiService = com.hereliesaz.lexorcist.service.GoogleApiService(accountCredential, application.packageName)
         }
 
         fun onSignInError(error: Exception) {
-            _signInState.value = SignInState.Error("Sign-in attempt failed. Please try again.", error)
+            _signInState.value = SignInState.Error("Sign-in attempt failed. Details: ${error.message}", error)
         }
 
         fun signOut() {

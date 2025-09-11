@@ -89,7 +89,7 @@
     <string name="unnamed_template">Unnamed Template (ID: %1$s…)</string>
     <string name="create">Create</string>
     <string name="cancel">Cancel</string>
-    <string name="no_cases_found">No cases found. Click the \'\+\' button to create a new case.</string>
+    <string name="no_cases_found">No cases found. Click the \'+\' button to create a new case.</string>
     <string name="no_cases_match_search">No cases match your search.</string>
     <string name="no_cases_found_line1">No cases found.</string>
     <string name="no_cases_found_line2">Create a new case or open an existing one.</string>
@@ -227,4 +227,8 @@
     </string-array>
     <string name="no_review_data_for_case">No allegations or evidence found for this case.</string>
     <string name="no_allegations_for_case">No allegations found for this case.</string>
+
+    <string name="master_allegations">Master Allegations</string>
+    <string name="no_allegations_match_search">No allegations match your search.</string>
+    <string name="no_allegations_found">No allegations found. The master list may be empty or is still loading.</string>
 </resources>
