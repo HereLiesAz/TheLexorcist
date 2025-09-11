@@ -105,8 +105,7 @@ fun MainScreen(
                 Row(
                     modifier =
                         Modifier
-                            .fillMaxSize()
-                            .padding(paddingValues),
+                            .fillMaxSize(),
                 ) {
                     AzNavRail {
                         azRailItem(id = "home", text = "Home", onClick = { navController.navigate("home") })
@@ -122,7 +121,7 @@ fun MainScreen(
                         azMenuItem(id = "logout", text = "Logout", onClick = { authViewModel.signOut() })
                     }
 
-                    BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                    BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxHeight().padding(paddingValues)) {
                         val halfContentAreaHeight = this@BoxWithConstraints.maxHeight / 2
                         val contentAreaViewportHeight = this@BoxWithConstraints.maxHeight
 
