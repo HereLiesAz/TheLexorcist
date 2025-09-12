@@ -1,3 +1,5 @@
+@file:Suppress("ktlint:standard:no-wildcard-imports")
+
 package com.hereliesaz.lexorcist
 
 import androidx.compose.foundation.layout.Arrangement
@@ -74,12 +76,6 @@ fun MainScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     var showCreateCaseDialog by remember { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) {
-        mainViewModel.createAllegationsSheet()
-        // The user will need to get the spreadsheet ID from the logs and replace the placeholder
-        mainViewModel.populateAllegationsSheet("PLACEHOLDER_SPREADSHEET_ID")
-    }
-
     LaunchedEffect(caseSpecificErrorMessage) {
         caseSpecificErrorMessage?.let {
             snackbarHostState.showSnackbar(it)
@@ -91,6 +87,20 @@ fun MainScreen(
         if (signInState is SignInState.Error) {
             val errorState = signInState as SignInState.Error
             snackbarHostState.showSnackbar("Sign-In Error: ${errorState.message}")
+        }
+    }
+
+    LaunchedEffect(signInState) {
+        when (signInState) {
+            is SignInState.Success -> {
+                caseViewModel.loadCasesFromRepository()
+            }
+            is SignInState.Idle -> {
+                caseViewModel.clearCache()
+            }
+            else -> {
+                // Do nothing for InProgress or Error states in this effect
+            }
         }
     }
 
@@ -169,7 +179,7 @@ fun MainScreen(
                                         }
                                     }
                                 }
-                                composable("cases") { CasesScreen(caseViewModel = caseViewModel) }
+                                composable("cases") { CasesScreen(caseViewModel = caseViewModel, navController = navController) }
                                 composable("evidence") {
                                     EvidenceScreen(
                                         evidenceViewModel = evidenceViewModel,
@@ -274,6 +284,7 @@ fun MainScreen(
         if (showCreateCaseDialog) {
             CreateCaseDialog(
                 caseViewModel = caseViewModel,
+                navController = navController,
                 onDismiss = { showCreateCaseDialog = false },
             )
         }

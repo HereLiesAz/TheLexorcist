@@ -1,7 +1,8 @@
 package com.hereliesaz.lexorcist.di
 
 import android.content.Context
-import android.content.SharedPreferences // Added
+import android.content.SharedPreferences
+import androidx.credentials.CredentialManager
 import com.hereliesaz.lexorcist.data.SettingsManager
 import com.hereliesaz.lexorcist.service.ScriptRunner
 import com.hereliesaz.lexorcist.utils.CacheManager
@@ -19,9 +20,7 @@ class AppModule {
     @Singleton
     fun provideSharedPreferences(
         @ApplicationContext context: Context,
-    ): SharedPreferences {
-        return context.getSharedPreferences("LexorcistAppPrefs", Context.MODE_PRIVATE) // Added
-    }
+    ): SharedPreferences = context.getSharedPreferences("LexorcistAppPrefs", Context.MODE_PRIVATE)
 
     @Provides
     @Singleton
@@ -38,4 +37,14 @@ class AppModule {
     fun provideCacheManager(
         @ApplicationContext context: Context,
     ): CacheManager = CacheManager(context)
+
+    @Provides
+    @Singleton
+    fun provideCredentialManager(
+        @ApplicationContext context: Context,
+    ): CredentialManager = CredentialManager.create(context)
+
+    @Provides
+    @Singleton
+    fun provideGson(): com.google.gson.Gson = com.google.gson.Gson()
 }

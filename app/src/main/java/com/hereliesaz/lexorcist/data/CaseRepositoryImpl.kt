@@ -1,7 +1,6 @@
 package com.hereliesaz.lexorcist.data
 
 import com.hereliesaz.lexorcist.model.SheetFilter
-import com.hereliesaz.lexorcist.service.GoogleApiService
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.emptyFlow
@@ -13,8 +12,7 @@ import com.google.api.services.drive.model.File as DriveFile
 class CaseRepositoryImpl
     @Inject
     constructor(
-        // Changed to nullable
-        private val googleApiService: GoogleApiService?,
+        private val credentialHolder: com.hereliesaz.lexorcist.auth.CredentialHolder,
         private val settingsManager: SettingsManager,
         private val errorReporter: com.hereliesaz.lexorcist.utils.ErrorReporter,
     ) : CaseRepository {
@@ -29,12 +27,16 @@ class CaseRepositoryImpl
         override suspend fun getCaseBySpreadsheetId(spreadsheetId: String): Case? = _cases.value.find { it.spreadsheetId == spreadsheetId }
 
         override suspend fun refreshCases() {
+            android.util.Log.d("CaseRepositoryImpl", "refreshCases called")
+            val googleApiService = credentialHolder.googleApiService
             try {
                 googleApiService?.let { service ->
                     // Null check
                     val appRootFolderId = service.getOrCreateAppRootFolder()
                     val registryId = service.getOrCreateCaseRegistrySpreadsheetId(appRootFolderId)
-                    _cases.value = service.getAllCasesFromRegistry(registryId)
+                    val cases = service.getAllCasesFromRegistry(registryId)
+                    android.util.Log.d("CaseRepositoryImpl", "Found ${cases.size} cases in registry")
+                    _cases.value = cases
                 } ?: errorReporter.reportError(Exception("GoogleApiService not available in refreshCases"))
             } catch (e: java.io.IOException) {
                 errorReporter.reportError(e)
@@ -51,9 +53,12 @@ class CaseRepositoryImpl
             defendants: String,
             court: String,
         ) {
+            android.util.Log.d("CaseRepositoryImpl", "createCase called with name: $caseName")
+            val googleApiService = credentialHolder.googleApiService
             try {
                 googleApiService?.let { service ->
                     // Null check
+                    android.util.Log.d("CaseRepositoryImpl", "GoogleApiService is not null")
                     val appRootFolderId = service.getOrCreateAppRootFolder()
                     val caseFolderId =
                         service.getOrCreateCaseFolder(caseName) ?: run {
@@ -68,6 +73,7 @@ class CaseRepositoryImpl
                                 errorReporter.reportError(Exception("Spreadsheet ID is null after creation in createCase"))
                                 return
                             }
+                        android.util.Log.d("CaseRepositoryImpl", "Spreadsheet created with id: $spreadsheetId")
                         val newCase =
                             Case(
                                 // ID will be assigned by registry
@@ -86,15 +92,17 @@ class CaseRepositoryImpl
                     } else {
                         val error = (spreadsheetResult as com.hereliesaz.lexorcist.utils.Result.Error).exception
                         errorReporter.reportError(error ?: Exception("Unknown error creating spreadsheet in createCase"))
+                        android.util.Log.e("CaseRepositoryImpl", "Error creating spreadsheet: $error")
                     }
                 } ?: errorReporter.reportError(Exception("GoogleApiService not available in createCase"))
             } catch (e: java.io.IOException) {
                 errorReporter.reportError(e)
+                android.util.Log.e("CaseRepositoryImpl", "IOException in createCase: $e")
             }
         }
 
         override suspend fun archiveCase(case: Case) {
-            googleApiService?.let {
+            credentialHolder.googleApiService?.let {
                 val archivedCase = case.copy(isArchived = true)
                 if (it.updateCaseInRegistry(archivedCase)) {
                     refreshCases()
@@ -103,7 +111,7 @@ class CaseRepositoryImpl
         }
 
         override suspend fun deleteCase(case: Case) {
-            googleApiService?.let {
+            credentialHolder.googleApiService?.let {
                 if (it.deleteCaseFromRegistry(case)) {
                     case.folderId?.let { folderId -> it.deleteFolder(folderId) }
                     refreshCases()
@@ -162,5 +170,9 @@ class CaseRepositoryImpl
         override suspend fun importSpreadsheet(spreadsheetId: String): Case? {
             // TODO: Implement actual logic (with null safety for googleApiService)
             return null
+        }
+
+        override suspend fun clearCache() {
+            _cases.value = emptyList()
         }
     }

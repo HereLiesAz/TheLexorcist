@@ -1,6 +1,6 @@
 package com.hereliesaz.lexorcist.ui
 
-import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -67,9 +67,7 @@ fun ExtrasScreen(
             }
         },
     ) { paddingValues ->
-        BoxWithConstraints(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-            // val halfScreenHeight = this@BoxWithConstraints.maxHeight / 2 // REMOVED
-
+        Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             Column(
                 modifier =
                     Modifier
