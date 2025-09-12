@@ -8,6 +8,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose") version "2.2.10"
     id("com.google.devtools.ksp") version "2.2.10-2.0.2"
     id("com.diffplug.spotless")
+    id("com.google.gms.google-services") // Added Google Services plugin
 }
 
 android {
@@ -66,6 +67,11 @@ dependencies {
     implementation(libs.androidx.credentials) // Added AndroidX Credentials
     implementation(libs.androidx.credentials.play.services.auth)
     implementation(libs.google.id)
+
+    // Firebase
+    // implementation(platform(group = "com.google.firebase", name = "firebase-bom", version = "34.2.0")) // Use explicit group, name, version for BOM
+    implementation("com.google.firebase:firebase-auth-ktx:23.2.1") // Explicitly use KTX version and direct coordinate
+    // implementation("com.google.firebase:firebase-analytics") // Commented out to isolate build issue
 
     // Core testing dependencies
     testImplementation(libs.junit)
@@ -131,8 +137,6 @@ dependencies {
     implementation(libs.google.api.services.docs)
 
     implementation(libs.google.http.client.jackson2)
-    implementation(platform(libs.firebase.bom))
-    implementation(libs.google.firebase.analytics)
     implementation(libs.google.guava)
     implementation(libs.quickbirdstudios.opencv)
 
@@ -155,9 +159,9 @@ dependencies {
     ksp(libs.androidx.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
     testImplementation(libs.google.dagger.hilt.android.testing)
-    kspTest(libs.hilt.android.compiler)
+    kspTest(libs.google.dagger.hilt.compiler) // Corrected alias
     androidTestImplementation(libs.google.dagger.hilt.android.testing)
-    kspAndroidTest(libs.hilt.android.compiler)
+    kspAndroidTest(libs.google.dagger.hilt.compiler) // Corrected alias
 
 
     // Room IS NOT ALLOWED IN THIS PROJECT!!!!!

@@ -2,10 +2,11 @@ package com.hereliesaz.lexorcist.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.hereliesaz.lexorcist.auth.CredentialHolder // Import CredentialHolder
 import com.hereliesaz.lexorcist.common.state.SaveState
 import com.hereliesaz.lexorcist.model.Script
 import com.hereliesaz.lexorcist.model.Template
-import com.hereliesaz.lexorcist.service.GoogleApiService
+// Removed import com.hereliesaz.lexorcist.service.GoogleApiService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,8 +18,7 @@ import javax.inject.Inject
 class AddonsBrowserViewModel
     @Inject
     constructor(
-        // Changed to nullable
-        private val googleApiService: GoogleApiService?,
+        private val credentialHolder: CredentialHolder, // Inject CredentialHolder
     ) : ViewModel() {
         private val _scripts = MutableStateFlow<List<Script>>(emptyList())
         val scripts: StateFlow<List<Script>> = _scripts.asStateFlow()
@@ -35,6 +35,7 @@ class AddonsBrowserViewModel
 
         private fun loadAddons() {
             viewModelScope.launch {
+                val googleApiService = credentialHolder.googleApiService // Get service from holder
                 if (googleApiService == null) {
                     _scripts.value = emptyList()
                     _templates.value = emptyList()
@@ -53,6 +54,7 @@ class AddonsBrowserViewModel
             type: String,
         ) {
             viewModelScope.launch {
+                val googleApiService = credentialHolder.googleApiService // Get service from holder
                 if (googleApiService == null) {
                     _shareOperationState.value = SaveState.Error("Cannot share: User not signed in or service unavailable.")
                     return@launch
@@ -74,6 +76,7 @@ class AddonsBrowserViewModel
             type: String,
         ) {
             viewModelScope.launch {
+                val googleApiService = credentialHolder.googleApiService // Get service from holder
                 if (googleApiService == null) {
                     // Handle rating failure when service is unavailable, perhaps with a Snackbar
                     // For now, just log or do nothing if no specific UI feedback is required here
