@@ -2,7 +2,9 @@ package com.hereliesaz.lexorcist.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.hereliesaz.lexorcist.common.state.SaveState // Added import
+import android.app.Application
+import com.hereliesaz.lexorcist.R
+import com.hereliesaz.lexorcist.common.state.SaveState
 import com.hereliesaz.lexorcist.data.SettingsManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,33 +15,40 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ScriptEditorViewModel
-    @Inject
-    constructor(
-        private val settingsManager: SettingsManager,
-    ) : ViewModel() {
-        private val _scriptText = MutableStateFlow("")
-        val scriptText: StateFlow<String> = _scriptText.asStateFlow()
+@Inject
+constructor(
+    private val settingsManager: SettingsManager,
+    private val application: Application
+) : ViewModel() {
+    private val _scriptText = MutableStateFlow("")
+    val scriptText: StateFlow<String> = _scriptText.asStateFlow()
 
-        private val _saveState = MutableStateFlow<SaveState>(SaveState.Idle)
-        val saveState: StateFlow<SaveState> = _saveState.asStateFlow()
+    private val _saveState = MutableStateFlow<SaveState>(SaveState.Idle)
+    val saveState: StateFlow<SaveState> = _saveState.asStateFlow()
 
-        init {
-            loadScript()
-        }
+    init {
+        loadScript()
+    }
 
-        fun onScriptTextChanged(newText: String) {
-            _scriptText.value = newText
-        }
+    fun onScriptTextChanged(newText: String) {
+        _scriptText.value = newText
+    }
 
-        fun insertText(text: String) {
-            _scriptText.value += text
-        }
+    fun insertText(text: String) {
+        _scriptText.value += text
+    }
 
-        private fun loadScript() {
-            viewModelScope.launch {
-                _scriptText.value = settingsManager.getScript()
+    private fun loadScript() {
+        viewModelScope.launch {
+            val savedScript = settingsManager.getScript()
+            if (savedScript.isBlank()) {
+                val sampleScripts = application.resources.getStringArray(R.array.sample_scripts)
+                _scriptText.value = sampleScripts.random()
+            } else {
+                _scriptText.value = savedScript
             }
         }
+    }
 
         fun saveScript() {
             viewModelScope.launch {

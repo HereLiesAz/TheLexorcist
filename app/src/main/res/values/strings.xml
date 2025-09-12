@@ -140,7 +140,31 @@
     <string name="script_tab_description">Description</string>
     <string name="script_tab_editor">Editor</string>
     <string name="script_description_placeholder">This script does not yet have a description. Save the script to generate one.</string>
+    <string name="script_editor_explanation">
+        Scripts in The Lexorcist are powerful tools for automating the tagging and categorization of your evidence. Written in JavaScript, they allow you to define rules that automatically apply tags based on the content, date, or existing tags of your evidence.
+
+        \n\n<b>Available Variables:</b>
+        \n- <b>evidence:</b> The evidence object being processed. It contains properties like `content`, `documentDate`, and `tags`.
+        \n- <b>parser:</b> An object with a `tags` array. You can add new tags to your evidence by pushing them to this array (e.g., `parser.tags.push("New Tag");`).
+
+        \n\n<b>Examples:</b>
+        \n- Tagging based on keywords: `if (evidence.content.includes("keyword")) { parser.tags.push("Relevant Tag"); }`
+        \n- Categorizing by date: `if (evidence.documentDate > new Date("2023-01-01").getTime()) { parser.tags.push("After 2023"); }`
+    </string>
     <string name="script_editor_instructions">Use the buttons above to insert snippets or write your own Javascript code below. The `evidence` object and a `parser` object are available to you.</string>
+
+    <string-array name="sample_scripts">
+        <item>// Example 1: Tag threats\nif (evidence.content.includes("threaten")) {\n    parser.tags.push("Threat");\n}</item>
+        <item>// Example 2: Tag financial documents\nif (evidence.content.includes("invoice") || evidence.content.includes("receipt")) {\n    parser.tags.push("Financial");\n}</item>
+        <item>// Example 3: Tag evidence from a specific person\nif (evidence.content.includes("John Doe")) {\n    parser.tags.push("From John Doe");\n}</item>
+        <item>// Example 4: Categorize old evidence\nif (evidence.documentDate &lt; new Date("2020-01-01").getTime()) {\n    parser.tags.push("Old Evidence");\n}</item>
+        <item>// Example 5: Tag evidence that is already tagged "important"\nif (evidence.tags.includes("important")) {\n    parser.tags.push("High Priority");\n}</item>
+        <item>// Example 6: Identify potential harassment\nif (evidence.content.match(/harass/i)) {\n    parser.tags.push("Harassment");\n}</item>
+        <item>// Example 7: Tag images\nif (evidence.type === "image") {\n    parser.tags.push("Image");\n}</item>
+        <item>// Example 8: Tag audio files\nif (evidence.type === "audio") {\n    parser.tags.push("Audio Recording");\n}</item>
+        <item>// Example 9: Tag evidence related to a specific project\nif (evidence.content.includes("Project X")) {\n    parser.tags.push("Project X");\n}</item>
+        <item>// Example 10: Find evidence with specific keywords and after a certain date\nif (evidence.content.includes("contract") &amp;&amp; evidence.documentDate > new Date("2022-06-01").getTime()) {\n    parser.tags.push("Contract 2022");\n}</item>
+    </string-array>
 
     <string name="share_script_title">Share Script</string>
     <string name="share_script_confirmation">Share this script with other users? Make sure it contains no private information!</string>

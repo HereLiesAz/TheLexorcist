@@ -18,6 +18,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -26,12 +28,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.google.gson.Gson
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.model.Template
 import com.hereliesaz.lexorcist.viewmodel.AddonsBrowserViewModel
@@ -74,11 +78,41 @@ fun TemplatesScreen(viewModel: AddonsBrowserViewModel = hiltViewModel()) {
             Text(
                 "Here you can manage your document templates. You can create new templates, edit existing ones, and share them with the community.",
             )
-            Button(onClick = {
-                selectedTemplate = null
-                showEditor = true
-            }) {
-                Text("Create New Template")
+            val context = LocalContext.current
+            val launcher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.GetContent()
+            ) { uri ->
+                uri?.let {
+                    try {
+                        context.contentResolver.openInputStream(it)?.use { inputStream ->
+                            val text = inputStream.bufferedReader().use { reader ->
+                                reader.readText()
+                            }
+                            val template = Gson().fromJson(text, Template::class.java)
+                            viewModel.shareAddon(
+                                name = template.name,
+                                description = template.description,
+                                content = template.content,
+                                type = "Template",
+                            )
+                        }
+                    } catch (e: Exception) {
+                        // Handle exception
+                    }
+                }
+            }
+
+            Row {
+                Button(onClick = {
+                    selectedTemplate = null
+                    showEditor = true
+                }) {
+                    Text("Create New Template")
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Button(onClick = { launcher.launch("application/json") }) {
+                    Text("Import Template")
+                }
             }
             LazyColumn {
                 items(templates.value) { template ->

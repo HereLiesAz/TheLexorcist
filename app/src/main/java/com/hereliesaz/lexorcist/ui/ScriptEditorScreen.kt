@@ -146,36 +146,30 @@ fun ScriptEditorScreen(viewModel: ScriptEditorViewModel) {
                     0 -> { // Description Tab
                         Column(
                             modifier =
-                                Modifier
-                                    .fillMaxSize()
-                                    .padding(16.dp)
-                                    .verticalScroll(rememberScrollState()),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center,
+                            Modifier
+                                .fillMaxSize()
+                                .padding(16.dp)
+                                .verticalScroll(rememberScrollState()),
+                            horizontalAlignment = Alignment.Start,
+                            verticalArrangement = Arrangement.Top,
                         ) {
                             Text(
-                                text = stringResource(R.string.script_description_placeholder),
+                                text = stringResource(R.string.script_editor_explanation),
                                 style = MaterialTheme.typography.bodyLarge,
                             )
                         }
                     }
                     1 -> { // Editor Tab
                         Column(modifier = Modifier.fillMaxSize()) {
-                            Text(
-                                text = stringResource(R.string.script_editor_instructions),
-                                style = MaterialTheme.typography.bodySmall,
-                                modifier = Modifier.padding(top = 16.dp, bottom = 8.dp, start = 16.dp, end = 16.dp),
-                            )
                             OutlinedTextField(
                                 value = scriptText,
                                 onValueChange = { viewModel.onScriptTextChanged(it) },
                                 label = { Text(stringResource(R.string.enter_your_script)) },
-                                placeholder = { Text(stringResource(R.string.script_editor_placeholder)) },
                                 modifier =
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .weight(1f)
-                                        .padding(horizontal = 16.dp),
+                                Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f)
+                                    .padding(horizontal = 16.dp),
                             )
                         }
                     }

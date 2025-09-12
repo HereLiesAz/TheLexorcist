@@ -911,9 +911,37 @@ class GoogleApiService(
         type: String,
     ): Boolean =
         withContext(Dispatchers.IO) {
-            // TODO: Implement actual logic to share an addon (script or template)
-            // This might involve creating a file in a shared Drive folder and updating a registry.
-            false
+            try {
+                val spreadsheetId = "18hB2Kx5Le1uaF2pImeITgWntcBB-JfYxvpU2aqTzRr8"
+                val sheetName = if (type == "Script") "Scripts" else "Templates"
+                val range = "$sheetName!A:A"
+                val response = sheets.spreadsheets().values().get(spreadsheetId, range).execute()
+                val lastRow = response.getValues()?.size ?: 0
+                val newId = "$sheetName-${lastRow + 1}"
+
+                val values =
+                    listOf(
+                        listOf(
+                            newId,
+                            name,
+                            description,
+                            content,
+                            "self", // Author
+                            0.0, // Rating
+                            0, // NumRatings
+                        ),
+                    )
+                val body = ValueRange().setValues(values)
+                sheets
+                    .spreadsheets()
+                    .values()
+                    .append(spreadsheetId, sheetName, body)
+                    .setValueInputOption("RAW")
+                    .execute()
+                true
+            } catch (e: IOException) {
+                false
+            }
         }
 
     suspend fun rateAddon(
