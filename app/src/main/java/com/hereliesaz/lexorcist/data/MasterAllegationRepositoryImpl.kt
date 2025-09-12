@@ -26,4 +26,3 @@ class MasterAllegationRepositoryImpl
                 emit(allegations)
             }
     }
-

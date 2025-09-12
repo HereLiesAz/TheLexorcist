@@ -92,6 +92,20 @@ fun MainScreen(
         }
     }
 
+    LaunchedEffect(signInState) {
+        when (signInState) {
+            is SignInState.Success -> {
+                caseViewModel.loadCasesFromRepository()
+            }
+            is SignInState.Idle -> {
+                caseViewModel.clearCache()
+            }
+            else -> {
+                // Do nothing for InProgress or Error states in this effect
+            }
+        }
+    }
+
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { paddingValues ->
