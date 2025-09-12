@@ -70,7 +70,7 @@ dependencies {
 
     // Firebase
     // implementation(platform(group = "com.google.firebase", name = "firebase-bom", version = "34.2.0")) // Use explicit group, name, version for BOM
-    implementation("com.google.firebase:firebase-auth-ktx:23.2.1") // Explicitly use KTX version and direct coordinate
+    implementation(libs.google.firebase.auth.ktx) // Explicitly use KTX version and direct coordinate
     // implementation("com.google.firebase:firebase-analytics") // Commented out to isolate build issue
 
     // Core testing dependencies

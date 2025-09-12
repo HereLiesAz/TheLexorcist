@@ -1,14 +1,14 @@
 package com.hereliesaz.lexorcist.data
 
 import android.util.Log
-import com.hereliesaz.lexorcist.service.GoogleApiService
+import com.hereliesaz.lexorcist.auth.CredentialHolder // Added import
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 
 class AllegationsRepositoryImpl @Inject constructor(
-    private val googleApiService: GoogleApiService?,
+    private val credentialHolder: CredentialHolder, // Changed from GoogleApiService?
 ) : AllegationsRepository {
 
     private var masterAllegationsSheetId: String? = null
@@ -26,9 +26,7 @@ class AllegationsRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getAllegations(caseId: String): List<Allegation> {
-        // This part remains for case-specific allegations, needs its own spreadsheet ID logic
-        // For now, it might be using a hardcoded or differently managed ID.
-        // This function is not the cause of the current crash related to master allegations.
+        val googleApiService = credentialHolder.googleApiService // Get from holder
         if (googleApiService == null) {
             Log.e(TAG, "GoogleApiService is null in getAllegations. Cannot fetch case allegations.")
             return emptyList()
@@ -53,6 +51,7 @@ class AllegationsRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getMasterAllegations(): List<MasterAllegation> {
+        val googleApiService = credentialHolder.googleApiService // Get from holder
         if (googleApiService == null) {
             Log.e(TAG, "GoogleApiService is null. Cannot fetch master allegations.")
             return emptyList()
@@ -91,6 +90,7 @@ class AllegationsRepositoryImpl @Inject constructor(
     }
 
     override suspend fun addAllegationToMasterList(allegation: MasterAllegation): Boolean {
+        val googleApiService = credentialHolder.googleApiService // Get from holder
         if (googleApiService == null) {
             Log.e(TAG, "GoogleApiService is null. Cannot add allegation to master list.")
             return false

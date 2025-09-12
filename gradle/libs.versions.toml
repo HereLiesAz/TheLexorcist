@@ -1,6 +1,7 @@
 [versions]
 androidApplication = "8.13.0" # Assuming a common version, adjust if needed from project level build.gradle
 aznavrail = "2.9"
+firebaseAuthKtx = "23.2.1"
 hiltAndroidCompiler = "2.57.1"
 kotlinAndroid = "2.2.10" # Assuming from your compose plugin version, adjust if different for kotlin-android
 kotlinParcelize = "1.9.0" # Assuming same as kotlinAndroid
@@ -78,6 +79,7 @@ androidx-compose-ui = { group = "androidx.compose.ui", name = "ui", version.ref 
 androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "composeFoundation" }
 google-firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
 google-firebase-auth = { module = "com.google.firebase:firebase-auth" }
+google-firebase-auth-ktx = { module = "com.google.firebase:firebase-auth-ktx", version.ref = "firebaseAuthKtx" }
 hilt-android-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "hiltAndroidCompiler" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 junit-jupiter-api = { group = "org.junit.jupiter", name = "junit-jupiter-api", version.ref = "junitJupiterApi" }

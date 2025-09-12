@@ -1,6 +1,6 @@
 package com.hereliesaz.lexorcist.data
 
-import com.hereliesaz.lexorcist.service.GoogleApiService
+import com.hereliesaz.lexorcist.auth.CredentialHolder // Added import
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.emptyFlow
@@ -11,8 +11,7 @@ import javax.inject.Singleton
 class EvidenceRepositoryImpl
     @Inject
     constructor(
-        // Changed to nullable
-        private val googleApiService: GoogleApiService?,
+        private val credentialHolder: CredentialHolder, // Changed from GoogleApiService?
         private val evidenceCacheManager: com.hereliesaz.lexorcist.utils.EvidenceCacheManager,
     ) : EvidenceRepository {
         private val evidenceByCaseMap = mutableMapOf<Long, kotlinx.coroutines.flow.MutableStateFlow<List<Evidence>>>()
@@ -23,7 +22,6 @@ class EvidenceRepositoryImpl
         ): Flow<List<Evidence>> {
             if (!evidenceByCaseMap.containsKey(caseId)) {
                 evidenceByCaseMap[caseId] = kotlinx.coroutines.flow.MutableStateFlow(emptyList())
-                // Load from cache or remote
                 val cachedEvidence = evidenceCacheManager.loadEvidence(caseId)
                 if (cachedEvidence != null) {
                     evidenceByCaseMap[caseId]?.value = cachedEvidence
@@ -38,7 +36,7 @@ class EvidenceRepositoryImpl
             spreadsheetId: String,
             caseId: Long,
         ) {
-            // Null-safe call needed here after the change
+            val googleApiService = credentialHolder.googleApiService // Get from holder
             googleApiService?.getEvidenceForCase(spreadsheetId, caseId)?.let { remoteEvidence ->
                 evidenceCacheManager.saveEvidence(caseId, remoteEvidence)
                 evidenceByCaseMap[caseId]?.value = remoteEvidence
@@ -46,27 +44,23 @@ class EvidenceRepositoryImpl
         }
 
         override suspend fun getEvidenceById(id: Int): Evidence? {
-            // This is inefficient, should be improved if needed
             return evidenceByCaseMap.values.flatMap { it.value }.find { it.id == id }
         }
 
         override fun getEvidence(id: Int): Flow<Evidence> {
-            // This is inefficient and doesn't update. Not implemented.
             return emptyFlow()
         }
 
         override suspend fun addEvidence(evidence: Evidence) {
-            // Null-safe call needed here after the change
+            val googleApiService = credentialHolder.googleApiService // Get from holder
             googleApiService?.addEvidenceToCase(evidence)
-            // refreshEvidence might also need to be conditional on googleApiService not being null
-            // if it strictly relies on a successful remote operation.
-            // For now, keeping existing logic, but this is a point of attention.
-            if (googleApiService != null) { // Only refresh if service was available to add
+            if (googleApiService != null) {
                 refreshEvidence(evidence.spreadsheetId, evidence.caseId)
             }
         }
 
         override suspend fun updateEvidence(evidence: Evidence) {
+            val googleApiService = credentialHolder.googleApiService // Get from holder
             googleApiService?.let {
                 if (it.updateEvidenceInSheet(evidence)) {
                     refreshEvidence(evidence.spreadsheetId, evidence.caseId)
@@ -75,6 +69,7 @@ class EvidenceRepositoryImpl
         }
 
         override suspend fun deleteEvidence(evidence: Evidence) {
+            val googleApiService = credentialHolder.googleApiService // Get from holder
             googleApiService?.let {
                 if (it.deleteEvidenceFromSheet(evidence)) {
                     refreshEvidence(evidence.spreadsheetId, evidence.caseId)
@@ -86,9 +81,9 @@ class EvidenceRepositoryImpl
             id: Int,
             commentary: String,
         ) {
-            val evidence = getEvidenceById(id)
-            if (evidence != null) {
-                val updatedEvidence = evidence.copy(commentary = commentary)
+            val evidenceItem = getEvidenceById(id) // Renamed for clarity
+            if (evidenceItem != null) {
+                val updatedEvidence = evidenceItem.copy(commentary = commentary)
                 updateEvidence(updatedEvidence)
             }
         }
