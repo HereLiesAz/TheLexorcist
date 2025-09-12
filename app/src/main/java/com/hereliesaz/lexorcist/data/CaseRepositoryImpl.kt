@@ -100,7 +100,7 @@ class CaseRepositoryImpl
                 android.util.Log.e("CaseRepositoryImpl", "IOException in createCase: $e")
             }
         }
-    }
+
 
         override suspend fun archiveCase(case: Case) {
             credentialHolder.googleApiService?.let {
@@ -177,4 +177,4 @@ class CaseRepositoryImpl
             _cases.value = emptyList()
         }
     }
-}
+

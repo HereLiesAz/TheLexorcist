@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import com.google.api.services.drive.model.File as DriveFile
+import androidx.core.content.edit
 
 @HiltViewModel
 class CaseViewModel
@@ -155,7 +156,8 @@ class CaseViewModel
         ) {
             android.util.Log.d("CaseViewModel", "createCase called with name: $caseName")
             viewModelScope.launch {
-                caseRepository.createCase( // Corrected method name
+                caseRepository.createCase(
+                    // Corrected method name
                     caseName,
                     exhibitSheetName,
                     caseNumber,

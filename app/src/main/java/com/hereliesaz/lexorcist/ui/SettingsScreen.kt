@@ -12,7 +12,7 @@ import androidx.compose.foundation.rememberScrollState // Added import
 import androidx.compose.foundation.verticalScroll // Added import
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider // Corrected import
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -91,7 +91,7 @@ fun SettingsScreen(caseViewModel: CaseViewModel) {
             }
 
             Spacer(modifier = Modifier.height(24.dp))
-            Divider()
+            HorizontalDivider()
             Spacer(modifier = Modifier.height(24.dp))
 
             // Cache Settings

@@ -18,9 +18,6 @@ import com.google.api.services.sheets.v4.SheetsScopes
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
-import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
-import com.google.api.services.drive.DriveScopes
-import com.google.api.services.sheets.v4.SheetsScopes
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.auth.CredentialHolder
 import com.hereliesaz.lexorcist.model.SignInState
@@ -74,8 +71,8 @@ class AuthViewModel
                         .setNonce(nonce)
 
                 if (silent) {
-                    val userEmail = sharedPreferences.getString(PREF_USER_EMAIL_KEY, null)
-                    if (userEmail != null) {
+                    val storedUserEmail = sharedPreferences.getString(PREF_USER_EMAIL_KEY, null)
+                    if (storedUserEmail != null) {
                         googleIdOptionBuilder.setFilterByAuthorizedAccounts(true)
                     } else {
                         _signInState.value = SignInState.Idle
@@ -103,6 +100,7 @@ class AuthViewModel
                             onSignInError(e)
                         }
                     } else {
+                        Log.e(TAG, "Unexpected credential type: ${credential.type}")
                         onSignInError(Exception("Unexpected credential type"))
                     }
                 } catch (e: GetCredentialException) {
@@ -110,35 +108,41 @@ class AuthViewModel
                     if (!silent) {
                         onSignInError(e)
                     } else {
-                        _signInState.value = SignInState.Idle
+                        _signInState.value = SignInState.Idle 
                     }
                 }
             }
         }
 
         private fun onSignInResult(googleIdTokenCredential: GoogleIdTokenCredential) {
-            val userId = googleIdTokenCredential.id // Use .id, which is the email/unique identifier
+            val userId = googleIdTokenCredential.id // .id is the non-nullable unique user identifier (subject claim)
 
-            if (userId.isNullOrBlank()) { // Check if userId (email) is null or blank
-                Log.e(TAG, "User ID (email) is null or blank from GoogleIdTokenCredential. Cannot proceed.")
-                onSignInError(Exception("User email not available. Please ensure email permission is granted or try again."))
+            // Ensure the userId is not blank, as an empty string is not a valid account name.
+            if (userId.isBlank()) { 
+                Log.e(TAG, "User ID (sub) is blank from GoogleIdTokenCredential. Cannot proceed.")
+                onSignInError(Exception("User ID not available or is blank. Please ensure ID permission is granted or try again."))
                 return
             }
 
             val userInfo =
                 UserInfo(
                     displayName = googleIdTokenCredential.displayName,
-                    email = userId, // Use userId (which is the email)
+                    // While 'id' is the unique identifier, the 'email' field is typically what's displayed and used for account association.
+                    // However, for GoogleAccountCredential's 'selectedAccountName', a non-empty string is required. 'id' serves this purpose.
+                    email = userId, // Using userId (sub) as the primary identifier here as per original logic.
                     photoUrl = googleIdTokenCredential.profilePictureUri?.toString(),
                 )
             _signInState.value = SignInState.Success(userInfo)
-            sharedPreferences.edit { putString(PREF_USER_EMAIL_KEY, credential.id) }
-            Log.d(TAG, "User email saved to SharedPreferences: ${credential.id}")
+            
+            // Store the validated userId (which is the 'id'/'sub' from the token)
+            sharedPreferences.edit { putString(PREF_USER_EMAIL_KEY, userId) }
+            Log.d(TAG, "User ID (sub) saved to SharedPreferences: $userId")
 
             // Create and store the GoogleAccountCredential
             val scopes = listOf(DriveScopes.DRIVE, SheetsScopes.SPREADSHEETS)
             val accountCredential = GoogleAccountCredential.usingOAuth2(application, scopes)
-            accountCredential.selectedAccountName = credential.id
+            // Use the validated, non-blank userId for selectedAccountName
+            accountCredential.selectedAccountName = userId 
             credentialHolder.credential = accountCredential
             credentialHolder.googleApiService =
                 com.hereliesaz.lexorcist.service
@@ -154,7 +158,7 @@ class AuthViewModel
                 credentialManager.clearCredentialState(ClearCredentialStateRequest())
                 _signInState.value = SignInState.Idle
                 sharedPreferences.edit { remove(PREF_USER_EMAIL_KEY) }
-                Log.d(TAG, "User email cleared from SharedPreferences.")
+                Log.d(TAG, "User ID (sub) cleared from SharedPreferences.")
                 credentialHolder.credential = null
                 credentialHolder.googleApiService = null
             }
