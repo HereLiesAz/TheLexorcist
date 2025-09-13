@@ -24,7 +24,7 @@ interface CaseRepository {
         plaintiffs: String,
         defendants: String,
         court: String,
-    )
+    ): com.hereliesaz.lexorcist.utils.Result<Unit>
 
     suspend fun archiveCase(case: Case)
 

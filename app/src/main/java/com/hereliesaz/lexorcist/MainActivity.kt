@@ -35,6 +35,13 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
+            val userRecoverableError by caseViewModel.userRecoverableError.collectAsState()
+            LaunchedEffect(userRecoverableError) {
+                userRecoverableError?.let {
+                    startActivity(it.intent)
+                }
+            }
+
             LexorcistTheme(themeMode = themeMode) {
                 val navController = rememberNavController()
 
