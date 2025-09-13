@@ -22,6 +22,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,15 +47,30 @@ import java.util.Locale
 fun TemplatesScreen(viewModel: AddonsBrowserViewModel = hiltViewModel()) {
     var showEditor by remember { mutableStateOf(false) }
     var selectedTemplate by remember { mutableStateOf<Template?>(null) }
-    val templates =
-        remember {
-            mutableStateOf(
-                listOf(
-                    Template("1", "Template 1", "Description 1", "<h1>Template 1</h1><p>This is a test template.</p>", "Author 1"),
-                    Template("2", "Template 2", "Description 2", "<h1>Template 2</h1><p>This is another test template.</p>", "Author 2"),
-                ),
+    val context = LocalContext.current
+    val templates = remember { mutableStateOf<List<Template>>(emptyList()) }
+
+    LaunchedEffect(Unit) {
+        val templateResources = listOf(
+            R.raw.template_cover_sheet,
+            R.raw.template_custody_log,
+            R.raw.template_declaration,
+            R.raw.template_metadata,
+            R.raw.template_table_of_exhibits
+        )
+
+        templates.value = templateResources.map { resId ->
+            val content = context.resources.openRawResource(resId).bufferedReader().use { it.readText() }
+            val name = context.resources.getResourceEntryName(resId).replace("template_", "").replace("_", " ").replaceFirstChar { it.titlecase() }
+            Template(
+                id = resId.toString(),
+                name = name,
+                description = "A standard template for $name.",
+                content = content,
+                author = "Lexorcist"
             )
         }
+    }
 
     Scaffold(
         topBar = {
