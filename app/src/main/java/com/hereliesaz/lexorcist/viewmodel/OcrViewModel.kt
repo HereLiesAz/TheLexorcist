@@ -30,10 +30,11 @@ class OcrViewModel
             viewModelScope.launch {
                 Log.d("OcrViewModel", "Delegating performOcrOnUri to OcrProcessingService for URI: $uri")
                 try {
-                    val ocrText = ocrProcessingService.processImageFrame(
-                        uri = uri,
-                        context = context,
-                    )
+                    val ocrText =
+                        ocrProcessingService.processImageFrame(
+                            uri = uri,
+                            context = context,
+                        )
                     Log.d("OcrViewModel", "OcrProcessingService completed for URI: $uri, result: $ocrText")
                 } catch (e: Exception) {
                     Log.e("OcrViewModel", "Error calling OcrProcessingService for URI: $uri", e)

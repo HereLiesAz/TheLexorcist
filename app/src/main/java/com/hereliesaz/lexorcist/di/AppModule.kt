@@ -3,6 +3,7 @@ package com.hereliesaz.lexorcist.di
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.credentials.CredentialManager
+import androidx.work.WorkManager
 import com.hereliesaz.lexorcist.data.SettingsManager
 import com.hereliesaz.lexorcist.service.ScriptRunner
 import com.hereliesaz.lexorcist.utils.CacheManager

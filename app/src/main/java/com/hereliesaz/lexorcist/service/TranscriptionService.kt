@@ -2,7 +2,6 @@ package com.hereliesaz.lexorcist.service
 
 import android.content.Context
 import android.net.Uri
-import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
 import com.google.api.gax.core.FixedCredentialsProvider
 import com.google.auth.oauth2.AccessToken
 import com.google.auth.oauth2.GoogleCredentials
@@ -19,61 +18,62 @@ import javax.inject.Singleton
 
 @Singleton
 class TranscriptionService
-@Inject
-constructor(
-    @ApplicationContext private val context: Context,
-    private val credentialHolder: CredentialHolder,
-) {
-    suspend fun transcribeAudio(uri: Uri): String {
-        try {
-            val credential = credentialHolder.credential
-                ?: return "Error: Could not retrieve access token."
-            val accessToken = credential.token
-            val googleCredentials = GoogleCredentials.create(AccessToken(accessToken, null))
-            val speechSettings =
-                SpeechSettings
-                    .newBuilder()
-                    .setCredentialsProvider(FixedCredentialsProvider.create(googleCredentials))
-                    .build()
+    @Inject
+    constructor(
+        @ApplicationContext private val context: Context,
+        private val credentialHolder: CredentialHolder,
+    ) {
+        suspend fun transcribeAudio(uri: Uri): String {
+            try {
+                val credential =
+                    credentialHolder.credential
+                        ?: return "Error: Could not retrieve access token."
+                val accessToken = credential.token
+                val googleCredentials = GoogleCredentials.create(AccessToken(accessToken, null))
+                val speechSettings =
+                    SpeechSettings
+                        .newBuilder()
+                        .setCredentialsProvider(FixedCredentialsProvider.create(googleCredentials))
+                        .build()
 
-            SpeechClient.create(speechSettings).use { speechClient ->
-                val audioBytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
-                if (audioBytes == null) {
-                    return "Error: Could not read audio file."
+                SpeechClient.create(speechSettings).use { speechClient ->
+                    val audioBytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                    if (audioBytes == null) {
+                        return "Error: Could not read audio file."
+                    }
+
+                    val audio =
+                        RecognitionAudio
+                            .newBuilder()
+                            .setContent(ByteString.copyFrom(audioBytes))
+                            .build()
+
+                    val config =
+                        RecognitionConfig
+                            .newBuilder()
+                            .setEncoding(RecognitionConfig.AudioEncoding.ENCODING_UNSPECIFIED) // Let the service auto-detect
+                            .setSampleRateHertz(16000) // Adjust if you know the sample rate
+                            .setLanguageCode("en-US")
+                            .build()
+
+                    val request =
+                        RecognizeRequest
+                            .newBuilder()
+                            .setConfig(config)
+                            .setAudio(audio)
+                            .build()
+
+                    val response = speechClient.recognize(request)
+                    val results = response.resultsList
+
+                    if (results.isNotEmpty()) {
+                        return results[0].alternativesList[0].transcript
+                    }
                 }
-
-                val audio =
-                    RecognitionAudio
-                        .newBuilder()
-                        .setContent(ByteString.copyFrom(audioBytes))
-                        .build()
-
-                val config =
-                    RecognitionConfig
-                        .newBuilder()
-                        .setEncoding(RecognitionConfig.AudioEncoding.ENCODING_UNSPECIFIED) // Let the service auto-detect
-                        .setSampleRateHertz(16000) // Adjust if you know the sample rate
-                        .setLanguageCode("en-US")
-                        .build()
-
-                val request =
-                    RecognizeRequest
-                        .newBuilder()
-                        .setConfig(config)
-                        .setAudio(audio)
-                        .build()
-
-                val response = speechClient.recognize(request)
-                val results = response.resultsList
-
-                if (results.isNotEmpty()) {
-                    return results[0].alternativesList[0].transcript
-                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                return "Error during transcription: ${e.message}"
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            return "Error during transcription: ${e.message}"
+            return "No transcription result."
         }
-        return "No transcription result."
     }
-}

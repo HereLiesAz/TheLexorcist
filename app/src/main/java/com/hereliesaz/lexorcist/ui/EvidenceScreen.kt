@@ -10,8 +10,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Audiotrack
@@ -54,6 +54,7 @@ fun EvidenceScreen(
     var showAddTextEvidence by remember { mutableStateOf(false) }
     var text by remember { mutableStateOf("") }
     val selectedCase by caseViewModel.selectedCase.collectAsState()
+    val evidenceList by evidenceViewModel.evidenceList.collectAsState()
 
     val imagePickerLauncher =
         rememberLauncherForActivityResult(
@@ -100,7 +101,6 @@ fun EvidenceScreen(
             modifier =
                 Modifier
                     .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
                     .padding(padding)
                     .padding(16.dp),
             horizontalAlignment = Alignment.End,
@@ -191,6 +191,32 @@ fun EvidenceScreen(
                     Text(stringResource(R.string.add_video_evidence).uppercase(Locale.getDefault()))
                 }
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            LazyColumn(modifier = Modifier.fillMaxSize()) {
+                items(evidenceList) { evidence ->
+                    EvidenceListItem(evidence = evidence)
+                }
+            }
         }
+    }
+}
+
+@Composable
+fun EvidenceListItem(evidence: com.hereliesaz.lexorcist.data.Evidence) {
+    Column(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+        horizontalAlignment = Alignment.End,
+    ) {
+        Text(text = "Type: ${evidence.type}", style = MaterialTheme.typography.bodyMedium)
+        Text(
+            text = evidence.content,
+            style = MaterialTheme.typography.bodyLarge,
+            textAlign = TextAlign.End,
+        )
     }
 }
