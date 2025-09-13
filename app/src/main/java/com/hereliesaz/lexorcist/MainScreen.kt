@@ -51,10 +51,8 @@ import com.hereliesaz.lexorcist.ui.ExtrasScreen
 import com.hereliesaz.lexorcist.ui.ReviewScreen
 import com.hereliesaz.lexorcist.ui.ScriptEditorScreen
 import com.hereliesaz.lexorcist.ui.SettingsScreen
-import com.hereliesaz.lexorcist.ui.ShareAddonScreen
 import com.hereliesaz.lexorcist.ui.TemplatesScreen
 import com.hereliesaz.lexorcist.ui.TimelineScreen
-import com.hereliesaz.lexorcist.ui.TranscriptionScreen
 import com.hereliesaz.lexorcist.viewmodel.AddonsBrowserViewModel
 import com.hereliesaz.lexorcist.viewmodel.AllegationsViewModel
 import com.hereliesaz.lexorcist.viewmodel.AuthViewModel
@@ -170,7 +168,7 @@ fun MainScreen(
                                         verticalArrangement = Arrangement.Top, // Content aligns to its top
                                     ) {
                                         Text(
-                                            text = stringResource(R.string.appTitle),
+                                            text = stringResource(R.string.app_name),
                                             style = MaterialTheme.typography.headlineMedium,
                                         )
                                         Spacer(modifier = Modifier.height(16.dp))
@@ -199,14 +197,7 @@ fun MainScreen(
                                 }
                                 composable("extras") { ExtrasScreen(viewModel = hiltViewModel<AddonsBrowserViewModel>(), onShare = {}) }
                                 composable("script_editor") {
-                                    ScriptEditorScreen(viewModel = hiltViewModel<ScriptEditorViewModel>(), navController = navController)
-                                }
-                                composable("share_addon/{type}/{content}") { backStackEntry ->
-                                    val addonsBrowserViewModel: AddonsBrowserViewModel = hiltViewModel()
-                                    ShareAddonScreen { name, description, content, type ->
-                                        addonsBrowserViewModel.shareAddon(name, description, content, type)
-                                        navController.popBackStack()
-                                    }
+                                    ScriptEditorScreen(viewModel = hiltViewModel<ScriptEditorViewModel>())
                                 }
                                 // Renamed route for case-specific allegations
                                 composable("case_allegations_route") {
@@ -253,18 +244,6 @@ fun MainScreen(
                                                 evidenceViewModel.clearEvidenceDetails()
                                             }
                                         }
-                                    } else {
-                                        Text("Error: Evidence ID not found or invalid.")
-                                    }
-                                }
-                                composable("transcription/{evidenceId}") { backStackEntry ->
-                                    val evidenceId =
-                                        backStackEntry.arguments?.getString("evidenceId")?.toIntOrNull()
-                                    if (evidenceId != null) {
-                                        TranscriptionScreen(
-                                            evidenceViewModel = evidenceViewModel,
-                                            navController = navController,
-                                        )
                                     } else {
                                         Text("Error: Evidence ID not found or invalid.")
                                     }
