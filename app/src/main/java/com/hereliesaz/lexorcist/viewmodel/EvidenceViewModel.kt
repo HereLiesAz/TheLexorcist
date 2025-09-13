@@ -53,128 +53,131 @@ class EvidenceViewModel
         private val _searchQuery = MutableStateFlow("")
         val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
-    private val _evidenceList = MutableStateFlow<List<Evidence>>(emptyList())
-    private val _searchQuery = MutableStateFlow("")
-    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+        val evidenceList: StateFlow<List<Evidence>> =
+            _evidenceList
+                .combine(_searchQuery) { evidence, query ->
+                    if (query.isBlank()) {
+                        evidence
+                    } else {
+                        evidence.filter { it.content.contains(query, ignoreCase = true) }
+                    }
+                }.stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.Lazily, emptyList())
 
-    val evidenceList: StateFlow<List<Evidence>> =
-        _evidenceList
-            .combine(_searchQuery) { evidence, query ->
-                if (query.isBlank()) {
-                    evidence
-                } else {
-                    evidence.filter { it.content.contains(query, ignoreCase = true) }
-                }
-            }.stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.Lazily, emptyList())
+        private val _isLoading = MutableStateFlow(false)
+        val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+        private var currentCaseIdForList: Long? = null
+        private var currentSpreadsheetIdForList: String? = null
 
-    private var currentCaseIdForList: Long? = null
-    private var currentSpreadsheetIdForList: String? = null
-
-    fun addTextEvidence(
-        text: String,
-        caseId: Long,
-        spreadsheetId: String,
-    ) {
-        viewModelScope.launch {
-            val entities =
-                com.hereliesaz.lexorcist.DataParser
-                    .tagData(text)
-            val newEvidence =
-                Evidence(
-                    id = 0,
-                    caseId = caseId,
-                    spreadsheetId = spreadsheetId,
-                    type = "text",
-                    content = text,
-                    timestamp = System.currentTimeMillis(),
-                    sourceDocument = "Manual text entry",
-                    documentDate = System.currentTimeMillis(),
-                    allegationId = null,
-                    category = "",
-                    tags = emptyList(),
-                    commentary = null,
-                    linkedEvidenceIds = emptyList(),
-                    parentVideoId = null,
-                    entities = entities,
-                )
-            evidenceRepository.addEvidence(newEvidence)
-            // Refresh list if it's for the same case
-            if (caseId == currentCaseIdForList && spreadsheetId == currentSpreadsheetIdForList) {
-                loadEvidenceForCase(caseId, spreadsheetId)
-            }
-        }
-    }
-
-    fun toggleEvidenceSelection(evidenceId: Int) {
-        val list =
-            _evidenceList.value.map {
-                if (it.id == evidenceId) {
-                    it.copy(isSelected = !it.isSelected)
-                } else {
-                    it
-                }
-            }
-        _evidenceList.value = list
-    }
-
-    fun clearEvidenceSelection() {
-        val list =
-            _evidenceList.value.map {
-                it.copy(isSelected = false)
-            }
-        _evidenceList.value = list
-    }
-
-    fun loadEvidenceDetails(evidenceId: Int) {
-        viewModelScope.launch {
-            _selectedEvidenceDetails.value = evidenceRepository.getEvidenceById(evidenceId)
-        }
-    }
-
-    fun updateCommentary(
-        evidenceId: Int,
-        commentary: String,
-    ) {
-        viewModelScope.launch {
-            evidenceRepository.updateCommentary(evidenceId, commentary)
-            val currentDetails = _selectedEvidenceDetails.value
-            if (currentDetails != null && currentDetails.id == evidenceId) {
-                _selectedEvidenceDetails.value = currentDetails.copy(commentary = commentary)
-            }
-            // Refresh list if the updated item is in the current list
-            currentCaseIdForList?.let { caseId ->
-                currentSpreadsheetIdForList?.let { spreadsheetId ->
+        fun addTextEvidence(
+            text: String,
+            caseId: Long,
+            spreadsheetId: String,
+        ) {
+            viewModelScope.launch {
+                val entities =
+                    com.hereliesaz.lexorcist.DataParser
+                        .tagData(text)
+                val newEvidence =
+                    Evidence(
+                        id = 0,
+                        caseId = caseId,
+                        spreadsheetId = spreadsheetId,
+                        type = "text",
+                        content = text,
+                        timestamp = System.currentTimeMillis(),
+                        sourceDocument = "Manual text entry",
+                        documentDate = System.currentTimeMillis(),
+                        allegationId = null,
+                        category = "",
+                        tags = emptyList(),
+                        commentary = null,
+                        linkedEvidenceIds = emptyList(),
+                        parentVideoId = null,
+                        entities = entities,
+                    )
+                evidenceRepository.addEvidence(newEvidence)
+                // Refresh list if it's for the same case
+                if (caseId == currentCaseIdForList && spreadsheetId == currentSpreadsheetIdForList) {
                     loadEvidenceForCase(caseId, spreadsheetId)
                 }
             }
         }
-    }
 
-    fun clearEvidenceDetails() {
-        _selectedEvidenceDetails.value = null
-    }
+        fun toggleEvidenceSelection(evidenceId: Int) {
+            val updatedList =
+                _evidenceList.value.map {
+                    if (it.id == evidenceId) {
+                        it.copy(isSelected = !it.isSelected)
+                    } else {
+                        it
+                    }
+                }
+            _evidenceList.value = updatedList
 
-    fun loadEvidenceForCase(
-        caseId: Long,
-        spreadsheetId: String,
-    ) {
-        currentCaseIdForList = caseId
-        currentSpreadsheetIdForList = spreadsheetId
-        viewModelScope.launch {
-            _isLoading.value = true
-            evidenceRepository.getEvidenceForCase(spreadsheetId, caseId).collectLatest { evidence ->
-                if (evidence.isEmpty()) {
-                    _evidenceList.value = createPlaceholderEvidence()
-                } else {
-                    _evidenceList.value = evidence
+            val toggledEvidence = updatedList.find { it.id == evidenceId }
+            if (toggledEvidence != null) {
+                viewModelScope.launch {
+                    evidenceRepository.updateEvidence(toggledEvidence)
                 }
             }
-            _isLoading.value = false
         }
-    }
+
+        fun clearEvidenceSelection() {
+            val list =
+                _evidenceList.value.map {
+                    it.copy(isSelected = false)
+                }
+            _evidenceList.value = list
+        }
+
+        fun loadEvidenceDetails(evidenceId: Int) {
+            viewModelScope.launch {
+                _selectedEvidenceDetails.value = evidenceRepository.getEvidenceById(evidenceId)
+            }
+        }
+
+        fun updateCommentary(
+            evidenceId: Int,
+            commentary: String,
+        ) {
+            viewModelScope.launch {
+                evidenceRepository.updateCommentary(evidenceId, commentary)
+                val currentDetails = _selectedEvidenceDetails.value
+                if (currentDetails != null && currentDetails.id == evidenceId) {
+                    _selectedEvidenceDetails.value = currentDetails.copy(commentary = commentary)
+                }
+                // Refresh list if the updated item is in the current list
+                currentCaseIdForList?.let { caseId ->
+                    currentSpreadsheetIdForList?.let { spreadsheetId ->
+                        loadEvidenceForCase(caseId, spreadsheetId)
+                    }
+                }
+            }
+        }
+
+        fun clearEvidenceDetails() {
+            _selectedEvidenceDetails.value = null
+        }
+
+        fun loadEvidenceForCase(
+            caseId: Long,
+            spreadsheetId: String,
+        ) {
+            currentCaseIdForList = caseId
+            currentSpreadsheetIdForList = spreadsheetId
+            viewModelScope.launch {
+                _isLoading.value = true
+                evidenceRepository.getEvidenceForCase(spreadsheetId, caseId).collectLatest { evidence ->
+                    if (evidence.isEmpty()) {
+                        _evidenceList.value = createPlaceholderEvidence()
+                    } else {
+                        _evidenceList.value = evidence
+                    }
+                }
+                _isLoading.value = false
+            }
+        }
 
         private fun createPlaceholderEvidence(): List<Evidence> =
             listOf(
@@ -216,66 +219,66 @@ class EvidenceViewModel
                 ),
             )
 
-    fun updateEvidence(evidence: Evidence) {
-        viewModelScope.launch {
-            evidenceRepository.updateEvidence(evidence)
-            val script = settingsManager.getScript()
-            val result = scriptRunner.runScript(script, evidence)
-            if (result is Result.Success) {
-                val updatedEvidence = evidence.copy(tags = evidence.tags + result.data.tags)
-                evidenceRepository.updateEvidence(updatedEvidence)
-            }
-            // Refresh list if it's for the same case
-            if (evidence.caseId == currentCaseIdForList && evidence.spreadsheetId == currentSpreadsheetIdForList) {
-                loadEvidenceForCase(evidence.caseId, evidence.spreadsheetId)
-            }
-        }
-    }
-
-    fun deleteEvidence(evidence: Evidence) {
-        viewModelScope.launch {
-            evidenceRepository.deleteEvidence(evidence)
-            // Refresh list if it's for the same case
-            if (evidence.caseId == currentCaseIdForList && evidence.spreadsheetId == currentSpreadsheetIdForList) {
-                loadEvidenceForCase(evidence.caseId, evidence.spreadsheetId)
-            }
-        }
-    }
-
-    fun onSearchQueryChanged(query: String) {
-        _searchQuery.value = query
-    }
-
-    fun assignAllegationToEvidence(
-        evidenceId: Int,
-        allegationId: Int,
-    ) {
-        viewModelScope.launch {
-            val evidence = evidenceRepository.getEvidenceById(evidenceId)
-            if (evidence != null) {
-                val updatedEvidence = evidence.copy(allegationId = allegationId)
-                evidenceRepository.updateEvidence(updatedEvidence)
+        fun updateEvidence(evidence: Evidence) {
+            viewModelScope.launch {
+                evidenceRepository.updateEvidence(evidence)
+                val script = settingsManager.getScript()
+                val result = scriptRunner.runScript(script, evidence)
+                if (result is Result.Success) {
+                    val updatedEvidence = evidence.copy(tags = evidence.tags + result.data.tags)
+                    evidenceRepository.updateEvidence(updatedEvidence)
+                }
                 // Refresh list if it's for the same case
                 if (evidence.caseId == currentCaseIdForList && evidence.spreadsheetId == currentSpreadsheetIdForList) {
                     loadEvidenceForCase(evidence.caseId, evidence.spreadsheetId)
                 }
             }
         }
-    }
 
-    fun processImageEvidence(uri: Uri) {
-        viewModelScope.launch {
-            if (currentCaseIdForList != null && currentSpreadsheetIdForList != null) {
-                ocrProcessingService.processImage(
-                    uri = uri,
-                    context = getApplication(),
-                    caseId = currentCaseIdForList!!,
-                    spreadsheetId = currentSpreadsheetIdForList!!,
-                )
-                loadEvidenceForCase(currentCaseIdForList!!, currentSpreadsheetIdForList!!)
+        fun deleteEvidence(evidence: Evidence) {
+            viewModelScope.launch {
+                evidenceRepository.deleteEvidence(evidence)
+                // Refresh list if it's for the same case
+                if (evidence.caseId == currentCaseIdForList && evidence.spreadsheetId == currentSpreadsheetIdForList) {
+                    loadEvidenceForCase(evidence.caseId, evidence.spreadsheetId)
+                }
             }
         }
-    }
+
+        fun onSearchQueryChanged(query: String) {
+            _searchQuery.value = query
+        }
+
+        fun assignAllegationToEvidence(
+            evidenceId: Int,
+            allegationId: Int,
+        ) {
+            viewModelScope.launch {
+                val evidence = evidenceRepository.getEvidenceById(evidenceId)
+                if (evidence != null) {
+                    val updatedEvidence = evidence.copy(allegationId = allegationId)
+                    evidenceRepository.updateEvidence(updatedEvidence)
+                    // Refresh list if it's for the same case
+                    if (evidence.caseId == currentCaseIdForList && evidence.spreadsheetId == currentSpreadsheetIdForList) {
+                        loadEvidenceForCase(evidence.caseId, evidence.spreadsheetId)
+                    }
+                }
+            }
+        }
+
+        fun processImageEvidence(uri: Uri) {
+            viewModelScope.launch {
+                if (currentCaseIdForList != null && currentSpreadsheetIdForList != null) {
+                    ocrProcessingService.processImage(
+                        uri = uri,
+                        context = getApplication(),
+                        caseId = currentCaseIdForList!!,
+                        spreadsheetId = currentSpreadsheetIdForList!!,
+                    )
+                    loadEvidenceForCase(currentCaseIdForList!!, currentSpreadsheetIdForList!!)
+                }
+            }
+        }
 
         fun processAudioEvidence(uri: Uri) {
             viewModelScope.launch {
@@ -347,36 +350,3 @@ class EvidenceViewModel
             }
         }
     }
-
-    fun updateTranscript(
-        evidence: Evidence,
-        newTranscript: String,
-        reason: String,
-    ) {
-        viewModelScope.launch {
-            evidenceRepository.updateTranscript(evidence, newTranscript, reason)
-        }
-    }
-
-    fun processVideoEvidence(uri: Uri) {
-        viewModelScope.launch {
-            if (currentCaseIdForList != null && currentSpreadsheetIdForList != null) {
-                val case = caseRepository.getCaseBySpreadsheetId(currentSpreadsheetIdForList!!)
-                if (case != null) {
-                    val workRequest =
-                        OneTimeWorkRequestBuilder<VideoProcessingWorker>()
-                            .setInputData(
-                                Data
-                                    .Builder()
-                                    .putString(VideoProcessingWorker.KEY_VIDEO_URI, uri.toString())
-                                    .putInt(VideoProcessingWorker.KEY_CASE_ID, case.id)
-                                    .putString(VideoProcessingWorker.KEY_CASE_NAME, case.name)
-                                    .putString(VideoProcessingWorker.KEY_SPREADSHEET_ID, case.spreadsheetId)
-                                    .build(),
-                            ).build()
-                    workManager.enqueue(workRequest)
-                }
-            }
-        }
-    }
-}

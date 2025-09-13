@@ -712,6 +712,7 @@ class GoogleApiService(
                                         ?.toString()
                                         ?.let { Gson().fromJson(it, object : TypeToken<Map<String, List<String>>>() {}.type) }
                                         ?: emptyMap(),
+                                isSelected = row.getOrNull(13)?.toString()?.toBoolean() ?: false,
                             )
                         } catch (e: Exception) {
                             null // Skip row if parsing fails
@@ -742,6 +743,7 @@ class GoogleApiService(
                             evidence.linkedEvidenceIds.joinToString(","),
                             evidence.parentVideoId ?: "",
                             Gson().toJson(evidence.entities),
+                            evidence.isSelected.toString(),
                         ),
                     )
                 val body = ValueRange().setValues(values)
@@ -815,6 +817,7 @@ class GoogleApiService(
                         evidence.linkedEvidenceIds.joinToString(","),
                         evidence.parentVideoId ?: "",
                         Gson().toJson(evidence.entities),
+                        evidence.isSelected.toString(),
                     )
                 val valueRange = ValueRange().setValues(listOf(rowData))
                 val updateRange = "Evidence!A${rowIndex + 1}"
