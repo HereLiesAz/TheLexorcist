@@ -53,11 +53,11 @@ import com.hereliesaz.lexorcist.ui.ScriptEditorScreen
 import com.hereliesaz.lexorcist.ui.SettingsScreen
 import com.hereliesaz.lexorcist.ui.TemplatesScreen
 import com.hereliesaz.lexorcist.ui.TimelineScreen
+import com.hereliesaz.lexorcist.viewmodel.AddonsBrowserViewModel
+import com.hereliesaz.lexorcist.viewmodel.AllegationsViewModel
 import com.hereliesaz.lexorcist.viewmodel.AuthViewModel
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
-import com.hereliesaz.lexorcist.viewmodel.AddonsBrowserViewModel
-import com.hereliesaz.lexorcist.viewmodel.AllegationsViewModel
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 import com.hereliesaz.lexorcist.viewmodel.MasterAllegationsViewModel
 import com.hereliesaz.lexorcist.viewmodel.ScriptEditorViewModel
@@ -124,7 +124,11 @@ fun MainScreen(
                         azRailItem(id = "cases", text = "Cases", onClick = { navController.navigate("cases") })
                         azRailItem(id = "evidence", text = "Evidence", onClick = { navController.navigate("evidence") })
                         // Renamed item id and route for case-specific allegations
-                        azRailItem(id = "case_allegations_item", text = "Allegations", onClick = { navController.navigate("case_allegations_route") })
+                        azRailItem(
+                            id = "case_allegations_item",
+                            text = "Allegations",
+                            onClick = { navController.navigate("case_allegations_route") },
+                        )
                         azRailItem(id = "templates", text = "Templates", onClick = { navController.navigate("templates") })
                         azRailItem(id = "timeline", text = "Timeline", onClick = { navController.navigate("timeline") })
                         azRailItem(id = "data_review", text = "Review", onClick = { navController.navigate("data_review") })

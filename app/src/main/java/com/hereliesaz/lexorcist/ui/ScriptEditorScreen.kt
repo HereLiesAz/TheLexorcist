@@ -146,10 +146,10 @@ fun ScriptEditorScreen(viewModel: ScriptEditorViewModel) {
                     0 -> { // Description Tab
                         Column(
                             modifier =
-                            Modifier
-                                .fillMaxSize()
-                                .padding(16.dp)
-                                .verticalScroll(rememberScrollState()),
+                                Modifier
+                                    .fillMaxSize()
+                                    .padding(16.dp)
+                                    .verticalScroll(rememberScrollState()),
                             horizontalAlignment = Alignment.Start,
                             verticalArrangement = Arrangement.Top,
                         ) {
@@ -166,10 +166,10 @@ fun ScriptEditorScreen(viewModel: ScriptEditorViewModel) {
                                 onValueChange = { viewModel.onScriptTextChanged(it) },
                                 label = { Text(stringResource(R.string.enter_your_script)) },
                                 modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .weight(1f)
-                                    .padding(horizontal = 16.dp),
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .weight(1f)
+                                        .padding(horizontal = 16.dp),
                             )
                         }
                     }

@@ -43,13 +43,9 @@ class EvidenceRepositoryImpl
             }
         }
 
-        override suspend fun getEvidenceById(id: Int): Evidence? {
-            return evidenceByCaseMap.values.flatMap { it.value }.find { it.id == id }
-        }
+        override suspend fun getEvidenceById(id: Int): Evidence? = evidenceByCaseMap.values.flatMap { it.value }.find { it.id == id }
 
-        override fun getEvidence(id: Int): Flow<Evidence> {
-            return emptyFlow()
-        }
+        override fun getEvidence(id: Int): Flow<Evidence> = emptyFlow()
 
         override suspend fun addEvidence(evidence: Evidence) {
             val googleApiService = credentialHolder.googleApiService // Get from holder

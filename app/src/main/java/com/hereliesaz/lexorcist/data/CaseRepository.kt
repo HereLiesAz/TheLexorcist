@@ -9,9 +9,12 @@ interface CaseRepository {
      * A flow of the list of cases.
      * This flow will emit a new list of cases whenever the data changes.
      */
-    val cases: Flow<List<Case>> // Renamed from getCases
+    val cases: Flow<List<Case>>
+    val selectedCase: Flow<Case?>
 
     suspend fun getCaseBySpreadsheetId(spreadsheetId: String): Case?
+
+    suspend fun selectCase(case: Case?)
 
     suspend fun refreshCases()
 
