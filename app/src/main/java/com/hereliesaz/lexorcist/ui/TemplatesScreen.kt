@@ -1,6 +1,8 @@
 package com.hereliesaz.lexorcist.ui
 
 import android.webkit.WebView
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,8 +20,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -51,25 +51,37 @@ fun TemplatesScreen(viewModel: AddonsBrowserViewModel = hiltViewModel()) {
     val templates = remember { mutableStateOf<List<Template>>(emptyList()) }
 
     LaunchedEffect(Unit) {
-        val templateResources = listOf(
-            R.raw.template_cover_sheet,
-            R.raw.template_custody_log,
-            R.raw.template_declaration,
-            R.raw.template_metadata,
-            R.raw.template_table_of_exhibits
-        )
-
-        templates.value = templateResources.map { resId ->
-            val content = context.resources.openRawResource(resId).bufferedReader().use { it.readText() }
-            val name = context.resources.getResourceEntryName(resId).replace("template_", "").replace("_", " ").replaceFirstChar { it.titlecase() }
-            Template(
-                id = resId.toString(),
-                name = name,
-                description = "A standard template for $name.",
-                content = content,
-                author = "Lexorcist"
+        val templateResources =
+            listOf(
+                R.raw.template_cover_sheet,
+                R.raw.template_custody_log,
+                R.raw.template_declaration,
+                R.raw.template_metadata,
+                R.raw.template_table_of_exhibits,
             )
-        }
+
+        templates.value =
+            templateResources.map { resId ->
+                val content =
+                    context.resources
+                        .openRawResource(resId)
+                        .bufferedReader()
+                        .use { it.readText() }
+                val name =
+                    context.resources
+                        .getResourceEntryName(
+                            resId,
+                        ).replace("template_", "")
+                        .replace("_", " ")
+                        .replaceFirstChar { it.titlecase() }
+                Template(
+                    id = resId.toString(),
+                    name = name,
+                    description = "A standard template for $name.",
+                    content = content,
+                    author = "Lexorcist",
+                )
+            }
     }
 
     Scaffold(
@@ -95,28 +107,30 @@ fun TemplatesScreen(viewModel: AddonsBrowserViewModel = hiltViewModel()) {
                 "Here you can manage your document templates. You can create new templates, edit existing ones, and share them with the community.",
             )
             val context = LocalContext.current
-            val launcher = rememberLauncherForActivityResult(
-                contract = ActivityResultContracts.GetContent()
-            ) { uri ->
-                uri?.let {
-                    try {
-                        context.contentResolver.openInputStream(it)?.use { inputStream ->
-                            val text = inputStream.bufferedReader().use { reader ->
-                                reader.readText()
+            val launcher =
+                rememberLauncherForActivityResult(
+                    contract = ActivityResultContracts.GetContent(),
+                ) { uri ->
+                    uri?.let {
+                        try {
+                            context.contentResolver.openInputStream(it)?.use { inputStream ->
+                                val text =
+                                    inputStream.bufferedReader().use { reader ->
+                                        reader.readText()
+                                    }
+                                val template = Gson().fromJson(text, Template::class.java)
+                                viewModel.shareAddon(
+                                    name = template.name,
+                                    description = template.description,
+                                    content = template.content,
+                                    type = "Template",
+                                )
                             }
-                            val template = Gson().fromJson(text, Template::class.java)
-                            viewModel.shareAddon(
-                                name = template.name,
-                                description = template.description,
-                                content = template.content,
-                                type = "Template",
-                            )
+                        } catch (e: Exception) {
+                            // Handle exception
                         }
-                    } catch (e: Exception) {
-                        // Handle exception
                     }
                 }
-            }
 
             Row {
                 Button(onClick = {

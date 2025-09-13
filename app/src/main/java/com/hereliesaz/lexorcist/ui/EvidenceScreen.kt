@@ -25,6 +25,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -35,11 +36,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel // Corrected import
 import androidx.navigation.NavController
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
+import kotlinx.coroutines.flow.collectLatest
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -66,6 +67,12 @@ fun EvidenceScreen(
         ) { uri ->
             uri?.let { evidenceViewModel::processAudioEvidence }
         }
+
+    LaunchedEffect(Unit) {
+        evidenceViewModel.navigateToTranscriptionScreen.collectLatest { evidenceId ->
+            navController.navigate("transcription/$evidenceId")
+        }
+    }
 
     Scaffold(
         topBar = {
