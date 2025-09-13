@@ -83,6 +83,12 @@ fun EvidenceScreen(
         }
     }
 
+    LaunchedEffect(selectedCase) {
+        selectedCase?.let {
+            evidenceViewModel.loadEvidenceForCase(it.id.toLong(), it.spreadsheetId)
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
