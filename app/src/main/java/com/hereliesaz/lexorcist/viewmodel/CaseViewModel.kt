@@ -1,6 +1,7 @@
 package com.hereliesaz.lexorcist.viewmodel
 
 import android.content.Context
+import android.content.Intent // Added for UserRecoverableAuthIOException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.hereliesaz.lexorcist.data.Allegation
@@ -9,6 +10,7 @@ import com.hereliesaz.lexorcist.data.CaseRepository
 import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException
 import com.hereliesaz.lexorcist.data.SortOrder
 import com.hereliesaz.lexorcist.model.SheetFilter
+import com.hereliesaz.lexorcist.utils.Result // Ensure this is the correct import for your Result class
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -37,7 +39,6 @@ class CaseViewModel
         private val _searchQuery = MutableStateFlow("")
         val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
-        // Assuming caseRepository.getAllCases() exists and returns Flow<List<Case>>
         val cases: StateFlow<List<Case>> =
             caseRepository.cases
                 .combine(sortOrder) { cases, currentSortOrder ->
@@ -79,8 +80,8 @@ class CaseViewModel
         private val _errorMessage = MutableStateFlow<String?>(null)
         val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
-        private val _userRecoverableError = MutableStateFlow<UserRecoverableAuthIOException?>(null)
-        val userRecoverableError: StateFlow<UserRecoverableAuthIOException?> = _userRecoverableError.asStateFlow()
+        private val _userRecoverableAuthIntent = MutableStateFlow<Intent?>(null)
+        val userRecoverableAuthIntent: StateFlow<Intent?> = _userRecoverableAuthIntent.asStateFlow()
 
         private val _selectedCaseEvidenceList = MutableStateFlow<List<com.hereliesaz.lexorcist.data.Evidence>>(emptyList())
         val selectedCaseEvidenceList: StateFlow<List<com.hereliesaz.lexorcist.data.Evidence>> = _selectedCaseEvidenceList.asStateFlow()
@@ -111,6 +112,10 @@ class CaseViewModel
 
         fun clearError() {
             _errorMessage.value = null
+        }
+
+        fun clearUserRecoverableAuthIntent() {
+            _userRecoverableAuthIntent.value = null
         }
 
         fun setThemeMode(themeMode: com.hereliesaz.lexorcist.ui.theme.ThemeMode) {
@@ -171,8 +176,18 @@ class CaseViewModel
                     defendants.value,
                     court.value,
                 )
-                if (result is com.hereliesaz.lexorcist.utils.Result.UserRecoverableError) {
-                    _userRecoverableError.value = result.exception
+                when (result) {
+                    is Result.Success -> {
+                        // Handle success, e.g., navigation or showing a success message
+                        // For now, just logging
+                        android.util.Log.d("CaseViewModel", "Case creation successful")
+                    }
+                    is Result.Error -> {
+                        _errorMessage.value = result.exception.message ?: "Unknown error during case creation"
+                    }
+                    is Result.UserRecoverableError -> {
+                        _userRecoverableAuthIntent.value = result.exception.intent
+                    }
                 }
             }
         }

@@ -1,5 +1,9 @@
 package com.hereliesaz.lexorcist.ui
 
+import android.app.Activity
+import android.content.Intent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth // Added import
@@ -12,6 +16,8 @@ import androidx.compose.material3.OutlinedButton // Could be used for dialog but
 import androidx.compose.material3.OutlinedTextField // Changed from TextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,6 +45,28 @@ fun CreateCaseDialog(
     var caseNumber by remember { mutableStateOf("") }
     var caseSection by remember { mutableStateOf("") }
     var caseJudge by remember { mutableStateOf("") }
+
+    val userRecoverableAuthIntent by caseViewModel.userRecoverableAuthIntent.collectAsState()
+
+    val authLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult(),
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            // Retry the operation or inform the user of success
+            // For now, we assume the operation might need to be retried by the user if it didn't auto-proceed.
+            // Optionally, call createCase again or a specific retry logic in ViewModel.
+        } else {
+            // Handle the case where the user did not complete the auth flow
+            caseViewModel.showError("Authorization was not completed.")
+        }
+        caseViewModel.clearUserRecoverableAuthIntent() // Clear the intent after handling
+    }
+
+    LaunchedEffect(userRecoverableAuthIntent) {
+        userRecoverableAuthIntent?.let {
+            authLauncher.launch(it)
+        }
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -97,6 +125,8 @@ fun CreateCaseDialog(
                             caseSection = caseSection,
                             caseJudge = caseJudge,
                         )
+                        // Dismissal and navigation should ideally happen based on successful case creation
+                        // For now, keeping original logic. Consider observing a success event from ViewModel.
                         onDismiss()
                         navController.navigate("cases")
                     }
