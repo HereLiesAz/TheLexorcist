@@ -2,17 +2,16 @@ package com.hereliesaz.lexorcist.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.hereliesaz.lexorcist.auth.CredentialHolder // Import CredentialHolder
+import com.hereliesaz.lexorcist.auth.CredentialHolder
 import com.hereliesaz.lexorcist.common.state.SaveState
 import com.hereliesaz.lexorcist.model.Script
 import com.hereliesaz.lexorcist.model.Template
-// Removed import com.hereliesaz.lexorcist.service.GoogleApiService
 import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 @HiltViewModel
 class AddonsBrowserViewModel

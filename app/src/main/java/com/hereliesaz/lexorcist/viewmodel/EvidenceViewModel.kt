@@ -225,7 +225,7 @@ class EvidenceViewModel
                 val script = settingsManager.getScript()
                 val result = scriptRunner.runScript(script, evidence)
                 if (result is Result.Success) {
-                    val updatedEvidence = evidence.copy(tags = evidence.tags + result.data.tags)
+                    val updatedEvidence = evidence.copy(tags = evidence.tags + result.data)
                     evidenceRepository.updateEvidence(updatedEvidence)
                 }
                 // Refresh list if it's for the same case

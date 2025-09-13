@@ -6,10 +6,6 @@ import org.mozilla.javascript.Scriptable
 import org.mozilla.javascript.ScriptableObject
 
 class ScriptRunner {
-    class Parser {
-        var tags: MutableList<String> = mutableListOf()
-    }
-
     class ScriptExecutionException(
         message: String,
         cause: Throwable,
@@ -18,7 +14,7 @@ class ScriptRunner {
     fun runScript(
         script: String,
         evidence: Evidence,
-    ): Result<Parser> {
+    ): Result<List<String>> {
         val rhino =
             org.mozilla.javascript.Context
                 .enter()
@@ -26,7 +22,7 @@ class ScriptRunner {
         rhino.optimizationLevel = -1
         try {
             val scope: Scriptable = rhino.initStandardObjects()
-            val customParserInstance = Parser()
+            val tags = mutableListOf<String>()
             ScriptableObject.putProperty(
                 scope,
                 "evidence",
@@ -35,12 +31,14 @@ class ScriptRunner {
             )
             ScriptableObject.putProperty(
                 scope,
-                "parser",
+                "tags",
                 org.mozilla.javascript.Context
-                    .javaToJS(customParserInstance, scope),
+                    .javaToJS(tags, scope),
             )
             rhino.evaluateString(scope, script, "JavaScript<MainViewModel>", 1, null)
-            return Result.Success(customParserInstance)
+            val tagsFromScope = ScriptableObject.getProperty(scope, "tags")
+            val resultTags = org.mozilla.javascript.Context.jsToJava(tagsFromScope, List::class.java) as List<String>
+            return Result.Success(resultTags)
         } catch (e: Exception) {
             return Result.Error(ScriptExecutionException("Failed to execute script", e))
         } finally {
