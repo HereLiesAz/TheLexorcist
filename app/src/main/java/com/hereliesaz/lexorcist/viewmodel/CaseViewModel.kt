@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.hereliesaz.lexorcist.data.Allegation
 import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.data.CaseRepository
+import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException
 import com.hereliesaz.lexorcist.data.SortOrder
 import com.hereliesaz.lexorcist.model.SheetFilter
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -77,6 +78,9 @@ class CaseViewModel
 
         private val _errorMessage = MutableStateFlow<String?>(null)
         val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
+        private val _userRecoverableError = MutableStateFlow<UserRecoverableAuthIOException?>(null)
+        val userRecoverableError: StateFlow<UserRecoverableAuthIOException?> = _userRecoverableError.asStateFlow()
 
         private val _selectedCaseEvidenceList = MutableStateFlow<List<com.hereliesaz.lexorcist.data.Evidence>>(emptyList())
         val selectedCaseEvidenceList: StateFlow<List<com.hereliesaz.lexorcist.data.Evidence>> = _selectedCaseEvidenceList.asStateFlow()
@@ -156,7 +160,7 @@ class CaseViewModel
         ) {
             android.util.Log.d("CaseViewModel", "createCase called with name: $caseName")
             viewModelScope.launch {
-                caseRepository.createCase(
+                val result = caseRepository.createCase(
                     // Corrected method name
                     caseName,
                     exhibitSheetName,
@@ -167,6 +171,9 @@ class CaseViewModel
                     defendants.value,
                     court.value,
                 )
+                if (result is com.hereliesaz.lexorcist.utils.Result.UserRecoverableError) {
+                    _userRecoverableError.value = result.exception
+                }
             }
         }
 

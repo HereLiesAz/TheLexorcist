@@ -8,6 +8,7 @@ Where: sdk.dir property in local.properties file. Problem: Directory does not ex
 > Task :app:processDebugNavigationResources UP-TO-DATE
 > Task :app:compileDebugNavigationResources UP-TO-DATE
 > Task :app:generateDebugResValues UP-TO-DATE
+> Task :app:processDebugGoogleServices UP-TO-DATE
 > Task :app:mapDebugSourceSetPaths UP-TO-DATE
 > Task :app:generateDebugResources UP-TO-DATE
 > Task :app:mergeDebugResources UP-TO-DATE
@@ -28,6 +29,7 @@ Where: sdk.dir property in local.properties file. Problem: Directory does not ex
 > Task :app:processReleaseNavigationResources UP-TO-DATE
 > Task :app:compileReleaseNavigationResources UP-TO-DATE
 > Task :app:generateReleaseResValues UP-TO-DATE
+> Task :app:processReleaseGoogleServices UP-TO-DATE
 > Task :app:mapReleaseSourceSetPaths UP-TO-DATE
 > Task :app:generateReleaseResources UP-TO-DATE
 > Task :app:mergeReleaseResources UP-TO-DATE
@@ -44,35 +46,44 @@ Where: sdk.dir property in local.properties file. Problem: Directory does not ex
 > Task :app:javaPreCompileReleaseUnitTest UP-TO-DATE
 > Task :app:kspDebugKotlin
 > Task :app:kspReleaseKotlin
-> Task :app:compileReleaseKotlin
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/di/SheetModule.kt:15:39 Unresolved reference 'FolderManager'.
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/CasesScreen.kt:211:13 No value passed for parameter 'navController'.
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/CaseViewModel.kt:12:39 Unresolved reference 'FolderManager'.
-
-> Task :app:compileReleaseKotlin FAILED
 
 > Task :app:compileDebugKotlin FAILED
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/di/SheetModule.kt:15:39 Unresolved reference 'FolderManager'.
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/CasesScreen.kt:211:13 No value passed for parameter 'navController'.
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/CaseViewModel.kt:12:39 Unresolved reference 'FolderManager'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/SpreadsheetImportService.kt:19:13 Initializer type mismatch: expected 'String?', actual 'Result<String>?'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/SpreadsheetImportService.kt:84:9 'when' expression must be exhaustive. Add the 'is UserRecoverableError' branch or an 'else' branch.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/SpreadsheetImportService.kt:102:109 Variable 'newCaseSpreadsheetId' must be initialized.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/SpreadsheetImportService.kt:105:39 Variable 'newCaseSpreadsheetId' must be initialized.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/SpreadsheetImportService.kt:107:88 Variable 'newCaseSpreadsheetId' must be initialized.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/SpreadsheetImportService.kt:117:35 Variable 'newCaseSpreadsheetId' must be initialized.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/SpreadsheetImportService.kt:127:112 Variable 'newCaseSpreadsheetId' must be initialized.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/SpreadsheetImportService.kt:133:35 Variable 'newCaseSpreadsheetId' must be initialized.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/SpreadsheetImportService.kt:153:25 Variable 'newCaseSpreadsheetId' must be initialized.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/SpreadsheetImportService.kt:159:116 Variable 'newCaseSpreadsheetId' must be initialized.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/SpreadsheetImportService.kt:165:119 Variable 'newCaseSpreadsheetId' must be initialized.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/SpreadsheetImportService.kt:167:62 Variable 'newCaseSpreadsheetId' must be initialized.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/service/OcrProcessingService.kt:61:17 'when' expression must be exhaustive. Add the 'is UserRecoverableError' branch or an 'else' branch.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/service/OcrProcessingService.kt:109:17 'when' expression must be exhaustive. Add the 'is UserRecoverableError' branch or an 'else' branch.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/service/VideoProcessingWorker.kt:66:21 'when' expression must be exhaustive. Add the 'is UserRecoverableError' branch or an 'else' branch.
+
+> Task :app:compileReleaseKotlin FAILED
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/SpreadsheetImportService.kt:19:13 Initializer type mismatch: expected 'String?', actual 'Result<String>?'.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/SpreadsheetImportService.kt:84:9 'when' expression must be exhaustive. Add the 'is UserRecoverableError' branch or an 'else' branch.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/SpreadsheetImportService.kt:102:109 Variable 'newCaseSpreadsheetId' must be initialized.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/SpreadsheetImportService.kt:105:39 Variable 'newCaseSpreadsheetId' must be initialized.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/SpreadsheetImportService.kt:107:88 Variable 'newCaseSpreadsheetId' must be initialized.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/SpreadsheetImportService.kt:117:35 Variable 'newCaseSpreadsheetId' must be initialized.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/SpreadsheetImportService.kt:127:112 Variable 'newCaseSpreadsheetId' must be initialized.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/SpreadsheetImportService.kt:133:35 Variable 'newCaseSpreadsheetId' must be initialized.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/SpreadsheetImportService.kt:153:25 Variable 'newCaseSpreadsheetId' must be initialized.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/SpreadsheetImportService.kt:159:116 Variable 'newCaseSpreadsheetId' must be initialized.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/SpreadsheetImportService.kt:165:119 Variable 'newCaseSpreadsheetId' must be initialized.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/SpreadsheetImportService.kt:167:62 Variable 'newCaseSpreadsheetId' must be initialized.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/service/OcrProcessingService.kt:61:17 'when' expression must be exhaustive. Add the 'is UserRecoverableError' branch or an 'else' branch.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/service/OcrProcessingService.kt:109:17 'when' expression must be exhaustive. Add the 'is UserRecoverableError' branch or an 'else' branch.
+e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/service/VideoProcessingWorker.kt:66:21 'when' expression must be exhaustive. Add the 'is UserRecoverableError' branch or an 'else' branch.
 
 FAILURE: Build completed with 2 failures.
 
 1: Task failed with an exception.
------------
-* What went wrong:
-Execution failed for task ':app:compileReleaseKotlin'.
-> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
-   > Compilation error. See log for more details
-
-* Try:
-> Run with --stacktrace option to get the stack trace.
-> Run with --info or --debug option to get more log output.
-> Run with --scan to get full insights.
-> Get more help at https://help.gradle.org.
-==============================================================================
-
-2: Task failed with an exception.
 -----------
 * What went wrong:
 Execution failed for task ':app:compileDebugKotlin'.
@@ -86,5 +97,19 @@ Execution failed for task ':app:compileDebugKotlin'.
 > Get more help at https://help.gradle.org.
 ==============================================================================
 
-BUILD FAILED in 1m 13s
-39 actionable tasks: 4 executed, 35 up-to-date
+2: Task failed with an exception.
+-----------
+* What went wrong:
+Execution failed for task ':app:compileReleaseKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+==============================================================================
+
+BUILD FAILED in 33s
+41 actionable tasks: 4 executed, 37 up-to-date

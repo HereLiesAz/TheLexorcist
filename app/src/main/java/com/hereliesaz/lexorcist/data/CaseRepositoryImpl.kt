@@ -31,12 +31,15 @@ class CaseRepositoryImpl
             val googleApiService = credentialHolder.googleApiService
             try {
                 googleApiService?.let { service ->
-                    // Null check
-                    val appRootFolderId = service.getOrCreateAppRootFolder()
-                    val registryId = service.getOrCreateCaseRegistrySpreadsheetId(appRootFolderId)
-                    val cases = service.getAllCasesFromRegistry(registryId)
-                    android.util.Log.d("CaseRepositoryImpl", "Found ${cases.size} cases in registry")
-                    _cases.value = cases
+                    val appRootFolderIdResult = service.getOrCreateAppRootFolder()
+                    if (appRootFolderIdResult is com.hereliesaz.lexorcist.utils.Result.Success) {
+                        val registryId = service.getOrCreateCaseRegistrySpreadsheetId(appRootFolderIdResult.data)
+                        val cases = service.getAllCasesFromRegistry(registryId)
+                        android.util.Log.d("CaseRepositoryImpl", "Found ${cases.size} cases in registry")
+                        _cases.value = cases
+                    } else if (appRootFolderIdResult is com.hereliesaz.lexorcist.utils.Result.Error) {
+                        errorReporter.reportError(appRootFolderIdResult.exception)
+                    }
                 } ?: errorReporter.reportError(Exception("GoogleApiService not available in refreshCases"))
             } catch (e: java.io.IOException) {
                 errorReporter.reportError(e)
@@ -52,52 +55,64 @@ class CaseRepositoryImpl
             plaintiffs: String,
             defendants: String,
             court: String,
-        ) {
+        ): com.hereliesaz.lexorcist.utils.Result<Unit> {
             android.util.Log.d("CaseRepositoryImpl", "createCase called with name: $caseName")
             val googleApiService = credentialHolder.googleApiService
+            if (googleApiService == null) {
+                errorReporter.reportError(Exception("GoogleApiService not available in createCase"))
+                return com.hereliesaz.lexorcist.utils.Result.Error(Exception("GoogleApiService not available"))
+            }
             try {
-                googleApiService?.let { service ->
-                    // Null check
-                    android.util.Log.d("CaseRepositoryImpl", "GoogleApiService is not null")
-                    val appRootFolderId = service.getOrCreateAppRootFolder()
+                val appRootFolderIdResult = googleApiService.getOrCreateAppRootFolder()
+                if (appRootFolderIdResult is com.hereliesaz.lexorcist.utils.Result.Success) {
+                    val appRootFolderId = appRootFolderIdResult.data
                     val caseFolderId =
-                        service.getOrCreateCaseFolder(caseName) ?: run {
+                        googleApiService.getOrCreateCaseFolder(caseName) ?: run {
                             errorReporter.reportError(Exception("Failed to create or get case folder in createCase"))
-                            return
+                            return com.hereliesaz.lexorcist.utils.Result.Error(Exception("Failed to create or get case folder"))
                         }
-                    val spreadsheetResult = service.createSpreadsheet(caseName, caseFolderId)
+                    val spreadsheetResult = googleApiService.createSpreadsheet(caseName, caseFolderId)
 
-                    if (spreadsheetResult is com.hereliesaz.lexorcist.utils.Result.Success) {
-                        val spreadsheetId =
-                            spreadsheetResult.data ?: run {
-                                errorReporter.reportError(Exception("Spreadsheet ID is null after creation in createCase"))
-                                return
-                            }
-                        android.util.Log.d("CaseRepositoryImpl", "Spreadsheet created with id: $spreadsheetId")
-                        val newCase =
-                            Case(
-                                // ID will be assigned by registry
-                                id = 0,
-                                name = caseName,
-                                spreadsheetId = spreadsheetId,
-                                folderId = caseFolderId,
-                                plaintiffs = plaintiffs,
-                                defendants = defendants,
-                                court = court,
-                                lastModifiedTime = System.currentTimeMillis(),
-                            )
-                        val registryId = service.getOrCreateCaseRegistrySpreadsheetId(appRootFolderId)
-                        service.addCaseToRegistry(registryId, newCase)
-                        refreshCases() // This will also need googleApiService
-                    } else {
-                        val error = (spreadsheetResult as com.hereliesaz.lexorcist.utils.Result.Error).exception
-                        errorReporter.reportError(error ?: Exception("Unknown error creating spreadsheet in createCase"))
-                        android.util.Log.e("CaseRepositoryImpl", "Error creating spreadsheet: $error")
+                    return when (spreadsheetResult) {
+                        is com.hereliesaz.lexorcist.utils.Result.Success -> {
+                            val spreadsheetId =
+                                spreadsheetResult.data ?: run {
+                                    errorReporter.reportError(Exception("Spreadsheet ID is null after creation in createCase"))
+                                    return com.hereliesaz.lexorcist.utils.Result.Error(Exception("Spreadsheet ID is null after creation"))
+                                }
+                            android.util.Log.d("CaseRepositoryImpl", "Spreadsheet created with id: $spreadsheetId")
+                            val newCase =
+                                Case(
+                                    id = 0,
+                                    name = caseName,
+                                    spreadsheetId = spreadsheetId,
+                                    folderId = caseFolderId,
+                                    plaintiffs = plaintiffs,
+                                    defendants = defendants,
+                                    court = court,
+                                    lastModifiedTime = System.currentTimeMillis(),
+                                )
+                            val registryId = googleApiService.getOrCreateCaseRegistrySpreadsheetId(appRootFolderId)
+                            googleApiService.addCaseToRegistry(registryId, newCase)
+                            refreshCases()
+                            com.hereliesaz.lexorcist.utils.Result.Success(Unit)
+                        }
+                        is com.hereliesaz.lexorcist.utils.Result.Error -> {
+                            errorReporter.reportError(spreadsheetResult.exception)
+                            android.util.Log.e("CaseRepositoryImpl", "Error creating spreadsheet: ${spreadsheetResult.exception}")
+                            spreadsheetResult
+                        }
+                        is com.hereliesaz.lexorcist.utils.Result.UserRecoverableError -> {
+                            spreadsheetResult
+                        }
                     }
-                } ?: errorReporter.reportError(Exception("GoogleApiService not available in createCase"))
+                } else {
+                    return appRootFolderIdResult as com.hereliesaz.lexorcist.utils.Result.Error
+                }
             } catch (e: java.io.IOException) {
                 errorReporter.reportError(e)
                 android.util.Log.e("CaseRepositoryImpl", "IOException in createCase: $e")
+                return com.hereliesaz.lexorcist.utils.Result.Error(e)
             }
         }
 

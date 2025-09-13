@@ -19,6 +19,7 @@ import com.google.api.services.sheets.v4.model.Spreadsheet
 import com.google.api.services.sheets.v4.model.SpreadsheetProperties
 import com.google.api.services.sheets.v4.model.ValueRange
 import com.google.gson.Gson
+import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException
 import com.google.gson.reflect.TypeToken
 import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.model.Script
@@ -27,6 +28,7 @@ import com.hereliesaz.lexorcist.utils.Result
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.IOException
+import android.util.Log
 
 class GoogleApiService(
     private val drive: Drive,
@@ -43,11 +45,12 @@ class GoogleApiService(
             .build(),
     )
 
-    suspend fun getOrCreateAppRootFolder(): String =
+    suspend fun getOrCreateAppRootFolder(): Result<String> =
         withContext(Dispatchers.IO) {
+            val folderName = "Lexorcist"
+            val query = "mimeType='application/vnd.google-apps.folder' and name='$folderName' and trashed=false"
+            Log.d("GoogleApiService", "Querying for root folder with: $query")
             try {
-                val folderName = "Lexorcist"
-                val query = "mimeType='application/vnd.google-apps.folder' and name='$folderName' and trashed=false"
                 val files =
                     drive
                         .files()
@@ -56,7 +59,9 @@ class GoogleApiService(
                         .setSpaces("drive")
                         .execute()
                         .files
+                Log.d("GoogleApiService", "Found ${files?.size ?: 0} root folder(s).")
                 if (files.isNullOrEmpty()) {
+                    Log.d("GoogleApiService", "Root folder not found, creating it.")
                     val fileMetadata =
                         File().apply {
                             name = folderName
@@ -68,12 +73,18 @@ class GoogleApiService(
                             .create(fileMetadata)
                             .setFields("id")
                             .execute()
-                    createdFile.id
+                    Log.d("GoogleApiService", "Root folder created with ID: ${createdFile.id}")
+                    Result.Success(createdFile.id)
                 } else {
-                    files[0].id
+                    Log.d("GoogleApiService", "Using existing root folder with ID: ${files[0].id}")
+                    Result.Success(files[0].id)
                 }
+            } catch (e: UserRecoverableAuthIOException) {
+                Log.e("GoogleApiService", "User recoverable auth error getting or creating app root folder.", e)
+                Result.UserRecoverableError(e)
             } catch (e: IOException) {
-                throw IOException("Failed to get or create app root folder", e)
+                Log.e("GoogleApiService", "Failed to get or create app root folder.", e)
+                Result.Error(e)
             }
         }
 
@@ -119,6 +130,7 @@ class GoogleApiService(
         folderId: String,
     ): Result<String?> =
         withContext(Dispatchers.IO) {
+            Log.d("GoogleApiService", "Creating spreadsheet with title: $title in folder: $folderId")
             try {
                 val spreadsheet = Spreadsheet().setProperties(SpreadsheetProperties().setTitle(title))
                 val createdSheet =
@@ -127,13 +139,19 @@ class GoogleApiService(
                         .create(spreadsheet)
                         .setFields("spreadsheetId")
                         .execute()
+                Log.d("GoogleApiService", "Spreadsheet created with ID: ${createdSheet.spreadsheetId}")
                 drive
                     .files()
                     .update(createdSheet.spreadsheetId, null)
                     .setAddParents(folderId)
                     .execute()
+                Log.d("GoogleApiService", "Spreadsheet moved to folder: $folderId")
                 Result.Success(createdSheet.spreadsheetId)
+            } catch (e: UserRecoverableAuthIOException) {
+                Log.e("GoogleApiService", "User recoverable auth error creating spreadsheet.", e)
+                Result.UserRecoverableError(e)
             } catch (e: IOException) {
+                Log.e("GoogleApiService", "Failed to create spreadsheet.", e)
                 Result.Error(e)
             }
         }
@@ -142,34 +160,39 @@ class GoogleApiService(
     suspend fun createAllegationsSheet(): String? =
         withContext(Dispatchers.IO) {
             try {
-                val folderId = getOrCreateAppRootFolder()
-                val fileName = "Lexorcist - Allegations"
-                val query = "mimeType='application/vnd.google-apps.spreadsheet' and name='$fileName' and trashed=false and '$folderId' in parents"
-                val files =
-                    drive
-                        .files()
-                        .list()
-                        .setQ(query)
-                        .setSpaces("drive")
-                        .execute()
-                        .files
-                if (files.isNullOrEmpty()) {
-                    val spreadsheet = Spreadsheet().setProperties(SpreadsheetProperties().setTitle(fileName))
-                    val createdSheet =
-                        sheets
-                            .spreadsheets()
-                            .create(spreadsheet)
-                            .setFields("spreadsheetId")
+                val folderIdResult = getOrCreateAppRootFolder()
+                if (folderIdResult is Result.Success) {
+                    val folderId = folderIdResult.data
+                    val fileName = "Lexorcist - Allegations"
+                    val query = "mimeType='application/vnd.google-apps.spreadsheet' and name='$fileName' and trashed=false and '$folderId' in parents"
+                    val files =
+                        drive
+                            .files()
+                            .list()
+                            .setQ(query)
+                            .setSpaces("drive")
                             .execute()
-                    drive
-                        .files()
-                        .update(createdSheet.spreadsheetId, null)
-                        .setAddParents(folderId)
-                        .execute()
-                    android.util.Log.d("GoogleApiService", "Created allegations sheet with ID: ${createdSheet.spreadsheetId}")
-                    createdSheet.spreadsheetId
+                            .files
+                    if (files.isNullOrEmpty()) {
+                        val spreadsheet = Spreadsheet().setProperties(SpreadsheetProperties().setTitle(fileName))
+                        val createdSheet =
+                            sheets
+                                .spreadsheets()
+                                .create(spreadsheet)
+                                .setFields("spreadsheetId")
+                                .execute()
+                        drive
+                            .files()
+                            .update(createdSheet.spreadsheetId, null)
+                            .setAddParents(folderId)
+                            .execute()
+                        android.util.Log.d("GoogleApiService", "Created allegations sheet with ID: ${createdSheet.spreadsheetId}")
+                        createdSheet.spreadsheetId
+                    } else {
+                        files[0].id
+                    }
                 } else {
-                    files[0].id
+                    null
                 }
             } catch (e: IOException) {
                 null
@@ -216,38 +239,42 @@ class GoogleApiService(
 
     @Suppress("ktlint:standard:max-line-length")
     suspend fun getOrCreateCaseFolder(caseName: String): String? {
-        val appRootFolderId = getOrCreateAppRootFolder() ?: return null
-        return withContext(Dispatchers.IO) {
-            try {
-                val query = "mimeType='application/vnd.google-apps.folder' and name='$caseName' and trashed=false and '$appRootFolderId' in parents"
-                val files =
-                    drive
-                        .files()
-                        .list()
-                        .setQ(query)
-                        .setSpaces("drive")
-                        .execute()
-                        .files
-                if (files.isNullOrEmpty()) {
-                    val fileMetadata =
-                        File().apply {
-                            name = caseName
-                            mimeType = "application/vnd.google-apps.folder"
-                            parents = listOf(appRootFolderId)
-                        }
-                    drive
-                        .files()
-                        .create(fileMetadata)
-                        .setFields("id")
-                        .execute()
-                        .id
-                } else {
-                    files[0].id
+        val appRootFolderIdResult = getOrCreateAppRootFolder()
+        if (appRootFolderIdResult is Result.Success) {
+            val appRootFolderId = appRootFolderIdResult.data
+            return withContext(Dispatchers.IO) {
+                try {
+                    val query = "mimeType='application/vnd.google-apps.folder' and name='$caseName' and trashed=false and '$appRootFolderId' in parents"
+                    val files =
+                        drive
+                            .files()
+                            .list()
+                            .setQ(query)
+                            .setSpaces("drive")
+                            .execute()
+                            .files
+                    if (files.isNullOrEmpty()) {
+                        val fileMetadata =
+                            File().apply {
+                                name = caseName
+                                mimeType = "application/vnd.google-apps.folder"
+                                parents = listOf(appRootFolderId)
+                            }
+                        drive
+                            .files()
+                            .create(fileMetadata)
+                            .setFields("id")
+                            .execute()
+                            .id
+                    } else {
+                        files[0].id
+                    }
+                } catch (e: IOException) {
+                    null
                 }
-            } catch (e: IOException) {
-                null
             }
         }
+        return null
     }
 
     @Suppress("ktlint:standard:max-line-length")
@@ -383,45 +410,50 @@ class GoogleApiService(
     suspend fun updateCaseInRegistry(case: Case): Boolean {
         return withContext(Dispatchers.IO) {
             try {
-                val registryId = getOrCreateCaseRegistrySpreadsheetId(getOrCreateAppRootFolder())
-                val range = "Sheet1!A:A" // Assuming IDs are in column A
-                val response =
+                val registryIdResult = getOrCreateAppRootFolder()
+                if (registryIdResult is Result.Success) {
+                    val registryId = getOrCreateCaseRegistrySpreadsheetId(registryIdResult.data)
+                    val range = "Sheet1!A:A" // Assuming IDs are in column A
+                    val response =
+                        sheets
+                            .spreadsheets()
+                            .values()
+                            .get(registryId, range)
+                            .execute()
+                    val values = response.getValues()
+                    if (values.isNullOrEmpty()) return@withContext false
+
+                    val rowIndex = values.indexOfFirst { it.isNotEmpty() && it[0].toString() == case.id.toString() }
+                    if (rowIndex == -1) return@withContext false
+
+                    val rowData =
+                        listOf(
+                            case.id.toString(),
+                            case.name,
+                            case.spreadsheetId,
+                            case.scriptId ?: "",
+                            case.generatedPdfId ?: "",
+                            case.sourceHtmlSnapshotId ?: "",
+                            case.originalMasterHtmlTemplateId ?: "",
+                            case.folderId ?: "",
+                            case.plaintiffs ?: "",
+                            case.defendants ?: "",
+                            case.court ?: "",
+                            case.isArchived.toString(),
+                            System.currentTimeMillis().toString(),
+                        )
+                    val valueRange = ValueRange().setValues(listOf(rowData))
+                    val updateRange = "Sheet1!A${rowIndex + 1}"
                     sheets
                         .spreadsheets()
                         .values()
-                        .get(registryId, range)
+                        .update(registryId, updateRange, valueRange)
+                        .setValueInputOption("RAW")
                         .execute()
-                val values = response.getValues()
-                if (values.isNullOrEmpty()) return@withContext false
-
-                val rowIndex = values.indexOfFirst { it.isNotEmpty() && it[0].toString() == case.id.toString() }
-                if (rowIndex == -1) return@withContext false
-
-                val rowData =
-                    listOf(
-                        case.id.toString(),
-                        case.name,
-                        case.spreadsheetId,
-                        case.scriptId ?: "",
-                        case.generatedPdfId ?: "",
-                        case.sourceHtmlSnapshotId ?: "",
-                        case.originalMasterHtmlTemplateId ?: "",
-                        case.folderId ?: "",
-                        case.plaintiffs ?: "",
-                        case.defendants ?: "",
-                        case.court ?: "",
-                        case.isArchived.toString(),
-                        System.currentTimeMillis().toString(),
-                    )
-                val valueRange = ValueRange().setValues(listOf(rowData))
-                val updateRange = "Sheet1!A${rowIndex + 1}"
-                sheets
-                    .spreadsheets()
-                    .values()
-                    .update(registryId, updateRange, valueRange)
-                    .setValueInputOption("RAW")
-                    .execute()
-                true
+                    true
+                } else {
+                    false
+                }
             } catch (e: IOException) {
                 false
             }
@@ -431,45 +463,50 @@ class GoogleApiService(
     suspend fun deleteCaseFromRegistry(case: Case): Boolean {
         return withContext(Dispatchers.IO) {
             try {
-                val registryId = getOrCreateCaseRegistrySpreadsheetId(getOrCreateAppRootFolder())
-                val range = "Sheet1!A:A" // Assuming IDs are in column A
-                val response =
-                    sheets
-                        .spreadsheets()
-                        .values()
-                        .get(registryId, range)
-                        .execute()
-                val values = response.getValues()
-                if (values.isNullOrEmpty()) return@withContext false
+                val registryIdResult = getOrCreateAppRootFolder()
+                if (registryIdResult is Result.Success) {
+                    val registryId = getOrCreateCaseRegistrySpreadsheetId(registryIdResult.data)
+                    val range = "Sheet1!A:A" // Assuming IDs are in column A
+                    val response =
+                        sheets
+                            .spreadsheets()
+                            .values()
+                            .get(registryId, range)
+                            .execute()
+                    val values = response.getValues()
+                    if (values.isNullOrEmpty()) return@withContext false
 
-                val rowIndex = values.indexOfFirst { it.isNotEmpty() && it[0].toString() == case.id.toString() }
-                if (rowIndex == -1) return@withContext false
+                    val rowIndex = values.indexOfFirst { it.isNotEmpty() && it[0].toString() == case.id.toString() }
+                    if (rowIndex == -1) return@withContext false
 
-                val sheetId =
-                    sheets
-                        .spreadsheets()
-                        .get(registryId)
-                        .execute()
-                        .sheets
-                        .firstOrNull { it.properties.title == "Sheet1" }
-                        ?.properties
-                        ?.sheetId ?: 0
+                    val sheetId =
+                        sheets
+                            .spreadsheets()
+                            .get(registryId)
+                            .execute()
+                            .sheets
+                            .firstOrNull { it.properties.title == "Sheet1" }
+                            ?.properties
+                            ?.sheetId ?: 0
 
-                val request =
-                    Request().setDeleteDimension(
-                        DeleteDimensionRequest()
-                            .setRange(
-                                DimensionRange()
-                                    .setSheetId(sheetId)
-                                    .setDimension("ROWS")
-                                    .setStartIndex(rowIndex)
-                                    .setEndIndex(rowIndex + 1),
-                            ),
-                    )
+                    val request =
+                        Request().setDeleteDimension(
+                            DeleteDimensionRequest()
+                                .setRange(
+                                    DimensionRange()
+                                        .setSheetId(sheetId)
+                                        .setDimension("ROWS")
+                                        .setStartIndex(rowIndex)
+                                        .setEndIndex(rowIndex + 1),
+                                ),
+                        )
 
-                val batchUpdateRequest = BatchUpdateSpreadsheetRequest().setRequests(listOf(request))
-                sheets.spreadsheets().batchUpdate(registryId, batchUpdateRequest).execute()
-                true
+                    val batchUpdateRequest = BatchUpdateSpreadsheetRequest().setRequests(listOf(request))
+                    sheets.spreadsheets().batchUpdate(registryId, batchUpdateRequest).execute()
+                    true
+                } else {
+                    false
+                }
             } catch (e: IOException) {
                 false
             }
@@ -843,21 +880,25 @@ class GoogleApiService(
     }
 
     suspend fun listHtmlTemplatesInAppRootFolder(): List<File> {
-        val appRootFolderId = getOrCreateAppRootFolder() ?: return emptyList()
-        return withContext(Dispatchers.IO) {
-            try {
-                val query = "mimeType='text/html' and trashed=false and '$appRootFolderId' in parents"
-                drive
-                    .files()
-                    .list()
-                    .setQ(query)
-                    .setSpaces("drive")
-                    .execute()
-                    .files ?: emptyList()
-            } catch (e: IOException) {
-                emptyList()
+        val appRootFolderIdResult = getOrCreateAppRootFolder()
+        if (appRootFolderIdResult is Result.Success) {
+            val appRootFolderId = appRootFolderIdResult.data
+            return withContext(Dispatchers.IO) {
+                try {
+                    val query = "mimeType='text/html' and trashed=false and '$appRootFolderId' in parents"
+                    drive
+                        .files()
+                        .list()
+                        .setQ(query)
+                        .setSpaces("drive")
+                        .execute()
+                        .files ?: emptyList()
+                } catch (e: IOException) {
+                    emptyList()
+                }
             }
         }
+        return emptyList()
     }
 
     suspend fun getSharedScripts(): List<Script> {

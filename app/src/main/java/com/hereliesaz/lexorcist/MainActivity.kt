@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.navigation.compose.rememberNavController
@@ -26,6 +27,21 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val themeMode by caseViewModel.themeMode.collectAsState()
+            val signInState by authViewModel.signInState.collectAsState()
+
+            LaunchedEffect(signInState) {
+                if (signInState is com.hereliesaz.lexorcist.model.SignInState.Success) {
+                    caseViewModel.loadCasesFromRepository()
+                }
+            }
+
+            val userRecoverableError by caseViewModel.userRecoverableError.collectAsState()
+            LaunchedEffect(userRecoverableError) {
+                userRecoverableError?.let {
+                    startActivity(it.intent)
+                }
+            }
+
             LexorcistTheme(themeMode = themeMode) {
                 val navController = rememberNavController()
 
