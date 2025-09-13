@@ -3,12 +3,14 @@
     "type": "Civil",
     "category": "Daños personales (Agravios)",
     "name": "Negligencia",
-    "description": "No ejercer un cuidado razonable, por ejemplo, accidentes de coche, resbalones y caídas, negligencia médica, muerte por negligencia."
+    "description": "No ejercer un cuidado razonable, por ejemplo, accidentes de coche, resbalones y caídas, negligencia médica, muerte por negligencia.",
+    "courtLevel": "State"
   },
   {
     "type": "Civil",
     "category": "Daños personales (Agravios)",
     "name": "Asalto y agresión",
-    "description": "Acto intencional que causa temor de un ataque (asalto) o contacto físico ilegal (agresión)."
+    "description": "Acto intencional que causa temor de un ataque (asalto) o contacto físico ilegal (agresión).",
+    "courtLevel": "State"
   }
 ]

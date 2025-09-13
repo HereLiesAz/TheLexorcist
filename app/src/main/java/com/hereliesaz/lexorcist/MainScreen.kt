@@ -48,7 +48,6 @@ import com.hereliesaz.lexorcist.ui.CreateCaseDialog
 import com.hereliesaz.lexorcist.ui.EvidenceDetailsScreen
 import com.hereliesaz.lexorcist.ui.EvidenceScreen
 import com.hereliesaz.lexorcist.ui.ExtrasScreen
-import com.hereliesaz.lexorcist.ui.MasterAllegationsScreen
 import com.hereliesaz.lexorcist.ui.ReviewScreen
 import com.hereliesaz.lexorcist.ui.ScriptEditorScreen
 import com.hereliesaz.lexorcist.ui.SettingsScreen
@@ -126,7 +125,6 @@ fun MainScreen(
                         azRailItem(id = "evidence", text = "Evidence", onClick = { navController.navigate("evidence") })
                         // Renamed item id and route for case-specific allegations
                         azRailItem(id = "case_allegations_item", text = "Allegations", onClick = { navController.navigate("case_allegations_route") })
-                        azRailItem(id = "master_allegations", text = "Master Allegations", onClick = { navController.navigate("master_allegations") })
                         azRailItem(id = "templates", text = "Templates", onClick = { navController.navigate("templates") })
                         azRailItem(id = "timeline", text = "Timeline", onClick = { navController.navigate("timeline") })
                         azRailItem(id = "data_review", text = "Review", onClick = { navController.navigate("data_review") })
@@ -200,9 +198,6 @@ fun MainScreen(
                                 // Renamed route for case-specific allegations
                                 composable("case_allegations_route") {
                                     AllegationsScreen(hiltViewModel<MasterAllegationsViewModel>())
-                                }
-                                composable("master_allegations") {
-                                    MasterAllegationsScreen(viewModel = hiltViewModel<MasterAllegationsViewModel>())
                                 }
                                 composable("templates") {
                                     TemplatesScreen(hiltViewModel<AddonsBrowserViewModel>())

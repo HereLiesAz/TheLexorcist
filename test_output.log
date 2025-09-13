@@ -5,80 +5,82 @@ Where: sdk.dir property in local.properties file. Problem: Directory does not ex
 > Task :app:preDebugBuild UP-TO-DATE
 > Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
 > Task :app:checkDebugAarMetadata UP-TO-DATE
-> Task :app:processDebugNavigationResources UP-TO-DATE
+> Task :app:processDebugNavigationResources
 > Task :app:compileDebugNavigationResources UP-TO-DATE
 > Task :app:generateDebugResValues UP-TO-DATE
 > Task :app:processDebugGoogleServices UP-TO-DATE
-> Task :app:mapDebugSourceSetPaths UP-TO-DATE
-> Task :app:generateDebugResources UP-TO-DATE
-> Task :app:mergeDebugResources UP-TO-DATE
-> Task :app:packageDebugResources UP-TO-DATE
-> Task :app:parseDebugLocalResources UP-TO-DATE
+> Task :app:mapDebugSourceSetPaths
+> Task :app:generateDebugResources
+> Task :app:packageDebugResources
+> Task :app:mergeDebugResources
 > Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
 > Task :app:extractDeepLinksDebug UP-TO-DATE
+> Task :app:parseDebugLocalResources
 > Task :app:processDebugMainManifest UP-TO-DATE
 > Task :app:processDebugManifest UP-TO-DATE
 > Task :app:processDebugManifestForPackage UP-TO-DATE
-> Task :app:processDebugResources UP-TO-DATE
-> Task :app:kspDebugKotlin UP-TO-DATE
-> Task :app:compileDebugKotlin UP-TO-DATE
 > Task :app:javaPreCompileDebug UP-TO-DATE
-> Task :app:compileDebugJavaWithJavac UP-TO-DATE
-> Task :app:hiltAggregateDepsDebug UP-TO-DATE
-> Task :app:hiltJavaCompileDebug UP-TO-DATE
-> Task :app:transformDebugClassesWithAsm UP-TO-DATE
-> Task :app:bundleDebugClassesToRuntimeJar UP-TO-DATE
 > Task :app:preDebugUnitTestBuild UP-TO-DATE
-> Task :app:processDebugJavaRes UP-TO-DATE
-> Task :app:bundleDebugClassesToCompileJar UP-TO-DATE
-> Task :app:kspDebugUnitTestKotlin UP-TO-DATE
-> Task :app:compileDebugUnitTestKotlin UP-TO-DATE
 > Task :app:javaPreCompileDebugUnitTest UP-TO-DATE
-> Task :app:compileDebugUnitTestJavaWithJavac UP-TO-DATE
-> Task :app:hiltAggregateDepsDebugUnitTest UP-TO-DATE
-> Task :app:hiltJavaCompileDebugUnitTest NO-SOURCE
-> Task :app:processDebugUnitTestJavaRes UP-TO-DATE
-> Task :app:transformDebugUnitTestClassesWithAsm UP-TO-DATE
-> Task :app:testDebugUnitTest UP-TO-DATE
 > Task :app:preReleaseBuild UP-TO-DATE
 > Task :app:buildKotlinToolingMetadata UP-TO-DATE
 > Task :app:checkReleaseAarMetadata UP-TO-DATE
-> Task :app:processReleaseNavigationResources UP-TO-DATE
+> Task :app:processReleaseNavigationResources
 > Task :app:compileReleaseNavigationResources UP-TO-DATE
 > Task :app:generateReleaseResValues UP-TO-DATE
 > Task :app:processReleaseGoogleServices UP-TO-DATE
-> Task :app:mapReleaseSourceSetPaths UP-TO-DATE
-> Task :app:generateReleaseResources UP-TO-DATE
-> Task :app:mergeReleaseResources UP-TO-DATE
-> Task :app:packageReleaseResources UP-TO-DATE
-> Task :app:parseReleaseLocalResources UP-TO-DATE
+> Task :app:mapReleaseSourceSetPaths
+> Task :app:generateReleaseResources
+> Task :app:mergeReleaseResources
+> Task :app:packageReleaseResources
 > Task :app:createReleaseCompatibleScreenManifests UP-TO-DATE
+> Task :app:parseReleaseLocalResources
 > Task :app:extractDeepLinksRelease UP-TO-DATE
 > Task :app:processReleaseMainManifest UP-TO-DATE
 > Task :app:processReleaseManifest UP-TO-DATE
 > Task :app:processReleaseManifestForPackage UP-TO-DATE
-> Task :app:processReleaseResources UP-TO-DATE
-> Task :app:kspReleaseKotlin UP-TO-DATE
-> Task :app:compileReleaseKotlin UP-TO-DATE
 > Task :app:javaPreCompileRelease UP-TO-DATE
-> Task :app:compileReleaseJavaWithJavac UP-TO-DATE
-> Task :app:hiltAggregateDepsRelease UP-TO-DATE
-> Task :app:hiltJavaCompileRelease UP-TO-DATE
-> Task :app:transformReleaseClassesWithAsm UP-TO-DATE
-> Task :app:bundleReleaseClassesToRuntimeJar UP-TO-DATE
 > Task :app:preReleaseUnitTestBuild UP-TO-DATE
-> Task :app:processReleaseJavaRes UP-TO-DATE
-> Task :app:bundleReleaseClassesToCompileJar UP-TO-DATE
-> Task :app:kspReleaseUnitTestKotlin UP-TO-DATE
-> Task :app:compileReleaseUnitTestKotlin UP-TO-DATE
 > Task :app:javaPreCompileReleaseUnitTest UP-TO-DATE
+> Task :app:processDebugResources
+> Task :app:processReleaseResources
+> Task :app:kspReleaseKotlin
+> Task :app:kspDebugKotlin
+> Task :app:compileDebugKotlin
+> Task :app:compileReleaseKotlin
+> Task :app:compileDebugJavaWithJavac
+> Task :app:hiltAggregateDepsDebug UP-TO-DATE
+> Task :app:hiltJavaCompileDebug
+> Task :app:processDebugJavaRes
+> Task :app:bundleDebugClassesToCompileJar
+> Task :app:transformDebugClassesWithAsm
+> Task :app:compileReleaseJavaWithJavac
+> Task :app:bundleDebugClassesToRuntimeJar
+> Task :app:hiltAggregateDepsRelease UP-TO-DATE
+> Task :app:kspDebugUnitTestKotlin
+> Task :app:hiltJavaCompileRelease
+> Task :app:processReleaseJavaRes
+> Task :app:bundleReleaseClassesToCompileJar
+> Task :app:transformReleaseClassesWithAsm
+> Task :app:compileDebugUnitTestKotlin
+> Task :app:compileDebugUnitTestJavaWithJavac UP-TO-DATE
+> Task :app:kspReleaseUnitTestKotlin
+> Task :app:hiltAggregateDepsDebugUnitTest UP-TO-DATE
+> Task :app:hiltJavaCompileDebugUnitTest NO-SOURCE
+> Task :app:processDebugUnitTestJavaRes UP-TO-DATE
+> Task :app:transformDebugUnitTestClassesWithAsm
+> Task :app:bundleReleaseClassesToRuntimeJar
+> Task :app:compileReleaseUnitTestKotlin
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+> Task :app:testDebugUnitTest
 > Task :app:compileReleaseUnitTestJavaWithJavac UP-TO-DATE
 > Task :app:hiltAggregateDepsReleaseUnitTest UP-TO-DATE
 > Task :app:hiltJavaCompileReleaseUnitTest NO-SOURCE
 > Task :app:processReleaseUnitTestJavaRes UP-TO-DATE
-> Task :app:transformReleaseUnitTestClassesWithAsm UP-TO-DATE
-> Task :app:testReleaseUnitTest UP-TO-DATE
-> Task :app:test UP-TO-DATE
+> Task :app:transformReleaseUnitTestClassesWithAsm
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+> Task :app:testReleaseUnitTest
+> Task :app:test
 
-BUILD SUCCESSFUL in 11s
-69 actionable tasks: 69 up-to-date
+BUILD SUCCESSFUL in 1m 36s
+69 actionable tasks: 38 executed, 31 up-to-date

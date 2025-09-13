@@ -10,12 +10,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -36,6 +38,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -55,6 +58,7 @@ fun AllegationsScreen(viewModel: MasterAllegationsViewModel = hiltViewModel()) {
     val selectedAllegations by viewModel.selectedAllegations.collectAsState()
     val sortType by viewModel.sortType.collectAsState()
     val keyboardController = LocalSoftwareKeyboardController.current
+    var showDetailsDialog by remember { mutableStateOf<MasterAllegation?>(null) }
 
     val groupedAllegations = if (sortType == AllegationSortType.TYPE) allegations.groupBy { it.type } else null
     val groupedByCategory = if (sortType == AllegationSortType.CATEGORY) allegations.groupBy { it.category } else null
@@ -137,6 +141,7 @@ fun AllegationsScreen(viewModel: MasterAllegationsViewModel = hiltViewModel()) {
                                     allegation = allegation,
                                     isSelected = selectedAllegations.contains(allegation),
                                     onToggleSelection = { viewModel.toggleAllegationSelection(allegation) },
+                                    onLongPress = { showDetailsDialog = it }
                                 )
                             }
                         }
@@ -155,6 +160,7 @@ fun AllegationsScreen(viewModel: MasterAllegationsViewModel = hiltViewModel()) {
                                 allegation = allegation,
                                 isSelected = selectedAllegations.contains(allegation),
                                 onToggleSelection = { viewModel.toggleAllegationSelection(allegation) },
+                                onLongPress = { showDetailsDialog = it }
                             )
                         }
                     }
@@ -164,9 +170,23 @@ fun AllegationsScreen(viewModel: MasterAllegationsViewModel = hiltViewModel()) {
                             allegation = allegation,
                             isSelected = selectedAllegations.contains(allegation),
                             onToggleSelection = { viewModel.toggleAllegationSelection(allegation) },
+                            onLongPress = { showDetailsDialog = it }
                         )
                     }
                 }
+            }
+
+            if (showDetailsDialog != null) {
+                AlertDialog(
+                    onDismissRequest = { showDetailsDialog = null },
+                    title = { Text(showDetailsDialog!!.name) },
+                    text = { Text(showDetailsDialog!!.description) },
+                    confirmButton = {
+                        Button(onClick = { showDetailsDialog = null }) {
+                            Text("OK")
+                        }
+                    }
+                )
             }
         }
     }
@@ -215,6 +235,13 @@ fun SortDropdown(
                     expanded = false
                 },
             )
+            DropdownMenuItem(
+                text = { Text("Court Level") },
+                onClick = {
+                    onSortChange(AllegationSortType.COURT_LEVEL)
+                    expanded = false
+                },
+            )
         }
     }
 }
@@ -224,13 +251,19 @@ fun AllegationItem(
     allegation: MasterAllegation,
     isSelected: Boolean,
     onToggleSelection: () -> Unit,
+    onLongPress: (MasterAllegation) -> Unit
 ) {
     Card(
         modifier =
             Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 4.dp)
-                .clickable { onToggleSelection() },
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onTap = { onToggleSelection() },
+                        onLongPress = { onLongPress(allegation) }
+                    )
+                },
         colors =
             CardDefaults.cardColors(
                 containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
