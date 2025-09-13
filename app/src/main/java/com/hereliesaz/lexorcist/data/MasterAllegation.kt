@@ -5,4 +5,5 @@ data class MasterAllegation(
     val category: String,
     val name: String,
     val description: String,
+    val courtLevel: String,
 )

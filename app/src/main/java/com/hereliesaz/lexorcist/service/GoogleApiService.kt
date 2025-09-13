@@ -27,6 +27,7 @@ import com.hereliesaz.lexorcist.utils.Result
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.IOException
+import android.util.Log
 
 class GoogleApiService(
     private val drive: Drive,
@@ -45,9 +46,10 @@ class GoogleApiService(
 
     suspend fun getOrCreateAppRootFolder(): String =
         withContext(Dispatchers.IO) {
+            val folderName = "Lexorcist"
+            val query = "mimeType='application/vnd.google-apps.folder' and name='$folderName' and trashed=false"
+            Log.d("GoogleApiService", "Querying for root folder with: $query")
             try {
-                val folderName = "Lexorcist"
-                val query = "mimeType='application/vnd.google-apps.folder' and name='$folderName' and trashed=false"
                 val files =
                     drive
                         .files()
@@ -56,7 +58,9 @@ class GoogleApiService(
                         .setSpaces("drive")
                         .execute()
                         .files
+                Log.d("GoogleApiService", "Found ${files?.size ?: 0} root folder(s).")
                 if (files.isNullOrEmpty()) {
+                    Log.d("GoogleApiService", "Root folder not found, creating it.")
                     val fileMetadata =
                         File().apply {
                             name = folderName
@@ -68,11 +72,14 @@ class GoogleApiService(
                             .create(fileMetadata)
                             .setFields("id")
                             .execute()
+                    Log.d("GoogleApiService", "Root folder created with ID: ${createdFile.id}")
                     createdFile.id
                 } else {
+                    Log.d("GoogleApiService", "Using existing root folder with ID: ${files[0].id}")
                     files[0].id
                 }
             } catch (e: IOException) {
+                Log.e("GoogleApiService", "Failed to get or create app root folder.", e)
                 throw IOException("Failed to get or create app root folder", e)
             }
         }
@@ -119,6 +126,7 @@ class GoogleApiService(
         folderId: String,
     ): Result<String?> =
         withContext(Dispatchers.IO) {
+            Log.d("GoogleApiService", "Creating spreadsheet with title: $title in folder: $folderId")
             try {
                 val spreadsheet = Spreadsheet().setProperties(SpreadsheetProperties().setTitle(title))
                 val createdSheet =
@@ -127,13 +135,16 @@ class GoogleApiService(
                         .create(spreadsheet)
                         .setFields("spreadsheetId")
                         .execute()
+                Log.d("GoogleApiService", "Spreadsheet created with ID: ${createdSheet.spreadsheetId}")
                 drive
                     .files()
                     .update(createdSheet.spreadsheetId, null)
                     .setAddParents(folderId)
                     .execute()
+                Log.d("GoogleApiService", "Spreadsheet moved to folder: $folderId")
                 Result.Success(createdSheet.spreadsheetId)
             } catch (e: IOException) {
+                Log.e("GoogleApiService", "Failed to create spreadsheet.", e)
                 Result.Error(e)
             }
         }

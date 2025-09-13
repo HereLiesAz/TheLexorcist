@@ -5,86 +5,82 @@ Where: sdk.dir property in local.properties file. Problem: Directory does not ex
 > Task :app:preDebugBuild UP-TO-DATE
 > Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
 > Task :app:checkDebugAarMetadata UP-TO-DATE
-> Task :app:processDebugNavigationResources UP-TO-DATE
+> Task :app:processDebugNavigationResources
 > Task :app:compileDebugNavigationResources UP-TO-DATE
 > Task :app:generateDebugResValues UP-TO-DATE
-> Task :app:mapDebugSourceSetPaths UP-TO-DATE
-> Task :app:generateDebugResources UP-TO-DATE
-> Task :app:mergeDebugResources UP-TO-DATE
-> Task :app:packageDebugResources UP-TO-DATE
-> Task :app:parseDebugLocalResources UP-TO-DATE
+> Task :app:processDebugGoogleServices UP-TO-DATE
+> Task :app:mapDebugSourceSetPaths
+> Task :app:generateDebugResources
+> Task :app:packageDebugResources
+> Task :app:mergeDebugResources
 > Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
 > Task :app:extractDeepLinksDebug UP-TO-DATE
+> Task :app:parseDebugLocalResources
 > Task :app:processDebugMainManifest UP-TO-DATE
 > Task :app:processDebugManifest UP-TO-DATE
 > Task :app:processDebugManifestForPackage UP-TO-DATE
-> Task :app:processDebugResources UP-TO-DATE
 > Task :app:javaPreCompileDebug UP-TO-DATE
 > Task :app:preDebugUnitTestBuild UP-TO-DATE
 > Task :app:javaPreCompileDebugUnitTest UP-TO-DATE
 > Task :app:preReleaseBuild UP-TO-DATE
 > Task :app:buildKotlinToolingMetadata UP-TO-DATE
 > Task :app:checkReleaseAarMetadata UP-TO-DATE
-> Task :app:processReleaseNavigationResources UP-TO-DATE
+> Task :app:processReleaseNavigationResources
 > Task :app:compileReleaseNavigationResources UP-TO-DATE
 > Task :app:generateReleaseResValues UP-TO-DATE
-> Task :app:mapReleaseSourceSetPaths UP-TO-DATE
-> Task :app:generateReleaseResources UP-TO-DATE
-> Task :app:mergeReleaseResources UP-TO-DATE
-> Task :app:packageReleaseResources UP-TO-DATE
-> Task :app:parseReleaseLocalResources UP-TO-DATE
+> Task :app:processReleaseGoogleServices UP-TO-DATE
+> Task :app:mapReleaseSourceSetPaths
+> Task :app:generateReleaseResources
+> Task :app:mergeReleaseResources
+> Task :app:packageReleaseResources
 > Task :app:createReleaseCompatibleScreenManifests UP-TO-DATE
+> Task :app:parseReleaseLocalResources
 > Task :app:extractDeepLinksRelease UP-TO-DATE
 > Task :app:processReleaseMainManifest UP-TO-DATE
 > Task :app:processReleaseManifest UP-TO-DATE
 > Task :app:processReleaseManifestForPackage UP-TO-DATE
-> Task :app:processReleaseResources UP-TO-DATE
 > Task :app:javaPreCompileRelease UP-TO-DATE
 > Task :app:preReleaseUnitTestBuild UP-TO-DATE
 > Task :app:javaPreCompileReleaseUnitTest UP-TO-DATE
-> Task :app:kspDebugKotlin
+> Task :app:processDebugResources
+> Task :app:processReleaseResources
 > Task :app:kspReleaseKotlin
+> Task :app:kspDebugKotlin
+> Task :app:compileDebugKotlin
 > Task :app:compileReleaseKotlin
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/di/SheetModule.kt:15:39 Unresolved reference 'FolderManager'.
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/CasesScreen.kt:211:13 No value passed for parameter 'navController'.
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/CaseViewModel.kt:12:39 Unresolved reference 'FolderManager'.
+> Task :app:compileDebugJavaWithJavac
+> Task :app:hiltAggregateDepsDebug UP-TO-DATE
+> Task :app:hiltJavaCompileDebug
+> Task :app:processDebugJavaRes
+> Task :app:bundleDebugClassesToCompileJar
+> Task :app:transformDebugClassesWithAsm
+> Task :app:compileReleaseJavaWithJavac
+> Task :app:bundleDebugClassesToRuntimeJar
+> Task :app:hiltAggregateDepsRelease UP-TO-DATE
+> Task :app:kspDebugUnitTestKotlin
+> Task :app:hiltJavaCompileRelease
+> Task :app:processReleaseJavaRes
+> Task :app:bundleReleaseClassesToCompileJar
+> Task :app:transformReleaseClassesWithAsm
+> Task :app:compileDebugUnitTestKotlin
+> Task :app:compileDebugUnitTestJavaWithJavac UP-TO-DATE
+> Task :app:kspReleaseUnitTestKotlin
+> Task :app:hiltAggregateDepsDebugUnitTest UP-TO-DATE
+> Task :app:hiltJavaCompileDebugUnitTest NO-SOURCE
+> Task :app:processDebugUnitTestJavaRes UP-TO-DATE
+> Task :app:transformDebugUnitTestClassesWithAsm
+> Task :app:bundleReleaseClassesToRuntimeJar
+> Task :app:compileReleaseUnitTestKotlin
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+> Task :app:testDebugUnitTest
+> Task :app:compileReleaseUnitTestJavaWithJavac UP-TO-DATE
+> Task :app:hiltAggregateDepsReleaseUnitTest UP-TO-DATE
+> Task :app:hiltJavaCompileReleaseUnitTest NO-SOURCE
+> Task :app:processReleaseUnitTestJavaRes UP-TO-DATE
+> Task :app:transformReleaseUnitTestClassesWithAsm
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+> Task :app:testReleaseUnitTest
+> Task :app:test
 
-> Task :app:compileReleaseKotlin FAILED
-
-> Task :app:compileDebugKotlin FAILED
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/di/SheetModule.kt:15:39 Unresolved reference 'FolderManager'.
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/ui/CasesScreen.kt:211:13 No value passed for parameter 'navController'.
-e: file:///app/app/src/main/java/com/hereliesaz/lexorcist/viewmodel/CaseViewModel.kt:12:39 Unresolved reference 'FolderManager'.
-
-FAILURE: Build completed with 2 failures.
-
-1: Task failed with an exception.
------------
-* What went wrong:
-Execution failed for task ':app:compileReleaseKotlin'.
-> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
-   > Compilation error. See log for more details
-
-* Try:
-> Run with --stacktrace option to get the stack trace.
-> Run with --info or --debug option to get more log output.
-> Run with --scan to get full insights.
-> Get more help at https://help.gradle.org.
-==============================================================================
-
-2: Task failed with an exception.
------------
-* What went wrong:
-Execution failed for task ':app:compileDebugKotlin'.
-> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
-   > Compilation error. See log for more details
-
-* Try:
-> Run with --stacktrace option to get the stack trace.
-> Run with --info or --debug option to get more log output.
-> Run with --scan to get full insights.
-> Get more help at https://help.gradle.org.
-==============================================================================
-
-BUILD FAILED in 1m 13s
-39 actionable tasks: 4 executed, 35 up-to-date
+BUILD SUCCESSFUL in 1m 36s
+69 actionable tasks: 38 executed, 31 up-to-date

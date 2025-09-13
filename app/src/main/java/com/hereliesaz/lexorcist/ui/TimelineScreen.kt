@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -72,13 +73,23 @@ fun TimelineScreen(
         BoxWithConstraints(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             val halfScreenHeight = this@BoxWithConstraints.maxHeight / 2
 
-            if (evidenceList.isEmpty()) {
+            val isLoading by evidenceViewModel.isLoading.collectAsState()
+
+            if (isLoading) {
                 Column(
                     modifier = Modifier.fillMaxSize(),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                 ) {
-                    Text(stringResource(R.string.no_evidence_placeholder))
+                    CircularProgressIndicator()
+                }
+            } else if (evidenceList.isEmpty()) {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    Text("No evidence found for this case.")
                 }
             } else {
                 LazyColumn(
@@ -122,23 +133,30 @@ fun EvidenceCard(
     evidence: Evidence,
     onClick: () -> Unit,
 ) {
+    val isPlaceholder = evidence.id < 0
     Card(
         modifier = Modifier.fillMaxWidth(),
-        onClick = onClick,
+        onClick = { if (!isPlaceholder) onClick() },
     ) {
         Column(
             modifier = Modifier.padding(16.dp).fillMaxWidth(), // Fill width for internal alignment
             horizontalAlignment = Alignment.End, // Right-align content within the Card
         ) {
-            Text(text = evidence.content, style = MaterialTheme.typography.bodyLarge)
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(text = evidence.category, style = MaterialTheme.typography.bodySmall)
-                Text(text = evidence.documentDate.toString(), style = MaterialTheme.typography.bodySmall)
+            Text(
+                text = evidence.content,
+                style = if (isPlaceholder) MaterialTheme.typography.bodyMedium else MaterialTheme.typography.bodyLarge,
+                color = if (isPlaceholder) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurface
+            )
+            if (!isPlaceholder) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(text = evidence.category, style = MaterialTheme.typography.bodySmall)
+                    Text(text = evidence.documentDate.toString(), style = MaterialTheme.typography.bodySmall)
+                }
             }
         }
     }
