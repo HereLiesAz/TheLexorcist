@@ -5,19 +5,23 @@ import android.content.SharedPreferences
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
-import com.google.api.services.drive.DriveScopes // Added import
-import com.google.api.services.sheets.v4.SheetsScopes // Added import
+import androidx.work.Data
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import com.hereliesaz.lexorcist.data.CaseRepository
 import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.data.EvidenceRepository
 import com.hereliesaz.lexorcist.data.SettingsManager
 import com.hereliesaz.lexorcist.service.OcrProcessingService
 import com.hereliesaz.lexorcist.service.ScriptRunner
 import com.hereliesaz.lexorcist.service.TranscriptionService
+import com.hereliesaz.lexorcist.service.VideoProcessingWorker
 import com.hereliesaz.lexorcist.utils.Result
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
@@ -31,13 +35,19 @@ class EvidenceViewModel
     constructor(
         application: Application,
         private val evidenceRepository: EvidenceRepository,
+        private val caseRepository: CaseRepository,
         private val settingsManager: SettingsManager,
         private val scriptRunner: ScriptRunner,
         private val ocrProcessingService: OcrProcessingService,
+        private val transcriptionService: TranscriptionService,
         private val sharedPreferences: SharedPreferences,
+        private val workManager: WorkManager,
     ) : AndroidViewModel(application) {
         private val _selectedEvidenceDetails = MutableStateFlow<Evidence?>(null)
         val selectedEvidenceDetails: StateFlow<Evidence?> = _selectedEvidenceDetails.asStateFlow()
+
+        private val _navigateToTranscriptionScreen = MutableSharedFlow<Int>()
+        val navigateToTranscriptionScreen = _navigateToTranscriptionScreen.asSharedFlow()
 
         private val _evidenceList = MutableStateFlow<List<Evidence>>(emptyList())
         private val _searchQuery = MutableStateFlow("")
@@ -95,7 +105,7 @@ class EvidenceViewModel
         }
 
         fun toggleEvidenceSelection(evidenceId: Int) {
-            val list =
+            val updatedList =
                 _evidenceList.value.map {
                     if (it.id == evidenceId) {
                         it.copy(isSelected = !it.isSelected)
@@ -103,7 +113,14 @@ class EvidenceViewModel
                         it
                     }
                 }
-            _evidenceList.value = list
+            _evidenceList.value = updatedList
+
+            val toggledEvidence = updatedList.find { it.id == evidenceId }
+            if (toggledEvidence != null) {
+                viewModelScope.launch {
+                    evidenceRepository.updateEvidence(toggledEvidence)
+                }
+            }
         }
 
         fun clearEvidenceSelection() {
@@ -162,12 +179,45 @@ class EvidenceViewModel
             }
         }
 
-        private fun createPlaceholderEvidence(): List<Evidence> {
-            return listOf(
-                Evidence(id = -1, caseId = 0, spreadsheetId = "", type = "placeholder", content = "This is a placeholder item.", timestamp = 0, sourceDocument = "", documentDate = 0, allegationId = null, category = "Placeholder", tags = emptyList(), commentary = null, linkedEvidenceIds = emptyList(), parentVideoId = null, entities = emptyMap(), isSelected = false),
-                Evidence(id = -2, caseId = 0, spreadsheetId = "", type = "placeholder", content = "Add your first piece of evidence to get started.", timestamp = 0, sourceDocument = "", documentDate = 0, allegationId = null, category = "Placeholder", tags = emptyList(), commentary = null, linkedEvidenceIds = emptyList(), parentVideoId = null, entities = emptyMap(), isSelected = false)
+        private fun createPlaceholderEvidence(): List<Evidence> =
+            listOf(
+                Evidence(
+                    id = -1,
+                    caseId = 0,
+                    spreadsheetId = "",
+                    type = "placeholder",
+                    content = "This is a placeholder item.",
+                    timestamp = 0,
+                    sourceDocument = "",
+                    documentDate = 0,
+                    allegationId = null,
+                    category = "Placeholder",
+                    tags = emptyList(),
+                    commentary = null,
+                    linkedEvidenceIds = emptyList(),
+                    parentVideoId = null,
+                    entities = emptyMap(),
+                    isSelected = false,
+                ),
+                Evidence(
+                    id = -2,
+                    caseId = 0,
+                    spreadsheetId = "",
+                    type = "placeholder",
+                    content = "Add your first piece of evidence to get started.",
+                    timestamp = 0,
+                    sourceDocument = "",
+                    documentDate = 0,
+                    allegationId = null,
+                    category = "Placeholder",
+                    tags = emptyList(),
+                    commentary = null,
+                    linkedEvidenceIds = emptyList(),
+                    parentVideoId = null,
+                    entities = emptyMap(),
+                    isSelected = false,
+                ),
             )
-        }
 
         fun updateEvidence(evidence: Evidence) {
             viewModelScope.launch {
@@ -233,37 +283,70 @@ class EvidenceViewModel
         fun processAudioEvidence(uri: Uri) {
             viewModelScope.launch {
                 if (currentCaseIdForList != null && currentSpreadsheetIdForList != null) {
-                    val userEmail = sharedPreferences.getString(AuthViewModel.PREF_USER_EMAIL_KEY, null)
-                    if (userEmail != null) {
-                        val credential =
-                            GoogleAccountCredential
-                                .usingOAuth2(
-                                    getApplication(),
-                                    listOf(DriveScopes.DRIVE_FILE, SheetsScopes.SPREADSHEETS), // Changed to correct scope constants
-                                ).setSelectedAccountName(userEmail)
+                    val case = caseRepository.getCaseBySpreadsheetId(currentSpreadsheetIdForList!!)
+                    if (case != null) {
+                        val uploadResult = evidenceRepository.uploadFile(uri, case.name)
+                        if (uploadResult is Result.Success) {
+                            val transcribedText = transcriptionService.transcribeAudio(uri)
 
-                        val transcriptionService = TranscriptionService(getApplication(), credential)
-                        val transcribedText = transcriptionService.transcribeAudio(uri)
+                            val newEvidence =
+                                Evidence(
+                                    id = 0,
+                                    caseId = currentCaseIdForList!!,
+                                    spreadsheetId = currentSpreadsheetIdForList!!,
+                                    type = "audio",
+                                    content = transcribedText,
+                                    timestamp = System.currentTimeMillis(),
+                                    sourceDocument = uploadResult.data?.webViewLink ?: uri.toString(),
+                                    documentDate = System.currentTimeMillis(),
+                                    allegationId = null,
+                                    category = "Audio Transcription",
+                                    tags = listOf("audio", "transcription"),
+                                    commentary = null,
+                                    parentVideoId = null,
+                                    entities = emptyMap(),
+                                )
+                            val newEvidenceWithId = evidenceRepository.addEvidence(newEvidence)
+                            if (newEvidenceWithId != null) {
+                                loadEvidenceForCase(
+                                    currentCaseIdForList!!,
+                                    currentSpreadsheetIdForList!!,
+                                )
+                                _navigateToTranscriptionScreen.emit(newEvidenceWithId.id)
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
-                        val newEvidence =
-                            Evidence(
-                                id = 0,
-                                caseId = currentCaseIdForList!!,
-                                spreadsheetId = currentSpreadsheetIdForList!!,
-                                type = "audio",
-                                content = transcribedText,
-                                timestamp = System.currentTimeMillis(),
-                                sourceDocument = uri.toString(),
-                                documentDate = System.currentTimeMillis(),
-                                allegationId = null,
-                                category = "Audio Transcription",
-                                tags = listOf("audio", "transcription"),
-                                commentary = null,
-                                parentVideoId = null,
-                                entities = emptyMap(),
-                            )
-                        evidenceRepository.addEvidence(newEvidence)
-                        loadEvidenceForCase(currentCaseIdForList!!, currentSpreadsheetIdForList!!)
+        fun updateTranscript(
+            evidence: Evidence,
+            newTranscript: String,
+            reason: String,
+        ) {
+            viewModelScope.launch {
+                evidenceRepository.updateTranscript(evidence, newTranscript, reason)
+            }
+        }
+
+        fun processVideoEvidence(uri: Uri) {
+            viewModelScope.launch {
+                if (currentCaseIdForList != null && currentSpreadsheetIdForList != null) {
+                    val case = caseRepository.getCaseBySpreadsheetId(currentSpreadsheetIdForList!!)
+                    if (case != null) {
+                        val workRequest =
+                            OneTimeWorkRequestBuilder<VideoProcessingWorker>()
+                                .setInputData(
+                                    Data
+                                        .Builder()
+                                        .putString(VideoProcessingWorker.KEY_VIDEO_URI, uri.toString())
+                                        .putInt(VideoProcessingWorker.KEY_CASE_ID, case.id)
+                                        .putString(VideoProcessingWorker.KEY_CASE_NAME, case.name)
+                                        .putString(VideoProcessingWorker.KEY_SPREADSHEET_ID, case.spreadsheetId)
+                                        .build(),
+                                ).build()
+                        workManager.enqueue(workRequest)
                     }
                 }
             }

@@ -145,7 +145,7 @@ fun EvidenceCard(
             Text(
                 text = evidence.content,
                 style = if (isPlaceholder) MaterialTheme.typography.bodyMedium else MaterialTheme.typography.bodyLarge,
-                color = if (isPlaceholder) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurface
+                color = if (isPlaceholder) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurface,
             )
             if (!isPlaceholder) {
                 Spacer(modifier = Modifier.height(8.dp))

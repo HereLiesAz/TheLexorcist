@@ -3,8 +3,8 @@ package com.hereliesaz.lexorcist.di
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.credentials.CredentialManager
+import androidx.work.WorkManager
 import com.hereliesaz.lexorcist.data.SettingsManager
-import com.hereliesaz.lexorcist.service.GoogleApiService
 import com.hereliesaz.lexorcist.service.ScriptRunner
 import com.hereliesaz.lexorcist.utils.CacheManager
 import dagger.Module
@@ -17,6 +17,12 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 class AppModule {
+    @Provides
+    @Singleton
+    fun provideWorkManager(
+        @ApplicationContext context: Context,
+    ): WorkManager = WorkManager.getInstance(context)
+
     @Provides
     @Singleton
     fun provideSharedPreferences(

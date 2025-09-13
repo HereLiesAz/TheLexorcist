@@ -12,7 +12,7 @@ interface EvidenceRepository {
 
     fun getEvidence(id: Int): Flow<Evidence>
 
-    suspend fun addEvidence(evidence: Evidence)
+    suspend fun addEvidence(evidence: Evidence): Evidence?
 
     suspend fun updateEvidence(evidence: Evidence)
 
@@ -21,5 +21,16 @@ interface EvidenceRepository {
     suspend fun updateCommentary(
         id: Int,
         commentary: String,
+    )
+
+    suspend fun uploadFile(
+        uri: android.net.Uri,
+        caseName: String,
+    ): com.hereliesaz.lexorcist.utils.Result<com.google.api.services.drive.model.File?>
+
+    suspend fun updateTranscript(
+        evidence: Evidence,
+        newTranscript: String,
+        reason: String,
     )
 }

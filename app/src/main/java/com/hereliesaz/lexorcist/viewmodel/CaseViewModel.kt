@@ -1,16 +1,16 @@
 package com.hereliesaz.lexorcist.viewmodel
 
 import android.content.Context
-import android.content.Intent // Added for UserRecoverableAuthIOException
+import android.content.Intent
+import androidx.core.content.edit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.hereliesaz.lexorcist.data.Allegation
 import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.data.CaseRepository
-import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException
 import com.hereliesaz.lexorcist.data.SortOrder
 import com.hereliesaz.lexorcist.model.SheetFilter
-import com.hereliesaz.lexorcist.utils.Result // Ensure this is the correct import for your Result class
+import com.hereliesaz.lexorcist.utils.Result
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,11 +18,11 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import com.google.api.services.drive.model.File as DriveFile
-import androidx.core.content.edit
 
 @HiltViewModel
 class CaseViewModel
@@ -31,7 +31,8 @@ class CaseViewModel
         @param:ApplicationContext private val applicationContext: Context,
         private val caseRepository: CaseRepository,
     ) : ViewModel() {
-        private val sharedPref = applicationContext.getSharedPreferences("CaseInfoPrefs", Context.MODE_PRIVATE)
+        private val sharedPref =
+            applicationContext.getSharedPreferences("CaseInfoPrefs", Context.MODE_PRIVATE)
 
         private val _sortOrder = MutableStateFlow(SortOrder.DATE_DESC)
         val sortOrder: StateFlow<SortOrder> = _sortOrder.asStateFlow()
@@ -56,8 +57,8 @@ class CaseViewModel
                     }
                 }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
-        private val _selectedCase = MutableStateFlow<Case?>(null)
-        val selectedCase: StateFlow<Case?> = _selectedCase.asStateFlow()
+        val selectedCase: StateFlow<Case?> =
+            caseRepository.selectedCase.stateIn(viewModelScope, SharingStarted.Lazily, null)
 
         private val _sheetFilters = MutableStateFlow<List<SheetFilter>>(emptyList())
         val sheetFilters: StateFlow<List<SheetFilter>> = _sheetFilters.asStateFlow()
@@ -81,13 +82,18 @@ class CaseViewModel
         val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
         private val _userRecoverableAuthIntent = MutableStateFlow<Intent?>(null)
-        val userRecoverableAuthIntent: StateFlow<Intent?> = _userRecoverableAuthIntent.asStateFlow()
+        val userRecoverableAuthIntent: StateFlow<Intent?> =
+            _userRecoverableAuthIntent.asStateFlow()
 
-        private val _selectedCaseEvidenceList = MutableStateFlow<List<com.hereliesaz.lexorcist.data.Evidence>>(emptyList())
-        val selectedCaseEvidenceList: StateFlow<List<com.hereliesaz.lexorcist.data.Evidence>> = _selectedCaseEvidenceList.asStateFlow()
+        private val _selectedCaseEvidenceList =
+            MutableStateFlow<List<com.hereliesaz.lexorcist.data.Evidence>>(emptyList())
+        val selectedCaseEvidenceList: StateFlow<List<com.hereliesaz.lexorcist.data.Evidence>> =
+            _selectedCaseEvidenceList.asStateFlow()
 
-        private val _themeMode = MutableStateFlow(com.hereliesaz.lexorcist.ui.theme.ThemeMode.SYSTEM)
-        val themeMode: StateFlow<com.hereliesaz.lexorcist.ui.theme.ThemeMode> = _themeMode.asStateFlow()
+        private val _themeMode =
+            MutableStateFlow(com.hereliesaz.lexorcist.ui.theme.ThemeMode.SYSTEM)
+        val themeMode: StateFlow<com.hereliesaz.lexorcist.ui.theme.ThemeMode> =
+            _themeMode.asStateFlow()
 
         init {
             loadThemeModePreference()
@@ -95,7 +101,7 @@ class CaseViewModel
         }
 
         private fun clearCaseData() {
-            _selectedCase.value = null
+            viewModelScope.launch { caseRepository.selectCase(null) }
             _sheetFilters.value = emptyList()
             _allegations.value = emptyList()
             _htmlTemplates.value = emptyList()
@@ -124,10 +130,15 @@ class CaseViewModel
         }
 
         private fun loadThemeModePreference() {
-            val themeName = sharedPref.getString("theme_mode", com.hereliesaz.lexorcist.ui.theme.ThemeMode.SYSTEM.name)
+            val themeName =
+                sharedPref.getString(
+                    "theme_mode",
+                    com.hereliesaz.lexorcist.ui.theme.ThemeMode.SYSTEM.name,
+                )
             _themeMode.value =
-                com.hereliesaz.lexorcist.ui.theme.ThemeMode
-                    .valueOf(themeName ?: com.hereliesaz.lexorcist.ui.theme.ThemeMode.SYSTEM.name)
+                com.hereliesaz.lexorcist.ui.theme.ThemeMode.valueOf(
+                    themeName ?: com.hereliesaz.lexorcist.ui.theme.ThemeMode.SYSTEM.name,
+                )
         }
 
         fun onSortOrderChange(newSortOrder: SortOrder) {
@@ -139,9 +150,7 @@ class CaseViewModel
         }
 
         fun loadCasesFromRepository() {
-            viewModelScope.launch {
-                caseRepository.refreshCases()
-            }
+            viewModelScope.launch { caseRepository.refreshCases() }
         }
 
         fun loadHtmlTemplatesFromRepository() {
@@ -165,17 +174,18 @@ class CaseViewModel
         ) {
             android.util.Log.d("CaseViewModel", "createCase called with name: $caseName")
             viewModelScope.launch {
-                val result = caseRepository.createCase(
-                    // Corrected method name
-                    caseName,
-                    exhibitSheetName,
-                    caseNumber,
-                    caseSection,
-                    caseJudge,
-                    plaintiffs.value,
-                    defendants.value,
-                    court.value,
-                )
+                val result =
+                    caseRepository.createCase(
+                        // Corrected method name
+                        caseName,
+                        exhibitSheetName,
+                        caseNumber,
+                        caseSection,
+                        caseJudge,
+                        plaintiffs.value,
+                        defendants.value,
+                        court.value,
+                    )
                 when (result) {
                     is Result.Success -> {
                         // Handle success, e.g., navigation or showing a success message
@@ -183,7 +193,8 @@ class CaseViewModel
                         android.util.Log.d("CaseViewModel", "Case creation successful")
                     }
                     is Result.Error -> {
-                        _errorMessage.value = result.exception.message ?: "Unknown error during case creation"
+                        _errorMessage.value =
+                            result.exception.message ?: "Unknown error during case creation"
                     }
                     is Result.UserRecoverableError -> {
                         _userRecoverableAuthIntent.value = result.exception.intent
@@ -193,20 +204,24 @@ class CaseViewModel
         }
 
         fun selectCase(case: Case?) {
-            _selectedCase.value = case
-            if (case != null) {
-                loadSheetFiltersFromRepository(case.spreadsheetId)
-                loadAllegationsFromRepository(case.id, case.spreadsheetId)
-            } else {
-                _sheetFilters.value = emptyList()
-                _allegations.value = emptyList()
+            viewModelScope.launch {
+                caseRepository.selectCase(case)
+                if (case != null) {
+                    loadSheetFiltersFromRepository(case.spreadsheetId)
+                    loadAllegationsFromRepository(case.id, case.spreadsheetId)
+                } else {
+                    _sheetFilters.value = emptyList()
+                    _allegations.value = emptyList()
+                }
             }
         }
 
         private fun loadSheetFiltersFromRepository(spreadsheetId: String) {
             viewModelScope.launch {
                 caseRepository.refreshSheetFilters(spreadsheetId)
-                caseRepository.getSheetFilters(spreadsheetId).collect { _sheetFilters.value = it }
+                caseRepository.getSheetFilters(spreadsheetId).collect {
+                    _sheetFilters.value = it
+                }
             }
         }
 
@@ -214,8 +229,11 @@ class CaseViewModel
             name: String,
             value: String,
         ) {
-            val spreadsheetId = _selectedCase.value?.spreadsheetId ?: return
-            viewModelScope.launch { caseRepository.addSheetFilter(spreadsheetId, name, value) }
+            viewModelScope.launch {
+                val spreadsheetId =
+                    caseRepository.selectedCase.firstOrNull()?.spreadsheetId ?: return@launch
+                caseRepository.addSheetFilter(spreadsheetId, name, value)
+            }
         }
 
         private fun loadAllegationsFromRepository(
@@ -224,13 +242,15 @@ class CaseViewModel
         ) {
             viewModelScope.launch {
                 caseRepository.refreshAllegations(caseId, spreadsheetId)
-                caseRepository.getAllegations(caseId, spreadsheetId).collect { _allegations.value = it }
+                caseRepository.getAllegations(caseId, spreadsheetId).collect {
+                    _allegations.value = it
+                }
             }
         }
 
         fun addAllegationWithRepository(allegationText: String) {
-            val case = _selectedCase.value ?: return
             viewModelScope.launch {
+                val case = caseRepository.selectedCase.firstOrNull() ?: return@launch
                 caseRepository.addAllegation(case.spreadsheetId, allegationText)
                 loadAllegationsFromRepository(case.id, case.spreadsheetId)
             }
