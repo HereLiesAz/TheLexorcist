@@ -5,7 +5,6 @@ import androidx.lifecycle.AndroidViewModel
 import com.hereliesaz.lexorcist.auth.CredentialHolder
 import com.hereliesaz.lexorcist.data.CaseRepository
 import com.hereliesaz.lexorcist.data.EvidenceRepository
-import com.hereliesaz.lexorcist.service.GoogleApiService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 

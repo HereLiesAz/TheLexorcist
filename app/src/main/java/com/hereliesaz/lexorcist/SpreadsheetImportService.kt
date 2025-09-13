@@ -16,17 +16,18 @@ class SpreadsheetImportService(
     suspend fun importAndSetupNewCaseFromData(sheetsData: Map<String, List<List<Any>>>): Case? {
         // 1. Get Root Folder and Registry IDs
         val appRootFolderIdResult = googleApiService.getOrCreateAppRootFolder()
-        val appRootFolderId: String? = when (val result = appRootFolderIdResult) {
-            is Result.Success -> result.data
-            is Result.Error -> {
-                Log.e(tag, "importAndSetup: Failed to get or create app root folder. Error: ${result.exception}")
-                null
+        val appRootFolderId: String? =
+            when (val result = appRootFolderIdResult) {
+                is Result.Success -> result.data
+                is Result.Error -> {
+                    Log.e(tag, "importAndSetup: Failed to get or create app root folder. Error: ${result.exception}")
+                    null
+                }
+                is Result.UserRecoverableError -> {
+                    Log.e(tag, "importAndSetup: User recoverable error getting or creating app root folder. Error: ${result.exception}")
+                    null
+                }
             }
-            is Result.UserRecoverableError -> {
-                Log.e(tag, "importAndSetup: User recoverable error getting or creating app root folder. Error: ${result.exception}")
-                null
-            }
-        }
 
         if (appRootFolderId == null) {
             // Log message already handled in the when block above
@@ -73,35 +74,39 @@ class SpreadsheetImportService(
         val newCaseFolderId: String? = googleApiService.getOrCreateCaseFolder(importedCaseName)
 
         if (newCaseFolderId == null) {
-            Log.e(tag, "importAndSetup: Failed to create or retrieve folder for new case: $importedCaseName. getOrCreateCaseFolder returned null.")
+            Log.e(
+                tag,
+                "importAndSetup: Failed to create or retrieve folder for new case: $importedCaseName. getOrCreateCaseFolder returned null.",
+            )
             return null
         }
 
         val newCaseSpreadsheetIdResult = googleApiService.createSpreadsheet(importedCaseName, newCaseFolderId)
-        val newCaseSpreadsheetId: String = when (val result = newCaseSpreadsheetIdResult) {
-            is Result.Success -> {
-                val id = result.data
-                if (id == null) {
-                    Log.e(tag, "importAndSetup: createSpreadsheet returned success but with a null ID for case: $importedCaseName")
+        val newCaseSpreadsheetId: String =
+            when (val result = newCaseSpreadsheetIdResult) {
+                is Result.Success -> {
+                    val id = result.data
+                    if (id == null) {
+                        Log.e(tag, "importAndSetup: createSpreadsheet returned success but with a null ID for case: $importedCaseName")
+                        return null
+                    }
+                    id
+                }
+                is Result.Error -> {
+                    Log.e(
+                        tag,
+                        "importAndSetup: Failed to create spreadsheet for new case: $importedCaseName. Error: ${result.exception}",
+                    )
                     return null
                 }
-                id
+                is Result.UserRecoverableError -> {
+                    Log.e(
+                        tag,
+                        "importAndSetup: User recoverable error creating spreadsheet for new case: $importedCaseName. Error: ${result.exception}",
+                    )
+                    return null
+                }
             }
-            is Result.Error -> {
-                Log.e(
-                    tag,
-                    "importAndSetup: Failed to create spreadsheet for new case: $importedCaseName. Error: ${result.exception}",
-                )
-                return null
-            }
-            is Result.UserRecoverableError -> {
-                Log.e(
-                    tag,
-                    "importAndSetup: User recoverable error creating spreadsheet for new case: $importedCaseName. Error: ${result.exception}",
-                )
-                return null
-            }
-        }
 
         Log.d(tag, "importAndSetup: Created new case structure: Folder ID $newCaseFolderId, Spreadsheet ID $newCaseSpreadsheetId")
 

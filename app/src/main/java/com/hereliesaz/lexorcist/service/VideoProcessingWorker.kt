@@ -13,7 +13,6 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.hereliesaz.lexorcist.auth.CredentialHolder
-import com.hereliesaz.lexorcist.service.OcrProcessingService
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
@@ -29,7 +28,9 @@ class VideoProcessingWorker
     constructor(
         @Assisted private val appContext: Context, // Made private val as it's used in methods
         @Assisted workerParams: WorkerParameters,
-        private val ocrProcessingService: OcrProcessingService, // Changed from OcrViewModel
+        private val evidenceRepository: com.hereliesaz.lexorcist.data.EvidenceRepository,
+        private val ocrProcessingService: OcrProcessingService,
+        private val transcriptionService: TranscriptionService,
         private val credentialHolder: CredentialHolder,
     ) : CoroutineWorker(appContext, workerParams) {
         override suspend fun doWork(): Result {
@@ -82,26 +83,41 @@ class VideoProcessingWorker
             }
 
             val audioUri = extractAudio(videoUri)
-            if (audioUri == null) {
-                Log.e(TAG, "Failed to extract audio")
-            } else {
-                Log.d(TAG, "Audio extracted to: $audioUri")
-                // TODO: Pass audioUri to the speech-to-text pipeline (TranscriptionService)
-            }
+            val audioTranscript =
+                if (audioUri != null) {
+                    transcriptionService.transcribeAudio(audioUri)
+                } else {
+                    "Audio could not be extracted."
+                }
 
             val frameUris = extractKeyframes(videoUri)
-            if (frameUris.isNotEmpty()) {
-                Log.d(TAG, "Extracted ${frameUris.size} keyframes")
-                frameUris.forEach { uri ->
-                    ocrProcessingService.processImageFrame(
-                        uri = uri,
-                        context = appContext,
-                        caseId = caseId,
-                        spreadsheetId = spreadsheetId, // Pass spreadsheetId
-                        parentVideoId = uploadedDriveFile?.id,
-                    )
-                }
-            }
+            val ocrTextFromFrames =
+                frameUris
+                    .map { uri ->
+                        ocrProcessingService.processImageFrame(uri, appContext)
+                    }.joinToString("\n\n--- FRAME ---\n\n")
+
+            val combinedText =
+                "Video Transcript:\n$audioTranscript\n\n--- OCR FROM FRAMES ---\n\n$ocrTextFromFrames"
+
+            val videoEvidence =
+                com.hereliesaz.lexorcist.data.Evidence(
+                    id = 0,
+                    caseId = caseId.toLong(),
+                    spreadsheetId = spreadsheetId,
+                    type = "video",
+                    content = combinedText,
+                    timestamp = System.currentTimeMillis(),
+                    sourceDocument = uploadedDriveFile?.webViewLink ?: videoUri.toString(),
+                    documentDate = System.currentTimeMillis(),
+                    allegationId = null,
+                    category = "Video Evidence",
+                    tags = listOf("video", "transcription", "ocr"),
+                    commentary = null,
+                    parentVideoId = null,
+                    entities = emptyMap(),
+                )
+            evidenceRepository.addEvidence(videoEvidence)
 
             return Result.success()
         }

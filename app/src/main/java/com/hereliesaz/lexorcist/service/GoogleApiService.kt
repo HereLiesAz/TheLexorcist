@@ -1,6 +1,8 @@
 package com.hereliesaz.lexorcist.service
 
+import android.util.Log
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
+import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException
 import com.google.api.client.http.FileContent
 import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.gson.GsonFactory
@@ -19,7 +21,6 @@ import com.google.api.services.sheets.v4.model.Spreadsheet
 import com.google.api.services.sheets.v4.model.SpreadsheetProperties
 import com.google.api.services.sheets.v4.model.ValueRange
 import com.google.gson.Gson
-import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException
 import com.google.gson.reflect.TypeToken
 import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.model.Script
@@ -28,7 +29,6 @@ import com.hereliesaz.lexorcist.utils.Result
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.IOException
-import android.util.Log
 
 class GoogleApiService(
     private val drive: Drive,
@@ -723,7 +723,7 @@ class GoogleApiService(
             }
         }
 
-    suspend fun addEvidenceToCase(evidence: com.hereliesaz.lexorcist.data.Evidence): Boolean =
+    suspend fun addEvidenceToCase(evidence: com.hereliesaz.lexorcist.data.Evidence): AppendValuesResponse? =
         withContext(Dispatchers.IO) {
             try {
                 val values =
@@ -751,9 +751,8 @@ class GoogleApiService(
                     .append(evidence.spreadsheetId, "Evidence!A1", body)
                     .setValueInputOption("RAW")
                     .execute()
-                true
             } catch (e: IOException) {
-                false
+                null
             }
         }
 
@@ -956,7 +955,12 @@ class GoogleApiService(
                 val spreadsheetId = "18hB2Kx5Le1uaF2pImeITgWntcBB-JfYxvpU2aqTzRr8"
                 val sheetName = if (type == "Script") "Scripts" else "Templates"
                 val range = "$sheetName!A:A"
-                val response = sheets.spreadsheets().values().get(spreadsheetId, range).execute()
+                val response =
+                    sheets
+                        .spreadsheets()
+                        .values()
+                        .get(spreadsheetId, range)
+                        .execute()
                 val lastRow = response.getValues()?.size ?: 0
                 val newId = "$sheetName-${lastRow + 1}"
 

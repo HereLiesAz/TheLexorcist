@@ -2,12 +2,12 @@ package com.hereliesaz.lexorcist.viewmodel
 
 import android.content.Context
 import android.content.Intent // Added for UserRecoverableAuthIOException
+import androidx.core.content.edit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.hereliesaz.lexorcist.data.Allegation
 import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.data.CaseRepository
-import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException
 import com.hereliesaz.lexorcist.data.SortOrder
 import com.hereliesaz.lexorcist.model.SheetFilter
 import com.hereliesaz.lexorcist.utils.Result // Ensure this is the correct import for your Result class
@@ -22,7 +22,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import com.google.api.services.drive.model.File as DriveFile
-import androidx.core.content.edit
 
 @HiltViewModel
 class CaseViewModel
@@ -165,17 +164,18 @@ class CaseViewModel
         ) {
             android.util.Log.d("CaseViewModel", "createCase called with name: $caseName")
             viewModelScope.launch {
-                val result = caseRepository.createCase(
-                    // Corrected method name
-                    caseName,
-                    exhibitSheetName,
-                    caseNumber,
-                    caseSection,
-                    caseJudge,
-                    plaintiffs.value,
-                    defendants.value,
-                    court.value,
-                )
+                val result =
+                    caseRepository.createCase(
+                        // Corrected method name
+                        caseName,
+                        exhibitSheetName,
+                        caseNumber,
+                        caseSection,
+                        caseJudge,
+                        plaintiffs.value,
+                        defendants.value,
+                        court.value,
+                    )
                 when (result) {
                     is Result.Success -> {
                         // Handle success, e.g., navigation or showing a success message
