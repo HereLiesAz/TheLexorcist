@@ -65,6 +65,9 @@ class OcrProcessingService
                     is Result.Error -> {
                         Log.e("OcrProcessingService", "Script error for $uri: ${scriptResult.exception.message}", scriptResult.exception)
                     }
+                    is Result.UserRecoverableError -> {
+                        Log.e("OcrProcessingService", "User recoverable script error for $uri: ${scriptResult.exception.message}", scriptResult.exception)
+                    }
                 }
             }
 
@@ -112,6 +115,9 @@ class OcrProcessingService
                     }
                     is Result.Error -> {
                         Log.e("OcrProcessingService", "Script error for $uri: ${scriptResult.exception.message}", scriptResult.exception)
+                    }
+                    is Result.UserRecoverableError -> {
+                        Log.e("OcrProcessingService", "User recoverable script error for $uri: ${scriptResult.exception.message}", scriptResult.exception)
                     }
                 }
             }

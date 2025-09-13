@@ -71,6 +71,10 @@ class VideoProcessingWorker
                         is LexResult.Error -> {
                             Log.e(TAG, "Failed to upload video: ${uploadResult.exception.message}")
                         }
+                        is LexResult.UserRecoverableError -> {
+                            Log.e(TAG, "User recoverable error while uploading video: ${uploadResult.exception.message}")
+                            // Optionally, you might want to retry or notify the user
+                        }
                     }
                 } else {
                     Log.e(TAG, "Failed to get or create evidence folder for case: $caseName")
