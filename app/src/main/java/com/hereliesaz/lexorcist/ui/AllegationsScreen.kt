@@ -1,6 +1,6 @@
 package com.hereliesaz.lexorcist.ui
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -141,7 +140,7 @@ fun AllegationsScreen(viewModel: MasterAllegationsViewModel = hiltViewModel()) {
                                     allegation = allegation,
                                     isSelected = selectedAllegations.contains(allegation),
                                     onToggleSelection = { viewModel.toggleAllegationSelection(allegation) },
-                                    onLongPress = { showDetailsDialog = it }
+                                    onLongPress = { showDetailsDialog = it },
                                 )
                             }
                         }
@@ -160,7 +159,7 @@ fun AllegationsScreen(viewModel: MasterAllegationsViewModel = hiltViewModel()) {
                                 allegation = allegation,
                                 isSelected = selectedAllegations.contains(allegation),
                                 onToggleSelection = { viewModel.toggleAllegationSelection(allegation) },
-                                onLongPress = { showDetailsDialog = it }
+                                onLongPress = { showDetailsDialog = it },
                             )
                         }
                     }
@@ -170,7 +169,7 @@ fun AllegationsScreen(viewModel: MasterAllegationsViewModel = hiltViewModel()) {
                             allegation = allegation,
                             isSelected = selectedAllegations.contains(allegation),
                             onToggleSelection = { viewModel.toggleAllegationSelection(allegation) },
-                            onLongPress = { showDetailsDialog = it }
+                            onLongPress = { showDetailsDialog = it },
                         )
                     }
                 }
@@ -185,7 +184,7 @@ fun AllegationsScreen(viewModel: MasterAllegationsViewModel = hiltViewModel()) {
                         Button(onClick = { showDetailsDialog = null }) {
                             Text("OK")
                         }
-                    }
+                    },
                 )
             }
         }
@@ -251,7 +250,7 @@ fun AllegationItem(
     allegation: MasterAllegation,
     isSelected: Boolean,
     onToggleSelection: () -> Unit,
-    onLongPress: (MasterAllegation) -> Unit
+    onLongPress: (MasterAllegation) -> Unit,
 ) {
     Card(
         modifier =
@@ -261,7 +260,7 @@ fun AllegationItem(
                 .pointerInput(Unit) {
                     detectTapGestures(
                         onTap = { onToggleSelection() },
-                        onLongPress = { onLongPress(allegation) }
+                        onLongPress = { onLongPress(allegation) },
                     )
                 },
         colors =

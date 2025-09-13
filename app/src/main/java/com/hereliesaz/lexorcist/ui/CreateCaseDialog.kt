@@ -1,7 +1,6 @@
 package com.hereliesaz.lexorcist.ui
 
 import android.app.Activity
-import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -48,19 +47,20 @@ fun CreateCaseDialog(
 
     val userRecoverableAuthIntent by caseViewModel.userRecoverableAuthIntent.collectAsState()
 
-    val authLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult(),
-    ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            // Retry the operation or inform the user of success
-            // For now, we assume the operation might need to be retried by the user if it didn't auto-proceed.
-            // Optionally, call createCase again or a specific retry logic in ViewModel.
-        } else {
-            // Handle the case where the user did not complete the auth flow
-            caseViewModel.showError("Authorization was not completed.")
+    val authLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.StartActivityForResult(),
+        ) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                // Retry the operation or inform the user of success
+                // For now, we assume the operation might need to be retried by the user if it didn't auto-proceed.
+                // Optionally, call createCase again or a specific retry logic in ViewModel.
+            } else {
+                // Handle the case where the user did not complete the auth flow
+                caseViewModel.showError("Authorization was not completed.")
+            }
+            caseViewModel.clearUserRecoverableAuthIntent() // Clear the intent after handling
         }
-        caseViewModel.clearUserRecoverableAuthIntent() // Clear the intent after handling
-    }
 
     LaunchedEffect(userRecoverableAuthIntent) {
         userRecoverableAuthIntent?.let {

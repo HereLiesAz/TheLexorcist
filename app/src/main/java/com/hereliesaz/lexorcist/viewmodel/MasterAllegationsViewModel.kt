@@ -19,7 +19,7 @@ enum class AllegationSortType {
     TYPE,
     CATEGORY,
     NAME,
-    COURT_LEVEL
+    COURT_LEVEL,
 }
 
 @HiltViewModel
