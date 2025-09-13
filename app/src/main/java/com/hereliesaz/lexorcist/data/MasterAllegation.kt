@@ -6,4 +6,5 @@ data class MasterAllegation(
     val name: String,
     val description: String,
     val courtLevel: String,
+    val isSelected: Boolean = false,
 )

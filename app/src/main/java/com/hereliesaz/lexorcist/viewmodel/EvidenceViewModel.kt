@@ -306,12 +306,14 @@ class EvidenceViewModel
                                     parentVideoId = null,
                                     entities = emptyMap(),
                                 )
-                            val newId = evidenceRepository.addEvidence(newEvidence)
-                            loadEvidenceForCase(
-                                currentCaseIdForList!!,
-                                currentSpreadsheetIdForList!!,
-                            )
-                            _navigateToTranscriptionScreen.emit(newId)
+                            val newEvidenceWithId = evidenceRepository.addEvidence(newEvidence)
+                            if (newEvidenceWithId != null) {
+                                loadEvidenceForCase(
+                                    currentCaseIdForList!!,
+                                    currentSpreadsheetIdForList!!,
+                                )
+                                _navigateToTranscriptionScreen.emit(newEvidenceWithId.id)
+                            }
                         }
                     }
                 }

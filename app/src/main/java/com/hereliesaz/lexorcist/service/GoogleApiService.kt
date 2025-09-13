@@ -1002,4 +1002,45 @@ class GoogleApiService(
             // This might involve updating metadata for the shared addon file or a registry.
             false
         }
+
+    suspend fun getSelectedAllegations(spreadsheetId: String): List<String> =
+        withContext(Dispatchers.IO) {
+            try {
+                val range = "SelectedAllegations!A:A"
+                val response =
+                    sheets
+                        .spreadsheets()
+                        .values()
+                        .get(spreadsheetId, range)
+                        .execute()
+                val values = response.getValues()
+                if (values.isNullOrEmpty()) {
+                    emptyList()
+                } else {
+                    values.map { it[0].toString() }
+                }
+            } catch (e: IOException) {
+                emptyList()
+            }
+        }
+
+    suspend fun updateSelectedAllegations(
+        spreadsheetId: String,
+        allegations: List<String>,
+    ) {
+        withContext(Dispatchers.IO) {
+            try {
+                val sheetData = readSpreadsheet(spreadsheetId)
+                if (sheetData?.get("SelectedAllegations") == null) {
+                    addSheet(spreadsheetId, "SelectedAllegations")
+                } else {
+                    clearSheet(spreadsheetId, "SelectedAllegations")
+                }
+                val values = allegations.map { listOf(it) }
+                writeData(spreadsheetId, "SelectedAllegations!A1", values)
+            } catch (e: IOException) {
+                // Handle error
+            }
+        }
+    }
 }

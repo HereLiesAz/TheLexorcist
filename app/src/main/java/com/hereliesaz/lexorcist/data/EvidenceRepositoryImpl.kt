@@ -53,16 +53,20 @@ class EvidenceRepositoryImpl
 
         override fun getEvidence(id: Int): Flow<Evidence> = emptyFlow()
 
-        override suspend fun addEvidence(evidence: Evidence): Int {
-            val googleApiService = credentialHolder.googleApiService // Get from holder
+        override suspend fun addEvidence(evidence: Evidence): Evidence? {
+            val googleApiService = credentialHolder.googleApiService
             val response = googleApiService?.addEvidenceToCase(evidence)
             if (googleApiService != null) {
                 refreshEvidence(evidence.spreadsheetId, evidence.caseId)
             }
             return response?.updates?.updatedRange?.let {
                 val row = it.substringAfter("A").substringBefore(":").toIntOrNull()
-                row ?: 0
-            } ?: 0
+                if (row != null) {
+                    evidence.copy(id = row)
+                } else {
+                    null
+                }
+            }
         }
 
         override suspend fun updateEvidence(evidence: Evidence) {

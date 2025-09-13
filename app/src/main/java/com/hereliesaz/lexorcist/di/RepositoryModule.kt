@@ -2,6 +2,8 @@ package com.hereliesaz.lexorcist.di
 
 import com.hereliesaz.lexorcist.data.AllegationsRepository
 import com.hereliesaz.lexorcist.data.AllegationsRepositoryImpl
+import com.hereliesaz.lexorcist.data.CaseAllegationSelectionRepository
+import com.hereliesaz.lexorcist.data.CaseAllegationSelectionRepositoryImpl
 import com.hereliesaz.lexorcist.data.CaseRepository
 import com.hereliesaz.lexorcist.data.CaseRepositoryImpl
 import com.hereliesaz.lexorcist.data.EvidenceRepository
@@ -32,4 +34,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindMasterAllegationRepository(impl: MasterAllegationRepositoryImpl): MasterAllegationRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindCaseAllegationSelectionRepository(impl: CaseAllegationSelectionRepositoryImpl): CaseAllegationSelectionRepository
 }

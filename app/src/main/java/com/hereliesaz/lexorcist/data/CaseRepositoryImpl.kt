@@ -18,14 +18,20 @@ class CaseRepositoryImpl
         private val errorReporter: com.hereliesaz.lexorcist.utils.ErrorReporter,
     ) : CaseRepository {
         private val _cases = kotlinx.coroutines.flow.MutableStateFlow<List<Case>>(emptyList())
+        private val _selectedCase = kotlinx.coroutines.flow.MutableStateFlow<Case?>(null)
 
         /**
          * A flow of the list of cases.
          * This is the implementation of the [CaseRepository.cases] property.
          */
         override val cases: Flow<List<Case>> = _cases.asStateFlow()
+        override val selectedCase: Flow<Case?> = _selectedCase.asStateFlow()
 
         override suspend fun getCaseBySpreadsheetId(spreadsheetId: String): Case? = _cases.value.find { it.spreadsheetId == spreadsheetId }
+
+        override suspend fun selectCase(case: Case?) {
+            _selectedCase.value = case
+        }
 
         override suspend fun refreshCases() {
             android.util.Log.d("CaseRepositoryImpl", "refreshCases called")

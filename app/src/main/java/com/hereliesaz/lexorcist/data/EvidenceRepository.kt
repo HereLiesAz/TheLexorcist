@@ -12,7 +12,7 @@ interface EvidenceRepository {
 
     fun getEvidence(id: Int): Flow<Evidence>
 
-    suspend fun addEvidence(evidence: Evidence): Int
+    suspend fun addEvidence(evidence: Evidence): Evidence?
 
     suspend fun updateEvidence(evidence: Evidence)
 

@@ -91,14 +91,18 @@ class VideoProcessingWorker
                 }
 
             val frameUris = extractKeyframes(videoUri)
-            val ocrTextFromFrames =
-                frameUris
-                    .map { uri ->
-                        ocrProcessingService.processImageFrame(uri, appContext)
-                    }.joinToString("\n\n--- FRAME ---\n\n")
-
-            val combinedText =
-                "Video Transcript:\n$audioTranscript\n\n--- OCR FROM FRAMES ---\n\n$ocrTextFromFrames"
+            if (frameUris.isNotEmpty()) {
+                Log.d(TAG, "Extracted ${frameUris.size} keyframes")
+                frameUris.forEach { uri ->
+                    ocrProcessingService.processVideoFrame(
+                        uri = uri,
+                        context = appContext,
+                        caseId = caseId.toLong(),
+                        spreadsheetId = spreadsheetId,
+                        parentVideoId = uploadedDriveFile?.id,
+                    )
+                }
+            }
 
             val videoEvidence =
                 com.hereliesaz.lexorcist.data.Evidence(
@@ -106,7 +110,7 @@ class VideoProcessingWorker
                     caseId = caseId.toLong(),
                     spreadsheetId = spreadsheetId,
                     type = "video",
-                    content = combinedText,
+                    content = audioTranscript,
                     timestamp = System.currentTimeMillis(),
                     sourceDocument = uploadedDriveFile?.webViewLink ?: videoUri.toString(),
                     documentDate = System.currentTimeMillis(),
