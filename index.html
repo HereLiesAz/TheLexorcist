@@ -7,6 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="web/style.css">
     <style>
         :root {
             --background-color: #121212;
@@ -221,7 +222,7 @@
             <div class="hero-content">
                 <img src="/assets/lexorcist_white.webp" >
                 <h1>Exorcise the Demons of Discovery.</h1>
-                <p>Lexorcist automates the tedious, soul-crushing, legalitarian process of evidence management. Scan documents, organize data in Google Sheets, and generate court-ready paperwork. Stop the madness. Start the case.</p>
+                <p>The Lexorcist empowers lawyers and their clients to capture, automatically analyze, and process digital evidence, transforming raw data into court-ready documentation with powerful, scriptable automation.</p>
                 <a href="#" class="cta-button">Get it on Google Play</a>
             </div>
         </section>
@@ -230,16 +231,28 @@
             <h2>The Ritual of Automation</h2>
             <div class="features-grid">
                 <div class="feature-card">
-                    <h3>Intelligent Scanning</h3>
-                    <p>Capture documents, filings, and other evidence with your device's camera. Our OCR extracts the critical data so you don't have to.</p>
+                    <h3>Automated Evidence Pipeline</h3>
+                    <p>Capture images or screenshots and let the app handle the rest. The Lexorcist uses OCR to extract text and then feeds it into a powerful, user-scriptable engine for analysis.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Customizable Tagging Engine</h3>
+                    <p>Define your own keywords, patterns, and "dorks" using JavaScript to automatically tag evidence. This allows you to create highly specific rules for identifying content relevant to your case.</p>
                 </div>
                 <div class="feature-card">
                     <h3>Google Suite Integration</h3>
-                    <p>Automatically organizes extracted data into a Google Sheet and links all generated documents to your Google Drive. Your case, contained.</p>
+                    <p>Each case gets its own Google Sheet, where all evidence and its metadata are neatly organized. This serves as a central hub for your case data.</p>
                 </div>
                 <div class="feature-card">
-                    <h3>Automated Document Generation</h3>
-                    <p>Generates cover sheets, affidavits, and metadata pages from your data with a single click, using customizable templates and a powerful backend script.</p>
+                    <h3>Automatic Document Generation</h3>
+                    <p>The app leverages a powerful Google Apps Script backend. From your case's Google Sheet, you can instantly generate a variety of court-ready documents.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Timeline View</h3>
+                    <p>Visualize the chronology of your evidence with an interactive timeline, making it easy to see the sequence of events.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Secure and On-Device</h3>
+                    <p>All OCR and data parsing happens on your device to ensure privacy and security.</p>
                 </div>
             </div>
         </section>
@@ -271,6 +284,8 @@
         <p>&copy; 2025 Here Lies AZ. All Rights Reserved. The law is serious; the paperwork doesn't have to be.</p>
     </footer>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="web/script.js"></script>
     <script>
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
