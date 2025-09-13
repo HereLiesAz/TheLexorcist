@@ -37,7 +37,7 @@ import kotlinx.coroutines.withContext
 import java.security.MessageDigest
 import java.util.UUID
 import javax.inject.Inject
-import android.accounts.Account // <<< ADD THIS IMPORT
+import android.accounts.Account
 
 @HiltViewModel
 class AuthViewModel

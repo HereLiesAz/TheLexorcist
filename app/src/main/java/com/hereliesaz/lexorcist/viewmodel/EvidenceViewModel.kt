@@ -151,11 +151,22 @@ class EvidenceViewModel
             currentSpreadsheetIdForList = spreadsheetId
             viewModelScope.launch {
                 _isLoading.value = true
-                evidenceRepository.getEvidenceForCase(spreadsheetId, caseId).collectLatest {
-                    _evidenceList.value = it
+                evidenceRepository.getEvidenceForCase(spreadsheetId, caseId).collectLatest { evidence ->
+                    if (evidence.isEmpty()) {
+                        _evidenceList.value = createPlaceholderEvidence()
+                    } else {
+                        _evidenceList.value = evidence
+                    }
                 }
                 _isLoading.value = false
             }
+        }
+
+        private fun createPlaceholderEvidence(): List<Evidence> {
+            return listOf(
+                Evidence(id = -1, caseId = 0, spreadsheetId = "", type = "placeholder", content = "This is a placeholder item.", timestamp = 0, sourceDocument = "", documentDate = 0, allegationId = null, category = "Placeholder", tags = emptyList(), commentary = null, linkedEvidenceIds = emptyList(), parentVideoId = null, entities = emptyMap(), isSelected = false),
+                Evidence(id = -2, caseId = 0, spreadsheetId = "", type = "placeholder", content = "Add your first piece of evidence to get started.", timestamp = 0, sourceDocument = "", documentDate = 0, allegationId = null, category = "Placeholder", tags = emptyList(), commentary = null, linkedEvidenceIds = emptyList(), parentVideoId = null, entities = emptyMap(), isSelected = false)
+            )
         }
 
         fun updateEvidence(evidence: Evidence) {

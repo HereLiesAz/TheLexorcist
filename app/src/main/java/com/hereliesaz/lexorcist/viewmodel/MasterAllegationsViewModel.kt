@@ -19,6 +19,7 @@ enum class AllegationSortType {
     TYPE,
     CATEGORY,
     NAME,
+    COURT_LEVEL
 }
 
 @HiltViewModel
@@ -55,6 +56,7 @@ class MasterAllegationsViewModel
                         AllegationSortType.TYPE -> allegations.sortedWith(compareBy({ it.type }, { it.category }, { it.name }))
                         AllegationSortType.CATEGORY -> allegations.sortedWith(compareBy({ it.category }, { it.type }, { it.name }))
                         AllegationSortType.NAME -> allegations.sortedBy { it.name }
+                        AllegationSortType.COURT_LEVEL -> allegations.sortedBy { it.courtLevel }
                     }
                 }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
