@@ -1,7 +1,7 @@
 package com.hereliesaz.lexorcist.ui
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box // Added import
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -29,11 +29,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel // Corrected import
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.data.MasterAllegation
 import com.hereliesaz.lexorcist.viewmodel.MasterAllegationsViewModel
 import java.util.Locale
+import androidx.compose.ui.text.TextStyle // Added import
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,7 +54,7 @@ fun MasterAllegationsScreen(
                     ) {
                         Text(
                             stringResource(R.string.master_allegations).uppercase(Locale.getDefault()),
-                            // textAlign = TextAlign.End, // No longer needed, Box handles alignment
+                            textAlign = TextAlign.Center, // Centered text within the end-aligned Box
                             color = MaterialTheme.colorScheme.primary
                         )
                     }
@@ -78,20 +79,21 @@ fun MasterAllegationsScreen(
                     .fillMaxWidth()
                     .padding(vertical = 8.dp),
                 leadingIcon = { Icon(Icons.Filled.Search, contentDescription = stringResource(R.string.search)) },
-                singleLine = true
+                singleLine = true,
+                textStyle = MaterialTheme.typography.bodyLarge.copy(textAlign = TextAlign.End) // Align input text to the end
             )
 
             if (allegations.isEmpty()) {
                 Column(
                     modifier = Modifier.fillMaxSize().padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
+                    horizontalAlignment = Alignment.End, // Changed to End
                     verticalArrangement = Arrangement.Center
                 ) {
                     Text(
                         text = if (searchQuery.isNotBlank()) stringResource(R.string.no_allegations_match_search)
                                else stringResource(R.string.no_allegations_found),
                         style = MaterialTheme.typography.bodyLarge,
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.End // Changed to End
                     )
                 }
             } else {

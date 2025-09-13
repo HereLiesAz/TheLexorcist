@@ -37,6 +37,7 @@ import kotlinx.coroutines.withContext
 import java.security.MessageDigest
 import java.util.UUID
 import javax.inject.Inject
+import android.accounts.Account // <<< ADD THIS IMPORT
 
 @HiltViewModel
 class AuthViewModel
@@ -171,8 +172,11 @@ constructor(
         val scopes = listOf(DriveScopes.DRIVE, SheetsScopes.SPREADSHEETS)
         val accountCredential = GoogleAccountCredential.usingOAuth2(application, scopes)
 
-        Log.d(TAG, "Attempting to set GoogleAccountCredential selectedAccountName to: '$userEmail'")
-        accountCredential.selectedAccountName = userEmail
+        // Create an Account object explicitly
+        val googleAccount = Account(userEmail, "com.google") // userEmail is known to be non-null here
+        Log.d(TAG, "Attempting to set GoogleAccountCredential selectedAccount to: ${googleAccount.name}")
+        accountCredential.setSelectedAccount(googleAccount) // Use setSelectedAccount with the Account object
+
         credentialHolder.credential = accountCredential
         credentialHolder.googleApiService =
             com.hereliesaz.lexorcist.service
