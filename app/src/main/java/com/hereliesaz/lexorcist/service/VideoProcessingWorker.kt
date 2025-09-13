@@ -12,7 +12,7 @@ import android.util.Log
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.hereliesaz.lexorcist.service.GoogleApiService
+import com.hereliesaz.lexorcist.auth.CredentialHolder
 import com.hereliesaz.lexorcist.service.OcrProcessingService
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -30,7 +30,7 @@ class VideoProcessingWorker
         @Assisted private val appContext: Context, // Made private val as it's used in methods
         @Assisted workerParams: WorkerParameters,
         private val ocrProcessingService: OcrProcessingService, // Changed from OcrViewModel
-        private val googleApiService: GoogleApiService?,
+        private val credentialHolder: CredentialHolder,
     ) : CoroutineWorker(appContext, workerParams) {
         override suspend fun doWork(): Result {
             val videoUriString = inputData.getString(KEY_VIDEO_URI)
@@ -57,6 +57,7 @@ class VideoProcessingWorker
             }
 
             var uploadedDriveFile: DriveFile? = null
+            val googleApiService = credentialHolder.googleApiService // Get from CredentialHolder
             if (googleApiService == null) {
                 Log.e(TAG, "GoogleApiService is not available. Skipping Drive upload.")
             } else {

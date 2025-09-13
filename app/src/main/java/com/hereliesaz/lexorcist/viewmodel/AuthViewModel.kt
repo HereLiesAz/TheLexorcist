@@ -47,7 +47,7 @@ constructor(
     private val credentialManager: CredentialManager,
     private val credentialHolder: CredentialHolder,
     private val firebaseAuth: FirebaseAuth, // Injected FirebaseAuth
-    @IODispatcher private val ioDispatcher: CoroutineDispatcher
+    @param:IODispatcher private val ioDispatcher: CoroutineDispatcher
 ) : AndroidViewModel(application) {
     private val _signInState = MutableStateFlow<SignInState>(SignInState.Idle)
     val signInState: StateFlow<SignInState> = _signInState.asStateFlow()
