@@ -5,7 +5,7 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("kotlin-parcelize") // Added kotlin-parcelize plugin
     id("com.google.dagger.hilt.android")
-    id("org.jetbrains.kotlin.plugin.compose") version "2.2.10"
+    id("org.jetbrains.kotlin.plugin.compose") version "2.2.20"
     id("com.google.devtools.ksp") version "2.2.10-2.0.2"
     id("com.diffplug.spotless")
     id("com.google.gms.google-services") // Added Google Services plugin
@@ -21,7 +21,7 @@ android {
         targetSdk = 36
 
         versionCode = 1
-        versionName = "1.0"
+        versionName = "0.6.0"
 
         testInstrumentationRunner = "com.hereliesaz.lexorcist.HiltTestRunner"
     }
