@@ -51,6 +51,7 @@ import com.hereliesaz.lexorcist.ui.ExtrasScreen
 import com.hereliesaz.lexorcist.ui.ReviewScreen
 import com.hereliesaz.lexorcist.ui.ScriptEditorScreen
 import com.hereliesaz.lexorcist.ui.SettingsScreen
+import com.hereliesaz.lexorcist.ui.ShareAddonScreen
 import com.hereliesaz.lexorcist.ui.TemplatesScreen
 import com.hereliesaz.lexorcist.ui.TimelineScreen
 import com.hereliesaz.lexorcist.viewmodel.AuthViewModel
@@ -193,7 +194,14 @@ fun MainScreen(
                                 }
                                 composable("extras") { ExtrasScreen(viewModel = hiltViewModel<AddonsBrowserViewModel>(), onShare = {}) }
                                 composable("script_editor") {
-                                    ScriptEditorScreen(viewModel = hiltViewModel<ScriptEditorViewModel>())
+                                    ScriptEditorScreen(viewModel = hiltViewModel<ScriptEditorViewModel>(), navController = navController)
+                                }
+                                composable("share_addon/{type}/{content}") { backStackEntry ->
+                                    val addonsBrowserViewModel: AddonsBrowserViewModel = hiltViewModel()
+                                    ShareAddonScreen { name, description, content, type ->
+                                        addonsBrowserViewModel.shareAddon(name, description, content, type)
+                                        navController.popBackStack()
+                                    }
                                 }
                                 // Renamed route for case-specific allegations
                                 composable("case_allegations_route") {

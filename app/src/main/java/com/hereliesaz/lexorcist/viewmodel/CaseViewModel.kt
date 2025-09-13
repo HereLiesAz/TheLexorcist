@@ -138,9 +138,14 @@ class CaseViewModel
             _searchQuery.value = query
         }
 
+        private val _isLoading = MutableStateFlow(false)
+        val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
         fun loadCasesFromRepository() {
             viewModelScope.launch {
+                _isLoading.value = true
                 caseRepository.refreshCases()
+                _isLoading.value = false
             }
         }
 
