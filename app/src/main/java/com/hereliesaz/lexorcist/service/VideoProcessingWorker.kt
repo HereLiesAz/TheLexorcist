@@ -94,10 +94,10 @@ class VideoProcessingWorker
             if (frameUris.isNotEmpty()) {
                 Log.d(TAG, "Extracted ${frameUris.size} keyframes")
                 frameUris.forEach { uri ->
-                    ocrProcessingService.processVideoFrame(
+                    ocrProcessingService.processImageFrame(
                         uri = uri,
                         context = appContext,
-                        caseId = caseId.toLong(),
+                        caseId = caseId, // Removed .toLong()
                         spreadsheetId = spreadsheetId,
                         parentVideoId = uploadedDriveFile?.id,
                     )
@@ -107,7 +107,7 @@ class VideoProcessingWorker
             val videoEvidence =
                 com.hereliesaz.lexorcist.data.Evidence(
                     id = 0,
-                    caseId = caseId.toLong(),
+                    caseId = caseId.toLong(), // This is for Evidence data class, may need to be Int too
                     spreadsheetId = spreadsheetId,
                     type = "video",
                     content = audioTranscript,
