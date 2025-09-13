@@ -180,7 +180,7 @@ constructor(
         credentialHolder.credential = accountCredential
         credentialHolder.googleApiService =
             com.hereliesaz.lexorcist.service
-                .GoogleApiService(accountCredential, application.getString(R.string.app_name))
+                .GoogleApiService(accountCredential, application.getString(R.string.appTitle))
         Log.d(TAG, "GoogleApiService initialized with Firebase user email.")
     }
 

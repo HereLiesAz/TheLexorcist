@@ -164,7 +164,7 @@ fun MainScreen(
                                         verticalArrangement = Arrangement.Top, // Content aligns to its top
                                     ) {
                                         Text(
-                                            text = stringResource(R.string.app_name),
+                                            text = stringResource(R.string.appTitle),
                                             style = MaterialTheme.typography.headlineMedium,
                                         )
                                         Spacer(modifier = Modifier.height(16.dp))

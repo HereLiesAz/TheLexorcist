@@ -1,5 +1,6 @@
 <resources>
-    <string name="app_name">The Lexorcist</string>
+    <string name="app_name">TheLexorcist</string>
+    <string name="appTitle">The Lexorcist</string>
     <string name="spreadsheet_import_service_tag">SpreadsheetImportSvc</string>
     <string name="case_sheet_parser_tag">CaseSheetParser</string>
     <string name="parse_store_failed_app_root_folder">parseAndStore: Failed to get or create app root folder.</string>

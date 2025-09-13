@@ -1,92 +1,34 @@
-body {
-    background-color: #0a0a0a;
-    color: #e0e0e0;
-    font-family: 'Helvetica Neue', sans-serif;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    overflow: hidden;
-    background-image: linear-gradient(45deg, #1a1a1a 25%, transparent 25%),
-                      linear-gradient(-45deg, #1a1a1a 25%, transparent 25%),
-                      linear-gradient(45deg, transparent 75%, #1a1a1a 75%),
-                      linear-gradient(-45deg, transparent 75%, #1a1a1a 75%);
-    background-size: 20px 20px;
-    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
-}
+/* Additional styles for animations */
 
-.container {
-    text-align: center;
-    padding: 2rem;
-    border-radius: 10px;
-    background-color: rgba(0, 0, 0, 0.85);
-    box-shadow: 0 0 40px rgba(255, 0, 0, 0.6);
-    border: 3px solid rgba(255, 0, 0, 0.8);
-}
-
-.main-title {
-    font-family: 'Courier New', monospace;
-    font-size: 4.5rem;
-    font-weight: bold;
-    color: #ff0000;
-    text-shadow: 0 0 5px #ff0000, 0 0 10px #ff0000, 0 0 20px #ff0000, 0 0 40px #ff0000;
-    margin-bottom: 1rem;
-    letter-spacing: 0.2rem;
-    animation: flicker 1.5s infinite alternate;
-}
-
-.quote {
-    font-size: 1.8rem;
-    font-style: italic;
-    color: #ccc;
-    margin-bottom: 0.5rem;
-}
-
-.author {
-    font-size: 1.2rem;
-    color: #999;
-    margin-bottom: 2rem;
-}
-
-.possession-meter {
-    width: 80%;
-    height: 30px;
-    border: 2px solid #ff0000;
-    border-radius: 5px;
-    margin: 2rem auto;
-    background-color: #333;
-}
-
-.meter-bar {
-    width: 0%;
-    height: 100%;
-    background-color: #ff0000;
-    border-radius: 2px;
-}
-
-.footer-text {
-    font-family: 'Courier New', monospace;
-    font-weight: bold;
-    font-size: 1.5rem;
-    color: #ff0000;
-    margin-top: 2rem;
-}
-
+/* Flicker animation for titles */
 @keyframes flicker {
     0%, 18%, 22%, 25%, 53%, 57%, 100% {
         text-shadow:
-            0 0 4px #ff0000,
-            0 0 11px #ff0000,
-            0 0 19px #ff0000,
-            0 0 40px #ff0000,
-            0 0 80px #ff0000,
-            0 0 90px #ff0000,
-            0 0 100px #ff0000,
-            0 0 150px #ff0000;
+            0 0 4px #fff,
+            0 0 11px #fff,
+            0 0 19px #fff,
+            0 0 40px #0ff,
+            0 0 80px #0ff,
+            0 0 90px #0ff,
+            0 0 100px #0ff,
+            0 0 150px #0ff;
     }
     20%, 24%, 55% {
         text-shadow: none;
     }
+}
+
+/* Apply flicker animation to the main hero title */
+#hero h1 {
+    animation: flicker 2s infinite alternate;
+}
+
+/* Add a subtle animation to the feature cards on hover */
+.feature-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.feature-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 10px 20px rgba(0, 255, 255, 0.2);
 }
