@@ -58,8 +58,6 @@ object DataParser {
             "\\b\\d{1,2}:\\d{2}:\\d{2}\\s*(?:AM|PM)\\b".toRegex() to SimpleDateFormat("h:mm:ss a", Locale.US),
             "\\b\\d{2}:\\d{2}:\\d{2}\\b".toRegex() to SimpleDateFormat("HH:mm:ss", Locale.US),
             "\\b\\d{2}:\\d{2}\\b".toRegex() to SimpleDateFormat("HH:mm", Locale.US),
-            // More generic pattern for timestamps
-            "\\b\\d{1,2}:\\d{2}(?::\\d{2})?\\s*(?:AM|PM)?\\b".toRegex() to SimpleDateFormat("h:mm", Locale.US),
         )
 
     fun parseTimestamps(text: String): List<String> {

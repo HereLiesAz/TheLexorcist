@@ -60,7 +60,7 @@ class OcrProcessingService
                 val scriptResult = scriptRunner.runScript(script, newEvidence)
                 when (scriptResult) {
                     is Result.Success -> {
-                            newEvidence = newEvidence.copy(tags = newEvidence.tags + scriptResult.data)
+                        newEvidence = newEvidence.copy(tags = newEvidence.tags + scriptResult.data.tags)
                     }
                     is Result.Error -> {
                         Log.e("OcrProcessingService", "Script error for $uri: ${scriptResult.exception.message}", scriptResult.exception)
@@ -111,7 +111,7 @@ class OcrProcessingService
                 val scriptResult = scriptRunner.runScript(script, newEvidence)
                 when (scriptResult) {
                     is Result.Success -> {
-                        newEvidence = newEvidence.copy(tags = newEvidence.tags + scriptResult.data)
+                        newEvidence = newEvidence.copy(tags = newEvidence.tags + scriptResult.data.tags)
                     }
                     is Result.Error -> {
                         Log.e("OcrProcessingService", "Script error for $uri: ${scriptResult.exception.message}", scriptResult.exception)

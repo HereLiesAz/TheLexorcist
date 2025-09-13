@@ -49,7 +49,7 @@ import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class) // Removed ExperimentalMaterial3ExpressiveApi
 @Composable
-fun ScriptEditorScreen(viewModel: ScriptEditorViewModel, navController: androidx.navigation.NavController) {
+fun ScriptEditorScreen(viewModel: ScriptEditorViewModel) {
     val scriptText by viewModel.scriptText.collectAsState()
     val saveState by viewModel.saveState.collectAsState()
     val context = LocalContext.current
@@ -210,7 +210,7 @@ fun ScriptEditorScreen(viewModel: ScriptEditorViewModel, navController: androidx
             confirmButton = {
                 Button(
                     onClick = {
-                        navController.navigate("share_addon/Script/$scriptText")
+                        // TODO: Implement sharing logic with AddonsBrowserViewModel
                         showShareDialog = false
                     },
                 ) {
