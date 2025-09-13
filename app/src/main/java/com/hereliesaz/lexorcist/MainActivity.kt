@@ -35,10 +35,12 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            val userRecoverableError by caseViewModel.userRecoverableError.collectAsState()
-            LaunchedEffect(userRecoverableError) {
-                userRecoverableError?.let {
-                    startActivity(it.intent)
+            // Collect the user recoverable auth intent from CaseViewModel
+            val userRecoverableIntent by caseViewModel.userRecoverableAuthIntent.collectAsState()
+            LaunchedEffect(userRecoverableIntent) {
+                userRecoverableIntent?.let {
+                    startActivity(it) // Launch the intent directly
+                    caseViewModel.clearUserRecoverableAuthIntent() // Clear the intent after launching
                 }
             }
 
