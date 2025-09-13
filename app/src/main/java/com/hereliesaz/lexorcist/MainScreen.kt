@@ -1,9 +1,7 @@
-@file:Suppress("ktlint:standard:no-wildcard-imports")
-
 package com.hereliesaz.lexorcist
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Box // Added import
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -34,7 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel // Changed import
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel // Corrected import
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -53,8 +51,7 @@ import com.hereliesaz.lexorcist.ui.ScriptEditorScreen
 import com.hereliesaz.lexorcist.ui.SettingsScreen
 import com.hereliesaz.lexorcist.ui.TemplatesScreen
 import com.hereliesaz.lexorcist.ui.TimelineScreen
-import com.hereliesaz.lexorcist.viewmodel.AddonsBrowserViewModel
-import com.hereliesaz.lexorcist.viewmodel.AllegationsViewModel
+import com.hereliesaz.lexorcist.viewmodel.AddonsBrowserViewModel // Corrected import
 import com.hereliesaz.lexorcist.viewmodel.AuthViewModel
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
@@ -195,16 +192,16 @@ fun MainScreen(
                                         navController = navController,
                                     )
                                 }
-                                composable("extras") { ExtrasScreen(viewModel = hiltViewModel<AddonsBrowserViewModel>(), onShare = {}) }
+                                composable("extras") { ExtrasScreen(viewModel = androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel<AddonsBrowserViewModel>(), onShare = {}) }
                                 composable("script_editor") {
-                                    ScriptEditorScreen(viewModel = hiltViewModel<ScriptEditorViewModel>())
+                                    ScriptEditorScreen(viewModel = androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel<ScriptEditorViewModel>(), navController = navController)
                                 }
                                 // Renamed route for case-specific allegations
                                 composable("case_allegations_route") {
-                                    AllegationsScreen(hiltViewModel<MasterAllegationsViewModel>())
+                                    AllegationsScreen(androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel<MasterAllegationsViewModel>())
                                 }
                                 composable("templates") {
-                                    TemplatesScreen(hiltViewModel<AddonsBrowserViewModel>())
+                                    TemplatesScreen(androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel<AddonsBrowserViewModel>())
                                 }
                                 composable("timeline") {
                                     selectedCase?.let {
@@ -216,7 +213,7 @@ fun MainScreen(
                                     }
                                 }
                                 composable("data_review") {
-                                    val allegationsViewModel: com.hereliesaz.lexorcist.viewmodel.AllegationsViewModel = hiltViewModel()
+                                    val allegationsViewModel: com.hereliesaz.lexorcist.viewmodel.AllegationsViewModel = androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel()
                                     ReviewScreen(
                                         evidenceViewModel = evidenceViewModel,
                                         caseViewModel = caseViewModel,
