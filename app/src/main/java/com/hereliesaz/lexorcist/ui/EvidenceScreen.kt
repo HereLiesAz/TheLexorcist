@@ -10,12 +10,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Audiotrack
 import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -25,6 +26,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -35,11 +37,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel // Corrected import
 import androidx.navigation.NavController
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
+import kotlinx.coroutines.flow.collectLatest
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -52,6 +54,7 @@ fun EvidenceScreen(
     var showAddTextEvidence by remember { mutableStateOf(false) }
     var text by remember { mutableStateOf("") }
     val selectedCase by caseViewModel.selectedCase.collectAsState()
+    val evidenceList by evidenceViewModel.evidenceList.collectAsState()
 
     val imagePickerLauncher =
         rememberLauncherForActivityResult(
@@ -66,6 +69,19 @@ fun EvidenceScreen(
         ) { uri ->
             uri?.let { evidenceViewModel::processAudioEvidence }
         }
+
+    val videoPickerLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.GetContent(),
+        ) { uri ->
+            uri?.let { evidenceViewModel.processVideoEvidence(it) }
+        }
+
+    LaunchedEffect(Unit) {
+        evidenceViewModel.navigateToTranscriptionScreen.collectLatest { evidenceId ->
+            navController.navigate("transcription/$evidenceId")
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -85,7 +101,6 @@ fun EvidenceScreen(
             modifier =
                 Modifier
                     .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
                     .padding(padding)
                     .padding(16.dp),
             horizontalAlignment = Alignment.End,
@@ -163,7 +178,45 @@ fun EvidenceScreen(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(stringResource(R.string.add_audio_evidence).uppercase(Locale.getDefault()))
                 }
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(onClick = { videoPickerLauncher.launch("video/*") }) {
+                    Icon(
+                        Icons.Default.Videocam,
+                        contentDescription =
+                            stringResource(R.string.add_video_evidence).uppercase(
+                                Locale.getDefault(),
+                            ),
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(R.string.add_video_evidence).uppercase(Locale.getDefault()))
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            LazyColumn(modifier = Modifier.fillMaxSize()) {
+                items(evidenceList) { evidence ->
+                    EvidenceListItem(evidence = evidence)
+                }
             }
         }
+    }
+}
+
+@Composable
+fun EvidenceListItem(evidence: com.hereliesaz.lexorcist.data.Evidence) {
+    Column(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+        horizontalAlignment = Alignment.End,
+    ) {
+        Text(text = "Type: ${evidence.type}", style = MaterialTheme.typography.bodyMedium)
+        Text(
+            text = evidence.content,
+            style = MaterialTheme.typography.bodyLarge,
+            textAlign = TextAlign.End,
+        )
     }
 }
