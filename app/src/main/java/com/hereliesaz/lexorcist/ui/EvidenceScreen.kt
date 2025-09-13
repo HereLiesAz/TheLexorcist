@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Audiotrack
 import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -66,6 +67,13 @@ fun EvidenceScreen(
             contract = ActivityResultContracts.GetContent(),
         ) { uri ->
             uri?.let { evidenceViewModel::processAudioEvidence }
+        }
+
+    val videoPickerLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.GetContent(),
+        ) { uri ->
+            uri?.let { evidenceViewModel.processVideoEvidence(it) }
         }
 
     LaunchedEffect(Unit) {
@@ -169,6 +177,18 @@ fun EvidenceScreen(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(stringResource(R.string.add_audio_evidence).uppercase(Locale.getDefault()))
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(onClick = { videoPickerLauncher.launch("video/*") }) {
+                    Icon(
+                        Icons.Default.Videocam,
+                        contentDescription =
+                            stringResource(R.string.add_video_evidence).uppercase(
+                                Locale.getDefault(),
+                            ),
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(R.string.add_video_evidence).uppercase(Locale.getDefault()))
                 }
             }
         }

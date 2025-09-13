@@ -57,16 +57,13 @@ class OcrViewModelTest {
             // Given
             val uri: Uri = mockk()
             val context: Context = mockk()
-            val caseId = 123
-            val spreadsheetId = "spreadsheet-123"
-            val parentVideoId = "video-456"
-            coEvery { ocrProcessingService.processImageFrame(any(), any(), any(), any(), any()) } returns Unit
+            coEvery { ocrProcessingService.processImageFrame(any(), any()) } returns "OCR Text"
 
             // When
-            ocrViewModel.performOcrOnUri(uri, context, caseId, spreadsheetId, parentVideoId)
+            ocrViewModel.performOcrOnUri(uri, context)
             testDispatcher.scheduler.advanceUntilIdle()
 
             // Then
-            coVerify { ocrProcessingService.processImageFrame(uri, context, caseId, spreadsheetId, parentVideoId) }
+            coVerify { ocrProcessingService.processImageFrame(uri, context) }
         }
 }

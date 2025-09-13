@@ -12,17 +12,23 @@ import com.google.cloud.speech.v1.RecognizeRequest
 import com.google.cloud.speech.v1.SpeechClient
 import com.google.cloud.speech.v1.SpeechSettings
 import com.google.protobuf.ByteString
+import com.hereliesaz.lexorcist.auth.CredentialHolder
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class TranscriptionService(
-    private val context: Context,
-    private val authCredentialParam: GoogleAccountCredential,
+@Singleton
+class TranscriptionService
+@Inject
+constructor(
+    @ApplicationContext private val context: Context,
+    private val credentialHolder: CredentialHolder,
 ) {
     suspend fun transcribeAudio(uri: Uri): String {
         try {
-            val accessToken = authCredentialParam.token
-            if (accessToken == null) {
-                return "Error: Could not retrieve access token."
-            }
+            val credential = credentialHolder.credential
+                ?: return "Error: Could not retrieve access token."
+            val accessToken = credential.token
             val googleCredentials = GoogleCredentials.create(AccessToken(accessToken, null))
             val speechSettings =
                 SpeechSettings

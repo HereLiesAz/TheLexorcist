@@ -260,4 +260,5 @@
     <string name="reason_for_edit">Reason for Edit</string>
     <string name="reason">Reason</string>
     <string name="confirm">Confirm</string>
+    <string name="add_video_evidence">Add Video Evidence</string>
 </resources>

@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
+import com.hereliesaz.lexorcist.auth.CredentialHolder
 import com.hereliesaz.lexorcist.service.TranscriptionService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,7 +17,9 @@ class TranscriptionViewModel(
     private var transcriptionService: TranscriptionService? = null
 
     fun setCredential(credential: GoogleAccountCredential) {
-        transcriptionService = TranscriptionService(getApplication(), credential)
+        val credentialHolder = CredentialHolder()
+        credentialHolder.credential = credential
+        transcriptionService = TranscriptionService(getApplication(), credentialHolder)
     }
 
     private val _transcriptionState = MutableStateFlow<TranscriptionState>(TranscriptionState.Idle)
