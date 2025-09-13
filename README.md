@@ -1,6 +1,6 @@
 # The Lexorcist
 
-The Lexorcist is a powerful, user-friendly Android application designed to exorcise the demonic tedium of legal discovery. It empowers lawyers and their clients to capture, automatically analyze, and process digital evidence, transforming raw data into court-ready documentation with powerful, scriptable automation.
+The Lexorcist is a powerful, user-friendly Android application for legalitarians designed to exorcise the demonic tedium of legal discovery. It empowers lawyers and their clients to capture, automatically analyze, and process digital evidence, transforming raw data into court-ready documentation with powerful, scriptable automation.
 
 Whether you're dealing with screenshots of harassment, written threats, or examples of slander, The Lexorcist provides the tools to streamline the entire workflow—from a picture on a phone to a fully prepared exhibit.
 
