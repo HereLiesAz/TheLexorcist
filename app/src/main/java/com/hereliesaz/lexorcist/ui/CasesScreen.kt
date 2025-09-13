@@ -24,7 +24,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
@@ -74,7 +73,7 @@ fun CasesScreen(
         remember(casesState, searchQuery) {
             casesState.filter { case ->
                 !case.isArchived &&
-                    (searchQuery.isBlank() || case.name.contains(searchQuery, ignoreCase = true))
+                        (searchQuery.isBlank() || case.name.contains(searchQuery, ignoreCase = true))
             }
         }
 
@@ -127,7 +126,7 @@ fun CasesScreen(
                 Column(
                     modifier = Modifier.fillMaxSize(),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
+                    verticalArrangement = Arrangement.Center,
                 ) {
                     CircularProgressIndicator()
                 }
@@ -146,7 +145,7 @@ fun CasesScreen(
                             stringResource(R.string.no_cases_match_search)
                         } else {
                             stringResource(R.string.no_cases_found_line1) + "\n" +
-                                stringResource(R.string.no_cases_found_line2)
+                                    stringResource(R.string.no_cases_found_line2)
                         }
                     Text(
                         text = noCasesText,
