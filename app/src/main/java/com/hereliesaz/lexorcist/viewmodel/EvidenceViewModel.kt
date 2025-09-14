@@ -131,25 +131,31 @@ class EvidenceViewModel
             _evidenceList.value = list
         }
 
-    fun onEvidenceSelected(evidence: Evidence) {
-        viewModelScope.launch {
-            if (evidence.type == "video") {
-                val allEvidence = evidenceRepository.getEvidenceForCase(evidence.spreadsheetId, evidence.caseId).first()
-                val childEvidence = allEvidence.filter { it.parentVideoId == evidence.sourceDocument }
-                val combinedContent = StringBuilder()
-                combinedContent.append("--- VIDEO TRANSCRIPT ---\n")
-                combinedContent.append(evidence.content)
-                combinedContent.append("\n\n--- OCR FROM FRAMES ---")
-                childEvidence.forEach {
-                    combinedContent.append("\n\n--- Frame ---\n")
-                    combinedContent.append(it.content)
-                }
-                _selectedEvidenceDetails.value = evidence.copy(content = combinedContent.toString())
-            } else {
-                _selectedEvidenceDetails.value = evidence
+        fun fetchEvidenceDetailsById(evidenceId: Int) {
+            viewModelScope.launch {
+                _selectedEvidenceDetails.value = evidenceRepository.getEvidenceById(evidenceId)
             }
         }
-    }
+
+        fun onEvidenceSelected(evidence: Evidence) {
+            viewModelScope.launch {
+                if (evidence.type == "video") {
+                    val allEvidence = evidenceRepository.getEvidenceForCase(evidence.spreadsheetId, evidence.caseId).first()
+                    val childEvidence = allEvidence.filter { it.parentVideoId == evidence.sourceDocument }
+                    val combinedContent = StringBuilder()
+                    combinedContent.append("--- VIDEO TRANSCRIPT ---\n")
+                    combinedContent.append(evidence.content)
+                    combinedContent.append("\n\n--- OCR FROM FRAMES ---")
+                    childEvidence.forEach {
+                        combinedContent.append("\n\n--- Frame ---\n")
+                        combinedContent.append(it.content)
+                    }
+                    _selectedEvidenceDetails.value = evidence.copy(content = combinedContent.toString())
+                } else {
+                    _selectedEvidenceDetails.value = evidence
+                }
+            }
+        }
 
         fun onDialogDismiss() {
             _selectedEvidenceDetails.value = null
@@ -175,12 +181,6 @@ class EvidenceViewModel
 
         fun clearEvidenceDetails() {
             _selectedEvidenceDetails.value = null
-        }
-
-        fun loadEvidenceById(evidenceId: Int) {
-            viewModelScope.launch {
-                _selectedEvidenceDetails.value = evidenceRepository.getEvidenceById(evidenceId)
-            }
         }
 
         fun loadEvidenceForCase(
@@ -289,13 +289,16 @@ class EvidenceViewModel
         fun processImageEvidence(uri: Uri) {
             viewModelScope.launch {
                 if (currentCaseIdForList != null && currentSpreadsheetIdForList != null) {
-                    ocrProcessingService.processImage(
-                        uri = uri,
-                        context = getApplication(),
-                        caseId = currentCaseIdForList!!,
-                        spreadsheetId = currentSpreadsheetIdForList!!,
-                    )
-                    loadEvidenceForCase(currentCaseIdForList!!, currentSpreadsheetIdForList!!)
+                    try {
+                        ocrProcessingService.processImage(
+                            uri = uri,
+                            context = getApplication(),
+                            caseId = currentCaseIdForList!!,
+                            spreadsheetId = currentSpreadsheetIdForList!!,
+                        )
+                    } finally {
+                        loadEvidenceForCase(currentCaseIdForList!!, currentSpreadsheetIdForList!!)
+                    }
                 }
             }
         }
