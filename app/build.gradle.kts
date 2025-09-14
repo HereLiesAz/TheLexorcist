@@ -6,9 +6,9 @@ plugins {
     id("kotlin-parcelize") // Added kotlin-parcelize plugin
     id("com.google.dagger.hilt.android")
     id("org.jetbrains.kotlin.plugin.compose") version "2.2.20"
-    id("com.google.devtools.ksp") version "2.2.10-2.0.2"
-    id("com.diffplug.spotless")
+    id("com.google.devtools.ksp") version "2.2.20-2.0.3"
     id("com.google.gms.google-services") // Added Google Services plugin
+    id("com.palantir.git-version")
 }
 
 android {
@@ -69,9 +69,8 @@ dependencies {
     implementation(libs.google.id)
 
     // Firebase
-    // implementation(platform(group = "com.google.firebase", name = "firebase-bom", version = "34.2.0")) // Use explicit group, name, version for BOM
+    implementation(platform(libs.firebase.bom))
     implementation(libs.google.firebase.auth.ktx) // Explicitly use KTX version and direct coordinate
-    // implementation("com.google.firebase:firebase-analytics") // Commented out to isolate build issue
 
     // Core testing dependencies
     testImplementation(libs.junit)
@@ -178,9 +177,3 @@ kotlin {
     }
 }
 
-spotless {
-    kotlin {
-        target("src/**/*.kt")
-        ktlint()
-    }
-}
