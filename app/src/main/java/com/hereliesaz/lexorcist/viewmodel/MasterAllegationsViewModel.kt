@@ -19,7 +19,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-@OptIn(ExperimentalCoroutinesApi::class)
+
 enum class AllegationSortType {
     TYPE,
     CATEGORY,
@@ -27,6 +27,7 @@ enum class AllegationSortType {
     COURT_LEVEL,
 }
 
+@OptIn(ExperimentalCoroutinesApi::class) // Moved OptIn here
 @HiltViewModel
 class MasterAllegationsViewModel
 @Inject
@@ -47,7 +48,7 @@ constructor(
 
     val allegations: StateFlow<List<MasterAllegation>> =
         caseRepository.selectedCase
-            .flatMapLatest { case ->
+            .flatMapLatest { case -> // This line (50 in original) requires ExperimentalCoroutinesApi
                 val selectedAllegationsFlow =
                     if (case != null) {
                         caseAllegationSelectionRepository.getSelectedAllegations(case.spreadsheetId)
