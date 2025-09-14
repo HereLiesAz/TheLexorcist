@@ -175,7 +175,7 @@ class AuthViewModel
             sharedPreferences.edit { putString(PREF_USER_EMAIL_KEY, userEmail) }
             Log.d(TAG, "User email saved to SharedPreferences: '$userEmail'")
 
-            val scopes = listOf(DriveScopes.DRIVE, SheetsScopes.SPREADSHEETS)
+            val scopes = listOf(DriveScopes.DRIVE, SheetsScopes.SPREADSHEETS, "profile", "email")
             val accountCredential = GoogleAccountCredential.usingOAuth2(application, scopes)
 
             // Create an Account object explicitly
