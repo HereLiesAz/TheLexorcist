@@ -7,8 +7,7 @@ kotlinAndroid = "2.2.20" # Assuming from your compose plugin version, adjust if 
 kotlinParcelize = "1.9.0" # Assuming same as kotlinAndroid
 hilt = "2.57.1"
 composeCompiler = "2.2.20" # from org.jetbrains.kotlin.plugin.compose
-ksp = "2.2.10-2.0.2" # from com.google.devtools.ksp
-spotless = "7.2.1" # A common version, adjust if you have it specified in project level build.gradle
+ksp = "2.2.20-2.0.3" # from com.google.devtools.ksp
 coreKtx = "1.17.0"
 appcompat = "1.7.1"
 material = "1.13.0"
@@ -150,4 +149,3 @@ kotlin-parcelize = { id = "org.jetbrains.kotlin.parcelize", version.ref = "kotli
 hilt-android = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "composeCompiler" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
-spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }

@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -97,7 +98,6 @@ class EvidenceViewModel
                         entities = entities,
                     )
                 evidenceRepository.addEvidence(newEvidence)
-                // Refresh list if it's for the same case
                 if (caseId == currentCaseIdForList && spreadsheetId == currentSpreadsheetIdForList) {
                     loadEvidenceForCase(caseId, spreadsheetId)
                 }
@@ -131,10 +131,34 @@ class EvidenceViewModel
             _evidenceList.value = list
         }
 
-        fun loadEvidenceDetails(evidenceId: Int) {
+        fun fetchEvidenceDetailsById(evidenceId: Int) {
             viewModelScope.launch {
                 _selectedEvidenceDetails.value = evidenceRepository.getEvidenceById(evidenceId)
             }
+        }
+
+        fun onEvidenceSelected(evidence: Evidence) {
+            viewModelScope.launch {
+                if (evidence.type == "video") {
+                    val allEvidence = evidenceRepository.getEvidenceForCase(evidence.spreadsheetId, evidence.caseId).first()
+                    val childEvidence = allEvidence.filter { it.parentVideoId == evidence.sourceDocument }
+                    val combinedContent = StringBuilder()
+                    combinedContent.append("--- VIDEO TRANSCRIPT ---\n")
+                    combinedContent.append(evidence.content)
+                    combinedContent.append("\n\n--- OCR FROM FRAMES ---")
+                    childEvidence.forEach {
+                        combinedContent.append("\n\n--- Frame ---\n")
+                        combinedContent.append(it.content)
+                    }
+                    _selectedEvidenceDetails.value = evidence.copy(content = combinedContent.toString())
+                } else {
+                    _selectedEvidenceDetails.value = evidence
+                }
+            }
+        }
+
+        fun onDialogDismiss() {
+            _selectedEvidenceDetails.value = null
         }
 
         fun updateCommentary(
@@ -147,7 +171,6 @@ class EvidenceViewModel
                 if (currentDetails != null && currentDetails.id == evidenceId) {
                     _selectedEvidenceDetails.value = currentDetails.copy(commentary = commentary)
                 }
-                // Refresh list if the updated item is in the current list
                 currentCaseIdForList?.let { caseId ->
                     currentSpreadsheetIdForList?.let { spreadsheetId ->
                         loadEvidenceForCase(caseId, spreadsheetId)
@@ -228,7 +251,6 @@ class EvidenceViewModel
                     val updatedEvidence = evidence.copy(tags = evidence.tags + result.data)
                     evidenceRepository.updateEvidence(updatedEvidence)
                 }
-                // Refresh list if it's for the same case
                 if (evidence.caseId == currentCaseIdForList && evidence.spreadsheetId == currentSpreadsheetIdForList) {
                     loadEvidenceForCase(evidence.caseId, evidence.spreadsheetId)
                 }
@@ -238,7 +260,6 @@ class EvidenceViewModel
         fun deleteEvidence(evidence: Evidence) {
             viewModelScope.launch {
                 evidenceRepository.deleteEvidence(evidence)
-                // Refresh list if it's for the same case
                 if (evidence.caseId == currentCaseIdForList && evidence.spreadsheetId == currentSpreadsheetIdForList) {
                     loadEvidenceForCase(evidence.caseId, evidence.spreadsheetId)
                 }
@@ -258,7 +279,6 @@ class EvidenceViewModel
                 if (evidence != null) {
                     val updatedEvidence = evidence.copy(allegationId = allegationId)
                     evidenceRepository.updateEvidence(updatedEvidence)
-                    // Refresh list if it's for the same case
                     if (evidence.caseId == currentCaseIdForList && evidence.spreadsheetId == currentSpreadsheetIdForList) {
                         loadEvidenceForCase(evidence.caseId, evidence.spreadsheetId)
                     }
@@ -269,13 +289,16 @@ class EvidenceViewModel
         fun processImageEvidence(uri: Uri) {
             viewModelScope.launch {
                 if (currentCaseIdForList != null && currentSpreadsheetIdForList != null) {
-                    ocrProcessingService.processImage(
-                        uri = uri,
-                        context = getApplication(),
-                        caseId = currentCaseIdForList!!,
-                        spreadsheetId = currentSpreadsheetIdForList!!,
-                    )
-                    loadEvidenceForCase(currentCaseIdForList!!, currentSpreadsheetIdForList!!)
+                    try {
+                        ocrProcessingService.processImage(
+                            uri = uri,
+                            context = getApplication(),
+                            caseId = currentCaseIdForList!!,
+                            spreadsheetId = currentSpreadsheetIdForList!!,
+                        )
+                    } finally {
+                        loadEvidenceForCase(currentCaseIdForList!!, currentSpreadsheetIdForList!!)
+                    }
                 }
             }
         }
