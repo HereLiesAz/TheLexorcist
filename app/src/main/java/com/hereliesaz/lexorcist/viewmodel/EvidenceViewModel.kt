@@ -130,15 +130,11 @@ class EvidenceViewModel
                 }
             _evidenceList.value = list
         }
+
         fun loadEvidenceById(evidenceId: Int) {
             viewModelScope.launch {
                 _selectedEvidenceDetails.value = evidenceRepository.getEvidenceById(evidenceId)
             }
-        }
-    }
-
-        fun onDialogDismiss() {
-            _selectedEvidenceDetails.value = null
         }
 
         fun onEvidenceSelected(evidence: Evidence) {
@@ -185,12 +181,6 @@ class EvidenceViewModel
 
         fun clearEvidenceDetails() {
             _selectedEvidenceDetails.value = null
-        }
-
-        fun loadEvidenceById(evidenceId: Int) {
-            viewModelScope.launch {
-                _selectedEvidenceDetails.value = evidenceRepository.getEvidenceById(evidenceId)
-            }
         }
 
         fun loadEvidenceForCase(
@@ -298,16 +288,18 @@ class EvidenceViewModel
 
         fun processImageEvidence(uri: Uri) {
             viewModelScope.launch {
-                if (currentCaseIdForList != null && currentSpreadsheetIdForList != null) {
+                val caseId = currentCaseIdForList
+                val spreadsheetId = currentSpreadsheetIdForList
+                if (caseId != null && spreadsheetId != null) {
                     try {
                         ocrProcessingService.processImage(
                             uri = uri,
                             context = getApplication(),
-                            caseId = currentCaseIdForList!!,
-                            spreadsheetId = currentSpreadsheetIdForList!!,
+                            caseId = caseId,
+                            spreadsheetId = spreadsheetId,
                         )
                     } finally {
-                        loadEvidenceForCase(currentCaseIdForList!!, currentSpreadsheetIdForList!!)
+                        loadEvidenceForCase(caseId, spreadsheetId)
                     }
                 }
             }

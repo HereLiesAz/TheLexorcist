@@ -5,6 +5,7 @@ import android.content.Intent
 import androidx.core.content.edit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.api.services.drive.model.File as DriveFile
 import com.hereliesaz.lexorcist.data.Allegation
 import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.data.CaseRepository
@@ -13,15 +14,15 @@ import com.hereliesaz.lexorcist.model.SheetFilter
 import com.hereliesaz.lexorcist.utils.Result
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import javax.inject.Inject
-import com.google.api.services.drive.model.File as DriveFile
 
 @HiltViewModel
 class CaseViewModel
@@ -39,9 +40,6 @@ constructor(
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
-
     val cases: StateFlow<List<Case>> =
         caseRepository.cases
             .combine(sortOrder) { cases, currentSortOrder ->
@@ -51,13 +49,15 @@ constructor(
                     SortOrder.DATE_ASC -> cases.sortedBy { it.id }
                     SortOrder.DATE_DESC -> cases.sortedByDescending { it.id }
                 }
-            }.combine(searchQuery) { cases, query ->
+            }
+            .combine(searchQuery) { cases, query ->
                 if (query.isBlank()) {
                     cases
                 } else {
                     cases.filter { it.name.contains(query, ignoreCase = true) }
                 }
-            }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+            }
+            .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     val selectedCase: StateFlow<Case?> =
         caseRepository.selectedCase.stateIn(viewModelScope, SharingStarted.Lazily, null)
@@ -135,11 +135,11 @@ constructor(
         val themeName =
             sharedPref.getString(
                 "theme_mode",
-                com.hereliesaz.lexorcist.ui.theme.ThemeMode.SYSTEM.name,
+                com.hereliesaz.lexorcist.ui.theme.ThemeMode.SYSTEM.name
             )
         _themeMode.value =
             com.hereliesaz.lexorcist.ui.theme.ThemeMode.valueOf(
-                themeName ?: com.hereliesaz.lexorcist.ui.theme.ThemeMode.SYSTEM.name,
+                themeName ?: com.hereliesaz.lexorcist.ui.theme.ThemeMode.SYSTEM.name
             )
     }
 
@@ -152,11 +152,7 @@ constructor(
     }
 
     fun loadCasesFromRepository() {
-        viewModelScope.launch {
-            _isLoading.value = true
-            caseRepository.refreshCases()
-            _isLoading.value = false
-        }
+        viewModelScope.launch { caseRepository.refreshCases() }
     }
 
     fun loadHtmlTemplatesFromRepository() {
