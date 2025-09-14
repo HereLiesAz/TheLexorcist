@@ -2,6 +2,7 @@ package com.hereliesaz.lexorcist.ui
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -42,6 +43,8 @@ import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
 import kotlinx.coroutines.flow.collectLatest
+import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -55,6 +58,7 @@ fun EvidenceScreen(
     var text by remember { mutableStateOf("") }
     val selectedCase by caseViewModel.selectedCase.collectAsState()
     val evidenceList by evidenceViewModel.evidenceList.collectAsState()
+    val selectedEvidence by evidenceViewModel.selectedEvidenceDetails.collectAsState()
 
     val imagePickerLauncher =
         rememberLauncherForActivityResult(
@@ -89,12 +93,16 @@ fun EvidenceScreen(
         }
     }
 
+    selectedEvidence?.let {
+        EvidenceDetailsDialog(evidence = it, onDismiss = { evidenceViewModel.onDialogDismiss() })
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        stringResource(R.string.evidence).uppercase(Locale.getDefault()),
+                        "Add Evidence".uppercase(Locale.getDefault()),
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.End,
                         color = MaterialTheme.colorScheme.primary,
@@ -202,7 +210,7 @@ fun EvidenceScreen(
 
             LazyColumn(modifier = Modifier.fillMaxSize()) {
                 items(evidenceList) { evidence ->
-                    EvidenceListItem(evidence = evidence)
+                    EvidenceListItem(evidence = evidence, onClick = { evidenceViewModel.onEvidenceSelected(evidence) })
                 }
             }
         }
@@ -210,19 +218,30 @@ fun EvidenceScreen(
 }
 
 @Composable
-fun EvidenceListItem(evidence: com.hereliesaz.lexorcist.data.Evidence) {
+fun EvidenceListItem(
+    evidence: com.hereliesaz.lexorcist.data.Evidence,
+    onClick: () -> Unit,
+) {
+    val sdf = remember { SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()) }
+    val formattedDate = remember(evidence.timestamp) { sdf.format(Date(evidence.timestamp)) }
+
     Column(
         modifier =
             Modifier
                 .fillMaxWidth()
+                .clickable(onClick = onClick)
                 .padding(vertical = 8.dp),
         horizontalAlignment = Alignment.End,
     ) {
-        Text(text = "Type: ${evidence.type}", style = MaterialTheme.typography.bodyMedium)
+        Text(
+            text = "Type: ${evidence.type} | Added: $formattedDate",
+            style = MaterialTheme.typography.bodyMedium,
+        )
         Text(
             text = evidence.content,
             style = MaterialTheme.typography.bodyLarge,
             textAlign = TextAlign.End,
+            maxLines = 3,
         )
     }
 }
