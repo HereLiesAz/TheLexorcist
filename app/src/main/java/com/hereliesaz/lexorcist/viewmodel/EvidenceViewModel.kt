@@ -131,7 +131,7 @@ class EvidenceViewModel
             _evidenceList.value = list
         }
 
-        fun fetchEvidenceDetailsById(evidenceId: Int) {
+        fun loadEvidenceById(evidenceId: Int) {
             viewModelScope.launch {
                 _selectedEvidenceDetails.value = evidenceRepository.getEvidenceById(evidenceId)
             }
