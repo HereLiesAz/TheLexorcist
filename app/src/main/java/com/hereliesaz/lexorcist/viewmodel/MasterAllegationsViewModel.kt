@@ -60,33 +60,36 @@ constructor(
                     .getMasterAllegations()
                     .combine(selectedAllegationsFlow) { master, selected ->
                         master.map { it.copy(isSelected = selected.contains(it.name)) }
-                    }.combine(searchQuery) { allegations, query ->
+                    }
+                    .combine(searchQuery) { allegations, query ->
                         if (query.isBlank()) {
                             allegations
                         } else {
                             allegations.filter {
                                 it.name.contains(query, ignoreCase = true) ||
-                                        it.description.contains(query, ignoreCase = true) ||
-                                        it.category.contains(query, ignoreCase = true) ||
-                                        it.type.contains(query, ignoreCase = true)
+                                    it.description.contains(query, ignoreCase = true) ||
+                                    it.category.contains(query, ignoreCase = true) ||
+                                    it.type.contains(query, ignoreCase = true)
                             }
                         }
-                    }.combine(_sortType) { allegations, sortType ->
+                    }
+                    .combine(_sortType) { allegations, sortType ->
                         when (sortType) {
                             AllegationSortType.TYPE ->
                                 allegations.sortedWith(
-                                    compareBy({ it.type }, { it.category }, { it.name }),
+                                    compareBy({ it.type }, { it.category }, { it.name })
                                 )
                             AllegationSortType.CATEGORY ->
                                 allegations.sortedWith(
-                                    compareBy({ it.category }, { it.type }, { it.name }),
+                                    compareBy({ it.category }, { it.type }, { it.name })
                                 )
                             AllegationSortType.NAME -> allegations.sortedBy { it.name }
                             AllegationSortType.COURT_LEVEL ->
                                 allegations.sortedBy { it.courtLevel }
                         }
                     }
-            }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+            }
+            .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     fun onSearchQueryChanged(query: String) {
         _searchQuery.value = query
@@ -101,10 +104,11 @@ constructor(
             val case = caseRepository.selectedCase.firstOrNull() ?: return@launch
             val currentSelection =
                 (
-                        caseAllegationSelectionRepository
-                            .getSelectedAllegations(case.spreadsheetId)
-                            .firstOrNull() ?: emptyList()
-                        ).toMutableSet()
+                    caseAllegationSelectionRepository
+                        .getSelectedAllegations(case.spreadsheetId)
+                        .firstOrNull() ?: emptyList()
+                )
+                    .toMutableSet()
 
             if (allegation.name in currentSelection) {
                 currentSelection.remove(allegation.name)
@@ -113,7 +117,7 @@ constructor(
             }
             caseAllegationSelectionRepository.updateSelectedAllegations(
                 case.spreadsheetId,
-                currentSelection.toList(),
+                currentSelection.toList()
             )
         }
     }
