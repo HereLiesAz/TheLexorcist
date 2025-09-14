@@ -131,9 +131,23 @@ class EvidenceViewModel
             _evidenceList.value = list
         }
 
-        fun loadEvidenceDetails(evidenceId: Int) {
+        fun onEvidenceSelected(evidence: Evidence) {
             viewModelScope.launch {
-                _selectedEvidenceDetails.value = evidenceRepository.getEvidenceById(evidenceId)
+                if (evidence.type == "video") {
+                    val allEvidence = evidenceRepository.getEvidenceForCase(evidence.spreadsheetId, evidence.caseId).first()
+                    val childEvidence = allEvidence.filter { it.parentVideoId == evidence.sourceDocument }
+                    val combinedContent = StringBuilder()
+                    combinedContent.append("--- VIDEO TRANSCRIPT ---\n")
+                    combinedContent.append(evidence.content)
+                    combinedContent.append("\n\n--- OCR FROM FRAMES ---")
+                    childEvidence.forEach {
+                        combinedContent.append("\n\n--- Frame ---\n")
+                        combinedContent.append(it.content)
+                    }
+                    _selectedEvidenceDetails.value = evidence.copy(content = combinedContent.toString())
+                } else {
+                    _selectedEvidenceDetails.value = evidence
+                }
             }
         }
 
