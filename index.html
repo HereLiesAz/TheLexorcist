@@ -3,298 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Lexorcist - Tame Your Legal Paperwork</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <title>The Lexorcist - Banish the Legal Paperwork Demon</title>
     <link rel="stylesheet" href="web/style.css">
-    <style>
-        :root {
-            --background-color: #121212;
-            --surface-color: #1e1e1e;
-            --primary-text-color: #e0e0e0;
-            --secondary-text-color: #a0a0a0;
-            --accent-color: #ffffff;
-            --border-color: #333333;
-        }
-
-        body {
-            font-family: 'Roboto', sans-serif;
-            background-color: var(--background-color);
-            color: var(--primary-text-color);
-            margin: 0;
-            line-height: 1.6;
-        }
-
-        h1, h2, h3, .logo {
-            font-family: 'Lora', serif;
-            font-weight: 700;
-        }
-
-        a {
-            color: var(--accent-color);
-            text-decoration: none;
-        }
-
-        header {
-            background: rgba(18, 18, 18, 0.8);
-            backdrop-filter: blur(10px);
-            padding: 1rem 5%;
-            position: fixed;
-            width: 90%;
-            top: 0;
-            z-index: 100;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logo {
-            font-size: 1.5rem;
-            letter-spacing: 2px;
-        }
-
-        .nav-links {
-            list-style: none;
-            display: flex;
-            gap: 2rem;
-            margin: 0;
-            padding: 0;
-        }
-
-        .nav-links a {
-            transition: color 0.3s ease;
-        }
-
-        .nav-links a:hover {
-            color: var(--secondary-text-color);
-        }
-
-        main {
-            padding-top: 80px; /* Offset for fixed header */
-        }
-
-        #hero {
-            min-height: 80vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            padding: 2rem 5%;
-            background: radial-gradient(circle, #2a2a2a 0%, var(--background-color) 70%);
-        }
-
-        .hero-content {
-            max-width: 800px;
-        }
-
-        .hero-content h1 {
-            font-size: 3.5rem;
-            margin-bottom: 1rem;
-            line-height: 1.2;
-        }
-
-        .hero-content p {
-            font-size: 1.2rem;
-            color: var(--secondary-text-color);
-            max-width: 600px;
-            margin: 0 auto 2rem auto;
-        }
-
-        .cta-button {
-            display: inline-block;
-            background-color: var(--accent-color);
-            color: var(--background-color);
-            padding: 12px 28px;
-            border-radius: 5px;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            transition: transform 0.3s ease, background-color 0.3s ease;
-        }
-
-        .cta-button:hover {
-            transform: translateY(-3px);
-            background-color: #f0f0f0;
-        }
-
-        #features, #workflow {
-            padding: 4rem 5%;
-            text-align: center;
-        }
-
-        #features h2, #workflow h2 {
-            font-size: 2.5rem;
-            margin-bottom: 3rem;
-        }
-
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-            text-align: left;
-        }
-
-        .feature-card {
-            background-color: var(--surface-color);
-            padding: 2rem;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-        }
-
-        .feature-card h3 {
-            font-size: 1.5rem;
-            margin-top: 0;
-        }
-
-        .feature-card p {
-            color: var(--secondary-text-color);
-        }
-
-        .workflow-steps {
-            display: flex;
-            justify-content: space-around;
-            gap: 2rem;
-            flex-wrap: wrap;
-        }
-
-        .step {
-            max-width: 320px;
-        }
-
-        .step-number {
-            font-family: 'Lora', serif;
-            font-size: 3rem;
-            font-weight: 700;
-            color: var(--border-color);
-            line-height: 1;
-        }
-
-        .step h3 {
-            font-size: 1.5rem;
-            margin: 0.5rem 0;
-        }
-
-        .step p {
-            color: var(--secondary-text-color);
-        }
-
-        footer {
-            text-align: center;
-            padding: 2rem 5%;
-            margin-top: 2rem;
-            border-top: 1px solid var(--border-color);
-            color: var(--secondary-text-color);
-            font-size: 0.9rem;
-        }
-
-        @media (max-width: 768px) {
-            .hero-content h1 {
-                font-size: 2.5rem;
-            }
-            .hero-content p {
-                font-size: 1rem;
-            }
-            .nav-links {
-                display: none; /* Simplification for mobile */
-            }
-        }
-    </style>
 </head>
 <body>
+    <div class="parallax-container">
+        <div class="parallax-layer layer-back"></div>
+        <div class="parallax-layer layer-base">
+            <header>
+                <h1 class="main-title">The Lexorcist</h1>
+                <p class="subtitle">Banish the Legal Paperwork Demon</p>
+            </header>
 
-    <header>
-        <nav>
-            <div class="logo">THE LEXORCIST</div>
-            <ul class="nav-links">
-                <li><a href="#features">Features</a></li>
-                <li><a href="#workflow">Workflow</a></li>
-            </ul>
-        </nav>
-    </header>
+            <main>
+                <section id="hero">
+                    <h2 class="hero-title">Your Digital Exorcism Kit</h2>
+                    <p class="hero-text">The power of Christ compels you... to organize your evidence!</p>
+                    <p class="hero-text">Stop the demonic tedium of legal discovery. The Lexorcist empowers you to cast out the evil spirits of paperwork and reclaim your soul.</p>
+                </section>
 
-    <main>
-        <section id="hero">
-            <div class="hero-content">
-                <img src="/assets/lexorcist_white.webp" >
-                <h1>Exorcise the Demons of Discovery.</h1>
-                <p>The Lexorcist empowers lawyers and their clients to capture, automatically analyze, and process digital evidence, transforming raw data into court-ready documentation with powerful, scriptable automation.</p>
-                <a href="#" class="cta-button">Get it on Google Play</a>
-            </div>
-        </section>
+                <section id="features">
+                    <h2 class="section-title">The Rites of Automation</h2>
+                    <div class="feature-grid">
+                        <div class="feature-card">
+                            <h3>Automated Evidence Pipeline</h3>
+                            <p>From the first sign of possession (a screenshot) to the final exorcism (a court-ready document), our automated pipeline guides you.</p>
+                        </div>
+                        <div class="feature-card">
+                            <h3>Customizable Tagging Engine</h3>
+                            <p>Speak in tongues of your own making. Create custom JavaScript "incantations" to tag and banish specific types of evidence.</p>
+                        </div>
+                        <div class="feature-card">
+                            <h3>Google Suite Integration</h3>
+                            <p>Your sacred texts (evidence) are safely stored in the holy sepulcher of Google Sheets.</p>
+                        </div>
+                        <div class="feature-card">
+                            <h3>Automatic Document Generation</h3>
+                            <p>With a single command, generate holy relics of legal paperwork, perfectly formatted and ready for the high priests (judges).</p>
+                        </div>
+                        <div class="feature-card">
+                            <h3>Timeline View</h3>
+                            <p>Witness the entire possession, from start to finish, with a clear and interactive timeline of events.</p>
+                        </div>
+                        <div class="feature-card">
+                            <h3>Secure and On-Device</h3>
+                            <p>Your confessions are safe with us. All processing happens on your device, away from prying eyes.</p>
+                        </div>
+                    </div>
+                </section>
+            </main>
 
-        <section id="features">
-            <h2>The Ritual of Automation</h2>
-            <div class="features-grid">
-                <div class="feature-card">
-                    <h3>Automated Evidence Pipeline</h3>
-                    <p>Capture images or screenshots and let the app handle the rest. The Lexorcist uses OCR to extract text and then feeds it into a powerful, user-scriptable engine for analysis.</p>
-                </div>
-                <div class="feature-card">
-                    <h3>Customizable Tagging Engine</h3>
-                    <p>Define your own keywords, patterns, and "dorks" using JavaScript to automatically tag evidence. This allows you to create highly specific rules for identifying content relevant to your case.</p>
-                </div>
-                <div class="feature-card">
-                    <h3>Google Suite Integration</h3>
-                    <p>Each case gets its own Google Sheet, where all evidence and its metadata are neatly organized. This serves as a central hub for your case data.</p>
-                </div>
-                <div class="feature-card">
-                    <h3>Automatic Document Generation</h3>
-                    <p>The app leverages a powerful Google Apps Script backend. From your case's Google Sheet, you can instantly generate a variety of court-ready documents.</p>
-                </div>
-                <div class="feature-card">
-                    <h3>Timeline View</h3>
-                    <p>Visualize the chronology of your evidence with an interactive timeline, making it easy to see the sequence of events.</p>
-                </div>
-                <div class="feature-card">
-                    <h3>Secure and On-Device</h3>
-                    <p>All OCR and data parsing happens on your device to ensure privacy and security.</p>
-                </div>
-            </div>
-        </section>
-
-        <section id="workflow">
-            <h2>The Three Steps of Power</h2>
-            <div class="workflow-steps">
-                <div class="step">
-                    <div class="step-number">1</div>
-                    <h3>Configure</h3>
-                    <p>Sign in with your Google account and set up your case details. A one-time act of order against the chaos.</p>
-                </div>
-                <div class="step">
-                    <div class="step-number">2</div>
-                    <h3>Catalogue</h3>
-                    <p>Scan your evidence. The app captures the data, you categorize it. The machine does the rote work, you provide the intellect.</p>
-                </div>
-                <div class="step">
-                    <div class="step-number">3</div>
-                    <h3>Create</h3>
-                    <p>Open your case's Google Sheet and run the built-in tools to generate perfectly formatted legal documents from your evidence log.</p>
-                </div>
-            </div>
-        </section>
-
-    </main>
-
-    <footer>
-        <p>&copy; 2025 Here Lies AZ. All Rights Reserved. The law is serious; the paperwork doesn't have to be.</p>
-    </footer>
-
+            <footer>
+                <p>&copy; 2025 The Lexorcist. All Rights Reserved. May the power of organized evidence be with you.</p>
+            </footer>
+        </div>
+    </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
     <script src="web/script.js"></script>
-    <script>
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                document.querySelector(this.getAttribute('href')).scrollIntoView({
-                    behavior: 'smooth'
-                });
-            });
-        });
-    </script>
 </body>
 </html>
