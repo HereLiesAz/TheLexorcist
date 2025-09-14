@@ -3,14 +3,20 @@ package com.hereliesaz.lexorcist.service
 import android.content.Context
 import android.net.Uri
 import android.util.Log
+import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.text.TextRecognition
+import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import com.hereliesaz.lexorcist.DataParser
 import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.data.EvidenceRepository
 import com.hereliesaz.lexorcist.data.SettingsManager
 import com.hereliesaz.lexorcist.utils.ExifUtils
-import com.hereliesaz.lexorcist.utils.Result // Your Result class
+import com.hereliesaz.lexorcist.utils.Result
+import kotlinx.coroutines.suspendCancellableCoroutine
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 @Singleton
 class OcrProcessingService
@@ -20,17 +26,47 @@ class OcrProcessingService
         private val settingsManager: SettingsManager,
         private val scriptRunner: ScriptRunner,
     ) {
+        private suspend fun recognizeTextFromUri(
+            context: Context,
+            uri: Uri,
+        ): String {
+            return suspendCancellableCoroutine { continuation ->
+                val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+                val image =
+                    try {
+                        InputImage.fromFilePath(context, uri)
+                    } catch (e: Exception) {
+                        continuation.resumeWithException(e)
+                        return@suspendCancellableCoroutine
+                    }
+
+                recognizer
+                    .process(image)
+                    .addOnSuccessListener { visionText ->
+                        continuation.resume(visionText.text)
+                    }.addOnFailureListener { e ->
+                        continuation.resumeWithException(e)
+                    }
+            }
+        }
+
         suspend fun processImageFrame(
             uri: Uri,
-            context: Context, // Pass context for ExifUtils and other Android-specific operations
+            context: Context,
             caseId: Int,
-            spreadsheetId: String, // Added: spreadsheetId is needed for Evidence
+            spreadsheetId: String,
             parentVideoId: String?,
         ) {
             Log.d("OcrProcessingService", "processImageFrame called for URI: $uri, caseId: $caseId, parentVideoId: $parentVideoId")
 
-            // Actual OCR processing logic would go here. For now, using placeholder.
-            val ocrText = "Placeholder OCR text from image $uri"
+            val ocrText =
+                try {
+                    recognizeTextFromUri(context, uri)
+                } catch (e: Exception) {
+                    Log.e("OcrProcessingService", "Failed to recognize text from image frame.", e)
+                    "Error recognizing text from image frame: ${e.message}"
+                }
+
             val entities = DataParser.tagData(ocrText)
             val documentDate =
                 ExifUtils.getExifDate(context, uri)
@@ -39,9 +75,9 @@ class OcrProcessingService
 
             var newEvidence =
                 Evidence(
-                    id = 0, // Repository might assign this
+                    id = 0,
                     caseId = caseId.toLong(),
-                    spreadsheetId = spreadsheetId, // Use passed spreadsheetId
+                    spreadsheetId = spreadsheetId,
                     type = "ocr_image_from_video",
                     content = ocrText,
                     timestamp = System.currentTimeMillis(),
@@ -56,11 +92,11 @@ class OcrProcessingService
                 )
 
             val script = settingsManager.getScript()
-            if (script.isNotBlank()) { // Check if script is not blank instead of not null
+            if (script.isNotBlank()) {
                 val scriptResult = scriptRunner.runScript(script, newEvidence)
                 when (scriptResult) {
                     is Result.Success -> {
-                            newEvidence = newEvidence.copy(tags = newEvidence.tags + scriptResult.data)
+                        newEvidence = newEvidence.copy(tags = newEvidence.tags + scriptResult.data)
                     }
                     is Result.Error -> {
                         Log.e("OcrProcessingService", "Script error for $uri: ${scriptResult.exception.message}", scriptResult.exception)
@@ -85,7 +121,14 @@ class OcrProcessingService
             caseId: Long,
             spreadsheetId: String,
         ) {
-            val ocrText = "Placeholder OCR text from image $uri" // Replace with actual OCR logic
+            val ocrText =
+                try {
+                    recognizeTextFromUri(context, uri)
+                } catch (e: Exception) {
+                    Log.e("OcrProcessingService", "Failed to recognize text from image.", e)
+                    "Error recognizing text from image: ${e.message}"
+                }
+
             val entities = DataParser.tagData(ocrText)
             val documentDate =
                 ExifUtils.getExifDate(context, uri)
