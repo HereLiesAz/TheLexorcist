@@ -177,6 +177,12 @@ class EvidenceViewModel
             _selectedEvidenceDetails.value = null
         }
 
+        fun loadEvidenceById(evidenceId: Int) {
+            viewModelScope.launch {
+                _selectedEvidenceDetails.value = evidenceRepository.getEvidenceById(evidenceId)
+            }
+        }
+
         fun loadEvidenceForCase(
             caseId: Long,
             spreadsheetId: String,
