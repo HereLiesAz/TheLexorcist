@@ -142,7 +142,7 @@ dependencies {
     // Mozilla Rhino for JavaScript execution
     implementation(libs.mozilla.rhino)
     implementation(libs.materialkolor)
-    
+
     // Vico Charting Library
     implementation(libs.vico.compose)
     implementation(libs.vico.core)

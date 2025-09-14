@@ -130,11 +130,15 @@ class EvidenceViewModel
                 }
             _evidenceList.value = list
         }
-
         fun loadEvidenceById(evidenceId: Int) {
             viewModelScope.launch {
                 _selectedEvidenceDetails.value = evidenceRepository.getEvidenceById(evidenceId)
             }
+        }
+    }
+
+        fun onDialogDismiss() {
+            _selectedEvidenceDetails.value = null
         }
 
         fun onEvidenceSelected(evidence: Evidence) {
@@ -181,6 +185,12 @@ class EvidenceViewModel
 
         fun clearEvidenceDetails() {
             _selectedEvidenceDetails.value = null
+        }
+
+        fun loadEvidenceById(evidenceId: Int) {
+            viewModelScope.launch {
+                _selectedEvidenceDetails.value = evidenceRepository.getEvidenceById(evidenceId)
+            }
         }
 
         fun loadEvidenceForCase(

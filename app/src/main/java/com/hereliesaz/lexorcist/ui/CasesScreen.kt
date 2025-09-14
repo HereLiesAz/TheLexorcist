@@ -122,17 +122,16 @@ fun CasesScreen(
                 singleLine = true,
             )
 
-            // val isLoading by caseViewModel.isLoading.collectAsState()
-            // if (isLoading) {
-            // Column(
-            // modifier = Modifier.fillMaxSize(),
-            // horizontalAlignment = Alignment.CenterHorizontally,
-            // verticalArrangement = Arrangement.Center
-            // ) {
-            // CircularProgressIndicator()
-            // }
-            // } else
-            if (unarchivedCases.isEmpty()) {
+            val isLoading by caseViewModel.isLoading.collectAsState()
+            if (isLoading) {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            } else if (unarchivedCases.isEmpty()) {
                 Column(
                     modifier =
                         Modifier

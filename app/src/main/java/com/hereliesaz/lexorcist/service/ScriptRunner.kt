@@ -37,7 +37,9 @@ class ScriptRunner {
             )
             rhino.evaluateString(scope, script, "JavaScript<MainViewModel>", 1, null)
             val tagsFromScope = ScriptableObject.getProperty(scope, "tags")
-            val resultTags = org.mozilla.javascript.Context.jsToJava(tagsFromScope, List::class.java) as List<String>
+            val resultTags =
+                org.mozilla.javascript.Context
+                    .jsToJava(tagsFromScope, List::class.java) as List<String>
             return Result.Success(resultTags)
         } catch (e: Exception) {
             return Result.Error(ScriptExecutionException("Failed to execute script", e))
