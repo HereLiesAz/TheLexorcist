@@ -227,7 +227,7 @@ fun MainScreen(
 
                                     if (evidenceId != null) {
                                         LaunchedEffect(evidenceId) {
-                                            evidenceViewModel.loadEvidenceDetails(evidenceId)
+                                            evidenceViewModel.loadEvidenceById(evidenceId)
                                         }
                                         val evidence by evidenceViewModel.selectedEvidenceDetails.collectAsState()
                                         evidence?.let { ev ->
