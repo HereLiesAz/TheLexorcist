@@ -263,7 +263,7 @@ constructor(
         viewModelScope.launch {
             selectedCase.value?.let { case ->
                 when (val result = caseRepository.getEvidenceForCase(case.spreadsheetId)) {
-                    is Result.Success -> {
+                    is Result.Success -> { // Changed from Result.Success<*> to Result.Success
                         _selectedCaseEvidenceList.value = result.data
                     }
                     is Result.Error -> {

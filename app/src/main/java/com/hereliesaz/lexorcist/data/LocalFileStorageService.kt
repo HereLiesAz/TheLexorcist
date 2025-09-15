@@ -21,7 +21,7 @@ import javax.inject.Singleton
 
 @Singleton
 class LocalFileStorageService @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context, // Changed here
     private val gson: Gson
 ) : StorageService {
 
@@ -231,9 +231,9 @@ class LocalFileStorageService @Inject constructor(
             newEvidence.allegationId?.let { createCell(7).setCellValue(it.toDouble()) }
             createCell(8).setCellValue(newEvidence.category)
             createCell(9).setCellValue(newEvidence.tags.joinToString(","))
-            createCell(10).setCellValue(newEvidence.commentary)
+            createCell(10).setCellValue(newEvidence.commentary ?: "")
             createCell(11).setCellValue(newEvidence.linkedEvidenceIds.joinToString(","))
-            createCell(12).setCellValue(newEvidence.parentVideoId)
+            createCell(12).setCellValue(newEvidence.parentVideoId ?: "")
             createCell(13).setCellValue(gson.toJson(newEvidence.entities))
         }
         newEvidence
@@ -250,9 +250,9 @@ class LocalFileStorageService @Inject constructor(
         evidence.allegationId?.let { row.getCell(7)?.setCellValue(it.toDouble()) }
         row.getCell(8)?.setCellValue(evidence.category)
         row.getCell(9)?.setCellValue(evidence.tags.joinToString(","))
-        row.getCell(10)?.setCellValue(evidence.commentary)
+        row.getCell(10)?.setCellValue(evidence.commentary ?: "")
         row.getCell(11)?.setCellValue(evidence.linkedEvidenceIds.joinToString(","))
-        row.getCell(12)?.setCellValue(evidence.parentVideoId)
+        row.getCell(12)?.setCellValue(evidence.parentVideoId ?: "")
         row.getCell(13)?.setCellValue(gson.toJson(evidence.entities))
     }
 
