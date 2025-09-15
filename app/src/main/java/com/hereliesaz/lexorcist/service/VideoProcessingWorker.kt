@@ -11,6 +11,7 @@ import android.net.Uri
 import android.util.Log
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
+import androidx.work.Data
 import androidx.work.WorkerParameters
 import com.hereliesaz.lexorcist.auth.CredentialHolder
 import dagger.assisted.Assisted
@@ -50,6 +51,8 @@ class VideoProcessingWorker
             val videoUri = Uri.parse(videoUriString)
             Log.d(TAG, "Processing video: $videoUri for case: $caseName ($caseId), spreadsheetId: $spreadsheetId")
 
+            setProgressAsync(Data.Builder().putString(PROGRESS, "Starting video processing...").build())
+
             val videoFile = File(applicationContext.cacheDir, "video_${System.currentTimeMillis()}.mp4")
             applicationContext.contentResolver.openInputStream(videoUri)?.use { input ->
                 videoFile.outputStream().use { output ->
@@ -82,6 +85,7 @@ class VideoProcessingWorker
                 }
             }
 
+            setProgressAsync(Data.Builder().putString(PROGRESS, "Extracting audio...").build())
             val audioUri = extractAudio(videoUri)
             val audioTranscript =
                 if (audioUri != null) {
@@ -90,19 +94,27 @@ class VideoProcessingWorker
                     "Audio could not be extracted."
                 }
 
+            setProgressAsync(Data.Builder().putString(PROGRESS, "Extracting frames...").build())
             val frameUris = extractKeyframes(videoUri)
+            val ocrTextBuilder = StringBuilder()
             if (frameUris.isNotEmpty()) {
                 Log.d(TAG, "Extracted ${frameUris.size} keyframes")
-                frameUris.forEach { uri ->
-                    ocrProcessingService.processImageFrame(
+                frameUris.forEachIndexed { index, uri ->
+                    setProgressAsync(Data.Builder().putString(PROGRESS, "Processing frame ${index + 1} of ${frameUris.size}...").build())
+                    val frameEvidence = ocrProcessingService.processImageFrame(
                         uri = uri,
                         context = appContext,
                         caseId = caseId, // Removed .toLong()
                         spreadsheetId = spreadsheetId,
                         parentVideoId = uploadedDriveFile?.id,
                     )
+                    if (frameEvidence != null) {
+                        ocrTextBuilder.append(frameEvidence.content).append("\n\n")
+                    }
                 }
             }
+
+            val combinedContent = "Audio Transcript:\n$audioTranscript\n\nOCR from Frames:\n$ocrTextBuilder"
 
             val videoEvidence =
                 com.hereliesaz.lexorcist.data.Evidence(
@@ -110,7 +122,9 @@ class VideoProcessingWorker
                     caseId = caseId.toLong(), // This is for Evidence data class, may need to be Int too
                     spreadsheetId = spreadsheetId,
                     type = "video",
-                    content = audioTranscript,
+                    content = combinedContent,
+                    formattedContent = "```\n$combinedContent\n```",
+                    mediaUri = videoUri.toString(),
                     timestamp = System.currentTimeMillis(),
                     sourceDocument = uploadedDriveFile?.webViewLink ?: videoUri.toString(),
                     documentDate = System.currentTimeMillis(),
@@ -230,6 +244,7 @@ class VideoProcessingWorker
             const val KEY_CASE_ID = "KEY_CASE_ID"
             const val KEY_CASE_NAME = "KEY_CASE_NAME"
             const val KEY_SPREADSHEET_ID = "KEY_SPREADSHEET_ID" // Added key
+            const val PROGRESS = "PROGRESS"
             private const val TAG = "VideoProcessingWorker"
         }
     }

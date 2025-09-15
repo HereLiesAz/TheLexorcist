@@ -40,7 +40,7 @@ class LocalFileStorageService @Inject constructor(
         private const val TRANSCRIPT_EDITS_SHEET_NAME = "TranscriptEdits"
 
         private val CASES_HEADER = listOf("ID", "Name", "Plaintiffs", "Defendants", "Court", "FolderID", "LastModified", "IsArchived")
-        private val EVIDENCE_HEADER = listOf("EvidenceID", "CaseID", "Type", "Content", "Timestamp", "SourceDocument", "DocumentDate", "AllegationID", "Category", "Tags", "Commentary", "LinkedEvidenceIDs", "ParentVideoID", "Entities")
+        private val EVIDENCE_HEADER = listOf("EvidenceID", "CaseID", "Type", "Content", "FormattedContent", "MediaUri", "Timestamp", "SourceDocument", "DocumentDate", "AllegationID", "Category", "Tags", "Commentary", "LinkedEvidenceIDs", "ParentVideoID", "Entities")
         private val ALLEGATIONS_HEADER = listOf("AllegationID", "CaseID", "Text")
         private val TRANSCRIPT_EDITS_HEADER = listOf("EditID", "EvidenceID", "Timestamp", "Reason", "OldContent")
     }
@@ -200,15 +200,17 @@ class LocalFileStorageService @Inject constructor(
                 spreadsheetId = caseSpreadsheetId,
                 type = row.getCell(2)?.stringCellValue ?: "",
                 content = row.getCell(3)?.stringCellValue ?: "",
+                formattedContent = row.getCell(4)?.stringCellValue,
+                mediaUri = row.getCell(5)?.stringCellValue,
                 timestamp = timestamp,
-                sourceDocument = row.getCell(5)?.stringCellValue ?: "",
+                sourceDocument = row.getCell(7)?.stringCellValue ?: "",
                 documentDate = documentDate,
                 allegationId = allegationId,
-                category = row.getCell(8)?.stringCellValue ?: "",
+                category = row.getCell(10)?.stringCellValue ?: "",
                 tags = tags,
-                commentary = row.getCell(10)?.stringCellValue,
+                commentary = row.getCell(12)?.stringCellValue,
                 linkedEvidenceIds = linkedIds,
-                parentVideoId = row.getCell(12)?.stringCellValue,
+                parentVideoId = row.getCell(14)?.stringCellValue,
                 entities = entities,
                 transcriptEdits = transcriptEdits
             )
@@ -225,16 +227,18 @@ class LocalFileStorageService @Inject constructor(
             createCell(1).setCellValue(caseSpreadsheetId)
             createCell(2).setCellValue(newEvidence.type)
             createCell(3).setCellValue(newEvidence.content)
-            createCell(4).setCellValue(newEvidence.timestamp.toDouble())
-            createCell(5).setCellValue(newEvidence.sourceDocument)
-            createCell(6).setCellValue(newEvidence.documentDate.toDouble())
-            newEvidence.allegationId?.let { createCell(7).setCellValue(it.toDouble()) }
-            createCell(8).setCellValue(newEvidence.category)
-            createCell(9).setCellValue(newEvidence.tags.joinToString(","))
-            createCell(10).setCellValue(newEvidence.commentary ?: "")
-            createCell(11).setCellValue(newEvidence.linkedEvidenceIds.joinToString(","))
-            createCell(12).setCellValue(newEvidence.parentVideoId ?: "")
-            createCell(13).setCellValue(gson.toJson(newEvidence.entities))
+            createCell(4).setCellValue(newEvidence.formattedContent)
+            createCell(5).setCellValue(newEvidence.mediaUri)
+            createCell(6).setCellValue(newEvidence.timestamp.toDouble())
+            createCell(7).setCellValue(newEvidence.sourceDocument)
+            createCell(8).setCellValue(newEvidence.documentDate.toDouble())
+            newEvidence.allegationId?.let { createCell(9).setCellValue(it.toDouble()) }
+            createCell(10).setCellValue(newEvidence.category)
+            createCell(11).setCellValue(newEvidence.tags.joinToString(","))
+            createCell(12).setCellValue(newEvidence.commentary ?: "")
+            createCell(13).setCellValue(newEvidence.linkedEvidenceIds.joinToString(","))
+            createCell(14).setCellValue(newEvidence.parentVideoId ?: "")
+            createCell(15).setCellValue(gson.toJson(newEvidence.entities))
         }
         newEvidence
     }
@@ -244,16 +248,18 @@ class LocalFileStorageService @Inject constructor(
         val row = findRowById(sheet, evidence.id, 0) ?: throw IOException("Evidence with id ${evidence.id} not found.")
         row.getCell(2)?.setCellValue(evidence.type)
         row.getCell(3)?.setCellValue(evidence.content)
-        row.getCell(4)?.setCellValue(evidence.timestamp.toDouble())
-        row.getCell(5)?.setCellValue(evidence.sourceDocument)
-        row.getCell(6)?.setCellValue(evidence.documentDate.toDouble())
-        evidence.allegationId?.let { row.getCell(7)?.setCellValue(it.toDouble()) }
-        row.getCell(8)?.setCellValue(evidence.category)
-        row.getCell(9)?.setCellValue(evidence.tags.joinToString(","))
-        row.getCell(10)?.setCellValue(evidence.commentary ?: "")
-        row.getCell(11)?.setCellValue(evidence.linkedEvidenceIds.joinToString(","))
-        row.getCell(12)?.setCellValue(evidence.parentVideoId ?: "")
-        row.getCell(13)?.setCellValue(gson.toJson(evidence.entities))
+        row.getCell(4)?.setCellValue(evidence.formattedContent)
+        row.getCell(5)?.setCellValue(evidence.mediaUri)
+        row.getCell(6)?.setCellValue(evidence.timestamp.toDouble())
+        row.getCell(7)?.setCellValue(evidence.sourceDocument)
+        row.getCell(8)?.setCellValue(evidence.documentDate.toDouble())
+        evidence.allegationId?.let { row.getCell(9)?.setCellValue(it.toDouble()) }
+        row.getCell(10)?.setCellValue(evidence.category)
+        row.getCell(11)?.setCellValue(evidence.tags.joinToString(","))
+        row.getCell(12)?.setCellValue(evidence.commentary ?: "")
+        row.getCell(13)?.setCellValue(evidence.linkedEvidenceIds.joinToString(","))
+        row.getCell(14)?.setCellValue(evidence.parentVideoId ?: "")
+        row.getCell(15)?.setCellValue(gson.toJson(evidence.entities))
     }
 
     override suspend fun deleteEvidence(caseSpreadsheetId: String, evidence: Evidence): Result<Unit> = execute { workbook ->

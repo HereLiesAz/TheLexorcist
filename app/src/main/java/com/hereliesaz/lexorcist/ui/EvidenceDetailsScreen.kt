@@ -67,6 +67,11 @@ fun EvidenceDetailsScreen(
             Spacer(modifier = Modifier.height(8.dp))
             Text("Tags: ${evidence.tags.joinToString()}")
             Spacer(modifier = Modifier.height(16.dp))
+            if (!evidence.formattedContent.isNullOrEmpty()) {
+                Text("Formatted Content:")
+                Text(evidence.formattedContent)
+                Spacer(modifier = Modifier.height(16.dp))
+            }
             OutlinedTextField(
                 value = commentary ?: "",
                 onValueChange = { commentary = it },
