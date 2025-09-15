@@ -109,10 +109,10 @@ class LocalFileStorageService @Inject constructor(
         sheet.createRow(sheet.physicalNumberOfRows).apply {
             createCell(0).setCellValue(newCase.spreadsheetId)
             createCell(1).setCellValue(newCase.name)
-            createCell(2).setCellValue(newCase.plaintiffs)
-            createCell(3).setCellValue(newCase.defendants)
-            createCell(4).setCellValue(newCase.court)
-            createCell(5).setCellValue(newCase.folderId)
+            createCell(2).setCellValue(newCase.plaintiffs ?: "")
+            createCell(3).setCellValue(newCase.defendants ?: "")
+            createCell(4).setCellValue(newCase.court ?: "")
+            createCell(5).setCellValue(newCase.folderId ?: "")
             createCell(6).setCellValue(newCase.lastModifiedTime!!.toDouble())
             createCell(7).setCellValue(newCase.isArchived)
         }
@@ -123,10 +123,10 @@ class LocalFileStorageService @Inject constructor(
         val sheet = workbook.getSheet(CASES_SHEET_NAME) ?: throw IOException("Cases sheet not found.")
         val row = findRowById(sheet, case.spreadsheetId, 0) ?: throw IOException("Case with id ${case.spreadsheetId} not found.")
         row.getCell(1)?.setCellValue(case.name)
-        row.getCell(2)?.setCellValue(case.plaintiffs)
-        row.getCell(3)?.setCellValue(case.defendants)
-        row.getCell(4)?.setCellValue(case.court)
-        row.getCell(5)?.setCellValue(case.folderId)
+        row.getCell(2)?.setCellValue(case.plaintiffs ?: "")
+        row.getCell(3)?.setCellValue(case.defendants ?: "")
+        row.getCell(4)?.setCellValue(case.court ?: "")
+        row.getCell(5)?.setCellValue(case.folderId ?: "")
         row.getCell(6)?.setCellValue(System.currentTimeMillis().toDouble())
         row.getCell(7)?.setCellValue(case.isArchived)
     }
@@ -228,9 +228,9 @@ class LocalFileStorageService @Inject constructor(
             newEvidence.allegationId?.let { createCell(7).setCellValue(it.toDouble()) }
             createCell(8).setCellValue(newEvidence.category)
             createCell(9).setCellValue(newEvidence.tags.joinToString(","))
-            createCell(10).setCellValue(newEvidence.commentary)
+            createCell(10).setCellValue(newEvidence.commentary ?: "")
             createCell(11).setCellValue(newEvidence.linkedEvidenceIds.joinToString(","))
-            createCell(12).setCellValue(newEvidence.parentVideoId)
+            createCell(12).setCellValue(newEvidence.parentVideoId ?: "")
             createCell(13).setCellValue(gson.toJson(newEvidence.entities))
         }
         newEvidence
@@ -247,9 +247,9 @@ class LocalFileStorageService @Inject constructor(
         evidence.allegationId?.let { row.getCell(7)?.setCellValue(it.toDouble()) }
         row.getCell(8)?.setCellValue(evidence.category)
         row.getCell(9)?.setCellValue(evidence.tags.joinToString(","))
-        row.getCell(10)?.setCellValue(evidence.commentary)
+        row.getCell(10)?.setCellValue(evidence.commentary ?: "")
         row.getCell(11)?.setCellValue(evidence.linkedEvidenceIds.joinToString(","))
-        row.getCell(12)?.setCellValue(evidence.parentVideoId)
+        row.getCell(12)?.setCellValue(evidence.parentVideoId ?: "")
         row.getCell(13)?.setCellValue(gson.toJson(evidence.entities))
     }
 

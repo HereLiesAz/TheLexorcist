@@ -1,6 +1,7 @@
 package com.hereliesaz.lexorcist.data
 
 import kotlinx.coroutines.flow.Flow
+import com.hereliesaz.lexorcist.utils.Result
 
 interface EvidenceRepository {
     suspend fun getEvidenceForCase(
