@@ -21,6 +21,9 @@ Your primary objective is to develop "The Lexorcist" into a fully functional leg
 The application follows a **local-first** data management strategy. All user data, including case information and evidence, is stored in a single spreadsheet file (`lexorcist_data.xlsx`) within the application's folder, and synchronized with cloud services. Upon loading, the app must attempt synchronization to ensure it is using the lastest saved state. 
 
 This approach ensures that the app is always functional, even when offline. 
+
+The file google-services.template.json located at the root of the /app/ folder should be used to create the google-services.json file you will need to build the project. 
+
 ---
 
 ### UI and UX
