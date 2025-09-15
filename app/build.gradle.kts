@@ -89,6 +89,7 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
     androidTestImplementation(libs.androidx.test.uiautomator)
     androidTestImplementation(libs.mockk.android)
+    androidTestImplementation(libs.play.services.auth)
 
     implementation(libs.google.play.services.mlkit.text.recognition)
 

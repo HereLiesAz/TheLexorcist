@@ -113,7 +113,7 @@ itext7-core = { group = "com.itextpdf", name = "itext7-core", version.ref = "ite
 apache-poi = { group = "org.apache.poi", name = "poi", version.ref = "poi" }
 apache-poi-ooxml = { group = "org.apache.poi", name = "poi-ooxml", version.ref = "poi" }
 apache-poi-scratchpad = { group = "org.apache.poi", name = "poi-scratchpad", version.ref = "poi" }
-google-play-services-auth = { group = "com.google.android.gms", name = "play-services-auth", version.ref = "playServicesAuth" }
+play-services-auth = { group = "com.google.android.gms", name = "play-services-auth", version = "21.1.1" }
 google-api-client = { group = "com.google.api-client", name = "google-api-client", version.ref = "googleApiClient" }
 google-api-client-android = { group = "com.google.api-client", name = "google-api-client-android", version.ref = "googleApiClient" }
 google-api-services-drive = { group = "com.google.apis", name = "google-api-services-drive", version.ref = "googleApiServicesDrive" }
