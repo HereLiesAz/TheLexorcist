@@ -33,5 +33,5 @@ interface EvidenceRepository {
         evidence: Evidence,
         newTranscript: String,
         reason: String,
-    )
+    ): Result<Unit>
 }
