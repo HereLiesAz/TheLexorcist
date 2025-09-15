@@ -157,8 +157,10 @@ constructor(
 
     fun loadHtmlTemplatesFromRepository() {
         viewModelScope.launch {
-            // caseRepository.refreshHtmlTemplates()
-            // caseRepository.getHtmlTemplates().collect { _htmlTemplates.value = it }
+            caseRepository.refreshHtmlTemplates()
+            caseRepository.getHtmlTemplates().collect {
+                _htmlTemplates.value = it
+            }
         }
     }
 
@@ -207,9 +209,13 @@ constructor(
             if (case != null) {
                 loadSheetFiltersFromRepository(case.spreadsheetId)
                 loadAllegationsFromRepository(case.id, case.spreadsheetId)
+                loadHtmlTemplatesFromRepository()
+                loadEvidenceForSelectedCase()
             } else {
                 _sheetFilters.value = emptyList()
                 _allegations.value = emptyList()
+                _htmlTemplates.value = emptyList()
+                _selectedCaseEvidenceList.value = emptyList()
             }
         }
     }
@@ -250,6 +256,24 @@ constructor(
             val case = selectedCase.value ?: return@launch
             caseRepository.addAllegation(case.spreadsheetId, allegationText)
             loadAllegationsFromRepository(case.id, case.spreadsheetId)
+        }
+    }
+
+    fun loadEvidenceForSelectedCase() {
+        viewModelScope.launch {
+            selectedCase.value?.let { case ->
+                when (val result = caseRepository.getEvidenceForCase(case.spreadsheetId)) {
+                    is Result.Success -> {
+                        _selectedCaseEvidenceList.value = result.data
+                    }
+                    is Result.Error -> {
+                        _errorMessage.value = result.exception.message ?: "Unknown error"
+                    }
+                    is Result.UserRecoverableError -> {
+                        _userRecoverableAuthIntent.value = result.exception.intent
+                    }
+                }
+            }
         }
     }
 

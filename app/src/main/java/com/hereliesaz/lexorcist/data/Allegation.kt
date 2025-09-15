@@ -1,7 +1,7 @@
 package com.hereliesaz.lexorcist.data
 
 data class Allegation(
-    val id: Int,
+    val id: Int = 0,
     val spreadsheetId: String,
     val text: String,
 )

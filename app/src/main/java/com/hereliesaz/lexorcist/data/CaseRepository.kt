@@ -58,6 +58,8 @@ interface CaseRepository {
         allegationText: String,
     )
 
+    suspend fun getEvidenceForCase(spreadsheetId: String): Result<List<Evidence>>
+
     fun getHtmlTemplates(): Flow<List<DriveFile>>
 
     suspend fun refreshHtmlTemplates()

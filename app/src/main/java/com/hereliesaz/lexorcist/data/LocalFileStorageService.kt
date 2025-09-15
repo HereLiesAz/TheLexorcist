@@ -109,10 +109,10 @@ class LocalFileStorageService @Inject constructor(
         sheet.createRow(sheet.physicalNumberOfRows).apply {
             createCell(0).setCellValue(newCase.spreadsheetId)
             createCell(1).setCellValue(newCase.name)
-            createCell(2).setCellValue(newCase.plaintiffs ?: "")
-            createCell(3).setCellValue(newCase.defendants ?: "")
-            createCell(4).setCellValue(newCase.court ?: "")
-            createCell(5).setCellValue(newCase.folderId ?: "")
+            createCell(2).setCellValue(newCase.plaintiffs)
+            createCell(3).setCellValue(newCase.defendants)
+            createCell(4).setCellValue(newCase.court)
+            createCell(5).setCellValue(newCase.folderId)
             createCell(6).setCellValue(newCase.lastModifiedTime!!.toDouble())
             createCell(7).setCellValue(newCase.isArchived)
         }
@@ -123,10 +123,10 @@ class LocalFileStorageService @Inject constructor(
         val sheet = workbook.getSheet(CASES_SHEET_NAME) ?: throw IOException("Cases sheet not found.")
         val row = findRowById(sheet, case.spreadsheetId, 0) ?: throw IOException("Case with id ${case.spreadsheetId} not found.")
         row.getCell(1)?.setCellValue(case.name)
-        row.getCell(2)?.setCellValue(case.plaintiffs ?: "")
-        row.getCell(3)?.setCellValue(case.defendants ?: "")
-        row.getCell(4)?.setCellValue(case.court ?: "")
-        row.getCell(5)?.setCellValue(case.folderId ?: "")
+        row.getCell(2)?.setCellValue(case.plaintiffs)
+        row.getCell(3)?.setCellValue(case.defendants)
+        row.getCell(4)?.setCellValue(case.court)
+        row.getCell(5)?.setCellValue(case.folderId)
         row.getCell(6)?.setCellValue(System.currentTimeMillis().toDouble())
         row.getCell(7)?.setCellValue(case.isArchived)
     }
@@ -145,6 +145,22 @@ class LocalFileStorageService @Inject constructor(
     override suspend fun getEvidenceForCase(caseSpreadsheetId: String): Result<List<Evidence>> = execute { workbook ->
         val sheet = workbook.getSheet(EVIDENCE_SHEET_NAME) ?: return@execute emptyList()
         val editsSheet = workbook.getSheet(TRANSCRIPT_EDITS_SHEET_NAME)
+
+        val allEdits = editsSheet?.let {
+            (1..it.lastRowNum).mapNotNull { j ->
+                val editRow = it.getRow(j) ?: return@mapNotNull null
+                val evidenceId = editRow.getCell(1)?.numericCellValue?.toInt()
+                if (evidenceId != null) {
+                    evidenceId to com.hereliesaz.lexorcist.model.TranscriptEdit(
+                        timestamp = editRow.getCell(2)?.numericCellValue?.toLong() ?: 0L,
+                        reason = editRow.getCell(3)?.stringCellValue ?: "",
+                        content = editRow.getCell(4)?.stringCellValue ?: ""
+                    )
+                } else {
+                    null
+                }
+            }
+        }?.groupBy({ it.first }, { it.second }) ?: emptyMap()
 
         (1..sheet.lastRowNum).mapNotNull { i ->
             val row = sheet.getRow(i) ?: return@mapNotNull null
@@ -176,20 +192,7 @@ class LocalFileStorageService @Inject constructor(
                 object : TypeToken<Map<String, List<String>>>() {}.type
             )
 
-            val transcriptEdits = editsSheet?.let {
-                (1..it.lastRowNum).mapNotNull { j ->
-                    val editRow = it.getRow(j) ?: return@mapNotNull null
-                    if (editRow.getCell(1)?.numericCellValue?.toInt() == evidenceId) {
-                        com.hereliesaz.lexorcist.model.TranscriptEdit(
-                            timestamp = editRow.getCell(2)?.numericCellValue?.toLong() ?: 0L,
-                            reason = editRow.getCell(3)?.stringCellValue ?: "",
-                            content = editRow.getCell(4)?.stringCellValue ?: ""
-                        )
-                    } else {
-                        null
-                    }
-                }
-            } ?: emptyList()
+            val transcriptEdits = allEdits[evidenceId] ?: emptyList()
 
             Evidence(
                 id = evidenceId,
@@ -228,9 +231,9 @@ class LocalFileStorageService @Inject constructor(
             newEvidence.allegationId?.let { createCell(7).setCellValue(it.toDouble()) }
             createCell(8).setCellValue(newEvidence.category)
             createCell(9).setCellValue(newEvidence.tags.joinToString(","))
-            createCell(10).setCellValue(newEvidence.commentary ?: "")
+            createCell(10).setCellValue(newEvidence.commentary)
             createCell(11).setCellValue(newEvidence.linkedEvidenceIds.joinToString(","))
-            createCell(12).setCellValue(newEvidence.parentVideoId ?: "")
+            createCell(12).setCellValue(newEvidence.parentVideoId)
             createCell(13).setCellValue(gson.toJson(newEvidence.entities))
         }
         newEvidence
@@ -247,9 +250,9 @@ class LocalFileStorageService @Inject constructor(
         evidence.allegationId?.let { row.getCell(7)?.setCellValue(it.toDouble()) }
         row.getCell(8)?.setCellValue(evidence.category)
         row.getCell(9)?.setCellValue(evidence.tags.joinToString(","))
-        row.getCell(10)?.setCellValue(evidence.commentary ?: "")
+        row.getCell(10)?.setCellValue(evidence.commentary)
         row.getCell(11)?.setCellValue(evidence.linkedEvidenceIds.joinToString(","))
-        row.getCell(12)?.setCellValue(evidence.parentVideoId ?: "")
+        row.getCell(12)?.setCellValue(evidence.parentVideoId)
         row.getCell(13)?.setCellValue(gson.toJson(evidence.entities))
     }
 

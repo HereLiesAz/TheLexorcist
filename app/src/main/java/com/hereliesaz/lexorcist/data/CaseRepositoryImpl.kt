@@ -153,9 +153,13 @@ constructor(
         spreadsheetId: String,
         allegationText: String,
     ) {
-        val allegation = Allegation(id = 0, spreadsheetId = spreadsheetId, text = allegationText)
+        val allegation = Allegation(spreadsheetId = spreadsheetId, text = allegationText)
         storageService.addAllegation(spreadsheetId, allegation)
         refreshAllegations(0, spreadsheetId) // caseId is not used in refreshAllegations
+    }
+
+    override suspend fun getEvidenceForCase(spreadsheetId: String): Result<List<Evidence>> {
+        return storageService.getEvidenceForCase(spreadsheetId)
     }
 
     override fun getHtmlTemplates(): Flow<List<DriveFile>> {
