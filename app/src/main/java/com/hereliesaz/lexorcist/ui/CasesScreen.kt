@@ -70,6 +70,8 @@ fun CasesScreen(
     var showCreateCaseDialog by remember { mutableStateOf(false) }
     var currentSortOrderState by remember { mutableStateOf(sortOrder) }
 
+    val selectedCase by caseViewModel.selectedCase.collectAsState()
+
     val unarchivedCases =
         remember(casesState, searchQuery) {
             casesState.filter { case ->
@@ -169,6 +171,7 @@ fun CasesScreen(
                         CaseItem(
                             case = case,
                             isLongPressed = longPressedCase == case,
+                            isSelected = selectedCase?.id == case.id,
                             onLongPress = { longPressedCase = case },
                             onDelete = {
                                 longPressedCase = case
@@ -234,14 +237,23 @@ fun CasesScreen(
 fun CaseItem(
     case: Case,
     isLongPressed: Boolean,
+    isSelected: Boolean,
     onLongPress: (Case) -> Unit,
     onDelete: () -> Unit,
     onArchive: () -> Unit,
     onCancel: () -> Unit,
     onClick: () -> Unit,
 ) {
-    val backgroundColor = if (isLongPressed) MaterialTheme.colorScheme.surfaceVariant else Color.Transparent
-    val contentColor = if (isLongPressed) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
+    val backgroundColor = when {
+        isSelected -> MaterialTheme.colorScheme.primaryContainer
+        isLongPressed -> MaterialTheme.colorScheme.surfaceVariant
+        else -> Color.Transparent
+    }
+    val contentColor = when {
+        isSelected -> MaterialTheme.colorScheme.onPrimaryContainer
+        isLongPressed -> MaterialTheme.colorScheme.onSurfaceVariant
+        else -> MaterialTheme.colorScheme.onSurface
+    }
 
     Card(
         modifier =
@@ -256,7 +268,7 @@ fun CaseItem(
                 },
         shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(containerColor = backgroundColor, contentColor = contentColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = if (isLongPressed) 4.dp else 1.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = if (isLongPressed || isSelected) 4.dp else 1.dp),
     ) {
         Row(
             modifier = Modifier.padding(16.dp),

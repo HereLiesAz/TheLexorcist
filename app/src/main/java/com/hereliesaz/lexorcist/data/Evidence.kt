@@ -21,4 +21,5 @@ data class Evidence(
     val parentVideoId: String? = null,
     val entities: Map<String, List<String>> = emptyMap(),
     val isSelected: Boolean = false,
+    val transcriptEdits: List<com.hereliesaz.lexorcist.model.TranscriptEdit> = emptyList()
 ) : Parcelable
