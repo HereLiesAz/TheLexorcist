@@ -18,16 +18,9 @@ Your primary objective is to develop "The Lexorcist" into a fully functional leg
 
 ### **CRITICAL ARCHITECTURAL DIRECTIVE: Local-First**
 
-The application follows a **local-first** data management strategy. All user data, including case information and evidence, is stored in a single spreadsheet file (`lexorcist_data.xlsx`) within the case's own folder. 
+The application follows a **local-first** data management strategy. All user data, including case information and evidence, is stored in a single spreadsheet file (`lexorcist_data.xlsx`) within the application's folder, and synchronized with cloud services. Upon loading, the app must attempt synchronization to ensure it is using the lastest saved state. 
 
 This approach ensures that the app is always functional, even when offline. 
-When the user selects a photo, audio, or video file as evidence, text from the image/audio should be automatically parsed and formatted with markdown code, and saved. 
-All raw evidence files should be copied into a raw evidence folder.
-The progress of loading the file, finding text, formatting with markdown, and adding it to the case and indexing the evidence, needs to be transparent to the user. Progress should be shown, the current task summarized over the progress bar, and a detailed live log should be displayed below. 
-If no text is found, then the file is saved to the raw evidence folder, indexed as non-textual evidence, and the user should be informed. 
-For audio files, text is parsed from the transcript. Transcripts must be editable, tagging edits with a timestamp and reason for the edit. 
-For video files, text from video should be parsed both from its audio transcript and what's visible in the video. 
-ALL photos and media files added as evidence must be saved in the case folder, indexed, and linked in the spreadsheet.
 ---
 
 ### UI and UX
@@ -35,6 +28,13 @@ ALL photos and media files added as evidence must be saved in the case folder, i
 1. Except for the AzNavRail, all components on every screen (text boxes, not text) need to be right aligned.
 2. All buttons need to be transparent with a stroke the color of the theme. Text inside the buttons should be that same color. 
 3. All changes should be saved immediately and automatically to the case's folder. The folder must be saved and syncronized onto Google Drive often, but synchronization must always be attempted when the app is closed. That means the app will need to be explicit about being closed. 
+4. When the user selects a photo, audio, or video file as evidence, text from the image/audio should be automatically parsed and formatted with markdown code, and saved.
+5. All raw evidence files should be copied into a raw evidence folder.
+6. The progress of loading the file, finding text, formatting with markdown, and adding it to the case and indexing the evidence, needs to be transparent to the user. Progress should be shown, the current task summarized over the progress bar, and a detailed live log should be displayed below.
+7. If no text is found, then the file is saved to the raw evidence folder, indexed as non-textual evidence, and the user should be informed.
+8. For audio files, text is parsed from the transcript. Transcripts must be editable, tagging edits with a timestamp and reason for the edit.
+9. For video files, text from video should be parsed both from its audio transcript and what's visible in the video.
+10. ALL photos and media files added as evidence must be saved in the case folder, indexed, and linked in the spreadsheet.
 
 ---
 
