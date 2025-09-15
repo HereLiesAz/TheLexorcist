@@ -691,20 +691,10 @@ class GoogleApiService(
                                 sourceDocument = row[4].toString(),
                                 documentDate = row[5].toString().toLong(),
                                 allegationId = row.getOrNull(6)?.toString()?.toIntOrNull(),
-                                category = row.getOrNull(7).toString(),
-                                tags =
-                                    row
-                                        .getOrNull(8)
-                                        .toString()
-                                        .split(",")
-                                        .map { it.trim() },
+                                category = row.getOrNull(7)?.toString() ?: "",
+                                tags = row.getOrNull(8)?.toString()?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() } ?: emptyList(),
                                 commentary = row.getOrNull(9)?.toString(),
-                                linkedEvidenceIds =
-                                    row
-                                        .getOrNull(10)
-                                        .toString()
-                                        .split(",")
-                                        .mapNotNull { it.trim().toIntOrNull() },
+                                linkedEvidenceIds = row.getOrNull(10)?.toString()?.split(",")?.mapNotNull { it.trim().toIntOrNull() } ?: emptyList(),
                                 parentVideoId = row.getOrNull(11)?.toString(),
                                 entities =
                                     row
@@ -713,6 +703,8 @@ class GoogleApiService(
                                         ?.let { Gson().fromJson(it, object : TypeToken<Map<String, List<String>>>() {}.type) }
                                         ?: emptyMap(),
                                 isSelected = row.getOrNull(13)?.toString()?.toBoolean() ?: false,
+                                formattedContent = row.getOrNull(14)?.toString(),
+                                mediaUri = row.getOrNull(15)?.toString(),
                             )
                         } catch (e: Exception) {
                             null // Skip row if parsing fails
@@ -744,6 +736,8 @@ class GoogleApiService(
                             evidence.parentVideoId ?: "",
                             Gson().toJson(evidence.entities),
                             evidence.isSelected.toString(),
+                            evidence.formattedContent,
+                            evidence.mediaUri,
                         ),
                     )
                 val body = ValueRange().setValues(values)
@@ -818,6 +812,8 @@ class GoogleApiService(
                         evidence.parentVideoId ?: "",
                         Gson().toJson(evidence.entities),
                         evidence.isSelected.toString(),
+                        evidence.formattedContent,
+                        evidence.mediaUri,
                     )
                 val valueRange = ValueRange().setValues(listOf(rowData))
                 val updateRange = "Evidence!A${rowIndex + 1}"
