@@ -3,6 +3,7 @@ package com.hereliesaz.lexorcist.data
 import com.hereliesaz.lexorcist.model.SheetFilter
 import kotlinx.coroutines.flow.Flow
 import com.google.api.services.drive.model.File as DriveFile
+import com.hereliesaz.lexorcist.utils.Result // Added this import
 
 interface CaseRepository {
     /**
@@ -27,7 +28,7 @@ interface CaseRepository {
         plaintiffs: String,
         defendants: String,
         court: String,
-    ): com.hereliesaz.lexorcist.utils.Result<Unit>
+    ): Result<Unit> // This should now correctly resolve to com.hereliesaz.lexorcist.utils.Result
 
     suspend fun archiveCase(case: Case)
 
@@ -58,7 +59,7 @@ interface CaseRepository {
         allegationText: String,
     )
 
-    suspend fun getEvidenceForCase(spreadsheetId: String): Result<List<Evidence>>
+    suspend fun getEvidenceForCase(spreadsheetId: String): Result<List<Evidence>> // This should now correctly resolve
 
     fun getHtmlTemplates(): Flow<List<DriveFile>>
 
