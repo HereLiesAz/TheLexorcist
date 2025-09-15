@@ -40,6 +40,7 @@ The file google-services.template.json located at the root of the /app/ folder s
 10. ALL photos and media files added as evidence must be saved in the case folder, indexed, and linked in the spreadsheet.
 11. When the user taps a Case in the case list, it needs to highlight so they can see that a case was selected. Selecting a case should cause it to be loaded--its evidence previously added, the text parsed from that evidence, the allegations previously selected, the templates and scripts last loaded or edited or created for that case, etc. All screens should be in their most recent previous state. 
 12. All instances where data is being loaded should be indicated by a loading animation.
+13. The user should be able to select cloud services in Settings. 
 
 ---
 

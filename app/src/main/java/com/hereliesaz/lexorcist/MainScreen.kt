@@ -130,8 +130,8 @@ fun MainScreen(
                         azRailItem(id = "script_editor", text = "Script", onClick = { navController.navigate("script_editor") })
                         azRailItem(id = "data_review", text = "Review", onClick = { navController.navigate("data_review") })
                         azRailItem(id = "timeline", text = "Timeline", onClick = { navController.navigate("timeline") })
-                        azRailItem(id = "extras", text = "Extras", onClick = { navController.navigate("extras") })
-                        azRailItem(id = "settings", text = "Settings", onClick = { navController.navigate("settings") })
+                        azMenuItem(id = "extras", text = "Extras", onClick = { navController.navigate("extras") })
+                        azMenuItem(id = "settings", text = "Settings", onClick = { navController.navigate("settings") })
                         azMenuItem(id = "logout", text = "Logout", onClick = { authViewModel.signOut() })
                     }
 
