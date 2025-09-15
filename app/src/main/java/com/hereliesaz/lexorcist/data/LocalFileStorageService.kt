@@ -36,9 +36,11 @@ class LocalFileStorageService @Inject constructor(
     companion object {
         private const val CASES_SHEET_NAME = "Cases"
         private const val EVIDENCE_SHEET_NAME = "Evidence"
+        private const val ALLEGATIONS_SHEET_NAME = "Allegations"
 
         private val CASES_HEADER = listOf("ID", "Name", "Plaintiffs", "Defendants", "Court", "FolderID", "LastModified", "IsArchived")
         private val EVIDENCE_HEADER = listOf("EvidenceID", "CaseID", "Type", "Content", "Timestamp", "SourceDocument", "DocumentDate", "AllegationID", "Category", "Tags", "Commentary", "LinkedEvidenceIDs", "ParentVideoID", "Entities")
+        private val ALLEGATIONS_HEADER = listOf("AllegationID", "CaseID", "Text")
     }
 
     private suspend fun <T> execute(block: (XSSFWorkbook) -> T): Result<T> = withContext(Dispatchers.IO) {
@@ -252,5 +254,33 @@ class LocalFileStorageService @Inject constructor(
         } catch (e: Exception) {
             Result.Error(e)
         }
+    }
+
+    // --- Allegation Implementations ---
+
+    override suspend fun getAllegationsForCase(caseSpreadsheetId: String): Result<List<Allegation>> = execute { workbook ->
+        val sheet = workbook.getSheet(ALLEGATIONS_SHEET_NAME) ?: return@execute emptyList()
+        (1..sheet.lastRowNum).mapNotNull { i ->
+            val row = sheet.getRow(i) ?: return@mapNotNull null
+            if (row.getCell(1)?.stringCellValue != caseSpreadsheetId) return@mapNotNull null
+            Allegation(
+                id = row.getCell(0)?.numericCellValue?.toInt() ?: 0,
+                spreadsheetId = caseSpreadsheetId,
+                text = row.getCell(2)?.stringCellValue ?: ""
+            )
+        }
+    }
+
+    override suspend fun addAllegation(caseSpreadsheetId: String, allegation: Allegation): Result<Allegation> = execute { workbook ->
+        val sheet = workbook.getSheet(ALLEGATIONS_SHEET_NAME) ?: workbook.createSheet(ALLEGATIONS_SHEET_NAME).also {
+            it.createRow(0).apply { ALLEGATIONS_HEADER.forEachIndexed { index, s -> createCell(index).setCellValue(s) } }
+        }
+        val newAllegation = allegation.copy(id = sheet.physicalNumberOfRows)
+        sheet.createRow(sheet.physicalNumberOfRows).apply {
+            createCell(0).setCellValue(newAllegation.id.toDouble())
+            createCell(1).setCellValue(caseSpreadsheetId)
+            createCell(2).setCellValue(newAllegation.text)
+        }
+        newAllegation
     }
 }
