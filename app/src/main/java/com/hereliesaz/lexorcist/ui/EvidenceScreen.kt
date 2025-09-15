@@ -236,7 +236,7 @@ fun EvidenceScreen(
                         onClick = {
                             if (evidence.type == "audio") {
                                 evidenceViewModel.loadEvidenceById(evidence.id)
-                                evidenceViewModel.navigateToTranscriptionScreen.tryEmit(evidence.id)
+                                evidenceViewModel.requestNavigationToTranscriptionScreen(evidence.id) // <<< Corrected here
                             } else {
                                 evidenceViewModel.onEvidenceSelected(evidence)
                             }

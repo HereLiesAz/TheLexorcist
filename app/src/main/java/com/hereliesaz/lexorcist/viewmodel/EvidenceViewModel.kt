@@ -77,6 +77,12 @@ class EvidenceViewModel
         private var currentCaseIdForList: Long? = null
         private var currentSpreadsheetIdForList: String? = null
 
+        fun requestNavigationToTranscriptionScreen(evidenceId: Int) {
+            viewModelScope.launch {
+                _navigateToTranscriptionScreen.emit(evidenceId)
+            }
+        }
+
         fun addTextEvidence(
             text: String,
             caseId: Long,
@@ -93,6 +99,8 @@ class EvidenceViewModel
                         spreadsheetId = spreadsheetId,
                         type = "text",
                         content = text,
+                        formattedContent = null, 
+                        mediaUri = null, 
                         timestamp = System.currentTimeMillis(),
                         sourceDocument = "Manual text entry",
                         documentDate = System.currentTimeMillis(),
@@ -115,7 +123,11 @@ class EvidenceViewModel
             val updatedList =
                 _evidenceList.value.map {
                     if (it.id == evidenceId) {
-                        it.copy(isSelected = !it.isSelected)
+                        it.copy(
+                            isSelected = !it.isSelected,
+                            formattedContent = it.formattedContent, 
+                            mediaUri = it.mediaUri
+                        )
                     } else {
                         it
                     }
@@ -133,7 +145,11 @@ class EvidenceViewModel
         fun clearEvidenceSelection() {
             val list =
                 _evidenceList.value.map {
-                    it.copy(isSelected = false)
+                    it.copy(
+                        isSelected = false,
+                        formattedContent = it.formattedContent, 
+                        mediaUri = it.mediaUri
+                    )
                 }
             _evidenceList.value = list
         }
@@ -157,7 +173,11 @@ class EvidenceViewModel
                         combinedContent.append("\n\n--- Frame ---\n")
                         combinedContent.append(it.content)
                     }
-                    _selectedEvidenceDetails.value = evidence.copy(content = combinedContent.toString())
+                    _selectedEvidenceDetails.value = evidence.copy(
+                        content = combinedContent.toString(),
+                        formattedContent = evidence.formattedContent, 
+                        mediaUri = evidence.mediaUri
+                    )
                 } else {
                     _selectedEvidenceDetails.value = evidence
                 }
@@ -176,7 +196,11 @@ class EvidenceViewModel
                 evidenceRepository.updateCommentary(evidenceId, commentary)
                 val currentDetails = _selectedEvidenceDetails.value
                 if (currentDetails != null && currentDetails.id == evidenceId) {
-                    _selectedEvidenceDetails.value = currentDetails.copy(commentary = commentary)
+                    _selectedEvidenceDetails.value = currentDetails.copy(
+                        commentary = commentary,
+                        formattedContent = currentDetails.formattedContent,
+                        mediaUri = currentDetails.mediaUri
+                    )
                 }
                 currentCaseIdForList?.let { caseId ->
                     currentSpreadsheetIdForList?.let { spreadsheetId ->
@@ -217,6 +241,8 @@ class EvidenceViewModel
                     spreadsheetId = "",
                     type = "placeholder",
                     content = "This is a placeholder item.",
+                    formattedContent = null,
+                    mediaUri = null,
                     timestamp = 0,
                     sourceDocument = "",
                     documentDate = 0,
@@ -235,6 +261,8 @@ class EvidenceViewModel
                     spreadsheetId = "",
                     type = "placeholder",
                     content = "Add your first piece of evidence to get started.",
+                    formattedContent = null,
+                    mediaUri = null,
                     timestamp = 0,
                     sourceDocument = "",
                     documentDate = 0,
@@ -255,7 +283,11 @@ class EvidenceViewModel
                 val script = settingsManager.getScript()
                 val result = scriptRunner.runScript(script, evidence)
                 if (result is Result.Success) {
-                    val updatedEvidence = evidence.copy(tags = evidence.tags + result.data)
+                    val updatedEvidence = evidence.copy(
+                        tags = evidence.tags + result.data,
+                        formattedContent = evidence.formattedContent, 
+                        mediaUri = evidence.mediaUri
+                    )
                     evidenceRepository.updateEvidence(updatedEvidence)
                 }
                 if (evidence.caseId == currentCaseIdForList && evidence.spreadsheetId == currentSpreadsheetIdForList) {
@@ -284,7 +316,11 @@ class EvidenceViewModel
             viewModelScope.launch {
                 val evidence = evidenceRepository.getEvidenceById(evidenceId)
                 if (evidence != null) {
-                    val updatedEvidence = evidence.copy(allegationId = allegationId)
+                    val updatedEvidence = evidence.copy(
+                        allegationId = allegationId,
+                        formattedContent = evidence.formattedContent,
+                        mediaUri = evidence.mediaUri
+                    )
                     evidenceRepository.updateEvidence(updatedEvidence)
                     if (evidence.caseId == currentCaseIdForList && evidence.spreadsheetId == currentSpreadsheetIdForList) {
                         loadEvidenceForCase(evidence.caseId, evidence.spreadsheetId)
@@ -399,7 +435,7 @@ class EvidenceViewModel
                                 val progress = workInfo.progress.getString(VideoProcessingWorker.PROGRESS)
                                 _videoProcessingProgress.value = progress
                                 if (workInfo.state.isFinished) {
-                                    _videoProcessingProgress.value = null
+                                    _videoProcessingProgress.value = null // <<< Corrected here
                                     loadEvidenceForCase(currentCaseIdForList!!, currentSpreadsheetIdForList!!)
                                 }
                             }

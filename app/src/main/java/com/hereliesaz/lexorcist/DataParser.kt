@@ -157,6 +157,8 @@ object DataParser {
                     caseId = caseId.toLong(),
                     allegationId = linkedAllegation?.id,
                     content = sentence,
+                    formattedContent = null,
+                    mediaUri = null,
                     timestamp = System.currentTimeMillis(),
                     sourceDocument = "Parsed from text",
                     documentDate = date,
