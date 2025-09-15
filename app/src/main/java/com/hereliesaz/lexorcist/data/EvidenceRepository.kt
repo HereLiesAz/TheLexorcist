@@ -26,7 +26,8 @@ interface EvidenceRepository {
     suspend fun uploadFile(
         uri: android.net.Uri,
         caseName: String,
-    ): com.hereliesaz.lexorcist.utils.Result<com.google.api.services.drive.model.File?>
+        caseSpreadsheetId: String
+    ): com.hereliesaz.lexorcist.utils.Result<String>
 
     suspend fun updateTranscript(
         evidence: Evidence,

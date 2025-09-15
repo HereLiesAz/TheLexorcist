@@ -310,7 +310,7 @@ class EvidenceViewModel
                 if (currentCaseIdForList != null && currentSpreadsheetIdForList != null) {
                     val case = caseRepository.getCaseBySpreadsheetId(currentSpreadsheetIdForList!!)
                     if (case != null) {
-                        val uploadResult = evidenceRepository.uploadFile(uri, case.name)
+                        val uploadResult = evidenceRepository.uploadFile(uri, case.name, case.spreadsheetId)
                         if (uploadResult is Result.Success) {
                             val transcribedText = transcriptionService.transcribeAudio(uri)
 
@@ -322,7 +322,7 @@ class EvidenceViewModel
                                     type = "audio",
                                     content = transcribedText,
                                     timestamp = System.currentTimeMillis(),
-                                    sourceDocument = uploadResult.data?.webViewLink ?: uri.toString(),
+                                    sourceDocument = uploadResult.data ?: uri.toString(),
                                     documentDate = System.currentTimeMillis(),
                                     allegationId = null,
                                     category = "Audio Transcription",
