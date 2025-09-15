@@ -109,7 +109,7 @@ class LocalFileStorageService @Inject constructor(
             createCell(3).setCellValue(newCase.defendants)
             createCell(4).setCellValue(newCase.court)
             createCell(5).setCellValue(newCase.folderId)
-            createCell(6).setCellValue(newCase.lastModifiedTime.toDouble())
+            createCell(6).setCellValue(newCase.lastModifiedTime!!.toDouble())
             createCell(7).setCellValue(newCase.isArchived)
         }
         newCase
@@ -162,9 +162,13 @@ class LocalFileStorageService @Inject constructor(
             val linkedIdsCell = row.getCell(11)
             val linkedIds = (linkedIdsCell?.stringCellValue ?: "").split(",").filter { it.isNotBlank() }.mapNotNull { it.toIntOrNull() }
 
-            val entitiesCell = row.getCell(13)
-            val entities = gson.fromJson(entitiesCell?.stringCellValue ?: "{}", object : TypeToken<Map<String, List<String>>>() {}.type)
 
+            val entitiesCell = row.getCell(13)
+            // Explicitly define the type for entities
+            val entities: Map<String, List<String>> = gson.fromJson(
+                entitiesCell?.stringCellValue ?: "{}",
+                object : TypeToken<Map<String, List<String>>>() {}.type
+            )
             Evidence(
                 id = evidenceId,
                 caseId = caseSpreadsheetId.hashCode().toLong(),
