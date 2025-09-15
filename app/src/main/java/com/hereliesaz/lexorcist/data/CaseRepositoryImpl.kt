@@ -153,7 +153,7 @@ constructor(
         spreadsheetId: String,
         allegationText: String,
     ) {
-        val allegation = Allegation(spreadsheetId = spreadsheetId, text = allegationText)
+        val allegation = Allegation(id = 0, spreadsheetId = spreadsheetId, text = allegationText)
         storageService.addAllegation(spreadsheetId, allegation)
         refreshAllegations(0, spreadsheetId) // caseId is not used in refreshAllegations
     }

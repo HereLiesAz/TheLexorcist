@@ -106,7 +106,7 @@ constructor(
         newTranscript: String,
         reason: String,
     ): Result<Unit> {
-        val result = storageService.updateTranscript(evidence, newTranscript, reason)
+        val result: Result<Unit> = storageService.updateTranscript(evidence, newTranscript, reason)
         if (result is Result.Success) {
             refreshEvidence(evidence.spreadsheetId, evidence.caseId)
         }
