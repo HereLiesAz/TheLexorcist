@@ -30,7 +30,7 @@ The file google-services.template.json located at the root of the /app/ folder s
 
 1. Except for the AzNavRail, all components on every screen (text boxes, not text) need to be right aligned.
 2. All buttons need to be transparent with a stroke the color of the theme. Text inside the buttons should be that same color. 
-3. All changes should be saved immediately and automatically to the case's folder. The folder must be saved and syncronized onto Google Drive often, but synchronization must always be attempted when the app is closed. That means the app will need to be explicit about being closed. 
+3. All changes should be saved immediately and automatically to the case's folder. The folder must be saved and syncronized onto Google Drive often, but synchronization must always be attempted when the app is closed. That means the app will need to be explicit about being closed.
 4. When the user selects a photo, audio, or video file as evidence, text from the image/audio should be automatically parsed and formatted with markdown code, and saved.
 5. All raw evidence files should be copied into a raw evidence folder.
 6. The progress of loading the file, finding text, formatting with markdown, and adding it to the case and indexing the evidence, needs to be transparent to the user. Progress should be shown, the current task summarized over the progress bar, and a detailed live log should be displayed below.
@@ -38,6 +38,8 @@ The file google-services.template.json located at the root of the /app/ folder s
 8. For audio files, text is parsed from the transcript. Transcripts must be editable, tagging edits with a timestamp and reason for the edit.
 9. For video files, text from video should be parsed both from its audio transcript and what's visible in the video.
 10. ALL photos and media files added as evidence must be saved in the case folder, indexed, and linked in the spreadsheet.
+11. When the user taps a Case in the case list, it needs to highlight so they can see that a case was selected. Selecting a case should cause it to be loaded--its evidence previously added, the text parsed from that evidence, the allegations previously selected, the templates and scripts last loaded or edited or created for that case, etc. All screens should be in their most recent previous state. 
+12. All instances where data is being loaded should be indicated by a loading animation.
 
 ---
 
