@@ -187,7 +187,6 @@ fun MainScreen(
                                 composable("cases") { CasesScreen(caseViewModel = caseViewModel, navController = navController) }
                                 composable("evidence") {
                                     EvidenceScreen(
-                                        evidenceViewModel = evidenceViewModel,
                                         caseViewModel = caseViewModel,
                                         navController = navController,
                                     )
