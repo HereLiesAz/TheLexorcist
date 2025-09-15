@@ -33,6 +33,8 @@ ALL photos and media files added as evidence must be saved in the case folder, i
 ### UI and UX
 
 1. Except for the AzNavRail, all components on every screen (text boxes, not text) need to be right aligned.
+2. All buttons need to be transparent with a stroke the color of the theme. Text inside the buttons should be that same color. 
+3. All changes should be saved immediately and automatically to the case's folder. The folder must be saved and syncronized onto Google Drive often, but synchronization must always be attempted when the app is closed. That means the app will need to be explicit about being closed. 
 
 ---
 
