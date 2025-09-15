@@ -312,7 +312,10 @@ class EvidenceViewModel
                     if (case != null) {
                         val uploadResult = evidenceRepository.uploadFile(uri, case.name, case.spreadsheetId)
                         if (uploadResult is Result.Success) {
-                            val transcribedText = transcriptionService.transcribeAudio(uri)
+                            var transcribedText = transcriptionService.transcribeAudio(uri)
+                            if (transcribedText.contains("Error") || transcribedText == "No transcription result.") {
+                                transcribedText = ""
+                            }
 
                             val newEvidence =
                                 Evidence(
@@ -337,7 +340,9 @@ class EvidenceViewModel
                                     currentCaseIdForList!!,
                                     currentSpreadsheetIdForList!!,
                                 )
-                                _navigateToTranscriptionScreen.emit(newEvidenceWithId.id)
+                                if (transcribedText.isNotEmpty()) {
+                                    _navigateToTranscriptionScreen.emit(newEvidenceWithId.id)
+                                }
                             }
                         }
                     }

@@ -105,9 +105,11 @@ constructor(
         evidence: Evidence,
         newTranscript: String,
         reason: String,
-    ) {
-        // TODO: Implement the logic for updating transcript in local storage.
-        // This will likely involve creating a new sheet or a new table in the existing spreadsheet
-        // to track edit history. This is a complex operation and will be handled in a future task.
+    ): Result<Unit> {
+        val result = storageService.updateTranscript(evidence, newTranscript, reason)
+        if (result is Result.Success) {
+            refreshEvidence(evidence.spreadsheetId, evidence.caseId)
+        }
+        return result
     }
 }
