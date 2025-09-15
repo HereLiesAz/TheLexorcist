@@ -10,6 +10,8 @@ data class Evidence(
     val spreadsheetId: String,
     val type: String,
     val content: String,
+    val formattedContent: String?,
+    val mediaUri: String?,
     val timestamp: Long,
     val sourceDocument: String,
     val documentDate: Long,

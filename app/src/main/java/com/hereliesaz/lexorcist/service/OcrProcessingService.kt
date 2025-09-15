@@ -61,7 +61,7 @@ class OcrProcessingService
             caseId: Int,
             spreadsheetId: String,
             parentVideoId: String?,
-        ) {
+        ): Evidence? {
             Log.d("OcrProcessingService", "processImageFrame called for URI: $uri, caseId: $caseId, parentVideoId: $parentVideoId")
 
             val ocrText =
@@ -85,6 +85,8 @@ class OcrProcessingService
                     spreadsheetId = spreadsheetId,
                     type = "ocr_image_from_video",
                     content = ocrText,
+                    formattedContent = "```\n$ocrText\n```",
+                    mediaUri = uri.toString(),
                     timestamp = System.currentTimeMillis(),
                     sourceDocument = uri.toString(),
                     documentDate = documentDate,
@@ -117,7 +119,7 @@ class OcrProcessingService
             }
 
             Log.d("OcrProcessingService", "Adding evidence for frame: $uri")
-            evidenceRepository.addEvidence(newEvidence)
+            return evidenceRepository.addEvidence(newEvidence)
         }
 
         suspend fun processImage(
@@ -125,7 +127,7 @@ class OcrProcessingService
             context: Context,
             caseId: Long,
             spreadsheetId: String,
-        ) {
+        ): Evidence? {
             val ocrText =
                 try {
                     recognizeTextFromUri(context, uri)
@@ -147,6 +149,8 @@ class OcrProcessingService
                     spreadsheetId = spreadsheetId,
                     type = "image",
                     content = ocrText,
+                    formattedContent = "```\n$ocrText\n```",
+                    mediaUri = uri.toString(),
                     timestamp = System.currentTimeMillis(),
                     sourceDocument = uri.toString(),
                     documentDate = documentDate,
@@ -178,6 +182,6 @@ class OcrProcessingService
                 }
             }
 
-            evidenceRepository.addEvidence(newEvidence)
+            return evidenceRepository.addEvidence(newEvidence)
         }
     }
