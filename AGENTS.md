@@ -18,10 +18,16 @@ Your primary objective is to develop "The Lexorcist" into a fully functional leg
 
 ### **CRITICAL ARCHITECTURAL DIRECTIVE: Local-First**
 
-The application follows a **local-first** data management strategy. All user data, including case information and evidence, is stored in a single spreadsheet file (`lexorcist_data.xlsx`) within the application's private external storage directory.
+The application follows a **local-first** data management strategy. All user data, including case information and evidence, is stored in a single spreadsheet file (`lexorcist_data.xlsx`) within the case's own folder. 
 
-This approach ensures that the app is always functional, even when offline.
-
+This approach ensures that the app is always functional, even when offline. 
+When the user selects a photo, audio, or video file as evidence, text from the image/audio should be automatically parsed and formatted with markdown code, and saved. 
+All raw evidence files should be copied into a raw evidence folder.
+The progress of loading the file, finding text, formatting with markdown, and adding it to the case and indexing the evidence, needs to be transparent to the user. Progress should be shown, the current task summarized over the progress bar, and a detailed live log should be displayed below. 
+If no text is found, then the file is saved to the raw evidence folder, indexed as non-textual evidence, and the user should be informed. 
+For audio files, text is parsed from the transcript. Transcripts must be editable, tagging edits with a timestamp and reason for the edit. 
+For video files, text from video should be parsed both from its audio transcript and what's visible in the video. 
+ALL photos and media files added as evidence must be saved in the case folder, indexed, and linked in the spreadsheet.
 ---
 
 ### UI and UX
@@ -33,7 +39,7 @@ This approach ensures that the app is always functional, even when offline.
 ### Before You Begin...
 
 1.  **Analyze the Full Project:** The core architecture for the above workflow is already in place. Familiarize yourself with `OcrViewModel.kt` (for image processing), `ScriptRunner.kt` (for the tagging engine), `GoogleApiService.kt` (for Sheets/Drive integration), and the `raw` resources folder (for Apps Script and HTML templates).
-2.  **Prioritize Stability:** The app currently has build errors. Your first priority is always to get the application into a compilable and runnable state. Do not add new features until the existing ones are stable.
+2.  **Get Code Reviews Often:** If you are struggling, if you have a question, if you'd like to know how you're doing, get a code review. A code review must be run and heeded before any commit. If you disagree with the code review, get another code review. 
 3.  **Commit After Each Step:** Make a commit after completing each distinct task.
 4.  **Adhere to Design Principles:**
     * **UI:** Jetpack Compose, Material 3 Expressive, right-aligned elements (except the NavRail), and outlined buttons.
