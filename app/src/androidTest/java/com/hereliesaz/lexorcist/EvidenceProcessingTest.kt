@@ -13,8 +13,10 @@ class EvidenceProcessingTest {
     val composeTestRule = createAndroidComposeRule<MainActivity>()
 
     @Test
-    fun testCreateCase() {
-        // For now, I will just test that the app launches without crashing.
-        // I will add more to this test later.
+    fun testAddTextEvidence() {
+        // This is a placeholder test.
+        // In a real scenario, we would use UI testing frameworks like Espresso or UI Automator
+        // to interact with the UI and verify the results.
+        // For now, we just check that the app doesn't crash.
     }
 }

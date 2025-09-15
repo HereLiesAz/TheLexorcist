@@ -23,7 +23,10 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -59,6 +62,15 @@ fun EvidenceScreen(
     val selectedCase by caseViewModel.selectedCase.collectAsState()
     val evidenceList by caseViewModel.selectedCaseEvidenceList.collectAsState()
     val evidenceViewModel: EvidenceViewModel = hiltViewModel()
+    val userMessage by evidenceViewModel.userMessage.collectAsState()
+    val videoProcessingProgress by evidenceViewModel.videoProcessingProgress.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(userMessage) {
+        userMessage?.let {
+            snackbarHostState.showSnackbar(it)
+        }
+    }
 
     val imagePickerLauncher =
         rememberLauncherForActivityResult(
@@ -99,6 +111,7 @@ fun EvidenceScreen(
     // }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {
@@ -121,6 +134,13 @@ fun EvidenceScreen(
             horizontalAlignment = Alignment.End,
             verticalArrangement = Arrangement.Top,
         ) {
+            videoProcessingProgress?.let { progress ->
+                Column(horizontalAlignment = Alignment.End) {
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                    Text(progress, style = MaterialTheme.typography.bodySmall)
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+            }
             if (showAddTextEvidence) {
                 OutlinedTextField(
                     value = text,
@@ -211,7 +231,17 @@ fun EvidenceScreen(
 
             LazyColumn(modifier = Modifier.fillMaxSize()) {
                 items(evidenceList) { evidence ->
-                    EvidenceListItem(evidence = evidence, onClick = { evidenceViewModel.onEvidenceSelected(evidence) })
+                    EvidenceListItem(
+                        evidence = evidence,
+                        onClick = {
+                            if (evidence.type == "audio") {
+                                evidenceViewModel.loadEvidenceById(evidence.id)
+                                evidenceViewModel.navigateToTranscription(evidence.id)
+                            } else {
+                                evidenceViewModel.onEvidenceSelected(evidence)
+                            }
+                        }
+                    )
                 }
             }
         }

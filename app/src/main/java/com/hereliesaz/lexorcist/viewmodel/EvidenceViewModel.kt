@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import androidx.lifecycle.asFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -66,6 +67,12 @@ class EvidenceViewModel
 
         private val _isLoading = MutableStateFlow(false)
         val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+        private val _userMessage = MutableStateFlow<String?>(null)
+        val userMessage: StateFlow<String?> = _userMessage.asStateFlow()
+
+        private val _videoProcessingProgress = MutableStateFlow<String?>(null)
+        val videoProcessingProgress: StateFlow<String?> = _videoProcessingProgress.asStateFlow()
 
         private var currentCaseIdForList: Long? = null
         private var currentSpreadsheetIdForList: String? = null
@@ -291,14 +298,19 @@ class EvidenceViewModel
                 val caseId = currentCaseIdForList
                 val spreadsheetId = currentSpreadsheetIdForList
                 if (caseId != null && spreadsheetId != null) {
+                    _isLoading.value = true
                     try {
-                        ocrProcessingService.processImage(
+                        val newEvidence = ocrProcessingService.processImage(
                             uri = uri,
                             context = getApplication(),
                             caseId = caseId,
                             spreadsheetId = spreadsheetId,
                         )
+                        if (newEvidence != null && newEvidence.content.isEmpty()) {
+                            _userMessage.value = "No text found in the image."
+                        }
                     } finally {
+                        _isLoading.value = false
                         loadEvidenceForCase(caseId, spreadsheetId)
                     }
                 }
@@ -308,45 +320,56 @@ class EvidenceViewModel
         fun processAudioEvidence(uri: Uri) {
             viewModelScope.launch {
                 if (currentCaseIdForList != null && currentSpreadsheetIdForList != null) {
-                    val case = caseRepository.getCaseBySpreadsheetId(currentSpreadsheetIdForList!!)
-                    if (case != null) {
-                        val uploadResult = evidenceRepository.uploadFile(uri, case.name, case.spreadsheetId)
-                        if (uploadResult is Result.Success) {
-                            var transcribedText = transcriptionService.transcribeAudio(uri)
-                            if (transcribedText.contains("Error") || transcribedText == "No transcription result.") {
-                                transcribedText = ""
-                            }
+                    _isLoading.value = true
+                    try {
+                        val case = caseRepository.getCaseBySpreadsheetId(currentSpreadsheetIdForList!!)
+                        if (case != null) {
+                            val uploadResult = evidenceRepository.uploadFile(uri, case.name, case.spreadsheetId)
+                            if (uploadResult is Result.Success) {
+                                var transcribedText = transcriptionService.transcribeAudio(uri)
+                                if (transcribedText.contains("Error") || transcribedText == "No transcription result.") {
+                                    _userMessage.value = transcribedText
+                                    transcribedText = ""
+                                }
 
-                            val newEvidence =
-                                Evidence(
-                                    id = 0,
-                                    caseId = currentCaseIdForList!!,
-                                    spreadsheetId = currentSpreadsheetIdForList!!,
-                                    type = "audio",
-                                    content = transcribedText,
-                                    timestamp = System.currentTimeMillis(),
-                                    sourceDocument = uploadResult.data ?: uri.toString(),
-                                    documentDate = System.currentTimeMillis(),
-                                    allegationId = null,
-                                    category = "Audio Transcription",
-                                    tags = listOf("audio", "transcription"),
-                                    commentary = null,
-                                    parentVideoId = null,
-                                    entities = emptyMap(),
-                                )
-                            val newEvidenceWithId = evidenceRepository.addEvidence(newEvidence)
-                            if (newEvidenceWithId != null) {
-                                loadEvidenceForCase(
-                                    currentCaseIdForList!!,
-                                    currentSpreadsheetIdForList!!,
-                                )
-                                if (transcribedText.isNotEmpty()) {
-                                    _navigateToTranscriptionScreen.emit(newEvidenceWithId.id)
+                                val newEvidence =
+                                    Evidence(
+                                        id = 0,
+                                        caseId = currentCaseIdForList!!,
+                                        spreadsheetId = currentSpreadsheetIdForList!!,
+                                        type = "audio",
+                                        content = transcribedText,
+                                        formattedContent = "```\n$transcribedText\n```",
+                                        mediaUri = uri.toString(),
+                                        timestamp = System.currentTimeMillis(),
+                                        sourceDocument = uploadResult.data ?: uri.toString(),
+                                        documentDate = System.currentTimeMillis(),
+                                        allegationId = null,
+                                        category = "Audio Transcription",
+                                        tags = listOf("audio", "transcription"),
+                                        commentary = null,
+                                        parentVideoId = null,
+                                        entities = emptyMap(),
+                                    )
+                                val newEvidenceWithId = evidenceRepository.addEvidence(newEvidence)
+                                if (newEvidenceWithId != null) {
+                                    if (transcribedText.isNotEmpty()) {
+                                        _navigateToTranscriptionScreen.emit(newEvidenceWithId.id)
+                                    }
                                 }
                             }
                         }
+                    } finally {
+                        _isLoading.value = false
+                        loadEvidenceForCase(currentCaseIdForList!!, currentSpreadsheetIdForList!!)
                     }
                 }
+            }
+        }
+
+        fun navigateToTranscription(evidenceId: Int) {
+            viewModelScope.launch {
+                _navigateToTranscriptionScreen.emit(evidenceId)
             }
         }
 
@@ -377,6 +400,16 @@ class EvidenceViewModel
                                         .build(),
                                 ).build()
                         workManager.enqueue(workRequest)
+                        workManager.getWorkInfoByIdLiveData(workRequest.id).asFlow().collectLatest { workInfo ->
+                            if (workInfo != null) {
+                                val progress = workInfo.progress.getString(VideoProcessingWorker.PROGRESS)
+                                _videoProcessingProgress.value = progress
+                                if (workInfo.state.isFinished) {
+                                    _videoProcessingProgress.value = null
+                                    loadEvidenceForCase(currentCaseIdForList!!, currentSpreadsheetIdForList!!)
+                                }
+                            }
+                        }
                     }
                 }
             }
