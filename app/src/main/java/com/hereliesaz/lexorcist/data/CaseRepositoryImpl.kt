@@ -129,26 +129,37 @@ constructor(
         // TODO: Implement actual logic
     }
 
+    private val _allegations = MutableStateFlow<List<Allegation>>(emptyList())
+
     override fun getAllegations(
         caseId: Int,
         spreadsheetId: String,
     ): Flow<List<Allegation>> {
-        // TODO: Implement actual logic
-        return emptyFlow()
+        return _allegations.asStateFlow()
     }
 
     override suspend fun refreshAllegations(
         caseId: Int,
         spreadsheetId: String,
     ) {
-        // TODO: Implement actual logic
+        when (val result = storageService.getAllegationsForCase(spreadsheetId)) {
+            is Result.Success -> _allegations.value = result.data
+            is Result.Error -> errorReporter.reportError(result.exception)
+            is Result.UserRecoverableError -> errorReporter.reportError(result.exception)
+        }
     }
 
     override suspend fun addAllegation(
         spreadsheetId: String,
         allegationText: String,
     ) {
-        // TODO: Implement actual logic
+        val allegation = Allegation(spreadsheetId = spreadsheetId, text = allegationText)
+        storageService.addAllegation(spreadsheetId, allegation)
+        refreshAllegations(0, spreadsheetId) // caseId is not used in refreshAllegations
+    }
+
+    override suspend fun getEvidenceForCase(spreadsheetId: String): Result<List<Evidence>> {
+        return storageService.getEvidenceForCase(spreadsheetId)
     }
 
     override fun getHtmlTemplates(): Flow<List<DriveFile>> {

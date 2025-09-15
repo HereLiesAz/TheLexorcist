@@ -50,28 +50,27 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EvidenceScreen(
-    evidenceViewModel: EvidenceViewModel,
     caseViewModel: CaseViewModel,
     navController: NavController,
 ) {
     var showAddTextEvidence by remember { mutableStateOf(false) }
     var text by remember { mutableStateOf("") }
     val selectedCase by caseViewModel.selectedCase.collectAsState()
-    val evidenceList by evidenceViewModel.evidenceList.collectAsState()
-    val selectedEvidence by evidenceViewModel.selectedEvidenceDetails.collectAsState()
+    val evidenceList by caseViewModel.selectedCaseEvidenceList.collectAsState()
+    val evidenceViewModel: EvidenceViewModel = hiltViewModel()
 
     val imagePickerLauncher =
         rememberLauncherForActivityResult(
             contract = ActivityResultContracts.GetContent(),
         ) { uri ->
-            uri?.let { evidenceViewModel::processImageEvidence }
+            uri?.let { evidenceViewModel.processImageEvidence(it) }
         }
 
     val audioPickerLauncher =
         rememberLauncherForActivityResult(
             contract = ActivityResultContracts.GetContent(),
         ) { uri ->
-            uri?.let { evidenceViewModel::processAudioEvidence }
+            uri?.let { evidenceViewModel.processAudioEvidence(it) }
         }
 
     val videoPickerLauncher =
@@ -89,13 +88,14 @@ fun EvidenceScreen(
 
     LaunchedEffect(selectedCase) {
         selectedCase?.let {
-            evidenceViewModel.loadEvidenceForCase(it.id.toLong(), it.spreadsheetId)
+            caseViewModel.loadEvidenceForSelectedCase()
         }
     }
 
-    selectedEvidence?.let {
-        EvidenceDetailsDialog(evidence = it, onDismiss = { evidenceViewModel.onDialogDismiss() })
-    }
+    // This will not work anymore as selectedEvidence is in EvidenceViewModel
+    // selectedEvidence?.let {
+    //     EvidenceDetailsDialog(evidence = it, onDismiss = { evidenceViewModel.onDialogDismiss() })
+    // }
 
     Scaffold(
         topBar = {

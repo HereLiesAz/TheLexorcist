@@ -36,9 +36,13 @@ class LocalFileStorageService @Inject constructor(
     companion object {
         private const val CASES_SHEET_NAME = "Cases"
         private const val EVIDENCE_SHEET_NAME = "Evidence"
+        private const val ALLEGATIONS_SHEET_NAME = "Allegations"
+        private const val TRANSCRIPT_EDITS_SHEET_NAME = "TranscriptEdits"
 
         private val CASES_HEADER = listOf("ID", "Name", "Plaintiffs", "Defendants", "Court", "FolderID", "LastModified", "IsArchived")
         private val EVIDENCE_HEADER = listOf("EvidenceID", "CaseID", "Type", "Content", "Timestamp", "SourceDocument", "DocumentDate", "AllegationID", "Category", "Tags", "Commentary", "LinkedEvidenceIDs", "ParentVideoID", "Entities")
+        private val ALLEGATIONS_HEADER = listOf("AllegationID", "CaseID", "Text")
+        private val TRANSCRIPT_EDITS_HEADER = listOf("EditID", "EvidenceID", "Timestamp", "Reason", "OldContent")
     }
 
     private suspend fun <T> execute(block: (XSSFWorkbook) -> T): Result<T> = withContext(Dispatchers.IO) {
@@ -140,6 +144,24 @@ class LocalFileStorageService @Inject constructor(
 
     override suspend fun getEvidenceForCase(caseSpreadsheetId: String): Result<List<Evidence>> = execute { workbook ->
         val sheet = workbook.getSheet(EVIDENCE_SHEET_NAME) ?: return@execute emptyList()
+        val editsSheet = workbook.getSheet(TRANSCRIPT_EDITS_SHEET_NAME)
+
+        val allEdits = editsSheet?.let {
+            (1..it.lastRowNum).mapNotNull { j ->
+                val editRow = it.getRow(j) ?: return@mapNotNull null
+                val evidenceId = editRow.getCell(1)?.numericCellValue?.toInt()
+                if (evidenceId != null) {
+                    evidenceId to com.hereliesaz.lexorcist.model.TranscriptEdit(
+                        timestamp = editRow.getCell(2)?.numericCellValue?.toLong() ?: 0L,
+                        reason = editRow.getCell(3)?.stringCellValue ?: "",
+                        content = editRow.getCell(4)?.stringCellValue ?: ""
+                    )
+                } else {
+                    null
+                }
+            }
+        }?.groupBy({ it.first }, { it.second }) ?: emptyMap()
+
         (1..sheet.lastRowNum).mapNotNull { i ->
             val row = sheet.getRow(i) ?: return@mapNotNull null
             if (row.getCell(1)?.stringCellValue != caseSpreadsheetId) return@mapNotNull null
@@ -169,6 +191,9 @@ class LocalFileStorageService @Inject constructor(
                 entitiesCell?.stringCellValue ?: "{}",
                 object : TypeToken<Map<String, List<String>>>() {}.type
             )
+
+            val transcriptEdits = allEdits[evidenceId] ?: emptyList()
+
             Evidence(
                 id = evidenceId,
                 caseId = caseSpreadsheetId.hashCode().toLong(),
@@ -184,7 +209,8 @@ class LocalFileStorageService @Inject constructor(
                 commentary = row.getCell(10)?.stringCellValue,
                 linkedEvidenceIds = linkedIds,
                 parentVideoId = row.getCell(12)?.stringCellValue,
-                entities = entities
+                entities = entities,
+                transcriptEdits = transcriptEdits
             )
         }
     }
@@ -251,6 +277,55 @@ class LocalFileStorageService @Inject constructor(
             Result.Success(destinationFile.absolutePath)
         } catch (e: Exception) {
             Result.Error(e)
+        }
+    }
+
+    // --- Allegation Implementations ---
+
+    override suspend fun getAllegationsForCase(caseSpreadsheetId: String): Result<List<Allegation>> = execute { workbook ->
+        val sheet = workbook.getSheet(ALLEGATIONS_SHEET_NAME) ?: return@execute emptyList()
+        (1..sheet.lastRowNum).mapNotNull { i ->
+            val row = sheet.getRow(i) ?: return@mapNotNull null
+            if (row.getCell(1)?.stringCellValue != caseSpreadsheetId) return@mapNotNull null
+            Allegation(
+                id = row.getCell(0)?.numericCellValue?.toInt() ?: 0,
+                spreadsheetId = caseSpreadsheetId,
+                text = row.getCell(2)?.stringCellValue ?: ""
+            )
+        }
+    }
+
+    override suspend fun addAllegation(caseSpreadsheetId: String, allegation: Allegation): Result<Allegation> = execute { workbook ->
+        val sheet = workbook.getSheet(ALLEGATIONS_SHEET_NAME) ?: workbook.createSheet(ALLEGATIONS_SHEET_NAME).also {
+            it.createRow(0).apply { ALLEGATIONS_HEADER.forEachIndexed { index, s -> createCell(index).setCellValue(s) } }
+        }
+        val newAllegation = allegation.copy(id = sheet.physicalNumberOfRows)
+        sheet.createRow(sheet.physicalNumberOfRows).apply {
+            createCell(0).setCellValue(newAllegation.id.toDouble())
+            createCell(1).setCellValue(caseSpreadsheetId)
+            createCell(2).setCellValue(newAllegation.text)
+        }
+        newAllegation
+    }
+
+    // --- Transcript Implementations ---
+
+    override suspend fun updateTranscript(evidence: Evidence, newTranscript: String, reason: String): Result<Unit> = execute { workbook ->
+        val evidenceSheet = workbook.getSheet(EVIDENCE_SHEET_NAME) ?: throw IOException("Evidence sheet not found.")
+        val evidenceRow = findRowById(evidenceSheet, evidence.id, 0) ?: throw IOException("Evidence with id ${evidence.id} not found.")
+
+        val oldContent = evidenceRow.getCell(3)?.stringCellValue ?: ""
+        evidenceRow.getCell(3)?.setCellValue(newTranscript)
+
+        val editsSheet = workbook.getSheet(TRANSCRIPT_EDITS_SHEET_NAME) ?: workbook.createSheet(TRANSCRIPT_EDITS_SHEET_NAME).also {
+            it.createRow(0).apply { TRANSCRIPT_EDITS_HEADER.forEachIndexed { index, s -> createCell(index).setCellValue(s) } }
+        }
+        editsSheet.createRow(editsSheet.physicalNumberOfRows).apply {
+            createCell(0).setCellValue((editsSheet.physicalNumberOfRows).toDouble()) // EditID
+            createCell(1).setCellValue(evidence.id.toDouble()) // EvidenceID
+            createCell(2).setCellValue(System.currentTimeMillis().toDouble()) // Timestamp
+            createCell(3).setCellValue(reason) // Reason
+            createCell(4).setCellValue(oldContent) // OldContent
         }
     }
 }

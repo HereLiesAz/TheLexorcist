@@ -24,4 +24,13 @@ interface StorageService {
     suspend fun updateEvidence(caseSpreadsheetId: String, evidence: Evidence): Result<Unit>
     suspend fun deleteEvidence(caseSpreadsheetId: String, evidence: Evidence): Result<Unit>
     suspend fun uploadFile(caseSpreadsheetId: String, fileUri: Uri, mimeType: String): Result<String>
+
+    // --- Allegation Management ---
+
+    suspend fun getAllegationsForCase(caseSpreadsheetId: String): Result<List<Allegation>>
+    suspend fun addAllegation(caseSpreadsheetId: String, allegation: Allegation): Result<Allegation>
+
+    // --- Transcript Management ---
+
+    suspend fun updateTranscript(evidence: Evidence, newTranscript: String, reason: String): Result<Unit>
 }

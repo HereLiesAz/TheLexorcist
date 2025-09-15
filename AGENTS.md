@@ -16,17 +16,11 @@ Your primary objective is to develop "The Lexorcist" into a fully functional leg
 
 ---
 
-### **CRITICAL ARCHITECTURAL DIRECTIVE**
+### **CRITICAL ARCHITECTURAL DIRECTIVE: Local-First**
 
- **DO NOT USE LOCAL DATABASES.**
+The application follows a **local-first** data management strategy. All user data, including case information and evidence, is stored in a single spreadsheet file (`lexorcist_data.xlsx`) within the application's private external storage directory.
 
- Under **NO CIRCUMSTANCES** should you attempt to implement a local database, such as **Room** or **SQLite**. The application's core design relies **exclusively** on the Google Sheets API for data storage.
-
- **This is a non-negotiable architectural constraint.**
-
- Any attempt to introduce a local database will be considered a fundamental misunderstanding of the project's design and will be rejected. This approach ensures that the user maintains full control and visibility of their data in a familiar format (Google Sheets) and simplifies the application by avoiding complex data synchronization logic.
-
- If a task appears to require data persistence, the solution **must** involve the Google Sheets API. If you are uncertain how to proceed, you must ask for clarification.
+This approach ensures that the app is always functional, even when offline.
 
 ---
 
