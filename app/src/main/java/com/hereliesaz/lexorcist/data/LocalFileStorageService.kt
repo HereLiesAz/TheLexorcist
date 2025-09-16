@@ -20,12 +20,13 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 import com.hereliesaz.lexorcist.service.GoogleApiService
+import dagger.Lazy
 
 @Singleton
 class LocalFileStorageService @Inject constructor(
     @param:ApplicationContext private val context: Context, // Changed here
     private val gson: Gson,
-    private val googleApiService: GoogleApiService
+    private val googleApiService: Lazy<GoogleApiService> // Changed to Lazy injection
 ) : StorageService {
 
     private val storageDir: File by lazy {
@@ -343,12 +344,12 @@ class LocalFileStorageService @Inject constructor(
             return@withContext Result.Success(Unit) // Nothing to sync
         }
 
-        val folderIdResult = googleApiService.getOrCreateAppRootFolder()
+        val folderIdResult = googleApiService.get().getOrCreateAppRootFolder()
         if (folderIdResult is Result.Success) {
             val folderId = folderIdResult.data
             // For simplicity, we just upload. This will create duplicates.
             // A more robust implementation would check for existence and update.
-            val uploadResult = googleApiService.uploadFile(spreadsheetFile, folderId, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+            val uploadResult = googleApiService.get().uploadFile(spreadsheetFile, folderId, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
             when (uploadResult) {
                 is Result.Success -> Result.Success(Unit)
                 is Result.Error -> Result.Error(uploadResult.exception)
