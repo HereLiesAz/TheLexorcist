@@ -30,6 +30,8 @@ class CaseViewModel
 constructor(
     @param:ApplicationContext private val applicationContext: Context,
     private val caseRepository: CaseRepository,
+    private val settingsManager: com.hereliesaz.lexorcist.data.SettingsManager,
+    private val localFileStorageService: com.hereliesaz.lexorcist.data.LocalFileStorageService,
 ) : ViewModel() {
     private val sharedPref =
         applicationContext.getSharedPreferences("CaseInfoPrefs", Context.MODE_PRIVATE)
@@ -90,19 +92,52 @@ constructor(
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
-    private val _selectedCaseEvidenceList =
+    private val _unfilteredEvidenceList =
         MutableStateFlow<List<com.hereliesaz.lexorcist.data.Evidence>>(emptyList())
+
     val selectedCaseEvidenceList: StateFlow<List<com.hereliesaz.lexorcist.data.Evidence>> =
-        _selectedCaseEvidenceList.asStateFlow()
+        _unfilteredEvidenceList
+            .combine(_timelineSortType) { evidence, sortType ->
+                when (sortType) {
+                    TimelineSortType.DATE_OF_OCCURRENCE -> evidence.sortedByDescending { it.documentDate }
+                    TimelineSortType.DATE_EVIDENCE_ADDED -> evidence.sortedByDescending { it.timestamp }
+                    TimelineSortType.BY_ALLEGATION -> evidence.sortedBy { it.allegationId }
+                    TimelineSortType.BY_FILE_TYPE -> evidence.sortedBy { it.type }
+                    TimelineSortType.CUSTOM -> evidence // Placeholder for custom sort
+                }
+            }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+
+    fun onTimelineSortOrderChanged(sortType: TimelineSortType) {
+        _timelineSortType.value = sortType
+    }
 
     private val _themeMode =
         MutableStateFlow(com.hereliesaz.lexorcist.ui.theme.ThemeMode.SYSTEM)
     val themeMode: StateFlow<com.hereliesaz.lexorcist.ui.theme.ThemeMode> =
         _themeMode.asStateFlow()
 
+    private val _storageLocation = MutableStateFlow<String?>(null)
+    val storageLocation: StateFlow<String?> = _storageLocation.asStateFlow()
+
+    private val _timelineSortType = MutableStateFlow(TimelineSortType.DATE_OF_OCCURRENCE)
+    val timelineSortType: StateFlow<TimelineSortType> = _timelineSortType.asStateFlow()
+
     init {
         loadThemeModePreference()
-        // observeAuthChanges() //TODO: Re-enable this once AuthViewModel is provided correctly
+        _storageLocation.value = settingsManager.getStorageLocation()
+    }
+
+    fun setStorageLocation(uri: android.net.Uri) {
+        viewModelScope.launch {
+            val oldLocation = settingsManager.getStorageLocation()
+            settingsManager.saveStorageLocation(uri.toString())
+            _storageLocation.value = uri.toString()
+            if (oldLocation != null) {
+                _userMessage.value = "Moving files to new location..."
+                localFileStorageService.moveFilesToNewLocation(oldLocation, uri.toString())
+                _userMessage.value = "Files moved successfully."
+            }
+        }
     }
 
     private fun clearCaseData() {
@@ -274,7 +309,7 @@ constructor(
             selectedCase.value?.let { case ->
                 when (val result = caseRepository.getEvidenceForCase(case.spreadsheetId)) {
                     is Result.Success -> { // Changed from Result.Success<*> to Result.Success
-                        _selectedCaseEvidenceList.value = result.data
+                        _unfilteredEvidenceList.value = result.data
                     }
                     is Result.Error -> {
                         _errorMessage.value = result.exception.message ?: "Unknown error"

@@ -47,7 +47,7 @@ import com.hereliesaz.lexorcist.ui.EvidenceDetailsScreen
 import com.hereliesaz.lexorcist.ui.EvidenceScreen
 import com.hereliesaz.lexorcist.ui.ExtrasScreen
 import com.hereliesaz.lexorcist.ui.ReviewScreen
-import com.hereliesaz.lexorcist.ui.ScriptEditorScreen
+import com.hereliesaz.lexorcist.ui.ScriptBuilderScreen
 import com.hereliesaz.lexorcist.ui.SettingsScreen
 import com.hereliesaz.lexorcist.ui.TemplatesScreen
 import com.hereliesaz.lexorcist.ui.TimelineScreen
@@ -57,7 +57,7 @@ import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 import com.hereliesaz.lexorcist.viewmodel.MasterAllegationsViewModel
-import com.hereliesaz.lexorcist.viewmodel.ScriptEditorViewModel
+import com.hereliesaz.lexorcist.viewmodel.ScriptBuilderViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -127,7 +127,7 @@ fun MainScreen(
                             onClick = { navController.navigate("case_allegations_route") },
                         )
                         azRailItem(id = "templates", text = "Templates", onClick = { navController.navigate("templates") })
-                        azRailItem(id = "script_editor", text = "Script", onClick = { navController.navigate("script_editor") })
+                        azRailItem(id = "script_builder", text = "Script Builder", onClick = { navController.navigate("script_builder") })
                         azRailItem(id = "data_review", text = "Review", onClick = { navController.navigate("data_review") })
                         azRailItem(id = "timeline", text = "Timeline", onClick = { navController.navigate("timeline") })
                         azMenuItem(id = "extras", text = "Extras", onClick = { navController.navigate("extras") })
@@ -190,8 +190,8 @@ fun MainScreen(
                                     )
                                 }
                                 composable("extras") { ExtrasScreen(viewModel = androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel<AddonsBrowserViewModel>(), onShare = {}) }
-                                composable("script_editor") {
-                                    ScriptEditorScreen(viewModel = androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel<ScriptEditorViewModel>(), navController = navController)
+                                composable("script_builder") {
+                                    ScriptBuilderScreen(viewModel = androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel<ScriptBuilderViewModel>(), navController = navController)
                                 }
                                 // Renamed route for case-specific allegations
                                 composable("case_allegations_route") {
@@ -203,8 +203,7 @@ fun MainScreen(
                                 composable("timeline") {
                                     selectedCase?.let {
                                         TimelineScreen(
-                                            case = it,
-                                            evidenceViewModel = evidenceViewModel,
+                                            caseViewModel = caseViewModel,
                                             navController = navController,
                                         )
                                     }

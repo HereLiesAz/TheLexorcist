@@ -24,11 +24,17 @@ import javax.inject.Singleton
 class LocalFileStorageService @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val gson: Gson,
-    private val credentialHolder: CredentialHolder // Changed here
+    private val credentialHolder: CredentialHolder,
+    private val settingsManager: SettingsManager
 ) : StorageService {
 
     private val storageDir: File by lazy {
-        val dir = context.getExternalFilesDir(null) ?: context.filesDir
+        val customLocation = settingsManager.getStorageLocation()
+        val dir = if (customLocation != null) {
+            File(Uri.parse(customLocation).path!!)
+        } else {
+            context.getExternalFilesDir(null) ?: context.filesDir
+        }
         if (!dir.exists()) dir.mkdirs()
         dir
     }
@@ -80,6 +86,17 @@ class LocalFileStorageService @Inject constructor(
             }
         }
         return null
+    }
+
+    suspend fun moveFilesToNewLocation(oldLocation: String, newLocation: String) {
+        withContext(Dispatchers.IO) {
+            val oldDir = File(Uri.parse(oldLocation).path!!)
+            val newDir = File(Uri.parse(newLocation).path!!)
+            if (oldDir.exists() && oldDir.isDirectory) {
+                oldDir.copyRecursively(newDir, overwrite = true)
+                oldDir.deleteRecursively()
+            }
+        }
     }
 
     // --- Case Implementations ---
@@ -275,8 +292,9 @@ class LocalFileStorageService @Inject constructor(
 
     override suspend fun uploadFile(caseSpreadsheetId: String, fileUri: Uri, mimeType: String): Result<String> = withContext(Dispatchers.IO) {
         try {
-            val caseDir = File(storageDir, caseSpreadsheetId).apply { if (!exists()) mkdirs() }
-            val destinationFile = File(caseDir, "file_${System.currentTimeMillis()}.${mimeType.substringAfter('/')}")
+            val caseDir = File(storageDir, caseSpreadsheetId)
+            val rawDir = File(caseDir, "raw").apply { if (!exists()) mkdirs() }
+            val destinationFile = File(rawDir, "file_${System.currentTimeMillis()}.${mimeType.substringAfter('/')}")
             context.contentResolver.openInputStream(fileUri)?.use { input ->
                 FileOutputStream(destinationFile).use { output ->
                     input.copyTo(output)

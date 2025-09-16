@@ -24,13 +24,13 @@ class TranscriptionService
         private val credentialHolder: CredentialHolder,
         private val logService: LogService,
     ) {
-        suspend fun transcribeAudio(uri: Uri): String {
+        suspend fun transcribeAudio(uri: Uri): Pair<String, String?> {
             logService.addLog("Starting audio transcription...")
             try {
                 logService.addLog("Getting credentials...")
                 val credential =
                     credentialHolder.credential
-                        ?: return "Error: Could not retrieve access token."
+                        ?: return Pair("", "Error: Could not retrieve access token.")
                 val accessToken = credential.token
                 val googleCredentials = GoogleCredentials.create(AccessToken(accessToken, null))
                 val speechSettings =
@@ -43,8 +43,8 @@ class TranscriptionService
                     logService.addLog("Reading audio file...")
                     val audioBytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
                     if (audioBytes == null) {
-                        logService.addLog("Error: Could not read audio file.")
-                        return "Error: Could not read audio file."
+                        logService.addLog("Error: Could not read audio file.", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
+                        return Pair("", "Error: Could not read audio file.")
                     }
                     logService.addLog("Audio file read successfully. Size: ${audioBytes.size} bytes.")
 
@@ -75,15 +75,15 @@ class TranscriptionService
                     if (results.isNotEmpty()) {
                         val transcript = results[0].alternativesList[0].transcript
                         logService.addLog("Transcription successful. Found ${transcript.length} characters.")
-                        return transcript
+                        return Pair(transcript, null)
                     }
                 }
             } catch (e: Exception) {
-                logService.addLog("Error during transcription: ${e.message}")
+                logService.addLog("Error during transcription: ${e.message}", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
                 e.printStackTrace()
-                return "Error during transcription: ${e.message}"
+                return Pair("", "Error during transcription: ${e.message}")
             }
-            logService.addLog("No transcription result.")
-            return "No transcription result."
+            logService.addLog("No transcription result.", com.hereliesaz.lexorcist.model.LogLevel.DEBUG)
+            return Pair("", "No transcription result.")
         }
     }
