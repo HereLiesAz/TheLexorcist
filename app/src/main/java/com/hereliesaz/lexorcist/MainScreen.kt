@@ -58,6 +58,7 @@ import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 import com.hereliesaz.lexorcist.viewmodel.MasterAllegationsViewModel
 import com.hereliesaz.lexorcist.viewmodel.ScriptBuilderViewModel
+import com.hereliesaz.lexorcist.viewmodel.SettingsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -207,16 +208,16 @@ fun MainScreen(
                                         Text("Error: Case ID or Spreadsheet ID not found.")
                                     }
                                 }
-                                composable("extras") { ExtrasScreen(viewModel = androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel<AddonsBrowserViewModel>(), onShare = {}) }
+                                composable("extras") { ExtrasScreen(viewModel = hiltViewModel<AddonsBrowserViewModel>(), onShare = {}) }
                                 composable("script_builder") {
-                                    ScriptBuilderScreen(viewModel = androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel<ScriptBuilderViewModel>(), navController = navController)
+                                    ScriptBuilderScreen(viewModel = hiltViewModel<ScriptBuilderViewModel>(), navController = navController)
                                 }
                                 // Renamed route for case-specific allegations
                                 composable("case_allegations_route") {
-                                    AllegationsScreen(androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel<MasterAllegationsViewModel>())
+                                    AllegationsScreen(hiltViewModel<MasterAllegationsViewModel>())
                                 }
                                 composable("templates") {
-                                    TemplatesScreen(androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel<AddonsBrowserViewModel>())
+                                    TemplatesScreen(hiltViewModel<AddonsBrowserViewModel>())
                                 }
                                 composable("timeline") {
                                     selectedCase?.let {
@@ -232,7 +233,7 @@ fun MainScreen(
                                         caseViewModel = caseViewModel,
                                     )
                                 }
-                                composable("settings") { SettingsScreen(caseViewModel = caseViewModel) }
+                                composable("settings") { SettingsScreen(viewModel = hiltViewModel<SettingsViewModel>(), caseViewModel = caseViewModel) }
                                 composable("evidence_details/{evidenceId}") { backStackEntry ->
                                     val evidenceIdString = backStackEntry.arguments?.getString("evidenceId")
                                     val evidenceId = remember(evidenceIdString) { evidenceIdString?.toIntOrNull() }
