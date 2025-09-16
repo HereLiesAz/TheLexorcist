@@ -51,15 +51,27 @@ android {
         resources.excludes.add("META-INF/NOTICE.md")
         // Exclude gRPC and Protobuf meta-inf files that can cause conflicts
         resources.excludes.add("META-INF/services/io.grpc.ManagedChannelProvider")
-        resources.excludes.add("META-INF/grpc-all.versions") // Example, adjust if needed
+        resources.excludes.add("META-INF/grpc-all.versions")
         resources.excludes.add("META-INF/io.netty.versions.properties")
+        // Netty native image properties
         resources.excludes.add("META-INF/native-image/io.netty/codec-http2/native-image.properties")
         resources.excludes.add("META-INF/native-image/io.netty/codec/native-image.properties")
         resources.excludes.add("META-INF/native-image/io.netty/common/native-image.properties")
         resources.excludes.add("META-INF/native-image/io.netty/handler/native-image.properties")
         resources.excludes.add("META-INF/native-image/io.netty/resolver/native-image.properties")
         resources.excludes.add("META-INF/native-image/io.netty/transport/native-image.properties")
-
+        // Common protobuf schema files that can cause conflicts
+        resources.excludes.add("google/protobuf/any.proto")
+        resources.excludes.add("google/protobuf/api.proto")
+        resources.excludes.add("google/protobuf/descriptor.proto")
+        resources.excludes.add("google/protobuf/duration.proto")
+        resources.excludes.add("google/protobuf/empty.proto")
+        resources.excludes.add("google/protobuf/field_mask.proto")
+        resources.excludes.add("google/protobuf/source_context.proto")
+        resources.excludes.add("google/protobuf/struct.proto")
+        resources.excludes.add("google/protobuf/timestamp.proto")
+        resources.excludes.add("google/protobuf/type.proto")
+        resources.excludes.add("google/protobuf/wrappers.proto")
     }
     lint {
         baseline = file("lint-baseline.xml")
@@ -153,6 +165,7 @@ dependencies {
 
     implementation(libs.google.http.client.jackson2)
     implementation(libs.google.guava)
+    ksp(libs.google.guava) // Added for KSP
     implementation(libs.quickbirdstudios.opencv)
     implementation(libs.play.services.auth)
 
@@ -168,11 +181,11 @@ dependencies {
     implementation(libs.jetlime)
 
     // Dropbox SDK
-    implementation(libs.dropbox.core.sdk)
+    // implementation(libs.dropbox.core.sdk)
 
 
     // Dropbox SDK
-    implementation("com.dropbox.core:dropbox-core-sdk:7.0.0")
+    // implementation("com.dropbox.core:dropbox-core-sdk:7.0.0")
 
     // Microsoft Graph SDK for OneDrive
     implementation("com.microsoft.graph:microsoft-graph:6.+")
@@ -197,9 +210,8 @@ dependencies {
     // Explicit gRPC dependencies with consistent versions
     implementation(libs.grpc.okhttp)
     implementation(libs.grpc.core)
-    implementation(libs.grpc.protobuf.lite)
+    // implementation(libs.grpc.protobuf.lite)
     implementation(libs.grpc.context)
-    implementation(libs.protobuf.javalite)
 
     implementation(libs.aznavrail)
 }

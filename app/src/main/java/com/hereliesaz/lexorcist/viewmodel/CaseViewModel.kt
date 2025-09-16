@@ -14,8 +14,7 @@ import com.hereliesaz.lexorcist.data.EvidenceRepository
 import com.hereliesaz.lexorcist.data.LocalFileStorageService
 import com.hereliesaz.lexorcist.data.SettingsManager
 import com.hereliesaz.lexorcist.data.SortOrder
-// Removed duplicate TimelineSortType enum, will use the one from its own file
-// import com.hereliesaz.lexorcist.viewmodel.TimelineSortType // Ensure this import is present if TimelineSortType.kt is in the same package
+import com.hereliesaz.lexorcist.viewmodel.TimelineSortType // Ensured import
 import com.hereliesaz.lexorcist.model.SheetFilter
 import com.hereliesaz.lexorcist.ui.theme.ThemeMode
 import com.hereliesaz.lexorcist.utils.Result
@@ -23,6 +22,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow // Ensured import
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -31,6 +31,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map // Ensured import
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -129,7 +130,8 @@ constructor(
     private val _selectedCaseEvidenceList =
         MutableStateFlow<List<com.hereliesaz.lexorcist.data.Evidence>>(emptyList())
 
-    val selectedCaseEvidenceList: StateFlow<List<com.hereliesaz.lexorcist.data.Evidence>> =
+    // Intermediate Flow for combined evidence
+    private val combinedEvidenceFlow: Flow<List<com.hereliesaz.lexorcist.data.Evidence>> =
         _selectedCaseEvidenceList
             .combine(timelineSortType) { evidence, sortType ->
                 when (sortType) {
@@ -139,14 +141,22 @@ constructor(
                     TimelineSortType.BY_FILE_TYPE -> evidence.sortedBy { it.type }
                     TimelineSortType.CUSTOM -> evidence
                 }
-            }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+            }
 
+    // Final StateFlow derived from the intermediate Flow
+    val selectedCaseEvidenceList: StateFlow<List<com.hereliesaz.lexorcist.data.Evidence>> =
+        combinedEvidenceFlow
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.Lazily,
+                initialValue = emptyList<com.hereliesaz.lexorcist.data.Evidence>()
+            )
+
+    // Refactored selectedEvidence to use map
     val selectedEvidence: StateFlow<List<com.hereliesaz.lexorcist.data.Evidence>> =
-        selectedCaseEvidenceList.combine(
-            selectedCaseEvidenceList
-        ) { list, _ ->
-            list.filter { it.isSelected }
-        }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+        selectedCaseEvidenceList
+            .map { list -> list.filter { it.isSelected } }
+            .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     fun onTimelineSortOrderChanged(sortType: TimelineSortType) {
         _timelineSortType.value = sortType
@@ -186,7 +196,6 @@ constructor(
         _plaintiffs.value = ""
         _defendants.value = ""
         _court.value = ""
-        // _unfilteredEvidenceList.value = emptyList() // Removed reference to undeclared variable
         saveCaseInfoToSharedPrefs()
     }
 
@@ -302,7 +311,6 @@ constructor(
                 _sheetFilters.value = emptyList()
                 _allegations.value = emptyList()
                 _htmlTemplates.value = emptyList()
-                // _unfilteredEvidenceList.value = emptyList() // Removed reference to undeclared variable
             }
         }
     }
