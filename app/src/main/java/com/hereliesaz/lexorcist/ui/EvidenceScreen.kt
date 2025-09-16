@@ -91,11 +91,11 @@ fun EvidenceScreen(
             ) {
                 LexorcistOutlinedButton(
                     onClick = { imagePickerLauncher.launch("image/*") },
-                    text = stringResource(R.string.add_image)
+                    text = stringResource(R.string.add_image_evidence)
                 )
                 LexorcistOutlinedButton(
                     onClick = { audioPickerLauncher.launch("audio/*") },
-                    text = stringResource(R.string.add_audio)
+                    text = stringResource(R.string.add_audio_evidence)
                 )
             }
             Spacer(modifier = Modifier.height(8.dp))
@@ -105,11 +105,11 @@ fun EvidenceScreen(
             ) {
                 LexorcistOutlinedButton(
                     onClick = { videoPickerLauncher.launch("video/*") },
-                    text = stringResource(R.string.add_video)
+                    text = stringResource(R.string.add_video_evidence)
                 )
                 LexorcistOutlinedButton(
                     onClick = { showAddTextDialog = true },
-                    text = stringResource(R.string.add_text)
+                    text = stringResource(R.string.add_text_evidence)
                 )
             }
 
@@ -120,7 +120,7 @@ fun EvidenceScreen(
                 items(evidenceList, key = { it.id }) { evidence ->
                     EvidenceListItem(evidence = evidence, onClick = {
                         evidenceViewModel.onEvidenceSelected(evidence)
-                        // TODO: Navigate to evidence detail screen
+                        navController.navigate("evidence_details/${evidence.id}")
                     })
                     HorizontalDivider()
                 }
@@ -142,7 +142,7 @@ fun EvidenceScreen(
             onDismiss = { showAddTextDialog = false },
             onConfirm = { text ->
                 selectedCase?.let {
-                    evidenceViewModel.addTextEvidence(text, it.id, it.spreadsheetId)
+                    evidenceViewModel.addTextEvidence(text, it.id.toLong(), it.spreadsheetId)
                 }
                 showAddTextDialog = false
             }

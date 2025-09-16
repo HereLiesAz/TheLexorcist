@@ -119,7 +119,17 @@ fun MainScreen(
                 ) {
                     AzNavRail {
                         azRailItem(id = "cases", text = "Cases", onClick = { navController.navigate("cases") })
-                        azRailItem(id = "evidence", text = "Evidence", onClick = { navController.navigate("evidence") })
+                        azRailItem(
+                            id = "evidence",
+                            text = "Evidence",
+                            onClick = {
+                                selectedCase?.let {
+                                    navController.navigate("evidence/${it.id}/${it.spreadsheetId}")
+                                } ?: run {
+                                    // Optionally, show a snackbar message
+                                }
+                            }
+                        )
                         // Renamed item id and route for case-specific allegations
                         azRailItem(
                             id = "case_allegations_item",
@@ -183,11 +193,19 @@ fun MainScreen(
                                     }
                                 }
                                 composable("cases") { CasesScreen(caseViewModel = caseViewModel, navController = navController) }
-                                composable("evidence") {
-                                    EvidenceScreen(
-                                        caseViewModel = caseViewModel,
-                                        navController = navController,
-                                    )
+                                composable("evidence/{caseId}/{spreadsheetId}") { backStackEntry ->
+                                    val caseId = backStackEntry.arguments?.getString("caseId")?.toLongOrNull()
+                                    val spreadsheetId = backStackEntry.arguments?.getString("spreadsheetId")
+                                    if (caseId != null && spreadsheetId != null) {
+                                        EvidenceScreen(
+                                            navController = navController,
+                                            caseId = caseId,
+                                            spreadsheetId = spreadsheetId
+                                        )
+                                    } else {
+                                        // Handle error, e.g., show a message or navigate back
+                                        Text("Error: Case ID or Spreadsheet ID not found.")
+                                    }
                                 }
                                 composable("extras") { ExtrasScreen(viewModel = androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel<AddonsBrowserViewModel>(), onShare = {}) }
                                 composable("script_editor") {

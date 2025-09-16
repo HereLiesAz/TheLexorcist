@@ -14,12 +14,14 @@ import androidx.compose.ui.unit.dp
 fun LexorcistOutlinedButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     text: String? = null,
     content: @Composable (() -> Unit)? = null
 ) {
     OutlinedButton(
         onClick = onClick,
         modifier = modifier,
+        enabled = enabled,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
         colors = ButtonDefaults.outlinedButtonColors(
             containerColor = Color.Transparent,
