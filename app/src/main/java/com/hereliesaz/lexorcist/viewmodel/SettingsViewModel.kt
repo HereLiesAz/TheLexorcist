@@ -1,22 +1,25 @@
 package com.hereliesaz.lexorcist.viewmodel
 
 import android.app.Application
-import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.hereliesaz.lexorcist.data.CloudStorageProvider
 import com.hereliesaz.lexorcist.data.SettingsManager
 import com.hereliesaz.lexorcist.ui.theme.ThemeMode
+import com.hereliesaz.lexorcist.utils.Result
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.io.File
 import javax.inject.Inject
+import javax.inject.Named
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val settingsManager: SettingsManager,
+    @Named("dropbox") private val dropboxProvider: CloudStorageProvider,
+    @Named("oneDrive") private val oneDriveProvider: CloudStorageProvider,
     application: Application
 ) : AndroidViewModel(application) {
 
@@ -31,6 +34,12 @@ class SettingsViewModel @Inject constructor(
 
     private val _migrationStatus = MutableStateFlow<String?>(null)
     val migrationStatus: StateFlow<String?> = _migrationStatus.asStateFlow()
+
+    private val _dropboxUploadStatus = MutableStateFlow<String?>(null)
+    val dropboxUploadStatus: StateFlow<String?> = _dropboxUploadStatus.asStateFlow()
+
+    private val _oneDriveUploadStatus = MutableStateFlow<String?>(null)
+    val oneDriveUploadStatus: StateFlow<String?> = _oneDriveUploadStatus.asStateFlow()
 
     init {
         loadSettings()
@@ -54,14 +63,47 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun setCaseFolderPath(newPath: String) {
-        // This feature is currently disabled in the UI.
-        // The file migration logic has been removed to avoid confusion.
-        // To re-enable, implement proper SAF URI handling and file migration.
         settingsManager.saveCaseFolderPath(newPath)
         _caseFolderPath.value = newPath
     }
 
     fun clearMigrationStatus() {
         _migrationStatus.value = null
+    }
+
+    fun testDropboxUpload() {
+        viewModelScope.launch {
+            val content = "Hello, Dropbox!".toByteArray()
+            when (val result = dropboxProvider.writeFile("", "test.txt", "text/plain", content)) {
+                is Result.Success -> {
+                    _dropboxUploadStatus.value = "Successfully uploaded file to Dropbox with ID: ${result.data.id}"
+                }
+                is Result.Error -> {
+                    _dropboxUploadStatus.value = "Error uploading file to Dropbox: ${result.exception.message}"
+                }
+            }
+        }
+    }
+
+    fun clearDropboxUploadStatus() {
+        _dropboxUploadStatus.value = null
+    }
+
+    fun testOneDriveUpload() {
+        viewModelScope.launch {
+            val content = "Hello, OneDrive!".toByteArray()
+            when (val result = oneDriveProvider.writeFile("root", "test.txt", "text/plain", content)) {
+                is Result.Success -> {
+                    _oneDriveUploadStatus.value = "Successfully uploaded file to OneDrive with ID: ${result.data.id}"
+                }
+                is Result.Error -> {
+                    _oneDriveUploadStatus.value = "Error uploading file to OneDrive: ${result.exception.message}"
+                }
+            }
+        }
+    }
+
+    fun clearOneDriveUploadStatus() {
+        _oneDriveUploadStatus.value = null
     }
 }

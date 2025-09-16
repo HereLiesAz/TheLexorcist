@@ -228,4 +228,10 @@ class AuthViewModel
             val digest = md.digest(bytes)
             return digest.fold("") { str, it -> str + "%02x".format(it) }
         }
+
+        fun storeDropboxAccessToken(accessToken: String) {
+            sharedPreferences.edit {
+                putString("dropbox_access_token", accessToken)
+            }
+        }
     }

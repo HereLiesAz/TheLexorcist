@@ -28,6 +28,7 @@ import com.hereliesaz.lexorcist.model.Template
 import com.hereliesaz.lexorcist.utils.Result
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.ByteArrayOutputStream
 import java.io.IOException
 
 class GoogleApiService(
@@ -87,6 +88,33 @@ class GoogleApiService(
                 Result.Error(e)
             }
         }
+
+    suspend fun listFiles(folderId: String): Result<List<File>> = withContext(Dispatchers.IO) {
+        try {
+            val files = drive.files().list()
+                .setQ("'$folderId' in parents and trashed=false")
+                .setFields("files(id, name, modifiedTime)")
+                .execute()
+                .files
+            Result.Success(files)
+        } catch (e: UserRecoverableAuthIOException) {
+            Result.UserRecoverableError(e)
+        } catch (e: IOException) {
+            Result.Error(e)
+        }
+    }
+
+    suspend fun downloadFile(fileId: String): Result<ByteArray> = withContext(Dispatchers.IO) {
+        try {
+            val outputStream = ByteArrayOutputStream()
+            drive.files().get(fileId).executeMediaAndDownloadTo(outputStream)
+            Result.Success(outputStream.toByteArray())
+        } catch (e: UserRecoverableAuthIOException) {
+            Result.UserRecoverableError(e)
+        } catch (e: IOException) {
+            Result.Error(e)
+        }
+    }
 
     suspend fun uploadFolder(
         folder: java.io.File,
