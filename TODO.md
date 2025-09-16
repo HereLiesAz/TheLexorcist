@@ -10,39 +10,27 @@ This document outlines the tasks required to bring The Lexorcist to a fully func
 
 These tasks are the highest priority and must be completed before adding new features. The primary goal is to get the application into a runnable, stable state and ensure all existing architectural components are properly integrated.
 
-- [ ] **1.1. Fix Build Errors:**
-    - The project currently fails to compile. The build command is timing out, but manual inspection suggests the following issues:
-    - **`LexorcistTheme`:** An unresolved reference to `TheLexorcistTheme` is mentioned in the old `TODO.md`. The theme is now defined as `LexorcistTheme` in `app/src/main/java/com/hereliesaz/lexorcist/ui/theme/Theme.kt` and used in `MainActivity.kt`. The import might be incorrect or there might be other issues.
-    - **`Icons.filled`:** An unresolved reference to `Icons.filled` is mentioned. `CasesScreen.kt` uses `Icons.Filled.Search`, `Icons.Filled.Add`, etc. and also `Icons.AutoMirrored.Filled.Sort`. There might be an issue with the Material Icons dependency or imports.
-    - **Action:** Investigate and fix the build errors. The relevant files are `MainActivity.kt`, `app/src/main/java/com/hereliesaz/lexorcist/ui/CasesScreen.kt`, and the theme files in `app/src/main/java/com/hereliesaz/lexorcist/ui/theme/`. The file `ScriptEditorActivity.kt` has been replaced with `app/src/main/java/com/hereliesaz/lexorcist/ui/ScriptEditorScreen.kt`.
+- [x] **1.1. Fix Build Errors:**
+    - The project now compiles and runs successfully.
 
-- [ ] **1.2. Integrate `DataParser.kt`:**
-    - The `DataParser.kt` file, which is designed to extract generic entities like names, dates, and locations, is currently unused.
-    - **Action:** Modify the evidence processing pipeline in the ViewModels (`OcrViewModel`/`MainViewModel`) to call `DataParser.tagData()` on the extracted OCR text. The results of this parsing should be made available to the `ScriptRunner` so that user-defined scripts can leverage this pre-parsed information.
+- [x] **1.2. Integrate `DataParser.kt`:**
+    - The `DataParser.kt` is now used in the evidence processing pipeline.
 
-- [ ] **1.3. Refactor Monolithic `MainViewModel`:**
-    - The `MainViewModel` is overly large and handles logic that belongs in more specialized ViewModels.
-    - **Action:** Systematically move logic from `MainViewModel` into `AuthViewModel`, `CaseViewModel`, `EvidenceViewModel`, and `OcrViewModel`. For example, all OCR and image review logic should reside solely in `OcrViewModel`. Case creation and selection should be in `CaseViewModel`.
+- [x] **1.3. Refactor Monolithic `MainViewModel`:**
+    - The `MainViewModel` has been refactored, and the logic has been moved to more specialized ViewModels.
 
 ### **Part 2: Feature Enhancement & Vision Alignment**
 
 Once the app is stable, these tasks will enhance the core workflow and bring the application closer to the user's vision.
 
-- [ ] **2.1. Implement Enhanced Metadata Extraction:**
-    - The current implementation uses the system time when creating evidence. The vision requires extracting actual dates from the source material.
-    - **Action:** Add a library or custom code to read EXIF data from images to get the "Date Taken."
-    - **Action:** For screenshots of messages, enhance `DataParser.kt` with regex patterns to identify and extract timestamps commonly found in messaging apps.
-    - **Action:** The extracted date should be the default `documentDate` for a new `Evidence` object, with the current time used as a fallback.
+- [x] **2.1. Implement Enhanced Metadata Extraction:**
+    - The app now extracts EXIF data from images and uses regex to find timestamps in screenshots.
 
-- [ ] **2.2. Solidify the Scripting Engine:**
-    - The `ScriptRunner.kt` is functional but needs to be fully integrated with the UI.
-    - **Action:** Ensure that the script saved in the `ScriptEditorScreen` is the one used by `ScriptRunner` when processing new evidence.
-    - **Action:** Provide clear documentation and examples within the app (perhaps in a help section or placeholder text in the editor) on how to write scripts to tag evidence based on keywords (e.g., `if (evidence.content.includes("threat")) { parser.tags.push("Threat"); }`).
+- [x] **2.2. Solidify the Scripting Engine:**
+    - The script from the `ScriptEditorScreen` is now used by the `ScriptRunner`.
 
-- [ ] **2.3. Full CRUD for Evidence:**
-    - While evidence can be added, the full lifecycle is not complete.
-    - **Action:** Ensure that editing or deleting evidence in the `DataReviewScreen` correctly updates the corresponding row in the Google Sheet.
-    - **Action:** When evidence is updated, re-run the script runner against it to update its tags.
+- [x] **2.3. Full CRUD for Evidence:**
+    - The app now supports full CRUD operations for evidence, and the changes are reflected in the spreadsheet.
 
 ### **Part 3: Polish and User Experience**
 
@@ -51,9 +39,15 @@ Once the app is stable, these tasks will enhance the core workflow and bring the
     - **Action:** Add unit tests for all ViewModels, repositories, and the `ScriptRunner`.
     - **Action:** Add integration tests for the database and Google API interactions.
 
-- [ ] **3.2. Refine UI and Error Handling:**
-    - Provide more specific error messages for API failures, script errors, or parsing issues.
-    - Add loading indicators for all network and long-running operations.
+- [x] **3.2. Refine UI and Error Handling:**
+    - The UI has been updated to be more consistent and user-friendly.
+    - Loading indicators and more specific error messages have been added.
 
-- [ ] **3.3. Complete UI Screens:**
-    - Fully implement the functionality for all screens outlined in the navigation rail, ensuring they are driven by the refactored ViewModels.
+- [x] **3.3. Complete UI Screens:**
+    - All screens in the navigation rail are now fully functional.
+
+### **Part 4: Document Generation**
+
+- [ ] **4.1. Implement Document Generation:**
+    - This feature is not yet implemented.
+    - **Action:** Implement the document generation feature using the Google Apps Script backend and HTML templates.

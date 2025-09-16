@@ -6,7 +6,7 @@ This privacy policy applies to the The Lexorcist app (hereby referred to as "App
 
 The Application does not collect any personally identifiable information.
 
-The Application collects information that you provide to it, such as when you create a case or add evidence. This information is stored on your personal Google Drive and is not accessible to the Service Provider.
+The Application collects information that you provide to it, such as when you create a case or add evidence. This information is stored locally on your device in a spreadsheet file (`lexorcist_data.xlsx`) and can be synchronized with your personal Google Drive. This data is not accessible to the Service Provider.
 
 ## Third-Party Services
 
