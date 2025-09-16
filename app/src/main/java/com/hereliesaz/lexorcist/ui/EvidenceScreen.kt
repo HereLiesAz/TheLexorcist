@@ -28,6 +28,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -141,6 +142,17 @@ fun EvidenceScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                 }
             }
+            val isLoading by evidenceViewModel.isLoading.collectAsState()
+            val processingStatus by evidenceViewModel.processingStatus.collectAsState()
+            if (isLoading) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                    CircularProgressIndicator()
+                    processingStatus?.let {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(it, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            }
             if (showAddTextEvidence) {
                 OutlinedTextField(
                     value = text,
@@ -224,6 +236,8 @@ fun EvidenceListItem(
         Text(
             text = "Type: ${evidence.type} | Added: $formattedDate",
             style = MaterialTheme.typography.bodyMedium,
+            textAlign = TextAlign.End,
+            modifier = Modifier.fillMaxWidth()
         )
         Text(
             text = evidence.content,

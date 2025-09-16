@@ -74,6 +74,9 @@ class EvidenceViewModel
         private val _videoProcessingProgress = MutableStateFlow<String?>(null)
         val videoProcessingProgress: StateFlow<String?> = _videoProcessingProgress.asStateFlow()
 
+        private val _processingStatus = MutableStateFlow<String?>(null)
+        val processingStatus: StateFlow<String?> = _processingStatus.asStateFlow()
+
         private var currentCaseIdForList: Long? = null
         private var currentSpreadsheetIdForList: String? = null
 
@@ -335,6 +338,7 @@ class EvidenceViewModel
                 val spreadsheetId = currentSpreadsheetIdForList
                 if (caseId != null && spreadsheetId != null) {
                     _isLoading.value = true
+                    _processingStatus.value = "Processing image..."
                     try {
                         val newEvidence = ocrProcessingService.processImage(
                             uri = uri,
@@ -347,6 +351,7 @@ class EvidenceViewModel
                         }
                     } finally {
                         _isLoading.value = false
+                        _processingStatus.value = null
                         loadEvidenceForCase(caseId, spreadsheetId)
                     }
                 }
@@ -357,6 +362,7 @@ class EvidenceViewModel
             viewModelScope.launch {
                 if (currentCaseIdForList != null && currentSpreadsheetIdForList != null) {
                     _isLoading.value = true
+                    _processingStatus.value = "Processing audio..."
                     try {
                         val case = caseRepository.getCaseBySpreadsheetId(currentSpreadsheetIdForList!!)
                         if (case != null) {
@@ -392,11 +398,12 @@ class EvidenceViewModel
                                     if (transcribedText.isNotEmpty()) {
                                         _navigateToTranscriptionScreen.emit(newEvidenceWithId.id)
                                     }
-                                }
+                                 }
                             }
                         }
                     } finally {
                         _isLoading.value = false
+                        _processingStatus.value = null
                         loadEvidenceForCase(currentCaseIdForList!!, currentSpreadsheetIdForList!!)
                     }
                 }

@@ -87,6 +87,9 @@ constructor(
     val userRecoverableAuthIntent: StateFlow<Intent?> =
         _userRecoverableAuthIntent.asStateFlow()
 
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
     private val _selectedCaseEvidenceList =
         MutableStateFlow<List<com.hereliesaz.lexorcist.data.Evidence>>(emptyList())
     val selectedCaseEvidenceList: StateFlow<List<com.hereliesaz.lexorcist.data.Evidence>> =
@@ -152,7 +155,14 @@ constructor(
     }
 
     fun loadCasesFromRepository() {
-        viewModelScope.launch { caseRepository.refreshCases() }
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                caseRepository.refreshCases()
+            } finally {
+                _isLoading.value = false
+            }
+        }
     }
 
     fun loadHtmlTemplatesFromRepository() {
