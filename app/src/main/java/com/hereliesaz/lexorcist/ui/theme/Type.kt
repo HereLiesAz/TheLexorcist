@@ -2,25 +2,14 @@ package com.hereliesaz.lexorcist.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import com.hereliesaz.lexorcist.R
 
-// Define the custom font family
-val RobotoFontFamily = FontFamily(
-    Font(R.font.roboto, FontWeight.Normal),
-    Font(R.font.roboto, FontWeight.Medium),
-    Font(R.font.roboto, FontWeight.Bold)
-)
-
-// Set of Material typography styles to start with, overriding with the custom font
+// Set of Material typography styles to start with
 val Typography =
     Typography(
         displayLarge =
         TextStyle(
-            fontFamily = RobotoFontFamily,
             fontWeight = FontWeight.Normal,
             fontSize = 57.sp,
             lineHeight = 64.sp,
@@ -28,7 +17,6 @@ val Typography =
         ),
         displayMedium =
         TextStyle(
-            fontFamily = RobotoFontFamily,
             fontWeight = FontWeight.Normal,
             fontSize = 45.sp,
             lineHeight = 52.sp,
@@ -36,7 +24,6 @@ val Typography =
         ),
         displaySmall =
         TextStyle(
-            fontFamily = RobotoFontFamily,
             fontWeight = FontWeight.Normal,
             fontSize = 36.sp,
             lineHeight = 44.sp,
@@ -44,7 +31,6 @@ val Typography =
         ),
         headlineLarge =
         TextStyle(
-            fontFamily = RobotoFontFamily,
             fontWeight = FontWeight.Bold,
             fontSize = 32.sp,
             lineHeight = 40.sp,
@@ -52,7 +38,6 @@ val Typography =
         ),
         headlineMedium =
         TextStyle(
-            fontFamily = RobotoFontFamily,
             fontWeight = FontWeight.Medium,
             fontSize = 28.sp,
             lineHeight = 36.sp,
@@ -60,7 +45,6 @@ val Typography =
         ),
         headlineSmall =
         TextStyle(
-            fontFamily = RobotoFontFamily,
             fontWeight = FontWeight.Medium,
             fontSize = 24.sp,
             lineHeight = 32.sp,
@@ -68,7 +52,6 @@ val Typography =
         ),
         titleLarge =
         TextStyle(
-            fontFamily = RobotoFontFamily,
             fontWeight = FontWeight.Bold,
             fontSize = 22.sp,
             lineHeight = 28.sp,
@@ -76,7 +59,6 @@ val Typography =
         ),
         titleMedium =
         TextStyle(
-            fontFamily = RobotoFontFamily,
             fontWeight = FontWeight.Medium,
             fontSize = 16.sp,
             lineHeight = 24.sp,
@@ -84,7 +66,6 @@ val Typography =
         ),
         titleSmall =
         TextStyle(
-            fontFamily = RobotoFontFamily,
             fontWeight = FontWeight.Medium,
             fontSize = 14.sp,
             lineHeight = 20.sp,
@@ -92,7 +73,6 @@ val Typography =
         ),
         bodyLarge =
         TextStyle(
-            fontFamily = RobotoFontFamily,
             fontWeight = FontWeight.Normal,
             fontSize = 16.sp,
             lineHeight = 24.sp,
@@ -100,7 +80,6 @@ val Typography =
         ),
         bodyMedium =
         TextStyle(
-            fontFamily = RobotoFontFamily,
             fontWeight = FontWeight.Normal,
             fontSize = 14.sp,
             lineHeight = 20.sp,
@@ -108,7 +87,6 @@ val Typography =
         ),
         bodySmall =
         TextStyle(
-            fontFamily = RobotoFontFamily,
             fontWeight = FontWeight.Normal,
             fontSize = 12.sp,
             lineHeight = 16.sp,
@@ -116,7 +94,6 @@ val Typography =
         ),
         labelLarge =
         TextStyle(
-            fontFamily = RobotoFontFamily,
             fontWeight = FontWeight.Medium,
             fontSize = 14.sp,
             lineHeight = 20.sp,
@@ -124,7 +101,6 @@ val Typography =
         ),
         labelMedium =
         TextStyle(
-            fontFamily = RobotoFontFamily,
             fontWeight = FontWeight.Medium,
             fontSize = 12.sp,
             lineHeight = 16.sp,
@@ -132,7 +108,6 @@ val Typography =
         ),
         labelSmall =
         TextStyle(
-            fontFamily = RobotoFontFamily,
             fontWeight = FontWeight.Medium,
             fontSize = 11.sp,
             lineHeight = 16.sp,
