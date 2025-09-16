@@ -33,4 +33,8 @@ interface StorageService {
     // --- Transcript Management ---
 
     suspend fun updateTranscript(evidence: Evidence, newTranscript: String, reason: String): Result<Unit>
+
+    // --- Synchronization ---
+
+    suspend fun synchronize(): Result<Unit>
 }
