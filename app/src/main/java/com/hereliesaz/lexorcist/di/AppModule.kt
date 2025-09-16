@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.credentials.CredentialManager
 import androidx.work.WorkManager
+import com.google.gson.Gson // Moved import
 import com.hereliesaz.lexorcist.data.SettingsManager
 import com.hereliesaz.lexorcist.service.ScriptRunner
 import com.hereliesaz.lexorcist.utils.CacheManager
@@ -25,6 +26,7 @@ class AppModule {
     fun provideApplicationScope(): CoroutineScope {
         return CoroutineScope(SupervisorJob() + Dispatchers.Default)
     }
+
     @Provides
     @Singleton
     fun provideWorkManager(
@@ -59,13 +61,9 @@ class AppModule {
         @ApplicationContext context: Context,
     ): CredentialManager = CredentialManager.create(context)
 
-import com.hereliesaz.lexorcist.service.LogService
-
     @Provides
     @Singleton
-    fun provideGson(): com.google.gson.Gson = com.google.gson.Gson()
+    fun provideGson(): Gson = Gson() // Changed to use the imported Gson
 
-    @Provides
-    @Singleton
-    fun provideLogService(): LogService = LogService()
+    // Removed provideLogService() as LogService has @Inject constructor
 }
