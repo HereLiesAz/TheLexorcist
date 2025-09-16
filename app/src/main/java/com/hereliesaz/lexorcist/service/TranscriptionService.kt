@@ -22,9 +22,12 @@ class TranscriptionService
     constructor(
         @param:ApplicationContext private val context: Context,
         private val credentialHolder: CredentialHolder,
+        private val logService: LogService,
     ) {
         suspend fun transcribeAudio(uri: Uri): String {
+            logService.addLog("Starting audio transcription...")
             try {
+                logService.addLog("Getting credentials...")
                 val credential =
                     credentialHolder.credential
                         ?: return "Error: Could not retrieve access token."
@@ -35,12 +38,15 @@ class TranscriptionService
                         .newBuilder()
                         .setCredentialsProvider(FixedCredentialsProvider.create(googleCredentials))
                         .build()
-
+                logService.addLog("Creating SpeechClient...")
                 SpeechClient.create(speechSettings).use { speechClient ->
+                    logService.addLog("Reading audio file...")
                     val audioBytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
                     if (audioBytes == null) {
+                        logService.addLog("Error: Could not read audio file.")
                         return "Error: Could not read audio file."
                     }
+                    logService.addLog("Audio file read successfully. Size: ${audioBytes.size} bytes.")
 
                     val audio =
                         RecognitionAudio.newBuilder()
@@ -61,17 +67,23 @@ class TranscriptionService
                             .setAudio(audio)
                             .build()
 
+                    logService.addLog("Sending transcription request...")
                     val response = speechClient.recognize(request)
                     val results = response.resultsList
+                    logService.addLog("Transcription request complete.")
 
                     if (results.isNotEmpty()) {
-                        return results[0].alternativesList[0].transcript
+                        val transcript = results[0].alternativesList[0].transcript
+                        logService.addLog("Transcription successful. Found ${transcript.length} characters.")
+                        return transcript
                     }
                 }
             } catch (e: Exception) {
+                logService.addLog("Error during transcription: ${e.message}")
                 e.printStackTrace()
                 return "Error during transcription: ${e.message}"
             }
+            logService.addLog("No transcription result.")
             return "No transcription result."
         }
     }

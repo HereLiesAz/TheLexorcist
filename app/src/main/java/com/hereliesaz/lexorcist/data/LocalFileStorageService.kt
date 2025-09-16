@@ -20,13 +20,12 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 import com.hereliesaz.lexorcist.service.GoogleApiService
-import dagger.Lazy
 
 @Singleton
 class LocalFileStorageService @Inject constructor(
     @param:ApplicationContext private val context: Context, // Changed here
     private val gson: Gson,
-    private val googleApiService: Lazy<GoogleApiService> // Changed to Lazy injection
+    private val googleApiService: GoogleApiService
 ) : StorageService {
 
     private val storageDir: File by lazy {
@@ -344,17 +343,35 @@ class LocalFileStorageService @Inject constructor(
             return@withContext Result.Success(Unit) // Nothing to sync
         }
 
-        val folderIdResult = googleApiService.get().getOrCreateAppRootFolder()
+        val folderIdResult = googleApiService.getOrCreateAppRootFolder()
         if (folderIdResult is Result.Success) {
-            val folderId = folderIdResult.data
-            // For simplicity, we just upload. This will create duplicates.
-            // A more robust implementation would check for existence and update.
-            val uploadResult = googleApiService.get().uploadFile(spreadsheetFile, folderId, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-            when (uploadResult) {
-                is Result.Success -> Result.Success(Unit)
-                is Result.Error -> Result.Error(uploadResult.exception)
-                is Result.UserRecoverableError -> Result.UserRecoverableError(uploadResult.exception)
+            val appRootFolderId = folderIdResult.data
+
+            // Upload the main spreadsheet
+            val uploadSpreadsheetResult = googleApiService.uploadFile(spreadsheetFile, appRootFolderId, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+            if (uploadSpreadsheetResult is Result.Error) {
+                return@withContext Result.Error(uploadSpreadsheetResult.exception)
             }
+
+            // Get all cases to find their folders
+            val casesResult = getAllCases()
+            if (casesResult is Result.Success) {
+                val cases = casesResult.data
+                for (case in cases) {
+                    val caseFolder = File(storageDir, case.spreadsheetId)
+                    if (caseFolder.exists() && caseFolder.isDirectory) {
+                        val uploadFolderResult = googleApiService.uploadFolder(caseFolder, appRootFolderId)
+                        if (uploadFolderResult is Result.Error) {
+                            // Log the error but continue with other folders
+                            android.util.Log.e("LocalFileStorageService", "Failed to upload folder for case ${case.name}", uploadFolderResult.exception)
+                        }
+                    }
+                }
+            } else if (casesResult is Result.Error) {
+                return@withContext Result.Error(casesResult.exception)
+            }
+
+            Result.Success(Unit)
         } else if (folderIdResult is Result.Error) {
             Result.Error(folderIdResult.exception)
         } else if (folderIdResult is Result.UserRecoverableError) {

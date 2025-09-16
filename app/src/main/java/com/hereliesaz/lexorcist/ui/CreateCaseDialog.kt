@@ -24,6 +24,8 @@ import androidx.compose.ui.Alignment // Added import
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.hereliesaz.lexorcist.R
@@ -86,30 +88,35 @@ fun CreateCaseDialog(
                     label = { Text(stringResource(R.string.case_name_required)) },
                     isError = caseName.isBlank(),
                     modifier = Modifier.fillMaxWidth(), // TextField takes full width
+                    textStyle = TextStyle(textAlign = TextAlign.End)
                 )
                 OutlinedTextField(
                     value = exhibitSheetName,
                     onValueChange = { exhibitSheetName = it },
                     label = { Text(stringResource(R.string.exhibit_sheet_name)) },
                     modifier = Modifier.fillMaxWidth(),
+                    textStyle = TextStyle(textAlign = TextAlign.End)
                 )
                 OutlinedTextField(
                     value = caseNumber,
                     onValueChange = { caseNumber = it },
                     label = { Text(stringResource(R.string.case_number)) },
                     modifier = Modifier.fillMaxWidth(),
+                    textStyle = TextStyle(textAlign = TextAlign.End)
                 )
                 OutlinedTextField(
                     value = caseSection,
                     onValueChange = { caseSection = it },
                     label = { Text(stringResource(R.string.case_section)) },
                     modifier = Modifier.fillMaxWidth(),
+                    textStyle = TextStyle(textAlign = TextAlign.End)
                 )
                 OutlinedTextField(
                     value = caseJudge,
                     onValueChange = { caseJudge = it },
                     label = { Text(stringResource(R.string.judge)) },
                     modifier = Modifier.fillMaxWidth(),
+                    textStyle = TextStyle(textAlign = TextAlign.End)
                 )
             }
         },

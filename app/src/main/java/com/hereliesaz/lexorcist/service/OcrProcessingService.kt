@@ -25,6 +25,7 @@ class OcrProcessingService
         private val evidenceRepository: EvidenceRepository,
         private val settingsManager: SettingsManager,
         private val scriptRunner: ScriptRunner,
+        private val logService: LogService,
     ) {
         private suspend fun recognizeTextFromUri(
             context: Context,
@@ -62,15 +63,16 @@ class OcrProcessingService
             spreadsheetId: String,
             parentVideoId: String?,
         ): Evidence? {
-            Log.d("OcrProcessingService", "processImageFrame called for URI: $uri, caseId: $caseId, parentVideoId: $parentVideoId")
-
+            logService.addLog("Processing video frame: $uri")
             val ocrText =
                 try {
                     recognizeTextFromUri(context, uri)
                 } catch (e: Exception) {
+                    logService.addLog("Error recognizing text from frame: ${e.message}")
                     Log.e("OcrProcessingService", "Failed to recognize text from image frame.", e)
                     "Error recognizing text from image frame: ${e.message}"
                 }
+            logService.addLog("Frame recognition complete. Found ${ocrText.length} characters.")
 
             val entities = DataParser.tagData(ocrText)
             val documentDate =
@@ -106,9 +108,11 @@ class OcrProcessingService
                         newEvidence = newEvidence.copy(tags = newEvidence.tags + scriptResult.data)
                     }
                     is Result.Error -> {
+                        logService.addLog("Script error for frame: ${scriptResult.exception.message}")
                         Log.e("OcrProcessingService", "Script error for $uri: ${scriptResult.exception.message}", scriptResult.exception)
                     }
                     is Result.UserRecoverableError -> {
+                        logService.addLog("Script error for frame: ${scriptResult.exception.message}")
                         Log.e(
                             "OcrProcessingService",
                             "User recoverable script error for $uri: ${scriptResult.exception.message}",
@@ -118,8 +122,10 @@ class OcrProcessingService
                 }
             }
 
-            Log.d("OcrProcessingService", "Adding evidence for frame: $uri")
-            return evidenceRepository.addEvidence(newEvidence)
+            logService.addLog("Saving frame evidence...")
+            val savedEvidence = evidenceRepository.addEvidence(newEvidence)
+            logService.addLog("Frame evidence saved with ID: ${savedEvidence?.id}")
+            return savedEvidence
         }
 
         suspend fun processImage(
@@ -128,19 +134,25 @@ class OcrProcessingService
             caseId: Long,
             spreadsheetId: String,
         ): Evidence? {
+            logService.addLog("Starting image processing...")
             val ocrText =
                 try {
+                    logService.addLog("Recognizing text from image...")
                     recognizeTextFromUri(context, uri)
                 } catch (e: Exception) {
+                    logService.addLog("Error recognizing text: ${e.message}")
                     Log.e("OcrProcessingService", "Failed to recognize text from image.", e)
                     "Error recognizing text from image: ${e.message}"
                 }
 
+            logService.addLog("Text recognition complete. Found ${ocrText.length} characters.")
             val entities = DataParser.tagData(ocrText)
+            logService.addLog("Parsed ${entities.size} entities.")
             val documentDate =
                 ExifUtils.getExifDate(context, uri)
                     ?: DataParser.parseDates(ocrText).firstOrNull()
                     ?: System.currentTimeMillis()
+            logService.addLog("Determined document date: $documentDate")
 
             var newEvidence =
                 Evidence(
@@ -164,15 +176,19 @@ class OcrProcessingService
 
             val script = settingsManager.getScript()
             if (script.isNotBlank()) {
+                logService.addLog("Running script...")
                 val scriptResult = scriptRunner.runScript(script, newEvidence)
                 when (scriptResult) {
                     is Result.Success -> {
                         newEvidence = newEvidence.copy(tags = newEvidence.tags + scriptResult.data)
+                        logService.addLog("Script finished. Added tags: ${scriptResult.data.joinToString(", ")}")
                     }
                     is Result.Error -> {
+                        logService.addLog("Script error: ${scriptResult.exception.message}")
                         Log.e("OcrProcessingService", "Script error for $uri: ${scriptResult.exception.message}", scriptResult.exception)
                     }
                     is Result.UserRecoverableError -> {
+                        logService.addLog("Script error: ${scriptResult.exception.message}")
                         Log.e(
                             "OcrProcessingService",
                             "User recoverable script error for $uri: ${scriptResult.exception.message}",
@@ -182,6 +198,9 @@ class OcrProcessingService
                 }
             }
 
-            return evidenceRepository.addEvidence(newEvidence)
+            logService.addLog("Saving evidence...")
+            val savedEvidence = evidenceRepository.addEvidence(newEvidence)
+            logService.addLog("Evidence saved with ID: ${savedEvidence?.id}")
+            return savedEvidence
         }
     }

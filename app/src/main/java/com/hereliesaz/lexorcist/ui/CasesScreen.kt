@@ -92,6 +92,7 @@ fun CasesScreen(
                         stringResource(R.string.cases).uppercase(Locale.getDefault()),
                         modifier = Modifier.fillMaxWidth(),
                         color = MaterialTheme.colorScheme.primary,
+                        textAlign = TextAlign.End,
                     )
                 },
             )
@@ -274,6 +275,7 @@ fun CaseItem(
                     text = case.name,
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.End,
                 )
             }
             if (isLongPressed) {

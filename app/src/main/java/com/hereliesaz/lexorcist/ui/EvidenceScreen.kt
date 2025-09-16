@@ -143,8 +143,15 @@ fun EvidenceScreen(
                 }
             }
             val isLoading by evidenceViewModel.isLoading.collectAsState()
+            val processingStatus by evidenceViewModel.processingStatus.collectAsState()
             if (isLoading) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                    CircularProgressIndicator()
+                    processingStatus?.let {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(it, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
             }
             if (showAddTextEvidence) {
                 OutlinedTextField(
@@ -191,7 +198,16 @@ fun EvidenceScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            LazyColumn(modifier = Modifier.fillMaxSize()) {
+            val logMessages by evidenceViewModel.logMessages.collectAsState()
+            if (logMessages.isNotEmpty()) {
+                LazyColumn(modifier = Modifier.weight(1f)) {
+                    items(logMessages) { message ->
+                        Text(message, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            }
+
+            LazyColumn(modifier = Modifier.weight(1f)) {
                 items(evidenceList) { evidence ->
                     EvidenceListItem(
                         evidence = evidence,
@@ -229,6 +245,8 @@ fun EvidenceListItem(
         Text(
             text = "Type: ${evidence.type} | Added: $formattedDate",
             style = MaterialTheme.typography.bodyMedium,
+            textAlign = TextAlign.End,
+            modifier = Modifier.fillMaxWidth()
         )
         Text(
             text = evidence.content,
