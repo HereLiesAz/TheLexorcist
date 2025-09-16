@@ -21,7 +21,7 @@ android {
         targetSdk = 36
 
         versionCode = 2
-        versionName = "0.7.8"
+        versionName = "0.7.8-agent"
 
         testInstrumentationRunner = "com.hereliesaz.lexorcist.HiltTestRunner"
     }
