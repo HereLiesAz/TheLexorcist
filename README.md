@@ -17,6 +17,11 @@ This project is in an advanced stage of development, with a robust architecture 
 - **Timeline View:** Visualize the chronology of your evidence with an interactive timeline, making it easy to see the sequence of events.
 - **Secure and On-Device:** All OCR and data parsing happens on your device to ensure privacy and security.
 
+## Technical Details
+
+- **Local-First Architecture:** The application follows a local-first data management strategy. All user data, including case information and evidence, is stored in a single spreadsheet file (`lexorcist_data.xlsx`) within the application's folder, and synchronized with cloud services. This approach ensures that the app is always functional, even when offline.
+- **UI and UX:** The app is built with Jetpack Compose and Material 3 Expressive. The UI is designed to be right-aligned, with the exception of the navigation rail. All buttons are styled as outlined buttons. The app uses a custom font called "Ithea".
+
 ## License
 
 The Lexorcist is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.

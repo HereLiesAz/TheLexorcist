@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState // Added import
 import androidx.compose.foundation.verticalScroll // Added import
-import androidx.compose.material3.Button
+import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -79,9 +79,7 @@ fun EvidenceDetailsScreen(
                 modifier = Modifier.fillMaxWidth(), // TextField takes full width
             )
             Spacer(modifier = Modifier.height(16.dp))
-            Button(onClick = { viewModel.updateCommentary(evidence.id, commentary ?: "") }) {
-                Text("Save Commentary")
-            }
+            LexorcistOutlinedButton(onClick = { viewModel.updateCommentary(evidence.id, commentary ?: "") }, text = "Save Commentary")
         }
     }
 }

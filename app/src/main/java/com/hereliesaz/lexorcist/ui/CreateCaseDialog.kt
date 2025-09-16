@@ -9,9 +9,8 @@ import androidx.compose.foundation.layout.fillMaxWidth // Added import
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button // Kept for dialog buttons
+import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.OutlinedButton // Could be used for dialog buttons for consistency
 import androidx.compose.material3.OutlinedTextField // Changed from TextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -115,7 +114,7 @@ fun CreateCaseDialog(
             }
         },
         confirmButton = {
-            Button( // Using filled Button for primary action
+            LexorcistOutlinedButton(
                 onClick = {
                     if (caseName.isNotBlank()) {
                         caseViewModel.createCase(
@@ -131,16 +130,11 @@ fun CreateCaseDialog(
                         navController.navigate("cases")
                     }
                 },
-                enabled = caseName.isNotBlank(),
-            ) {
-                Text(stringResource(R.string.create))
-            }
+                text = stringResource(R.string.create)
+            )
         },
         dismissButton = {
-            OutlinedButton(onClick = onDismiss) {
-                // Using OutlinedButton for secondary action
-                Text(stringResource(R.string.cancel))
-            }
+            LexorcistOutlinedButton(onClick = onDismiss, text = stringResource(R.string.cancel))
         },
     )
 }
