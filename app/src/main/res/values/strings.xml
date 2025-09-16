@@ -13,7 +13,7 @@
     <string name="parse_store_no_existing_case">parseAndStore: No existing case found with name \'%1$s\'. Proceeding to create new case structure.</string>
     <string name="parse_store_failed_create_folder">parseAndStore: Failed to create folder for new case: %1$s</string>
     <string name="parse_store_failed_create_spreadsheet">parseAndStore: Failed to create spreadsheet for new case: %1$s</string>
-    <string name="default_imported_case_script">// Default script for imported case\\nfunction onOpen() {}</string>
+    <string name="default_imported_case_script">// Default script for imported case\nfunction onOpen() {}</string>
     <string name="parse_store_created_new_case">parseAndStore: Created new case structure: Folder ID %1$s, Spreadsheet ID %2$s</string>
     <string name="parse_store_failed_add_case_to_registry">parseAndStore: Failed to add new case \'%1$s\' to registry. Proceeding with data import to its sheet, but it won\'t be listed until registry issue is fixed.</string>
     <string name="exhibit_matrix_allegations_sheet_name">Exhibit Matrix - Allegations</string>
@@ -121,7 +121,6 @@
         // - parser: An object with a `tags` array to add new tags to the evidence.
     </string>
     <string name="save_script">Save Script</string>
-    <string name="script_builder">Script Builder</string>
     <string name="script_snippet_text_includes">evidence.text.includes("")</string>
     <string name="script_snippet_text_includes_label">text.includes(…)</string>
     <string name="script_snippet_tags_includes">evidence.tags.includes("")</string>
