@@ -8,9 +8,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState // Added import
-import androidx.compose.foundation.verticalScroll // Added import
-import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -25,28 +24,29 @@ import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import coil.compose.rememberAsyncImagePainter
 import com.hereliesaz.lexorcist.data.Evidence
-import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
+import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
+import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 
 @Composable
 fun EvidenceDetailsScreen(
     evidence: Evidence,
-    viewModel: EvidenceViewModel,
+    caseViewModel: CaseViewModel,
 ) {
     var commentary by remember { mutableStateOf(evidence.commentary ?: "") }
 
     BoxWithConstraints(
         modifier =
-            Modifier
-                .fillMaxSize()
-                .padding(16.dp), // Apply padding to the outer Box
+        Modifier
+            .fillMaxSize()
+            .padding(16.dp), // Apply padding to the outer Box
     ) {
         val halfScreenHeight = this@BoxWithConstraints.maxHeight / 2
 
         Column(
             modifier =
-                Modifier
-                    .fillMaxSize() // Column fills the BoxWithConstraints
-                    .verticalScroll(rememberScrollState()),
+            Modifier
+                .fillMaxSize() // Column fills the BoxWithConstraints
+                .verticalScroll(rememberScrollState()),
             // Make content scrollable
             horizontalAlignment = Alignment.End, // Right-align children of this Column
         ) {
@@ -73,13 +73,13 @@ fun EvidenceDetailsScreen(
                 Spacer(modifier = Modifier.height(16.dp))
             }
             OutlinedTextField(
-                value = commentary ?: "",
+                value = commentary,
                 onValueChange = { commentary = it },
                 label = { Text("Commentary") },
                 modifier = Modifier.fillMaxWidth(), // TextField takes full width
             )
             Spacer(modifier = Modifier.height(16.dp))
-            LexorcistOutlinedButton(onClick = { viewModel.updateCommentary(evidence.id, commentary ?: "") }, text = "Save Commentary")
+            LexorcistOutlinedButton(onClick = { caseViewModel.updateCommentary(evidence.id, commentary) }, text = "Save Commentary")
         }
     }
 }

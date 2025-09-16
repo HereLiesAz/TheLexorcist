@@ -1,28 +1,23 @@
 package com.hereliesaz.lexorcist.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
-import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -33,28 +28,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.hereliesaz.lexorcist.R
-import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.data.Evidence
-import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
+import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
+import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
+import com.hereliesaz.lexorcist.viewmodel.TimelineSortType
+import com.pushpal.jetlime.ItemsList
+import com.pushpal.jetlime.JetLimeColumn
+import com.pushpal.jetlime.JetLimeDefaults
+import com.pushpal.jetlime.JetLimeEvent
+import com.pushpal.jetlime.JetLimeEventDefaults
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TimelineScreen(
-    case: Case,
-    evidenceViewModel: EvidenceViewModel = viewModel(),
-    navController: NavController,
-) {
-    val evidenceList by evidenceViewModel.evidenceList.collectAsState()
-    val searchQuery by evidenceViewModel.searchQuery.collectAsState()
+fun TimelineScreen(caseViewModel: CaseViewModel, navController: NavController) {
+    val evidenceList by caseViewModel.selectedCaseEvidenceList.collectAsState()
     var showEvidenceDetailsDialog by remember { mutableStateOf<Evidence?>(null) }
-
-    LaunchedEffect(case) {
-        evidenceViewModel.loadEvidenceForCase(case.id.toLong(), case.spreadsheetId)
-    }
+    val timelineSortType by caseViewModel.timelineSortType.collectAsState()
 
     Scaffold(
         topBar = {
@@ -63,53 +55,51 @@ fun TimelineScreen(
                     Text(
                         stringResource(R.string.timeline).uppercase(Locale.getDefault()),
                         modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.End,
                         color = MaterialTheme.colorScheme.primary,
                     )
                 },
             )
         },
-    ) { paddingValues ->
-        BoxWithConstraints(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-            val halfScreenHeight = this@BoxWithConstraints.maxHeight / 2
-
-            val isLoading by evidenceViewModel.isLoading.collectAsState()
-
-            if (isLoading) {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                ) {
-                    CircularProgressIndicator()
-                }
-            } else if (evidenceList.isEmpty()) {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                ) {
-                    Text("No evidence found for this case.")
-                }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(), // LazyColumn fills the BoxWithConstraints
-                    contentPadding =
-                    PaddingValues(
-                        top = halfScreenHeight,
-                        start = 16.dp,
-                        end = 16.dp,
-                        bottom = 16.dp,
-                    ),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                    horizontalAlignment = Alignment.End
-                ) {
-                    items(evidenceList) { evidence ->
-                        EvidenceCard(
-                            evidence = evidence,
-                            onClick = { showEvidenceDetailsDialog = evidence },
-                        )
+    ) { padding ->
+        Column(
+            modifier = Modifier.fillMaxSize().padding(padding),
+            horizontalAlignment = Alignment.End
+        ) {
+            TimelineSortDropdown(
+                sortType = timelineSortType,
+                onSortChange = { caseViewModel.onTimelineSortOrderChanged(it) },
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+            if (evidenceList.isNotEmpty()) {
+                JetLimeColumn(
+                    modifier = Modifier.padding(16.dp),
+                    itemsList = ItemsList(evidenceList),
+                    key = { _, item -> item.id },
+                    style = JetLimeDefaults.columnStyle(),
+                ) { _, item, position ->
+                    JetLimeEvent(
+                        style = JetLimeEventDefaults.eventStyle(position = position)
+                    ) {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { showEvidenceDetailsDialog = item },
+                        ) {
+                            Column(modifier = Modifier.padding(8.dp)) {
+                                Text(item.sourceDocument, style = MaterialTheme.typography.titleMedium)
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(item.content)
+                            }
+                        }
                     }
                 }
+            } else {
+                Text(
+                    text = stringResource(R.string.no_evidence_placeholder),
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    textAlign = TextAlign.End,
+                )
             }
         }
     }
@@ -118,76 +108,38 @@ fun TimelineScreen(
         EvidenceDetailsDialog(
             evidence = evidence,
             onDismiss = { showEvidenceDetailsDialog = null },
-            onNavigateToEvidenceDetails = {
-                // Ensure evidence.id is a non-null string if your route expects that.
-                // If evidence.id is Long, it should be passed as such if the navigation graph handles it.
-                navController.navigate("evidence_details/${evidence.id}")
-                showEvidenceDetailsDialog = null // Dismiss dialog after initiating navigation
-            },
         )
     }
 }
 
 @Composable
-fun EvidenceCard(
-    evidence: Evidence,
-    onClick: () -> Unit,
+fun TimelineSortDropdown(
+    sortType: TimelineSortType,
+    onSortChange: (TimelineSortType) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    val isPlaceholder = evidence.id < 0
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        onClick = { if (!isPlaceholder) onClick() },
+    var expanded by remember { mutableStateOf(false) }
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.End,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp).fillMaxWidth(), // Fill width for internal alignment
-            horizontalAlignment = Alignment.End, // Right-align content within the Card
+        Text("Sort by: $sortType")
+        Spacer(modifier = Modifier.height(8.dp))
+        LexorcistOutlinedButton(onClick = { expanded = true }, text = stringResource(id = R.string.sort))
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
         ) {
-            Text(
-                text = evidence.content,
-                style = if (isPlaceholder) MaterialTheme.typography.bodyMedium else MaterialTheme.typography.bodyLarge,
-                color = if (isPlaceholder) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurface,
-            )
-            if (!isPlaceholder) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(text = evidence.category, style = MaterialTheme.typography.bodySmall)
-                    Text(text = evidence.documentDate.toString(), style = MaterialTheme.typography.bodySmall)
-                }
+            TimelineSortType.values().forEach { sortType ->
+                DropdownMenuItem(
+                    text = { Text(sortType.name.replace("_", " ").lowercase(Locale.getDefault()).replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }) },
+                    onClick = {
+                        onSortChange(sortType)
+                        expanded = false
+                    },
+                )
             }
         }
     }
-}
-
-@Composable
-fun EvidenceDetailsDialog(
-    evidence: Evidence,
-    onDismiss: () -> Unit,
-    onNavigateToEvidenceDetails: () -> Unit,
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(text = "Evidence Details") },
-        text = {
-            Column(horizontalAlignment = Alignment.End) {
-                // Right-align content in the dialog text area
-                Text(text = "Content: ${evidence.content}")
-                Text(text = "Category: ${evidence.category}")
-                Text(text = "Source: ${evidence.sourceDocument}")
-                Text(text = "Tags: ${evidence.tags.joinToString()}")
-            }
-        },
-        confirmButton = {
-            LexorcistOutlinedButton(onClick = {
-                onNavigateToEvidenceDetails()
-                // onDismiss() // Already called after navigation
-            }, text = "Go to Details")
-        },
-        dismissButton = {
-            LexorcistOutlinedButton(onClick = onDismiss, text = "Close")
-        },
-    )
 }

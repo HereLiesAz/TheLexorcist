@@ -42,6 +42,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel // Corrected import
 import com.hereliesaz.lexorcist.R
@@ -64,7 +65,16 @@ fun AllegationsScreen(viewModel: MasterAllegationsViewModel = hiltViewModel()) {
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text(stringResource(R.string.allegations)) })
+            TopAppBar(
+                title = {
+                    Text(
+                        stringResource(R.string.allegations).uppercase(java.util.Locale.getDefault()),
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.End,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                },
+            )
         },
     ) { padding ->
         Column(
@@ -78,7 +88,7 @@ fun AllegationsScreen(viewModel: MasterAllegationsViewModel = hiltViewModel()) {
                 Text(
                     text = "Selected Allegations:",
                     style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(start = 16.dp, top = 16.dp),
+                    modifier = Modifier.fillMaxWidth().padding(top = 16.dp, end = 16.dp),
                 )
                 LazyColumn(
                     modifier =
@@ -88,7 +98,7 @@ fun AllegationsScreen(viewModel: MasterAllegationsViewModel = hiltViewModel()) {
                             .padding(horizontal = 16.dp),
                 ) {
                     items(selectedAllegations.toList()) { allegation ->
-                        Text(text = allegation.name)
+                        Text(text = allegation.name, modifier = Modifier.fillMaxWidth())
                     }
                 }
             }
@@ -124,7 +134,7 @@ fun AllegationsScreen(viewModel: MasterAllegationsViewModel = hiltViewModel()) {
                             Text(
                                 text = type,
                                 style = MaterialTheme.typography.headlineSmall,
-                                modifier = Modifier.padding(16.dp),
+                                modifier = Modifier.fillMaxWidth().padding(16.dp),
                             )
                         }
                         val allegationsByCategory = allegationsForType.groupBy { it.category }
@@ -133,7 +143,7 @@ fun AllegationsScreen(viewModel: MasterAllegationsViewModel = hiltViewModel()) {
                                 Text(
                                     text = category,
                                     style = MaterialTheme.typography.titleMedium,
-                                    modifier = Modifier.padding(start = 32.dp, top = 8.dp, bottom = 8.dp),
+                                    modifier = Modifier.fillMaxWidth().padding(start = 32.dp, top = 8.dp, bottom = 8.dp, end = 16.dp),
                                 )
                             }
                             items(allegationList) { allegation ->

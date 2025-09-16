@@ -206,7 +206,7 @@ fun TemplateItem(
                         .height(100.dp),
             )
             Spacer(modifier = Modifier.height(8.dp))
-            Row {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = template.description,
                     modifier = Modifier.weight(1f),

@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -16,7 +16,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -29,18 +28,20 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.hereliesaz.lexorcist.R
-import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
+import com.hereliesaz.lexorcist.data.Evidence
+import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
+import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TranscriptionScreen(
-    evidenceViewModel: EvidenceViewModel,
+    evidence: Evidence,
+    caseViewModel: CaseViewModel,
     navController: NavController,
 ) {
-    val evidenceDetails by evidenceViewModel.selectedEvidenceDetails.collectAsState()
-    var transcript by remember(evidenceDetails) {
-        mutableStateOf(evidenceDetails?.content ?: "")
+    var transcript by remember(evidence) {
+        mutableStateOf(evidence.content)
     }
     var reason by remember { mutableStateOf("") }
     var showReasonDialog by remember { mutableStateOf(false) }
@@ -61,10 +62,10 @@ fun TranscriptionScreen(
     ) { padding ->
         Column(
             modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .padding(16.dp),
+            Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(16.dp),
             horizontalAlignment = Alignment.End
         ) {
             OutlinedTextField(
@@ -72,22 +73,22 @@ fun TranscriptionScreen(
                 onValueChange = { transcript = it },
                 label = { Text(stringResource(R.string.transcript_label)) },
                 modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
+                Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
                 textStyle = TextStyle(textAlign = TextAlign.End)
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text("Edit History", style = MaterialTheme.typography.titleMedium, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.End)
             LazyColumn(modifier = Modifier.weight(1f)) {
-                items(evidenceDetails?.transcriptEdits ?: emptyList()) { edit ->
+                items(evidence.transcriptEdits) { edit ->
                     Text("${edit.timestamp}: ${edit.reason} - ${edit.content}", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.End)
                 }
             }
             Spacer(modifier = Modifier.height(16.dp))
             LexorcistOutlinedButton(
                 onClick = {
-                    if (transcript != evidenceDetails?.content) {
+                    if (transcript != evidence.content) {
                         showReasonDialog = true
                     } else {
                         navController.popBackStack()
@@ -103,9 +104,7 @@ fun TranscriptionScreen(
         ReasonDialog(
             onDismiss = { showReasonDialog = false },
             onConfirm = { reasonText ->
-                evidenceDetails?.let {
-                    evidenceViewModel.updateTranscript(it, transcript, reasonText)
-                }
+                caseViewModel.updateTranscript(evidence, transcript, reasonText)
                 showReasonDialog = false
                 navController.popBackStack()
             },
@@ -119,7 +118,7 @@ fun ReasonDialog(
     onConfirm: (String) -> Unit,
 ) {
     var reason by remember { mutableStateOf("") }
-    androidx.compose.material3.AlertDialog(
+    AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.reason_for_edit)) },
         text = {
