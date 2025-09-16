@@ -56,3 +56,5 @@ app/google-services.json
 /.idea/caches/deviceStreaming.xml
 /.kotlin/sessions/kotlin-compiler-7983376919953869927.salive
 /.kotlin/sessions/kotlin-compiler-*
+/backup.ps1
+/project_backup_full_2025-09-15_23-31-14.txt
