@@ -26,6 +26,13 @@ class SettingsManager
             context.getSharedPreferences(context.getString(R.string.settings_preferences_name), Context.MODE_PRIVATE)
 
         private val keyUserScript = "user_script"
+        private val keyStorageLocation = "storage_location"
+
+        fun saveStorageLocation(uri: String) {
+            sharedPreferences.edit().putString(keyStorageLocation, uri).apply()
+        }
+
+        fun getStorageLocation(): String? = sharedPreferences.getString(keyStorageLocation, null)
 
         /**
          * Saves the user-defined script.

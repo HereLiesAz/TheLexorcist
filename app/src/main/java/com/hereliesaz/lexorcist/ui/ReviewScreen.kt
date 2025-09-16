@@ -52,26 +52,27 @@ import androidx.compose.ui.unit.dp
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.data.Allegation
 import com.hereliesaz.lexorcist.data.Evidence
-import com.hereliesaz.lexorcist.viewmodel.AllegationsViewModel
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+import com.hereliesaz.lexorcist.viewmodel.AllegationsViewModel
+
 fun ReviewScreen(
     evidenceViewModel: EvidenceViewModel,
     caseViewModel: CaseViewModel,
     allegationsViewModel: AllegationsViewModel,
 ) {
-    val evidenceList by evidenceViewModel.evidenceList.collectAsState()
+    val evidenceList by caseViewModel.selectedCaseEvidenceList.collectAsState()
     val selectedCase by caseViewModel.selectedCase.collectAsState()
-    val isLoading by evidenceViewModel.isLoading.collectAsState()
+    val isLoading by caseViewModel.isLoading.collectAsState()
     val allegations by allegationsViewModel.allegations.collectAsState()
 
     LaunchedEffect(selectedCase) {
         selectedCase?.let {
-            evidenceViewModel.loadEvidenceForCase(it.id.toLong(), it.spreadsheetId)
+            caseViewModel.loadEvidenceForSelectedCase()
             allegationsViewModel.loadAllegations(it.id.toString())
         }
     }

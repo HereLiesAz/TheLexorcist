@@ -18,6 +18,8 @@ constructor(
     private val storageService: StorageService, // Injected StorageService
     private val settingsManager: SettingsManager,
     private val errorReporter: ErrorReporter,
+    private val caseSheetParser: CaseSheetParser,
+    private val credentialHolder: com.hereliesaz.lexorcist.auth.CredentialHolder,
 ) : CaseRepository {
     private val _cases = MutableStateFlow<List<Case>>(emptyList())
     private val _selectedCase = MutableStateFlow<Case?>(null)
@@ -172,7 +174,19 @@ constructor(
     }
 
     override suspend fun importSpreadsheet(spreadsheetId: String): Case? {
-        // TODO: Implement actual logic
+        val googleApiService = credentialHolder.googleApiService ?: return null
+        val sheetData = googleApiService.readSpreadsheet(spreadsheetId)
+        if (sheetData.isNullOrEmpty()) {
+            return null
+        }
+        val parsedData = caseSheetParser.parseCaseFromData(spreadsheetId, sheetData)
+        if (parsedData != null) {
+            val (newCase, evidenceList) = parsedData
+            storageService.createCase(newCase)
+            evidenceList.forEach { storageService.addEvidence(newCase.spreadsheetId, it) }
+            refreshCases()
+            return newCase
+        }
         return null
     }
 
