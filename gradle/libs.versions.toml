@@ -3,6 +3,7 @@ androidApplication = "8.13.0" # Assuming a common version, adjust if needed from
 aznavrail = "2.9"
 browser = "1.9.0"
 dropboxCoreSdk = "7.0.0"
+errorProneAnnotations = "2.41.0"
 firebaseAuthKtx = "23.2.1"
 grpcContext = "1.75.0"
 grpcCore = "1.75.0"
@@ -88,6 +89,7 @@ androidx-compose-runtime = { group = "androidx.compose.runtime", name = "runtime
 androidx-navigation-runtime-ktx = { group = "androidx.navigation", name = "navigation-runtime-ktx", version.ref = "navigationRuntimeKtx" }
 androidx-compose-ui = { group = "androidx.compose.ui", name = "ui", version.ref = "composeUi" }
 androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "composeFoundation" }
+google-errorprone-annotations = { group = "com.google.errorprone", name = "error_prone_annotations", version.ref = "errorProneAnnotations" }
 google-firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
 google-firebase-auth = { module = "com.google.firebase:firebase-auth" }
 google-firebase-auth-ktx = { module = "com.google.firebase:firebase-auth-ktx", version.ref = "firebaseAuthKtx" }
