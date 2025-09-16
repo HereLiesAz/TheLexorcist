@@ -93,6 +93,7 @@ dependencies {
     androidTestImplementation(libs.play.services.auth)
 
     implementation(libs.google.play.services.mlkit.text.recognition)
+    implementation(libs.play.services.base) // Added
 
 
     // Gson
