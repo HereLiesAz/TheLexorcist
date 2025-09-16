@@ -39,6 +39,7 @@ import java.util.Locale
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Switch
+import androidx.compose.material3.Switch
 import androidx.compose.ui.platform.LocalContext
 import com.hereliesaz.lexorcist.viewmodel.SettingsViewModel
 
