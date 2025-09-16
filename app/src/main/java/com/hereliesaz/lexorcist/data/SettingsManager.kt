@@ -80,4 +80,20 @@ class SettingsManager
             val defaultFormat = context.getString(R.string.settings_export_format_pdf)
             return sharedPreferences.getString(context.getString(R.string.settings_key_export_format), defaultFormat) ?: defaultFormat
         }
+
+        fun saveCaseFolderPath(path: String) {
+            sharedPreferences.edit().putString("case_folder_path", path).apply()
+        }
+
+        fun getCaseFolderPath(): String? {
+            return sharedPreferences.getString("case_folder_path", null)
+        }
+
+        fun saveCloudSyncEnabled(enabled: Boolean) {
+            sharedPreferences.edit().putBoolean("cloud_sync_enabled", enabled).apply()
+        }
+
+        fun getCloudSyncEnabled(): Boolean {
+            return sharedPreferences.getBoolean("cloud_sync_enabled", true)
+        }
     }

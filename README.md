@@ -16,6 +16,8 @@ This project is in an advanced stage of development, with a robust architecture 
 - **Automatic Document Generation:** The app leverages a powerful Google Apps Script backend. From your case's Google Sheet, you can instantly generate a variety of court-ready documents using customizable HTML templates.
 - **Timeline View:** Visualize the chronology of your evidence with an interactive timeline, making it easy to see the sequence of events.
 - **Secure and On-Device:** All OCR and data parsing happens on your device to ensure privacy and security.
+- **Transparent Progress:** See detailed, real-time logs of the evidence processing pipeline, so you know exactly what's happening with your data at all times.
+- **Configurable Storage:** Choose where your case folders are stored on your device and enable or disable cloud synchronization to fit your workflow.
 
 ## Technical Details
 

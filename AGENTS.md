@@ -46,7 +46,7 @@ The file google-services.template.json located at the root of the /app/ folder s
 
 ### Before You Begin...
 
-1.  **Analyze the Full Project:** The core architecture for the above workflow is already in place. Familiarize yourself with `OcrViewModel.kt` (for image processing), `ScriptRunner.kt` (for the tagging engine), `GoogleApiService.kt` (for Sheets/Drive integration), and the `raw` resources folder (for Apps Script and HTML templates).
+1.  **Analyze the Full Project:** The core architecture for the above workflow is already in place. Familiarize yourself with `OcrViewModel.kt` (for image processing), `ScriptRunner.kt` (for the tagging engine), `GoogleApiService.kt` (for Sheets/Drive integration), `SettingsViewModel.kt` (for user settings), and the `raw` resources folder (for Apps Script and HTML templates).
 2.  **Get Code Reviews Often:** If you are struggling, if you have a question, if you'd like to know how you're doing, get a code review. A code review must be run and heeded before any commit. If you disagree with the code review, get another code review. 
 3.  **Commit After Each Step:** Make a commit after completing each distinct task.
 4.  **Adhere to Design Principles:**

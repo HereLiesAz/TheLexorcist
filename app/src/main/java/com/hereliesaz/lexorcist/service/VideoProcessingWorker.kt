@@ -53,14 +53,16 @@ class VideoProcessingWorker
             logService.addLog("Processing video: $videoUri")
             setProgressAsync(Data.Builder().putString(PROGRESS, "Starting video processing...").build())
 
-            logService.addLog("Copying video to cache...")
-            val videoFile = File(applicationContext.cacheDir, "video_${System.currentTimeMillis()}.mp4")
-            applicationContext.contentResolver.openInputStream(videoUri)?.use { input ->
-                videoFile.outputStream().use { output ->
-                    input.copyTo(output)
-                }
+            logService.addLog("Copying video to raw evidence folder...")
+            val localUploadResult = evidenceRepository.uploadFile(videoUri, caseName, spreadsheetId)
+            if (localUploadResult is LexResult.Error) {
+                logService.addLog("Failed to copy video to local storage: ${localUploadResult.exception.message}")
+                return Result.failure()
             }
-            logService.addLog("Video copied to cache.")
+            val videoPath = (localUploadResult as LexResult.Success).data
+            val videoFile = File(videoPath)
+            setProgressAsync(Data.Builder().putString(PROGRESS, "Raw evidence file saved.").build())
+            logService.addLog("Video copied to raw evidence folder.")
 
             var uploadedDriveFile: DriveFile? = null
             val googleApiService = credentialHolder.googleApiService // Get from CredentialHolder
