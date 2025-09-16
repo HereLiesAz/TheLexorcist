@@ -9,6 +9,8 @@ import com.hereliesaz.lexorcist.utils.Result
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.apache.poi.ss.usermodel.Cell
+import org.apache.poi.ss.usermodel.CellType
 import org.apache.poi.ss.usermodel.Row
 import org.apache.poi.xssf.usermodel.XSSFSheet
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
@@ -81,11 +83,60 @@ class LocalFileStorageService @Inject constructor(
     private fun findRowById(sheet: XSSFSheet, id: Int, idColumn: Int): Row? {
         for (i in 1..sheet.lastRowNum) {
             val row = sheet.getRow(i) ?: continue
-            if (row.getCell(idColumn)?.numericCellValue?.toInt() == id) {
+            // Use safe numeric cell value retrieval
+            if (getIntCellValueSafe(row.getCell(idColumn)) == id) {
                 return row
             }
         }
         return null
+    }
+
+    // Helper functions to safely get cell values
+    private fun getNumericCellValueSafe(cell: Cell?): Double? {
+        if (cell == null) return null
+        return when (cell.cellType) {
+            CellType.NUMERIC -> cell.numericCellValue
+            CellType.STRING -> cell.stringCellValue.toDoubleOrNull()
+            CellType.FORMULA -> {
+                try {
+                    if (cell.cachedFormulaResultType == CellType.NUMERIC) {
+                        cell.numericCellValue
+                    } else if (cell.cachedFormulaResultType == CellType.STRING) {
+                        cell.stringCellValue.toDoubleOrNull()
+                    } else {
+                        null
+                    }
+                } catch (e: IllegalStateException) {
+                    null // Error during formula evaluation or unsupported cached type
+                }
+            }
+            else -> null
+        }
+    }
+
+    private fun getIntCellValueSafe(cell: Cell?): Int? {
+        return getNumericCellValueSafe(cell)?.toInt()
+    }
+
+    private fun getLongCellValueSafe(cell: Cell?): Long? {
+        return getNumericCellValueSafe(cell)?.toLong()
+    }
+
+    private fun getBooleanCellValueSafe(cell: Cell?): Boolean? {
+        if (cell == null) return null
+        return when (cell.cellType) {
+            CellType.BOOLEAN -> cell.booleanCellValue
+            CellType.STRING -> {
+                val sVal = cell.stringCellValue.trim().lowercase()
+                when (sVal) {
+                    "true" -> true
+                    "false" -> false
+                    else -> null
+                }
+            }
+            CellType.NUMERIC -> cell.numericCellValue != 0.0
+            else -> null
+        }
     }
 
     suspend fun moveFilesToNewLocation(oldLocation: String, newLocation: String) {
@@ -113,8 +164,8 @@ class LocalFileStorageService @Inject constructor(
                 defendants = row.getCell(3)?.stringCellValue ?: "",
                 court = row.getCell(4)?.stringCellValue ?: "",
                 folderId = row.getCell(5)?.stringCellValue,
-                lastModifiedTime = row.getCell(6)?.numericCellValue?.toLong() ?: 0L,
-                isArchived = row.getCell(7)?.booleanCellValue ?: false
+                lastModifiedTime = getLongCellValueSafe(row.getCell(6)) ?: 0L,
+                isArchived = getBooleanCellValueSafe(row.getCell(7)) ?: false
             )
         }
     }
@@ -168,10 +219,10 @@ class LocalFileStorageService @Inject constructor(
         val allEdits = editsSheet?.let {
             (1..it.lastRowNum).mapNotNull { j ->
                 val editRow = it.getRow(j) ?: return@mapNotNull null
-                val evidenceId = editRow.getCell(1)?.numericCellValue?.toInt()
+                val evidenceId = getIntCellValueSafe(editRow.getCell(1))
                 if (evidenceId != null) {
                     evidenceId to com.hereliesaz.lexorcist.model.TranscriptEdit(
-                        timestamp = editRow.getCell(2)?.numericCellValue?.toLong() ?: 0L,
+                        timestamp = getLongCellValueSafe(editRow.getCell(2)) ?: 0L,
                         reason = editRow.getCell(3)?.stringCellValue ?: "",
                         content = editRow.getCell(4)?.stringCellValue ?: ""
                     )
@@ -186,26 +237,24 @@ class LocalFileStorageService @Inject constructor(
             if (row.getCell(1)?.stringCellValue != caseSpreadsheetId) return@mapNotNull null
 
             val idCell = row.getCell(0)
-            val evidenceId = idCell?.numericCellValue?.toInt() ?: 0
+            val evidenceId = getIntCellValueSafe(idCell) ?: 0
 
-            val timestampCell = row.getCell(4)
-            val timestamp = timestampCell?.numericCellValue?.toLong() ?: 0L
+            val timestampCell = row.getCell(6) // Corrected index for Evidence Timestamp
+            val timestamp = getLongCellValueSafe(timestampCell) ?: 0L
 
-            val documentDateCell = row.getCell(6)
-            val documentDate = documentDateCell?.numericCellValue?.toLong() ?: 0L
+            val documentDateCell = row.getCell(8) // Corrected index for Evidence DocumentDate
+            val documentDate = getLongCellValueSafe(documentDateCell) ?: 0L
 
-            val allegationIdCell = row.getCell(7)
-            val allegationId = allegationIdCell?.numericCellValue?.toInt()
+            val allegationIdCell = row.getCell(9) // Corrected index for Evidence AllegationID
+            val allegationId = getIntCellValueSafe(allegationIdCell)
 
-            val tagsCell = row.getCell(9)
+            val tagsCell = row.getCell(11) // Corrected index for Evidence Tags
             val tags = (tagsCell?.stringCellValue ?: "").split(",").filter { it.isNotBlank() }
 
-            val linkedIdsCell = row.getCell(11)
+            val linkedIdsCell = row.getCell(13) // Corrected index for Evidence LinkedEvidenceIDs
             val linkedIds = (linkedIdsCell?.stringCellValue ?: "").split(",").filter { it.isNotBlank() }.mapNotNull { it.toIntOrNull() }
 
-
-            val entitiesCell = row.getCell(13)
-            // Explicitly define the type for entities
+            val entitiesCell = row.getCell(15) // Corrected index for Evidence Entities
             val entities: Map<String, List<String>> = gson.fromJson(
                 entitiesCell?.stringCellValue ?: "{}",
                 object : TypeToken<Map<String, List<String>>>() {}.type
@@ -215,21 +264,21 @@ class LocalFileStorageService @Inject constructor(
 
             Evidence(
                 id = evidenceId,
-                caseId = caseSpreadsheetId.hashCode().toLong(),
+                caseId = caseSpreadsheetId.hashCode().toLong(), // This seems to be a placeholder, consider if it should be from sheet
                 spreadsheetId = caseSpreadsheetId,
                 type = row.getCell(2)?.stringCellValue ?: "",
                 content = row.getCell(3)?.stringCellValue ?: "",
                 formattedContent = row.getCell(4)?.stringCellValue,
                 mediaUri = row.getCell(5)?.stringCellValue,
                 timestamp = timestamp,
-                sourceDocument = row.getCell(7)?.stringCellValue ?: "",
+                sourceDocument = row.getCell(7)?.stringCellValue ?: "", // Corrected index for Evidence SourceDocument
                 documentDate = documentDate,
                 allegationId = allegationId,
-                category = row.getCell(10)?.stringCellValue ?: "",
+                category = row.getCell(10)?.stringCellValue ?: "", // Corrected index for Evidence Category
                 tags = tags,
-                commentary = row.getCell(12)?.stringCellValue,
+                commentary = row.getCell(12)?.stringCellValue, // Corrected index for Evidence Commentary
                 linkedEvidenceIds = linkedIds,
-                parentVideoId = row.getCell(14)?.stringCellValue,
+                parentVideoId = row.getCell(14)?.stringCellValue, // Corrected index for Evidence ParentVideoID
                 entities = entities,
                 transcriptEdits = transcriptEdits
             )
@@ -314,7 +363,7 @@ class LocalFileStorageService @Inject constructor(
             val row = sheet.getRow(i) ?: return@mapNotNull null
             if (row.getCell(1)?.stringCellValue != caseSpreadsheetId) return@mapNotNull null
             Allegation(
-                id = row.getCell(0)?.numericCellValue?.toInt() ?: 0,
+                id = getIntCellValueSafe(row.getCell(0)) ?: 0,
                 spreadsheetId = caseSpreadsheetId,
                 text = row.getCell(2)?.stringCellValue ?: ""
             )
