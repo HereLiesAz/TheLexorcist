@@ -14,7 +14,10 @@ import com.hereliesaz.lexorcist.data.EvidenceRepository
 import com.hereliesaz.lexorcist.data.LocalFileStorageService
 import com.hereliesaz.lexorcist.data.SettingsManager
 import com.hereliesaz.lexorcist.data.SortOrder
+// Removed duplicate TimelineSortType enum, will use the one from its own file
+// import com.hereliesaz.lexorcist.viewmodel.TimelineSortType // Ensure this import is present if TimelineSortType.kt is in the same package
 import com.hereliesaz.lexorcist.model.SheetFilter
+import com.hereliesaz.lexorcist.ui.theme.ThemeMode
 import com.hereliesaz.lexorcist.utils.Result
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -97,6 +100,9 @@ constructor(
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
+    private val _userMessage = MutableStateFlow<String?>(null)
+    val userMessage: StateFlow<String?> = _userMessage.asStateFlow()
+
     private val _userRecoverableAuthIntent = MutableStateFlow<Intent?>(null)
     val userRecoverableAuthIntent: StateFlow<Intent?> =
         _userRecoverableAuthIntent.asStateFlow()
@@ -132,7 +138,7 @@ constructor(
                     TimelineSortType.DATE_EVIDENCE_ADDED -> evidence.sortedByDescending { it.timestamp }
                     TimelineSortType.BY_ALLEGATION -> evidence.sortedBy { it.allegationId }
                     TimelineSortType.BY_FILE_TYPE -> evidence.sortedBy { it.type }
-                    TimelineSortType.CUSTOM -> evidence // Placeholder for custom sort
+                    TimelineSortType.CUSTOM -> evidence
                 }
             }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
@@ -148,8 +154,8 @@ constructor(
     }
 
     private val _themeMode =
-        MutableStateFlow(com.hereliesaz.lexorcist.ui.theme.ThemeMode.SYSTEM)
-    val themeMode: StateFlow<com.hereliesaz.lexorcist.ui.theme.ThemeMode> =
+        MutableStateFlow(ThemeMode.SYSTEM)
+    val themeMode: StateFlow<ThemeMode> =
         _themeMode.asStateFlow()
 
     private val _storageLocation = MutableStateFlow<String?>(null)
@@ -158,6 +164,10 @@ constructor(
     init {
         loadThemeModePreference()
         _storageLocation.value = settingsManager.getStorageLocation()
+    }
+
+    fun onTimelineSortOrderChanged(sortType: TimelineSortType) {
+        _timelineSortType.value = sortType
     }
 
     fun setStorageLocation(uri: android.net.Uri) {
@@ -181,7 +191,7 @@ constructor(
         _plaintiffs.value = ""
         _defendants.value = ""
         _court.value = ""
-        _selectedCaseEvidenceList.value = emptyList()
+        _unfilteredEvidenceList.value = emptyList()
         saveCaseInfoToSharedPrefs()
     }
 
@@ -193,11 +203,15 @@ constructor(
         _errorMessage.value = null
     }
 
+    fun clearUserMessage() {
+        _userMessage.value = null
+    }
+
     fun clearUserRecoverableAuthIntent() {
         _userRecoverableAuthIntent.value = null
     }
 
-    fun setThemeMode(themeMode: com.hereliesaz.lexorcist.ui.theme.ThemeMode) {
+    fun setThemeMode(themeMode: ThemeMode) {
         _themeMode.value = themeMode
         sharedPref.edit().putString("theme_mode", themeMode.name).apply()
     }
@@ -206,11 +220,11 @@ constructor(
         val themeName =
             sharedPref.getString(
                 "theme_mode",
-                com.hereliesaz.lexorcist.ui.theme.ThemeMode.SYSTEM.name
+                ThemeMode.SYSTEM.name
             )
         _themeMode.value =
-            com.hereliesaz.lexorcist.ui.theme.ThemeMode.valueOf(
-                themeName ?: com.hereliesaz.lexorcist.ui.theme.ThemeMode.SYSTEM.name
+            ThemeMode.valueOf(
+                themeName ?: ThemeMode.SYSTEM.name
             )
     }
 
@@ -293,7 +307,7 @@ constructor(
                 _sheetFilters.value = emptyList()
                 _allegations.value = emptyList()
                 _htmlTemplates.value = emptyList()
-                _selectedCaseEvidenceList.value = emptyList()
+                _unfilteredEvidenceList.value = emptyList()
             }
         }
     }
@@ -317,7 +331,7 @@ constructor(
         }
     }
 
-    private fun loadAllegationsFromRepository(
+    internal fun loadAllegationsFromRepository(
         caseId: Int,
         spreadsheetId: String,
     ) {

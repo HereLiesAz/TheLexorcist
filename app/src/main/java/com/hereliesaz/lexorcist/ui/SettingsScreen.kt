@@ -1,5 +1,6 @@
 package com.hereliesaz.lexorcist.ui
 
+import android.app.Activity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -34,6 +35,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+// import com.dropbox.core.android.Auth // Removed based on user feedback
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.ui.theme.ThemeMode
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -45,6 +48,8 @@ import java.util.Locale
 fun SettingsScreen(caseViewModel: CaseViewModel) {
     val themeMode by caseViewModel.themeMode.collectAsState()
     var showClearCacheDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val activity = context as android.app.Activity
 
     Scaffold(
         topBar = {

@@ -284,7 +284,7 @@ fun EvidenceItem(
                 )
                 if (evidence.category.isNotBlank()) {
                     Text(
-                        text = "Category: ${evidence.category}",
+                        text = "Category: ${'$'}{evidence.category}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.fillMaxWidth(),
@@ -292,7 +292,7 @@ fun EvidenceItem(
                 }
                 if (evidence.tags.isNotEmpty()) {
                     Text(
-                        text = "Tags: ${evidence.tags.joinToString()}",
+                        text = "Tags: ${'$'}{evidence.tags.joinToString()}",
                         style = MaterialTheme.typography.bodySmall,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,

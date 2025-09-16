@@ -79,6 +79,14 @@ class SettingsViewModel @Inject constructor(
                 is Result.Error -> {
                     _dropboxUploadStatus.value = "Error uploading file to Dropbox: ${result.exception.message}"
                 }
+                is Result.UserRecoverableError -> { // Added this branch
+                    _dropboxUploadStatus.value = "Dropbox user recoverable error: ${result.exception.message}"
+                    // Optionally, you might want to expose result.exception.intent to the UI here
+                }
+                // Add else branch if there are other Result subtypes not covered, or if it's a sealed interface with more implementations
+                // else -> {
+                //     _dropboxUploadStatus.value = "Unknown result from Dropbox upload"
+                // }
             }
         }
     }

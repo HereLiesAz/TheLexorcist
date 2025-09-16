@@ -2,6 +2,7 @@
 androidApplication = "8.13.0" # Assuming a common version, adjust if needed from project level build.gradle
 aznavrail = "2.9"
 browser = "1.9.0"
+dropboxCoreSdk = "7.0.0"
 firebaseAuthKtx = "23.2.1"
 hiltAndroidCompiler = "2.57.1"
 kotlinAndroid = "2.2.20" # Assuming from your compose plugin version, adjust if different for kotlin-android
@@ -75,6 +76,7 @@ androidx-ui-graphics = { module = "androidx.compose.ui:ui-graphics" }
 androidx-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest" }
 androidx-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
 aznavrail = { module = "com.github.hereliesaz:aznavrail", version.ref = "aznavrail" }
+dropbox-core-sdk = { module = "com.dropbox.core:dropbox-core-sdk", version.ref = "dropboxCoreSdk" }
 firebase-auth-ktx = { module = "com.google.firebase:firebase-auth-ktx" }
 google-android-material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 androidx-compose-runtime = { group = "androidx.compose.runtime", name = "runtime", version.ref = "composeRuntime" }

@@ -18,6 +18,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ExperimentalComposeApi
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -25,6 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.ExperimentalComposeUiApi // Added for experimental APIs
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -41,7 +43,9 @@ import com.pushpal.jetlime.JetLimeEvent
 import com.pushpal.jetlime.JetLimeEventDefaults
 import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class,
+    ExperimentalComposeApi::class
+) // Added ExperimentalComposeUiApi
 @Composable
 fun TimelineScreen(caseViewModel: CaseViewModel, navController: NavController) {
     val evidenceList by caseViewModel.selectedCaseEvidenceList.collectAsState()
@@ -75,7 +79,7 @@ fun TimelineScreen(caseViewModel: CaseViewModel, navController: NavController) {
                 JetLimeColumn(
                     modifier = Modifier.padding(16.dp),
                     itemsList = ItemsList(evidenceList),
-                    key = { _, item -> item.id },
+                    key = { _: Int, item: Evidence -> item.id }, // Explicitly typed item
                     style = JetLimeDefaults.columnStyle(),
                 ) { _, item, position ->
                     JetLimeEvent(
@@ -131,11 +135,11 @@ fun TimelineSortDropdown(
             expanded = expanded,
             onDismissRequest = { expanded = false },
         ) {
-            TimelineSortType.values().forEach { sortType ->
+            enumValues<TimelineSortType>().forEach { sortTypeEntry ->
                 DropdownMenuItem(
                     text = { Text(sortType.name.replace("_", " ").lowercase(Locale.getDefault()).replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }) },
                     onClick = {
-                        onSortChange(sortType)
+                        onSortChange(sortTypeEntry)
                         expanded = false
                     },
                 )

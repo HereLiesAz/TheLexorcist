@@ -154,10 +154,11 @@ dependencies {
     implementation(libs.vico.core)
 
     // JetLime Timeline Library
-    implementation("io.github.pushpalroy:jetlime:4.0.0")
+    implementation(libs.jetlime)
 
     // Dropbox SDK
-    implementation("com.dropbox.core:dropbox-core-sdk:7.0.0")
+    implementation(libs.dropbox.core.sdk)
+
 
     // Hilt
     implementation(libs.google.dagger.hilt.android)
