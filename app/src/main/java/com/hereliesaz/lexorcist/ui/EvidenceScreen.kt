@@ -188,11 +188,8 @@ fun EvidenceScreen(
                 )
             } else {
                 LexorcistOutlinedButton(onClick = { showAddTextEvidence = true }, text = stringResource(R.string.add_text_evidence).uppercase(Locale.getDefault()))
-                Spacer(modifier = Modifier.height(8.dp))
                 LexorcistOutlinedButton(onClick = { imagePickerLauncher.launch("image/*") }, text = stringResource(R.string.add_image_evidence).uppercase(Locale.getDefault()))
-                Spacer(modifier = Modifier.height(8.dp))
                 LexorcistOutlinedButton(onClick = { audioPickerLauncher.launch("audio/*") }, text = stringResource(R.string.add_audio_evidence).uppercase(Locale.getDefault()))
-                Spacer(modifier = Modifier.height(8.dp))
                 LexorcistOutlinedButton(onClick = { videoPickerLauncher.launch("video/*") }, text = stringResource(R.string.add_video_evidence).uppercase(Locale.getDefault()))
             }
 
