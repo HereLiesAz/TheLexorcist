@@ -20,3 +20,5 @@ This project is in an advanced stage of development, with a robust architecture 
 ## License
 
 The Lexorcist is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
+
+This app is agent-maintained.

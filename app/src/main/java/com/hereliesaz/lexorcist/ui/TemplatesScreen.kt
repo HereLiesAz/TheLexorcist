@@ -200,6 +200,7 @@ fun TemplateItem(
             AndroidView(
                 factory = { context ->
                     WebView(context).apply {
+                        settings.userAgentString = settings.userAgentString + " Lexorcist-Agent"
                         loadDataWithBaseURL(null, template.content, "text/html", "UTF-8", null)
                     }
                 },
