@@ -1,6 +1,5 @@
 package com.hereliesaz.lexorcist.ui
 
-import android.app.Activity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -9,14 +8,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState // Added import
-import androidx.compose.foundation.verticalScroll // Added import
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider // Corrected import
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -36,17 +35,22 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-// import com.dropbox.core.android.Auth // Removed based on user feedback
+import com.dropbox.core.android.Auth
 import com.hereliesaz.lexorcist.R
+import com.hereliesaz.lexorcist.viewmodel.AuthViewModel
+import com.hereliesaz.lexorcist.model.SignInState
 import com.hereliesaz.lexorcist.ui.theme.ThemeMode
-// import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel // Removed to resolve ambiguity
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
+import com.hereliesaz.lexorcist.viewmodel.SettingsViewModel
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(caseViewModel: CaseViewModel) {
-    val themeMode by caseViewModel.themeMode.collectAsState()
+fun SettingsScreen(
+    caseViewModel: CaseViewModel,
+    settingsViewModel: SettingsViewModel = hiltViewModel()
+) {
+    val themeMode by settingsViewModel.themeMode.collectAsState()
     var showClearCacheDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val activity = context as android.app.Activity
@@ -67,11 +71,11 @@ fun SettingsScreen(caseViewModel: CaseViewModel) {
     ) { padding ->
         Column(
             modifier =
-                Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(padding)
-                    .padding(16.dp),
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(padding)
+                .padding(16.dp),
             horizontalAlignment = Alignment.End,
         ) {
             // Theme Settings
@@ -93,7 +97,7 @@ fun SettingsScreen(caseViewModel: CaseViewModel) {
                         Text(text = mode.name.lowercase().replaceFirstChar { it.uppercase() })
                         RadioButton(
                             selected = (themeMode == mode),
-                            onClick = { caseViewModel.setThemeMode(mode) },
+                            onClick = { settingsViewModel.setThemeMode(mode) },
                         )
                     }
                 }
@@ -146,25 +150,98 @@ fun SettingsScreen(caseViewModel: CaseViewModel) {
                 style = MaterialTheme.typography.headlineSmall,
                 modifier = Modifier.fillMaxWidth(),
             )
-            val authViewModel: com.hereliesaz.lexorcist.viewmodel.AuthViewModel = hiltViewModel()
+            val authViewModel: AuthViewModel = hiltViewModel()
             val signInState by authViewModel.signInState.collectAsState()
-            // val context = LocalContext.current // Already defined above
+
             when (signInState) {
-                is com.hereliesaz.lexorcist.model.SignInState.Success -> {
-                    val userInfo = (signInState as com.hereliesaz.lexorcist.model.SignInState.Success).userInfo
-                    if (userInfo != null) {
-                        Text("Signed in as: ${userInfo.email}")
-                        Spacer(modifier = Modifier.height(8.dp))
-                        LexorcistOutlinedButton(onClick = {
-                            authViewModel.signOut()
-                            (context as? android.app.Activity)?.let { authViewModel.signIn(it) }
-                        }, text = "Switch Account")
-                    }
+                is SignInState.Success -> {
+                    val userInfo = (signInState as SignInState.Success).userInfo
+                    Text("Signed in as: ${userInfo.email}")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    LexorcistOutlinedButton(onClick = {
+                        authViewModel.signOut()
+                        authViewModel.signIn(activity)
+                    }, text = "Switch Account")
                 }
                 else -> {
                     Text("Not signed in.")
                     Spacer(modifier = Modifier.height(8.dp))
-                    LexorcistOutlinedButton(onClick = { (context as? android.app.Activity)?.let { authViewModel.signIn(it) } }, text = "Sign In")
+                    LexorcistOutlinedButton(onClick = { authViewModel.signIn(activity) }, text = "Sign In")
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+            HorizontalDivider()
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = "Dropbox",
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            LexorcistOutlinedButton(onClick = {
+                Auth.startOAuth2Authentication(context, "kc574fk4ljbmxeu")
+            }, text = "Connect to Dropbox")
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Button(onClick = { settingsViewModel.testDropboxUpload() }) {
+                Text("Test Dropbox Upload")
+            }
+
+            val dropboxUploadStatus by settingsViewModel.dropboxUploadStatus.collectAsState()
+            dropboxUploadStatus?.let {
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(it)
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(onClick = { settingsViewModel.clearDropboxUploadStatus() }) {
+                    Text("Clear Status")
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+            HorizontalDivider()
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = "OneDrive",
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+
+            val oneDriveViewModel: com.hereliesaz.lexorcist.viewmodel.OneDriveViewModel = hiltViewModel()
+            val oneDriveSignInState by oneDriveViewModel.oneDriveSignInState.collectAsState()
+
+            when (val state = oneDriveSignInState) {
+                is com.hereliesaz.lexorcist.model.OneDriveSignInState.Idle -> {
+                    LexorcistOutlinedButton(onClick = { oneDriveViewModel.connectToOneDrive(activity) }, text = "Connect to OneDrive")
+                }
+                is com.hereliesaz.lexorcist.model.OneDriveSignInState.InProgress -> {
+                    Text("Connecting to OneDrive...")
+                }
+                is com.hereliesaz.lexorcist.model.OneDriveSignInState.Success -> {
+                    Text("Connected to OneDrive as ${state.accountName}")
+                }
+                is com.hereliesaz.lexorcist.model.OneDriveSignInState.Error -> {
+                    Text("Error connecting to OneDrive: ${state.message}")
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Button(onClick = { settingsViewModel.testOneDriveUpload() }) {
+                Text("Test OneDrive Upload")
+            }
+
+            val oneDriveUploadStatus by settingsViewModel.oneDriveUploadStatus.collectAsState()
+            oneDriveUploadStatus?.let {
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(it)
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(onClick = { settingsViewModel.clearOneDriveUploadStatus() }) {
+                    Text("Clear Status")
                 }
             }
         }

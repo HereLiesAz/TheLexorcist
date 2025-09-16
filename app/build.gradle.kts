@@ -171,6 +171,13 @@ dependencies {
     implementation(libs.dropbox.core.sdk)
 
 
+    // Dropbox SDK
+    implementation("com.dropbox.core:dropbox-core-sdk:7.0.0")
+
+    // Microsoft Graph SDK for OneDrive
+    implementation("com.microsoft.graph:microsoft-graph:6.+")
+    implementation("com.microsoft.identity.client:msal:2.+")
+
     // Hilt
     implementation(libs.google.dagger.hilt.android)
     ksp(libs.google.dagger.hilt.compiler)

@@ -1,0 +1,16 @@
+{
+  "client_id" : "_PLACEHOLDER_CLIENT_ID_",
+  "authorization_user_agent" : "DEFAULT",
+  "redirect_uri" : "msauth://com.hereliesaz.lexorcist/_PLACEHOLDER_SIGNATURE_HASH_",
+  "account_mode" : "SINGLE",
+  "broker_redirect_uri_registered": true,
+  "authorities" : [
+    {
+      "type": "AAD",
+      "audience": {
+        "type": "AzureADandPersonalMicrosoftAccount",
+        "tenant_id": "common"
+      }
+    }
+  ]
+}
