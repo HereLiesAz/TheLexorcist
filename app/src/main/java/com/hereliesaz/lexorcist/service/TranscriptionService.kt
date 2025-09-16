@@ -20,7 +20,7 @@ import javax.inject.Singleton
 class TranscriptionService
     @Inject
     constructor(
-        @ApplicationContext private val context: Context,
+        @param:ApplicationContext private val context: Context,
         private val credentialHolder: CredentialHolder,
     ) {
         suspend fun transcribeAudio(uri: Uri): String {
@@ -43,16 +43,14 @@ class TranscriptionService
                     }
 
                     val audio =
-                        RecognitionAudio
-                            .newBuilder()
+                        RecognitionAudio.newBuilder()
                             .setContent(ByteString.copyFrom(audioBytes))
                             .build()
 
                     val config =
-                        RecognitionConfig
-                            .newBuilder()
-                            .setEncoding(RecognitionConfig.AudioEncoding.ENCODING_UNSPECIFIED) // Let the service auto-detect
-                            .setSampleRateHertz(16000) // Adjust if you know the sample rate
+                        RecognitionConfig.newBuilder()
+                            .setEncoding(RecognitionConfig.AudioEncoding.ENCODING_UNSPECIFIED)// Let the service auto-detect
+                            .setSampleRateHertz(16000)// Adjust if you know the sample rate
                             .setLanguageCode("en-US")
                             .build()
 
