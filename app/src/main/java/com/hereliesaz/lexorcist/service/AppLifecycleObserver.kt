@@ -12,13 +12,16 @@ import javax.inject.Singleton
 @Singleton
 class AppLifecycleObserver @Inject constructor(
     private val caseRepository: CaseRepository,
+    private val settingsManager: com.hereliesaz.lexorcist.data.SettingsManager,
     private val applicationScope: CoroutineScope
 ) : DefaultLifecycleObserver {
 
     override fun onStop(owner: LifecycleOwner) {
         super.onStop(owner)
-        applicationScope.launch(Dispatchers.IO) {
-            caseRepository.synchronize()
+        if (settingsManager.getCloudSyncEnabled()) {
+            applicationScope.launch(Dispatchers.IO) {
+                caseRepository.synchronize()
+            }
         }
     }
 }

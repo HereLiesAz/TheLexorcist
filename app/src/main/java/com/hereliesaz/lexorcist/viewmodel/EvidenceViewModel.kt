@@ -84,6 +84,18 @@ class EvidenceViewModel
         private var currentCaseIdForList: Long? = null
         private var currentSpreadsheetIdForList: String? = null
 
+        private val _selectedCase = MutableStateFlow<com.hereliesaz.lexorcist.data.Case?>(null)
+        val selectedCase: StateFlow<com.hereliesaz.lexorcist.data.Case?> = _selectedCase.asStateFlow()
+
+        fun loadCaseAndEvidence(caseId: Long, spreadsheetId: String) {
+            viewModelScope.launch {
+                currentCaseIdForList = caseId
+                currentSpreadsheetIdForList = spreadsheetId
+                _selectedCase.value = caseRepository.getCaseBySpreadsheetId(spreadsheetId)
+                loadEvidenceForCase(caseId, spreadsheetId)
+            }
+        }
+
         fun requestNavigationToTranscriptionScreen(evidenceId: Int) {
             viewModelScope.launch {
                 _navigateToTranscriptionScreen.emit(evidenceId)
@@ -347,8 +359,15 @@ class EvidenceViewModel
                 val spreadsheetId = currentSpreadsheetIdForList
                 if (caseId != null && spreadsheetId != null) {
                     _isLoading.value = true
-                    _processingStatus.value = "Processing image..."
+                    _processingStatus.value = "Analyzing Image..."
                     try {
+                        val case = caseRepository.getCaseBySpreadsheetId(spreadsheetId)
+                        if(case != null) {
+                            val uploadResult = evidenceRepository.uploadFile(uri, case.name, case.spreadsheetId)
+                            if (uploadResult is Result.Success) {
+                                _userMessage.value = "Raw evidence file saved."
+                            }
+                        }
                         val newEvidence = ocrProcessingService.processImage(
                             uri = uri,
                             context = getApplication(),
@@ -372,12 +391,13 @@ class EvidenceViewModel
                 clearLogs()
                 if (currentCaseIdForList != null && currentSpreadsheetIdForList != null) {
                     _isLoading.value = true
-                    _processingStatus.value = "Processing audio..."
+                    _processingStatus.value = "Transcribing Audio..."
                     try {
                         val case = caseRepository.getCaseBySpreadsheetId(currentSpreadsheetIdForList!!)
                         if (case != null) {
                             val uploadResult = evidenceRepository.uploadFile(uri, case.name, case.spreadsheetId)
                             if (uploadResult is Result.Success) {
+                                _userMessage.value = "Raw evidence file saved."
                                 var transcribedText = transcriptionService.transcribeAudio(uri)
                                 if (transcribedText.contains("Error") || transcribedText == "No transcription result.") {
                                     _userMessage.value = transcribedText
@@ -451,7 +471,11 @@ class EvidenceViewModel
                         workManager.getWorkInfoByIdLiveData(workRequest.id).asFlow().collectLatest { workInfo ->
                             if (workInfo != null) {
                                 val progress = workInfo.progress.getString(VideoProcessingWorker.PROGRESS)
-                                _videoProcessingProgress.value = progress
+                                if (progress == "Raw evidence file saved.") {
+                                    _userMessage.value = progress
+                                } else {
+                                    _videoProcessingProgress.value = progress
+                                }
                                 if (workInfo.state.isFinished) {
                                     _videoProcessingProgress.value = null // <<< Corrected here
                                     loadEvidenceForCase(currentCaseIdForList!!, currentSpreadsheetIdForList!!)
