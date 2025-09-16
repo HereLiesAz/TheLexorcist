@@ -184,10 +184,8 @@ class AuthViewModel
             accountCredential.setSelectedAccount(googleAccount) // Use setSelectedAccount with the Account object
 
             credentialHolder.credential = accountCredential
-            credentialHolder.googleApiService =
-                com.hereliesaz.lexorcist.service
-                    .GoogleApiService(accountCredential, application.getString(R.string.app_name))
-            Log.d(TAG, "GoogleApiService initialized with Firebase user email.")
+            // Removed assignment to credentialHolder.googleApiService as it's a val with a custom getter
+            Log.d(TAG, "GoogleApiService will be initialized by CredentialHolder when accessed.")
         }
 
         // Renamed for clarity
@@ -208,7 +206,7 @@ class AuthViewModel
                     sharedPreferences.edit { remove(PREF_USER_EMAIL_KEY) }
                     Log.d(TAG, "User email cleared from SharedPreferences.")
                     credentialHolder.credential = null
-                    credentialHolder.googleApiService = null
+                    // Removed assignment to credentialHolder.googleApiService as it's a val with a custom getter
                     Log.d(TAG, "Sign out complete.")
                 } catch (e: Exception) {
                     Log.e(TAG, "Error during sign out: ", e)
