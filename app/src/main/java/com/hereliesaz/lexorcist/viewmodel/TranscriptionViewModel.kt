@@ -7,19 +7,23 @@ import androidx.lifecycle.viewModelScope
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
 import com.hereliesaz.lexorcist.auth.CredentialHolder
 import com.hereliesaz.lexorcist.service.TranscriptionService
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class TranscriptionViewModel(
+@HiltViewModel
+class TranscriptionViewModel @Inject constructor(
     application: Application,
+    private val transcriptionService: TranscriptionService, // Injected
+    private val credentialHolder: CredentialHolder      // Injected
 ) : AndroidViewModel(application) {
-    private var transcriptionService: TranscriptionService? = null
 
     fun setCredential(credential: GoogleAccountCredential) {
-        val credentialHolder = CredentialHolder()
-        credentialHolder.credential = credential
-        transcriptionService = TranscriptionService(getApplication(), credentialHolder)
+        // Use the injected CredentialHolder
+        this.credentialHolder.credential = credential
+        // TranscriptionService is already injected and will use the updated CredentialHolder
     }
 
     private val _transcriptionState = MutableStateFlow<TranscriptionState>(TranscriptionState.Idle)
@@ -27,12 +31,9 @@ class TranscriptionViewModel(
 
     fun transcribeAudio(uri: Uri) {
         viewModelScope.launch {
-            if (transcriptionService == null) {
-                _transcriptionState.value = TranscriptionState.Error("Transcription service not initialized.")
-                return@launch
-            }
+            // The injected transcriptionService will handle missing credentials internally.
             _transcriptionState.value = TranscriptionState.Loading
-            val transcript = transcriptionService!!.transcribeAudio(uri)
+            val transcript = transcriptionService.transcribeAudio(uri)
             if (transcript.startsWith("Error:")) {
                 _transcriptionState.value = TranscriptionState.Error(transcript)
             } else {
@@ -44,14 +45,7 @@ class TranscriptionViewModel(
 
 sealed class TranscriptionState {
     object Idle : TranscriptionState()
-
     object Loading : TranscriptionState()
-
-    data class Success(
-        val transcript: String,
-    ) : TranscriptionState()
-
-    data class Error(
-        val message: String,
-    ) : TranscriptionState()
+    data class Success(val transcript: String) : TranscriptionState()
+    data class Error(val message: String) : TranscriptionState()
 }
