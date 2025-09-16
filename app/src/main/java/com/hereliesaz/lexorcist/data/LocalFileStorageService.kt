@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import com.hereliesaz.lexorcist.auth.CredentialHolder
 import com.hereliesaz.lexorcist.utils.Result
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -19,13 +20,11 @@ import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
-import com.hereliesaz.lexorcist.service.GoogleApiService
-
 @Singleton
 class LocalFileStorageService @Inject constructor(
-    @param:ApplicationContext private val context: Context, // Changed here
+    @param:ApplicationContext private val context: Context,
     private val gson: Gson,
-    private val googleApiService: GoogleApiService
+    private val credentialHolder: CredentialHolder // Changed here
 ) : StorageService {
 
     private val storageDir: File by lazy {
@@ -339,6 +338,9 @@ class LocalFileStorageService @Inject constructor(
     }
 
     override suspend fun synchronize(): Result<Unit> = withContext(Dispatchers.IO) {
+        val googleApiService = credentialHolder.googleApiService
+            ?: return@withContext Result.Error(Exception("User not authenticated. Cannot synchronize."))
+
         if (!spreadsheetFile.exists()) {
             return@withContext Result.Success(Unit) // Nothing to sync
         }
@@ -352,6 +354,10 @@ class LocalFileStorageService @Inject constructor(
             if (uploadSpreadsheetResult is Result.Error) {
                 return@withContext Result.Error(uploadSpreadsheetResult.exception)
             }
+            if (uploadSpreadsheetResult is Result.UserRecoverableError) {
+                return@withContext Result.UserRecoverableError(uploadSpreadsheetResult.exception)
+            }
+
 
             // Get all cases to find their folders
             val casesResult = getAllCases()
@@ -364,6 +370,10 @@ class LocalFileStorageService @Inject constructor(
                         if (uploadFolderResult is Result.Error) {
                             // Log the error but continue with other folders
                             android.util.Log.e("LocalFileStorageService", "Failed to upload folder for case ${case.name}", uploadFolderResult.exception)
+                        }
+                         if (uploadFolderResult is Result.UserRecoverableError) {
+                            // Log the error but continue with other folders
+                            android.util.Log.e("LocalFileStorageService", "User recoverable error uploading folder for case ${case.name}", uploadFolderResult.exception)
                         }
                     }
                 }
