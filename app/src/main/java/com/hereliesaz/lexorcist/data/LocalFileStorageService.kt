@@ -24,11 +24,17 @@ import javax.inject.Singleton
 class LocalFileStorageService @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val gson: Gson,
-    private val credentialHolder: CredentialHolder // Changed here
+    private val credentialHolder: CredentialHolder, // Changed here
+    private val settingsManager: SettingsManager
 ) : StorageService {
 
     private val storageDir: File by lazy {
-        val dir = context.getExternalFilesDir(null) ?: context.filesDir
+        val customPath = settingsManager.getCaseFolderPath()
+        val dir = if (customPath != null) {
+            File(customPath)
+        } else {
+            context.getExternalFilesDir(null) ?: context.filesDir
+        }
         if (!dir.exists()) dir.mkdirs()
         dir
     }
@@ -275,8 +281,9 @@ class LocalFileStorageService @Inject constructor(
 
     override suspend fun uploadFile(caseSpreadsheetId: String, fileUri: Uri, mimeType: String): Result<String> = withContext(Dispatchers.IO) {
         try {
-            val caseDir = File(storageDir, caseSpreadsheetId).apply { if (!exists()) mkdirs() }
-            val destinationFile = File(caseDir, "file_${System.currentTimeMillis()}.${mimeType.substringAfter('/')}")
+            val caseDir = File(storageDir, caseSpreadsheetId)
+            val rawEvidenceDir = File(caseDir, "raw_evidence").apply { if (!exists()) mkdirs() }
+            val destinationFile = File(rawEvidenceDir, "file_${System.currentTimeMillis()}.${mimeType.substringAfter('/')}")
             context.contentResolver.openInputStream(fileUri)?.use { input ->
                 FileOutputStream(destinationFile).use { output ->
                     input.copyTo(output)
