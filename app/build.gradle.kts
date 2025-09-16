@@ -103,6 +103,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.process) // Added lifecycle-process
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.androidx.compose.runtime.livedata)
 
