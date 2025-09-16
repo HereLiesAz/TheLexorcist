@@ -140,6 +140,7 @@ dependencies {
     implementation(libs.google.http.client.jackson2)
     implementation(libs.google.guava)
     implementation(libs.quickbirdstudios.opencv)
+    implementation(libs.play.services.auth)
 
     // Mozilla Rhino for JavaScript execution
     implementation(libs.mozilla.rhino)
