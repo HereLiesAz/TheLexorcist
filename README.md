@@ -29,3 +29,33 @@ This project is in an advanced stage of development, with a robust architecture 
 The Lexorcist is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
 
 This app is agent-maintained.
+
+## Project Status
+
+### Implemented Features
+
+- **Evidence Processing:**
+    - Automatic text extraction from images (OCR).
+    - Automatic transcription of audio files.
+- **File Management:**
+    - Raw evidence files are saved to a dedicated `raw` folder within the case directory.
+    - Users can select a custom storage location for case folders.
+- **UI/UX:**
+    - The "Script Editor" has been renamed to "Script Builder".
+    - The UI of the Allegations, Templates, and Timeline screens has been right-aligned.
+    - Data loading and display issues in the Review and Timeline screens have been fixed.
+    - The Timeline screen now uses an extended timeline view from the `JetLime` library.
+- **Settings:**
+    - Users can select and switch Google accounts for cloud services.
+- **Spreadsheet Import:**
+    - The app can import case data, including evidence, from a spreadsheet.
+- **User Feedback:**
+    - The app provides toast notifications and a detailed log for background tasks.
+
+### Remaining Tasks
+
+- **Complete Cloud Sync:** Implement robust cloud synchronization, especially on app close.
+- **Complete Video Processing:** Implement text extraction from video frames (visual text).
+- **Editable Transcripts:** Implement the UI and logic for editing audio transcripts with timestamps and reasons.
+- **Full Progress Transparency:** Enhance the progress reporting to include a more detailed and structured log view.
+- **Testing:** The test suite is currently failing and needs to be fixed.
