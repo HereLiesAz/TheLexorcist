@@ -20,7 +20,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
+import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -91,7 +91,6 @@ fun CasesScreen(
                     Text(
                         stringResource(R.string.cases).uppercase(Locale.getDefault()),
                         modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.End,
                         color = MaterialTheme.colorScheme.primary,
                     )
                 },
@@ -106,19 +105,20 @@ fun CasesScreen(
     ) { innerPadding ->
         Column(
             modifier =
-                Modifier
-                    .padding(innerPadding) // Apply padding from Scaffold (e.g., for FAB)
-                    .statusBarsPadding() // Add status bar padding directly to the content
-                    .fillMaxSize(),
+            Modifier
+                .padding(innerPadding) // Apply padding from Scaffold (e.g., for FAB)
+                .statusBarsPadding() // Add status bar padding directly to the content
+                .fillMaxSize(),
+            horizontalAlignment = Alignment.End
         ) {
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { caseViewModel.onSearchQueryChanged(it) },
                 label = { Text(stringResource(R.string.search)) },
                 modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 8.dp),
+                Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 8.dp),
                 // Padding for the search field
                 leadingIcon = { Icon(Icons.Filled.Search, contentDescription = stringResource(R.string.search)) },
                 singleLine = true,
@@ -137,10 +137,10 @@ fun CasesScreen(
             if (unarchivedCases.isEmpty()) {
                 Column(
                     modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .verticalScroll(rememberScrollState())
-                            .padding(horizontal = 16.dp),
+                    Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                 ) {
@@ -149,7 +149,7 @@ fun CasesScreen(
                             stringResource(R.string.no_cases_match_search)
                         } else {
                             stringResource(R.string.no_cases_found_line1) + "\n" +
-                                stringResource(R.string.no_cases_found_line2)
+                                    stringResource(R.string.no_cases_found_line2)
                         }
                     Text(
                         text = noCasesText,
@@ -160,12 +160,12 @@ fun CasesScreen(
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding =
-                        PaddingValues( // Adjust padding as needed now that topBar is gone
-                            start = 16.dp,
-                            end = 16.dp,
-                            top = 8.dp, // Adjusted top padding
-                            bottom = 16.dp,
-                        ),
+                    PaddingValues( // Adjust padding as needed now that topBar is gone
+                        start = 16.dp,
+                        end = 16.dp,
+                        top = 8.dp, // Adjusted top padding
+                        bottom = 16.dp,
+                    ),
                 ) {
                     items(unarchivedCases, key = { it.id }) { case ->
                         CaseItem(
@@ -205,21 +205,17 @@ fun CasesScreen(
             title = { Text(stringResource(R.string.delete_case) + ": ${longPressedCase?.name ?: ""}") },
             text = { Text(stringResource(R.string.delete_case_confirmation, longPressedCase?.name ?: "")) },
             confirmButton = {
-                Button(onClick = {
+                LexorcistOutlinedButton(onClick = {
                     longPressedCase?.let { caseViewModel.deleteCaseWithRepository(it) }
                     showDeleteConfirmDialog = false
                     longPressedCase = null
-                }) {
-                    Text(stringResource(R.string.delete))
-                }
+                }, text = stringResource(R.string.delete))
             },
             dismissButton = {
-                OutlinedButton(onClick = {
+                LexorcistOutlinedButton(onClick = {
                     showDeleteConfirmDialog = false
                     longPressedCase = null
-                }) {
-                    Text(stringResource(R.string.cancel))
-                }
+                }, text = stringResource(R.string.cancel))
             },
         )
     }

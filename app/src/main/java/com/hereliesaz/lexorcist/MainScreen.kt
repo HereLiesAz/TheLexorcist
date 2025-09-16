@@ -12,7 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
+import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -179,9 +179,7 @@ fun MainScreen(
                                             style = MaterialTheme.typography.bodyLarge,
                                         )
                                         Spacer(modifier = Modifier.height(32.dp))
-                                        Button(onClick = { showCreateCaseDialog = true }) {
-                                            Text(stringResource(R.string.create_new_case))
-                                        }
+                                        LexorcistOutlinedButton(onClick = { showCreateCaseDialog = true }, text = stringResource(R.string.create_new_case))
                                     }
                                 }
                                 composable("cases") { CasesScreen(caseViewModel = caseViewModel, navController = navController) }
@@ -270,9 +268,7 @@ fun MainScreen(
                         verticalArrangement = Arrangement.Top,
                     ) {
                         Spacer(Modifier.height(halfScreenHeight))
-                        Button(onClick = onSignInClick) {
-                            Text(stringResource(R.string.sign_in_with_google))
-                        }
+                        LexorcistOutlinedButton(onClick = onSignInClick, text = stringResource(R.string.sign_in_with_google))
                         if (currentSignInState is SignInState.Error) {
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(

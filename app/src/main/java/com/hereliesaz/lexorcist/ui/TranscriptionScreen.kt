@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
+import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -50,7 +50,6 @@ fun TranscriptionScreen(
                     Text(
                         stringResource(R.string.transcription).uppercase(Locale.getDefault()),
                         modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.End,
                         color = MaterialTheme.colorScheme.primary,
                     )
                 },
@@ -63,6 +62,7 @@ fun TranscriptionScreen(
                     .fillMaxSize()
                     .padding(padding)
                     .padding(16.dp),
+            horizontalAlignment = Alignment.End
         ) {
             OutlinedTextField(
                 value = transcript,
@@ -81,7 +81,7 @@ fun TranscriptionScreen(
                 }
             }
             Spacer(modifier = Modifier.height(16.dp))
-            Button(
+            LexorcistOutlinedButton(
                 onClick = {
                     if (transcript != evidenceDetails?.content) {
                         showReasonDialog = true
@@ -90,9 +90,8 @@ fun TranscriptionScreen(
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text(stringResource(R.string.save).uppercase(Locale.getDefault()))
-            }
+                text = stringResource(R.string.save).uppercase(Locale.getDefault())
+            )
         }
     }
 
@@ -127,14 +126,10 @@ fun ReasonDialog(
             )
         },
         confirmButton = {
-            Button(onClick = { onConfirm(reason) }) {
-                Text(stringResource(R.string.confirm))
-            }
+            LexorcistOutlinedButton(onClick = { onConfirm(reason) }, text = stringResource(R.string.confirm))
         },
         dismissButton = {
-            Button(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel))
-            }
+            LexorcistOutlinedButton(onClick = onDismiss, text = stringResource(R.string.cancel))
         },
     )
 }

@@ -21,7 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
+import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -237,15 +237,14 @@ fun ReviewScreenContent(
     }
 
     if (selectionMode) {
-        Button(
+        LexorcistOutlinedButton(
             onClick = {
                 selectionMode = false
                 evidenceViewModel.clearEvidenceSelection()
             },
             modifier = Modifier.padding(16.dp),
-        ) {
-            Text("Exit Selection Mode")
-        }
+            text = "Exit Selection Mode"
+        )
     }
 
     if (showEditDialog && evidenceToEdit != null) {
@@ -265,17 +264,13 @@ fun ReviewScreenContent(
             title = { Text(stringResource(R.string.delete_evidence).uppercase(Locale.getDefault())) },
             text = { Text(stringResource(R.string.delete_evidence_confirmation)) },
             confirmButton = {
-                Button(onClick = {
+                LexorcistOutlinedButton(onClick = {
                     evidenceViewModel.deleteEvidence(evidenceToDelete)
                     onShowDeleteConfirmDialogChange(false)
-                }) {
-                    Text(stringResource(R.string.delete).uppercase(Locale.getDefault()))
-                }
+                }, text = stringResource(R.string.delete).uppercase(Locale.getDefault()))
             },
             dismissButton = {
-                OutlinedButton(onClick = { onShowDeleteConfirmDialogChange(false) }) {
-                    Text(stringResource(R.string.cancel).uppercase(Locale.getDefault()))
-                }
+                LexorcistOutlinedButton(onClick = { onShowDeleteConfirmDialogChange(false) }, text = stringResource(R.string.cancel).uppercase(Locale.getDefault()))
             },
         )
     }
@@ -401,7 +396,7 @@ fun EditEvidenceDialog(
             }
         },
         confirmButton = {
-            Button(onClick = {
+            LexorcistOutlinedButton(onClick = {
                 val updatedEvidence =
                     evidence.copy(
                         content = content,
@@ -410,14 +405,10 @@ fun EditEvidenceDialog(
                         tags = tags.split(",").map { it.trim() }.filter { it.isNotEmpty() },
                     )
                 onSave(updatedEvidence)
-            }) {
-                Text(stringResource(R.string.save).uppercase(Locale.getDefault()))
-            }
+            }, text = stringResource(R.string.save).uppercase(Locale.getDefault()))
         },
         dismissButton = {
-            OutlinedButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel).uppercase(Locale.getDefault()))
-            }
+            LexorcistOutlinedButton(onClick = onDismiss, text = stringResource(R.string.cancel).uppercase(Locale.getDefault()))
         },
     )
 }

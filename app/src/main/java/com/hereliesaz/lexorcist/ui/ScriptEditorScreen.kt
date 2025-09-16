@@ -13,8 +13,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -183,21 +183,19 @@ fun ScriptEditorScreen(viewModel: ScriptEditorViewModel, navController: androidx
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
             ) {
-                OutlinedButton(
+                LexorcistOutlinedButton(
                     onClick = { showShareDialog = true },
-                ) {
-                    Text(stringResource(R.string.share))
-                }
-                OutlinedButton(
+                    text = stringResource(R.string.share)
+                )
+                LexorcistOutlinedButton(
                     onClick = { viewModel.saveScript() },
-                    enabled = saveState !is SaveState.Saving,
-                ) {
-                    if (saveState is SaveState.Saving) {
-                        CircularProgressIndicator(modifier = Modifier.size(24.dp)) // Changed back
-                    } else {
-                        Text(stringResource(R.string.save_script))
+                    text = if (saveState is SaveState.Saving) "" else stringResource(R.string.save_script),
+                    content = {
+                        if (saveState is SaveState.Saving) {
+                            CircularProgressIndicator(modifier = Modifier.size(24.dp)) // Changed back
+                        }
                     }
-                }
+                )
             }
         }
     }
@@ -208,19 +206,16 @@ fun ScriptEditorScreen(viewModel: ScriptEditorViewModel, navController: androidx
             title = { Text(stringResource(R.string.share_script_title)) },
             text = { Text(stringResource(R.string.share_script_confirmation)) },
             confirmButton = {
-                Button(
+                LexorcistOutlinedButton(
                     onClick = {
                         navController.navigate("share_addon/Script/$scriptText")
                         showShareDialog = false
                     },
-                ) {
-                    Text(stringResource(R.string.share))
-                }
+                    text = stringResource(R.string.share)
+                )
             },
             dismissButton = {
-                OutlinedButton(onClick = { showShareDialog = false }) {
-                    Text(stringResource(R.string.cancel))
-                }
+                LexorcistOutlinedButton(onClick = { showShareDialog = false }, text = stringResource(R.string.cancel))
             },
         )
     }

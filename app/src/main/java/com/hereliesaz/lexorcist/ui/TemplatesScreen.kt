@@ -13,7 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
+import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -91,7 +91,6 @@ fun TemplatesScreen(viewModel: AddonsBrowserViewModel = hiltViewModel()) {
                     Text(
                         stringResource(R.string.templates).uppercase(Locale.getDefault()),
                         modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.End,
                         color = MaterialTheme.colorScheme.primary,
                     )
                 },
@@ -102,7 +101,7 @@ fun TemplatesScreen(viewModel: AddonsBrowserViewModel = hiltViewModel()) {
             )
         },
     ) { padding ->
-        Column(modifier = Modifier.padding(padding).padding(16.dp)) {
+        Column(modifier = Modifier.padding(padding).padding(16.dp), horizontalAlignment = Alignment.End) {
             Text(
                 "Here you can manage your document templates. You can create new templates, edit existing ones, and share them with the community.",
             )
@@ -133,16 +132,12 @@ fun TemplatesScreen(viewModel: AddonsBrowserViewModel = hiltViewModel()) {
                 }
 
             Row {
-                Button(onClick = {
+                LexorcistOutlinedButton(onClick = {
                     selectedTemplate = null
                     showEditor = true
-                }) {
-                    Text("Create New Template")
-                }
+                }, text = "Create New Template")
                 Spacer(modifier = Modifier.width(8.dp))
-                Button(onClick = { launcher.launch("application/json") }) {
-                    Text("Import Template")
-                }
+                LexorcistOutlinedButton(onClick = { launcher.launch("application/json") }, text = "Import Template")
             }
             LazyColumn {
                 items(templates.value) { template ->
@@ -218,9 +213,7 @@ fun TemplateItem(
                     overflow = TextOverflow.Ellipsis,
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Button(onClick = onShare) {
-                    Text("Share")
-                }
+                LexorcistOutlinedButton(onClick = onShare, text = "Share")
             }
         }
     }
