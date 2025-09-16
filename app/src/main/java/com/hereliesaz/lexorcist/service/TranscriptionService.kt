@@ -42,15 +42,17 @@ class TranscriptionService
                         return "Error: Could not read audio file."
                     }
 
-                    val audio = RecognitionAudio.newBuilder()
-                        .setContent(ByteString.copyFrom(audioBytes))
-                        .build()
+                    val audio =
+                        RecognitionAudio.newBuilder()
+                            .setContent(ByteString.copyFrom(audioBytes))
+                            .build()
 
-                    val config = RecognitionConfig.newBuilder()
-                        .setEncoding(RecognitionConfig.AudioEncoding.ENCODING_UNSPECIFIED) // Let the service auto-detect
-                        .setSampleRateHertz(16000) // Adjust if you know the sample rate
-                        .setLanguageCode("en-US")
-                        .build()
+                    val config =
+                        RecognitionConfig.newBuilder()
+                            .setEncoding(RecognitionConfig.AudioEncoding.ENCODING_UNSPECIFIED)
+                            .setSampleRateHertz(16000)
+                            .setLanguageCode("en-US")
+                            .build()
 
                     val request =
                         RecognizeRequest

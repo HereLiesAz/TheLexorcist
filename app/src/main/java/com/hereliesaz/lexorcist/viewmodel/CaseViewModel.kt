@@ -269,7 +269,7 @@ constructor(
         }
     }
 
-    fun loadEvidenceForSelectedCase() {
+    internal fun loadEvidenceForSelectedCase() {
         viewModelScope.launch {
             selectedCase.value?.let { case ->
                 when (val result = caseRepository.getEvidenceForCase(case.spreadsheetId)) {
