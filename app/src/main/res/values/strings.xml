@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">TheLexorcist</string>
+    <string name="app_name" translatable="false">TheLexorcist</string>
     <string name="appTitle">The Lexorcist</string>
     <string name="spreadsheet_import_service_tag">SpreadsheetImportSvc</string>
     <string name="case_sheet_parser_tag">CaseSheetParser</string>
@@ -33,10 +33,10 @@
     <string name="settings_export_format_pdf">PDF</string>
     <string name="settings_export_format_csv">CSV</string>
     <string name="select_image">Select Image</string>
-    <string name="take_picture">Take Picture</string>
-    <string name="add_text_evidence">Add Text Evidence</string>
-    <string name="add_image_evidence">Add Image Evidence</string>
-    <string name="add_audio_evidence">Add Audio Evidence</string>
+    <string name="take_picture">Take Photo</string>
+    <string name="add_text_evidence">Text</string>
+    <string name="add_image_evidence">Image</string>
+    <string name="add_audio_evidence">Audio</string>
     <string name="add_document">Add Document</string>
     <string name="add_spreadsheet">Add Spreadsheet</string>
     <string name="image_for_review">Image for review</string>
@@ -261,5 +261,5 @@
     <string name="reason_for_edit">Reason for Edit</string>
     <string name="reason">Reason</string>
     <string name="confirm">Confirm</string>
-    <string name="add_video_evidence">Add Video Evidence</string>
+    <string name="add_video_evidence">Add Video</string>
 </resources>

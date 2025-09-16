@@ -43,16 +43,17 @@ class TranscriptionService
                     }
 
                     val audio =
-                        RecognitionAudio.newBuilder()
-                            .setContent(ByteString.copyFrom(audioBytes))
-                            .build()
+                        recognitionAudio {
+                            this.content = ByteString.copyFrom(audioBytes)
+                        }
 
                     val config =
-                        RecognitionConfig.newBuilder()
-                            .setEncoding(RecognitionConfig.AudioEncoding.ENCODING_UNSPECIFIED)// Let the service auto-detect
-                            .setSampleRateHertz(16000)// Adjust if you know the sample rate
-                            .setLanguageCode("en-US")
-                            .build()
+                        recognitionConfig {
+                            this.encoding =
+                                RecognitionConfig.AudioEncoding.ENCODING_UNSPECIFIED// Let the service auto-detect
+                            this.sampleRateHertz = 16000// Adjust if you know the sample rate
+                            this.languageCode = "en-US"
+                        }
 
                     val request =
                         RecognizeRequest
