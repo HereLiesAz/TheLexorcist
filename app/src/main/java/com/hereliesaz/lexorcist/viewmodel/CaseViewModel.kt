@@ -184,7 +184,7 @@ constructor(
         _plaintiffs.value = ""
         _defendants.value = ""
         _court.value = ""
-        _unfilteredEvidenceList.value = emptyList()
+        // _unfilteredEvidenceList.value = emptyList() // Removed reference to undeclared variable
         saveCaseInfoToSharedPrefs()
     }
 
@@ -300,7 +300,7 @@ constructor(
                 _sheetFilters.value = emptyList()
                 _allegations.value = emptyList()
                 _htmlTemplates.value = emptyList()
-                _unfilteredEvidenceList.value = emptyList()
+                // _unfilteredEvidenceList.value = emptyList() // Removed reference to undeclared variable
             }
         }
     }

@@ -112,6 +112,7 @@ fun TimelineScreen(caseViewModel: CaseViewModel, navController: NavController) {
         EvidenceDetailsDialog(
             evidence = evidence,
             onDismiss = { showEvidenceDetailsDialog = null },
+            onNavigateToEvidenceDetails = { navController.navigate("evidence_details/${evidence.id}") } 
         )
     }
 }
@@ -137,7 +138,7 @@ fun TimelineSortDropdown(
         ) {
             enumValues<TimelineSortType>().forEach { sortTypeEntry ->
                 DropdownMenuItem(
-                    text = { Text(sortType.name.replace("_", " ").lowercase(Locale.getDefault()).replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }) },
+                    text = { Text(sortTypeEntry.name.replace("_", " ").lowercase(Locale.getDefault()).replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }) }, // Corrected to use sortTypeEntry for display
                     onClick = {
                         onSortChange(sortTypeEntry)
                         expanded = false

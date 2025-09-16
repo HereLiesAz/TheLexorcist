@@ -39,7 +39,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 // import com.dropbox.core.android.Auth // Removed based on user feedback
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.ui.theme.ThemeMode
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+// import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel // Removed to resolve ambiguity
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import java.util.Locale
 
@@ -148,7 +148,7 @@ fun SettingsScreen(caseViewModel: CaseViewModel) {
             )
             val authViewModel: com.hereliesaz.lexorcist.viewmodel.AuthViewModel = hiltViewModel()
             val signInState by authViewModel.signInState.collectAsState()
-            val context = LocalContext.current
+            // val context = LocalContext.current // Already defined above
             when (signInState) {
                 is com.hereliesaz.lexorcist.model.SignInState.Success -> {
                     val userInfo = (signInState as com.hereliesaz.lexorcist.model.SignInState.Success).userInfo

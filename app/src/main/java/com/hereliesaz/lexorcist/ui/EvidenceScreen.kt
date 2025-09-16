@@ -59,7 +59,7 @@ fun EvidenceScreen(
 
     LaunchedEffect(snackbarHostState) {
         caseViewModel.userMessage.collectLatest { message ->
-            snackbarHostState.showSnackbar(message)
+            message?.let { snackbarHostState.showSnackbar(it) }
         }
     }
 

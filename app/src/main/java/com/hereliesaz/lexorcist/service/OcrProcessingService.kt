@@ -1,6 +1,7 @@
 package com.hereliesaz.lexorcist.service
 
 import android.content.Context
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.Log
 import com.google.mlkit.vision.common.InputImage
@@ -13,6 +14,9 @@ import com.hereliesaz.lexorcist.data.SettingsManager
 import com.hereliesaz.lexorcist.utils.ExifUtils
 import com.hereliesaz.lexorcist.utils.Result
 import kotlinx.coroutines.suspendCancellableCoroutine
+import java.io.File
+import java.io.FileInputStream
+import java.io.InputStream
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.resume
@@ -36,20 +40,49 @@ class OcrProcessingService
             try {
                 return suspendCancellableCoroutine { continuation ->
                     continuation.invokeOnCancellation { recognizer.close() }
-                    val image =
-                        try {
-                            // InputImage.fromFilePath can handle both content:// and file:// URIs
-                            InputImage.fromFilePath(context, uri)
-                        } catch (e: Exception) {
-                            continuation.resumeWithException(e)
+                    val image: InputImage
+                    var inputStream: InputStream? = null
+                    try {
+                        if (uri.scheme == "content") {
+                            inputStream = context.contentResolver.openInputStream(uri)
+                        } else if (uri.scheme == "file" || uri.scheme == null) {
+                            uri.path?.let {
+                                val file = File(it)
+                                if (file.exists()) {
+                                    inputStream = FileInputStream(file)
+                                } else {
+                                    throw java.io.FileNotFoundException("File not found at path: $it")
+                                }
+                            } ?: throw java.io.FileNotFoundException("URI path is null")
+                        } else {
+                            throw IllegalArgumentException("Unsupported URI scheme: ${uri.scheme}")
+                        }
+
+                        if (inputStream == null) {
+                            throw java.io.FileNotFoundException("Failed to open InputStream for URI: $uri")
+                        }
+                        
+                        val bitmap = BitmapFactory.decodeStream(inputStream)
+                        
+                        if (bitmap == null) {
+                            continuation.resumeWithException(RuntimeException("Failed to decode bitmap from URI: $uri"))
                             return@suspendCancellableCoroutine
                         }
+                        image = InputImage.fromBitmap(bitmap, 0) // Using 0 rotation for now
+                    } catch (e: Exception) {
+                        Log.e("OcrProcessingService", "Error creating InputImage from URI: $uri", e)
+                        continuation.resumeWithException(e)
+                        return@suspendCancellableCoroutine
+                    } finally {
+                        inputStream?.close()
+                    }
 
                     recognizer
                         .process(image)
                         .addOnSuccessListener { visionText ->
                             continuation.resume(visionText.text)
                         }.addOnFailureListener { e ->
+                            Log.e("OcrProcessingService", "Text recognition failed for URI: $uri", e)
                             continuation.resumeWithException(e)
                         }
                 }
