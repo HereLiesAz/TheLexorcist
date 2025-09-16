@@ -347,14 +347,16 @@ class EvidenceViewModel
                 val spreadsheetId = currentSpreadsheetIdForList
                 if (caseId != null && spreadsheetId != null) {
                     _isLoading.value = true
-                    _processingStatus.value = "Processing image..."
                     try {
-                        val newEvidence = ocrProcessingService.processImage(
+                        _processingStatus.value = "Uploading image..."
+                        val (newEvidence, message) = ocrProcessingService.processImage(
                             uri = uri,
                             context = getApplication(),
                             caseId = caseId,
                             spreadsheetId = spreadsheetId,
                         )
+                        _processingStatus.value = "Image processing complete."
+                        message?.let { _userMessage.value = it }
                         if (newEvidence != null && newEvidence.content.isEmpty()) {
                             _userMessage.value = "No text found in the image."
                         }
@@ -372,17 +374,17 @@ class EvidenceViewModel
                 clearLogs()
                 if (currentCaseIdForList != null && currentSpreadsheetIdForList != null) {
                     _isLoading.value = true
-                    _processingStatus.value = "Processing audio..."
                     try {
+                        _processingStatus.value = "Uploading audio..."
                         val case = caseRepository.getCaseBySpreadsheetId(currentSpreadsheetIdForList!!)
                         if (case != null) {
                             val uploadResult = evidenceRepository.uploadFile(uri, case.name, case.spreadsheetId)
                             if (uploadResult is Result.Success) {
-                                var transcribedText = transcriptionService.transcribeAudio(uri)
-                                if (transcribedText.contains("Error") || transcribedText == "No transcription result.") {
-                                    _userMessage.value = transcribedText
-                                    transcribedText = ""
-                                }
+                                _userMessage.value = "Raw evidence file saved."
+                                _processingStatus.value = "Transcribing audio..."
+                                val (transcribedText, message) = transcriptionService.transcribeAudio(uri)
+                                message?.let { _userMessage.value = it }
+                                _processingStatus.value = "Audio processing complete."
 
                                 val newEvidence =
                                     Evidence(

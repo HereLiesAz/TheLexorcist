@@ -30,6 +30,8 @@ class CaseViewModel
 constructor(
     @param:ApplicationContext private val applicationContext: Context,
     private val caseRepository: CaseRepository,
+    private val settingsManager: com.hereliesaz.lexorcist.data.SettingsManager,
+    private val localFileStorageService: com.hereliesaz.lexorcist.data.LocalFileStorageService,
 ) : ViewModel() {
     private val sharedPref =
         applicationContext.getSharedPreferences("CaseInfoPrefs", Context.MODE_PRIVATE)
@@ -100,9 +102,25 @@ constructor(
     val themeMode: StateFlow<com.hereliesaz.lexorcist.ui.theme.ThemeMode> =
         _themeMode.asStateFlow()
 
+    private val _storageLocation = MutableStateFlow<String?>(null)
+    val storageLocation: StateFlow<String?> = _storageLocation.asStateFlow()
+
     init {
         loadThemeModePreference()
-        // observeAuthChanges() //TODO: Re-enable this once AuthViewModel is provided correctly
+        _storageLocation.value = settingsManager.getStorageLocation()
+    }
+
+    fun setStorageLocation(uri: android.net.Uri) {
+        viewModelScope.launch {
+            val oldLocation = settingsManager.getStorageLocation()
+            settingsManager.saveStorageLocation(uri.toString())
+            _storageLocation.value = uri.toString()
+            if (oldLocation != null) {
+                _userMessage.value = "Moving files to new location..."
+                localFileStorageService.moveFilesToNewLocation(oldLocation, uri.toString())
+                _userMessage.value = "Files moved successfully."
+            }
+        }
     }
 
     private fun clearCaseData() {
@@ -249,7 +267,7 @@ constructor(
         }
     }
 
-    private fun loadAllegationsFromRepository(
+    internal fun loadAllegationsFromRepository(
         caseId: Int,
         spreadsheetId: String,
     ) {
