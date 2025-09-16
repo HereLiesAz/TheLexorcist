@@ -8,14 +8,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState // Added import
+import androidx.compose.foundation.verticalScroll // Added import
 import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.HorizontalDivider // Corrected import
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -34,26 +34,17 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
-import com.dropbox.core.android.Auth
 import com.hereliesaz.lexorcist.R
-import com.hereliesaz.lexorcist.viewmodel.AuthViewModel
-import com.hereliesaz.lexorcist.model.SignInState
 import com.hereliesaz.lexorcist.ui.theme.ThemeMode
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
-import com.hereliesaz.lexorcist.viewmodel.SettingsViewModel
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(
-    caseViewModel: CaseViewModel,
-    settingsViewModel: SettingsViewModel = hiltViewModel()
-) {
-    val themeMode by settingsViewModel.themeMode.collectAsState()
+fun SettingsScreen(caseViewModel: CaseViewModel) {
+    val themeMode by caseViewModel.themeMode.collectAsState()
     var showClearCacheDialog by remember { mutableStateOf(false) }
-    val context = LocalContext.current
-    val activity = context as android.app.Activity
 
     Scaffold(
         topBar = {
@@ -71,11 +62,11 @@ fun SettingsScreen(
     ) { padding ->
         Column(
             modifier =
-            Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(padding)
-                .padding(16.dp),
+                Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(padding)
+                    .padding(16.dp),
             horizontalAlignment = Alignment.End,
         ) {
             // Theme Settings
@@ -97,7 +88,7 @@ fun SettingsScreen(
                         Text(text = mode.name.lowercase().replaceFirstChar { it.uppercase() })
                         RadioButton(
                             selected = (themeMode == mode),
-                            onClick = { settingsViewModel.setThemeMode(mode) },
+                            onClick = { caseViewModel.setThemeMode(mode) },
                         )
                     }
                 }
@@ -150,53 +141,25 @@ fun SettingsScreen(
                 style = MaterialTheme.typography.headlineSmall,
                 modifier = Modifier.fillMaxWidth(),
             )
-            val authViewModel: AuthViewModel = hiltViewModel()
+            val authViewModel: com.hereliesaz.lexorcist.viewmodel.AuthViewModel = hiltViewModel()
             val signInState by authViewModel.signInState.collectAsState()
-
+            val context = LocalContext.current
             when (signInState) {
-                is SignInState.Success -> {
-                    val userInfo = (signInState as SignInState.Success).userInfo
-                    Text("Signed in as: ${userInfo.email}")
-                    Spacer(modifier = Modifier.height(8.dp))
-                    LexorcistOutlinedButton(onClick = {
-                        authViewModel.signOut()
-                        authViewModel.signIn(activity)
-                    }, text = "Switch Account")
+                is com.hereliesaz.lexorcist.model.SignInState.Success -> {
+                    val userInfo = (signInState as com.hereliesaz.lexorcist.model.SignInState.Success).userInfo
+                    if (userInfo != null) {
+                        Text("Signed in as: ${userInfo.email}")
+                        Spacer(modifier = Modifier.height(8.dp))
+                        LexorcistOutlinedButton(onClick = {
+                            authViewModel.signOut()
+                            (context as? android.app.Activity)?.let { authViewModel.signIn(it) }
+                        }, text = "Switch Account")
+                    }
                 }
                 else -> {
                     Text("Not signed in.")
                     Spacer(modifier = Modifier.height(8.dp))
-                    LexorcistOutlinedButton(onClick = { authViewModel.signIn(activity) }, text = "Sign In")
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-            HorizontalDivider()
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Text(
-                text = "Dropbox",
-                style = MaterialTheme.typography.headlineSmall,
-                modifier = Modifier.fillMaxWidth(),
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            LexorcistOutlinedButton(onClick = {
-                Auth.startOAuth2Authentication(context, "kc574fk4ljbmxeu")
-            }, text = "Connect to Dropbox")
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Button(onClick = { settingsViewModel.testDropboxUpload() }) {
-                Text("Test Dropbox Upload")
-            }
-
-            val dropboxUploadStatus by settingsViewModel.dropboxUploadStatus.collectAsState()
-            dropboxUploadStatus?.let {
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(it)
-                Spacer(modifier = Modifier.height(8.dp))
-                Button(onClick = { settingsViewModel.clearDropboxUploadStatus() }) {
-                    Text("Clear Status")
+                    LexorcistOutlinedButton(onClick = { (context as? android.app.Activity)?.let { authViewModel.signIn(it) } }, text = "Sign In")
                 }
             }
         }

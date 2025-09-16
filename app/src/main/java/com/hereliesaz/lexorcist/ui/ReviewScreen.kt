@@ -1,11 +1,8 @@
 package com.hereliesaz.lexorcist.ui
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -21,7 +18,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
-import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -29,7 +25,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -43,32 +38,32 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.data.Allegation
 import com.hereliesaz.lexorcist.data.Evidence
+import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
+import com.hereliesaz.lexorcist.viewmodel.AllegationsViewModel
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
-import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-import com.hereliesaz.lexorcist.viewmodel.AllegationsViewModel
-
 fun ReviewScreen(
-    evidenceViewModel: EvidenceViewModel,
-    caseViewModel: CaseViewModel,
-    allegationsViewModel: AllegationsViewModel,
+    caseViewModel: CaseViewModel = hiltViewModel(),
+    allegationsViewModel: AllegationsViewModel = hiltViewModel(),
 ) {
     val evidenceList by caseViewModel.selectedCaseEvidenceList.collectAsState()
     val selectedCase by caseViewModel.selectedCase.collectAsState()
     val isLoading by caseViewModel.isLoading.collectAsState()
     val allegations by allegationsViewModel.allegations.collectAsState()
+    val selectedAllegation by allegationsViewModel.selectedAllegation.collectAsState()
+    val selectedEvidence by caseViewModel.selectedEvidence.collectAsState()
 
     LaunchedEffect(selectedCase) {
         selectedCase?.let {
@@ -102,205 +97,182 @@ fun ReviewScreen(
             )
         },
     ) { padding ->
-        BoxWithConstraints(modifier = Modifier.padding(padding).fillMaxSize()) {
-            val halfScreenHeight = this@BoxWithConstraints.maxHeight / 2
+        Column(
+            modifier = Modifier
+                .padding(padding)
+                .fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            if (isLoading) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CircularProgressIndicator()
+                }
+            } else if (selectedCase == null) {
+                Column(
+                    modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    Text(stringResource(R.string.please_select_case_for_evidence).uppercase(Locale.getDefault()))
+                }
+            } else if (evidenceList.isEmpty()) {
+                Column(
+                    modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    Text(stringResource(R.string.no_evidence_for_case).uppercase(Locale.getDefault()))
+                }
+            } else {
+                Row(
+                    Modifier
+                        .weight(1f)
+                        .padding(horizontal = 8.dp)
+                ) {
+                    LazyColumn(modifier = Modifier.weight(1f)) {
+                        items(allegations) { allegation ->
+                            AllegationItem(
+                                allegation = allegation,
+                                isSelected = selectedAllegation?.id == allegation.id,
+                                onClick = { allegationsViewModel.onAllegationSelected(allegation) }
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    LazyColumn(modifier = Modifier.weight(1f)) {
+                        items(evidenceList) { evidence ->
+                            EvidenceItem(
+                                evidence = evidence,
+                                isSelected = selectedEvidence.any { it.id == evidence.id },
+                                onClick = { caseViewModel.toggleEvidenceSelection(evidence.id) },
+                                onEditClick = {
+                                    evidenceToEdit = it
+                                    showEditDialog = true
+                                },
+                                onDeleteClick = {
+                                    evidenceToDelete = it
+                                    showDeleteConfirmDialog = true
+                                }
+                            )
+                        }
+                    }
+                }
 
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                horizontalAlignment = Alignment.End,
-            ) {
-                if (isLoading) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        CircularProgressIndicator()
-                    }
-                } else if (selectedCase == null) {
-                    Column(
-                        modifier =
-                            Modifier
-                                .fillMaxSize()
-                                .verticalScroll(rememberScrollState())
-                                .padding(horizontal = 16.dp),
-                        horizontalAlignment = Alignment.End,
-                        verticalArrangement = Arrangement.Top,
-                    ) {
-                        Spacer(modifier = Modifier.height(halfScreenHeight))
-                        Text(stringResource(R.string.please_select_case_for_evidence).uppercase(Locale.getDefault()))
-                    }
-                } else if (evidenceList.isEmpty()) {
-                    Column(
-                        modifier =
-                            Modifier
-                                .fillMaxSize()
-                                .verticalScroll(rememberScrollState())
-                                .padding(horizontal = 16.dp),
-                        horizontalAlignment = Alignment.End,
-                        verticalArrangement = Arrangement.Top,
-                    ) {
-                        Text(stringResource(R.string.no_evidence_for_case).uppercase(Locale.getDefault()))
-                    }
-                } else {
-                    ReviewScreenContent(
-                        allegations = allegations,
-                        evidenceList = evidenceList,
-                        evidenceViewModel = evidenceViewModel,
-                        showEditDialog = showEditDialog,
-                        onShowEditDialogChange = { showEditDialog = it },
-                        evidenceToEdit = evidenceToEdit,
-                        onEvidenceToEditChange = { evidenceToEdit = it },
-                        showDeleteConfirmDialog = showDeleteConfirmDialog,
-                        onShowDeleteConfirmDialogChange = { showDeleteConfirmDialog = it },
-                        evidenceToDelete = evidenceToDelete,
-                        onEvidenceToDeleteChange = { evidenceToDelete = it },
+                if (selectedAllegation != null && selectedEvidence.isNotEmpty()) {
+                    LexorcistOutlinedButton(
+                        onClick = {
+                            caseViewModel.assignAllegationToSelectedEvidence(selectedAllegation!!.id)
+                        },
+                        text = stringResource(R.string.assign_to_allegation),
+                        modifier = Modifier.padding(16.dp)
                     )
                 }
             }
         }
     }
-}
-
-@Composable
-fun ReviewScreenContent(
-    allegations: List<Allegation>,
-    evidenceList: List<Evidence>,
-    evidenceViewModel: EvidenceViewModel,
-    showEditDialog: Boolean,
-    onShowEditDialogChange: (Boolean) -> Unit,
-    evidenceToEdit: Evidence?,
-    onEvidenceToEditChange: (Evidence?) -> Unit,
-    showDeleteConfirmDialog: Boolean,
-    onShowDeleteConfirmDialogChange: (Boolean) -> Unit,
-    evidenceToDelete: Evidence?,
-    onEvidenceToDeleteChange: (Evidence?) -> Unit,
-) {
-    var draggedEvidence by remember { mutableStateOf<Evidence?>(null) }
-    var selectionMode by remember { mutableStateOf(false) }
-
-    Row(modifier = Modifier.fillMaxSize()) {
-        LazyColumn(modifier = Modifier.weight(1f)) {
-            items(allegations) { allegation ->
-                Box(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp)
-                            .pointerInput(allegation) {
-                                detectDragGestures(
-                                    onDragEnd = {
-                                        draggedEvidence?.let {
-                                            evidenceViewModel.assignAllegationToEvidence(it.id, allegation.id)
-                                        }
-                                        draggedEvidence = null
-                                    },
-                                    onDrag = { _, _ -> },
-                                )
-                            },
-                ) {
-                    Text(allegation.text)
-                }
-            }
-        }
-        LazyColumn(modifier = Modifier.weight(1f)) {
-            items(evidenceList) { evidence ->
-                val isSelected = evidence.isSelected
-                Box(
-                    modifier =
-                        Modifier
-                            .padding(16.dp)
-                            .background(if (isSelected) Color.LightGray else Color.Transparent)
-                            .pointerInput(evidence) {
-                                detectTapGestures(
-                                    onLongPress = {
-                                        selectionMode = true
-                                        evidenceViewModel.toggleEvidenceSelection(evidence.id)
-                                    },
-                                    onTap = {
-                                        if (selectionMode) {
-                                            evidenceViewModel.toggleEvidenceSelection(evidence.id)
-                                        }
-                                    },
-                                )
-                            }.pointerInput(evidence) {
-                                detectDragGestures(
-                                    onDragStart = {
-                                        draggedEvidence = evidence
-                                    },
-                                    onDrag = { _, _ -> },
-                                )
-                            },
-                ) {
-                    Text(text = evidence.content)
-                }
-            }
-        }
-    }
-
-    if (selectionMode) {
-        LexorcistOutlinedButton(
-            onClick = {
-                selectionMode = false
-                evidenceViewModel.clearEvidenceSelection()
-            },
-            modifier = Modifier.padding(16.dp),
-            text = "Exit Selection Mode"
-        )
-    }
 
     if (showEditDialog && evidenceToEdit != null) {
         EditEvidenceDialog(
-            evidence = evidenceToEdit,
-            onDismiss = { onShowEditDialogChange(false) },
+            evidence = evidenceToEdit!!,
+            onDismiss = { showEditDialog = false },
             onSave = { updatedEvidence ->
-                evidenceViewModel.updateEvidence(updatedEvidence)
-                onShowEditDialogChange(false)
+                caseViewModel.updateEvidence(updatedEvidence)
+                showEditDialog = false
             },
         )
     }
 
     if (showDeleteConfirmDialog && evidenceToDelete != null) {
         AlertDialog(
-            onDismissRequest = { onShowDeleteConfirmDialogChange(false) },
+            onDismissRequest = { showDeleteConfirmDialog = false },
             title = { Text(stringResource(R.string.delete_evidence).uppercase(Locale.getDefault())) },
             text = { Text(stringResource(R.string.delete_evidence_confirmation)) },
             confirmButton = {
                 LexorcistOutlinedButton(onClick = {
-                    evidenceViewModel.deleteEvidence(evidenceToDelete)
-                    onShowDeleteConfirmDialogChange(false)
+                    caseViewModel.deleteEvidence(evidenceToDelete!!)
+                    showDeleteConfirmDialog = false
                 }, text = stringResource(R.string.delete).uppercase(Locale.getDefault()))
             },
             dismissButton = {
-                LexorcistOutlinedButton(onClick = { onShowDeleteConfirmDialogChange(false) }, text = stringResource(R.string.cancel).uppercase(Locale.getDefault()))
+                LexorcistOutlinedButton(onClick = { showDeleteConfirmDialog = false }, text = stringResource(R.string.cancel).uppercase(Locale.getDefault()))
             },
         )
     }
 }
 
 @Composable
+fun AllegationItem(
+    allegation: Allegation,
+    isSelected: Boolean,
+    onClick: (Allegation) -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .padding(vertical = 4.dp)
+            .fillMaxWidth()
+            .pointerInput(allegation) {
+                detectTapGestures(onTap = { onClick(allegation) })
+            },
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = MaterialTheme.shapes.medium,
+        colors = CardDefaults.cardColors(containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant)
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = allegation.text,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.weight(1f)
+            )
+        }
+    }
+}
+
+@Composable
 fun EvidenceItem(
     evidence: Evidence,
+    isSelected: Boolean,
+    onClick: (Int) -> Unit,
     onEditClick: (Evidence) -> Unit,
     onDeleteClick: (Evidence) -> Unit,
 ) {
     Card(
         modifier =
-            Modifier
-                .padding(vertical = 4.dp)
-                .fillMaxWidth(),
+        Modifier
+            .padding(vertical = 4.dp)
+            .fillMaxWidth()
+            .pointerInput(evidence) {
+                detectTapGestures(onTap = { onClick(evidence.id) })
+            },
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         shape = MaterialTheme.shapes.medium,
+        colors = CardDefaults.cardColors(containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Row(
             modifier =
-                Modifier
-                    .padding(16.dp)
-                    .fillMaxWidth(),
+            Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(
                 modifier = Modifier.weight(1f),
-                horizontalAlignment = Alignment.End,
+                horizontalAlignment = Alignment.Start,
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Text(

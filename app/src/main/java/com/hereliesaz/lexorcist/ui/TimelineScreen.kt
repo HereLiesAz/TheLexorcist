@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -35,10 +34,11 @@ import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import com.hereliesaz.lexorcist.viewmodel.TimelineSortType
-import com.jet.jetlime.ItemsList
-import com.jet.jetlime.JetLimeColumn
-import com.jet.jetlime.JetLimeDefaults
-import com.jet.jetlime.JetLimeExtendedEvent
+import com.pushpal.jetlime.ItemsList
+import com.pushpal.jetlime.JetLimeColumn
+import com.pushpal.jetlime.JetLimeDefaults
+import com.pushpal.jetlime.JetLimeEvent
+import com.pushpal.jetlime.JetLimeEventDefaults
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -53,7 +53,7 @@ fun TimelineScreen(caseViewModel: CaseViewModel, navController: NavController) {
             TopAppBar(
                 title = {
                     Text(
-                        "Timeline".uppercase(java.util.Locale.getDefault()),
+                        stringResource(R.string.timeline).uppercase(Locale.getDefault()),
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.End,
                         color = MaterialTheme.colorScheme.primary,
@@ -77,26 +77,26 @@ fun TimelineScreen(caseViewModel: CaseViewModel, navController: NavController) {
                     itemsList = ItemsList(evidenceList),
                     key = { _, item -> item.id },
                     style = JetLimeDefaults.columnStyle(),
-                ) { _, item, _ ->
-                    JetLimeExtendedEvent(
-                        content = {
-                            Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { showEvidenceDetailsDialog = item },
-                            ) {
-                                Column(modifier = Modifier.padding(8.dp)) {
-                                    Text(item.type, style = MaterialTheme.typography.titleMedium)
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Text(item.content)
-                                }
+                ) { _, item, position ->
+                    JetLimeEvent(
+                        style = JetLimeEventDefaults.eventStyle(position = position)
+                    ) {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { showEvidenceDetailsDialog = item },
+                        ) {
+                            Column(modifier = Modifier.padding(8.dp)) {
+                                Text(item.sourceDocument, style = MaterialTheme.typography.titleMedium)
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(item.content)
                             }
                         }
-                    )
+                    }
                 }
             } else {
                 Text(
-                    text = "No evidence to display on the timeline.",
+                    text = stringResource(R.string.no_evidence_placeholder),
                     modifier = Modifier.fillMaxWidth().padding(16.dp),
                     textAlign = TextAlign.End,
                 )
@@ -108,10 +108,6 @@ fun TimelineScreen(caseViewModel: CaseViewModel, navController: NavController) {
         EvidenceDetailsDialog(
             evidence = evidence,
             onDismiss = { showEvidenceDetailsDialog = null },
-            onNavigateToEvidenceDetails = {
-                navController.navigate("evidence_details/${evidence.id}")
-                showEvidenceDetailsDialog = null
-            },
         )
     }
 }
@@ -130,14 +126,14 @@ fun TimelineSortDropdown(
     ) {
         Text("Sort by: $sortType")
         Spacer(modifier = Modifier.height(8.dp))
-        LexorcistOutlinedButton(onClick = { expanded = true }, text = "Change")
+        LexorcistOutlinedButton(onClick = { expanded = true }, text = stringResource(id = R.string.sort))
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
         ) {
             TimelineSortType.values().forEach { sortType ->
                 DropdownMenuItem(
-                    text = { Text(sortType.name.replace("_", " ").lowercase().replaceFirstChar { it.titlecase() }) },
+                    text = { Text(sortType.name.replace("_", " ").lowercase(Locale.getDefault()).replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }) },
                     onClick = {
                         onSortChange(sortType)
                         expanded = false

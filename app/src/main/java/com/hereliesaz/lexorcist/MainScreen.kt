@@ -54,7 +54,6 @@ import com.hereliesaz.lexorcist.ui.TimelineScreen
 import com.hereliesaz.lexorcist.viewmodel.AddonsBrowserViewModel // Corrected import
 import com.hereliesaz.lexorcist.viewmodel.AuthViewModel
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
-import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 import com.hereliesaz.lexorcist.viewmodel.MasterAllegationsViewModel
 import com.hereliesaz.lexorcist.viewmodel.ScriptBuilderViewModel
@@ -65,7 +64,6 @@ fun MainScreen(
     navController: NavHostController,
     authViewModel: AuthViewModel = viewModel(),
     caseViewModel: CaseViewModel = viewModel(),
-    evidenceViewModel: EvidenceViewModel = viewModel(),
     mainViewModel: MainViewModel = viewModel(),
     onSignInClick: () -> Unit,
     onSignOutClick: () -> Unit,
@@ -185,7 +183,6 @@ fun MainScreen(
                                 composable("cases") { CasesScreen(caseViewModel = caseViewModel, navController = navController) }
                                 composable("evidence") {
                                     EvidenceScreen(
-                                        caseViewModel = caseViewModel,
                                         navController = navController,
                                     )
                                 }
@@ -209,36 +206,36 @@ fun MainScreen(
                                     }
                                 }
                                 composable("data_review") {
-                                    val allegationsViewModel: com.hereliesaz.lexorcist.viewmodel.AllegationsViewModel = androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel()
-                                    ReviewScreen(
-                                        evidenceViewModel = evidenceViewModel,
-                                        caseViewModel = caseViewModel,
-                                        allegationsViewModel = allegationsViewModel,
-                                    )
+                                    ReviewScreen(caseViewModel = caseViewModel)
                                 }
                                 composable("settings") { SettingsScreen(caseViewModel = caseViewModel) }
                                 composable("evidence_details/{evidenceId}") { backStackEntry ->
                                     val evidenceIdString = backStackEntry.arguments?.getString("evidenceId")
                                     val evidenceId = remember(evidenceIdString) { evidenceIdString?.toIntOrNull() }
+                                    val evidence = caseViewModel.selectedCaseEvidenceList.collectAsState().value.find { it.id == evidenceId }
 
-                                    if (evidenceId != null) {
-                                        LaunchedEffect(evidenceId) {
-                                            evidenceViewModel.loadEvidenceById(evidenceId)
-                                        }
-                                        val evidence by evidenceViewModel.selectedEvidenceDetails.collectAsState()
-                                        evidence?.let { ev ->
-                                            EvidenceDetailsScreen(
-                                                evidence = ev,
-                                                viewModel = evidenceViewModel,
-                                            )
-                                        }
-                                        DisposableEffect(Unit) {
-                                            onDispose {
-                                                evidenceViewModel.clearEvidenceDetails()
-                                            }
-                                        }
+                                    if (evidence != null) {
+                                        EvidenceDetailsScreen(
+                                            evidence = evidence,
+                                            caseViewModel = caseViewModel,
+                                        )
                                     } else {
-                                        Text("Error: Evidence ID not found or invalid.")
+                                        Text("Error: Evidence not found.")
+                                    }
+                                }
+                                composable("transcription/{evidenceId}") { backStackEntry ->
+                                    val evidenceIdString = backStackEntry.arguments?.getString("evidenceId")
+                                    val evidenceId = remember(evidenceIdString) { evidenceIdString?.toIntOrNull() }
+                                    val evidence = caseViewModel.selectedCaseEvidenceList.collectAsState().value.find { it.id == evidenceId }
+
+                                    if (evidence != null) {
+                                        com.hereliesaz.lexorcist.ui.TranscriptionScreen(
+                                            evidence = evidence,
+                                            caseViewModel = caseViewModel,
+                                            navController = navController
+                                        )
+                                    } else {
+                                        Text("Error: Evidence not found.")
                                     }
                                 }
                             }
