@@ -43,7 +43,7 @@ class TranscriptionService
                     logService.addLog("Reading audio file...")
                     val audioBytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
                     if (audioBytes == null) {
-                        logService.addLog("Error: Could not read audio file.")
+                        logService.addLog("Error: Could not read audio file.", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
                         return Pair("", "Error: Could not read audio file.")
                     }
                     logService.addLog("Audio file read successfully. Size: ${audioBytes.size} bytes.")
@@ -79,11 +79,11 @@ class TranscriptionService
                     }
                 }
             } catch (e: Exception) {
-                logService.addLog("Error during transcription: ${e.message}")
+                logService.addLog("Error during transcription: ${e.message}", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
                 e.printStackTrace()
                 return Pair("", "Error during transcription: ${e.message}")
             }
-            logService.addLog("No transcription result.")
+            logService.addLog("No transcription result.", com.hereliesaz.lexorcist.model.LogLevel.DEBUG)
             return Pair("", "No transcription result.")
         }
     }

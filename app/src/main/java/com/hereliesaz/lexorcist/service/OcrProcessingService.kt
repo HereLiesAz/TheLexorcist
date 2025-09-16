@@ -69,7 +69,7 @@ class OcrProcessingService
                 try {
                     recognizeTextFromUri(context, uri)
                 } catch (e: Exception) {
-                    logService.addLog("Error recognizing text from frame: ${e.message}")
+                    logService.addLog("Error recognizing text from frame: ${e.message}", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
                     Log.e("OcrProcessingService", "Failed to recognize text from image frame.", e)
                     "Error recognizing text from image frame: ${e.message}"
                 }
@@ -109,11 +109,11 @@ class OcrProcessingService
                         newEvidence = newEvidence.copy(tags = newEvidence.tags + scriptResult.data)
                     }
                     is Result.Error -> {
-                        logService.addLog("Script error for frame: ${scriptResult.exception.message}")
+                        logService.addLog("Script error for frame: ${scriptResult.exception.message}", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
                         Log.e("OcrProcessingService", "Script error for $uri: ${scriptResult.exception.message}", scriptResult.exception)
                     }
                     is Result.UserRecoverableError -> {
-                        logService.addLog("Script error for frame: ${scriptResult.exception.message}")
+                        logService.addLog("Script error for frame: ${scriptResult.exception.message}", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
                         Log.e(
                             "OcrProcessingService",
                             "User recoverable script error for $uri: ${scriptResult.exception.message}",
@@ -141,7 +141,7 @@ class OcrProcessingService
             val uploadResult = storageService.uploadFile(spreadsheetId, uri, mimeType)
 
             if (uploadResult is Result.Error) {
-                logService.addLog("Error uploading image: ${uploadResult.exception.message}")
+                logService.addLog("Error uploading image: ${uploadResult.exception.message}", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
                 Log.e("OcrProcessingService", "Failed to upload image.", uploadResult.exception)
                 return Pair(null, "Error uploading image: ${uploadResult.exception.message}")
             }
@@ -154,7 +154,7 @@ class OcrProcessingService
                     logService.addLog("Recognizing text from image...")
                     recognizeTextFromUri(context, newUri)
                 } catch (e: Exception) {
-                    logService.addLog("Error recognizing text: ${e.message}")
+                    logService.addLog("Error recognizing text: ${e.message}", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
                     Log.e("OcrProcessingService", "Failed to recognize text from image.", e)
                     "Error recognizing text from image: ${e.message}"
                 }
@@ -198,11 +198,11 @@ class OcrProcessingService
                         logService.addLog("Script finished. Added tags: ${scriptResult.data.joinToString(", ")}")
                     }
                     is Result.Error -> {
-                        logService.addLog("Script error: ${scriptResult.exception.message}")
+                        logService.addLog("Script error: ${scriptResult.exception.message}", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
                         Log.e("OcrProcessingService", "Script error for $uri: ${scriptResult.exception.message}", scriptResult.exception)
                     }
                     is Result.UserRecoverableError -> {
-                        logService.addLog("Script error: ${scriptResult.exception.message}")
+                        logService.addLog("Script error: ${scriptResult.exception.message}", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
                         Log.e(
                             "OcrProcessingService",
                             "User recoverable script error for $uri: ${scriptResult.exception.message}",

@@ -58,19 +58,22 @@ import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+import com.hereliesaz.lexorcist.viewmodel.AllegationsViewModel
+
 fun ReviewScreen(
     evidenceViewModel: EvidenceViewModel,
     caseViewModel: CaseViewModel,
+    allegationsViewModel: AllegationsViewModel,
 ) {
-    val evidenceList by evidenceViewModel.evidenceList.collectAsState()
+    val evidenceList by caseViewModel.selectedCaseEvidenceList.collectAsState()
     val selectedCase by caseViewModel.selectedCase.collectAsState()
-    val isLoading by evidenceViewModel.isLoading.collectAsState()
-    val allegations by caseViewModel.allegations.collectAsState()
+    val isLoading by caseViewModel.isLoading.collectAsState()
+    val allegations by allegationsViewModel.allegations.collectAsState()
 
     LaunchedEffect(selectedCase) {
         selectedCase?.let {
-            evidenceViewModel.loadEvidenceForCase(it.id.toLong(), it.spreadsheetId)
-            caseViewModel.loadAllegationsFromRepository(it.id, it.spreadsheetId)
+            caseViewModel.loadEvidenceForSelectedCase()
+            allegationsViewModel.loadAllegations(it.id.toString())
         }
     }
 

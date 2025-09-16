@@ -67,7 +67,7 @@ class VideoProcessingWorker
             var uploadedDriveFile: DriveFile? = null
             val googleApiService = credentialHolder.googleApiService // Get from CredentialHolder
             if (googleApiService == null) {
-                logService.addLog("GoogleApiService is not available. Skipping Drive upload.")
+                logService.addLog("GoogleApiService is not available. Skipping Drive upload.", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
             } else {
                 logService.addLog("Uploading video to Google Drive...")
                 val evidenceFolderId = googleApiService.getOrCreateEvidenceFolder(caseName)
@@ -78,14 +78,14 @@ class VideoProcessingWorker
                             logService.addLog("Video uploaded to Drive with ID: ${uploadedDriveFile?.id}")
                         }
                         is LexResult.Error -> {
-                            logService.addLog("Failed to upload video: ${uploadResult.exception.message}")
+                            logService.addLog("Failed to upload video: ${uploadResult.exception.message}", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
                         }
                         is LexResult.UserRecoverableError -> {
-                            logService.addLog("User recoverable error while uploading video: ${uploadResult.exception.message}")
+                            logService.addLog("User recoverable error while uploading video: ${uploadResult.exception.message}", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
                         }
                     }
                 } else {
-                    logService.addLog("Failed to get or create evidence folder for case: $caseName")
+                    logService.addLog("Failed to get or create evidence folder for case: $caseName", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
                 }
             }
 
@@ -96,7 +96,7 @@ class VideoProcessingWorker
                 if (audioUri != null) {
                     transcriptionService.transcribeAudio(audioUri)
                 } else {
-                    logService.addLog("Audio could not be extracted.")
+                    logService.addLog("Audio could not be extracted.", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
                     "Audio could not be extracted."
                 }
 
@@ -118,7 +118,10 @@ class VideoProcessingWorker
                         parentVideoId = uploadedDriveFile?.id,
                     )
                     if (frameEvidence != null) {
+                        logService.addLog("Found ${frameEvidence.content.length} characters in frame ${index + 1}")
                         ocrTextBuilder.append(frameEvidence.content).append("\n\n")
+                    } else {
+                        logService.addLog("No evidence created for frame ${index + 1}", com.hereliesaz.lexorcist.model.LogLevel.DEBUG)
                     }
                 }
             }

@@ -40,7 +40,7 @@ import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
 import java.util.Locale
-import com.jet.jetlime.JetLime
+import com.jet.jetlime.JetLimeExtended
 import com.jet.jetlime.JetLimeDefaults
 import com.jet.jetlime.JetLimeEvent
 
@@ -72,19 +72,19 @@ fun TimelineScreen(caseViewModel: com.hereliesaz.lexorcist.viewmodel.CaseViewMod
                 val items =
                     evidenceList.map {
                         JetLimeEvent(
-                            title = {
-                                Column(modifier = Modifier.clickable { showEvidenceDetailsDialog = it }) {
-                                    Text(it.type)
-                                }
-                            },
+                            title = { Text(it.type) },
                             description = {
-                                Column(modifier = Modifier.clickable { showEvidenceDetailsDialog = it }) {
-                                    Text(it.content)
+                                Card(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { showEvidenceDetailsDialog = it },
+                                ) {
+                                    Text(it.content, modifier = Modifier.padding(8.dp))
                                 }
                             },
                         )
                     }
-                JetLime(
+                JetLimeExtended(
                     modifier = Modifier.padding(16.dp),
                     items = items,
                     jetLimeStyle = JetLimeDefaults.jetLimeStyle(contentDistance = 20.dp),

@@ -58,7 +58,6 @@ import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 import com.hereliesaz.lexorcist.viewmodel.MasterAllegationsViewModel
 import com.hereliesaz.lexorcist.viewmodel.ScriptBuilderViewModel
-import com.hereliesaz.lexorcist.viewmodel.SettingsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -120,17 +119,7 @@ fun MainScreen(
                 ) {
                     AzNavRail {
                         azRailItem(id = "cases", text = "Cases", onClick = { navController.navigate("cases") })
-                        azRailItem(
-                            id = "evidence",
-                            text = "Evidence",
-                            onClick = {
-                                selectedCase?.let {
-                                    navController.navigate("evidence/${it.id}/${it.spreadsheetId}")
-                                } ?: run {
-                                    // Optionally, show a snackbar message
-                                }
-                            }
-                        )
+                        azRailItem(id = "evidence", text = "Evidence", onClick = { navController.navigate("evidence") })
                         // Renamed item id and route for case-specific allegations
                         azRailItem(
                             id = "case_allegations_item",
@@ -194,30 +183,22 @@ fun MainScreen(
                                     }
                                 }
                                 composable("cases") { CasesScreen(caseViewModel = caseViewModel, navController = navController) }
-                                composable("evidence/{caseId}/{spreadsheetId}") { backStackEntry ->
-                                    val caseId = backStackEntry.arguments?.getString("caseId")?.toLongOrNull()
-                                    val spreadsheetId = backStackEntry.arguments?.getString("spreadsheetId")
-                                    if (caseId != null && spreadsheetId != null) {
-                                        EvidenceScreen(
-                                            navController = navController,
-                                            caseId = caseId,
-                                            spreadsheetId = spreadsheetId
-                                        )
-                                    } else {
-                                        // Handle error, e.g., show a message or navigate back
-                                        Text("Error: Case ID or Spreadsheet ID not found.")
-                                    }
+                                composable("evidence") {
+                                    EvidenceScreen(
+                                        caseViewModel = caseViewModel,
+                                        navController = navController,
+                                    )
                                 }
-                                composable("extras") { ExtrasScreen(viewModel = hiltViewModel<AddonsBrowserViewModel>(), onShare = {}) }
+                                composable("extras") { ExtrasScreen(viewModel = androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel<AddonsBrowserViewModel>(), onShare = {}) }
                                 composable("script_builder") {
-                                    ScriptBuilderScreen(viewModel = hiltViewModel<ScriptBuilderViewModel>(), navController = navController)
+                                    ScriptBuilderScreen(viewModel = androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel<ScriptBuilderViewModel>(), navController = navController)
                                 }
                                 // Renamed route for case-specific allegations
                                 composable("case_allegations_route") {
-                                    AllegationsScreen(hiltViewModel<MasterAllegationsViewModel>())
+                                    AllegationsScreen(androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel<MasterAllegationsViewModel>())
                                 }
                                 composable("templates") {
-                                    TemplatesScreen(hiltViewModel<AddonsBrowserViewModel>())
+                                    TemplatesScreen(androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel<AddonsBrowserViewModel>())
                                 }
                                 composable("timeline") {
                                     selectedCase?.let {
@@ -228,12 +209,14 @@ fun MainScreen(
                                     }
                                 }
                                 composable("data_review") {
+                                    val allegationsViewModel: com.hereliesaz.lexorcist.viewmodel.AllegationsViewModel = androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel()
                                     ReviewScreen(
                                         evidenceViewModel = evidenceViewModel,
                                         caseViewModel = caseViewModel,
+                                        allegationsViewModel = allegationsViewModel,
                                     )
                                 }
-                                composable("settings") { SettingsScreen(viewModel = hiltViewModel<SettingsViewModel>(), caseViewModel = caseViewModel) }
+                                composable("settings") { SettingsScreen(caseViewModel = caseViewModel) }
                                 composable("evidence_details/{evidenceId}") { backStackEntry ->
                                     val evidenceIdString = backStackEntry.arguments?.getString("evidenceId")
                                     val evidenceId = remember(evidenceIdString) { evidenceIdString?.toIntOrNull() }
