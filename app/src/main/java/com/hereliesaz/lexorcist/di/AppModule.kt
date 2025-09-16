@@ -59,7 +59,13 @@ class AppModule {
         @ApplicationContext context: Context,
     ): CredentialManager = CredentialManager.create(context)
 
+import com.hereliesaz.lexorcist.service.LogService
+
     @Provides
     @Singleton
     fun provideGson(): com.google.gson.Gson = com.google.gson.Gson()
+
+    @Provides
+    @Singleton
+    fun provideLogService(): LogService = LogService()
 }

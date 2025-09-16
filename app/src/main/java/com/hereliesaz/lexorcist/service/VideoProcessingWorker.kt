@@ -33,6 +33,7 @@ class VideoProcessingWorker
         private val ocrProcessingService: OcrProcessingService,
         private val transcriptionService: TranscriptionService,
         private val credentialHolder: CredentialHolder,
+        private val logService: LogService,
     ) : CoroutineWorker(appContext, workerParams) {
         override suspend fun doWork(): Result {
             val videoUriString = inputData.getString(KEY_VIDEO_URI)
@@ -49,58 +50,64 @@ class VideoProcessingWorker
             }
 
             val videoUri = Uri.parse(videoUriString)
-            Log.d(TAG, "Processing video: $videoUri for case: $caseName ($caseId), spreadsheetId: $spreadsheetId")
-
+            logService.addLog("Processing video: $videoUri")
             setProgressAsync(Data.Builder().putString(PROGRESS, "Starting video processing...").build())
 
+            logService.addLog("Copying video to cache...")
             val videoFile = File(applicationContext.cacheDir, "video_${System.currentTimeMillis()}.mp4")
             applicationContext.contentResolver.openInputStream(videoUri)?.use { input ->
                 videoFile.outputStream().use { output ->
                     input.copyTo(output)
                 }
             }
+            logService.addLog("Video copied to cache.")
 
             var uploadedDriveFile: DriveFile? = null
             val googleApiService = credentialHolder.googleApiService // Get from CredentialHolder
             if (googleApiService == null) {
-                Log.e(TAG, "GoogleApiService is not available. Skipping Drive upload.")
+                logService.addLog("GoogleApiService is not available. Skipping Drive upload.")
             } else {
+                logService.addLog("Uploading video to Google Drive...")
                 val evidenceFolderId = googleApiService.getOrCreateEvidenceFolder(caseName)
                 if (evidenceFolderId != null) {
                     when (val uploadResult = googleApiService.uploadFile(videoFile, evidenceFolderId, "video/mp4")) {
                         is LexResult.Success -> {
                             uploadedDriveFile = uploadResult.data
-                            Log.d(TAG, "Video uploaded to Drive with ID: ${uploadedDriveFile?.id}")
+                            logService.addLog("Video uploaded to Drive with ID: ${uploadedDriveFile?.id}")
                         }
                         is LexResult.Error -> {
-                            Log.e(TAG, "Failed to upload video: ${uploadResult.exception.message}")
+                            logService.addLog("Failed to upload video: ${uploadResult.exception.message}")
                         }
                         is LexResult.UserRecoverableError -> {
-                            Log.e(TAG, "User recoverable error while uploading video: ${uploadResult.exception.message}")
-                            // Optionally, you might want to retry or notify the user
+                            logService.addLog("User recoverable error while uploading video: ${uploadResult.exception.message}")
                         }
                     }
                 } else {
-                    Log.e(TAG, "Failed to get or create evidence folder for case: $caseName")
+                    logService.addLog("Failed to get or create evidence folder for case: $caseName")
                 }
             }
 
             setProgressAsync(Data.Builder().putString(PROGRESS, "Extracting audio...").build())
+            logService.addLog("Extracting audio...")
             val audioUri = extractAudio(videoUri)
             val audioTranscript =
                 if (audioUri != null) {
                     transcriptionService.transcribeAudio(audioUri)
                 } else {
+                    logService.addLog("Audio could not be extracted.")
                     "Audio could not be extracted."
                 }
 
             setProgressAsync(Data.Builder().putString(PROGRESS, "Extracting frames...").build())
+            logService.addLog("Extracting frames...")
             val frameUris = extractKeyframes(videoUri)
             val ocrTextBuilder = StringBuilder()
             if (frameUris.isNotEmpty()) {
-                Log.d(TAG, "Extracted ${frameUris.size} keyframes")
+                logService.addLog("Extracted ${frameUris.size} keyframes")
                 frameUris.forEachIndexed { index, uri ->
-                    setProgressAsync(Data.Builder().putString(PROGRESS, "Processing frame ${index + 1} of ${frameUris.size}...").build())
+                    val progressMessage = "Processing frame ${index + 1} of ${frameUris.size}..."
+                    setProgressAsync(Data.Builder().putString(PROGRESS, progressMessage).build())
+                    logService.addLog(progressMessage)
                     val frameEvidence = ocrProcessingService.processImageFrame(
                         uri = uri,
                         context = appContext,

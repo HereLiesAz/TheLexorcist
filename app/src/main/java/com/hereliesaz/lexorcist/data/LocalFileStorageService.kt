@@ -345,17 +345,33 @@ class LocalFileStorageService @Inject constructor(
 
         val folderIdResult = googleApiService.getOrCreateAppRootFolder()
         if (folderIdResult is Result.Success) {
-            val folderId = folderIdResult.data
-            // This is a one-way synchronization that uploads the local file to Google Drive.
-            // It does not download changes from the cloud or handle conflicts.
-            // This will create duplicate files on every sync.
-            // TODO: Implement a more robust two-way synchronization mechanism.
-            val uploadResult = googleApiService.uploadFile(spreadsheetFile, folderId, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-            when (uploadResult) {
-                is Result.Success -> Result.Success(Unit)
-                is Result.Error -> Result.Error(uploadResult.exception)
-                is Result.UserRecoverableError -> Result.UserRecoverableError(uploadResult.exception)
+            val appRootFolderId = folderIdResult.data
+
+            // Upload the main spreadsheet
+            val uploadSpreadsheetResult = googleApiService.uploadFile(spreadsheetFile, appRootFolderId, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+            if (uploadSpreadsheetResult is Result.Error) {
+                return@withContext Result.Error(uploadSpreadsheetResult.exception)
             }
+
+            // Get all cases to find their folders
+            val casesResult = getAllCases()
+            if (casesResult is Result.Success) {
+                val cases = casesResult.data
+                for (case in cases) {
+                    val caseFolder = File(storageDir, case.spreadsheetId)
+                    if (caseFolder.exists() && caseFolder.isDirectory) {
+                        val uploadFolderResult = googleApiService.uploadFolder(caseFolder, appRootFolderId)
+                        if (uploadFolderResult is Result.Error) {
+                            // Log the error but continue with other folders
+                            android.util.Log.e("LocalFileStorageService", "Failed to upload folder for case ${case.name}", uploadFolderResult.exception)
+                        }
+                    }
+                }
+            } else if (casesResult is Result.Error) {
+                return@withContext Result.Error(casesResult.exception)
+            }
+
+            Result.Success(Unit)
         } else if (folderIdResult is Result.Error) {
             Result.Error(folderIdResult.exception)
         } else if (folderIdResult is Result.UserRecoverableError) {

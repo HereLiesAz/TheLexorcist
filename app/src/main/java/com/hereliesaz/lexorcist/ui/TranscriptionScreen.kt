@@ -24,6 +24,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -52,6 +53,7 @@ fun TranscriptionScreen(
                         stringResource(R.string.transcription).uppercase(Locale.getDefault()),
                         modifier = Modifier.fillMaxWidth(),
                         color = MaterialTheme.colorScheme.primary,
+                        textAlign = TextAlign.End
                     )
                 },
             )
@@ -73,12 +75,13 @@ fun TranscriptionScreen(
                     Modifier
                         .fillMaxWidth()
                         .weight(1f),
+                textStyle = TextStyle(textAlign = TextAlign.End)
             )
             Spacer(modifier = Modifier.height(16.dp))
-            Text("Edit History", style = MaterialTheme.typography.titleMedium)
+            Text("Edit History", style = MaterialTheme.typography.titleMedium, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.End)
             LazyColumn(modifier = Modifier.weight(1f)) {
                 items(evidenceDetails?.transcriptEdits ?: emptyList()) { edit ->
-                    Text("${edit.timestamp}: ${edit.reason} - ${edit.content}")
+                    Text("${edit.timestamp}: ${edit.reason} - ${edit.content}", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.End)
                 }
             }
             Spacer(modifier = Modifier.height(16.dp))
@@ -124,6 +127,7 @@ fun ReasonDialog(
                 value = reason,
                 onValueChange = { reason = it },
                 label = { Text(stringResource(R.string.reason)) },
+                textStyle = TextStyle(textAlign = TextAlign.End)
             )
         },
         confirmButton = {

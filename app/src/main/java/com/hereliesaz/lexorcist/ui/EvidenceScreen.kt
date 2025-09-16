@@ -198,7 +198,16 @@ fun EvidenceScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            LazyColumn(modifier = Modifier.fillMaxSize()) {
+            val logMessages by evidenceViewModel.logMessages.collectAsState()
+            if (logMessages.isNotEmpty()) {
+                LazyColumn(modifier = Modifier.weight(1f)) {
+                    items(logMessages) { message ->
+                        Text(message, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            }
+
+            LazyColumn(modifier = Modifier.weight(1f)) {
                 items(evidenceList) { evidence ->
                     EvidenceListItem(
                         evidence = evidence,

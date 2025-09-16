@@ -12,6 +12,7 @@ import com.hereliesaz.lexorcist.data.CaseRepository
 import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.data.EvidenceRepository
 import com.hereliesaz.lexorcist.data.SettingsManager
+import com.hereliesaz.lexorcist.service.LogService
 import com.hereliesaz.lexorcist.service.OcrProcessingService
 import com.hereliesaz.lexorcist.service.ScriptRunner
 import com.hereliesaz.lexorcist.service.TranscriptionService
@@ -44,6 +45,7 @@ class EvidenceViewModel
         private val transcriptionService: TranscriptionService,
         private val sharedPreferences: SharedPreferences,
         private val workManager: WorkManager,
+        private val logService: LogService,
     ) : AndroidViewModel(application) {
         private val _selectedEvidenceDetails = MutableStateFlow<Evidence?>(null)
         val selectedEvidenceDetails: StateFlow<Evidence?> = _selectedEvidenceDetails.asStateFlow()
@@ -76,6 +78,8 @@ class EvidenceViewModel
 
         private val _processingStatus = MutableStateFlow<String?>(null)
         val processingStatus: StateFlow<String?> = _processingStatus.asStateFlow()
+
+        val logMessages: StateFlow<List<String>> = logService.logMessages
 
         private var currentCaseIdForList: Long? = null
         private var currentSpreadsheetIdForList: String? = null
@@ -217,6 +221,10 @@ class EvidenceViewModel
             _selectedEvidenceDetails.value = null
         }
 
+        fun clearLogs() {
+            logService.clearLogs()
+        }
+
         fun loadEvidenceForCase(
             caseId: Long,
             spreadsheetId: String,
@@ -334,6 +342,7 @@ class EvidenceViewModel
 
         fun processImageEvidence(uri: Uri) {
             viewModelScope.launch {
+                clearLogs()
                 val caseId = currentCaseIdForList
                 val spreadsheetId = currentSpreadsheetIdForList
                 if (caseId != null && spreadsheetId != null) {
@@ -360,6 +369,7 @@ class EvidenceViewModel
 
         fun processAudioEvidence(uri: Uri) {
             viewModelScope.launch {
+                clearLogs()
                 if (currentCaseIdForList != null && currentSpreadsheetIdForList != null) {
                     _isLoading.value = true
                     _processingStatus.value = "Processing audio..."
@@ -422,6 +432,7 @@ class EvidenceViewModel
 
         fun processVideoEvidence(uri: Uri) {
             viewModelScope.launch {
+                clearLogs()
                 if (currentCaseIdForList != null && currentSpreadsheetIdForList != null) {
                     val case = caseRepository.getCaseBySpreadsheetId(currentSpreadsheetIdForList!!)
                     if (case != null) {

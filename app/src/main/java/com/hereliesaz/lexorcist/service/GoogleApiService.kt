@@ -88,6 +88,50 @@ class GoogleApiService(
             }
         }
 
+    suspend fun uploadFolder(
+        folder: java.io.File,
+        parentId: String,
+    ): Result<Unit> =
+        withContext(Dispatchers.IO) {
+            try {
+                // 1. Create the folder on Google Drive
+                val folderMetadata =
+                    File().apply {
+                        name = folder.name
+                        mimeType = "application/vnd.google-apps.folder"
+                        parents = listOf(parentId)
+                    }
+                val createdFolder =
+                    drive
+                        .files()
+                        .create(folderMetadata)
+                        .setFields("id")
+                        .execute()
+
+                // 2. List files in the local folder
+                val filesToUpload = folder.listFiles() ?: emptyArray()
+
+                // 3. Upload each file
+                for (file in filesToUpload) {
+                    if (file.isFile) {
+                        val mimeType = when (file.extension.lowercase()) {
+                            "jpg", "jpeg" -> "image/jpeg"
+                            "png" -> "image/png"
+                            "mp3" -> "audio/mpeg"
+                            "m4a" -> "audio/mp4"
+                            "mp4" -> "video/mp4"
+                            "xlsx" -> "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                            else -> "application/octet-stream"
+                        }
+                        uploadFile(file, createdFolder.id, mimeType)
+                    }
+                }
+                Result.Success(Unit)
+            } catch (e: IOException) {
+                Result.Error(e)
+            }
+        }
+
     suspend fun getOrCreateCaseRegistrySpreadsheetId(folderId: String): String =
         withContext(Dispatchers.IO) {
             try {
