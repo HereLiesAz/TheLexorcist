@@ -63,13 +63,12 @@ fun EvidenceScreen(
     val selectedCase by caseViewModel.selectedCase.collectAsState()
     val evidenceList by caseViewModel.selectedCaseEvidenceList.collectAsState()
     val evidenceViewModel: EvidenceViewModel = hiltViewModel()
-    val userMessage by evidenceViewModel.userMessage.collectAsState()
     val videoProcessingProgress by evidenceViewModel.videoProcessingProgress.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    LaunchedEffect(userMessage) {
-        userMessage?.let {
-            snackbarHostState.showSnackbar(it)
+    LaunchedEffect(Unit) {
+        evidenceViewModel.userMessage.collectLatest { message ->
+            snackbarHostState.showSnackbar(message)
         }
     }
 
@@ -198,8 +197,17 @@ fun EvidenceScreen(
             val logMessages by evidenceViewModel.logMessages.collectAsState()
             if (logMessages.isNotEmpty()) {
                 LazyColumn(modifier = Modifier.weight(1f)) {
-                    items(logMessages) { message ->
-                        Text(message, style = MaterialTheme.typography.bodySmall)
+                    items(logMessages) { logEntry ->
+                        val color = when (logEntry.level) {
+                            com.hereliesaz.lexorcist.model.LogLevel.INFO -> MaterialTheme.colorScheme.onSurface
+                            com.hereliesaz.lexorcist.model.LogLevel.ERROR -> MaterialTheme.colorScheme.error
+                            com.hereliesaz.lexorcist.model.LogLevel.DEBUG -> MaterialTheme.colorScheme.onSurfaceVariant
+                        }
+                        Text(
+                            text = "${java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date(logEntry.timestamp))} - ${logEntry.message}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = color
+                        )
                     }
                 }
             }

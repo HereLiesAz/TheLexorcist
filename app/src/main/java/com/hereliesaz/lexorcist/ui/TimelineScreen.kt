@@ -40,76 +40,65 @@ import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
 import java.util.Locale
+import com.jet.jetlime.JetLimeColumn
+import com.jet.jetlime.JetLimeDefaults
+import com.jet.jetlime.JetLimeEvent
+import com.jet.jetlime.JetLimeExtendedEvent
+import com.jet.jetlime.ItemsList
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TimelineScreen(
-    case: Case,
-    evidenceViewModel: EvidenceViewModel = viewModel(),
-    navController: NavController,
-) {
-    val evidenceList by evidenceViewModel.evidenceList.collectAsState()
-    val searchQuery by evidenceViewModel.searchQuery.collectAsState()
+fun TimelineScreen(caseViewModel: com.hereliesaz.lexorcist.viewmodel.CaseViewModel, navController: NavController) {
+    val evidenceList by caseViewModel.selectedCaseEvidenceList.collectAsState()
     var showEvidenceDetailsDialog by remember { mutableStateOf<Evidence?>(null) }
-
-    LaunchedEffect(case) {
-        evidenceViewModel.loadEvidenceForCase(case.id.toLong(), case.spreadsheetId)
-    }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        stringResource(R.string.timeline).uppercase(Locale.getDefault()),
+                        "Timeline".uppercase(java.util.Locale.getDefault()),
                         modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.End,
                         color = MaterialTheme.colorScheme.primary,
                     )
                 },
             )
         },
-    ) { paddingValues ->
-        BoxWithConstraints(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-            val halfScreenHeight = this@BoxWithConstraints.maxHeight / 2
-
-            val isLoading by evidenceViewModel.isLoading.collectAsState()
-
-            if (isLoading) {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                ) {
-                    CircularProgressIndicator()
-                }
-            } else if (evidenceList.isEmpty()) {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                ) {
-                    Text("No evidence found for this case.")
+    ) { padding ->
+        Column(
+            modifier = Modifier.fillMaxSize().padding(padding),
+            horizontalAlignment = Alignment.End
+        ) {
+            if (evidenceList.isNotEmpty()) {
+                JetLimeColumn(
+                    modifier = Modifier.padding(16.dp),
+                    itemsList = ItemsList(evidenceList),
+                    key = { _, item -> item.id },
+                    style = JetLimeDefaults.columnStyle(),
+                ) { _, item, _ ->
+                    JetLimeExtendedEvent(
+                        content = {
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { showEvidenceDetailsDialog = item },
+                            ) {
+                                Column(modifier = Modifier.padding(8.dp)) {
+                                    Text(item.type, style = MaterialTheme.typography.titleMedium)
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(item.content)
+                                }
+                            }
+                        }
+                    )
                 }
             } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(), // LazyColumn fills the BoxWithConstraints
-                    contentPadding =
-                    PaddingValues(
-                        top = halfScreenHeight,
-                        start = 16.dp,
-                        end = 16.dp,
-                        bottom = 16.dp,
-                    ),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                    horizontalAlignment = Alignment.End
-                ) {
-                    items(evidenceList) { evidence ->
-                        EvidenceCard(
-                            evidence = evidence,
-                            onClick = { showEvidenceDetailsDialog = evidence },
-                        )
-                    }
-                }
+                Text(
+                    text = "No evidence to display on the timeline.",
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    textAlign = TextAlign.End,
+                )
             }
         }
     }
@@ -119,75 +108,9 @@ fun TimelineScreen(
             evidence = evidence,
             onDismiss = { showEvidenceDetailsDialog = null },
             onNavigateToEvidenceDetails = {
-                // Ensure evidence.id is a non-null string if your route expects that.
-                // If evidence.id is Long, it should be passed as such if the navigation graph handles it.
                 navController.navigate("evidence_details/${evidence.id}")
-                showEvidenceDetailsDialog = null // Dismiss dialog after initiating navigation
+                showEvidenceDetailsDialog = null
             },
         )
     }
-}
-
-@Composable
-fun EvidenceCard(
-    evidence: Evidence,
-    onClick: () -> Unit,
-) {
-    val isPlaceholder = evidence.id < 0
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        onClick = { if (!isPlaceholder) onClick() },
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp).fillMaxWidth(), // Fill width for internal alignment
-            horizontalAlignment = Alignment.End, // Right-align content within the Card
-        ) {
-            Text(
-                text = evidence.content,
-                style = if (isPlaceholder) MaterialTheme.typography.bodyMedium else MaterialTheme.typography.bodyLarge,
-                color = if (isPlaceholder) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurface,
-            )
-            if (!isPlaceholder) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(text = evidence.category, style = MaterialTheme.typography.bodySmall)
-                    Text(text = evidence.documentDate.toString(), style = MaterialTheme.typography.bodySmall)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun EvidenceDetailsDialog(
-    evidence: Evidence,
-    onDismiss: () -> Unit,
-    onNavigateToEvidenceDetails: () -> Unit,
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(text = "Evidence Details") },
-        text = {
-            Column(horizontalAlignment = Alignment.End) {
-                // Right-align content in the dialog text area
-                Text(text = "Content: ${evidence.content}")
-                Text(text = "Category: ${evidence.category}")
-                Text(text = "Source: ${evidence.sourceDocument}")
-                Text(text = "Tags: ${evidence.tags.joinToString()}")
-            }
-        },
-        confirmButton = {
-            LexorcistOutlinedButton(onClick = {
-                onNavigateToEvidenceDetails()
-                // onDismiss() // Already called after navigation
-            }, text = "Go to Details")
-        },
-        dismissButton = {
-            LexorcistOutlinedButton(onClick = onDismiss, text = "Close")
-        },
-    )
 }
