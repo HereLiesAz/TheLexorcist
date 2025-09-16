@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.work.Data
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
+import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.data.CaseRepository
 import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.data.EvidenceRepository
@@ -84,6 +85,9 @@ class EvidenceViewModel
         private var currentCaseIdForList: Long? = null
         private var currentSpreadsheetIdForList: String? = null
 
+        private val _currentCase = MutableStateFlow<Case?>(null)
+        val currentCase: StateFlow<Case?> = _currentCase.asStateFlow()
+
         fun requestNavigationToTranscriptionScreen(evidenceId: Int) {
             viewModelScope.launch {
                 _navigateToTranscriptionScreen.emit(evidenceId)
@@ -92,7 +96,7 @@ class EvidenceViewModel
 
         fun addTextEvidence(
             text: String,
-            caseId: Long,
+            caseId: Long, // Matches Case.id being Int, but used as Long here
             spreadsheetId: String,
         ) {
             viewModelScope.launch {
@@ -106,8 +110,8 @@ class EvidenceViewModel
                         spreadsheetId = spreadsheetId,
                         type = "text",
                         content = text,
-                        formattedContent = null, 
-                        mediaUri = null, 
+                        formattedContent = null,
+                        mediaUri = null,
                         timestamp = System.currentTimeMillis(),
                         sourceDocument = "Manual text entry",
                         documentDate = System.currentTimeMillis(),
@@ -121,7 +125,7 @@ class EvidenceViewModel
                     )
                 evidenceRepository.addEvidence(newEvidence)
                 if (caseId == currentCaseIdForList && spreadsheetId == currentSpreadsheetIdForList) {
-                    loadEvidenceForCase(caseId, spreadsheetId)
+                    loadEvidenceForCase(caseId, spreadsheetId) // This will also reload the case
                 }
             }
         }
@@ -132,7 +136,7 @@ class EvidenceViewModel
                     if (it.id == evidenceId) {
                         it.copy(
                             isSelected = !it.isSelected,
-                            formattedContent = it.formattedContent, 
+                            formattedContent = it.formattedContent,
                             mediaUri = it.mediaUri
                         )
                     } else {
@@ -154,7 +158,7 @@ class EvidenceViewModel
                 _evidenceList.value.map {
                     it.copy(
                         isSelected = false,
-                        formattedContent = it.formattedContent, 
+                        formattedContent = it.formattedContent,
                         mediaUri = it.mediaUri
                     )
                 }
@@ -182,7 +186,7 @@ class EvidenceViewModel
                     }
                     _selectedEvidenceDetails.value = evidence.copy(
                         content = combinedContent.toString(),
-                        formattedContent = evidence.formattedContent, 
+                        formattedContent = evidence.formattedContent,
                         mediaUri = evidence.mediaUri
                     )
                 } else {
@@ -211,7 +215,7 @@ class EvidenceViewModel
                 }
                 currentCaseIdForList?.let { caseId ->
                     currentSpreadsheetIdForList?.let { spreadsheetId ->
-                        loadEvidenceForCase(caseId, spreadsheetId)
+                        loadEvidenceForCase(caseId, spreadsheetId) // This will also reload the case
                     }
                 }
             }
@@ -225,7 +229,7 @@ class EvidenceViewModel
             logService.clearLogs()
         }
 
-        fun loadEvidenceForCase(
+        fun loadEvidenceForCase( // Renamed from loadCaseAndEvidence in EvidenceScreen's perspective
             caseId: Long,
             spreadsheetId: String,
         ) {
@@ -233,6 +237,12 @@ class EvidenceViewModel
             currentSpreadsheetIdForList = spreadsheetId
             viewModelScope.launch {
                 _isLoading.value = true
+                // Fetch and update the current case
+                // Assuming CaseRepository has a method like getCaseBySpreadsheetId or getCaseById
+                // Using getCaseBySpreadsheetId as it seems more robust if spreadsheetId is unique
+                // and Case.id is Int while caseId is Long here.
+                _currentCase.value = caseRepository.getCaseBySpreadsheetId(spreadsheetId) // Or caseRepository.getCaseById(caseId.toInt())
+
                 evidenceRepository.getEvidenceForCase(spreadsheetId, caseId).collectLatest { evidence ->
                     if (evidence.isEmpty()) {
                         _evidenceList.value = createPlaceholderEvidence()
@@ -296,13 +306,13 @@ class EvidenceViewModel
                 if (result is Result.Success) {
                     val updatedEvidence = evidence.copy(
                         tags = evidence.tags + result.data,
-                        formattedContent = evidence.formattedContent, 
+                        formattedContent = evidence.formattedContent,
                         mediaUri = evidence.mediaUri
                     )
                     evidenceRepository.updateEvidence(updatedEvidence)
                 }
                 if (evidence.caseId == currentCaseIdForList && evidence.spreadsheetId == currentSpreadsheetIdForList) {
-                    loadEvidenceForCase(evidence.caseId, evidence.spreadsheetId)
+                    loadEvidenceForCase(evidence.caseId, evidence.spreadsheetId) // This will also reload the case
                 }
             }
         }
@@ -311,7 +321,7 @@ class EvidenceViewModel
             viewModelScope.launch {
                 evidenceRepository.deleteEvidence(evidence)
                 if (evidence.caseId == currentCaseIdForList && evidence.spreadsheetId == currentSpreadsheetIdForList) {
-                    loadEvidenceForCase(evidence.caseId, evidence.spreadsheetId)
+                    loadEvidenceForCase(evidence.caseId, evidence.spreadsheetId) // This will also reload the case
                 }
             }
         }
@@ -334,7 +344,7 @@ class EvidenceViewModel
                     )
                     evidenceRepository.updateEvidence(updatedEvidence)
                     if (evidence.caseId == currentCaseIdForList && evidence.spreadsheetId == currentSpreadsheetIdForList) {
-                        loadEvidenceForCase(evidence.caseId, evidence.spreadsheetId)
+                        loadEvidenceForCase(evidence.caseId, evidence.spreadsheetId) // This will also reload the case
                     }
                 }
             }
@@ -363,7 +373,7 @@ class EvidenceViewModel
                     } finally {
                         _isLoading.value = false
                         _processingStatus.value = null
-                        loadEvidenceForCase(caseId, spreadsheetId)
+                        loadEvidenceForCase(caseId, spreadsheetId) // This will also reload the case
                     }
                 }
             }
@@ -416,7 +426,7 @@ class EvidenceViewModel
                     } finally {
                         _isLoading.value = false
                         _processingStatus.value = null
-                        loadEvidenceForCase(currentCaseIdForList!!, currentSpreadsheetIdForList!!)
+                        loadEvidenceForCase(currentCaseIdForList!!, currentSpreadsheetIdForList!!) // This will also reload the case
                     }
                 }
             }
@@ -444,7 +454,7 @@ class EvidenceViewModel
                                     Data
                                         .Builder()
                                         .putString(VideoProcessingWorker.KEY_VIDEO_URI, uri.toString())
-                                        .putInt(VideoProcessingWorker.KEY_CASE_ID, case.id)
+                                        .putInt(VideoProcessingWorker.KEY_CASE_ID, case.id) // case.id is Int
                                         .putString(VideoProcessingWorker.KEY_CASE_NAME, case.name)
                                         .putString(VideoProcessingWorker.KEY_SPREADSHEET_ID, case.spreadsheetId)
                                         .build(),
@@ -455,8 +465,8 @@ class EvidenceViewModel
                                 val progress = workInfo.progress.getString(VideoProcessingWorker.PROGRESS)
                                 _videoProcessingProgress.value = progress
                                 if (workInfo.state.isFinished) {
-                                    _videoProcessingProgress.value = null // <<< Corrected here
-                                    loadEvidenceForCase(currentCaseIdForList!!, currentSpreadsheetIdForList!!)
+                                    _videoProcessingProgress.value = null
+                                    loadEvidenceForCase(currentCaseIdForList!!, currentSpreadsheetIdForList!!) // This will also reload the case
                                 }
                             }
                         }
