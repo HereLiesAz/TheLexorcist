@@ -1,5 +1,6 @@
 package com.hereliesaz.lexorcist.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -38,15 +39,17 @@ import androidx.navigation.NavController
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.data.Evidence
-import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
+import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import java.util.Locale
-import com.jet.jetlime.JetLimeExtended
-import com.jet.jetlime.JetLimeDefaults
-import com.jet.jetlime.JetLimeEvent
+import com.pushpal.jetlime.*
+import com.pushpal.jetlime.JetLimeDefaults
+import com.pushpal.jetlime.JetLimeEvent
+import com.pushpal.jetlime.JetLimeStyle
+import com.pushpal.jetlime.JetLimeExtended
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TimelineScreen(caseViewModel: com.hereliesaz.lexorcist.viewmodel.CaseViewModel, navController: NavController) {
+fun TimelineScreen(caseViewModel: CaseViewModel, navController: NavController) {
     val evidenceList by caseViewModel.selectedCaseEvidenceList.collectAsState()
     var showEvidenceDetailsDialog by remember { mutableStateOf<Evidence?>(null) }
 
@@ -70,7 +73,7 @@ fun TimelineScreen(caseViewModel: com.hereliesaz.lexorcist.viewmodel.CaseViewMod
         ) {
             if (evidenceList.isNotEmpty()) {
                 val items =
-                    evidenceList.map {
+                    evidenceList.map { evidenceItem -> // Renamed `it` to `evidenceItem` for clarity
                         JetLimeEvent(
                             title = { Text(it.type) },
                             description = {
@@ -87,7 +90,7 @@ fun TimelineScreen(caseViewModel: com.hereliesaz.lexorcist.viewmodel.CaseViewMod
                 JetLimeExtended(
                     modifier = Modifier.padding(16.dp),
                     items = items,
-                    jetLimeStyle = JetLimeDefaults.jetLimeStyle(contentDistance = 20.dp),
+                    style = JetLimeStyle(contentDistance = 20.dp), // Changed jetLimeStyle to style
                 )
             } else {
                 Text(
@@ -103,7 +106,7 @@ fun TimelineScreen(caseViewModel: com.hereliesaz.lexorcist.viewmodel.CaseViewMod
         EvidenceDetailsDialog(
             evidence = evidence,
             onDismiss = { showEvidenceDetailsDialog = null },
-            onNavigateToEvidenceDetails = {
+            onNavigateToEvidenceDetails = { // This parameter needs to be added to EvidenceDetailsDialog
                 navController.navigate("evidence_details/${evidence.id}")
                 showEvidenceDetailsDialog = null
             },

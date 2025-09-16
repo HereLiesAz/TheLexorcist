@@ -1,6 +1,8 @@
 package com.hereliesaz.lexorcist.ui
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -8,7 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -17,11 +18,13 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.hereliesaz.lexorcist.data.Evidence
+import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
 
 @Composable
 fun EvidenceDetailsDialog(
     evidence: Evidence,
     onDismiss: () -> Unit,
+    onNavigateToEvidenceDetails: () -> Unit, // Added this parameter
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -46,8 +49,14 @@ fun EvidenceDetailsDialog(
             }
         },
         confirmButton = {
-            Button(onClick = onDismiss) {
-                Text("Close")
+            Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
+                LexorcistOutlinedButton(onClick = onNavigateToEvidenceDetails) {
+                    Text("View Full Details")
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                LexorcistOutlinedButton(onClick = onDismiss) {
+                    Text("Close")
+                }
             }
         },
         modifier = Modifier.padding(16.dp),

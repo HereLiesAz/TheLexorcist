@@ -85,6 +85,9 @@ constructor(
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
+    private val _userMessage = MutableStateFlow<String?>(null) // Added user message StateFlow
+    val userMessage: StateFlow<String?> = _userMessage.asStateFlow() // Added user message StateFlow
+
     private val _userRecoverableAuthIntent = MutableStateFlow<Intent?>(null)
     val userRecoverableAuthIntent: StateFlow<Intent?> =
         _userRecoverableAuthIntent.asStateFlow()
@@ -141,6 +144,10 @@ constructor(
 
     fun clearError() {
         _errorMessage.value = null
+    }
+
+    fun clearUserMessage() { // Added function to clear user message
+        _userMessage.value = null
     }
 
     fun clearUserRecoverableAuthIntent() {

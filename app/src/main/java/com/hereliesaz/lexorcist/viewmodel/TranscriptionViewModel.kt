@@ -31,13 +31,15 @@ class TranscriptionViewModel @Inject constructor(
 
     fun transcribeAudio(uri: Uri) {
         viewModelScope.launch {
-            // The injected transcriptionService will handle missing credentials internally.
             _transcriptionState.value = TranscriptionState.Loading
-            val transcript = transcriptionService.transcribeAudio(uri)
-            if (transcript.startsWith("Error:")) {
-                _transcriptionState.value = TranscriptionState.Error(transcript)
+            val resultPair = transcriptionService.transcribeAudio(uri)
+            val transcriptText = resultPair.first
+            val message = resultPair.second
+
+            if (message != null && message.startsWith("Error:")) {
+                _transcriptionState.value = TranscriptionState.Error(message)
             } else {
-                _transcriptionState.value = TranscriptionState.Success(transcript)
+                _transcriptionState.value = TranscriptionState.Success(transcriptText)
             }
         }
     }

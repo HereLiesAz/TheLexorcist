@@ -154,8 +154,7 @@ dependencies {
     implementation(libs.vico.core)
 
     // JetLime Timeline Library
-    implementation(libs.jetlime)
-    implementation(libs.jetlime.android)
+    implementation("io.github.pushpalroy:jetlime:4.0.0")
 
     // Hilt
     implementation(libs.google.dagger.hilt.android)
@@ -182,4 +181,3 @@ kotlin {
         freeCompilerArgs.add("-opt-in=androidx.compose.material3.ExperimentalMaterial3Api")
     }
 }
-

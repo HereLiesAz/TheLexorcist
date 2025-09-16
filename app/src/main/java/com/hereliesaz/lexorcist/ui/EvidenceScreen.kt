@@ -45,7 +45,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel // Added import
 import androidx.navigation.NavController
 import com.hereliesaz.lexorcist.R
-import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
+import com.hereliesaz.lexorcist.data.Case
+import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
 import kotlinx.coroutines.flow.collectLatest
 import java.text.SimpleDateFormat
@@ -64,6 +65,9 @@ fun EvidenceScreen(
     val evidenceList by caseViewModel.selectedCaseEvidenceList.collectAsState()
     val evidenceViewModel: EvidenceViewModel = hiltViewModel()
     val videoProcessingProgress by evidenceViewModel.videoProcessingProgress.collectAsState()
+    val logMessages by evidenceViewModel.logMessages.collectAsState()
+    val currentCase by evidenceViewModel.currentCase.collectAsState()
+    var showAddTextDialog by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(Unit) {
