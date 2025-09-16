@@ -179,4 +179,8 @@ constructor(
     override suspend fun clearCache() {
         _cases.value = emptyList()
     }
+
+    override suspend fun synchronize() {
+        storageService.synchronize()
+    }
 }

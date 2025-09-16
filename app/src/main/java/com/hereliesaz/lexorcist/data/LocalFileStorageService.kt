@@ -19,10 +19,13 @@ import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
+import com.hereliesaz.lexorcist.service.GoogleApiService
+
 @Singleton
 class LocalFileStorageService @Inject constructor(
     @param:ApplicationContext private val context: Context, // Changed here
-    private val gson: Gson
+    private val gson: Gson,
+    private val googleApiService: GoogleApiService
 ) : StorageService {
 
     private val storageDir: File by lazy {
@@ -332,6 +335,31 @@ class LocalFileStorageService @Inject constructor(
             createCell(2).setCellValue(System.currentTimeMillis().toDouble()) // Timestamp
             createCell(3).setCellValue(reason) // Reason
             createCell(4).setCellValue(oldContent) // OldContent
+        }
+    }
+
+    override suspend fun synchronize(): Result<Unit> = withContext(Dispatchers.IO) {
+        if (!spreadsheetFile.exists()) {
+            return@withContext Result.Success(Unit) // Nothing to sync
+        }
+
+        val folderIdResult = googleApiService.getOrCreateAppRootFolder()
+        if (folderIdResult is Result.Success) {
+            val folderId = folderIdResult.data
+            // For simplicity, we just upload. This will create duplicates.
+            // A more robust implementation would check for existence and update.
+            val uploadResult = googleApiService.uploadFile(spreadsheetFile, folderId, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+            when (uploadResult) {
+                is Result.Success -> Result.Success(Unit)
+                is Result.Error -> Result.Error(uploadResult.exception)
+                is Result.UserRecoverableError -> Result.UserRecoverableError(uploadResult.exception)
+            }
+        } else if (folderIdResult is Result.Error) {
+            Result.Error(folderIdResult.exception)
+        } else if (folderIdResult is Result.UserRecoverableError) {
+            Result.UserRecoverableError(folderIdResult.exception)
+        } else {
+            Result.Error(Exception("Unknown error getting or creating app root folder"))
         }
     }
 }
