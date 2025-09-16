@@ -17,7 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
+import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
@@ -72,6 +72,7 @@ fun AllegationsScreen(viewModel: MasterAllegationsViewModel = hiltViewModel()) {
                 Modifier
                     .fillMaxSize()
                     .padding(padding),
+            horizontalAlignment = Alignment.End
         ) {
             if (selectedAllegations.isNotEmpty()) {
                 Text(
@@ -181,9 +182,7 @@ fun AllegationsScreen(viewModel: MasterAllegationsViewModel = hiltViewModel()) {
                     title = { Text(showDetailsDialog!!.name) },
                     text = { Text(showDetailsDialog!!.description) },
                     confirmButton = {
-                        Button(onClick = { showDetailsDialog = null }) {
-                            Text("OK")
-                        }
+                        LexorcistOutlinedButton(onClick = { showDetailsDialog = null }, text = "OK")
                     },
                 )
             }
@@ -205,10 +204,7 @@ fun SortDropdown(
     ) {
         Text("Sort by: $sortType")
         Spacer(modifier = Modifier.height(8.dp))
-        Button(onClick = { expanded = true }) {
-            Text("Change")
-            Icon(Icons.Default.ArrowDropDown, contentDescription = "Sort")
-        }
+        LexorcistOutlinedButton(onClick = { expanded = true }, text = "Change")
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },

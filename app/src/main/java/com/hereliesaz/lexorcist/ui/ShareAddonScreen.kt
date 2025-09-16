@@ -9,8 +9,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState // Added import
 import androidx.compose.foundation.verticalScroll // Added import
-import androidx.compose.material3.Button // Kept Button
-import androidx.compose.material3.OutlinedButton // For Type toggle if preferred
+import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
 import androidx.compose.material3.OutlinedTextField // Changed from TextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -69,13 +68,9 @@ fun ShareAddonScreen(onShare: (name: String, description: String, content: Strin
             )
             Spacer(modifier = Modifier.height(16.dp))
             // A simple way to select the type. A dropdown or RadioGroup would be better for more options.
-            OutlinedButton(onClick = { type = if (type == "Script") "Template" else "Script" }, modifier = Modifier.fillMaxWidth()) {
-                Text("Type: $type (Click to toggle)")
-            }
+            LexorcistOutlinedButton(onClick = { type = if (type == "Script") "Template" else "Script" }, modifier = Modifier.fillMaxWidth(), text = "Type: $type (Click to toggle)")
             Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = { onShare(name, description, content, type) }, modifier = Modifier.fillMaxWidth()) {
-                Text("Share")
-            }
+            LexorcistOutlinedButton(onClick = { onShare(name, description, content, type) }, modifier = Modifier.fillMaxWidth(), text = "Share")
         }
     }
 }

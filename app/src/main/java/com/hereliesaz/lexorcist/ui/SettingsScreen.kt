@@ -10,8 +10,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState // Added import
 import androidx.compose.foundation.verticalScroll // Added import
+import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider // Corrected import
 import androidx.compose.material3.MaterialTheme
@@ -101,9 +101,7 @@ fun SettingsScreen(caseViewModel: CaseViewModel) {
                 modifier = Modifier.fillMaxWidth(),
             )
             Spacer(modifier = Modifier.height(16.dp))
-            OutlinedButton(onClick = { showClearCacheDialog = true }) {
-                Text(text = stringResource(R.string.clear_cache))
-            }
+            LexorcistOutlinedButton(onClick = { showClearCacheDialog = true }, text = stringResource(R.string.clear_cache))
         }
     }
 
@@ -113,19 +111,16 @@ fun SettingsScreen(caseViewModel: CaseViewModel) {
             title = { Text(stringResource(R.string.clear_cache_title)) },
             text = { Text(stringResource(R.string.clear_cache_confirmation)) },
             confirmButton = {
-                Button(
+                LexorcistOutlinedButton(
                     onClick = {
                         caseViewModel.clearCache()
                         showClearCacheDialog = false
                     },
-                ) {
-                    Text(stringResource(R.string.delete))
-                }
+                    text = stringResource(R.string.delete)
+                )
             },
             dismissButton = {
-                OutlinedButton(onClick = { showClearCacheDialog = false }) {
-                    Text(stringResource(R.string.cancel))
-                }
+                LexorcistOutlinedButton(onClick = { showClearCacheDialog = false }, text = stringResource(R.string.cancel))
             },
         )
     }
