@@ -22,6 +22,7 @@ import com.hereliesaz.lexorcist.utils.Result
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -32,6 +33,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @HiltViewModel
 class CaseViewModel
@@ -536,19 +538,31 @@ constructor(
     }
 
     fun processAudioEvidence(uri: android.net.Uri) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             clearLogs()
             val case = selectedCase.value ?: return@launch
-            _isLoading.value = true
-            try {
+            withContext(Dispatchers.Main) {
+                _isLoading.value = true
                 _processingStatus.value = "Uploading audio..."
+            }
+
+            try {
                 val uploadResult = evidenceRepository.uploadFile(uri, case.name, case.spreadsheetId)
                 if (uploadResult is Result.Success) {
-                    viewModelScope.launch { _userMessage.emit("Raw evidence file saved.") }
-                    _processingStatus.value = "Transcribing audio..."
+                    withContext(Dispatchers.Main) {
+                        _userMessage.value = "Raw evidence file saved."
+                        _processingStatus.value = "Transcribing audio..."
+                    }
+
                     val (transcribedText, message) = transcriptionService.transcribeAudio(uri)
-                    message?.let { viewModelScope.launch { _userMessage.emit(it) } }
-                    _processingStatus.value = "Audio processing complete."
+                    message?.let {
+                        withContext(Dispatchers.Main) {
+                            _userMessage.value = it
+                        }
+                    }
+                    withContext(Dispatchers.Main) {
+                        _processingStatus.value = "Audio processing complete."
+                    }
 
                     val newEvidence =
                         com.hereliesaz.lexorcist.data.Evidence(
@@ -570,12 +584,16 @@ constructor(
                         )
                     val newEvidenceWithId = evidenceRepository.addEvidence(newEvidence)
                     if (newEvidenceWithId != null && newEvidenceWithId.content.isNotEmpty()) {
-                        _navigateToTranscriptionScreen.emit(newEvidenceWithId.id)
+                        withContext(Dispatchers.Main) {
+                            _navigateToTranscriptionScreen.emit(newEvidenceWithId.id)
+                        }
                     }
                 }
             } finally {
-                _isLoading.value = false
-                _processingStatus.value = null
+                withContext(Dispatchers.Main) {
+                    _isLoading.value = false
+                    _processingStatus.value = null
+                }
                 loadEvidenceForSelectedCase()
             }
         }

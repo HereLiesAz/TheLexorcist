@@ -49,6 +49,17 @@ android {
         resources.excludes.add("META-INF/LICENSE.md")
         resources.excludes.add("META-INF/LICENSE-notice.md")
         resources.excludes.add("META-INF/NOTICE.md")
+        // Exclude gRPC and Protobuf meta-inf files that can cause conflicts
+        resources.excludes.add("META-INF/services/io.grpc.ManagedChannelProvider")
+        resources.excludes.add("META-INF/grpc-all.versions") // Example, adjust if needed
+        resources.excludes.add("META-INF/io.netty.versions.properties")
+        resources.excludes.add("META-INF/native-image/io.netty/codec-http2/native-image.properties")
+        resources.excludes.add("META-INF/native-image/io.netty/codec/native-image.properties")
+        resources.excludes.add("META-INF/native-image/io.netty/common/native-image.properties")
+        resources.excludes.add("META-INF/native-image/io.netty/handler/native-image.properties")
+        resources.excludes.add("META-INF/native-image/io.netty/resolver/native-image.properties")
+        resources.excludes.add("META-INF/native-image/io.netty/transport/native-image.properties")
+
     }
     lint {
         baseline = file("lint-baseline.xml")
@@ -176,6 +187,13 @@ dependencies {
 
     // Google Cloud Speech-to-Text
     implementation(libs.google.cloud.speech)
+    // Explicit gRPC dependencies with consistent versions
+    implementation(libs.grpc.okhttp)
+    implementation(libs.grpc.core)
+    implementation(libs.grpc.protobuf.lite)
+    implementation(libs.grpc.context)
+    implementation(libs.protobuf.javalite)
+
     implementation(libs.aznavrail)
 }
 

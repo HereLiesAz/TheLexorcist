@@ -125,7 +125,7 @@ fun MainScreen(
                             onClick = { navController.navigate("case_allegations_route") },
                         )
                         azRailItem(id = "templates", text = "Templates", onClick = { navController.navigate("templates") })
-                        azRailItem(id = "script_builder", text = "Script Builder", onClick = { navController.navigate("script_builder") })
+                        azRailItem(id = "script_builder", text = "Script", onClick = { navController.navigate("script_builder") })
                         azRailItem(id = "data_review", text = "Review", onClick = { navController.navigate("data_review") })
                         azRailItem(id = "timeline", text = "Timeline", onClick = { navController.navigate("timeline") })
                         azMenuItem(id = "extras", text = "Extras", onClick = { navController.navigate("extras") })
