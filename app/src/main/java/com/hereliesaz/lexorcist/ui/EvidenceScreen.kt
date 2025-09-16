@@ -18,7 +18,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Audiotrack
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Videocam
-import androidx.compose.material3.Button
+import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -153,7 +153,7 @@ fun EvidenceScreen(
                     placeholder = { Text(stringResource(R.string.enter_evidence_content)) },
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                Button(
+                LexorcistOutlinedButton(
                     onClick = {
                         selectedCase?.let {
                             evidenceViewModel.addTextEvidence(
@@ -166,65 +166,22 @@ fun EvidenceScreen(
                         showAddTextEvidence = false
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = selectedCase != null,
-                ) {
-                    Text(stringResource(R.string.save).uppercase(Locale.getDefault()))
-                }
+                    text = stringResource(R.string.save).uppercase(Locale.getDefault())
+                )
                 Spacer(modifier = Modifier.height(16.dp))
-                Button(
+                LexorcistOutlinedButton(
                     onClick = { showAddTextEvidence = false },
                     modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(stringResource(R.string.cancel).uppercase(Locale.getDefault()))
-                }
+                    text = stringResource(R.string.cancel).uppercase(Locale.getDefault())
+                )
             } else {
-                Button(onClick = { showAddTextEvidence = true }) {
-                    Icon(
-                        Icons.Default.Add,
-                        contentDescription =
-                            stringResource(R.string.add_text_evidence).uppercase(
-                                Locale.getDefault(),
-                            ),
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(R.string.add_text_evidence).uppercase(Locale.getDefault()))
-                }
+                LexorcistOutlinedButton(onClick = { showAddTextEvidence = true }, text = stringResource(R.string.add_text_evidence).uppercase(Locale.getDefault()))
                 Spacer(modifier = Modifier.height(8.dp))
-                Button(onClick = { imagePickerLauncher.launch("image/*") }) {
-                    Icon(
-                        Icons.Default.Image,
-                        contentDescription =
-                            stringResource(R.string.add_image_evidence).uppercase(
-                                Locale.getDefault(),
-                            ),
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(R.string.add_image_evidence).uppercase(Locale.getDefault()))
-                }
+                LexorcistOutlinedButton(onClick = { imagePickerLauncher.launch("image/*") }, text = stringResource(R.string.add_image_evidence).uppercase(Locale.getDefault()))
                 Spacer(modifier = Modifier.height(8.dp))
-                Button(onClick = { audioPickerLauncher.launch("audio/*") }) {
-                    Icon(
-                        Icons.Default.Audiotrack,
-                        contentDescription =
-                            stringResource(R.string.add_audio_evidence).uppercase(
-                                Locale.getDefault(),
-                            ),
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(R.string.add_audio_evidence).uppercase(Locale.getDefault()))
-                }
+                LexorcistOutlinedButton(onClick = { audioPickerLauncher.launch("audio/*") }, text = stringResource(R.string.add_audio_evidence).uppercase(Locale.getDefault()))
                 Spacer(modifier = Modifier.height(8.dp))
-                Button(onClick = { videoPickerLauncher.launch("video/*") }) {
-                    Icon(
-                        Icons.Default.Videocam,
-                        contentDescription =
-                            stringResource(R.string.add_video_evidence).uppercase(
-                                Locale.getDefault(),
-                            ),
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(R.string.add_video_evidence).uppercase(Locale.getDefault()))
-                }
+                LexorcistOutlinedButton(onClick = { videoPickerLauncher.launch("video/*") }, text = stringResource(R.string.add_video_evidence).uppercase(Locale.getDefault()))
             }
 
             Spacer(modifier = Modifier.height(16.dp))
