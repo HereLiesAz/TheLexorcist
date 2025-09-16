@@ -110,9 +110,6 @@ constructor(
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
-    private val _userMessage = MutableSharedFlow<String>()
-    val userMessage = _userMessage.asSharedFlow()
-
     private val _videoProcessingProgress = MutableStateFlow<String?>(null)
     val videoProcessingProgress: StateFlow<String?> = _videoProcessingProgress.asStateFlow()
 
@@ -164,10 +161,6 @@ constructor(
     init {
         loadThemeModePreference()
         _storageLocation.value = settingsManager.getStorageLocation()
-    }
-
-    fun onTimelineSortOrderChanged(sortType: TimelineSortType) {
-        _timelineSortType.value = sortType
     }
 
     fun setStorageLocation(uri: android.net.Uri) {
