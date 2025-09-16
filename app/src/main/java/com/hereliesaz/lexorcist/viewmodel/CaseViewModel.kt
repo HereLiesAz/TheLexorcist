@@ -85,9 +85,6 @@ constructor(
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
-    private val _userMessage = MutableStateFlow<String?>(null) // Added user message StateFlow
-    val userMessage: StateFlow<String?> = _userMessage.asStateFlow() // Added user message StateFlow
-
     private val _userRecoverableAuthIntent = MutableStateFlow<Intent?>(null)
     val userRecoverableAuthIntent: StateFlow<Intent?> =
         _userRecoverableAuthIntent.asStateFlow()
@@ -95,10 +92,24 @@ constructor(
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
-    private val _selectedCaseEvidenceList =
+    private val _unfilteredEvidenceList =
         MutableStateFlow<List<com.hereliesaz.lexorcist.data.Evidence>>(emptyList())
+
     val selectedCaseEvidenceList: StateFlow<List<com.hereliesaz.lexorcist.data.Evidence>> =
-        _selectedCaseEvidenceList.asStateFlow()
+        _unfilteredEvidenceList
+            .combine(_timelineSortType) { evidence, sortType ->
+                when (sortType) {
+                    TimelineSortType.DATE_OF_OCCURRENCE -> evidence.sortedByDescending { it.documentDate }
+                    TimelineSortType.DATE_EVIDENCE_ADDED -> evidence.sortedByDescending { it.timestamp }
+                    TimelineSortType.BY_ALLEGATION -> evidence.sortedBy { it.allegationId }
+                    TimelineSortType.BY_FILE_TYPE -> evidence.sortedBy { it.type }
+                    TimelineSortType.CUSTOM -> evidence // Placeholder for custom sort
+                }
+            }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+
+    fun onTimelineSortOrderChanged(sortType: TimelineSortType) {
+        _timelineSortType.value = sortType
+    }
 
     private val _themeMode =
         MutableStateFlow(com.hereliesaz.lexorcist.ui.theme.ThemeMode.SYSTEM)
@@ -107,6 +118,9 @@ constructor(
 
     private val _storageLocation = MutableStateFlow<String?>(null)
     val storageLocation: StateFlow<String?> = _storageLocation.asStateFlow()
+
+    private val _timelineSortType = MutableStateFlow(TimelineSortType.DATE_OF_OCCURRENCE)
+    val timelineSortType: StateFlow<TimelineSortType> = _timelineSortType.asStateFlow()
 
     init {
         loadThemeModePreference()
@@ -144,10 +158,6 @@ constructor(
 
     fun clearError() {
         _errorMessage.value = null
-    }
-
-    fun clearUserMessage() { // Added function to clear user message
-        _userMessage.value = null
     }
 
     fun clearUserRecoverableAuthIntent() {
@@ -274,7 +284,7 @@ constructor(
         }
     }
 
-    internal fun loadAllegationsFromRepository(
+    private fun loadAllegationsFromRepository(
         caseId: Int,
         spreadsheetId: String,
     ) {
@@ -299,7 +309,7 @@ constructor(
             selectedCase.value?.let { case ->
                 when (val result = caseRepository.getEvidenceForCase(case.spreadsheetId)) {
                     is Result.Success -> { // Changed from Result.Success<*> to Result.Success
-                        _selectedCaseEvidenceList.value = result.data
+                        _unfilteredEvidenceList.value = result.data
                     }
                     is Result.Error -> {
                         _errorMessage.value = result.exception.message ?: "Unknown error"

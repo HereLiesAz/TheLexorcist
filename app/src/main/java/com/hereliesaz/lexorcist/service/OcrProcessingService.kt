@@ -38,6 +38,7 @@ class OcrProcessingService
                     continuation.invokeOnCancellation { recognizer.close() }
                     val image =
                         try {
+                            // InputImage.fromFilePath can handle both content:// and file:// URIs
                             InputImage.fromFilePath(context, uri)
                         } catch (e: Exception) {
                             continuation.resumeWithException(e)
