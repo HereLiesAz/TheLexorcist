@@ -156,6 +156,9 @@ dependencies {
     // JetLime Timeline Library
     implementation("io.github.pushpalroy:jetlime:4.0.0")
 
+    // Dropbox SDK
+    implementation("com.dropbox.core:dropbox-core-sdk:7.0.0")
+
     // Hilt
     implementation(libs.google.dagger.hilt.android)
     ksp(libs.google.dagger.hilt.compiler)
