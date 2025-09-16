@@ -1,6 +1,5 @@
 package com.hereliesaz.lexorcist.ui
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -39,17 +38,17 @@ import androidx.navigation.NavController
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.data.Evidence
-import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
+import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
 import java.util.Locale
-import com.pushpal.jetlime.*
-import com.pushpal.jetlime.JetLimeDefaults
-import com.pushpal.jetlime.JetLimeEvent
-import com.pushpal.jetlime.JetLimeStyle
-import com.pushpal.jetlime.JetLimeExtended
+import com.jet.jetlime.JetLimeColumn
+import com.jet.jetlime.JetLimeDefaults
+import com.jet.jetlime.JetLimeEvent
+import com.jet.jetlime.JetLimeExtendedEvent
+import com.jet.jetlime.ItemsList
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TimelineScreen(caseViewModel: CaseViewModel, navController: NavController) {
+fun TimelineScreen(caseViewModel: com.hereliesaz.lexorcist.viewmodel.CaseViewModel, navController: NavController) {
     val evidenceList by caseViewModel.selectedCaseEvidenceList.collectAsState()
     var showEvidenceDetailsDialog by remember { mutableStateOf<Evidence?>(null) }
 
@@ -72,26 +71,28 @@ fun TimelineScreen(caseViewModel: CaseViewModel, navController: NavController) {
             horizontalAlignment = Alignment.End
         ) {
             if (evidenceList.isNotEmpty()) {
-                val items =
-                    evidenceList.map { evidenceItem -> // Renamed `it` to `evidenceItem` for clarity
-                        JetLimeEvent(
-                            title = { Text(it.type) },
-                            description = {
-                                Card(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clickable { showEvidenceDetailsDialog = it },
-                                ) {
-                                    Text(it.content, modifier = Modifier.padding(8.dp))
-                                }
-                            },
-                        )
-                    }
-                JetLimeExtended(
+                JetLimeColumn(
                     modifier = Modifier.padding(16.dp),
-                    items = items,
-                    style = JetLimeStyle(contentDistance = 20.dp), // Changed jetLimeStyle to style
-                )
+                    itemsList = ItemsList(evidenceList),
+                    key = { _, item -> item.id },
+                    style = JetLimeDefaults.columnStyle(),
+                ) { _, item, _ ->
+                    JetLimeExtendedEvent(
+                        content = {
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { showEvidenceDetailsDialog = item },
+                            ) {
+                                Column(modifier = Modifier.padding(8.dp)) {
+                                    Text(item.type, style = MaterialTheme.typography.titleMedium)
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(item.content)
+                                }
+                            }
+                        }
+                    )
+                }
             } else {
                 Text(
                     text = "No evidence to display on the timeline.",
@@ -106,7 +107,7 @@ fun TimelineScreen(caseViewModel: CaseViewModel, navController: NavController) {
         EvidenceDetailsDialog(
             evidence = evidence,
             onDismiss = { showEvidenceDetailsDialog = null },
-            onNavigateToEvidenceDetails = { // This parameter needs to be added to EvidenceDetailsDialog
+            onNavigateToEvidenceDetails = {
                 navController.navigate("evidence_details/${evidence.id}")
                 showEvidenceDetailsDialog = null
             },
