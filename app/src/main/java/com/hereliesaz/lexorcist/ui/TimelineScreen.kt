@@ -1,5 +1,6 @@
 package com.hereliesaz.lexorcist.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -22,6 +23,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ExperimentalComposeApi
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -40,13 +42,12 @@ import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
 import java.util.Locale
-import com.jet.jetlime.JetLimeColumn
-import com.jet.jetlime.JetLimeDefaults
-import com.jet.jetlime.JetLimeEvent
-import com.jet.jetlime.JetLimeExtendedEvent
-import com.jet.jetlime.ItemsList
+import com.pushpal.jetlime.ItemsList
+import com.pushpal.jetlime.JetLimeColumn
+import com.pushpal.jetlime.JetLimeDefaults
+import com.pushpal.jetlime.JetLimeExtendedEvent
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeApi::class)
 @Composable
 fun TimelineScreen(caseViewModel: com.hereliesaz.lexorcist.viewmodel.CaseViewModel, navController: NavController) {
     val evidenceList by caseViewModel.selectedCaseEvidenceList.collectAsState()
