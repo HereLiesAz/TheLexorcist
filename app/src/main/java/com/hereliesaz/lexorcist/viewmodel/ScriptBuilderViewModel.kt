@@ -14,7 +14,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class ScriptEditorViewModel
+class ScriptBuilderViewModel
     @Inject
     constructor(
         private val settingsManager: SettingsManager,

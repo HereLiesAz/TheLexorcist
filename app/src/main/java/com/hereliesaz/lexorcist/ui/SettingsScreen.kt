@@ -25,10 +25,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -183,6 +186,60 @@ fun SettingsScreen(viewModel: SettingsViewModel, caseViewModel: CaseViewModel) {
             )
             Spacer(modifier = Modifier.height(16.dp))
             LexorcistOutlinedButton(onClick = { showClearCacheDialog = true }, text = stringResource(R.string.clear_cache))
+
+            Spacer(modifier = Modifier.height(24.dp))
+            HorizontalDivider()
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Storage Settings
+            Text(
+                text = "Storage Settings",
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            val storageLocation by caseViewModel.storageLocation.collectAsState()
+            val directoryPickerLauncher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.OpenDocumentTree(),
+                onResult = { uri ->
+                    uri?.let {
+                        caseViewModel.setStorageLocation(it)
+                    }
+                }
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text("Current location: ${storageLocation ?: "Default"}")
+            Spacer(modifier = Modifier.height(8.dp))
+            LexorcistOutlinedButton(onClick = { directoryPickerLauncher.launch(null) }, text = "Change Storage Location")
+
+            Spacer(modifier = Modifier.height(24.dp))
+            HorizontalDivider()
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Cloud Service Settings
+            Text(
+                text = "Cloud Service Settings",
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            val authViewModel: com.hereliesaz.lexorcist.viewmodel.AuthViewModel = hiltViewModel()
+            val signInState by authViewModel.signInState.collectAsState()
+            val activity = LocalContext.current as android.app.Activity
+            when (signInState) {
+                is com.hereliesaz.lexorcist.model.SignInState.Success -> {
+                    val userInfo = (signInState as com.hereliesaz.lexorcist.model.SignInState.Success).userInfo
+                    Text("Signed in as: ${userInfo.email}")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    LexorcistOutlinedButton(onClick = {
+                        authViewModel.signOut()
+                        authViewModel.signIn(activity)
+                    }, text = "Switch Account")
+                }
+                else -> {
+                    Text("Not signed in.")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    LexorcistOutlinedButton(onClick = { authViewModel.signIn(activity) }, text = "Sign In")
+                }
+            }
         }
     }
 

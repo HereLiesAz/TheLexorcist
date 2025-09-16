@@ -44,12 +44,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.common.state.SaveState
-import com.hereliesaz.lexorcist.viewmodel.ScriptEditorViewModel
+import com.hereliesaz.lexorcist.viewmodel.ScriptBuilderViewModel
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class) // Removed ExperimentalMaterial3ExpressiveApi
 @Composable
-fun ScriptEditorScreen(viewModel: ScriptEditorViewModel, navController: androidx.navigation.NavController) {
+fun ScriptBuilderScreen(viewModel: ScriptBuilderViewModel, navController: androidx.navigation.NavController) {
     val scriptText by viewModel.scriptText.collectAsState()
     val saveState by viewModel.saveState.collectAsState()
     val context = LocalContext.current
@@ -77,7 +77,7 @@ fun ScriptEditorScreen(viewModel: ScriptEditorViewModel, navController: androidx
             TopAppBar(
                 title = {
                     Text(
-                        stringResource(R.string.script_editor).uppercase(Locale.getDefault()),
+                        stringResource(R.string.script_builder).uppercase(Locale.getDefault()),
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.End,
                         color = MaterialTheme.colorScheme.primary,
@@ -95,7 +95,6 @@ fun ScriptEditorScreen(viewModel: ScriptEditorViewModel, navController: androidx
             horizontalAlignment = Alignment.End,
         ) {
             // Script Builder Section
-            Text(stringResource(R.string.script_builder), style = MaterialTheme.typography.headlineSmall)
             Spacer(modifier = Modifier.height(16.dp))
             FlowRow(
                 modifier = Modifier.fillMaxWidth(),

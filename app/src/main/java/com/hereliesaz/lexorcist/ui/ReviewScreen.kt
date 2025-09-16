@@ -52,7 +52,6 @@ import androidx.compose.ui.unit.dp
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.data.Allegation
 import com.hereliesaz.lexorcist.data.Evidence
-import com.hereliesaz.lexorcist.viewmodel.AllegationsViewModel
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import com.hereliesaz.lexorcist.viewmodel.EvidenceViewModel
 import java.util.Locale
@@ -62,17 +61,16 @@ import java.util.Locale
 fun ReviewScreen(
     evidenceViewModel: EvidenceViewModel,
     caseViewModel: CaseViewModel,
-    allegationsViewModel: AllegationsViewModel,
 ) {
     val evidenceList by evidenceViewModel.evidenceList.collectAsState()
     val selectedCase by caseViewModel.selectedCase.collectAsState()
     val isLoading by evidenceViewModel.isLoading.collectAsState()
-    val allegations by allegationsViewModel.allegations.collectAsState()
+    val allegations by caseViewModel.allegations.collectAsState()
 
     LaunchedEffect(selectedCase) {
         selectedCase?.let {
             evidenceViewModel.loadEvidenceForCase(it.id.toLong(), it.spreadsheetId)
-            allegationsViewModel.loadAllegations(it.id.toString())
+            caseViewModel.loadAllegationsFromRepository(it.id, it.spreadsheetId)
         }
     }
 
