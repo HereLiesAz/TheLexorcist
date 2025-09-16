@@ -54,4 +54,4 @@ The file google-services.template.json located at the root of the /app/ folder s
     * **Theme:** The color scheme is generated dynamically from a random seed color. This should not be changed.
     * **Documentation:**
     * **Code Style:** This project uses `ktlint` to enforce a consistent code style.
-5.  **Keep all documentation current. Update it as you go. 
+    * **Font:** The app uses a custom font called "Ithea". This should not be changed.

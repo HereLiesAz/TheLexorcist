@@ -20,7 +20,7 @@ This project is in an advanced stage of development, with a robust architecture 
 ## Technical Details
 
 - **Local-First Architecture:** The application follows a local-first data management strategy. All user data, including case information and evidence, is stored in a single spreadsheet file (`lexorcist_data.xlsx`) within the application's folder, and synchronized with cloud services. This approach ensures that the app is always functional, even when offline.
-- **UI and UX:** The app is built with Jetpack Compose and Material 3 Expressive. The UI is designed to be right-aligned, with the exception of the navigation rail. All buttons are styled as outlined buttons.
+- **UI and UX:** The app is built with Jetpack Compose and Material 3 Expressive. The UI is designed to be right-aligned, with the exception of the navigation rail. All buttons are styled as outlined buttons. The app uses a custom font called "Ithea".
 
 ## License
 
