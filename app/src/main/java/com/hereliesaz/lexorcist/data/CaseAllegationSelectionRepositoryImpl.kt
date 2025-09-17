@@ -1,6 +1,6 @@
 package com.hereliesaz.lexorcist.data
 
-import com.hereliesaz.lexorcist.auth.CredentialHolder
+// Removed: import com.hereliesaz.lexorcist.auth.CredentialHolder
 import com.hereliesaz.lexorcist.service.GoogleApiService
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -11,14 +11,14 @@ import javax.inject.Singleton
 class CaseAllegationSelectionRepositoryImpl
     @Inject
     constructor(
-        private val credentialHolder: CredentialHolder,
+        private val googleApiService: GoogleApiService, // Injected GoogleApiService directly
     ) : CaseAllegationSelectionRepository {
-        private val googleApiService: GoogleApiService?
-            get() = credentialHolder.googleApiService
+        // Removed the local googleApiService getter property
 
         override fun getSelectedAllegations(spreadsheetId: String): Flow<List<String>> =
             flow {
-                val result = googleApiService?.getSelectedAllegations(spreadsheetId) ?: emptyList()
+                // Use the directly injected googleApiService
+                val result = googleApiService.getSelectedAllegations(spreadsheetId) ?: emptyList()
                 emit(result)
             }
 
@@ -26,6 +26,7 @@ class CaseAllegationSelectionRepositoryImpl
             spreadsheetId: String,
             allegations: List<String>,
         ) {
-            googleApiService?.updateSelectedAllegations(spreadsheetId, allegations)
+            // Use the directly injected googleApiService
+            googleApiService.updateSelectedAllegations(spreadsheetId, allegations)
         }
     }

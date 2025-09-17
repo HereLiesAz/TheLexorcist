@@ -3,6 +3,7 @@ package com.hereliesaz.lexorcist.data
 import com.hereliesaz.lexorcist.data.objectbox.CaseObjectBox
 import com.hereliesaz.lexorcist.data.objectbox.CaseObjectBox_
 import com.hereliesaz.lexorcist.model.SheetFilter
+import com.hereliesaz.lexorcist.service.GoogleApiService // Added import
 import com.hereliesaz.lexorcist.utils.Result
 import com.hereliesaz.lexorcist.utils.ErrorReporter
 import io.objectbox.BoxStore
@@ -15,6 +16,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import javax.inject.Inject
 import javax.inject.Singleton
 import com.google.api.services.drive.model.File as DriveFile
+// Removed: import com.hereliesaz.lexorcist.auth.CredentialHolder // Removed import
 
 @Singleton
 class CaseRepositoryImpl @Inject constructor(
@@ -22,7 +24,7 @@ class CaseRepositoryImpl @Inject constructor(
     private val settingsManager: SettingsManager,
     private val errorReporter: ErrorReporter,
     private val caseSheetParser: CaseSheetParser,
-    private val credentialHolder: com.hereliesaz.lexorcist.auth.CredentialHolder,
+    private val googleApiService: GoogleApiService, // Injected GoogleApiService
     private val boxStore: BoxStore
 ) : CaseRepository {
     private val caseBox = boxStore.boxFor(CaseObjectBox::class.java)
@@ -169,7 +171,7 @@ class CaseRepositoryImpl @Inject constructor(
     }
 
     override suspend fun importSpreadsheet(spreadsheetId: String): Case? {
-        val googleApiService = credentialHolder.googleApiService ?: return null
+        // Use the directly injected googleApiService
         val sheetData = googleApiService.readSpreadsheet(spreadsheetId)
         if (sheetData.isNullOrEmpty()) {
             return null

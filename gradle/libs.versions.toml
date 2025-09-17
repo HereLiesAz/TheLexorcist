@@ -1,6 +1,6 @@
 [versions]
 androidApplication = "8.13.0" # Assuming a common version, adjust if needed from project level build.gradle
-aznavrail = "2.9"
+aznavrail = "3.1"
 browser = "1.9.0"
 dropboxCoreSdk = "7.0.0"
 errorProneAnnotations = "2.41.0"

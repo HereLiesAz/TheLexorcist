@@ -1,7 +1,7 @@
 package com.hereliesaz.lexorcist.di
 
 import android.content.Context
-import com.hereliesaz.lexorcist.auth.CredentialHolder
+// Removed: import com.hereliesaz.lexorcist.auth.CredentialHolder // No longer needed here
 import com.hereliesaz.lexorcist.data.CloudFile
 import com.hereliesaz.lexorcist.data.CloudStorageProvider
 import com.hereliesaz.lexorcist.data.GoogleDriveProvider
@@ -19,31 +19,23 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object GoogleDriveModule {
 
-    @Provides
-    @Singleton
-    fun provideGoogleApiService(credentialHolder: CredentialHolder): GoogleApiService? {
-        return credentialHolder.googleApiService
-    }
+    // Removed the provideGoogleApiService method as GoogleApiService is now directly injectable by Hilt
+    // @Provides
+    // @Singleton
+    // fun provideGoogleApiService(credentialHolder: CredentialHolder): GoogleApiService? {
+    //     return credentialHolder.googleApiService
+    // }
 
     @Provides
     @Singleton
     @Named("googleDrive")
     fun provideGoogleDriveProvider(
-        googleApiService: GoogleApiService?,
+        googleApiService: GoogleApiService, // Changed to non-nullable
         @ApplicationContext context: Context
     ): CloudStorageProvider {
-        if (googleApiService == null) {
-            // Return a provider that always fails
-            return object : CloudStorageProvider {
-                override suspend fun getRootFolderId(): Result<String> = Result.Error(Exception("Google account not signed in"))
-                override suspend fun listFiles(folderId: String): Result<List<CloudFile>> = Result.Error(Exception("Google account not signed in"))
-                override suspend fun readFile(fileId: String): Result<ByteArray> = Result.Error(Exception("Google account not signed in"))
-                override suspend fun writeFile(folderId: String, fileName: String, mimeType: String, content: ByteArray): Result<CloudFile> = Result.Error(Exception("Google account not signed in"))
-                override suspend fun updateFile(fileId: String, mimeType: String, content: ByteArray): Result<CloudFile> = Result.Error(Exception("Google account not signed in"))
-                override suspend fun getFileMetadata(fileId: String): Result<CloudFile> = Result.Error(Exception("Google account not signed in"))
-                override suspend fun createFolder(folderName: String, parentFolderId: String): Result<String> = Result.Error(Exception("Google account not signed in"))
-            }
-        }
+        // The null check for googleApiService is removed as Hilt will provide a non-null instance.
+        // If GoogleApiService cannot operate (e.g., no credentials), its methods will handle that,
+        // and GoogleDriveProvider should be robust to those responses.
         return GoogleDriveProvider(googleApiService, context)
     }
 }

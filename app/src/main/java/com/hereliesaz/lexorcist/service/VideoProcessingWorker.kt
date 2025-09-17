@@ -13,7 +13,8 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.Data
 import androidx.work.WorkerParameters
-import com.hereliesaz.lexorcist.auth.CredentialHolder
+// Removed: import com.hereliesaz.lexorcist.auth.CredentialHolder
+import com.hereliesaz.lexorcist.data.EvidenceRepository // Keep this specific import
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
@@ -29,10 +30,10 @@ class VideoProcessingWorker
     constructor(
         @Assisted private val appContext: Context, // Made private val as it's used in methods
         @Assisted workerParams: WorkerParameters,
-        private val evidenceRepository: com.hereliesaz.lexorcist.data.EvidenceRepository,
+        private val evidenceRepository: EvidenceRepository,
         private val ocrProcessingService: OcrProcessingService,
         private val transcriptionService: TranscriptionService,
-        private val credentialHolder: CredentialHolder,
+        private val googleApiService: GoogleApiService, // Injected GoogleApiService
         private val logService: LogService,
     ) : CoroutineWorker(appContext, workerParams) {
         override suspend fun doWork(): Result {
@@ -65,28 +66,26 @@ class VideoProcessingWorker
             logService.addLog("Video copied to raw evidence folder.")
 
             var uploadedDriveFile: DriveFile? = null
-            val googleApiService = credentialHolder.googleApiService // Get from CredentialHolder
-            if (googleApiService == null) {
-                logService.addLog("GoogleApiService is not available. Skipping Drive upload.", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
-            } else {
-                logService.addLog("Uploading video to Google Drive...")
-                val evidenceFolderId = googleApiService.getOrCreateEvidenceFolder(caseName)
-                if (evidenceFolderId != null) {
-                    when (val uploadResult = googleApiService.uploadFile(videoFile, evidenceFolderId, "video/mp4")) {
-                        is LexResult.Success -> {
-                            uploadedDriveFile = uploadResult.data
-                            logService.addLog("Video uploaded to Drive with ID: ${uploadedDriveFile?.id}")
-                        }
-                        is LexResult.Error -> {
-                            logService.addLog("Failed to upload video: ${uploadResult.exception.message}", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
-                        }
-                        is LexResult.UserRecoverableError -> {
-                            logService.addLog("User recoverable error while uploading video: ${uploadResult.exception.message}", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
-                        }
+            // Use the directly injected googleApiService
+            // The null check for googleApiService is removed as it's now directly injected.
+            // If GoogleApiService cannot operate (e.g., no credentials), its methods should handle that.
+            logService.addLog("Uploading video to Google Drive...")
+            val evidenceFolderId = googleApiService.getOrCreateEvidenceFolder(caseName)
+            if (evidenceFolderId != null) {
+                when (val uploadResult = googleApiService.uploadFile(videoFile, evidenceFolderId, "video/mp4")) {
+                    is LexResult.Success -> {
+                        uploadedDriveFile = uploadResult.data
+                        logService.addLog("Video uploaded to Drive with ID: ${uploadedDriveFile?.id}")
                     }
-                } else {
-                    logService.addLog("Failed to get or create evidence folder for case: $caseName", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
+                    is LexResult.Error -> {
+                        logService.addLog("Failed to upload video: ${uploadResult.exception.message}", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
+                    }
+                    is LexResult.UserRecoverableError -> {
+                        logService.addLog("User recoverable error while uploading video: ${uploadResult.exception.message}", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
+                    }
                 }
+            } else {
+                logService.addLog("Failed to get or create evidence folder for case: $caseName", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
             }
 
             setProgressAsync(Data.Builder().putString(PROGRESS, "Extracting audio...").build())

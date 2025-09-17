@@ -20,6 +20,7 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.util.UUID
 import javax.inject.Inject
+import javax.inject.Named // Added this import
 import javax.inject.Singleton
 
 @Singleton

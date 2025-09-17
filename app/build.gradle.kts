@@ -13,6 +13,13 @@ plugins {
     id("io.objectbox") // Added ObjectBox plugin
 }
 
+// Add KSP configuration block to exclude the Room KSP processor
+ksp {
+    arg("dagger.validateTransitiveComponentDependencies", "ENABLED")
+    arg("dagger.fullBindingGraphValidation", "ERROR") // You can also try "WARNING"
+    arg("ksp.excluded.processors", "androidx.room.compiler.processing.ksp.RoomKspProcessor") // Keep this
+}
+
 android {
     namespace = "com.hereliesaz.lexorcist"
     compileSdk = 36
