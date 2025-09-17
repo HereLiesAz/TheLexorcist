@@ -91,13 +91,19 @@ class VideoProcessingWorker
             setProgressAsync(Data.Builder().putString(PROGRESS, "Extracting audio...").build())
             logService.addLog("Extracting audio...")
             val audioUri = extractAudio(videoUri)
-            val audioTranscript =
-                if (audioUri != null) {
-                    transcriptionService.transcribeAudio(audioUri)
-                } else {
-                    logService.addLog("Audio could not be extracted.", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
+            val (transcript, error) = if (audioUri != null) {
+                transcriptionService.transcribeAudio(audioUri)
+            } else {
+                Pair(
+                    "Audio could not be extracted.",
                     "Audio could not be extracted."
-                }
+                )
+            }
+
+            if (error != null) {
+                logService.addLog("Transcription failed: $error", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
+                return Result.failure()
+            }
 
             setProgressAsync(Data.Builder().putString(PROGRESS, "Extracting frames...").build())
             logService.addLog("Extracting frames...")
@@ -125,7 +131,8 @@ class VideoProcessingWorker
                 }
             }
 
-            val combinedContent = "Audio Transcript:\n$audioTranscript\n\nOCR from Frames:\n$ocrTextBuilder"
+            val (transcript, _) = audioTranscript
+            val combinedContent = "Audio Transcript:\n$transcript\n\nOCR from Frames:\n$ocrTextBuilder"
 
             val videoEvidence =
                 com.hereliesaz.lexorcist.data.Evidence(
@@ -133,7 +140,7 @@ class VideoProcessingWorker
                     caseId = caseId.toLong(), // This is for Evidence data class, may need to be Int too
                     spreadsheetId = spreadsheetId,
                     type = "video",
-                    content = combinedContent,
+                    content = combinedContent.toString(),
                     formattedContent = "```\n$combinedContent\n```",
                     mediaUri = videoUri.toString(),
                     timestamp = System.currentTimeMillis(),
@@ -225,7 +232,7 @@ class VideoProcessingWorker
                     retriever.setDataSource(appContext, videoUri)
                     val durationString = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
                     val durationMs = durationString?.toLongOrNull() ?: 0L // Ensure default to Long
-                    val intervalUs = 60 * 1000 * 1000L // 1 minute
+                    val intervalUs = 5 * 1000 * 1000L // 5 seconds
 
                     for (timeUs in 0L until durationMs * 1000L step intervalUs) { // Ensure timeUs is Long
                         val bitmap = retriever.getFrameAtTime(timeUs, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
