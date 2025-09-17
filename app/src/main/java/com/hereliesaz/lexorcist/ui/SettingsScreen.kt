@@ -43,6 +43,7 @@ import com.hereliesaz.lexorcist.ui.theme.ThemeMode
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import com.hereliesaz.lexorcist.viewmodel.SettingsViewModel
 import java.util.Locale
+import android.app.Activity
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,7 +54,7 @@ fun SettingsScreen(
     val themeMode by settingsViewModel.themeMode.collectAsState()
     var showClearCacheDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
-    val activity = context as android.app.Activity
+    val activity = context as Activity
 
     Scaffold(
         topBar = {
@@ -156,7 +157,7 @@ fun SettingsScreen(
             when (signInState) {
                 is SignInState.Success -> {
                     val userInfo = (signInState as SignInState.Success).userInfo
-                    Text("Signed in as: ${userInfo.email}")
+                    Text("Signed in as: ${userInfo?.email}")
                     Spacer(modifier = Modifier.height(8.dp))
                     LexorcistOutlinedButton(onClick = {
                         authViewModel.signOut()
