@@ -9,7 +9,7 @@ plugins {
     id("com.google.devtools.ksp") version "2.2.20-2.0.3"
     id("com.google.gms.google-services") // Added Google Services plugin
     id("com.palantir.git-version")
-    id("io.objectbox") version "4.3.1"
+    id("io.realm.kotlin") // Added Realm plugin
 }
 
 android {
@@ -207,11 +207,8 @@ dependencies {
 
     // Room IS NOT ALLOWED IN THIS PROJECT!!!!!
 
-    // ObjectBox
-    implementation("io.objectbox:objectbox-android:4.3.1")
-    implementation("io.objectbox:objectbox-kotlin:4.3.1")
-    ksp("io.objectbox:objectbox-processor:4.3.1")
-
+    // Realm Database
+    implementation("io.realm.kotlin:library-base:1.19.0") // Added Realm library
 
     // Google Cloud Speech-to-Text
     implementation(libs.google.cloud.speech)

@@ -74,4 +74,13 @@ class SettingsManager @Inject constructor(
     fun getCloudSyncEnabled(): Boolean {
         return getSettings().cloudSyncEnabled
     }
+
+    fun saveSelectedCloudProvider(provider: String) {
+        val settings = getSettings().copy(selectedCloudProvider = provider)
+        settingsBox.put(settings)
+    }
+
+    fun getSelectedCloudProvider(): String {
+        return getSettings().selectedCloudProvider
+    }
 }
