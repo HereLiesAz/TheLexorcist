@@ -59,3 +59,5 @@ app/google-services.json
 /backup.ps1
 /project_backup_full_2025-09-15_23-31-14.txt
 /project_backup_full_*
+/hs_err_pid20740.log
+/hs_err_pid20740.mdmp

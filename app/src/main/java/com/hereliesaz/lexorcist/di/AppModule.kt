@@ -6,7 +6,11 @@ import androidx.credentials.CredentialManager
 import androidx.work.WorkManager
 import com.google.gson.Gson
 import com.hereliesaz.lexorcist.data.SettingsManager
-import com.hereliesaz.lexorcist.data.objectbox.MyObjectBox // Added import for MyObjectBox
+import com.hereliesaz.lexorcist.data.objectbox.MyObjectBox
+import com.hereliesaz.lexorcist.model.AllegationsSheet
+import com.hereliesaz.lexorcist.model.CaseInfoSheet
+import com.hereliesaz.lexorcist.model.EvidenceSheet
+import com.hereliesaz.lexorcist.model.SpreadsheetSchema
 import com.hereliesaz.lexorcist.service.ScriptRunner
 import com.hereliesaz.lexorcist.utils.CacheManager
 import dagger.Module
@@ -14,7 +18,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import io.objectbox.BoxStore // Added import for BoxStore
+import io.objectbox.BoxStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -53,9 +57,8 @@ class AppModule {
     @Provides
     @Singleton
     fun provideSettingsManager(
-        @ApplicationContext context: Context,
-        boxStore: BoxStore // Added BoxStore parameter
-    ): SettingsManager = SettingsManager(context, boxStore) // Pass BoxStore to constructor
+        @ApplicationContext context: Context
+    ): SettingsManager = SettingsManager(context) // Pass only Context to constructor
 
     @Provides
     @Singleton
@@ -77,4 +80,25 @@ class AppModule {
     @Singleton
     fun provideGson(): Gson = Gson()
 
+    @Provides
+    @Singleton
+    fun provideSpreadsheetSchema(): SpreadsheetSchema {
+        // Provide a default schema. In a real app, this might be loaded from a JSON file in assets.
+        return SpreadsheetSchema(
+            caseInfoSheet = CaseInfoSheet(
+                name = "CaseInfo",
+                caseNameLabel = "Case Name",
+                caseNameColumn = 1 // Assuming 0-based indexing for columns, adjust if 1-based
+            ),
+            allegationsSheet = AllegationsSheet(
+                name = "Allegations",
+                allegationColumn = 0 // Assuming 0-based indexing
+            ),
+            evidenceSheet = EvidenceSheet(
+                name = "Evidence",
+                contentColumn = 2, // Assuming 0-based indexing
+                tagsColumn = 3    // Assuming 0-based indexing
+            )
+        )
+    }
 }

@@ -8,4 +8,5 @@ plugins {
     id("com.google.devtools.ksp") version "2.2.20-2.0.3" apply false
     id("com.palantir.git-version") version "4.0.0" apply false
     id("io.realm.kotlin") version "3.0.0" apply false // Added Realm plugin
+    id("io.objectbox") version "4.3.1" apply false // Added ObjectBox plugin
 }

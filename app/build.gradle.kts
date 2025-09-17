@@ -10,6 +10,7 @@ plugins {
     id("com.google.gms.google-services") // Added Google Services plugin
     id("com.palantir.git-version")
     id("io.realm.kotlin") // Added Realm plugin
+    id("io.objectbox") // Added ObjectBox plugin
 }
 
 android {
@@ -166,7 +167,6 @@ dependencies {
 
     implementation(libs.google.http.client.jackson2)
     implementation(libs.google.guava)
-    ksp(libs.google.guava) // Added for KSP
     implementation(libs.quickbirdstudios.opencv)
     implementation(libs.play.services.auth)
 
