@@ -32,6 +32,9 @@ class SettingsViewModel @Inject constructor(
     private val _cloudSyncEnabled = MutableStateFlow(true)
     val cloudSyncEnabled: StateFlow<Boolean> = _cloudSyncEnabled.asStateFlow()
 
+    private val _selectedCloudProvider = MutableStateFlow("GoogleDrive")
+    val selectedCloudProvider: StateFlow<String> = _selectedCloudProvider.asStateFlow()
+
     private val _migrationStatus = MutableStateFlow<String?>(null)
     val migrationStatus: StateFlow<String?> = _migrationStatus.asStateFlow()
 
@@ -50,6 +53,12 @@ class SettingsViewModel @Inject constructor(
         _themeMode.value = ThemeMode.valueOf(themeName)
         _caseFolderPath.value = settingsManager.getCaseFolderPath()
         _cloudSyncEnabled.value = settingsManager.getCloudSyncEnabled()
+        _selectedCloudProvider.value = settingsManager.getSelectedCloudProvider()
+    }
+
+    fun setSelectedCloudProvider(provider: String) {
+        settingsManager.saveSelectedCloudProvider(provider)
+        _selectedCloudProvider.value = provider
     }
 
     fun setThemeMode(themeMode: ThemeMode) {

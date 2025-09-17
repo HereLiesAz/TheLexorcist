@@ -181,7 +181,7 @@ dependencies {
     implementation(libs.jetlime)
 
     // Dropbox SDK
-    // implementation(libs.dropbox.core.sdk)
+    implementation(libs.dropbox.core.sdk)
 
 
     // Dropbox SDK
