@@ -4,87 +4,219 @@ body {
     font-family: 'Helvetica Neue', sans-serif;
     margin: 0;
     padding: 0;
+    overflow-x: hidden;
+    position: relative;
+}
+
+/* Parallax Background */
+.parallax-bg-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    overflow: hidden;
+}
+
+.parallax-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+}
+
+.layer-1 {
+    background-image: url('https://hereliesaz.com/assets/dark-smoke-bg.jpg');
+    background-position: bottom center;
+}
+
+.layer-2 {
+    background-image: url('https://hereliesaz.com/assets/dark-rain.png');
+    background-position: top center;
+    opacity: 0.5;
+}
+
+.layer-3 {
+    background-image: url('https://hereliesaz.com/assets/dark-lightning.png');
+    background-position: top center;
+    opacity: 0.2;
+}
+
+/* Main Content Styling */
+.content-container {
+    position: relative;
+    z-index: 1;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 2rem;
+}
+
+section {
+    padding: 5rem 10%;
+    text-align: center;
+    min-height: 100vh;
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
-    min-height: 100vh;
-    overflow: hidden;
-    background-image: linear-gradient(45deg, #1a1a1a 25%, transparent 25%),
-                      linear-gradient(-45deg, #1a1a1a 25%, transparent 25%),
-                      linear-gradient(45deg, transparent 75%, #1a1a1a 75%),
-                      linear-gradient(-45deg, transparent 75%, #1a1a1a 75%);
-    background-size: 20px 20px;
-    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
 }
 
-.container {
-    text-align: center;
-    padding: 2rem;
-    border-radius: 10px;
-    background-color: rgba(0, 0, 0, 0.85);
-    box-shadow: 0 0 40px rgba(255, 0, 0, 0.6);
-    border: 3px solid rgba(255, 0, 0, 0.8);
-}
-
-.main-title {
-    font-family: 'Courier New', monospace;
-    font-size: 4.5rem;
-    font-weight: bold;
+h1.main-title {
+    font-family: 'Creepster', cursive;
+    font-size: 6rem;
     color: #ff0000;
-    text-shadow: 0 0 5px #ff0000, 0 0 10px #ff0000, 0 0 20px #ff0000, 0 0 40px #ff0000;
-    margin-bottom: 1rem;
-    letter-spacing: 0.2rem;
+    text-shadow: 0 0 5px #ff0000, 0 0 10px #ff0000, 0 0 20px #ff0000;
+    letter-spacing: 0.5rem;
     animation: flicker 1.5s infinite alternate;
 }
 
-.quote {
-    font-size: 1.8rem;
+.tagline {
+    font-size: 2rem;
     font-style: italic;
+    color: #999;
+    margin-top: -1rem;
+}
+
+.sub-tagline {
+    max-width: 600px;
+    font-size: 1.2rem;
+    line-height: 1.6;
     color: #ccc;
+}
+
+/* Features Section */
+.features-section h2 {
+    font-size: 3rem;
+    color: #ff0000;
+    text-shadow: 0 0 5px #ff0000;
+    margin-bottom: 3rem;
+}
+
+.relic-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 3rem;
+}
+
+.relic-item {
+    border: 2px solid #555;
+    padding: 2rem;
+    border-radius: 10px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.relic-item:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+}
+
+.relic-item img {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 1.5rem;
+}
+
+.relic-item h3 {
+    color: #ff0000;
+    font-size: 1.5rem;
     margin-bottom: 0.5rem;
 }
 
-.author {
-    font-size: 1.2rem;
-    color: #999;
+/* Pricing Section */
+.pricing-section h2 {
+    font-size: 3rem;
+    color: #ff0000;
+    text-shadow: 0 0 5px #ff0000;
+    margin-bottom: 3rem;
+}
+
+.pricing-grid {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 2rem;
+}
+
+.pricing-tier {
+    background: rgba(0, 0, 0, 0.5);
+    border: 2px solid #ff0000;
+    padding: 2rem;
+    border-radius: 10px;
+    width: 300px;
+}
+
+.pricing-tier h3 {
+    font-size: 2rem;
+    color: #ff0000;
+    text-shadow: 0 0 5px #ff0000;
+}
+
+.price {
+    font-size: 3rem;
+    font-weight: bold;
+    color: #fff;
+    margin: 1rem 0;
+}
+
+.pricing-tier ul {
+    list-style: none;
+    padding: 0;
+    text-align: left;
+    margin-top: 1rem;
+}
+
+.pricing-tier li {
+    padding: 0.5rem 0;
+    border-bottom: 1px dashed #555;
+}
+
+/* Contact Section */
+.contact-section h2 {
+    font-size: 3rem;
+    color: #ff0000;
+    text-shadow: 0 0 5px #ff0000;
     margin-bottom: 2rem;
 }
 
-.possession-meter {
-    width: 80%;
-    height: 30px;
-    border: 2px solid #ff0000;
-    border-radius: 5px;
-    margin: 2rem auto;
-    background-color: #333;
+.contact-section form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-width: 500px;
+    width: 100%;
 }
 
-.meter-bar {
-    width: 0%;
-    height: 100%;
-    background-color: #ff0000;
-    border-radius: 2px;
+.contact-section input,
+.contact-section textarea {
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.7);
+    border: 1px solid #ff0000;
+    color: #e0e0e0;
+    font-size: 1rem;
 }
 
-.footer-text {
-    font-family: 'Courier New', monospace;
+.submit-btn {
+    padding: 1rem;
+    background: #ff0000;
+    color: #0a0a0a;
     font-weight: bold;
-    font-size: 1.5rem;
-    color: #ff0000;
-    margin-top: 2rem;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2rem;
+    transition: background 0.3s ease;
 }
 
+.submit-btn:hover {
+    background: #e00000;
+}
+
+/* Keyframes */
 @keyframes flicker {
     0%, 18%, 22%, 25%, 53%, 57%, 100% {
-        text-shadow:
-            0 0 4px #ff0000,
-            0 0 11px #ff0000,
-            0 0 19px #ff0000,
-            0 0 40px #ff0000,
-            0 0 80px #ff0000,
-            0 0 90px #ff0000,
-            0 0 100px #ff0000,
-            0 0 150px #ff0000;
+        text-shadow: 0 0 4px #ff0000, 0 0 11px #ff0000, 0 0 19px #ff0000, 0 0 40px #ff0000, 0 0 80px #ff0000, 0 0 90px #ff0000, 0 0 100px #ff0000;
     }
     20%, 24%, 55% {
         text-shadow: none;
