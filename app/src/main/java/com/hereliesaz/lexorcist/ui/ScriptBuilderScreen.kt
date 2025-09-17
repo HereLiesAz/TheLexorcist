@@ -47,10 +47,18 @@ import com.hereliesaz.lexorcist.common.state.SaveState
 import com.hereliesaz.lexorcist.viewmodel.ScriptBuilderViewModel
 import java.util.Locale
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Card
+import com.hereliesaz.lexorcist.model.Script
+
 @OptIn(ExperimentalMaterial3Api::class) // Removed ExperimentalMaterial3ExpressiveApi
 @Composable
 fun ScriptBuilderScreen(viewModel: ScriptBuilderViewModel, navController: androidx.navigation.NavController) {
+    val scriptTitle by viewModel.scriptTitle.collectAsState()
     val scriptText by viewModel.scriptText.collectAsState()
+    val caseScripts by viewModel.caseScripts.collectAsState()
     val saveState by viewModel.saveState.collectAsState()
     val context = LocalContext.current
     var showShareDialog by remember { mutableStateOf(false) } // Restored
@@ -88,10 +96,10 @@ fun ScriptBuilderScreen(viewModel: ScriptBuilderViewModel, navController: androi
     ) { padding ->
         Column(
             modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .padding(8.dp),
+            Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(8.dp),
             horizontalAlignment = Alignment.End,
         ) {
             // Script Builder Section
@@ -117,38 +125,51 @@ fun ScriptBuilderScreen(viewModel: ScriptBuilderViewModel, navController: androi
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            OutlinedTextField(
+                value = scriptTitle,
+                onValueChange = { viewModel.onScriptTitleChanged(it) },
+                label = { Text(stringResource(R.string.script_title)) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             // Editor Section with Tabs
             var tabIndex by remember { mutableIntStateOf(0) }
-            val tabs = listOf(stringResource(R.string.script_tab_description), stringResource(R.string.script_tab_editor))
+            val tabs = listOf(
+                stringResource(R.string.script_tab_description),
+                stringResource(R.string.script_tab_editor),
+                "Case Scripts"
+            )
 
             Column(modifier = Modifier.weight(1f).fillMaxWidth()) {
                 SecondaryTabRow(
-                    tabIndex,
-                    Modifier,
-                    TabRowDefaults.primaryContainerColor,
-                    TabRowDefaults.primaryContentColor,
-                    @Composable {
-                        TabRowDefaults.SecondaryIndicator(Modifier.tabIndicatorOffset(tabIndex))
-                    },
-                    @Composable { HorizontalDivider() },
-                    {
-                        tabs.forEachIndexed { index, title ->
-                            Tab(
-                                text = { Text(title) },
-                                selected = tabIndex == index,
-                                onClick = { tabIndex = index },
-                            )
-                        }
-                    },
-                )
+                    selectedTabIndex = tabIndex,
+                    // contentColor = MaterialTheme.colorScheme.primary,
+                    indicator = {
+                        TabRowDefaults.SecondaryIndicator(
+                            Modifier.tabIndicatorOffset(tabIndex)
+                        )
+                    }
+                ) {
+                    tabs.forEachIndexed { index, title ->
+                        Tab(
+                            text = { Text(title) },
+                            selected = tabIndex == index,
+                            onClick = { tabIndex = index },
+                        )
+                    }
+                }
                 when (tabIndex) {
                     0 -> { // Description Tab
                         Column(
                             modifier =
-                                Modifier
-                                    .fillMaxSize()
-                                    .padding(16.dp)
-                                    .verticalScroll(rememberScrollState()),
+                            Modifier
+                                .fillMaxSize()
+                                .padding(16.dp)
+                                .verticalScroll(rememberScrollState()),
                             horizontalAlignment = Alignment.Start,
                             verticalArrangement = Arrangement.Top,
                         ) {
@@ -165,11 +186,22 @@ fun ScriptBuilderScreen(viewModel: ScriptBuilderViewModel, navController: androi
                                 onValueChange = { viewModel.onScriptTextChanged(it) },
                                 label = { Text(stringResource(R.string.enter_your_script)) },
                                 modifier =
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .weight(1f)
-                                        .padding(horizontal = 16.dp),
+                                Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f)
+                                    .padding(horizontal = 16.dp),
                             )
+                        }
+                    }
+                    2 -> { // Case Scripts Tab
+                        LazyColumn(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+                            items(caseScripts) { script ->
+                                ScriptItem(script = script, onClick = {
+                                    viewModel.loadScript(script)
+                                    tabIndex = 1 // Switch to editor tab
+                                })
+                                Spacer(modifier = Modifier.height(8.dp))
+                            }
                         }
                     }
                 }
@@ -217,5 +249,20 @@ fun ScriptBuilderScreen(viewModel: ScriptBuilderViewModel, navController: androi
                 LexorcistOutlinedButton(onClick = { showShareDialog = false }, text = stringResource(R.string.cancel))
             },
         )
+    }
+}
+
+@Composable
+fun ScriptItem(script: Script, onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(text = script.name, style = MaterialTheme.typography.titleMedium)
+            Text(text = "by ${script.author}", style = MaterialTheme.typography.bodySmall)
+            Text(text = script.description, style = MaterialTheme.typography.bodyMedium, maxLines = 2)
+        }
     }
 }

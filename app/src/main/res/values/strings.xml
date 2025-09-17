@@ -121,6 +121,7 @@
         // - parser: An object with a `tags` array to add new tags to the evidence.
     </string>
     <string name="save_script">Save Script</string>
+    <string name="script_title">Script Title</string>
     <string name="script_snippet_text_includes">evidence.text.includes("")</string>
     <string name="script_snippet_text_includes_label">text.includes(…)</string>
     <string name="script_snippet_tags_includes">evidence.tags.includes("")</string>

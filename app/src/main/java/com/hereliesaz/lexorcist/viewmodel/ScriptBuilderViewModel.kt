@@ -13,21 +13,38 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import com.hereliesaz.lexorcist.model.Script
+import java.io.InputStreamReader
+
 @HiltViewModel
 class ScriptBuilderViewModel
     @Inject
     constructor(
         private val settingsManager: SettingsManager,
         private val application: Application,
+        private val gson: Gson,
     ) : ViewModel() {
+        private val _scriptTitle = MutableStateFlow("")
+        val scriptTitle: StateFlow<String> = _scriptTitle.asStateFlow()
+
         private val _scriptText = MutableStateFlow("")
         val scriptText: StateFlow<String> = _scriptText.asStateFlow()
+
+        private val _caseScripts = MutableStateFlow<List<Script>>(emptyList())
+        val caseScripts: StateFlow<List<Script>> = _caseScripts.asStateFlow()
 
         private val _saveState = MutableStateFlow<SaveState>(SaveState.Idle)
         val saveState: StateFlow<SaveState> = _saveState.asStateFlow()
 
         init {
-            loadScript()
+            loadSavedScript()
+            loadSharedScripts()
+        }
+
+        fun onScriptTitleChanged(newText: String) {
+            _scriptTitle.value = newText
         }
 
         fun onScriptTextChanged(newText: String) {
@@ -38,7 +55,7 @@ class ScriptBuilderViewModel
             _scriptText.value += text
         }
 
-        private fun loadScript() {
+        private fun loadSavedScript() {
             viewModelScope.launch {
                 val savedScript = settingsManager.getScript()
                 if (savedScript.isBlank()) {
@@ -50,10 +67,32 @@ class ScriptBuilderViewModel
             }
         }
 
+        private fun loadSharedScripts() {
+            viewModelScope.launch {
+                try {
+                    val inputStream = application.resources.openRawResource(R.raw.shared_scripts)
+                    val reader = InputStreamReader(inputStream)
+                    val scriptListType = object : TypeToken<List<Script>>() {}.type
+                    val scripts: List<Script> = gson.fromJson(reader, scriptListType)
+                    _caseScripts.value = scripts
+                } catch (e: Exception) {
+                    // Handle error, e.g., log it or show a message
+                }
+            }
+        }
+
+        fun loadScript(script: Script) {
+            _scriptTitle.value = script.name
+            _scriptText.value = script.content
+        }
+
         fun saveScript() {
             viewModelScope.launch {
                 _saveState.value = SaveState.Saving
                 try {
+                    // Here you might want to save the script with its title,
+                    // but current settingsManager only saves the script text.
+                    // This would be a point of future improvement.
                     settingsManager.saveScript(_scriptText.value)
                     _saveState.value = SaveState.Success
                 } catch (e: Exception) {
