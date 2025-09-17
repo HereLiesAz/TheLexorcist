@@ -1,6 +1,6 @@
-# 40 Example Scripts for The Lexorcist
+# 60 Example Scripts for The Lexorcist
 
-This document provides 40 unique script examples for The Lexorcist's script builder. These scripts are designed to showcase the power and flexibility of the system, starting from simple keyword tagging and progressing to more complex, analytical, and even case-management-oriented functions.
+This document provides 60 unique script examples for The Lexorcist's script builder. These scripts are designed to showcase the power and flexibility of the system, starting from simple keyword tagging and progressing to more complex, analytical, and even case-management-oriented functions.
 
 For the purpose of these examples, we assume the script environment provides the following API:
 
