@@ -53,7 +53,7 @@ class SettingsViewModel @Inject constructor(
         _themeMode.value = ThemeMode.valueOf(themeName)
         _caseFolderPath.value = settingsManager.getCaseFolderPath()
         _cloudSyncEnabled.value = settingsManager.getCloudSyncEnabled()
-        _selectedCloudProvider.value = settingsManager.getSelectedCloudProvider() ?: "GoogleDrive"
+        _selectedCloudProvider.value = settingsManager.getSelectedCloudProvider()
     }
 
     fun setSelectedCloudProvider(provider: String) {
