@@ -50,6 +50,7 @@ import com.hereliesaz.lexorcist.ui.ReviewScreen
 import com.hereliesaz.lexorcist.ui.ScriptBuilderScreen
 import com.hereliesaz.lexorcist.ui.SettingsScreen
 import com.hereliesaz.lexorcist.ui.TemplatesScreen
+import com.hereliesaz.lexorcist.ui.PhotoGroupScreen
 import com.hereliesaz.lexorcist.ui.TimelineScreen
 import com.hereliesaz.lexorcist.viewmodel.AddonsBrowserViewModel // Corrected import
 import com.hereliesaz.lexorcist.viewmodel.AuthViewModel
@@ -210,6 +211,9 @@ fun MainScreen(
                                             navController = navController,
                                         )
                                     }
+                                }
+                                composable("photo_group") {
+                                    PhotoGroupScreen(navController = navController)
                                 }
                                 composable("data_review") {
                                     ReviewScreen(caseViewModel = caseViewModel)

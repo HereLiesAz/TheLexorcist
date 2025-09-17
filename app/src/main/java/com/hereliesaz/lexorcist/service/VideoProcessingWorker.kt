@@ -91,7 +91,7 @@ class VideoProcessingWorker
             setProgressAsync(Data.Builder().putString(PROGRESS, "Extracting audio...").build())
             logService.addLog("Extracting audio...")
             val audioUri = extractAudio(videoUri)
-            val (transcript, error) = if (audioUri != null) {
+            val (audioTranscript, error) = if (audioUri != null) {
                 transcriptionService.transcribeAudio(audioUri)
             } else {
                 Pair(
@@ -130,7 +130,7 @@ class VideoProcessingWorker
                 }
             }
 
-            val combinedContent = "Audio Transcript:\n$transcript\n\nOCR from Frames:\n$ocrTextBuilder"
+            val combinedContent = "Audio Transcript:\n${audioTranscript ?: "Transcription failed."}\n\nOCR from Frames:\n$ocrTextBuilder"
 
             val videoEvidence =
                 com.hereliesaz.lexorcist.data.Evidence(
