@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Federal Answer Template</title>
+<style>
+    body {
+        font-family: 'Times New Roman', Times, serif;
+        font-size: 12pt;
+        margin: 1in;
+        line-height: 2; /* Double-spaced */
+        width: 8.5in;
+        height: 11in;
+    }
+    .page {
+        width: 100%;
+        height: 100%;
+    }
+    .caption {
+        text-align: center;
+        font-weight: bold;
+    }
+    .case-info {
+        margin-top: 20px;
+        margin-bottom: 20px;
+    }
+    .document-title {
+        text-align: center;
+        font-weight: bold;
+        margin-bottom: 20px;
+    }
+    .paragraph {
+        margin-bottom: 10px;
+    }
+    .signature-block {
+        margin-top: 40px;
+    }
+</style>
+</head>
+<body>
+
+<div class="page">
+    <div class="caption">
+        UNITED STATES DISTRICT COURT<br>
+        FOR THE {{DISTRICT_NAME}}
+    </div>
+
+    <div class="case-info">
+        <div style="float: left; width: 55%;">
+            {{PLAINTIFF_NAMES}},<br>
+            <br>
+            Plaintiff,
+            <br>
+            v.<br>
+            <br>
+            {{DEFENDANT_NAMES}},<br>
+            <br>
+            Defendant.
+        </div>
+        <div style="float: right; width: 40%; padding-left: 10px;">
+            Case No. {{CASE_NUMBER}}<br>
+            <br>
+            <div class="document-title">
+                ANSWER TO COMPLAINT
+            </div>
+        </div>
+        <div style="clear: both;"></div>
+    </div>
+
+    <div class="content">
+        <div class="paragraph">
+            Defendant {{DEFENDANT_NAMES}}, by and through its undersigned counsel, answers Plaintiff's Complaint as follows:
+        </div>
+        <div class="paragraph">
+            1. Defendant admits the allegations in paragraph 1 of the Complaint.
+        </div>
+        <div class="paragraph">
+            2. Defendant denies the allegations in paragraph 2 of the Complaint.
+        </div>
+        <div class="paragraph">
+            3. Defendant lacks knowledge or information sufficient to form a belief as to the truth of the allegations in paragraph 3 of the Complaint, and therefore denies them.
+        </div>
+        <div class="paragraph">
+            <strong>AFFIRMATIVE DEFENSES</strong>
+        </div>
+        <div class="paragraph">
+            <strong>FIRST AFFIRMATIVE DEFENSE</strong><br>
+            (Failure to State a Claim Upon Which Relief Can Be Granted)
+        </div>
+        <div class="paragraph">
+            Plaintiff's Complaint fails to state a claim upon which relief can be granted.
+        </div>
+        <div class="paragraph">
+            <strong>SECOND AFFIRMATIVE DEFENSE</strong><br>
+            ({{AFFIRMATIVE_DEFENSE_2_TITLE}})
+        </div>
+        <div class="paragraph">
+            {{AFFIRMATIVE_DEFENSE_2_TEXT}}
+        </div>
+        <div class="paragraph">
+            WHEREFORE, Defendant respectfully requests that the Court enter judgment in its favor and against Plaintiff, dismissing the Complaint with prejudice, awarding Defendant its costs and attorney's fees, and granting such other and further relief as the Court deems just and proper.
+        </div>
+    </div>
+
+    <div class="signature-block">
+        <p>
+            Dated: {{DATE}}
+        </p>
+        <p>
+            Respectfully submitted,
+        </p>
+        <p>
+            ____________________________________<br>
+            {{ATTORNEY_NAME}} (Bar No. {{ATTORNEY_BAR_NUMBER}})<br>
+            {{ATTORNEY_FIRM}}<br>
+            {{ATTORNEY_ADDRESS}}<br>
+            Telephone: {{ATTORNEY_PHONE}}<br>
+            Email: {{ATTORNEY_EMAIL}}<br>
+            Attorney for Defendant
+        </p>
+    </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Federal Motion to Dismiss Template</title>
+<style>
+    body {
+        font-family: 'Times New Roman', Times, serif;
+        font-size: 12pt;
+        margin: 1in;
+        line-height: 2; /* Double-spaced */
+        width: 8.5in;
+        height: 11in;
+    }
+    .page {
+        width: 100%;
+        height: 100%;
+    }
+    .caption {
+        text-align: center;
+        font-weight: bold;
+    }
+    .case-info {
+        margin-top: 20px;
+        margin-bottom: 20px;
+    }
+    .document-title {
+        text-align: center;
+        font-weight: bold;
+        margin-bottom: 20px;
+    }
+    .paragraph {
+        margin-bottom: 10px;
+    }
+    .signature-block {
+        margin-top: 40px;
+    }
+</style>
+</head>
+<body>
+
+<div class="page">
+    <div class="caption">
+        UNITED STATES DISTRICT COURT<br>
+        FOR THE {{DISTRICT_NAME}}
+    </div>
+
+    <div class="case-info">
+        <div style="float: left; width: 55%;">
+            {{PLAINTIFF_NAMES}},<br>
+            <br>
+            Plaintiff,
+            <br>
+            v.<br>
+            <br>
+            {{DEFENDANT_NAMES}},<br>
+            <br>
+            Defendant.
+        </div>
+        <div style="float: right; width: 40%; padding-left: 10px;">
+            Case No. {{CASE_NUMBER}}<br>
+            <br>
+            <div class="document-title">
+                DEFENDANT'S MOTION TO DISMISS
+            </div>
+        </div>
+        <div style="clear: both;"></div>
+    </div>
+
+    <div class="content">
+        <div class="paragraph">
+            Defendant {{DEFENDANT_NAMES}}, by and through its undersigned counsel, respectfully moves this Court to dismiss Plaintiff's Complaint pursuant to Federal Rule of Civil Procedure 12(b)(6) for failure to state a claim upon which relief can be granted.
+        </div>
+        <div class="paragraph">
+            In support of this motion, Defendant submits the accompanying Memorandum of Law.
+        </div>
+        <div class="paragraph">
+            WHEREFORE, Defendant respectfully requests that the Court grant this Motion to Dismiss and dismiss Plaintiff's Complaint with prejudice, award Defendant its costs and attorney's fees, and grant such other and further relief as the Court deems just and proper.
+        </div>
+    </div>
+
+    <div class="signature-block">
+        <p>
+            Dated: {{DATE}}
+        </p>
+        <p>
+            Respectfully submitted,
+        </p>
+        <p>
+            ____________________________________<br>
+            {{ATTORNEY_NAME}} (Bar No. {{ATTORNEY_BAR_NUMBER}})<br>
+            {{ATTORNEY_FIRM}}<br>
+            {{ATTORNEY_ADDRESS}}<br>
+            Telephone: {{ATTORNEY_PHONE}}<br>
+            Email: {{ATTORNEY_EMAIL}}<br>
+            Attorney for Defendant
+        </p>
+    </div>
+</div>
+
+</body>
+</html>

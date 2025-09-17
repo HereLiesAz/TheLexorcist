@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Illinois Complaint Template</title>
+<style>
+    body {
+        font-family: 'Times New Roman', Times, serif;
+        font-size: 12pt;
+        margin: 1in;
+        line-height: 2; /* Double-spaced */
+        width: 8.5in;
+        height: 11in;
+    }
+    .page {
+        width: 100%;
+        height: 100%;
+        position: relative;
+    }
+    .top-right-space {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 2in;
+        height: 2in;
+    }
+    .caption {
+        text-align: center;
+        font-weight: bold;
+    }
+    .case-info {
+        margin-top: 20px;
+        margin-bottom: 20px;
+    }
+    .document-title {
+        text-align: center;
+        font-weight: bold;
+        margin-bottom: 20px;
+    }
+    .paragraph {
+        margin-bottom: 10px;
+    }
+    .signature-block {
+        margin-top: 40px;
+    }
+</style>
+</head>
+<body>
+
+<div class="page">
+    <div class="top-right-space"></div>
+
+    <div class="caption">
+        IN THE CIRCUIT COURT OF THE {{JUDICIAL_CIRCUIT}} JUDICIAL CIRCUIT<br>
+        {{COUNTY}} COUNTY, ILLINOIS
+    </div>
+
+    <div class="case-info">
+        <div style="float: left; width: 55%;">
+            {{PLAINTIFF_NAMES}},<br>
+            <br>
+            Plaintiff,
+            <br>
+            vs.<br>
+            <br>
+            {{DEFENDANT_NAMES}},<br>
+            <br>
+            Defendant.
+        </div>
+        <div style="float: right; width: 40%; padding-left: 10px;">
+            No. {{CASE_NUMBER}}<br>
+            <br>
+        </div>
+        <div style="clear: both;"></div>
+    </div>
+
+    <div class="document-title">
+        COMPLAINT AT LAW
+    </div>
+
+    <div class="content">
+        <div class="paragraph">
+            NOW COMES the Plaintiff, {{PLAINTIFF_NAMES}}, by and through their attorneys, {{ATTORNEY_FIRM}}, and for their Complaint against the Defendant, {{DEFENDANT_NAMES}}, states as follows:
+        </div>
+        <div class="paragraph">
+            1. {{DOCUMENT_BODY_PARAGRAPH_1}}
+        </div>
+        <div class="paragraph">
+            2. {{DOCUMENT_BODY_PARAGRAPH_2}}
+        </div>
+        <div class="paragraph">
+            3. {{DOCUMENT_BODY_PARAGRAPH_3}}
+        </div>
+        <div class="paragraph">
+            WHEREFORE, Plaintiff, {{PLAINTIFF_NAMES}}, prays for judgment against the Defendant, {{DEFENDANT_NAMES}}, for a sum in excess of {{JURISDICTIONAL_AMOUNT}}, plus costs of suit.
+        </div>
+    </div>
+
+    <div class="signature-block">
+        <p>
+            Respectfully submitted,
+        </p>
+        <p>
+            ____________________________________<br>
+            {{ATTORNEY_NAME}}<br>
+            {{ATTORNEY_FIRM}}<br>
+            {{ATTORNEY_ADDRESS}}<br>
+            {{ATTORNEY_CITY_STATE_ZIP}}<br>
+            ARDC No: {{ATTORNEY_ARDC_NUMBER}}<br>
+            Telephone: {{ATTORNEY_PHONE}}<br>
+            Email: {{ATTORNEY_EMAIL}}
+        </p>
+    </div>
+</div>
+
+</body>
+</html>

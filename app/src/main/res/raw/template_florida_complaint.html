@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Florida Complaint Template</title>
+<style>
+    body {
+        font-family: 'Times New Roman', Times, serif;
+        font-size: 12pt;
+        margin: 1in;
+        line-height: 2; /* Double-spaced */
+        width: 8.5in;
+        height: 11in;
+    }
+    .page {
+        width: 100%;
+        height: 100%;
+        position: relative;
+    }
+    .top-right-space {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 3in;
+        height: 3in;
+    }
+    .caption {
+        text-align: center;
+        font-weight: bold;
+    }
+    .case-info {
+        margin-top: 20px;
+        margin-bottom: 20px;
+    }
+    .document-title {
+        text-align: center;
+        font-weight: bold;
+        margin-bottom: 20px;
+    }
+    .paragraph {
+        margin-bottom: 10px;
+    }
+    .signature-block {
+        margin-top: 40px;
+    }
+</style>
+</head>
+<body>
+
+<div class="page">
+    <div class="top-right-space"></div>
+
+    <div class="caption">
+        IN THE CIRCUIT COURT OF THE {{JUDICIAL_CIRCUIT}} JUDICIAL CIRCUIT<br>
+        IN AND FOR {{COUNTY}} COUNTY, FLORIDA
+    </div>
+
+    <div class="case-info">
+        <div style="float: left; width: 55%;">
+            {{PLAINTIFF_NAMES}},<br>
+            <br>
+            Plaintiff,
+            <br>
+            vs.<br>
+            <br>
+            {{DEFENDANT_NAMES}},<br>
+            <br>
+            Defendant.
+        </div>
+        <div style="float: right; width: 40%; padding-left: 10px;">
+            CASE NO. {{CASE_NUMBER}}<br>
+            <br>
+        </div>
+        <div style="clear: both;"></div>
+    </div>
+
+    <div class="document-title">
+        COMPLAINT
+    </div>
+
+    <div class="content">
+        <div class="paragraph">
+            Plaintiff, {{PLAINTIFF_NAMES}}, sues Defendant, {{DEFENDANT_NAMES}}, and alleges:
+        </div>
+        <div class="paragraph">
+            1. This is an action for damages which exceeds $30,000.00.
+        </div>
+        <div class="paragraph">
+            2. {{DOCUMENT_BODY_PARAGRAPH_1}}
+        </div>
+        <div class="paragraph">
+            3. {{DOCUMENT_BODY_PARAGRAPH_2}}
+        </div>
+        <div class="paragraph">
+            WHEREFORE, Plaintiff demands judgment for damages against Defendant.
+        </div>
+    </div>
+
+    <div class="signature-block">
+        <p>
+            Respectfully submitted,
+        </p>
+        <p>
+            ____________________________________<br>
+            {{ATTORNEY_NAME}} (FBN: {{ATTORNEY_BAR_NUMBER}})<br>
+            {{ATTORNEY_FIRM}}<br>
+            {{ATTORNEY_ADDRESS}}<br>
+            Telephone: {{ATTORNEY_PHONE}}<br>
+            Email: {{ATTORNEY_EMAIL}}<br>
+            Attorney for Plaintiff
+        </p>
+    </div>
+</div>
+
+</body>
+</html>

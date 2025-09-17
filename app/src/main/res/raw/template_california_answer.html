@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>California Answer Template</title>
+<style>
+    body {
+        font-family: 'Times New Roman', Times, serif;
+        font-size: 12pt;
+        margin: 0;
+        padding: 0;
+        width: 8.5in;
+        height: 11in;
+    }
+    .page {
+        width: 8.5in;
+        height: 11in;
+        padding-left: 1in;
+        padding-right: 1in;
+        padding-bottom: 1in;
+        box-sizing: border-box;
+        position: relative;
+        page-break-after: always;
+    }
+    .content-container {
+        padding-top: 2in; /* This creates the 3-inch top margin for the content below the header */
+        line-height: 2; /* Double-spaced */
+    }
+    .line-numbers {
+        position: absolute;
+        left: 0.5in;
+        top: 1in;
+        bottom: 1in;
+        width: 0.5in;
+        text-align: right;
+        padding-right: 10px;
+        font-size: 12pt;
+        line-height: 2;
+    }
+    .line-numbers span {
+        display: block;
+    }
+    .caption-header {
+        position: absolute;
+        top: 1in;
+        left: 1in;
+        line-height: 1.5;
+    }
+    .court-title {
+        text-align: center;
+        font-weight: bold;
+    }
+    .case-title {
+        margin-top: 20px;
+    }
+    .case-info {
+        float: right;
+        width: 40%;
+        border-left: 1px solid black;
+        padding-left: 10px;
+    }
+    .document-title {
+        text-align: center;
+        font-weight: bold;
+        margin-top: 20px;
+    }
+</style>
+</head>
+<body>
+
+<div class="page">
+    <div class="line-numbers">
+        <script>
+            for (let i = 1; i <= 28; i++) {
+                document.write('<span>' + i + '</span>');
+            }
+        </script>
+    </div>
+
+    <div class="caption-header">
+        {{ATTORNEY_NAME}} (SBN: {{ATTORNEY_SBN}})<br>
+        {{ATTORNEY_ADDRESS_LINE_1}}<br>
+        {{ATTORNEY_ADDRESS_LINE_2}}<br>
+        Telephone: {{ATTORNEY_PHONE}}<br>
+        Fax: {{ATTORNEY_FAX}}<br>
+        Email: {{ATTORNEY_EMAIL}}<br>
+        <br>
+        Attorney for {{PARTY_REPRESENTATION}}
+    </div>
+
+    <div class="content-container">
+        <div class="court-title">
+            <br><br><br><br><br><br><br> <!-- This pushes the court title down to line 8 -->
+            SUPERIOR COURT OF THE STATE OF CALIFORNIA<br>
+            FOR THE COUNTY OF {{COUNTY}}
+        </div>
+
+        <div class="case-title">
+            <div style="float: left; width: 55%;">
+                {{PLAINTIFF_NAMES}},<br>
+                <br>
+                Plaintiff,
+                <br>
+                vs.<br>
+                <br>
+                {{DEFENDANT_NAMES}},<br>
+                <br>
+                Defendant.
+            </div>
+            <div class="case-info">
+                Case No. {{CASE_NUMBER}}<br>
+                <br>
+                <div class="document-title">
+                    ANSWER TO COMPLAINT
+                </div>
+            </div>
+            <div style="clear: both;"></div>
+        </div>
+
+        <div style="margin-top: 20px;">
+            <p>
+                Defendant {{DEFENDANT_NAMES}} answers the complaint of Plaintiff {{PLAINTIFF_NAMES}} as follows:
+            </p>
+            <p>
+                1. Defendant admits the allegations contained in paragraphs {{ADMITTED_PARAGRAPHS}}.
+            </p>
+            <p>
+                2. Defendant denies the allegations contained in paragraphs {{DENIED_PARAGRAPHS}}.
+            </p>
+            <p>
+                3. Defendant is without sufficient information or belief to admit or deny the allegations contained in paragraphs {{UNKNOWN_PARAGRAPHS}}, and on that basis denies them.
+            </p>
+            <p>
+                <strong>AFFIRMATIVE DEFENSES</strong>
+            </p>
+            <p>
+                <strong>FIRST AFFIRMATIVE DEFENSE</strong><br>
+                (Failure to State a Cause of Action)
+            </p>
+            <p>
+                4. The complaint, and each cause of action contained therein, fails to state facts sufficient to constitute a cause of action against this answering Defendant.
+            </p>
+            <p>
+                <strong>SECOND AFFIRMATIVE DEFENSE</strong><br>
+                ({{AFFIRMATIVE_DEFENSE_2_TITLE}})
+            </p>
+            <p>
+                5. {{AFFIRMATIVE_DEFENSE_2_TEXT}}
+            </p>
+            <p>
+                WHEREFORE, Defendant prays for judgment as follows:
+            </p>
+            <ol>
+                <li>That Plaintiff take nothing by this action;</li>
+                <li>For costs of suit incurred herein; and</li>
+                <li>For such other and further relief as the Court may deem just and proper.</li>
+            </ol>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

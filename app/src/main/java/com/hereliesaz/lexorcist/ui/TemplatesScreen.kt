@@ -46,6 +46,16 @@ import java.io.File
 import java.util.Locale
 import java.util.UUID
 
+@VisibleForTesting
+internal fun filterTemplates(templates: List<Template>, court: String): List<Template> {
+    return if (court.isNotBlank()) {
+        templates.filter {
+            it.court.equals(court, ignoreCase = true) || it.court == "Generic"
+        }
+    } else {
+        templates
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -78,9 +88,18 @@ fun TemplatesScreen(
                     R.raw.template_declaration,
                     R.raw.template_metadata,
                     R.raw.template_table_of_exhibits,
-                    R.raw.template_california_pleading,
-                    R.raw.template_federal_pleading,
-                    R.raw.template_louisiana_pleading,
+                    R.raw.template_california_complaint,
+                    R.raw.template_federal_complaint,
+                    R.raw.template_louisiana_complaint,
+                    R.raw.template_new_york_complaint,
+                    R.raw.template_texas_answer,
+                    R.raw.template_california_answer,
+                    R.raw.template_federal_answer,
+                    R.raw.template_federal_motion_to_dismiss,
+                    R.raw.template_california_motion_to_dismiss,
+                    R.raw.template_texas_motion_to_dismiss,
+                    R.raw.template_florida_complaint,
+                    R.raw.template_illinois_complaint,
                 )
 
             templates.value =
@@ -98,15 +117,33 @@ fun TemplatesScreen(
                             .replace("_", " ")
                             .replaceFirstChar { it.titlecase() }
                     val description = when (resId) {
-                        R.raw.template_california_pleading -> "A template that adheres to the California Rules of Court for pleading papers."
-                        R.raw.template_federal_pleading -> "A template for U.S. Federal Courts, based on the FRCP and N.D. Cal. local rules."
-                        R.raw.template_louisiana_pleading -> "A template for Louisiana State Courts, focusing on content structure."
+                        R.raw.template_california_complaint -> "A template that adheres to the California Rules of Court for pleading papers."
+                        R.raw.template_federal_complaint -> "A template for U.S. Federal Courts, based on the FRCP and N.D. Cal. local rules."
+                        R.raw.template_louisiana_complaint -> "A template for Louisiana State Courts, focusing on content structure."
+                        R.raw.template_new_york_complaint -> "A template for New York Supreme Court complaints."
+                        R.raw.template_texas_answer -> "A template for an Original Answer in Texas state court."
+                        R.raw.template_california_answer -> "A template for an Answer in California state court."
+                        R.raw.template_federal_answer -> "A template for an Answer in U.S. Federal Court."
+                        R.raw.template_federal_motion_to_dismiss -> "A template for a Motion to Dismiss in U.S. Federal Court."
+                        R.raw.template_california_motion_to_dismiss -> "A template for a Demurrer (Motion to Dismiss) in California state court."
+                        R.raw.template_texas_motion_to_dismiss -> "A template for a Special Exception and Motion to Dismiss in Texas state court."
+                        R.raw.template_florida_complaint -> "A template for a Complaint in Florida state court."
+                        R.raw.template_illinois_complaint -> "A template for a Complaint in Illinois state court."
                         else -> "A standard template for $name."
                     }
                     val court = when (resId) {
-                        R.raw.template_california_pleading -> "California"
-                        R.raw.template_federal_pleading -> "Federal"
-                        R.raw.template_louisiana_pleading -> "Louisiana"
+                        R.raw.template_california_complaint -> "California"
+                        R.raw.template_federal_complaint -> "Federal"
+                        R.raw.template_louisiana_complaint -> "Louisiana"
+                        R.raw.template_new_york_complaint -> "New York"
+                        R.raw.template_texas_answer -> "Texas"
+                        R.raw.template_california_answer -> "California"
+                        R.raw.template_federal_answer -> "Federal"
+                        R.raw.template_federal_motion_to_dismiss -> "Federal"
+                        R.raw.template_california_motion_to_dismiss -> "California"
+                        R.raw.template_texas_motion_to_dismiss -> "Texas"
+                        R.raw.template_florida_complaint -> "Florida"
+                        R.raw.template_illinois_complaint -> "Illinois"
                         else -> "Generic"
                     }
                     Template(

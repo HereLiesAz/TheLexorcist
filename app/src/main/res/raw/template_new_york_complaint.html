@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>New York Supreme Court Complaint Template</title>
+<style>
+    body {
+        font-family: 'Times New Roman', Times, serif;
+        font-size: 14pt;
+        margin: 1in;
+        line-height: 2; /* Double-spaced */
+        width: 8.5in;
+        height: 11in;
+    }
+    .page {
+        width: 100%;
+        height: 100%;
+    }
+    .caption {
+        text-align: center;
+        font-weight: bold;
+    }
+    .case-info {
+        margin-top: 20px;
+        margin-bottom: 20px;
+    }
+    .document-title {
+        text-align: center;
+        font-weight: bold;
+        margin-bottom: 20px;
+    }
+    .paragraph {
+        margin-bottom: 10px;
+    }
+    .signature-block {
+        margin-top: 40px;
+    }
+</style>
+</head>
+<body>
+
+<div class="page">
+    <div class="caption">
+        SUPREME COURT OF THE STATE OF NEW YORK<br>
+        COUNTY OF {{COUNTY}}
+    </div>
+
+    <div class="case-info">
+        <div style="float: left; width: 55%;">
+            {{PLAINTIFF_NAMES}},<br>
+            <br>
+            Plaintiff,
+            <br>
+            -against-<br>
+            <br>
+            {{DEFENDANT_NAMES}},<br>
+            <br>
+            Defendant.
+        </div>
+        <div style="float: right; width: 40%; padding-left: 10px;">
+            Index No. {{INDEX_NUMBER}}<br>
+            <br>
+            <div class="document-title">
+                COMPLAINT
+            </div>
+        </div>
+        <div style="clear: both;"></div>
+    </div>
+
+    <div class="content">
+        <div class="paragraph">
+            Plaintiff, by and through its attorneys, {{ATTORNEY_FIRM}}, as and for its complaint against defendant, alleges as follows:
+        </div>
+        <div class="paragraph">
+            1. {{DOCUMENT_BODY_PARAGRAPH_1}}
+        </div>
+        <div class="paragraph">
+            2. {{DOCUMENT_BODY_PARAGRAPH_2}}
+        </div>
+        <div class="paragraph">
+            3. {{DOCUMENT_BODY_PARAGRAPH_3}}
+        </div>
+        <div class="paragraph">
+            WHEREFORE, Plaintiff demands judgment against Defendant for the following:
+            <ul>
+                <li>{{PRAYER_FOR_RELIEF_1}}</li>
+                <li>{{PRAYER_FOR_RELIEF_2}}</li>
+                <li>Such other and further relief as this Court deems just and proper.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="signature-block">
+        <p>
+            Dated: {{DATE}}
+        </p>
+        <p>
+            ____________________________________<br>
+            {{ATTORNEY_NAME}} (Bar Roll No. {{ATTORNEY_BAR_ROLL}})<br>
+            {{ATTORNEY_FIRM}}<br>
+            {{ATTORNEY_ADDRESS}}<br>
+            Telephone: {{ATTORNEY_PHONE}}<br>
+            Email: {{ATTORNEY_EMAIL}}<br>
+            Attorneys for Plaintiff
+        </p>
+    </div>
+</div>
+
+</body>
+</html>
