@@ -242,12 +242,7 @@ constructor(
 
     fun loadCasesFromRepository() {
         viewModelScope.launch {
-            _isLoading.value = true
-            try {
-                caseRepository.refreshCases()
-            } finally {
-                _isLoading.value = false
-            }
+            caseRepository.refreshCases()
         }
     }
 
