@@ -264,4 +264,13 @@
     <string name="add_video_evidence">Video</string>
     <string name="assign_to_allegation">Assign to Allegation</string>
     <string name="add_evidence">Add Evidence</string>
+
+    <string name="fragment_main_action_1_button_text">Text includes</string>
+    <string name="fragment_main_action_2_button_text">Tags includes</string>
+    <string name="fragment_main_action_3_button_text">Date &gt;</string>
+    <string name="fragment_main_action_4_button_text">Date &lt;</string>
+    <string name="fragment_main_action_5_button_text">Tag threats</string>
+    <string name="fragment_main_action_6_button_text">Tag financial</string>
+    <string name="fragment_main_buttons_title">Script Snippets</string>
+    <string name="generate_description">Generate Description</string>
 </resources>
