@@ -1,15 +1,23 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
+
+val localProperties = Properties() // Create a Properties object
+val localPropertiesFile = rootProject.file("local.properties")
+
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.inputStream().use { input ->
+        localProperties.load(input)
+    }
+}
 
 plugins {
-    id("com.android.application")
-    id("org.jetbrains.kotlin.android")
-    id("kotlin-parcelize") // Added kotlin-parcelize plugin
-    id("com.google.dagger.hilt.android")
-    id("com.google.devtools.ksp")
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.hilt.android)
+    id("com.google.devtools.ksp") // Changed from alias
+    alias(libs.plugins.kotlin.compose) // Added Kotlin Compose Compiler plugin
     id("com.google.gms.google-services") // Added Google Services plugin
-    id("com.palantir.git-version")
-    id("io.realm.kotlin") // Added Realm plugin
-    id("io.objectbox") // Added ObjectBox plugin
+
 }
 
 // Add KSP configuration block to exclude the Room KSP processor
@@ -20,6 +28,20 @@ ksp {
 }
 
 android {
+    signingConfigs {
+        maybeCreate("debug").apply {
+            storeFile = file("G://My Drive//az_apk_keystore.jks")
+            storePassword = localProperties.getProperty("MY_KEYSTORE_PASSWORD") ?: System.getenv("MY_KEYSTORE_PASSWORD") ?: ""
+            keyAlias = "key0"
+            keyPassword = localProperties.getProperty("MY_KEY_PASSWORD") ?: System.getenv("MY_KEY_PASSWORD") ?: ""
+        }
+        maybeCreate("release").apply {
+            storeFile = file("G://My Drive//az_apk_keystore.jks")
+            storePassword = localProperties.getProperty("MY_KEYSTORE_PASSWORD") ?: System.getenv("MY_KEYSTORE_PASSWORD") ?: ""
+            keyAlias = "key0"
+            keyPassword = localProperties.getProperty("MY_KEY_PASSWORD") ?: System.getenv("MY_KEY_PASSWORD") ?: ""
+        }
+    }
     namespace = "com.hereliesaz.lexorcist"
     compileSdk = 36
 
@@ -38,13 +60,14 @@ android {
         getByName("release") {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            signingConfig = signingConfigs.getByName("release") // Explicitly assign signing config
         }
     }
     buildFeatures {
         compose = true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.3"
+        kotlinCompilerExtensionVersion = "2.2.20"
     }
     packaging {
         resources.excludes.add("META-INF/INDEX.LIST")
@@ -79,9 +102,19 @@ android {
     lint {
         baseline = file("lint-baseline.xml")
     }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+    }
+    buildToolsVersion = "36.0.0"
+    compileSdkExtension = 19
+    ndkVersion = "29.0.13599879 rc2"
 }
 
 dependencies {
+
     constraints {
         implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable:0.3.5") {
             because("Align kotlin versions")
@@ -111,7 +144,7 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.turbine)
     testImplementation(libs.kotlin.test.junit)
-    testImplementation("com.squareup.okhttp3:mockwebserver:4.9.3")
+    testImplementation(libs.mockwebserver)
 
     // AndroidX Test dependencies (androidTest)
     androidTestImplementation(libs.androidx.test.ext.junit)
@@ -142,7 +175,7 @@ dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.runtime)
-    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.ui) // CORRECTED ALIAS
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
@@ -214,11 +247,8 @@ dependencies {
 
     // Room IS NOT ALLOWED IN THIS PROJECT!!!!!
 
-    // Realm Database
-    implementation(libs.library.base) // Added Realm library
-
     // Vosk for on-device speech-to-text
-    implementation("com.alphacephei:vosk-android:0.3.70")
+    implementation(libs.vosk.android)
     // Explicit gRPC dependencies with consistent versions
     implementation(libs.grpc.okhttp)
     implementation(libs.grpc.core)
@@ -232,11 +262,5 @@ kotlin {
     jvmToolchain(17)
     compilerOptions {
         freeCompilerArgs.add("-opt-in=androidx.compose.material3.ExperimentalMaterial3Api")
-    }
-}
-
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
-    kotlinOptions {
-        jvmTarget = "17"
     }
 }
