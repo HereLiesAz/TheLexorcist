@@ -117,4 +117,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     setInterval(randomJolt, Math.random() * (15000 - 10000) + 10000); // 10-15 seconds
+
+    const contactForm = document.getElementById('contact-form');
+    if (contactForm) {
+        contactForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const message = document.getElementById('message').value;
+            const subject = 'Lexorcist Contact Form Submission';
+            const body = `Name: ${name}%0D%0AEmail: ${email}%0D%0AMessage: ${message}`;
+            window.location.href = `mailto:hereliesaz@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        });
+    }
 });

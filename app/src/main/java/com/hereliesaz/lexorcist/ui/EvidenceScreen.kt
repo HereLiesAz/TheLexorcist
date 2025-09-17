@@ -148,6 +148,7 @@ fun EvidenceScreen(
                         .fillMaxWidth()
                         .weight(1f),
                     placeholder = { Text(stringResource(R.string.enter_evidence_content)) },
+                    textStyle = MaterialTheme.typography.bodyLarge.copy(textAlign = TextAlign.End),
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 LexorcistOutlinedButton(
@@ -156,13 +157,11 @@ fun EvidenceScreen(
                         text = ""
                         showAddTextEvidence = false
                     },
-                    modifier = Modifier.fillMaxWidth(),
                     text = stringResource(R.string.save).uppercase(Locale.getDefault())
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 LexorcistOutlinedButton(
                     onClick = { showAddTextEvidence = false },
-                    modifier = Modifier.fillMaxWidth(),
                     text = stringResource(R.string.cancel).uppercase(Locale.getDefault())
                 )
             } else {

@@ -115,6 +115,7 @@
     <string name="script_saved_successfully">Script saved successfully</string>
     <string name="enter_your_script">Enter your script</string>
     <string name="script_editor_placeholder">
+        // Your script goes here. Use the available variables to process evidence.\n
         // Example: if (evidence.content.includes("threat")) { parser.tags.push("Threat"); }\n
         // Available variables:\n
         // - evidence: The evidence object being processed.\n
@@ -140,7 +141,7 @@
 
     <string name="script_tab_description">Description</string>
     <string name="script_tab_editor">Editor</string>
-    <string name="script_description_placeholder">This script does not yet have a description. Save the script to generate one.</string>
+    <string name="script_description_placeholder">Enter a brief description of your script here. This will help you identify it later.</string>
     <string name="script_editor_explanation">
         Scripts in The Lexorcist are powerful tools for automating the tagging and categorization of your evidence. Written in JavaScript, they allow you to define rules that automatically apply tags based on the content, date, or existing tags of your evidence.
 

@@ -41,7 +41,9 @@ import com.google.gson.Gson
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.model.Template
 import com.hereliesaz.lexorcist.viewmodel.AddonsBrowserViewModel
+import java.io.File
 import java.util.Locale
+import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,39 +52,51 @@ fun TemplatesScreen(viewModel: AddonsBrowserViewModel = hiltViewModel()) {
     var selectedTemplate by remember { mutableStateOf<Template?>(null) }
     val context = LocalContext.current
     val templates = remember { mutableStateOf<List<Template>>(emptyList()) }
+    val templatesFile = File(context.filesDir, "templates.json")
+
+    fun saveTemplates(updatedTemplates: List<Template>) {
+        val json = Gson().toJson(updatedTemplates)
+        templatesFile.writeText(json)
+        templates.value = updatedTemplates
+    }
 
     LaunchedEffect(Unit) {
-        val templateResources =
-            listOf(
-                R.raw.template_cover_sheet,
-                R.raw.template_custody_log,
-                R.raw.template_declaration,
-                R.raw.template_metadata,
-                R.raw.template_table_of_exhibits,
-            )
-
-        templates.value =
-            templateResources.map { resId ->
-                val content =
-                    context.resources
-                        .openRawResource(resId)
-                        .bufferedReader()
-                        .use { it.readText() }
-                val name =
-                    context.resources
-                        .getResourceEntryName(
-                            resId,
-                        ).replace("template_", "")
-                        .replace("_", " ")
-                        .replaceFirstChar { it.titlecase() }
-                Template(
-                    id = resId.toString(),
-                    name = name,
-                    description = "A standard template for $name.",
-                    content = content,
-                    author = "Lexorcist",
+        if (templatesFile.exists()) {
+            val json = templatesFile.readText()
+            templates.value = Gson().fromJson(json, Array<Template>::class.java).toList()
+        } else {
+            val templateResources =
+                listOf(
+                    R.raw.template_cover_sheet,
+                    R.raw.template_custody_log,
+                    R.raw.template_declaration,
+                    R.raw.template_metadata,
+                    R.raw.template_table_of_exhibits,
                 )
-            }
+
+            templates.value =
+                templateResources.map { resId ->
+                    val content =
+                        context.resources
+                            .openRawResource(resId)
+                            .bufferedReader()
+                            .use { it.readText() }
+                    val name =
+                        context.resources
+                            .getResourceEntryName(
+                                resId,
+                            ).replace("template_", "")
+                            .replace("_", " ")
+                            .replaceFirstChar { it.titlecase() }
+                    Template(
+                        id = resId.toString(),
+                        name = name,
+                        description = "A standard template for $name.",
+                        content = content,
+                        author = "Lexorcist",
+                    )
+                }
+        }
     }
 
     Scaffold(
@@ -96,9 +110,9 @@ fun TemplatesScreen(viewModel: AddonsBrowserViewModel = hiltViewModel()) {
                     )
                 },
                 colors =
-                    TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color.Transparent,
-                    ),
+                TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.Transparent,
+                ),
             )
         },
     ) { padding ->
@@ -165,8 +179,17 @@ fun TemplatesScreen(viewModel: AddonsBrowserViewModel = hiltViewModel()) {
     if (showEditor) {
         TemplateEditor(
             template = selectedTemplate,
-            onSave = {
-                // TODO: Implement save logic
+            onSave = { updatedTemplate ->
+                val currentTemplates = templates.value.toMutableList()
+                if (selectedTemplate == null) {
+                    currentTemplates.add(updatedTemplate.copy(id = UUID.randomUUID().toString()))
+                } else {
+                    val index = currentTemplates.indexOfFirst { it.id == updatedTemplate.id }
+                    if (index != -1) {
+                        currentTemplates[index] = updatedTemplate
+                    }
+                }
+                saveTemplates(currentTemplates)
                 showEditor = false
             },
             onDismiss = { showEditor = false },

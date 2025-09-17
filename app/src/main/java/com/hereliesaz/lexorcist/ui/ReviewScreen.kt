@@ -320,6 +320,11 @@ fun EvidenceItem(
     }
 }
 
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditEvidenceDialog(
     evidence: Evidence,
@@ -330,6 +335,8 @@ fun EditEvidenceDialog(
     var sourceDocument by remember { mutableStateOf(evidence.sourceDocument) }
     var category by remember { mutableStateOf(evidence.category) }
     var tags by remember { mutableStateOf(evidence.tags.joinToString(", ")) }
+    val categories = listOf("Financial", "Communication", "Legal", "Personal", "Other")
+    var expanded by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -353,13 +360,37 @@ fun EditEvidenceDialog(
                     label = { Text(stringResource(R.string.source_document)) },
                     modifier = Modifier.fillMaxWidth(),
                 )
-                OutlinedTextField(
-                    value = category,
-                    onValueChange = { category = it },
-                    label = { Text(stringResource(R.string.category)) },
-                    placeholder = { Text(stringResource(R.string.enter_category)) },
-                    modifier = Modifier.fillMaxWidth(),
-                )
+                ExposedDropdownMenuBox(
+                    expanded = expanded,
+                    onExpandedChange = { expanded = !expanded },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    OutlinedTextField(
+                        value = category,
+                        onValueChange = { },
+                        readOnly = true,
+                        label = { Text(stringResource(R.string.category)) },
+                        trailingIcon = {
+                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                        },
+                        modifier = Modifier.menuAnchor().fillMaxWidth(),
+                        textStyle = MaterialTheme.typography.bodyLarge.copy(textAlign = TextAlign.End),
+                    )
+                    ExposedDropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false },
+                    ) {
+                        categories.forEach { selectionOption ->
+                            DropdownMenuItem(
+                                text = { Text(selectionOption) },
+                                onClick = {
+                                    category = selectionOption
+                                    expanded = false
+                                }
+                            )
+                        }
+                    }
+                }
                 OutlinedTextField(
                     value = tags,
                     onValueChange = { tags = it },
