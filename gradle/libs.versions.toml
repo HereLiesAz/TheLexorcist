@@ -4,7 +4,7 @@ aznavrail = "3.1"
 browser = "1.9.0"
 dropboxCoreSdk = "7.0.0"
 errorProneAnnotations = "2.41.0"
-firebaseAuthKtx = "23.2.1"
+firebaseAuthKtx = "22.3.1"
 grpcContext = "1.75.0"
 grpcCore = "1.75.0"
 grpcOkhttp = "1.75.0"
@@ -19,18 +19,15 @@ coreKtx = "1.17.0"
 appcompat = "1.7.1"
 libraryBase = "3.0.0"
 material = "1.13.0"
-composeRuntime = "1.9.1"
 microsoftGraph = "6.53.0"
 msal = "7.1.0"
 navigationRuntimeKtx = "2.9.4"
-composeUi = "1.9.1"
-composeFoundation = "1.9.1"
 junit = "4.13.2"
 junitJupiterApi = "5.13.4"
 junitJupiterEngine = "5.13.4"
 mockkAndroid = "1.14.5"
 coreTesting = "2.2.0"
-kotlinxCoroutinesTest = "1.10.2"
+kotlinxCoroutinesTest = "1.8.0"
 protobufJavalite = "4.32.1"
 turbine = "1.2.1"
 kotlinTestJunit = "2.2.10"
@@ -46,12 +43,12 @@ lifecycleViewmodelCompose = "2.9.3"
 lifecycleRuntimeKtx = "2.9.3"
 lifecycleProcess = "2.9.3" # Added
 workRuntimeKtx = "2.10.4"
-composeRuntimeLivedata = "1.9.1"
-composeBom = "2025.09.00"
+composeBom = "2024.09.02-alpha"
 exifinterface = "1.4.1"
 activityCompose = "1.11.0"
 coilCompose = "2.7.0"
 navigationCompose = "2.9.4"
+kotlinStdlib = "1.9.22"
 itext7Core = "9.3.0"
 poi = "5.4.1"
 playServicesAuth = "21.4.0"
@@ -65,9 +62,9 @@ firebaseBom = "34.2.0"
 guava = "33.4.8-android"
 opencv = "4.5.3"
 mozillaRhino = "1.8.0"
-materialKolor = "3.0.1"
+materialKolor = "2.0.0"
 vicoCompose = "2.1.3" # Used for both compose and core
-jetlime = "4.0.0"
+jetlime = "3.0.0"
 hiltWork = "1.3.0"
 androidxHiltCompiler = "1.3.0"
 googleCloudSpeech = "4.68.0"
@@ -89,11 +86,9 @@ dropbox-core-sdk = { module = "com.dropbox.core:dropbox-core-sdk", version.ref =
 dropbox-android-sdk = { module = "com.dropbox.core:dropbox-android-sdk", version.ref = "dropboxCoreSdk" }
 firebase-auth-ktx = { module = "com.google.firebase:firebase-auth-ktx" }
 google-android-material = { group = "com.google.android.material", name = "material", version.ref = "material" }
-androidx-compose-runtime = { group = "androidx.compose.runtime", name = "runtime", version.ref = "composeRuntime" }
 androidx-navigation-runtime-ktx = { group = "androidx.navigation", name = "navigation-runtime-ktx", version.ref = "navigationRuntimeKtx" }
-androidx-compose-ui = { group = "androidx.compose.ui", name = "ui", version.ref = "composeUi" }
-androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "composeFoundation" }
 google-errorprone-annotations = { group = "com.google.errorprone", name = "error_prone_annotations", version.ref = "errorProneAnnotations" }
+kotlin-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version.ref = "kotlinStdlib" }
 google-firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
 google-firebase-auth = { module = "com.google.firebase:firebase-auth" }
 google-firebase-auth-ktx = { module = "com.google.firebase:firebase-auth-ktx", version.ref = "firebaseAuthKtx" }
@@ -127,13 +122,15 @@ androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "l
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
 androidx-lifecycle-process = { group = "androidx.lifecycle", name = "lifecycle-process", version.ref = "lifecycleProcess" } # Added
 androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "workRuntimeKtx" }
-androidx-compose-runtime-livedata = { group = "androidx.compose.runtime", name = "runtime-livedata", version.ref = "composeRuntimeLivedata" }
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
 androidx-compose-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" } # No version in BOM
 androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" } # No version in BOM
 androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" } # No version in BOM
 androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" } # No version in BOM
 androidx-exifinterface = { group = "androidx.exifinterface", name = "exifinterface", version.ref = "exifinterface" }
+androidx-compose-runtime-livedata = { group = "androidx.compose.runtime", name = "runtime-livedata" }
+androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation" }
+androidx-compose-runtime = { group = "androidx.compose.runtime", name = "runtime" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coilCompose" }
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }

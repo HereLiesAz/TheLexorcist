@@ -102,7 +102,6 @@ class VideoProcessingWorker
 
             if (error != null) {
                 logService.addLog("Transcription failed: $error", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
-                return Result.failure()
             }
 
             setProgressAsync(Data.Builder().putString(PROGRESS, "Extracting frames...").build())
@@ -131,7 +130,6 @@ class VideoProcessingWorker
                 }
             }
 
-            val (transcript, _) = audioTranscript
             val combinedContent = "Audio Transcript:\n$transcript\n\nOCR from Frames:\n$ocrTextBuilder"
 
             val videoEvidence =
