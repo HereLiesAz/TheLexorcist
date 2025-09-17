@@ -663,3 +663,297 @@ For the purpose of these examples, we assume the script environment provides the
         createNote("First draft of the case brief has been generated based on the current state of the case.");
     }
     ```
+
+---
+
+## **Part 3: AI-Powered Spreadsheet Automation**
+
+For this next set of scripts, we assume a more advanced API that allows for direct interaction with an AI model and the case spreadsheet (`lexorcist_data.xlsx`).
+
+**New Assumed API:**
+*   `AI.analyze(model, params)`: A function to call a specified AI model (e.g., "Summarizer", "Sentiment", "LegalTopicClassifier").
+*   `Spreadsheet.query(sheetName, query)`: A function to run a SQL-like query against a sheet.
+*   `Spreadsheet.updateCell(sheetName, cell, value)`: A function to update a specific cell.
+*   `Spreadsheet.appendRow(sheetName, rowData)`: A function to add a new row.
+*   `Spreadsheet.createSheet(sheetName)`: A function to create a new sheet.
+
+---
+
+### **Level 11: AI for Summarization and Data Extraction**
+
+**41. AI-Powered Evidence Summarization**
+*   **Description:** Calls an AI model to generate a concise, neutral summary of a long piece of evidence and writes it to a "Summary" column in the "Evidence" sheet.
+*   **Script:**
+    ```javascript
+    const longText = evidence.text;
+    if (longText.length > 2000) { // Only summarize long texts
+        const summary = AI.analyze("Summarizer", { text: longText });
+        const evidenceRow = Spreadsheet.query("Evidence", `SELECT * WHERE EvidenceID = '${evidence.id}'`)[0];
+        Spreadsheet.updateCell("Evidence", `H${evidenceRow.rowNumber}`, summary.text); // Assuming H is the Summary column
+    }
+    ```
+
+**42. Key Entity Extraction to Spreadsheet**
+*   **Description:** Uses an AI to extract all named entities (People, Places, Organizations, Dates) and populates a new "Entities" sheet with the entity, its type, and a link back to the source evidence.
+*   **Script:**
+    ```javascript
+    Spreadsheet.createSheet("Entities"); // Fails silently if it exists
+    const entities = AI.analyze("EntityExtractor", { text: evidence.text });
+    entities.forEach(entity => {
+        Spreadsheet.appendRow("Entities", {
+            "Entity": entity.name,
+            "Type": entity.type,
+            "SourceEvidenceID": evidence.id
+        });
+    });
+    ```
+
+**43. Action Item Tracker**
+*   **Description:** An AI script that identifies action items or commitments (e.g., "I will pay you on Friday") and logs them in a new "ActionItems" sheet.
+*   **Script:**
+    ```javascript
+    Spreadsheet.createSheet("ActionItems");
+    const actionItems = AI.analyze("ActionItemFinder", { text: evidence.text });
+    actionItems.forEach(item => {
+        Spreadsheet.appendRow("ActionItems", {
+            "Commitment": item.commitment,
+            "DueDate": item.dueDate, // The AI would extract this
+            "SourceEvidenceID": evidence.id
+        });
+    });
+    ```
+
+**44. De-identify and Anonymize to Column**
+*   **Description:** Uses an AI to find and replace all PII, saving this anonymized version to a new "AnonymizedText" column in the spreadsheet for safe sharing.
+*   **Script:**
+    ```javascript
+    const anonymized = AI.analyze("Anonymizer", { text: evidence.text });
+    const evidenceRow = Spreadsheet.query("Evidence", `SELECT * WHERE EvidenceID = '${evidence.id}'`)[0];
+    Spreadsheet.updateCell("Evidence", `I${evidenceRow.rowNumber}`, anonymized.text); // Assuming I is the AnonymizedText column
+    ```
+
+---
+
+### **Level 12: AI for Classification and Scoring**
+
+**45. Advanced Emotion & Intent Analysis**
+*   **Description:** Analyzes text for nuanced emotions and perceived intent, writing these scores to corresponding columns in the "Evidence" sheet.
+*   **Script:**
+    ```javascript
+    const analysis = AI.analyze("EmotionAndIntent", { text: evidence.text });
+    const row = Spreadsheet.query("Evidence", `SELECT * WHERE EvidenceID = '${evidence.id}'`)[0];
+    Spreadsheet.updateCell("Evidence", `J${row.rowNumber}`, analysis.emotion); // e.g., "Anger"
+    Spreadsheet.updateCell("Evidence", `K${row.rowNumber}`, analysis.intent);  // e.g., "Deceptive"
+    ```
+
+**46. Legal Topic Classification**
+*   **Description:** Classifies evidence into specific legal topics, allowing for powerful filtering in the spreadsheet.
+*   **Script:**
+    ```javascript
+    const topic = AI.analyze("LegalTopicClassifier", { text: evidence.text });
+    const row = Spreadsheet.query("Evidence", `SELECT * WHERE EvidenceID = '${evidence.id}'`)[0];
+    Spreadsheet.updateCell("Evidence", `L${row.rowNumber}`, topic.name); // e.g., "Contract Law"
+    ```
+
+**47. Evidence Admissibility Score**
+*   **Description:** Assesses evidence against rules of evidence (hearsay, relevance) and adds a preliminary "Admissibility Score" and reasoning to the spreadsheet.
+*   **Script:**
+    ```javascript
+    const admissibility = AI.analyze("AdmissibilityScorer", { text: evidence.text, metadata: evidence.metadata });
+    const row = Spreadsheet.query("Evidence", `SELECT * WHERE EvidenceID = '${evidence.id}'`)[0];
+    Spreadsheet.updateCell("Evidence", `M${row.rowNumber}`, admissibility.score); // e.g., 0.75
+    Spreadsheet.updateCell("Evidence", `N${row.rowNumber}`, admissibility.reasoning);
+    ```
+
+**48. Argument Strength Assessor**
+*   **Description:** When evidence is linked to an allegation, this AI evaluates how strongly the evidence supports it, providing a score and explanation in a "SupportStrength" column.
+*   **Script:**
+    ```javascript
+    if (evidence.allegations.length > 0) {
+        const allegationText = case.allegations.find(a => a.name === evidence.allegations[0]).description;
+        const strength = AI.analyze("ArgumentStrength", { premise: evidence.text, conclusion: allegationText });
+        const row = Spreadsheet.query("Evidence", `SELECT * WHERE EvidenceID = '${evidence.id}'`)[0];
+        Spreadsheet.updateCell("Evidence", `O${row.rowNumber}`, strength.score);
+    }
+    ```
+
+---
+
+### **Level 13: AI for Spreadsheet-based Case Analysis**
+
+**49. Create a Dynamic Case Timeline Sheet**
+*   **Description:** Queries all evidence, sorts it by date, and uses an AI summarizer on each piece to generate a new, clean "Timeline" sheet.
+*   **Script:**
+    ```javascript
+    Spreadsheet.createSheet("Timeline");
+    const allEvidence = Spreadsheet.query("Evidence", "SELECT * ORDER BY Date ASC");
+    allEvidence.forEach(row => {
+        const summary = AI.analyze("Summarizer", { text: row.Text });
+        Spreadsheet.appendRow("Timeline", {
+            "Date": row.Date,
+            "EventSummary": summary.text,
+            "SourceEvidenceID": row.EvidenceID
+        });
+    });
+    ```
+
+**50. Identify Key Witnesses from Spreadsheet Data**
+*   **Description:** Queries the "Entities" sheet for all "Person" entities, counts their mentions, and creates a "KeyWitnesses" sheet sorted by frequency.
+*   **Script:**
+    ```javascript
+    Spreadsheet.createSheet("KeyWitnesses");
+    const witnesses = Spreadsheet.query("Entities", "SELECT Entity, COUNT(*) as Mentions WHERE Type = 'Person' GROUP BY Entity ORDER BY Mentions DESC");
+    witnesses.forEach(witness => {
+        Spreadsheet.appendRow("KeyWitnesses", witness);
+    });
+    ```
+
+**51. AI-Generated Contradiction Matrix**
+*   **Description:** Systematically compares evidence in the spreadsheet and, if it finds a contradiction, creates a "ContradictionMatrix" sheet logging the conflict.
+*   **Script:**
+    ```javascript
+    Spreadsheet.createSheet("ContradictionMatrix");
+    const allEvidence = Spreadsheet.query("Evidence", "SELECT EvidenceID, Text");
+    for (let i = 0; i < allEvidence.length; i++) {
+        for (let j = i + 1; j < allEvidence.length; j++) {
+            const result = AI.analyze("ContradictionFinder", { textA: allEvidence[i].Text, textB: allEvidence[j].Text });
+            if (result.isContradictory) {
+                Spreadsheet.appendRow("ContradictionMatrix", {
+                    "EvidenceID_A": allEvidence[i].EvidenceID,
+                    "EvidenceID_B": allEvidence[j].EvidenceID,
+                    "Explanation": result.explanation
+                });
+            }
+        }
+    }
+    ```
+
+**52. Cluster Similar Evidence into a New Sheet**
+*   **Description:** Uses an AI embedding model to group semantically similar evidence, creating a "Clusters" sheet that maps each piece of evidence to a Cluster ID.
+*   **Script:**
+    ```javascript
+    Spreadsheet.createSheet("Clusters");
+    const allEvidence = Spreadsheet.query("Evidence", "SELECT EvidenceID, Text");
+    const clusters = AI.analyze("Clusterer", { documents: allEvidence.map(e => e.Text) });
+    clusters.forEach((clusterId, index) => {
+        Spreadsheet.appendRow("Clusters", {
+            "EvidenceID": allEvidence[index].EvidenceID,
+            "ClusterID": clusterId
+        });
+    });
+    ```
+
+---
+
+### **Level 14: AI for Generative and Predictive Tasks on the Spreadsheet**
+
+**53. Generate Deposition Questions for a Witness**
+*   **Description:** Selects a witness from the "KeyWitnesses" sheet, queries all associated evidence, and uses a generative AI to create tailored deposition questions in a new sheet.
+*   **Script:**
+    ```javascript
+    const topWitness = Spreadsheet.query("KeyWitnesses", "SELECT Entity LIMIT 1")[0].Entity;
+    Spreadsheet.createSheet(`DepoPrep_${topWitness}`);
+    const relatedEvidence = Spreadsheet.query("Entities", `SELECT SourceEvidenceID WHERE Entity = '${topWitness}'`);
+    const texts = relatedEvidence.map(e => Spreadsheet.query("Evidence", `SELECT Text WHERE EvidenceID = '${e.SourceEvidenceID}'`)[0].Text);
+
+    const questions = AI.analyze("DepoQuestionGenerator", { context: texts.join("\n\n") });
+    questions.forEach(q => {
+        Spreadsheet.appendRow(`DepoPrep_${topWitness}`, { "Question": q });
+    });
+    ```
+
+**54. Predict Missing Document Types**
+*   **Description:** The AI analyzes existing documents and communications in the spreadsheet to predict what standard documents are likely missing, logging them in a "DiscoveryGaps" sheet.
+*   **Script:**
+    ```javascript
+    Spreadsheet.createSheet("DiscoveryGaps");
+    const allText = Spreadsheet.query("Evidence", "SELECT Text").map(r => r.Text).join("\n");
+    const missingDocs = AI.analyze("MissingDocumentPredictor", { context: allText, caseType: case.type });
+    missingDocs.forEach(doc => {
+        Spreadsheet.appendRow("DiscoveryGaps", { "SuggestedMissingDocument": doc });
+    });
+    ```
+
+**55. Financial Anomaly Detection in Transactions**
+*   **Description:** If the spreadsheet has a "Transactions" sheet, this AI script analyzes it for anomalies, flagging them for review in a new "FlaggedTransactions" sheet.
+*   **Script:**
+    ```javascript
+    Spreadsheet.createSheet("FlaggedTransactions");
+    const transactions = Spreadsheet.query("Transactions", "SELECT *");
+    const flagged = AI.analyze("FinancialAnomalyDetector", { transactions: transactions });
+    flagged.forEach(txn => {
+        Spreadsheet.appendRow("FlaggedTransactions", { ...txn, "Reason": "AI Flagged" });
+    });
+    ```
+
+**56. Draft a Case Summary from Spreadsheet Data**
+*   **Description:** An AI script that reads multiple sheets (Evidence, Timeline, Allegations) to generate a narrative first draft of a case summary, writing it to a "CaseSummary" sheet.
+*   **Script:**
+    ```javascript
+    Spreadsheet.createSheet("CaseSummary");
+    const context = {
+        allegations: Spreadsheet.query("Allegations", "SELECT *"),
+        timeline: Spreadsheet.query("Timeline", "SELECT *"),
+        keyEvidence: Spreadsheet.query("Evidence", "SELECT * WHERE Severity = 'Critical'")
+    };
+    const summary = AI.analyze("CaseSummaryGenerator", { context: context });
+    Spreadsheet.appendRow("CaseSummary", { "GeneratedSummary": summary.text });
+    ```
+
+---
+
+### **Level 15: AI for Strategic and Interactive Spreadsheet Functions**
+
+**57. "What-If" Scenario Analysis**
+*   **Description:** A user adds hypothetical evidence to a "WhatIf" sheet. This script uses an AI to predict its impact on the case, writing the analysis back to the sheet.
+*   **Script:**
+    ```javascript
+    const scenarios = Spreadsheet.query("WhatIf", "SELECT * WHERE Analysis IS NULL");
+    scenarios.forEach(scenario => {
+        const impact = AI.analyze("ImpactPredictor", { case: case, newEvidence: scenario.HypotheticalEvidence });
+        Spreadsheet.updateCell("WhatIf", `B${scenario.rowNumber}`, impact.analysis); // Assuming B is Analysis column
+    });
+    ```
+
+**58. Auto-Update Allegation Status in Spreadsheet**
+*   **Description:** Periodically reviews all evidence linked to an allegation and, if sufficiently supported, updates a "Status" column for that allegation in the "Allegations" sheet.
+*   **Script:**
+    ```javascript
+    const allegations = Spreadsheet.query("Allegations", "SELECT *");
+    allegations.forEach(allegation => {
+        const relatedEvidence = Spreadsheet.query("Evidence", `SELECT * WHERE allegations LIKE '%${allegation.Name}%'`);
+        const strength = AI.analyze("AllegationStrength", { evidence: relatedEvidence });
+        if (strength.score > 0.8) {
+            Spreadsheet.updateCell("Allegations", `C${allegation.rowNumber}`, "Sufficiently Supported"); // C is Status column
+        }
+    });
+    ```
+
+**59. Identify the "Most Persuasive" Evidence**
+*   **Description:** An AI ranks all evidence in the spreadsheet based on relevance, admissibility, and impact, then creates a "Top5Evidence" sheet with links to these key pieces.
+*   **Script:**
+    ```javascript
+    Spreadsheet.createSheet("Top5Evidence");
+    const allEvidence = Spreadsheet.query("Evidence", "SELECT *");
+    const rankings = AI.analyze("PersuasivenessRanker", { evidence: allEvidence, allegations: case.allegations });
+    rankings.slice(0, 5).forEach(item => {
+        Spreadsheet.appendRow("Top5Evidence", { "EvidenceID": item.id, "Rank": item.rank, "Reason": item.reason });
+    });
+    ```
+
+**60. AI-Powered Spreadsheet Query via Natural Language**
+*   **Description:** A user writes a question in a "Queries" sheet. The script sends it to an AI that converts it into a formal query, executes it, and pastes the results into the sheet.
+*   **Script:**
+    ```javascript
+    const newQueries = Spreadsheet.query("Queries", "SELECT * WHERE Result IS NULL");
+    newQueries.forEach(query => {
+        const formalQuery = AI.analyze("NLQtoSQL", { question: query.Question });
+        try {
+            const results = Spreadsheet.query(formalQuery.sheet, formalQuery.sql);
+            const resultsAsText = JSON.stringify(results, null, 2);
+            Spreadsheet.updateCell("Queries", `B${query.rowNumber}`, resultsAsText);
+        } catch (e) {
+            Spreadsheet.updateCell("Queries", `B${query.rowNumber}`, `Error: ${e.message}`);
+        }
+    });
+    ```
