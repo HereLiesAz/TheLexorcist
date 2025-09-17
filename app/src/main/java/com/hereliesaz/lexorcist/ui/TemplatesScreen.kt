@@ -3,6 +3,7 @@ package com.hereliesaz.lexorcist.ui
 import android.webkit.WebView
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -45,14 +46,19 @@ import java.io.File
 import java.util.Locale
 import java.util.UUID
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TemplatesScreen(viewModel: AddonsBrowserViewModel = hiltViewModel()) {
+fun TemplatesScreen(
+    viewModel: AddonsBrowserViewModel = hiltViewModel(),
+    caseViewModel: CaseViewModel = hiltViewModel()
+) {
     var showEditor by remember { mutableStateOf(false) }
     var selectedTemplate by remember { mutableStateOf<Template?>(null) }
     val context = LocalContext.current
     val templates = remember { mutableStateOf<List<Template>>(emptyList()) }
     val templatesFile = File(context.filesDir, "templates.json")
+    val court by caseViewModel.court.collectAsState()
 
     fun saveTemplates(updatedTemplates: List<Template>) {
         val json = Gson().toJson(updatedTemplates)
@@ -72,6 +78,9 @@ fun TemplatesScreen(viewModel: AddonsBrowserViewModel = hiltViewModel()) {
                     R.raw.template_declaration,
                     R.raw.template_metadata,
                     R.raw.template_table_of_exhibits,
+                    R.raw.template_california_pleading,
+                    R.raw.template_federal_pleading,
+                    R.raw.template_louisiana_pleading,
                 )
 
             templates.value =
@@ -88,12 +97,25 @@ fun TemplatesScreen(viewModel: AddonsBrowserViewModel = hiltViewModel()) {
                             ).replace("template_", "")
                             .replace("_", " ")
                             .replaceFirstChar { it.titlecase() }
+                    val description = when (resId) {
+                        R.raw.template_california_pleading -> "A template that adheres to the California Rules of Court for pleading papers."
+                        R.raw.template_federal_pleading -> "A template for U.S. Federal Courts, based on the FRCP and N.D. Cal. local rules."
+                        R.raw.template_louisiana_pleading -> "A template for Louisiana State Courts, focusing on content structure."
+                        else -> "A standard template for $name."
+                    }
+                    val court = when (resId) {
+                        R.raw.template_california_pleading -> "California"
+                        R.raw.template_federal_pleading -> "Federal"
+                        R.raw.template_louisiana_pleading -> "Louisiana"
+                        else -> "Generic"
+                    }
                     Template(
                         id = resId.toString(),
                         name = name,
-                        description = "A standard template for $name.",
+                        description = description,
                         content = content,
                         author = "Lexorcist",
+                        court = court,
                     )
                 }
         }
@@ -155,7 +177,9 @@ fun TemplatesScreen(viewModel: AddonsBrowserViewModel = hiltViewModel()) {
                 LexorcistOutlinedButton(onClick = { launcher.launch("application/json") }, text = "Import Template")
             }
             LazyColumn {
-                items(templates.value) { template ->
+                val filteredTemplates = filterTemplates(templates.value, court)
+
+                items(filteredTemplates) { template ->
                     TemplateItem(
                         template = template,
                         onEdit = {
