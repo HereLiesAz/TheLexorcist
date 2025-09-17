@@ -2,31 +2,18 @@ package com.hereliesaz.lexorcist.data
 
 import com.hereliesaz.lexorcist.auth.OneDriveAuthManager
 import com.hereliesaz.lexorcist.utils.Result
-import com.microsoft.graph.authentication.IAuthenticationProvider
-import com.microsoft.graph.requests.GraphServiceClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.json.JSONObject
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import java.net.HttpURLConnection
 import java.net.URL
-import java.util.concurrent.CompletableFuture
 import javax.inject.Inject
 
 class OneDriveProvider @Inject constructor(
     private val oneDriveAuthManager: OneDriveAuthManager
 ) : CloudStorageProvider {
-
-    private fun getGraphClient(): GraphServiceClient<out okhttp3.Request>? {
-        val accessToken = oneDriveAuthManager.getAccessToken() ?: return null
-        val authProvider = object : IAuthenticationProvider {
-            override fun getAuthorizationTokenAsync(requestUrl: URL): CompletableFuture<String> {
-                val future = CompletableFuture<String>()
-                future.complete(accessToken)
-                return future
-            }
-        }
-        return GraphServiceClient.builder()
-            .authenticationProvider(authProvider)
-            .buildClient()
-    }
 
     override suspend fun getRootFolderId(): Result<String> {
         return Result.Success("root")
@@ -41,23 +28,47 @@ class OneDriveProvider @Inject constructor(
     }
 
     override suspend fun writeFile(folderId: String, fileName: String, mimeType: String, content: ByteArray): Result<CloudFile> = withContext(Dispatchers.IO) {
-        val graphClient = getGraphClient()
-        if (graphClient == null) {
+        val accessToken = oneDriveAuthManager.getAccessToken()
+        if (accessToken == null) {
             return@withContext Result.Error(Exception("OneDrive client not initialized. Please connect to OneDrive first."))
         }
 
+        var connection: HttpURLConnection? = null
         try {
-            val uploadedFile = graphClient.me().drive().root().child(fileName).content()
-                .buildRequest()
-                .put(content)
+            val url = URL("https://graph.microsoft.com/v1.0/me/drive/root:/$fileName:/content")
+            connection = url.openConnection() as HttpURLConnection
+            connection.requestMethod = "PUT"
+            connection.setRequestProperty("Authorization", "Bearer $accessToken")
+            connection.setRequestProperty("Content-Type", mimeType)
+            connection.doOutput = true
+            connection.outputStream.use { os ->
+                os.write(content)
+            }
 
-            if (uploadedFile != null) {
-                Result.Success(CloudFile(uploadedFile.id ?: "", uploadedFile.name ?: "", uploadedFile.lastModifiedDateTime?.toInstant()?.toEpochMilli() ?: 0))
+            val responseCode = connection.responseCode
+            if (responseCode == HttpURLConnection.HTTP_OK || responseCode == HttpURLConnection.HTTP_CREATED) {
+                val reader = BufferedReader(InputStreamReader(connection.inputStream))
+                val response = StringBuilder()
+                var line: String?
+                while (reader.readLine().also { line = it } != null) {
+                    response.append(line)
+                }
+                reader.close()
+
+                val jsonResponse = JSONObject(response.toString())
+                val fileId = jsonResponse.getString("id")
+                val name = jsonResponse.getString("name")
+                // The lastModifiedDateTime is not available in the response of the content upload.
+                // We will use the current time as a fallback.
+                val lastModified = System.currentTimeMillis()
+                Result.Success(CloudFile(fileId, name, lastModified))
             } else {
-                Result.Error(Exception("OneDrive upload failed."))
+                Result.Error(Exception("OneDrive upload failed with response code: $responseCode"))
             }
         } catch (e: Exception) {
             Result.Error(e)
+        } finally {
+            connection?.disconnect()
         }
     }
 

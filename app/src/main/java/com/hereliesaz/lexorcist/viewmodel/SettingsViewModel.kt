@@ -81,6 +81,9 @@ class SettingsViewModel @Inject constructor(
                 is Result.Error -> {
                     _dropboxUploadStatus.value = "Error uploading file to Dropbox: ${result.exception.message}"
                 }
+                is Result.UserRecoverableError -> {
+                    _dropboxUploadStatus.value = "A recoverable error occurred: ${result.exception.message}"
+                }
             }
         }
     }
@@ -98,6 +101,9 @@ class SettingsViewModel @Inject constructor(
                 }
                 is Result.Error -> {
                     _oneDriveUploadStatus.value = "Error uploading file to OneDrive: ${result.exception.message}"
+                }
+                is Result.UserRecoverableError -> {
+                    _oneDriveUploadStatus.value = "A recoverable error occurred: ${result.exception.message}"
                 }
             }
         }
