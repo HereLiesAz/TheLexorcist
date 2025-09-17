@@ -1,11 +1,16 @@
 package com.hereliesaz.lexorcist.data
 
+import android.content.Context
 import com.hereliesaz.lexorcist.service.GoogleApiService
 import com.hereliesaz.lexorcist.utils.Result
+import dagger.hilt.android.qualifiers.ApplicationContext
+import java.io.File
+import java.io.FileOutputStream
 import javax.inject.Inject
 
 class GoogleDriveProvider @Inject constructor(
-    private val googleApiService: GoogleApiService
+    private val googleApiService: GoogleApiService,
+    @ApplicationContext private val context: Context
 ) : CloudStorageProvider {
 
     override suspend fun getRootFolderId(): Result<String> {
@@ -31,20 +36,60 @@ class GoogleDriveProvider @Inject constructor(
     }
 
     override suspend fun writeFile(folderId: String, fileName: String, mimeType: String, content: ByteArray): Result<CloudFile> {
-        // This is a bit tricky, as the GoogleApiService.uploadFile takes a java.io.File, not a byte array.
-        // I will need to create a temporary file to upload.
-        // Or I can modify the GoogleApiService to take a byte array.
-        // For now, I will assume it's not possible to upload a byte array directly.
-        // This will be a TODO.
-        TODO("Not yet implemented")
+        val tempFile = File(context.cacheDir, fileName)
+        FileOutputStream(tempFile).use { it.write(content) }
+
+        val result = googleApiService.uploadFile(tempFile, folderId, mimeType)
+        tempFile.delete() // Clean up the temporary file
+
+        return when (result) {
+            is Result.Success -> {
+                val uploadedFile = result.data
+                if (uploadedFile != null) {
+                    Result.Success(CloudFile(uploadedFile.id, uploadedFile.name, System.currentTimeMillis()))
+                } else {
+                    Result.Error(Exception("Google Drive upload failed to return a file."))
+                }
+            }
+            is Result.Error -> Result.Error(result.exception)
+            is Result.UserRecoverableError -> Result.UserRecoverableError(result.exception)
+        }
     }
 
     override suspend fun updateFile(fileId: String, mimeType: String, content: ByteArray): Result<CloudFile> {
-        // Similar to writeFile, this will require a temporary file.
-        TODO("Not yet implemented")
+        val tempFile = File(context.cacheDir, "temp_update_file")
+        FileOutputStream(tempFile).use { it.write(content) }
+
+        val result = googleApiService.updateFile(fileId, tempFile, mimeType)
+        tempFile.delete() // Clean up the temporary file
+
+        return when (result) {
+            is Result.Success -> {
+                val uploadedFile = result.data
+                if (uploadedFile != null) {
+                    Result.Success(CloudFile(uploadedFile.id, uploadedFile.name, System.currentTimeMillis()))
+                } else {
+                    Result.Error(Exception("Google Drive update failed to return a file."))
+                }
+            }
+            is Result.Error -> Result.Error(result.exception)
+            is Result.UserRecoverableError -> Result.UserRecoverableError(result.exception)
+        }
     }
 
     override suspend fun getFileMetadata(fileId: String): Result<CloudFile> {
-        TODO("Not yet implemented")
+        val result = googleApiService.getFileMetadata(fileId)
+        return when (result) {
+            is Result.Success -> {
+                val file = result.data
+                Result.Success(CloudFile(file.id, file.name, file.modifiedTime.value))
+            }
+            is Result.Error -> Result.Error(result.exception)
+            is Result.UserRecoverableError -> Result.UserRecoverableError(result.exception)
+        }
+    }
+
+    override suspend fun createFolder(folderName: String, parentFolderId: String): Result<String> {
+        return googleApiService.createFolder(folderName, parentFolderId)
     }
 }

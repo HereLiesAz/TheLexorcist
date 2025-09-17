@@ -89,6 +89,41 @@ class GoogleApiService(
             }
         }
 
+    suspend fun getFileMetadata(fileId: String): Result<File> = withContext(Dispatchers.IO) {
+        try {
+            val file = drive.files().get(fileId).setFields("id, name, modifiedTime").execute()
+            Result.Success(file)
+        } catch (e: UserRecoverableAuthIOException) {
+            Result.UserRecoverableError(e)
+        } catch (e: IOException) {
+            Result.Error(e)
+        }
+    }
+
+    suspend fun updateFile(
+        fileId: String,
+        file: java.io.File,
+        mimeType: String,
+    ): Result<File?> =
+        withContext(Dispatchers.IO) {
+            try {
+                val fileMetadata =
+                    File().apply {
+                        name = file.name
+                    }
+                val mediaContent = FileContent(mimeType, file)
+                val uploadedFile =
+                    drive
+                        .files()
+                        .update(fileId, fileMetadata, mediaContent)
+                        .setFields("id, name, webViewLink")
+                        .execute()
+                Result.Success(uploadedFile)
+            } catch (e: IOException) {
+                Result.Error(e)
+            }
+        }
+
     suspend fun listFiles(folderId: String): Result<List<File>> = withContext(Dispatchers.IO) {
         try {
             val files = drive.files().list()
@@ -155,6 +190,29 @@ class GoogleApiService(
                     }
                 }
                 Result.Success(Unit)
+            } catch (e: IOException) {
+                Result.Error(e)
+            }
+        }
+
+    suspend fun createFolder(folderName: String, parentId: String): Result<String> =
+        withContext(Dispatchers.IO) {
+            try {
+                val fileMetadata =
+                    File().apply {
+                        name = folderName
+                        mimeType = "application/vnd.google-apps.folder"
+                        parents = listOf(parentId)
+                    }
+                val createdFile =
+                    drive
+                        .files()
+                        .create(fileMetadata)
+                        .setFields("id")
+                        .execute()
+                Result.Success(createdFile.id)
+            } catch (e: UserRecoverableAuthIOException) {
+                Result.UserRecoverableError(e)
             } catch (e: IOException) {
                 Result.Error(e)
             }

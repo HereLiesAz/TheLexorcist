@@ -43,7 +43,6 @@ import com.hereliesaz.lexorcist.ui.theme.ThemeMode
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import com.hereliesaz.lexorcist.viewmodel.SettingsViewModel
 import java.util.Locale
-import android.app.Activity
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,7 +53,7 @@ fun SettingsScreen(
     val themeMode by settingsViewModel.themeMode.collectAsState()
     var showClearCacheDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
-    val activity = context as Activity
+    val activity = context as android.app.Activity
 
     Scaffold(
         topBar = {
@@ -152,11 +151,18 @@ fun SettingsScreen(
                 modifier = Modifier.fillMaxWidth(),
             )
 
+            val authViewModel: AuthViewModel = hiltViewModel()
+            val signInState by authViewModel.signInState.collectAsState()
+
             val selectedCloudProvider by settingsViewModel.selectedCloudProvider.collectAsState()
             val cloudProviders = listOf("GoogleDrive", "Dropbox", "OneDrive", "None")
 
             Column(Modifier.fillMaxWidth()) {
                 cloudProviders.forEach { provider ->
+                    val isEnabled = when (provider) {
+                        "GoogleDrive" -> signInState is SignInState.Success
+                        else -> true
+                    }
                     Row(
                         Modifier
                             .fillMaxWidth()
@@ -168,6 +174,7 @@ fun SettingsScreen(
                         RadioButton(
                             selected = (selectedCloudProvider == provider),
                             onClick = { settingsViewModel.setSelectedCloudProvider(provider) },
+                            enabled = isEnabled
                         )
                     }
                 }
@@ -177,13 +184,12 @@ fun SettingsScreen(
             HorizontalDivider()
             Spacer(modifier = Modifier.height(24.dp))
 
-            val authViewModel: AuthViewModel = hiltViewModel()
             val signInState by authViewModel.signInState.collectAsState()
 
             when (signInState) {
                 is SignInState.Success -> {
                     val userInfo = (signInState as SignInState.Success).userInfo
-                    Text("Signed in as: ${userInfo?.email}")
+                    Text("Signed in as: ${userInfo.email}")
                     Spacer(modifier = Modifier.height(8.dp))
                     LexorcistOutlinedButton(onClick = {
                         authViewModel.signOut()

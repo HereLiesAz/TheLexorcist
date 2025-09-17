@@ -1,86 +1,115 @@
 package com.hereliesaz.lexorcist.data
 
 import android.content.Context
-import com.hereliesaz.lexorcist.data.objectbox.SettingsObjectBox
+import android.content.SharedPreferences
+import com.hereliesaz.lexorcist.R
 import dagger.hilt.android.qualifiers.ApplicationContext
-import io.objectbox.BoxStore
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Manages application settings using [SharedPreferences].
+ *
+ * This class provides a simple way to save and retrieve user preferences, such as the
+ * application theme and export format.
+ *
+ * @param context The application context, used to access [SharedPreferences].
+ */
 @Singleton
-class SettingsManager @Inject constructor(
-    @ApplicationContext private val context: Context,
-    private val boxStore: BoxStore
-) {
+class SettingsManager
+    @Inject
+    constructor(
+        @param:ApplicationContext private val context: Context,
+    ) { // Changed here
 
-    private val settingsBox = boxStore.boxFor(SettingsObjectBox::class.java)
+        private val sharedPreferences: SharedPreferences =
+            context.getSharedPreferences(context.getString(R.string.settings_preferences_name), Context.MODE_PRIVATE)
 
-    init {
-        if (settingsBox.isEmpty) {
-            settingsBox.put(SettingsObjectBox())
+        private val keyUserScript = "user_script"
+        private val keyStorageLocation = "storage_location"
+        private val keyCloudProvider = "cloud_provider"
+
+        fun saveSelectedCloudProvider(provider: String) {
+            sharedPreferences.edit().putString(keyCloudProvider, provider).apply()
+        }
+
+        fun getSelectedCloudProvider(): String {
+            return sharedPreferences.getString(keyCloudProvider, "GoogleDrive") ?: "GoogleDrive"
+        }
+
+        fun saveStorageLocation(uri: String) {
+            sharedPreferences.edit().putString(keyStorageLocation, uri).apply()
+        }
+
+        fun getStorageLocation(): String? = sharedPreferences.getString(keyStorageLocation, null)
+
+        /**
+         * Saves the user-defined script.
+         *
+         * @param script The script to save.
+         */
+        fun saveScript(script: String) {
+            sharedPreferences.edit().putString(keyUserScript, script).apply()
+        }
+
+        /**
+         * Retrieves the saved user script.
+         *
+         * @return The saved script, or an empty string if no script is set.
+         */
+        fun getScript(): String = sharedPreferences.getString(keyUserScript, "") ?: ""
+
+        /**
+         * Saves the selected application theme.
+         *
+         * @param theme The theme to save (e.g., "Light", "Dark", "System").
+         */
+        fun saveTheme(theme: String) {
+            sharedPreferences.edit().putString(context.getString(R.string.settings_key_theme), theme).apply()
+        }
+
+        /**
+         * Retrieves the saved application theme.
+         *
+         * @return The saved theme, or "System" if no theme is set.
+         */
+        fun getTheme(): String {
+            val defaultTheme = context.getString(R.string.settings_theme_system)
+            return sharedPreferences.getString(context.getString(R.string.settings_key_theme), defaultTheme) ?: defaultTheme
+        }
+
+        /**
+         * Saves the selected export format.
+         *
+         * @param format The export format to save (e.g., "PDF", "CSV").
+         */
+        fun saveExportFormat(format: String) {
+            sharedPreferences.edit().putString(context.getString(R.string.settings_key_export_format), format).apply()
+        }
+
+        /**
+         * Retrieves the saved export format.
+         *
+         * @return The saved export format, or "PDF" if no format is set.
+         */
+        fun getExportFormat(): String {
+            val defaultFormat = context.getString(R.string.settings_export_format_pdf)
+            return sharedPreferences.getString(context.getString(R.string.settings_key_export_format), defaultFormat) ?: defaultFormat
+        }
+
+        fun saveCaseFolderPath(path: String) {
+            sharedPreferences.edit().putString("case_folder_path", path).apply()
+        }
+
+        fun getCaseFolderPath(): String? {
+            return sharedPreferences.getString("case_folder_path", null)
+        }
+
+        fun saveCloudSyncEnabled(enabled: Boolean) {
+            sharedPreferences.edit().putBoolean("cloud_sync_enabled", enabled).apply()
+        }
+
+        fun getCloudSyncEnabled(): Boolean {
+            return sharedPreferences.getBoolean("cloud_sync_enabled", true)
         }
     }
-
-    private fun getSettings(): SettingsObjectBox {
-        return settingsBox.get(1) ?: SettingsObjectBox()
-    }
-
-    fun saveStorageLocation(uri: String) {
-        val settings = getSettings().copy(storageLocation = uri)
-        settingsBox.put(settings)
-    }
-
-    fun getStorageLocation(): String? = getSettings().storageLocation
-
-    fun saveScript(script: String) {
-        val settings = getSettings().copy(userScript = script)
-        settingsBox.put(settings)
-    }
-
-    fun getScript(): String = getSettings().userScript
-
-    fun saveTheme(theme: String) {
-        val settings = getSettings().copy(theme = theme)
-        settingsBox.put(settings)
-    }
-
-    fun getTheme(): String {
-        return getSettings().theme
-    }
-
-    fun saveExportFormat(format: String) {
-        val settings = getSettings().copy(exportFormat = format)
-        settingsBox.put(settings)
-    }
-
-    fun getExportFormat(): String {
-        return getSettings().exportFormat
-    }
-
-    fun saveCaseFolderPath(path: String) {
-        val settings = getSettings().copy(caseFolderPath = path)
-        settingsBox.put(settings)
-    }
-
-    fun getCaseFolderPath(): String? {
-        return getSettings().caseFolderPath
-    }
-
-    fun saveCloudSyncEnabled(enabled: Boolean) {
-        val settings = getSettings().copy(cloudSyncEnabled = enabled)
-        settingsBox.put(settings)
-    }
-
-    fun getCloudSyncEnabled(): Boolean {
-        return getSettings().cloudSyncEnabled
-    }
-
-    fun saveSelectedCloudProvider(provider: String) {
-        val settings = getSettings().copy(selectedCloudProvider = provider)
-        settingsBox.put(settings)
-    }
-
-    fun getSelectedCloudProvider(): String {
-        return getSettings().selectedCloudProvider
-    }
-}

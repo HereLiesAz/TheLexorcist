@@ -19,12 +19,49 @@ class OneDriveProvider @Inject constructor(
         return Result.Success("root")
     }
 
-    override suspend fun listFiles(folderId: String): Result<List<CloudFile>> {
-        TODO("Not yet implemented for one-way sync")
+    override suspend fun listFiles(folderId: String): Result<List<CloudFile>> = withContext(Dispatchers.IO) {
+        val graphClient = getGraphClient()
+        if (graphClient == null) {
+            return@withContext Result.Error(Exception("OneDrive client not initialized. Please connect to OneDrive first."))
+        }
+
+        try {
+            val result = graphClient.me().drive().items(folderId).children()
+                .buildRequest()
+                .get()
+
+            if (result != null) {
+                val files = result.currentPage.map {
+                    CloudFile(it.id ?: "", it.name ?: "", it.lastModifiedDateTime?.toInstant()?.toEpochMilli() ?: 0)
+                }
+                Result.Success(files)
+            } else {
+                Result.Error(Exception("OneDrive list files failed."))
+            }
+        } catch (e: Exception) {
+            Result.Error(e)
+        }
     }
 
-    override suspend fun readFile(fileId: String): Result<ByteArray> {
-        TODO("Not yet implemented for one-way sync")
+    override suspend fun readFile(fileId: String): Result<ByteArray> = withContext(Dispatchers.IO) {
+        val graphClient = getGraphClient()
+        if (graphClient == null) {
+            return@withContext Result.Error(Exception("OneDrive client not initialized. Please connect to OneDrive first."))
+        }
+
+        try {
+            val stream = graphClient.me().drive().items(fileId).content()
+                .buildRequest()
+                .get()
+
+            if (stream != null) {
+                Result.Success(stream.readBytes())
+            } else {
+                Result.Error(Exception("OneDrive read file failed."))
+            }
+        } catch (e: Exception) {
+            Result.Error(e)
+        }
     }
 
     override suspend fun writeFile(folderId: String, fileName: String, mimeType: String, content: ByteArray): Result<CloudFile> = withContext(Dispatchers.IO) {
@@ -72,11 +109,70 @@ class OneDriveProvider @Inject constructor(
         }
     }
 
-    override suspend fun updateFile(fileId: String, mimeType: String, content: ByteArray): Result<CloudFile> {
-        TODO("Not yet implemented for one-way sync")
+    override suspend fun updateFile(fileId: String, mimeType: String, content: ByteArray): Result<CloudFile> = withContext(Dispatchers.IO) {
+        val graphClient = getGraphClient()
+        if (graphClient == null) {
+            return@withContext Result.Error(Exception("OneDrive client not initialized. Please connect to OneDrive first."))
+        }
+
+        try {
+            val uploadedFile = graphClient.me().drive().items(fileId).content()
+                .buildRequest()
+                .put(content)
+
+            if (uploadedFile != null) {
+                Result.Success(CloudFile(uploadedFile.id ?: "", uploadedFile.name ?: "", uploadedFile.lastModifiedDateTime?.toInstant()?.toEpochMilli() ?: 0))
+            } else {
+                Result.Error(Exception("OneDrive upload failed."))
+            }
+        } catch (e: Exception) {
+            Result.Error(e)
+        }
     }
 
-    override suspend fun getFileMetadata(fileId: String): Result<CloudFile> {
-        TODO("Not yet implemented for one-way sync")
+    override suspend fun getFileMetadata(fileId: String): Result<CloudFile> = withContext(Dispatchers.IO) {
+        val graphClient = getGraphClient()
+        if (graphClient == null) {
+            return@withContext Result.Error(Exception("OneDrive client not initialized. Please connect to OneDrive first."))
+        }
+
+        try {
+            val result = graphClient.me().drive().items(fileId)
+                .buildRequest()
+                .get()
+
+            if (result != null) {
+                Result.Success(CloudFile(result.id ?: "", result.name ?: "", result.lastModifiedDateTime?.toInstant()?.toEpochMilli() ?: 0))
+            } else {
+                Result.Error(Exception("OneDrive get file metadata failed."))
+            }
+        } catch (e: Exception) {
+            Result.Error(e)
+        }
+    }
+
+    override suspend fun createFolder(folderName: String, parentFolderId: String): Result<String> = withContext(Dispatchers.IO) {
+        val graphClient = getGraphClient()
+        if (graphClient == null) {
+            return@withContext Result.Error(Exception("OneDrive client not initialized. Please connect to OneDrive first."))
+        }
+
+        try {
+            val folder = com.microsoft.graph.models.DriveItem()
+            folder.name = folderName
+            folder.folder = com.microsoft.graph.models.Folder()
+
+            val createdFolder = graphClient.me().drive().items(parentFolderId).children()
+                .buildRequest()
+                .post(folder)
+
+            if (createdFolder != null) {
+                Result.Success(createdFolder.id ?: "")
+            } else {
+                Result.Error(Exception("OneDrive create folder failed."))
+            }
+        } catch (e: Exception) {
+            Result.Error(e)
+        }
     }
 }

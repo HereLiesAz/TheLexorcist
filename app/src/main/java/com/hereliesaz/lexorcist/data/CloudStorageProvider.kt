@@ -9,6 +9,7 @@ interface CloudStorageProvider {
     suspend fun writeFile(folderId: String, fileName: String, mimeType: String, content: ByteArray): Result<CloudFile>
     suspend fun updateFile(fileId: String, mimeType: String, content: ByteArray): Result<CloudFile>
     suspend fun getFileMetadata(fileId: String): Result<CloudFile>
+    suspend fun createFolder(folderName: String, parentFolderId: String): Result<String>
 }
 
 data class CloudFile(

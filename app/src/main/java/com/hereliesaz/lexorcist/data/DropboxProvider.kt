@@ -17,12 +17,36 @@ class DropboxProvider @Inject constructor(
         return Result.Success("")
     }
 
-    override suspend fun listFiles(folderId: String): Result<List<CloudFile>> {
-        TODO("Not yet implemented for one-way sync")
+    override suspend fun listFiles(folderId: String): Result<List<CloudFile>> = withContext(Dispatchers.IO) {
+        val client = dropboxAuthManager.getClient()
+        if (client == null) {
+            return@withContext Result.Error(Exception("Dropbox client not initialized. Please connect to Dropbox first."))
+        }
+
+        try {
+            val result = client.files().listFolder(folderId)
+            val files = result.entries.map {
+                CloudFile(it.pathLower, it.name, (it as? com.dropbox.core.v2.files.FileMetadata)?.clientModified?.time ?: 0)
+            }
+            Result.Success(files)
+        } catch (e: Exception) {
+            Result.Error(e)
+        }
     }
 
-    override suspend fun readFile(fileId: String): Result<ByteArray> {
-        TODO("Not yet implemented for one-way sync")
+    override suspend fun readFile(fileId: String): Result<ByteArray> = withContext(Dispatchers.IO) {
+        val client = dropboxAuthManager.getClient()
+        if (client == null) {
+            return@withContext Result.Error(Exception("Dropbox client not initialized. Please connect to Dropbox first."))
+        }
+
+        try {
+            val outputStream = java.io.ByteArrayOutputStream()
+            client.files().download(fileId).download(outputStream)
+            Result.Success(outputStream.toByteArray())
+        } catch (e: Exception) {
+            Result.Error(e)
+        }
     }
 
     override suspend fun writeFile(folderId: String, fileName: String, mimeType: String, content: ByteArray): Result<CloudFile> = withContext(Dispatchers.IO) {
@@ -38,17 +62,58 @@ class DropboxProvider @Inject constructor(
                 .withMode(WriteMode.OVERWRITE)
                 .uploadAndFinish(inputStream)
 
-            Result.Success(CloudFile(uploadedFile.id, uploadedFile.name, uploadedFile.clientModified.time))
+            Result.Success(CloudFile(path, uploadedFile.name, uploadedFile.clientModified.time))
         } catch (e: Exception) {
             Result.Error(e)
         }
     }
 
-    override suspend fun updateFile(fileId: String, mimeType: String, content: ByteArray): Result<CloudFile> {
-        TODO("Not yet implemented for one-way sync")
+    override suspend fun updateFile(fileId: String, mimeType: String, content: ByteArray): Result<CloudFile> = withContext(Dispatchers.IO) {
+        val client = dropboxAuthManager.getClient()
+        if (client == null) {
+            return@withContext Result.Error(Exception("Dropbox client not initialized. Please connect to Dropbox first."))
+        }
+
+        try {
+            val path = fileId // The fileId is the path
+            val inputStream = ByteArrayInputStream(content)
+            val uploadedFile = client.files().uploadBuilder(path)
+                .withMode(WriteMode.OVERWRITE)
+                .uploadAndFinish(inputStream)
+
+            Result.Success(CloudFile(path, uploadedFile.name, uploadedFile.clientModified.time))
+        } catch (e: Exception) {
+            Result.Error(e)
+        }
     }
 
-    override suspend fun getFileMetadata(fileId: String): Result<CloudFile> {
-        TODO("Not yet implemented for one-way sync")
+    override suspend fun getFileMetadata(fileId: String): Result<CloudFile> = withContext(Dispatchers.IO) {
+        val client = dropboxAuthManager.getClient()
+        if (client == null) {
+            return@withContext Result.Error(Exception("Dropbox client not initialized. Please connect to Dropbox first."))
+        }
+
+        try {
+            val metadata = client.files().getMetadata(fileId)
+            val fileMetadata = metadata as com.dropbox.core.v2.files.FileMetadata
+            Result.Success(CloudFile(fileMetadata.pathLower, fileMetadata.name, fileMetadata.clientModified.time))
+        } catch (e: Exception) {
+            Result.Error(e)
+        }
+    }
+
+    override suspend fun createFolder(folderName: String, parentFolderId: String): Result<String> = withContext(Dispatchers.IO) {
+        val client = dropboxAuthManager.getClient()
+        if (client == null) {
+            return@withContext Result.Error(Exception("Dropbox client not initialized. Please connect to Dropbox first."))
+        }
+
+        try {
+            val path = if (parentFolderId.isEmpty()) "/$folderName" else "/$parentFolderId/$folderName"
+            val createdFolder = client.files().createFolderV2(path)
+            Result.Success(createdFolder.metadata.id)
+        } catch (e: Exception) {
+            Result.Error(e)
+        }
     }
 }

@@ -26,7 +26,11 @@ import javax.inject.Singleton
 class LocalFileStorageService @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val gson: Gson,
-    private val settingsManager: SettingsManager
+    private val settingsManager: SettingsManager,
+    private val syncManager: SyncManager,
+    @Named("googleDrive") private val googleDriveProvider: CloudStorageProvider,
+    @Named("dropbox") private val dropboxProvider: CloudStorageProvider,
+    @Named("oneDrive") private val oneDriveProvider: CloudStorageProvider
 ) : StorageService {
 
     private val storageDir: File by lazy {
@@ -404,7 +408,18 @@ class LocalFileStorageService @Inject constructor(
     }
 
     override suspend fun synchronize(): Result<Unit> {
-        // This is now handled by the SyncManager
-        return Result.Success(Unit)
+        val selectedProvider = settingsManager.getSelectedCloudProvider()
+        val cloudStorageProvider = when (selectedProvider) {
+            "GoogleDrive" -> googleDriveProvider
+            "Dropbox" -> dropboxProvider
+            "OneDrive" -> oneDriveProvider
+            else -> null
+        }
+
+        return if (cloudStorageProvider != null) {
+            syncManager.synchronize(cloudStorageProvider, this)
+        } else {
+            Result.Success(Unit) // No provider selected, so nothing to sync
+        }
     }
 }
