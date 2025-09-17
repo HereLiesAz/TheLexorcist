@@ -208,9 +208,9 @@ dependencies {
     // Room IS NOT ALLOWED IN THIS PROJECT!!!!!
 
     // ObjectBox
-    implementation("io.objectbox:objectbox-android:${rootProject.extra["objectboxVersion"]}")
-    implementation("io.objectbox:objectbox-kotlin:${rootProject.extra["objectboxVersion"]}")
-    ksp("io.objectbox:objectbox-processor:${rootProject.extra["objectboxVersion"]}")
+    implementation("io.objectbox:objectbox-android:4.3.1")
+    implementation("io.objectbox:objectbox-kotlin:4.3.1")
+    ksp("io.objectbox:objectbox-processor:4.3.1")
 
 
     // Google Cloud Speech-to-Text
