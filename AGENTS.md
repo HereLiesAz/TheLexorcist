@@ -44,6 +44,18 @@ The file google-services.template.json located at the root of the /app/ folder s
 
 ---
 
+### Roadmap
+
+This section outlines the remaining tasks to be completed. Please address these in the order listed.
+
+1.  **Fix Failing Tests:** The test suite is currently failing and needs to be fixed. This is the highest priority task.
+2.  **Complete Cloud Sync:** Implement robust cloud synchronization, especially on app close.
+3.  **Complete Video Processing:** Implement text extraction from video frames (visual text).
+4.  **Editable Transcripts:** Implement the UI and logic for editing audio transcripts with timestamps and reasons.
+5.  **Full Progress Transparency:** Enhance the progress reporting to include a more detailed and structured log view.
+
+---
+
 ### Before You Begin...
 
 1.  **Analyze the Full Project:** The core architecture for the above workflow is already in place. Familiarize yourself with `OcrViewModel.kt` (for image processing), `ScriptRunner.kt` (for the tagging engine), `GoogleApiService.kt` (for Sheets/Drive integration), `SettingsViewModel.kt` (for user settings), and the `raw` resources folder (for Apps Script and HTML templates).
