@@ -50,3 +50,7 @@ app/google-services.json
 # IDE files
 /.idea/
 /.kotlin/
+/project_backup_full_2025-09-15_23-34-37.txt
+/hs_err_pid20740.mdmp
+/backup.ps1
+/hs_err_pid20740.log
