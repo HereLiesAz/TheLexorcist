@@ -6,7 +6,12 @@ import org.mozilla.javascript.Scriptable
 import org.mozilla.javascript.ScriptableObject
 // import android.util.Log // Uncomment if logging for non-string elements is added
 
-class ScriptRunner {
+import com.hereliesaz.lexorcist.viewmodel.ScriptedMenuViewModel
+import javax.inject.Inject
+import javax.inject.Singleton
+
+@Singleton
+class ScriptRunner @Inject constructor(private val scriptedMenuViewModel: ScriptedMenuViewModel) {
     class ScriptExecutionException(
         message: String,
         cause: Throwable, // Cause is non-null
@@ -35,6 +40,12 @@ class ScriptRunner {
                 "tags",
                 org.mozilla.javascript.Context
                     .javaToJS(tags, scope),
+            )
+            ScriptableObject.putProperty(
+                scope,
+                "menu",
+                org.mozilla.javascript.Context
+                    .javaToJS(scriptedMenuViewModel, scope),
             )
             rhino.evaluateString(scope, script, "JavaScript<ScriptRunner>", 1, null)
 

@@ -62,7 +62,7 @@ class AppModule {
 
     @Provides
     @Singleton
-    fun provideScriptRunner(): ScriptRunner = ScriptRunner()
+    fun provideScriptRunner(scriptedMenuViewModel: ScriptedMenuViewModel): ScriptRunner = ScriptRunner(scriptedMenuViewModel)
 
     @Provides
     @Singleton

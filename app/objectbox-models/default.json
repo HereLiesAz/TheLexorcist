@@ -79,7 +79,7 @@
     },
     {
       "id": "2:452412768460764855",
-      "lastPropertyId": "8:4557484541685200935",
+      "lastPropertyId": "9:7167753942458926743",
       "name": "SettingsObjectBox",
       "properties": [
         {
@@ -117,6 +117,11 @@
           "id": "7:1338221599952899194",
           "name": "cloudSyncEnabled",
           "type": 1
+        },
+        {
+          "id": "9:7167753942458926743",
+          "name": "selectedCloudProvider",
+          "type": 9
         }
       ],
       "relations": []
