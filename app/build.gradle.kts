@@ -186,12 +186,12 @@ dependencies {
 
 
     // Dropbox SDK
-    implementation("com.dropbox.core:dropbox-core-sdk:7.0.0")
+    implementation(libs.dropbox.core.sdk)
     implementation(libs.dropbox.android.sdk)
 
     // Microsoft Graph SDK for OneDrive
-    implementation("com.microsoft.graph:microsoft-graph:6.+")
-    implementation("com.microsoft.identity.client:msal:7.1.0")
+    implementation(libs.microsoft.graph)
+    implementation(libs.msal)
 
     // Hilt
     implementation(libs.google.dagger.hilt.android)
@@ -208,7 +208,7 @@ dependencies {
     // Room IS NOT ALLOWED IN THIS PROJECT!!!!!
 
     // Realm Database
-    implementation("io.realm.kotlin:library-base:1.19.0") // Added Realm library
+    implementation(libs.library.base) // Added Realm library
 
     // Google Cloud Speech-to-Text
     implementation(libs.google.cloud.speech)

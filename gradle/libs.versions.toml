@@ -17,8 +17,11 @@ composeCompiler = "2.2.20" # from org.jetbrains.kotlin.plugin.compose
 ksp = "2.2.20-2.0.3" # from com.google.devtools.ksp
 coreKtx = "1.17.0"
 appcompat = "1.7.1"
+libraryBase = "3.0.0"
 material = "1.13.0"
 composeRuntime = "1.9.1"
+microsoftGraph = "6.53.0"
+msal = "7.1.0"
 navigationRuntimeKtx = "2.9.4"
 composeUi = "1.9.1"
 composeFoundation = "1.9.1"
@@ -102,9 +105,12 @@ hilt-android-compiler = { module = "com.google.dagger:hilt-android-compiler", ve
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 junit-jupiter-api = { group = "org.junit.jupiter", name = "junit-jupiter-api", version.ref = "junitJupiterApi" }
 junit-jupiter-engine = { group = "org.junit.jupiter", name = "junit-jupiter-engine", version.ref = "junitJupiterEngine" }
+library-base = { module = "io.realm.kotlin:library-base", version.ref = "libraryBase" }
+microsoft-graph = { module = "com.microsoft.graph:microsoft-graph", version.ref = "microsoftGraph" }
 mockk-android = { group = "io.mockk", name = "mockk-android", version.ref = "mockkAndroid" }
 androidx-arch-core-testing = { group = "androidx.arch.core", name = "core-testing", version.ref = "coreTesting" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinxCoroutinesTest" }
+msal = { module = "com.microsoft.identity.client:msal", version.ref = "msal" }
 protobuf-javalite = { module = "com.google.protobuf:protobuf-javalite", version.ref = "protobufJavalite" }
 turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
 kotlin-test-junit = { group = "org.jetbrains.kotlin", name = "kotlin-test-junit", version.ref = "kotlinTestJunit" }
