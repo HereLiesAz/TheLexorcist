@@ -46,20 +46,7 @@ app/google-services.json
 /app/src/main/res/raw/template_declaration.gdoc
 /app/src/main/res/raw/template_metadata.gdoc
 /app/src/main/res/raw/template_table_of_exhibits.gdoc
-/.kotlin/sessions/kotlin-compiler-9638920479695606041.salive
-/.kotlin/sessions/kotlin-compiler-17912086832244052631.salive
-/.kotlin/sessions/kotlin-compiler-8917211272754291513.salive
 
-
-/.kotlin/sessions/kotlin-compiler-5349112573790488510.salive
-/.kotlin/sessions/kotlin-compiler-13215732261968789333.salive
-/.idea/caches/deviceStreaming.xml
-/.kotlin/sessions/kotlin-compiler-7983376919953869927.salive
-/.kotlin/sessions/kotlin-compiler-*
-/backup.ps1
-/project_backup_full_2025-09-15_23-31-14.txt
-/project_backup_full_*
-/hs_err_pid20740.log
-/hs_err_pid20740.mdmp
-/.kotlin/errors/errors-1758099786509.log
-/.kotlin/errors/errors-1758099875458.log
+# IDE files
+/.idea/
+/.kotlin/

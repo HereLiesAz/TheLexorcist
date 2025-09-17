@@ -109,6 +109,7 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.turbine)
     testImplementation(libs.kotlin.test.junit)
+    testImplementation("com.squareup.okhttp3:mockwebserver:4.9.3")
 
     // AndroidX Test dependencies (androidTest)
     androidTestImplementation(libs.androidx.test.ext.junit)
@@ -211,8 +212,8 @@ dependencies {
     // Realm Database
     implementation(libs.library.base) // Added Realm library
 
-    // Google Cloud Speech-to-Text
-    implementation(libs.google.cloud.speech)
+    // Vosk for on-device speech-to-text
+    implementation("com.alphacephei:vosk-android:0.3.70")
     // Explicit gRPC dependencies with consistent versions
     implementation(libs.grpc.okhttp)
     implementation(libs.grpc.core)
