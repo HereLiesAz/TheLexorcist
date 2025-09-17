@@ -150,6 +150,32 @@ fun SettingsScreen(
                 style = MaterialTheme.typography.headlineSmall,
                 modifier = Modifier.fillMaxWidth(),
             )
+
+            val selectedCloudProvider by settingsViewModel.selectedCloudProvider.collectAsState()
+            val cloudProviders = listOf("GoogleDrive", "Dropbox", "OneDrive", "None")
+
+            Column(Modifier.fillMaxWidth()) {
+                cloudProviders.forEach { provider ->
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.End,
+                    ) {
+                        Text(text = provider)
+                        RadioButton(
+                            selected = (selectedCloudProvider == provider),
+                            onClick = { settingsViewModel.setSelectedCloudProvider(provider) },
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+            HorizontalDivider()
+            Spacer(modifier = Modifier.height(24.dp))
+
             val authViewModel: AuthViewModel = hiltViewModel()
             val signInState by authViewModel.signInState.collectAsState()
 

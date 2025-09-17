@@ -27,6 +27,15 @@ class SettingsManager
 
         private val keyUserScript = "user_script"
         private val keyStorageLocation = "storage_location"
+        private val keyCloudProvider = "cloud_provider"
+
+        fun saveSelectedCloudProvider(provider: String) {
+            sharedPreferences.edit().putString(keyCloudProvider, provider).apply()
+        }
+
+        fun getSelectedCloudProvider(): String {
+            return sharedPreferences.getString(keyCloudProvider, "GoogleDrive") ?: "GoogleDrive"
+        }
 
         fun saveStorageLocation(uri: String) {
             sharedPreferences.edit().putString(keyStorageLocation, uri).apply()
