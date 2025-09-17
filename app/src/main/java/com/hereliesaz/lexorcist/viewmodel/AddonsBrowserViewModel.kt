@@ -2,10 +2,10 @@ package com.hereliesaz.lexorcist.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.hereliesaz.lexorcist.auth.CredentialHolder
 import com.hereliesaz.lexorcist.common.state.SaveState
 import com.hereliesaz.lexorcist.model.Script
 import com.hereliesaz.lexorcist.model.Template
+import com.hereliesaz.lexorcist.service.GoogleApiService // Import GoogleApiService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,7 +17,7 @@ import kotlinx.coroutines.launch
 class AddonsBrowserViewModel
     @Inject
     constructor(
-        private val credentialHolder: CredentialHolder, // Inject CredentialHolder
+        private val googleApiService: GoogleApiService // Inject GoogleApiService directly
     ) : ViewModel() {
         private val _scripts = MutableStateFlow<List<Script>>(emptyList())
         val scripts: StateFlow<List<Script>> = _scripts.asStateFlow()
@@ -34,12 +34,7 @@ class AddonsBrowserViewModel
 
         private fun loadAddons() {
             viewModelScope.launch {
-                val googleApiService = credentialHolder.googleApiService // Get service from holder
-                if (googleApiService == null) {
-                    _scripts.value = emptyList()
-                    _templates.value = emptyList()
-                    return@launch
-                }
+                // Use the injected googleApiService directly
                 // In a real scenario, you'd handle potential errors from these calls
                 _scripts.value = googleApiService.getSharedScripts() ?: emptyList()
                 _templates.value = googleApiService.getSharedTemplates() ?: emptyList()
@@ -53,11 +48,7 @@ class AddonsBrowserViewModel
             type: String,
         ) {
             viewModelScope.launch {
-                val googleApiService = credentialHolder.googleApiService // Get service from holder
-                if (googleApiService == null) {
-                    _shareOperationState.value = SaveState.Error("Cannot share: User not signed in or service unavailable.")
-                    return@launch
-                }
+                // Use the injected googleApiService directly
                 _shareOperationState.value = SaveState.Saving
                 val success = googleApiService.shareAddon(name, description, content, type)
                 if (success) {
@@ -75,12 +66,7 @@ class AddonsBrowserViewModel
             type: String,
         ) {
             viewModelScope.launch {
-                val googleApiService = credentialHolder.googleApiService // Get service from holder
-                if (googleApiService == null) {
-                    // Handle rating failure when service is unavailable, perhaps with a Snackbar
-                    // For now, just log or do nothing if no specific UI feedback is required here
-                    return@launch
-                }
+                // Use the injected googleApiService directly
                 val success = googleApiService.rateAddon(id, rating, type)
                 if (success) {
                     loadAddons() // Refresh list to show updated ratings

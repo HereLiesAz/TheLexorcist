@@ -1,5 +1,6 @@
 package com.hereliesaz.lexorcist.service
 
+import android.app.Application
 import android.util.Log
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
 import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException
@@ -22,6 +23,7 @@ import com.google.api.services.sheets.v4.model.SpreadsheetProperties
 import com.google.api.services.sheets.v4.model.ValueRange
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import com.hereliesaz.lexorcist.auth.CredentialHolder
 import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.model.Script
 import com.hereliesaz.lexorcist.model.Template
@@ -30,24 +32,37 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import java.io.IOException
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class GoogleApiService(
-    private val drive: Drive,
-    private val sheets: Sheets,
+@Singleton
+class GoogleApiService @Inject constructor(
+    private val credentialHolder: CredentialHolder,
+    private val application: Application
 ) {
-    constructor(credential: GoogleAccountCredential, applicationName: String) : this(
-        Drive
-            .Builder(NetHttpTransport(), GsonFactory.getDefaultInstance(), credential) // Changed here
-            .setApplicationName(applicationName)
-            .build(),
-        Sheets
-            .Builder(NetHttpTransport(), GsonFactory.getDefaultInstance(), credential) // Changed here
-            .setApplicationName(applicationName)
-            .build(),
-    )
+    private val applicationName = "The Lexorcist" // Or load from string resource via application context
+    private val gsonFactory = GsonFactory.getDefaultInstance()
+    private val httpTransport = NetHttpTransport()
+
+    private fun getDriveService(): Drive? {
+        return credentialHolder.credential?.let { cred ->
+            Drive.Builder(httpTransport, gsonFactory, cred)
+                .setApplicationName(applicationName)
+                .build()
+        }
+    }
+
+    private fun getSheetsService(): Sheets? {
+        return credentialHolder.credential?.let { cred ->
+            Sheets.Builder(httpTransport, gsonFactory, cred)
+                .setApplicationName(applicationName)
+                .build()
+        }
+    }
 
     suspend fun getOrCreateAppRootFolder(): Result<String> =
         withContext(Dispatchers.IO) {
+            val drive = getDriveService() ?: return@withContext Result.Error(IOException("Credential not available for Drive service"))
             val folderName = "Lexorcist"
             val query = "mimeType='application/vnd.google-apps.folder' and name='$folderName' and trashed=false"
             Log.d("GoogleApiService", "Querying for root folder with: $query")
@@ -90,6 +105,7 @@ class GoogleApiService(
         }
 
     suspend fun getFileMetadata(fileId: String): Result<File> = withContext(Dispatchers.IO) {
+        val drive = getDriveService() ?: return@withContext Result.Error(IOException("Credential not available for Drive service"))
         try {
             val file = drive.files().get(fileId).setFields("id, name, modifiedTime").execute()
             Result.Success(file)
@@ -106,6 +122,7 @@ class GoogleApiService(
         mimeType: String,
     ): Result<File?> =
         withContext(Dispatchers.IO) {
+            val drive = getDriveService() ?: return@withContext Result.Error(IOException("Credential not available for Drive service"))
             try {
                 val fileMetadata =
                     File().apply {
@@ -125,6 +142,7 @@ class GoogleApiService(
         }
 
     suspend fun listFiles(folderId: String): Result<List<File>> = withContext(Dispatchers.IO) {
+        val drive = getDriveService() ?: return@withContext Result.Error(IOException("Credential not available for Drive service"))
         try {
             val files = drive.files().list()
                 .setQ("'$folderId' in parents and trashed=false")
@@ -140,6 +158,7 @@ class GoogleApiService(
     }
 
     suspend fun downloadFile(fileId: String): Result<ByteArray> = withContext(Dispatchers.IO) {
+        val drive = getDriveService() ?: return@withContext Result.Error(IOException("Credential not available for Drive service"))
         try {
             val outputStream = ByteArrayOutputStream()
             drive.files().get(fileId).executeMediaAndDownloadTo(outputStream)
@@ -156,6 +175,7 @@ class GoogleApiService(
         parentId: String,
     ): Result<Unit> =
         withContext(Dispatchers.IO) {
+            val drive = getDriveService() ?: return@withContext Result.Error(IOException("Credential not available for Drive service"))
             try {
                 // 1. Create the folder on Google Drive
                 val folderMetadata =
@@ -197,6 +217,7 @@ class GoogleApiService(
 
     suspend fun createFolder(folderName: String, parentId: String): Result<String> =
         withContext(Dispatchers.IO) {
+            val drive = getDriveService() ?: return@withContext Result.Error(IOException("Credential not available for Drive service"))
             try {
                 val fileMetadata =
                     File().apply {
@@ -220,6 +241,8 @@ class GoogleApiService(
 
     suspend fun getOrCreateCaseRegistrySpreadsheetId(folderId: String): String =
         withContext(Dispatchers.IO) {
+            val drive = getDriveService() ?: throw IOException("Credential not available for Drive service")
+            val sheets = getSheetsService() ?: throw IOException("Credential not available for Sheets service")
             try {
                 val fileName = "CaseRegistry"
                 val query =
@@ -260,6 +283,8 @@ class GoogleApiService(
         folderId: String,
     ): Result<String?> =
         withContext(Dispatchers.IO) {
+            val drive = getDriveService() ?: return@withContext Result.Error(IOException("Credential not available for Drive service"))
+            val sheets = getSheetsService() ?: return@withContext Result.Error(IOException("Credential not available for Sheets service"))
             Log.d("GoogleApiService", "Creating spreadsheet with title: $title in folder: $folderId")
             try {
                 val spreadsheet = Spreadsheet().setProperties(SpreadsheetProperties().setTitle(title))
@@ -289,6 +314,8 @@ class GoogleApiService(
     @Suppress("ktlint:standard:max-line-length")
     suspend fun createAllegationsSheet(): String? =
         withContext(Dispatchers.IO) {
+            val drive = getDriveService() ?: return@withContext null
+            val sheets = getSheetsService() ?: return@withContext null
             try {
                 val folderIdResult = getOrCreateAppRootFolder()
                 if (folderIdResult is Result.Success) {
@@ -335,6 +362,7 @@ class GoogleApiService(
         values: List<List<Any>>,
     ): Boolean =
         withContext(Dispatchers.IO) {
+            val sheets = getSheetsService() ?: return@withContext false
             try {
                 val body = ValueRange().setValues(values)
                 sheets
@@ -354,6 +382,7 @@ class GoogleApiService(
         sheetName: String,
     ): Boolean =
         withContext(Dispatchers.IO) {
+            val sheets = getSheetsService() ?: return@withContext false
             try {
                 val request = ClearValuesRequest()
                 sheets
@@ -369,6 +398,7 @@ class GoogleApiService(
 
     @Suppress("ktlint:standard:max-line-length")
     suspend fun getOrCreateCaseFolder(caseName: String): String? {
+        val drive = getDriveService() ?: return null
         val appRootFolderIdResult = getOrCreateAppRootFolder()
         if (appRootFolderIdResult is Result.Success) {
             val appRootFolderId = appRootFolderIdResult.data
@@ -409,6 +439,7 @@ class GoogleApiService(
 
     @Suppress("ktlint:standard:max-line-length")
     suspend fun getOrCreateEvidenceFolder(caseName: String): String? {
+        val drive = getDriveService() ?: return null
         val caseFolderId = getOrCreateCaseFolder(caseName) ?: return null
         return withContext(Dispatchers.IO) {
             try {
@@ -448,6 +479,7 @@ class GoogleApiService(
         registryId: String,
         case: Case,
     ): Boolean {
+        val sheets = getSheetsService() ?: return false
         android.util.Log.d("GoogleApiService", "addCaseToRegistry called for case: ${case.name}")
         return withContext(Dispatchers.IO) {
             try {
@@ -486,6 +518,7 @@ class GoogleApiService(
     }
 
     suspend fun getAllCasesFromRegistry(registryId: String): List<Case> {
+        val sheets = getSheetsService() ?: return emptyList()
         android.util.Log.d("GoogleApiService", "getAllCasesFromRegistry called")
         return withContext(Dispatchers.IO) {
             try {
@@ -538,6 +571,7 @@ class GoogleApiService(
     }
 
     suspend fun updateCaseInRegistry(case: Case): Boolean {
+        val sheets = getSheetsService() ?: return false
         return withContext(Dispatchers.IO) {
             try {
                 val registryIdResult = getOrCreateAppRootFolder()
@@ -591,6 +625,7 @@ class GoogleApiService(
     }
 
     suspend fun deleteCaseFromRegistry(case: Case): Boolean {
+        val sheets = getSheetsService() ?: return false
         return withContext(Dispatchers.IO) {
             try {
                 val registryIdResult = getOrCreateAppRootFolder()
@@ -645,6 +680,7 @@ class GoogleApiService(
 
     suspend fun deleteFolder(folderId: String): Boolean =
         withContext(Dispatchers.IO) {
+            val drive = getDriveService() ?: return@withContext false
             try {
                 drive.files().delete(folderId).execute()
                 true
@@ -659,6 +695,7 @@ class GoogleApiService(
         mimeType: String,
     ): Result<File?> =
         withContext(Dispatchers.IO) {
+            val drive = getDriveService() ?: return@withContext Result.Error(IOException("Credential not available for Drive service"))
             try {
                 val fileMetadata =
                     File().apply {
@@ -690,6 +727,7 @@ class GoogleApiService(
 
     suspend fun readSpreadsheet(spreadsheetId: String): Map<String, List<List<Any>>>? =
         withContext(Dispatchers.IO) {
+            val sheets = getSheetsService() ?: return@withContext null
             try {
                 val spreadsheet =
                     sheets
@@ -722,6 +760,7 @@ class GoogleApiService(
         sheetName: String,
     ): Boolean =
         withContext(Dispatchers.IO) {
+            val sheets = getSheetsService() ?: return@withContext false
             try {
                 val requests =
                     listOf(
@@ -745,6 +784,7 @@ class GoogleApiService(
         values: List<List<Any>>,
     ): AppendValuesResponse? =
         withContext(Dispatchers.IO) {
+            val sheets = getSheetsService() ?: return@withContext null
             try {
                 val body = ValueRange().setValues(values)
                 sheets
@@ -760,9 +800,10 @@ class GoogleApiService(
 
     suspend fun getAllegationsForCase(
         spreadsheetId: String,
-        caseId: Int,
+        caseId: Int, // caseId is not used to fetch sheets or drive
     ): List<com.hereliesaz.lexorcist.data.Allegation> =
         withContext(Dispatchers.IO) {
+            val sheets = getSheetsService() ?: return@withContext emptyList()
             try {
                 val range = "Allegations!A:C" // Assuming allegations are in a sheet named "Allegations"
                 val response =
@@ -794,9 +835,10 @@ class GoogleApiService(
 
     suspend fun getEvidenceForCase(
         spreadsheetId: String,
-        caseId: Long,
+        caseId: Long, // caseId is used in Evidence constructor
     ): List<com.hereliesaz.lexorcist.data.Evidence> =
         withContext(Dispatchers.IO) {
+            val sheets = getSheetsService() ?: return@withContext emptyList()
             try {
                 val range = "Evidence!A:Z" // Assuming evidence is in a sheet named "Evidence"
                 val response =
@@ -848,6 +890,7 @@ class GoogleApiService(
 
     suspend fun addEvidenceToCase(evidence: com.hereliesaz.lexorcist.data.Evidence): AppendValuesResponse? =
         withContext(Dispatchers.IO) {
+            val sheets = getSheetsService() ?: return@withContext null
             try {
                 val values =
                     listOf(
@@ -887,6 +930,7 @@ class GoogleApiService(
         allegationText: String,
     ): Boolean =
         withContext(Dispatchers.IO) {
+            val sheets = getSheetsService() ?: return@withContext false
             try {
                 val values =
                     listOf(
@@ -911,6 +955,7 @@ class GoogleApiService(
         }
 
     suspend fun updateEvidenceInSheet(evidence: com.hereliesaz.lexorcist.data.Evidence): Boolean {
+        val sheets = getSheetsService() ?: return false
         return withContext(Dispatchers.IO) {
             try {
                 val range = "Evidence!A:A" // Assuming IDs are in column A
@@ -961,6 +1006,7 @@ class GoogleApiService(
     }
 
     suspend fun deleteEvidenceFromSheet(evidence: com.hereliesaz.lexorcist.data.Evidence): Boolean {
+        val sheets = getSheetsService() ?: return false
         return withContext(Dispatchers.IO) {
             try {
                 val range = "Evidence!A:A" // Assuming IDs are in column A
@@ -1008,6 +1054,7 @@ class GoogleApiService(
     }
 
     suspend fun listHtmlTemplatesInAppRootFolder(): List<File> {
+        val drive = getDriveService() ?: return emptyList()
         val appRootFolderIdResult = getOrCreateAppRootFolder()
         if (appRootFolderIdResult is Result.Success) {
             val appRootFolderId = appRootFolderIdResult.data
@@ -1030,8 +1077,9 @@ class GoogleApiService(
     }
 
     suspend fun getSharedScripts(): List<Script> {
-        val spreadsheetId = "18hB2Kx5Le1uaF2pImeITgWntcBB-JfYxvpU2aqTzRr8"
-        val sheetData = readSpreadsheet(spreadsheetId)
+        val sheets = getSheetsService() ?: return emptyList()
+        val spreadsheetId = "18hB2Kx5Le1uaF2pImeITgWntcBB-JfYxvpU2aqTzRr8" // This should probably be a constant or configurable
+        val sheetData = readSpreadsheet(spreadsheetId) // This uses sheets internally
         val scriptSheet = sheetData?.get("Scripts") ?: return emptyList()
 
         return scriptSheet.mapNotNull { row ->
@@ -1052,8 +1100,9 @@ class GoogleApiService(
     }
 
     suspend fun getSharedTemplates(): List<Template> {
-        val spreadsheetId = "18hB2Kx5Le1uaF2pImeITgWntcBB-JfYxvpU2aqTzRr8"
-        val sheetData = readSpreadsheet(spreadsheetId)
+        val sheets = getSheetsService() ?: return emptyList()
+        val spreadsheetId = "18hB2Kx5Le1uaF2pImeITgWntcBB-JfYxvpU2aqTzRr8" // This should probably be a constant or configurable
+        val sheetData = readSpreadsheet(spreadsheetId) // This uses sheets internally
         val templateSheet = sheetData?.get("Templates") ?: return emptyList()
 
         return templateSheet.mapNotNull { row ->
@@ -1080,8 +1129,9 @@ class GoogleApiService(
         type: String,
     ): Boolean =
         withContext(Dispatchers.IO) {
+            val sheets = getSheetsService() ?: return@withContext false
             try {
-                val spreadsheetId = "18hB2Kx5Le1uaF2pImeITgWntcBB-JfYxvpU2aqTzRr8"
+                val spreadsheetId = "18hB2Kx5Le1uaF2pImeITgWntcBB-JfYxvpU2aqTzRr8" // Constant
                 val sheetName = if (type == "Script") "Scripts" else "Templates"
                 val range = "$sheetName!A:A"
                 val response =
@@ -1131,6 +1181,7 @@ class GoogleApiService(
 
     suspend fun getSelectedAllegations(spreadsheetId: String): List<String> =
         withContext(Dispatchers.IO) {
+            val sheets = getSheetsService() ?: return@withContext emptyList()
             try {
                 val range = "SelectedAllegations!A:A"
                 val response =
@@ -1154,16 +1205,17 @@ class GoogleApiService(
         spreadsheetId: String,
         allegations: List<String>,
     ) {
+        val sheets = getSheetsService() ?: return // Or throw, or return Result
         withContext(Dispatchers.IO) {
             try {
-                val sheetData = readSpreadsheet(spreadsheetId)
+                val sheetData = readSpreadsheet(spreadsheetId) // Uses sheets internally
                 if (sheetData?.get("SelectedAllegations") == null) {
-                    addSheet(spreadsheetId, "SelectedAllegations")
+                    addSheet(spreadsheetId, "SelectedAllegations") // Uses sheets internally
                 } else {
-                    clearSheet(spreadsheetId, "SelectedAllegations")
+                    clearSheet(spreadsheetId, "SelectedAllegations") // Uses sheets internally
                 }
                 val values = allegations.map { listOf(it) }
-                writeData(spreadsheetId, "SelectedAllegations!A1", values)
+                writeData(spreadsheetId, "SelectedAllegations!A1", values) // Uses sheets internally
             } catch (e: IOException) {
                 // Handle error
             }
