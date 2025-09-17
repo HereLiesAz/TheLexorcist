@@ -32,6 +32,9 @@ class SettingsViewModel @Inject constructor(
     private val _cloudSyncEnabled = MutableStateFlow(true)
     val cloudSyncEnabled: StateFlow<Boolean> = _cloudSyncEnabled.asStateFlow()
 
+    private val _selectedCloudProvider = MutableStateFlow("GoogleDrive")
+    val selectedCloudProvider: StateFlow<String> = _selectedCloudProvider.asStateFlow()
+
     private val _migrationStatus = MutableStateFlow<String?>(null)
     val migrationStatus: StateFlow<String?> = _migrationStatus.asStateFlow()
 
@@ -50,6 +53,12 @@ class SettingsViewModel @Inject constructor(
         _themeMode.value = ThemeMode.valueOf(themeName)
         _caseFolderPath.value = settingsManager.getCaseFolderPath()
         _cloudSyncEnabled.value = settingsManager.getCloudSyncEnabled()
+        _selectedCloudProvider.value = settingsManager.getSelectedCloudProvider()
+    }
+
+    fun setSelectedCloudProvider(provider: String) {
+        settingsManager.saveSelectedCloudProvider(provider)
+        _selectedCloudProvider.value = provider
     }
 
     fun setThemeMode(themeMode: ThemeMode) {
@@ -81,6 +90,9 @@ class SettingsViewModel @Inject constructor(
                 is Result.Error -> {
                     _dropboxUploadStatus.value = "Error uploading file to Dropbox: ${result.exception.message}"
                 }
+                is Result.UserRecoverableError -> {
+                    _dropboxUploadStatus.value = "A recoverable error occurred: ${result.exception.message}"
+                }
             }
         }
     }
@@ -98,6 +110,9 @@ class SettingsViewModel @Inject constructor(
                 }
                 is Result.Error -> {
                     _oneDriveUploadStatus.value = "Error uploading file to OneDrive: ${result.exception.message}"
+                }
+                is Result.UserRecoverableError -> {
+                    _oneDriveUploadStatus.value = "A recoverable error occurred: ${result.exception.message}"
                 }
             }
         }

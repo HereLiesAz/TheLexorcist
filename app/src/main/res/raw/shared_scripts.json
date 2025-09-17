@@ -1,0 +1,182 @@
+[
+  {
+    "id": "script-1",
+    "name": "Profanity Tagger",
+    "description": "A simple script to tag any evidence containing common curse words. Useful for establishing a general tone of communication.",
+    "content": "const curses = [\"f***\", \"s***\", \"b****\", \"a******\"];\nconst text = evidence.text.toLowerCase();\nif (curses.some(word => text.includes(word))) {\n    addTag(\"Profanity\");\n}",
+    "author": "Az",
+    "rating": 0.0,
+    "numRatings": 0
+  },
+  {
+    "id": "script-2",
+    "name": "Financial Mention Tagger",
+    "description": "Identifies and tags any mention of money or financial transactions.",
+    "content": "const financialRegex = /[$€£¥]|\\b(dollar|euro|yen|pound|payment|paid|owe|money)\\b/i;\nif (financialRegex.test(evidence.text)) {\n    addTag(\"Financial\");\n}",
+    "author": "Az",
+    "rating": 0.0,
+    "numRatings": 0
+  },
+  {
+    "id": "script-3",
+    "name": "Contact Information Extractor",
+    "description": "Finds and tags phone numbers and email addresses, making it easy to find contact details later.",
+    "content": "const emailRegex = /\\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}\\b/i;\nconst phoneRegex = /\\b\\d{3}[-.]?\\d{3}[-.]?\\d{4}\\b/;\nif (emailRegex.test(evidence.text)) {\n    addTag(\"Email Address\");\n}\nif (phoneRegex.test(evidence.text)) {\n    addTag(\"Phone Number\");\n}",
+    "author": "Az",
+    "rating": 0.0,
+    "numRatings": 0
+  },
+  {
+    "id": "script-4",
+    "name": "Appointment & Deadline Tagger",
+    "description": "Scans for mentions of specific dates, appointments, or deadlines.",
+    "content": "const deadlineRegex = /\\b(appointment|meeting|deadline|due on|court date)\\b/i;\nif (deadlineRegex.test(evidence.text)) {\n    addTag(\"Deadline/Appointment\");\n}",
+    "author": "Az",
+    "rating": 0.0,
+    "numRatings": 0
+  },
+  {
+    "id": "script-5",
+    "name": "Gaslighting Detector",
+    "description": "Identifies phrases commonly used in gaslighting to deny a person's reality.",
+    "content": "const gaslightingPhrases = [\"you're crazy\", \"that never happened\", \"you're imagining things\", \"you're too sensitive\", \"I never said that\"];\nconst text = evidence.text.toLowerCase();\nif (gaslightingPhrases.some(phrase => text.includes(phrase))) {\n    addTag(\"Gaslighting\");\n    linkToAllegation(\"Emotional Abuse\");\n}",
+    "author": "Az",
+    "rating": 0.0,
+    "numRatings": 0
+  },
+  {
+    "id": "script-6",
+    "name": "Threat Severity Assessor",
+    "description": "A more nuanced threat detector that assigns a severity level based on the type of threat.",
+    "content": "const lowSeverity = [\"i'll make you pay\"];\nconst medSeverity = [\"i'll ruin your life\"];\nconst highSeverity = [\"i'm going to hurt you\", \"i'll kill you\"];\nconst text = evidence.text.toLowerCase();\n\nif (highSeverity.some(p => text.includes(p))) {\n    addTag(\"Threat\");\n    setSeverity(\"Critical\");\n} else if (medSeverity.some(p => text.includes(p))) {\n    addTag(\"Threat\");\n    setSeverity(\"High\");\n} else if (lowSeverity.some(p => text.includes(p))) {\n    addTag(\"Threat\");\n    setSeverity(\"Medium\");\n}",
+    "author": "Az",
+    "rating": 0.0,
+    "numRatings": 0
+  },
+  {
+    "id": "script-7",
+    "name": "Custody Violation Tagger",
+    "description": "Specifically for family law cases, this script looks for violations of custody agreements.",
+    "content": "const violationPhrases = [\"you can't see the kids\", \"i'm not bringing him back\", \"it's not your weekend\"];\nif (violationPhrases.some(p => evidence.text.toLowerCase().includes(p))) {\n    addTag(\"Custody Violation\");\n    linkToAllegation(\"Child Custody Interference\");\n}",
+    "author": "Az",
+    "rating": 0.0,
+    "numRatings": 0
+  },
+  {
+    "id": "script-8",
+    "name": "Admission of Guilt Detector",
+    "description": "Flags phrases that could be interpreted as an admission of wrongdoing.",
+    "content": "const admissionPhrases = [\"i know i messed up\", \"it was my fault\", \"i'm sorry i did that\", \"i shouldn't have\"];\nif (admissionPhrases.some(p => evidence.text.toLowerCase().includes(p))) {\n    addTag(\"Admission\");\n}",
+    "author": "Az",
+    "rating": 0.0,
+    "numRatings": 0
+  },
+  {
+    "id": "script-9",
+    "name": "Stalking Pattern Detector",
+    "description": "This script looks for patterns of stalking by correlating location mentions across multiple pieces of evidence.",
+    "content": "const locationRegex = /i saw you at (.+?)\\b/i;\nconst match = evidence.text.match(locationRegex);\nif (match) {\n    const location = match[1];\n    addTag(`Location Mention: ${location}`);\n    const otherMentions = case.evidence.filter(e => \n        e.tags.some(t => t.startsWith(\"Location Mention:\"))\n    );\n    if (otherMentions.length > 2) {\n        addTag(\"Stalking Pattern\");\n        linkToAllegation(\"Stalking\");\n        createNote(`Multiple uninvited location mentions detected. Potential stalking behavior.`);\n    }\n}",
+    "author": "Az",
+    "rating": 0.0,
+    "numRatings": 0
+  },
+  {
+    "id": "script-10",
+    "name": "Contradiction Finder",
+    "description": "Scans other evidence to find direct contradictions.",
+    "content": "const promiseRegex = /i promise to (pay you|give you)(.+?)\\b/i;\nconst denialRegex = /i never promised to (pay you|give you)(.+?)\\b/i;\n\nconst promiseMatch = evidence.text.match(promiseRegex);\nif (promiseMatch) {\n    const promisedItem = promiseMatch[2].trim();\n    const contradiction = case.evidence.find(e => {\n        const denialMatch = e.text.match(denialRegex);\n        return denialMatch && denialMatch[2].trim() === promisedItem;\n    });\n    if (contradiction) {\n        addTag(\"Contradiction\");\n        createNote(`This contradicts evidence from ${contradiction.metadata.date}.`);\n    }\n}",
+    "author": "Az",
+    "rating": 0.0,
+    "numRatings": 0
+  },
+  {
+    "id": "script-11",
+    "name": "Escalation Tracker",
+    "description": "Tracks the severity of threats over time to show a pattern of escalation.",
+    "content": "if (evidence.tags.includes(\"Threat\")) {\n    const pastThreats = case.evidence.filter(e => \n        e.tags.includes(\"Threat\") && new Date(e.metadata.date) < new Date(evidence.metadata.date)\n    );\n    const pastSeverity = pastThreats.map(e => e.metadata.severity);\n    if (pastSeverity.includes(\"Medium\") && evidence.metadata.severity === \"High\") {\n        addTag(\"Escalating Behavior\");\n        createNote(\"Severity has escalated from Medium to High.\");\n    }\n}",
+    "author": "Az",
+    "rating": 0.0,
+    "numRatings": 0
+  },
+  {
+    "id": "script-12",
+    "name": "Alibi Corroborator/Breaker",
+    "description": "Checks for consistencies or inconsistencies in alibis.",
+    "content": "const alibiRegex = /i was at (.+?) at (\\d{1,2}:\\d{2}[ap]m)/i;\nconst match = evidence.text.match(alibiRegex);\nif (match) {\n    const location = match[1];\n    const time = match[2];\n    addTag(`Alibi: ${location} at ${time}`);\n    const conflictingEvidence = case.evidence.find(e => \n        e.text.includes(`i saw you at a different place at ${time}`)\n    );\n    if (conflictingEvidence) {\n        addTag(\"Alibi Conflict\");\n    }\n}",
+    "author": "Az",
+    "rating": 0.0,
+    "numRatings": 0
+  },
+  {
+    "id": "script-13",
+    "name": "Third-Party Witness Identifier",
+    "description": "Scans for mentions of other people who could be potential witnesses.",
+    "content": "const witnessRegex = /\\b(ask|talk to|with|saw|told) ([A-Z][a-z]+)\\b/g;\nlet match;\nwhile ((match = witnessRegex.exec(evidence.text)) !== null) {\n    const witnessName = match[2];\n    if (witnessName.toLowerCase() !== \"you\") {\n        addTag(`Potential Witness: ${witnessName}`);\n    }\n}",
+    "author": "Az",
+    "rating": 0.0,
+    "numRatings": 0
+  },
+  {
+    "id": "script-14",
+    "name": "Document Request Generator",
+    "description": "Identifies mentions of documents that you might need to request in discovery.",
+    "content": "const docRegex = /\\b(contract|agreement|lease|receipt|invoice|bank statement)\\b/ig;\nlet match;\nwhile ((match = docRegex.exec(evidence.text)) !== null) {\n    addTag(\"Mentioned Document\");\n    createNote(`Discovery suggestion: Request the '${match[0]}' mentioned here.`);\n}",
+    "author": "Az",
+    "rating": 0.0,
+    "numRatings": 0
+  },
+  {
+    "id": "script-15",
+    "name": "Communication Blackout Detector",
+    "description": "Identifies sudden and prolonged gaps in communication, which can be significant.",
+    "content": "const lastCommunication = case.evidence\n    .filter(e => e.metadata.source === evidence.metadata.source)\n    .sort((a, b) => new Date(b.metadata.date) - new Date(a.metadata.date))[1];\n\nif (lastCommunication) {\n    const daysSince = (new Date(evidence.metadata.date) - new Date(lastCommunication.metadata.date)) / (1000 * 3600 * 24);\n    if (daysSince > 14) {\n        addTag(\"Communication Gap\");\n        createNote(`A ${Math.round(daysSince)}-day gap in communication occurred before this message.`);\n    }\n}",
+    "author": "Az",
+    "rating": 0.0,
+    "numRatings": 0
+  },
+  {
+    "id": "script-16",
+    "name": "'If This, Then That' Coercion Analyzer",
+    "description": "A more advanced script to detect coercive 'if-then' statements.",
+    "content": "const coercionRegex = /if you (don't|won't) (.+?), (then )?i will (.+)/i;\nconst match = evidence.text.match(coercionRegex);\nif (match) {\n    const demand = match[2];\n    const consequence = match[4];\n    addTag(\"Coercion\");\n    linkToAllegation(\"Coercion/Blackmail\");\n    createNote(`Coercive statement detected. Demand: '${demand}', Consequence: '${consequence}'.`);\n}",
+    "author": "Az",
+    "rating": 0.0,
+    "numRatings": 0
+  },
+  {
+    "id": "script-17",
+    "name": "Sentiment Shift Analysis",
+    "description": "Uses a hypothetical sentiment analysis library to track emotional tone over time and flags drastic shifts.",
+    "content": "const currentSentiment = Sentiment.analyze(evidence.text).score;\nconst recentEvidence = case.evidence.slice(-5);\nconst avgPastSentiment = recentEvidence.reduce((acc, e) => acc + Sentiment.analyze(e.text).score, 0) / recentEvidence.length;\n\nif (Math.abs(currentSentiment - avgPastSentiment) > 1.5) {\n    addTag(\"Sentiment Shift\");\n    createNote(`Drastic sentiment shift from avg ${avgPastSentiment.toFixed(2)} to ${currentSentiment.toFixed(2)}.`);\n}",
+    "author": "Az",
+    "rating": 0.0,
+    "numRatings": 0
+  },
+  {
+    "id": "script-18",
+    "name": "Legal Element Mapper",
+    "description": "Tries to map evidence to the specific legal elements of an allegation.",
+    "content": "if (case.allegations.includes(\"Breach of Contract\")) {\n    if (evidence.text.toLowerCase().includes(\"i accept your offer\")) {\n        addTag(\"Contract - Acceptance\");\n    }\n    if (evidence.text.toLowerCase().includes(\"failed to deliver\")) {\n        addTag(\"Contract - Breach\");\n    }\n}",
+    "author": "Az",
+    "rating": 0.0,
+    "numRatings": 0
+  },
+  {
+    "id": "script-19",
+    "name": "Evidence Gap Suggester",
+    "description": "A smart script that suggests what evidence might be missing.",
+    "content": "if (evidence.tags.includes(\"Mentioned Document\")) {\n    const docName = evidence.text.match(/\\b(contract|agreement|etc)\\b/i)[0];\n    const hasDocument = case.evidence.some(e => e.metadata.type === 'document' && e.metadata.title.includes(docName));\n    if (!hasDocument) {\n        createNote(`Missing Evidence: The '${docName}' mentioned here has not been added to the case.`);\n    }\n}",
+    "author": "Az",
+    "rating": 0.0,
+    "numRatings": 0
+  },
+  {
+    "id": "script-20",
+    "name": "Narrative Summary Generator",
+    "description": "The ultimate script. For a given allegation, it pulls all linked evidence and attempts to create a chronological summary of events.",
+    "content": "if (case.allegations.includes(\"Harassment\")) {\n    const harassmentEvidence = case.evidence\n        .filter(e => e.allegations.includes(\"Harassment\"))\n        .sort((a, b) => new Date(a.metadata.date) - new Date(a.metadata.date));\n    \n    let summary = \"Summary of Harassment:\\n\";\n    harassmentEvidence.forEach(e => {\n        summary += `- On ${e.metadata.date}, a message containing '${e.tags.join(', ')}' was received.\\n`;\n    });\n    \n    if (evidence.id === harassmentEvidence.slice(-1)[0].id) {\n        createNote(summary);\n    }\n}",
+    "author": "Az",
+    "rating": 0.0,
+    "numRatings": 0
+  }
+]

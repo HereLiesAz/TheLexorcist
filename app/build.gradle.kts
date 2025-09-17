@@ -9,6 +9,7 @@ plugins {
     id("com.google.devtools.ksp") version "2.2.20-2.0.3"
     id("com.google.gms.google-services") // Added Google Services plugin
     id("com.palantir.git-version")
+    id("io.objectbox")
 }
 
 android {
@@ -181,15 +182,16 @@ dependencies {
     implementation(libs.jetlime)
 
     // Dropbox SDK
-    // implementation(libs.dropbox.core.sdk)
+    implementation(libs.dropbox.core.sdk)
 
 
     // Dropbox SDK
-    // implementation("com.dropbox.core:dropbox-core-sdk:7.0.0")
+    implementation("com.dropbox.core:dropbox-core-sdk:7.0.0")
+    implementation(libs.dropbox.android.sdk)
 
     // Microsoft Graph SDK for OneDrive
     implementation("com.microsoft.graph:microsoft-graph:6.+")
-    implementation("com.microsoft.identity.client:msal:2.+")
+    implementation("com.microsoft.identity.client:msal:7.1.0")
 
     // Hilt
     implementation(libs.google.dagger.hilt.android)
@@ -204,6 +206,11 @@ dependencies {
 
 
     // Room IS NOT ALLOWED IN THIS PROJECT!!!!!
+
+    // ObjectBox
+    implementation("io.objectbox:objectbox-kotlin:${rootProject.extra["objectboxVersion"]}")
+    ksp("io.objectbox:objectbox-processor:${rootProject.extra["objectboxVersion"]}")
+
 
     // Google Cloud Speech-to-Text
     implementation(libs.google.cloud.speech)
