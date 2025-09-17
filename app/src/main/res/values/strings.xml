@@ -278,4 +278,5 @@
     <string name="done">Done</string>
     <string name="edit_history">Edit History</string>
     <string name="edit_transcript">Edit Transcript</string>
+    <string name="fragment_main_script_text_input_layout_hint_text">Enter your script here...</string>
 </resources>

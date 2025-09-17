@@ -5,7 +5,6 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("kotlin-parcelize") // Added kotlin-parcelize plugin
     id("com.google.dagger.hilt.android")
-    id("org.jetbrains.kotlin.plugin.compose")
     id("com.google.devtools.ksp")
     id("com.google.gms.google-services") // Added Google Services plugin
     id("com.palantir.git-version")
@@ -45,6 +44,7 @@ android {
         compose = true
     }
     composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.3"
     }
     packaging {
         resources.excludes.add("META-INF/INDEX.LIST")
@@ -82,15 +82,17 @@ android {
 }
 
 dependencies {
+    constraints {
+        implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable:0.3.5") {
+            because("Align kotlin versions")
+        }
+    }
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.browser)
     implementation(libs.google.android.material)
-    implementation(libs.androidx.compose.runtime)
     implementation(libs.androidx.navigation.runtime.ktx)
-    implementation(libs.androidx.compose.ui)
-    implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.credentials) // Added AndroidX Credentials
     implementation(libs.androidx.credentials.play.services.auth)
     implementation(libs.google.id)
@@ -138,13 +140,16 @@ dependencies {
     // Jetpack Compose
 
     implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.ui)
+    implementation(libs.androidx.compose.foundation)
+    implementation(libs.androidx.compose.runtime)
+    implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.material.icons.extended)
     implementation(libs.androidx.exifinterface)
     implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.compose.runtime.livedata)
 
     // Coil for image loading
     implementation(libs.coil.compose)
@@ -227,5 +232,11 @@ kotlin {
     jvmToolchain(17)
     compilerOptions {
         freeCompilerArgs.add("-opt-in=androidx.compose.material3.ExperimentalMaterial3Api")
+    }
+}
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    kotlinOptions {
+        jvmTarget = "17"
     }
 }

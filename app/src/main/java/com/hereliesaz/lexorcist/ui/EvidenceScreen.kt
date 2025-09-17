@@ -31,9 +31,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.core.content.FileProvider
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.hereliesaz.lexorcist.R
@@ -42,6 +44,7 @@ import com.hereliesaz.lexorcist.model.ProcessingState
 import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import kotlinx.coroutines.flow.collectLatest
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -58,6 +61,9 @@ fun EvidenceScreen(
     val evidenceList by caseViewModel.selectedCaseEvidenceList.collectAsState()
     val videoProcessingProgress by caseViewModel.videoProcessingProgress.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
+    var tempImageUri by remember { mutableStateOf<android.net.Uri?>(null) }
+
 
     LaunchedEffect(snackbarHostState) {
         caseViewModel.userMessage.collectLatest { message ->
@@ -70,6 +76,15 @@ fun EvidenceScreen(
             contract = ActivityResultContracts.GetContent(),
         ) { uri ->
             uri?.let { caseViewModel.processImageEvidence(it) }
+        }
+
+    val takePictureLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.TakePicture(),
+        ) { success ->
+            if (success) {
+                tempImageUri?.let { caseViewModel.processImageEvidence(it) }
+            }
         }
 
     val audioPickerLauncher =
@@ -168,6 +183,14 @@ fun EvidenceScreen(
             } else if (processingState == null) {
                 LexorcistOutlinedButton(onClick = { showAddTextEvidence = true }, text = stringResource(R.string.add_text_evidence).uppercase(Locale.getDefault()))
                 LexorcistOutlinedButton(onClick = { imagePickerLauncher.launch("image/*") }, text = stringResource(R.string.add_image_evidence).uppercase(Locale.getDefault()))
+                LexorcistOutlinedButton(
+                    onClick = {
+                        val file = createTempImageFile(context)
+                        tempImageUri = FileProvider.getUriForFile(context, "com.hereliesaz.lexorcist.fileprovider", file)
+                        takePictureLauncher.launch(tempImageUri)
+                    },
+                    text = stringResource(R.string.take_picture).uppercase(Locale.getDefault())
+                )
                 LexorcistOutlinedButton(onClick = { audioPickerLauncher.launch("audio/*") }, text = stringResource(R.string.add_audio_evidence).uppercase(Locale.getDefault()))
                 LexorcistOutlinedButton(onClick = { videoPickerLauncher.launch("video/*") }, text = stringResource(R.string.add_video_evidence).uppercase(Locale.getDefault()))
             }
@@ -221,6 +244,16 @@ fun EvidenceListItem(
             maxLines = 3,
         )
     }
+}
+
+private fun createTempImageFile(context: android.content.Context): File {
+    val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+    val storageDir: File? = context.getExternalFilesDir(android.os.Environment.DIRECTORY_PICTURES)
+    return File.createTempFile(
+        "JPEG_${timeStamp}_",
+        ".jpg",
+        storageDir
+    )
 }
 
 @Composable
