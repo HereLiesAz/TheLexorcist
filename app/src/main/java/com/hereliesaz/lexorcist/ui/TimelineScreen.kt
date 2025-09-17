@@ -99,11 +99,30 @@ fun TimelineScreen(caseViewModel: CaseViewModel, navController: NavController) {
                     }
                 }
             } else {
-                Text(
-                    text = stringResource(R.string.no_evidence_placeholder),
-                    modifier = Modifier.fillMaxWidth().padding(16.dp),
-                    textAlign = TextAlign.End,
-                )
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .fillMaxWidth(),
+                        horizontalAlignment = Alignment.End
+                    ) {
+                        Text(
+                            text = "No evidence yet",
+                            style = MaterialTheme.typography.headlineSmall,
+                            textAlign = TextAlign.End,
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = stringResource(R.string.no_evidence_placeholder),
+                            style = MaterialTheme.typography.bodyLarge,
+                            textAlign = TextAlign.End,
+                        )
+                    }
+                }
             }
         }
     }
