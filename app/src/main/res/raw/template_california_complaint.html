@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>California Pleading Template</title>
+<title>California Complaint Template</title>
 <style>
     body {
         font-family: 'Times New Roman', Times, serif;
@@ -14,12 +14,15 @@
     .page {
         width: 8.5in;
         height: 11in;
-        padding: 1in;
+        padding-left: 1in;
+        padding-right: 1in;
+        padding-bottom: 1in;
         box-sizing: border-box;
         position: relative;
         page-break-after: always;
     }
-    .content {
+    .content-container {
+        padding-top: 2in; /* This creates the 3-inch top margin for the content below the header */
         line-height: 2; /* Double-spaced */
     }
     .line-numbers {
@@ -37,12 +40,15 @@
         display: block;
     }
     .caption-header {
+        position: absolute;
+        top: 1in;
+        left: 1in;
         line-height: 1.5;
     }
     .court-title {
         text-align: center;
-        margin-top: 1in;
         font-weight: bold;
+        /* Positioned with line breaks in the HTML */
     }
     .case-title {
         margin-top: 20px;
@@ -71,32 +77,33 @@
         </script>
     </div>
 
-    <div class="content">
-        <div class="caption-header">
-            {{ATTORNEY_NAME}} (SBN: {{ATTORNEY_SBN}})<br>
-            {{ATTORNEY_ADDRESS_LINE_1}}<br>
-            {{ATTORNEY_ADDRESS_LINE_2}}<br>
-            Telephone: {{ATTORNEY_PHONE}}<br>
-            Fax: {{ATTORNEY_FAX}}<br>
-            Email: {{ATTORNEY_EMAIL}}<br>
-            <br>
-            Attorney for {{PARTY_REPRESENTATION}}
-        </div>
+    <div class="caption-header">
+        {{ATTORNEY_NAME}} (SBN: {{ATTORNEY_SBN}})<br>
+        {{ATTORNEY_ADDRESS_LINE_1}}<br>
+        {{ATTORNEY_ADDRESS_LINE_2}}<br>
+        Telephone: {{ATTORNEY_PHONE}}<br>
+        Fax: {{ATTORNEY_FAX}}<br>
+        Email: {{ATTORNEY_EMAIL}}<br>
+        <br>
+        Attorney for {{PARTY_REPRESENTATION}}
+    </div>
 
+    <div class="content-container">
         <div class="court-title">
+            <br><br><br><br><br><br><br> <!-- This pushes the court title down to line 8 -->
             SUPERIOR COURT OF THE STATE OF CALIFORNIA<br>
             FOR THE COUNTY OF {{COUNTY}}
         </div>
 
         <div class="case-title">
             <div style="float: left; width: 55%;">
-                {{PLAINTIFF_NAMES}}<br>
+                {{PLAINTIFF_NAMES}},<br>
                 <br>
                 Plaintiff,
                 <br>
                 vs.<br>
                 <br>
-                {{DEFENDANT_NAMES}}<br>
+                {{DEFENDANT_NAMES}},<br>
                 <br>
                 Defendant.
             </div>
@@ -104,7 +111,7 @@
                 Case No. {{CASE_NUMBER}}<br>
                 <br>
                 <div class="document-title">
-                    {{DOCUMENT_TITLE}}
+                    COMPLAINT FOR DAMAGES
                 </div>
             </div>
             <div style="clear: both;"></div>
