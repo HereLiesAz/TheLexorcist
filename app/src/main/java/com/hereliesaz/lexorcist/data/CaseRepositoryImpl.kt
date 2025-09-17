@@ -6,7 +6,7 @@ import com.hereliesaz.lexorcist.model.SheetFilter
 import com.hereliesaz.lexorcist.utils.Result
 import com.hereliesaz.lexorcist.utils.ErrorReporter
 import io.objectbox.BoxStore
-import io.objectbox.kotlin.asFlow
+import io.objectbox.kotlin.asFlow // Specific import
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.emptyFlow
@@ -26,10 +26,11 @@ class CaseRepositoryImpl @Inject constructor(
     private val boxStore: BoxStore
 ) : CaseRepository {
     private val caseBox = boxStore.boxFor(CaseObjectBox::class.java)
+    private val query = caseBox.query().build() // Explicit query variable
     private val _selectedCase = MutableStateFlow<Case?>(null)
 
-    override val cases: Flow<List<Case>> = caseBox.query().build().asFlow().map { cases ->
-        cases.map { it.toCase() }
+    override val cases: Flow<List<Case>> = query.asFlow().map { objectBoxCases -> // Extension function style
+        objectBoxCases.map { it.toCase() }
     }
     override val selectedCase: Flow<Case?> = _selectedCase.asStateFlow()
 
