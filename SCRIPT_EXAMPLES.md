@@ -1,6 +1,6 @@
-# 20 Example Scripts for The Lexorcist
+# 40 Example Scripts for The Lexorcist
 
-This document provides 20 unique script examples for The Lexorcist's script builder. These scripts are designed to showcase the power and flexibility of the system, starting from simple keyword tagging and progressing to more complex, analytical, and even case-management-oriented functions.
+This document provides 40 unique script examples for The Lexorcist's script builder. These scripts are designed to showcase the power and flexibility of the system, starting from simple keyword tagging and progressing to more complex, analytical, and even case-management-oriented functions.
 
 For the purpose of these examples, we assume the script environment provides the following API:
 
@@ -332,5 +332,334 @@ For the purpose of these examples, we assume the script environment provides the
         if (evidence.id === harassmentEvidence.slice(-1)[0].id) {
             createNote(summary);
         }
+    }
+    ```
+
+---
+
+### **Level 6: Advanced Case & Evidence Integrity Analysis**
+
+**21. Chain of Custody Verifier**
+*   **Description:** For evidence that has been handled by multiple people, this script checks for a complete chain of custody log in the evidence's notes or metadata. It flags any evidence with gaps.
+*   **Script:**
+    ```javascript
+    // Assumes a metadata field `evidence.metadata.custodyLog` which is an array of transfer records.
+    if (evidence.metadata.type === 'physical') {
+        const log = evidence.metadata.custodyLog;
+        if (!log || log.length === 0) {
+            addTag("Missing Chain of Custody");
+            createNote("Critical: Physical evidence is missing its chain of custody log.");
+            return;
+        }
+        for (let i = 0; i < log.length - 1; i++) {
+            if (log[i].toPerson !== log[i+1].fromPerson) {
+                addTag("Broken Chain of Custody");
+                createNote(`Chain of custody broken between ${log[i].toPerson} and ${log[i+1].fromPerson}.`);
+                setSeverity("Critical");
+            }
+        }
+    }
+    ```
+
+**22. Metadata Anomaly Detector**
+*   **Description:** Scans for suspicious metadata, like a photo's EXIF data showing a date that contradicts the user-provided date, or a file that has been modified after it was supposedly collected.
+*   **Script:**
+    ```javascript
+    // Assumes EXIF data is parsed into `evidence.metadata.exif`
+    if (evidence.metadata.exif && evidence.metadata.exif.dateCreated) {
+        const exifDate = new Date(evidence.metadata.exif.dateCreated);
+        const providedDate = new Date(evidence.metadata.date);
+        const diffDays = Math.abs(exifDate - providedDate) / (1000 * 3600 * 24);
+        if (diffDays > 1) {
+            addTag("Metadata Anomaly");
+            createNote(`EXIF creation date (${exifDate.toDateString()}) differs from provided date (${providedDate.toDateString()}).`);
+            setSeverity("High");
+        }
+    }
+    ```
+
+**23. Duplicate Evidence Finder**
+*   **Description:** Uses a perceptual hash (phash) or simple checksum stored in metadata to find duplicate or near-duplicate images, even if they have different filenames.
+*   **Script:**
+    ```javascript
+    // Assumes a metadata field `evidence.metadata.phash`
+    if (evidence.metadata.phash) {
+        const duplicates = case.evidence.filter(e =>
+            e.id !== evidence.id && e.metadata.phash === evidence.metadata.phash
+        );
+        if (duplicates.length > 0) {
+            addTag("Duplicate");
+            createNote(`This is a duplicate of evidence: ${duplicates.map(d => d.id).join(', ')}.`);
+        }
+    }
+    ```
+
+**24. Communication Style Analyzer**
+*   **Description:** Analyzes the linguistic style (e.g., sentence length, word choice, use of emojis) of a piece of evidence and compares it to the author's known baseline. Flags messages that may have been written by someone else.
+*   **Script:**
+    ```javascript
+    // Conceptual - requires a baseline profile for the author.
+    // `profile.authors['JohnDoe'].avgSentenceLength`
+    const sentences = evidence.text.split(/[.!?]+/);
+    const avgLength = evidence.text.length / sentences.length;
+    const authorProfile = profile.authors[evidence.metadata.author];
+    if (authorProfile && Math.abs(avgLength - authorProfile.avgSentenceLength) > 10) {
+        addTag("Atypical Style");
+        createNote("Communication style is inconsistent with author's baseline.");
+    }
+    ```
+
+---
+
+### **Level 7: Dynamic Tasking & Workflow Automation**
+
+**25. Automated Deposition Question Generator**
+*   **Description:** When it finds a contradiction or a threat, this script automatically generates a potential deposition question and adds it to a case-wide "Deposition Prep" note.
+*   **Script:**
+    ```javascript
+    function addDepoQuestion(question) {
+        // This function would append to a central case note or task list.
+        console.log(`New Depo Question: ${question}`);
+    }
+
+    if (evidence.tags.includes("Contradiction")) {
+        addDepoQuestion(`On [Date], you stated X. However, on [Other Date], you stated Y. Can you explain this discrepancy?`);
+    }
+    if (evidence.tags.includes("Threat")) {
+        addDepoQuestion(`Can you explain what you meant when you wrote, "${evidence.text}"?`);
+    }
+    ```
+
+**26. Expert Witness Recommender**
+*   **Description:** Based on the content of the evidence, this script suggests when an expert witness might be needed.
+*   **Script:**
+    ```javascript
+    const financialRegex = /\b(forensic accounting|tax fraud|embezzlement)\b/i;
+    const techRegex = /\b(encryption|hacking|IP address|metadata)\b/i;
+
+    if (financialRegex.test(evidence.text)) {
+        addTag("Expert Witness Needed");
+        createNote("Consider engaging a forensic accountant for this evidence.");
+    }
+    if (techRegex.test(evidence.text)) {
+        addTag("Expert Witness Needed");
+        createNote("Consider engaging a digital forensics expert for this evidence.");
+    }
+    ```
+
+**27. Automatic Redaction Suggester**
+*   **Description:** Identifies Personally Identifiable Information (PII) like social security numbers, bank account numbers, or home addresses and tags them for redaction before sharing.
+*   **Script:**
+    ```javascript
+    const ssnRegex = /\b\d{3}-\d{2}-\d{4}\b/;
+    const bankAccountRegex = /\b\d{10,16}\b/;
+    if (ssnRegex.test(evidence.text) || bankAccountRegex.test(evidence.text)) {
+        addTag("Redact PII");
+        setSeverity("High");
+    }
+    ```
+
+**28. Settlement Offer Analyzer**
+*   **Description:** When a settlement offer is mentioned, this script scours the case for all evidence tagged "Financial" and calculates a running total of claimed damages to provide context for the offer.
+*   **Script:**
+    ```javascript
+    const offerRegex = /i will offer you \$([\d,.]+)/i;
+    const match = evidence.text.match(offerRegex);
+    if (match) {
+        const offerAmount = parseFloat(match[1].replace(/,/g, ''));
+        addTag("Settlement Offer");
+
+        let totalDamages = 0;
+        const financialEvidence = case.evidence.filter(e => e.tags.includes("Financial"));
+        financialEvidence.forEach(e => {
+            const damageMatch = e.text.match(/you owe me \$([\d,.]+)/i);
+            if (damageMatch) {
+                totalDamages += parseFloat(damageMatch[1].replace(/,/g, ''));
+            }
+        });
+
+        createNote(`Settlement offer of $${offerAmount} received. Total calculated damages in case: $${totalDamages}.`);
+    }
+    ```
+
+---
+
+### **Level 8: Multi-Case & Strategic Analysis**
+
+**29. Cross-Case Actor Linker**
+*   **Description:** Identifies if an actor (e.g., a person, a company) in this case has appeared in any other case in your database. Requires a global case database API.
+*   **Script:**
+    ```javascript
+    // Conceptual - requires a global `database` object.
+    const actorName = evidence.metadata.author;
+    const otherCases = database.findCasesByActor(actorName);
+    if (otherCases.length > 0) {
+        addTag("Cross-Case Link");
+        createNote(`Actor ${actorName} also appears in cases: ${otherCases.map(c => c.name).join(', ')}.`);
+    }
+    ```
+
+**30. Legal Precedent Suggester**
+*   **Description:** Identifies key phrases and concepts in the evidence and suggests searching for legal precedents related to them.
+*   **Script:**
+    ```javascript
+    // Conceptual - requires a legal research API.
+    if (evidence.tags.includes("Gaslighting") && evidence.tags.includes("Financial")) {
+        createNote("Research Suggestion: Search for precedents on 'economic abuse' and 'coercive control'.");
+        // In a more advanced version:
+        // LegalResearchAPI.findPrecedents({topic: "economic abuse"});
+    }
+    ```
+
+**31. "Smoking Gun" Identifier**
+*   **Description:** This script combines multiple high-value indicators to flag a piece of evidence as a potential "smoking gun".
+*   **Script:**
+    ```javascript
+    let score = 0;
+    if (evidence.tags.includes("Admission")) score++;
+    if (evidence.tags.includes("Contradiction")) score++;
+    if (evidence.metadata.severity === "Critical") score++;
+    if (evidence.tags.includes("Atypical Style")) score++; // Suggests someone trying to hide
+
+    if (score >= 3) {
+        addTag("Smoking Gun?");
+        setSeverity("Critical");
+        createNote("This evidence has multiple high-value indicators. Prioritize for review.");
+    }
+    ```
+
+**32. Case Strength Barometer**
+*   **Description:** A meta-script that runs periodically over the whole case, assessing the ratio of evidence linked to allegations vs. unlinked evidence, and the number of "Smoking Gun" or "Critical" items, to provide a rough barometer of case strength.
+*   **Script:**
+    ```javascript
+    // This would likely be a standalone script run on the case object, not on a single piece of evidence.
+    const linkedEvidence = case.evidence.filter(e => e.allegations.length > 0).length;
+    const totalEvidence = case.evidence.length;
+    const strengthRatio = linkedEvidence / totalEvidence;
+    const criticalItems = case.evidence.filter(e => e.metadata.severity === "Critical").length;
+
+    let strength = "Weak";
+    if (strengthRatio > 0.5) strength = "Moderate";
+    if (strengthRatio > 0.75) strength = "Strong";
+    if (criticalItems > 2) strength = "Very Strong";
+
+    createNote(`Case Strength Barometer: ${strength} (Ratio: ${strengthRatio.toFixed(2)}, Critical Items: ${criticalItems})`);
+    ```
+
+---
+
+### **Level 9: Generative & Predictive AI (Conceptual)**
+
+**33. Opposing Counsel Strategy Predictor**
+*   **Description:** Based on the evidence you have, this script tries to predict the opposing counsel's likely defense strategy.
+*   **Script:**
+    ```javascript
+    // Conceptual AI
+    const hasGaslighting = case.evidence.some(e => e.tags.includes("Gaslighting"));
+    const hasAdmissions = case.evidence.some(e => e.tags.includes("Admission"));
+
+    if (hasGaslighting && !hasAdmissions) {
+        createNote("Predicted Defense: Opposing counsel will likely argue the evidence is fabricated or that the client is unreliable ('unstable' defense).");
+    } else if (hasAdmissions) {
+        createNote("Predicted Defense: Opposing counsel may attempt a 'remorse' defense or argue the admissions were taken out of context.");
+    }
+    ```
+
+**34. Missing Narrative Link Detector**
+*   **Description:** Analyzes the timeline of events and points out logical gaps where evidence should exist but doesn't.
+*   **Script:**
+    ```javascript
+    // Conceptual AI
+    const threat = case.evidence.find(e => e.tags.includes("Threat"));
+    if (threat) {
+        const followUp = case.evidence.find(e => new Date(e.metadata.date) > new Date(threat.metadata.date));
+        if (!followUp) {
+            createNote("Narrative Gap: A threat was made, but there is no subsequent evidence showing the outcome or de-escalation. What happened next?");
+        }
+    }
+    ```
+
+**35. Evidence Forgery Risk Assessor**
+*   **Description:** Uses a conceptual AI model to analyze an image for signs of digital manipulation (e.g., inconsistent compression levels, pixel anomalies).
+*   **Script:**
+    ```javascript
+    // Conceptual AI
+    if (evidence.metadata.type === 'image') {
+        const forgeryRisk = ForgeryDetectionAI.analyze(evidence.imagePath); // returns a score 0-1
+        if (forgeryRisk > 0.8) {
+            addTag("Forgery Risk");
+            setSeverity("Critical");
+            createNote(`AI analysis indicates a ${forgeryRisk*100}% risk of digital manipulation.`);
+        }
+    }
+    ```
+
+**36. Automated Witness Vetting**
+*   **Description:** When a potential witness is identified, this script could (with permission) run a conceptual background check API to look for public records, conflicts of interest, or past instances of perjury.
+*   **Script:**
+    ```javascript
+    // Conceptual API
+    if (evidence.tags.some(t => t.startsWith("Potential Witness:"))) {
+        const witnessName = evidence.tags.find(t => t.startsWith("Potential Witness:")).split(": ")[1];
+        const backgroundCheck = BackgroundCheckAPI.run(witnessName);
+        if (backgroundCheck.hasRedFlags) {
+            createNote(`Witness Vetting: ${witnessName} has potential red flags: ${backgroundCheck.flags.join(', ')}.`);
+        }
+    }
+    ```
+
+---
+
+### **Level 10: Fully Autonomous Case Management (Conceptual)**
+
+**37. Auto-Categorize & File Evidence**
+*   **Description:** An AI-powered script that reads the evidence and automatically files it under the most relevant allegation without needing explicit rules.
+*   **Script:**
+    ```javascript
+    // Conceptual AI
+    const textToClassify = evidence.text;
+    const allAllegations = case.allegations;
+    const bestFitAllegation = ClassificationAI.findBestMatch(textToClassify, allAllegations);
+    if (bestFitAllegation.confidence > 0.7) {
+        linkToAllegation(bestFitAllegation.name);
+    }
+    ```
+
+**38. Dynamic Discovery Request Drafter**
+*   **Description:** Goes beyond suggesting requests. This script would actually draft a formal discovery request document based on the gaps it has identified.
+*   **Script:**
+    ```javascript
+    // Conceptual Document Generation
+    if (evidence.tags.includes("Missing Evidence")) {
+        const missingDoc = evidence.notes.find(n => n.startsWith("Missing Evidence:")).split("'")[1];
+        const requestDraft = DocumentGenerator.create('DiscoveryRequest', {
+            itemNumber: 1,
+            description: `All documents relating to the '${missingDoc}' mentioned in the communication dated ${evidence.metadata.date}.`
+        });
+        // save requestDraft to case files
+    }
+    ```
+
+**39. Case Outcome Predictor**
+*   **Description:** The holy grail. A conceptual AI that analyzes all evidence, case strength, linked precedents, and opposing counsel strategy to provide a probabilistic outcome prediction.
+*   **Script:**
+    ```javascript
+    // Conceptual AI
+    const prediction = OutcomePredictionAI.analyze(case);
+    // prediction = { outcome: "Favorable Settlement", confidence: 0.65, keyFactors: ["Smoking Gun evidence", "Strong witness list"] }
+    createNote(`Outcome Prediction: ${prediction.outcome} (Confidence: ${prediction.confidence*100}%) based on: ${prediction.keyFactors.join(', ')}.`);
+    ```
+
+**40. Automated Case Summary & Brief Generation**
+*   **Description:** A final, generative script that takes the narrative summaries, key evidence, witness lists, and legal precedents and generates a first draft of a case brief or summary judgment motion.
+*   **Script:**
+    ```javascript
+    // Conceptual Document Generation
+    if (case.status === "Preparing for Trial") {
+        const caseBriefDraft = DocumentGenerator.create('CaseBrief', {
+            caseObject: case
+        });
+        // save caseBriefDraft to case files
+        createNote("First draft of the case brief has been generated based on the current state of the case.");
     }
     ```
