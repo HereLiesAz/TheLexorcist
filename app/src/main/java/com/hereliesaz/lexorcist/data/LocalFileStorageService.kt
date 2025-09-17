@@ -56,7 +56,7 @@ class LocalFileStorageService @Inject constructor(
         private val CASES_HEADER = listOf("ID", "Name", "Plaintiffs", "Defendants", "Court", "FolderID", "LastModified", "IsArchived")
         private val EVIDENCE_HEADER = listOf("EvidenceID", "CaseID", "Type", "Content", "FormattedContent", "MediaUri", "Timestamp", "SourceDocument", "DocumentDate", "AllegationID", "Category", "Tags", "Commentary", "LinkedEvidenceIDs", "ParentVideoID", "Entities")
         private val ALLEGATIONS_HEADER = listOf("AllegationID", "CaseID", "Text")
-        private val TRANSCRIPT_EDITS_HEADER = listOf("EditID", "EvidenceID", "Timestamp", "Reason", "OldContent")
+        private val TRANSCRIPT_EDITS_HEADER = listOf("EditID", "EvidenceID", "Timestamp", "Reason", "NewContent")
     }
 
     private suspend fun <T> execute(block: (XSSFWorkbook) -> T): Result<T> = withContext(Dispatchers.IO) {
@@ -393,7 +393,6 @@ class LocalFileStorageService @Inject constructor(
         val evidenceSheet = workbook.getSheet(EVIDENCE_SHEET_NAME) ?: throw IOException("Evidence sheet not found.")
         val evidenceRow = findRowById(evidenceSheet, evidence.id, 0) ?: throw IOException("Evidence with id ${evidence.id} not found.")
 
-        val oldContent = evidenceRow.getCell(3)?.stringCellValue ?: ""
         evidenceRow.getCell(3)?.setCellValue(newTranscript)
 
         val editsSheet = workbook.getSheet(TRANSCRIPT_EDITS_SHEET_NAME) ?: workbook.createSheet(TRANSCRIPT_EDITS_SHEET_NAME).also {
@@ -404,7 +403,7 @@ class LocalFileStorageService @Inject constructor(
             createCell(1).setCellValue(evidence.id.toDouble()) // EvidenceID
             createCell(2).setCellValue(System.currentTimeMillis().toDouble()) // Timestamp
             createCell(3).setCellValue(reason) // Reason
-            createCell(4).setCellValue(oldContent) // OldContent
+            createCell(4).setCellValue(newTranscript) // NewContent
         }
     }
 

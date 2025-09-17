@@ -20,17 +20,22 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
+import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
+import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
+import java.util.Locale
 
 @Composable
 fun EvidenceDetailsScreen(
     evidence: Evidence,
     caseViewModel: CaseViewModel,
+    navController: NavController,
 ) {
     var commentary by remember { mutableStateOf(evidence.commentary ?: "") }
 
@@ -80,6 +85,14 @@ fun EvidenceDetailsScreen(
             )
             Spacer(modifier = Modifier.height(16.dp))
             LexorcistOutlinedButton(onClick = { caseViewModel.updateCommentary(evidence.id, commentary) }, text = "Save Commentary")
+            if (evidence.type == "audio") {
+                Spacer(modifier = Modifier.height(16.dp))
+                LexorcistOutlinedButton(
+                    onClick = { navController.navigate("transcription/${evidence.id}") },
+                    text = stringResource(R.string.edit_transcript).uppercase(Locale.getDefault()),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         }
     }
 }

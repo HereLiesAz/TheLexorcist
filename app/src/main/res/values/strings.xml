@@ -274,4 +274,8 @@
     <string name="fragment_main_action_6_button_text">Tag financial</string>
     <string name="fragment_main_buttons_title">Script Snippets</string>
     <string name="generate_description">Generate Description</string>
+    <string name="save_edit">Save Edit</string>
+    <string name="done">Done</string>
+    <string name="edit_history">Edit History</string>
+    <string name="edit_transcript">Edit Transcript</string>
 </resources>
