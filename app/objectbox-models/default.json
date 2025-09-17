@@ -117,11 +117,6 @@
           "id": "7:1338221599952899194",
           "name": "cloudSyncEnabled",
           "type": 1
-        },
-        {
-          "id": "8:4557484541685200935",
-          "name": "selectedCloudProvider",
-          "type": 9
         }
       ],
       "relations": []
@@ -135,7 +130,9 @@
   "modelVersionParserMinimum": 5,
   "retiredEntityUids": [],
   "retiredIndexUids": [],
-  "retiredPropertyUids": [],
+  "retiredPropertyUids": [
+    4557484541685200935
+  ],
   "retiredRelationUids": [],
   "version": 1
 }
