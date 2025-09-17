@@ -11,7 +11,7 @@ import javax.inject.Singleton
 
 @Singleton
 class AppLifecycleObserver @Inject constructor(
-    private val caseRepository: CaseRepository,
+    private val storageService: com.hereliesaz.lexorcist.data.StorageService,
     private val settingsManager: com.hereliesaz.lexorcist.data.SettingsManager,
     private val applicationScope: CoroutineScope
 ) : DefaultLifecycleObserver {
@@ -20,7 +20,7 @@ class AppLifecycleObserver @Inject constructor(
         super.onStop(owner)
         if (settingsManager.getCloudSyncEnabled()) {
             applicationScope.launch(Dispatchers.IO) {
-                caseRepository.synchronize()
+                storageService.synchronize()
             }
         }
     }

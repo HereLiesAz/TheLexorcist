@@ -26,8 +26,11 @@ import javax.inject.Singleton
 class LocalFileStorageService @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val gson: Gson,
-    private val credentialHolder: CredentialHolder,
-    private val settingsManager: SettingsManager
+    private val settingsManager: SettingsManager,
+    private val syncManager: SyncManager,
+    @Named("googleDrive") private val googleDriveProvider: CloudStorageProvider,
+    @Named("dropbox") private val dropboxProvider: CloudStorageProvider,
+    @Named("oneDrive") private val oneDriveProvider: CloudStorageProvider
 ) : StorageService {
 
     private val storageDir: File by lazy {
@@ -404,57 +407,19 @@ class LocalFileStorageService @Inject constructor(
         }
     }
 
-    override suspend fun synchronize(): Result<Unit> = withContext(Dispatchers.IO) {
-        val googleApiService = credentialHolder.googleApiService
-            ?: return@withContext Result.Error(Exception("User not authenticated. Cannot synchronize."))
-
-        if (!spreadsheetFile.exists()) {
-            return@withContext Result.Success(Unit) // Nothing to sync
+    override suspend fun synchronize(): Result<Unit> {
+        val selectedProvider = settingsManager.getSelectedCloudProvider()
+        val cloudStorageProvider = when (selectedProvider) {
+            "GoogleDrive" -> googleDriveProvider
+            "Dropbox" -> dropboxProvider
+            "OneDrive" -> oneDriveProvider
+            else -> null
         }
 
-        val folderIdResult = googleApiService.getOrCreateAppRootFolder()
-        if (folderIdResult is Result.Success) {
-            val appRootFolderId = folderIdResult.data
-
-            // Upload the main spreadsheet
-            val uploadSpreadsheetResult = googleApiService.uploadFile(spreadsheetFile, appRootFolderId, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-            if (uploadSpreadsheetResult is Result.Error) {
-                return@withContext Result.Error(uploadSpreadsheetResult.exception)
-            }
-            if (uploadSpreadsheetResult is Result.UserRecoverableError) {
-                return@withContext Result.UserRecoverableError(uploadSpreadsheetResult.exception)
-            }
-
-
-            // Get all cases to find their folders
-            val casesResult = getAllCases()
-            if (casesResult is Result.Success) {
-                val cases = casesResult.data
-                for (case in cases) {
-                    val caseFolder = File(storageDir, case.spreadsheetId)
-                    if (caseFolder.exists() && caseFolder.isDirectory) {
-                        val uploadFolderResult = googleApiService.uploadFolder(caseFolder, appRootFolderId)
-                        if (uploadFolderResult is Result.Error) {
-                            // Log the error but continue with other folders
-                            android.util.Log.e("LocalFileStorageService", "Failed to upload folder for case ${case.name}", uploadFolderResult.exception)
-                        }
-                         if (uploadFolderResult is Result.UserRecoverableError) {
-                            // Log the error but continue with other folders
-                            android.util.Log.e("LocalFileStorageService", "User recoverable error uploading folder for case ${case.name}", uploadFolderResult.exception)
-                        }
-                    }
-                }
-            } else if (casesResult is Result.Error) {
-                return@withContext Result.Error(casesResult.exception)
-            }
-
-            Result.Success(Unit)
-        } else if (folderIdResult is Result.Error) {
-            Result.Error(folderIdResult.exception)
-        } else if (folderIdResult is Result.UserRecoverableError) {
-            Result.UserRecoverableError(folderIdResult.exception)
+        return if (cloudStorageProvider != null) {
+            syncManager.synchronize(cloudStorageProvider, this)
         } else {
-            Result.Error(Exception("Unknown error getting or creating app root folder"))
+            Result.Success(Unit) // No provider selected, so nothing to sync
         }
     }
 }
