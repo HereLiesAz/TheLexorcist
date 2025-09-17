@@ -3,11 +3,8 @@ package com.hereliesaz.lexorcist.viewmodel
 import android.app.Application
 import android.content.Context
 import android.net.Uri
-import android.util.Log
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.hereliesaz.lexorcist.data.EvidenceRepository
-import com.hereliesaz.lexorcist.data.SettingsManager
-import com.hereliesaz.lexorcist.service.ScriptRunner
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
@@ -34,8 +31,6 @@ class OcrViewModelTest {
 
     private lateinit var ocrViewModel: OcrViewModel
     private lateinit var evidenceRepository: EvidenceRepository
-    private lateinit var settingsManager: SettingsManager
-    private lateinit var scriptRunner: ScriptRunner
     private lateinit var application: Application
 
     @Before
@@ -43,9 +38,7 @@ class OcrViewModelTest {
         Dispatchers.setMain(testDispatcher)
         application = mockk(relaxed = true)
         evidenceRepository = mockk(relaxed = true)
-        settingsManager = mockk(relaxed = true)
-        scriptRunner = mockk(relaxed = true)
-        ocrViewModel = OcrViewModel(application, evidenceRepository, settingsManager, scriptRunner)
+        ocrViewModel = OcrViewModel(application, evidenceRepository)
     }
 
     @After
@@ -58,7 +51,7 @@ class OcrViewModelTest {
         // Given
         val uri: Uri = mockk()
         val context: Context = mockk(relaxed = true)
-        val caseId = 1
+        val caseId = 1L
         val parentVideoId = "video1"
 
         // When
