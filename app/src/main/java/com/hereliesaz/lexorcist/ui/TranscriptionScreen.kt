@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -24,13 +24,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.data.Evidence
+import com.hereliesaz.lexorcist.model.TranscriptEdit
 import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
+import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -40,11 +44,9 @@ fun TranscriptionScreen(
     caseViewModel: CaseViewModel,
     navController: NavController,
 ) {
-    var transcript by remember(evidence) {
-        mutableStateOf(evidence.content)
-    }
+    var transcript by remember(evidence) { mutableStateOf(evidence.content) }
     var reason by remember { mutableStateOf("") }
-    var showReasonDialog by remember { mutableStateOf(false) }
+    val isTranscriptChanged = transcript != evidence.content
 
     Scaffold(
         topBar = {
@@ -79,61 +81,75 @@ fun TranscriptionScreen(
                 textStyle = TextStyle(textAlign = TextAlign.End)
             )
             Spacer(modifier = Modifier.height(16.dp))
-            Text("Edit History", style = MaterialTheme.typography.titleMedium, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.End)
-            LazyColumn(modifier = Modifier.weight(1f)) {
-                items(evidence.transcriptEdits) { edit ->
-                    Text("${edit.timestamp}: ${edit.reason} - ${edit.content}", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.End)
-                }
+
+            if (isTranscriptChanged) {
+                OutlinedTextField(
+                    value = reason,
+                    onValueChange = { reason = it },
+                    label = { Text(stringResource(R.string.reason_for_edit)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    textStyle = TextStyle(textAlign = TextAlign.End)
+                )
+                Spacer(modifier = Modifier.height(16.dp))
             }
-            Spacer(modifier = Modifier.height(16.dp))
+
             LexorcistOutlinedButton(
                 onClick = {
-                    if (transcript != evidence.content) {
-                        showReasonDialog = true
-                    } else {
-                        navController.popBackStack()
+                    if (isTranscriptChanged) {
+                        caseViewModel.updateTranscript(evidence, transcript, reason)
                     }
+                    navController.popBackStack()
                 },
                 modifier = Modifier.fillMaxWidth(),
-                text = stringResource(R.string.save).uppercase(Locale.getDefault())
+                enabled = !isTranscriptChanged || reason.isNotBlank(),
+                text = stringResource(if (isTranscriptChanged) R.string.save_edit else R.string.done).uppercase(Locale.getDefault())
             )
-        }
-    }
 
-    if (showReasonDialog) {
-        ReasonDialog(
-            onDismiss = { showReasonDialog = false },
-            onConfirm = { reasonText ->
-                caseViewModel.updateTranscript(evidence, transcript, reasonText)
-                showReasonDialog = false
-                navController.popBackStack()
-            },
-        )
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                stringResource(R.string.edit_history),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.End
+            )
+            LazyColumn(modifier = Modifier.weight(1f)) {
+                items(evidence.transcriptEdits.sortedByDescending { it.timestamp }) { edit ->
+                    EditHistoryItem(edit = edit)
+                }
+            }
+        }
     }
 }
 
 @Composable
-fun ReasonDialog(
-    onDismiss: () -> Unit,
-    onConfirm: (String) -> Unit,
-) {
-    var reason by remember { mutableStateOf("") }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.reason_for_edit)) },
-        text = {
-            OutlinedTextField(
-                value = reason,
-                onValueChange = { reason = it },
-                label = { Text(stringResource(R.string.reason)) },
-                textStyle = TextStyle(textAlign = TextAlign.End)
+fun EditHistoryItem(edit: TranscriptEdit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date(edit.timestamp)),
+                style = MaterialTheme.typography.bodySmall,
+                textAlign = TextAlign.End,
+                modifier = Modifier.fillMaxWidth()
             )
-        },
-        confirmButton = {
-            LexorcistOutlinedButton(onClick = { onConfirm(reason) }, text = stringResource(R.string.confirm))
-        },
-        dismissButton = {
-            LexorcistOutlinedButton(onClick = onDismiss, text = stringResource(R.string.cancel))
-        },
-    )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "Reason: ${edit.reason}",
+                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                textAlign = TextAlign.End,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = edit.content,
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.End,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
 }

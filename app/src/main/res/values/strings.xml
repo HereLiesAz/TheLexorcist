@@ -264,4 +264,8 @@
     <string name="add_video_evidence">Video</string>
     <string name="assign_to_allegation">Assign to Allegation</string>
     <string name="add_evidence">Add Evidence</string>
+    <string name="save_edit">Save Edit</string>
+    <string name="done">Done</string>
+    <string name="edit_history">Edit History</string>
+    <string name="edit_transcript">Edit Transcript</string>
 </resources>

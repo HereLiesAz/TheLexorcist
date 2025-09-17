@@ -218,6 +218,7 @@ fun MainScreen(
                                         EvidenceDetailsScreen(
                                             evidence = evidence,
                                             caseViewModel = caseViewModel,
+                                            navController = navController
                                         )
                                     } else {
                                         Text("Error: Evidence not found.")
