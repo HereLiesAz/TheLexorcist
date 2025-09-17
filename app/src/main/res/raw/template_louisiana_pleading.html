@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Louisiana Pleading Template</title>
+<style>
+    body {
+        font-family: sans-serif;
+        font-size: 12pt;
+        margin: 1in;
+    }
+    .court-title {
+        text-align: center;
+        font-weight: bold;
+        margin-bottom: 20px;
+    }
+    .case-title {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    .document-title {
+        text-align: center;
+        font-weight: bold;
+        margin-bottom: 20px;
+    }
+    .paragraph {
+        margin-bottom: 10px;
+    }
+    .signature-block {
+        margin-top: 40px;
+    }
+</style>
+</head>
+<body>
+
+    <div class="court-title">
+        {{COURT_NAME}}<br>
+        PARISH OF {{PARISH}}, STATE OF LOUISIANA
+    </div>
+
+    <div class="case-title">
+        NO. {{DOCKET_NUMBER}}
+    </div>
+
+    <div class="case-title">
+        {{PLAINTIFF_NAMES}}<br>
+        VERSUS<br>
+        {{DEFENDANT_NAMES}}
+    </div>
+
+    <div class="document-title">
+        {{DOCUMENT_TITLE}}
+    </div>
+
+    <div class="content">
+        <div class="paragraph">
+            1.
+            <br>
+            {{DOCUMENT_BODY_PARAGRAPH_1}}
+        </div>
+        <div class="paragraph">
+            2.
+            <br>
+            {{DOCUMENT_BODY_PARAGRAPH_2}}
+        </div>
+        <div class="paragraph">
+            3.
+            <br>
+            {{DOCUMENT_BODY_PARAGRAPH_3}}
+        </div>
+    </div>
+
+    <div class="signature-block">
+        <p>
+            Respectfully submitted,
+        </p>
+        <p>
+            ____________________________________<br>
+            {{ATTORNEY_NAME}} (Bar Roll No. {{ATTORNEY_BAR_ROLL}})<br>
+            {{ATTORNEY_ADDRESS_LINE_1}}<br>
+            {{ATTORNEY_ADDRESS_LINE_2}}<br>
+            Telephone: {{ATTORNEY_PHONE}}<br>
+            Email: {{ATTORNEY_EMAIL}}<br>
+            Attorney for {{PARTY_REPRESENTATION}}
+        </p>
+    </div>
+
+</body>
+</html>

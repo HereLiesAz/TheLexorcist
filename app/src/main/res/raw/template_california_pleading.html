@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>California Pleading Template</title>
+<style>
+    body {
+        font-family: 'Times New Roman', Times, serif;
+        font-size: 12pt;
+        margin: 0;
+        padding: 0;
+        width: 8.5in;
+        height: 11in;
+    }
+    .page {
+        width: 8.5in;
+        height: 11in;
+        padding: 1in;
+        box-sizing: border-box;
+        position: relative;
+        page-break-after: always;
+    }
+    .content {
+        line-height: 2; /* Double-spaced */
+    }
+    .line-numbers {
+        position: absolute;
+        left: 0.5in;
+        top: 1in;
+        bottom: 1in;
+        width: 0.5in;
+        text-align: right;
+        padding-right: 10px;
+        font-size: 12pt;
+        line-height: 2;
+    }
+    .line-numbers span {
+        display: block;
+    }
+    .caption-header {
+        line-height: 1.5;
+    }
+    .court-title {
+        text-align: center;
+        margin-top: 1in;
+        font-weight: bold;
+    }
+    .case-title {
+        margin-top: 20px;
+    }
+    .case-info {
+        float: right;
+        width: 40%;
+        border-left: 1px solid black;
+        padding-left: 10px;
+    }
+    .document-title {
+        text-align: center;
+        font-weight: bold;
+        margin-top: 20px;
+    }
+</style>
+</head>
+<body>
+
+<div class="page">
+    <div class="line-numbers">
+        <script>
+            for (let i = 1; i <= 28; i++) {
+                document.write('<span>' + i + '</span>');
+            }
+        </script>
+    </div>
+
+    <div class="content">
+        <div class="caption-header">
+            {{ATTORNEY_NAME}} (SBN: {{ATTORNEY_SBN}})<br>
+            {{ATTORNEY_ADDRESS_LINE_1}}<br>
+            {{ATTORNEY_ADDRESS_LINE_2}}<br>
+            Telephone: {{ATTORNEY_PHONE}}<br>
+            Fax: {{ATTORNEY_FAX}}<br>
+            Email: {{ATTORNEY_EMAIL}}<br>
+            <br>
+            Attorney for {{PARTY_REPRESENTATION}}
+        </div>
+
+        <div class="court-title">
+            SUPERIOR COURT OF THE STATE OF CALIFORNIA<br>
+            FOR THE COUNTY OF {{COUNTY}}
+        </div>
+
+        <div class="case-title">
+            <div style="float: left; width: 55%;">
+                {{PLAINTIFF_NAMES}}<br>
+                <br>
+                Plaintiff,
+                <br>
+                vs.<br>
+                <br>
+                {{DEFENDANT_NAMES}}<br>
+                <br>
+                Defendant.
+            </div>
+            <div class="case-info">
+                Case No. {{CASE_NUMBER}}<br>
+                <br>
+                <div class="document-title">
+                    {{DOCUMENT_TITLE}}
+                </div>
+            </div>
+            <div style="clear: both;"></div>
+        </div>
+
+        <div style="margin-top: 20px;">
+            {{DOCUMENT_BODY}}
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

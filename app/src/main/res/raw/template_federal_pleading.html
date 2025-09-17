@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Federal Pleading Template</title>
+<style>
+    body {
+        font-family: 'Times New Roman', Times, serif;
+        font-size: 12pt;
+        margin: 0;
+        padding: 0;
+        width: 8.5in;
+        height: 11in;
+    }
+    .page {
+        width: 8.5in;
+        height: 11in;
+        padding: 1in;
+        box-sizing: border-box;
+        position: relative;
+        page-break-after: always;
+    }
+    .content {
+        line-height: 2; /* Double-spaced */
+    }
+    .caption-header {
+        line-height: 1.5;
+    }
+    .court-title {
+        text-align: center;
+        margin-top: 1in;
+        font-weight: bold;
+    }
+    .case-title {
+        margin-top: 20px;
+    }
+    .case-info {
+        float: right;
+        width: 40%;
+        padding-left: 10px;
+    }
+    .document-title {
+        text-align: center;
+        font-weight: bold;
+        margin-top: 20px;
+    }
+</style>
+</head>
+<body>
+
+<div class="page">
+    <div class="content">
+        <div class="caption-header">
+            {{ATTORNEY_NAME}} (SBN: {{ATTORNEY_SBN}})<br>
+            {{ATTORNEY_ADDRESS_LINE_1}}<br>
+            {{ATTORNEY_ADDRESS_LINE_2}}<br>
+            Telephone: {{ATTORNEY_PHONE}}<br>
+            Fax: {{ATTORNEY_FAX}}<br>
+            Email: {{ATTORNEY_EMAIL}}<br>
+            <br>
+            Attorney for {{PARTY_REPRESENTATION}}
+        </div>
+
+        <div class="court-title">
+            UNITED STATES DISTRICT COURT<br>
+            NORTHERN DISTRICT OF CALIFORNIA
+        </div>
+
+        <div class="case-title">
+            <div style="float: left; width: 55%;">
+                {{PLAINTIFF_NAMES}},<br>
+                <br>
+                Plaintiff,
+                <br>
+                vs.<br>
+                <br>
+                {{DEFENDANT_NAMES}},<br>
+                <br>
+                Defendant.
+            </div>
+            <div class="case-info">
+                Case No. {{CASE_NUMBER}}<br>
+                <br>
+                <div class="document-title">
+                    {{DOCUMENT_TITLE}}
+                </div>
+            </div>
+            <div style="clear: both;"></div>
+        </div>
+
+        <div style="margin-top: 20px;">
+            <p>
+                1. {{DOCUMENT_BODY_PARAGRAPH_1}}
+            </p>
+            <p>
+                2. {{DOCUMENT_BODY_PARAGRAPH_2}}
+            </p>
+            <p>
+                3. {{DOCUMENT_BODY_PARAGRAPH_3}}
+            </p>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
