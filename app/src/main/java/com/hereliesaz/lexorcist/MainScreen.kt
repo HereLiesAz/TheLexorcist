@@ -186,7 +186,22 @@ fun MainScreen(
                                         navController = navController,
                                     )
                                 }
-                                composable("extras") { ExtrasScreen(viewModel = androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel<AddonsBrowserViewModel>(), onShare = {}) }
+                                composable("extras") {
+                                    ExtrasScreen(
+                                        onShare = {
+                                            navController.navigate("share_addon")
+                                        }
+                                    )
+                                }
+                                composable("share_addon") {
+                                    val extrasViewModel: com.hereliesaz.lexorcist.viewmodel.ExtrasViewModel = hiltViewModel()
+                                    com.hereliesaz.lexorcist.ui.ShareAddonScreen(
+                                        onShare = { name, description, content, type ->
+                                            extrasViewModel.shareItem(name, description, content, type)
+                                            navController.popBackStack()
+                                        }
+                                    )
+                                }
                                 composable("script_builder") {
                                     ScriptBuilderScreen(viewModel = androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel<ScriptBuilderViewModel>(), navController = navController)
                                 }
