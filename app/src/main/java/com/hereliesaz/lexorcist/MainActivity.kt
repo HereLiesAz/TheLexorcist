@@ -13,13 +13,18 @@ import com.hereliesaz.lexorcist.ui.theme.LexorcistTheme
 import com.hereliesaz.lexorcist.viewmodel.AuthViewModel
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
+import com.hereliesaz.lexorcist.viewmodel.ScriptedMenuViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private val authViewModel: AuthViewModel by viewModels()
     private val mainViewModel: MainViewModel by viewModels()
     private val caseViewModel: CaseViewModel by viewModels()
+
+    @Inject
+    lateinit var scriptedMenuViewModel: ScriptedMenuViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,6 +57,7 @@ class MainActivity : ComponentActivity() {
                     navController = navController,
                     mainViewModel = mainViewModel,
                     authViewModel = authViewModel,
+                    scriptedMenuViewModel = scriptedMenuViewModel,
                     onSignInClick = {
                         authViewModel.signIn(this)
                     },

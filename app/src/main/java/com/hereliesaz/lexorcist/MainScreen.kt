@@ -57,6 +57,8 @@ import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 import com.hereliesaz.lexorcist.viewmodel.MasterAllegationsViewModel
 import com.hereliesaz.lexorcist.viewmodel.ScriptBuilderViewModel
+import com.hereliesaz.lexorcist.viewmodel.ScriptedMenuViewModel
+import com.hereliesaz.lexorcist.ui.components.ScriptableAzNavRail
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -65,6 +67,7 @@ fun MainScreen(
     authViewModel: AuthViewModel = viewModel(),
     caseViewModel: CaseViewModel = viewModel(),
     mainViewModel: MainViewModel = viewModel(),
+    scriptedMenuViewModel: ScriptedMenuViewModel,
     onSignInClick: () -> Unit,
     onSignOutClick: () -> Unit,
 ) {
@@ -115,23 +118,11 @@ fun MainScreen(
                         Modifier
                             .fillMaxSize(),
                 ) {
-                    AzNavRail {
-                        azRailItem(id = "cases", text = "Cases", onClick = { navController.navigate("cases") })
-                        azRailItem(id = "evidence", text = "Evidence", onClick = { navController.navigate("evidence") })
-                        // Renamed item id and route for case-specific allegations
-                        azRailItem(
-                            id = "case_allegations_item",
-                            text = "Allegations",
-                            onClick = { navController.navigate("case_allegations_route") },
-                        )
-                        azRailItem(id = "templates", text = "Templates", onClick = { navController.navigate("templates") })
-                        azRailItem(id = "script_builder", text = "Script", onClick = { navController.navigate("script_builder") })
-                        azRailItem(id = "data_review", text = "Review", onClick = { navController.navigate("data_review") })
-                        azRailItem(id = "timeline", text = "Timeline", onClick = { navController.navigate("timeline") })
-                        azMenuItem(id = "extras", text = "Extras", onClick = { navController.navigate("extras") })
-                        azMenuItem(id = "settings", text = "Settings", onClick = { navController.navigate("settings") })
-                        azMenuItem(id = "logout", text = "Logout", onClick = { authViewModel.signOut() })
-                    }
+                    ScriptableAzNavRail(
+                        navController = navController,
+                        scriptedMenuItems = scriptedMenuViewModel.menuItems,
+                        onLogout = { authViewModel.signOut() }
+                    )
 
                     BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxHeight().padding(paddingValues)) {
                         val halfContentAreaHeight = this@BoxWithConstraints.maxHeight / 2
