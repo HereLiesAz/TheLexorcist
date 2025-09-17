@@ -14,6 +14,7 @@ import com.hereliesaz.lexorcist.data.EvidenceRepository
 import com.hereliesaz.lexorcist.data.LocalFileStorageService
 import com.hereliesaz.lexorcist.data.SettingsManager
 import com.hereliesaz.lexorcist.data.SortOrder
+import com.hereliesaz.lexorcist.model.ProcessingState
 import com.hereliesaz.lexorcist.viewmodel.TimelineSortType // Ensured import
 import com.hereliesaz.lexorcist.model.SheetFilter
 import com.hereliesaz.lexorcist.ui.theme.ThemeMode
@@ -110,16 +111,14 @@ constructor(
     val userRecoverableAuthIntent: StateFlow<Intent?> =
         _userRecoverableAuthIntent.asStateFlow()
 
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
-
     private val _videoProcessingProgress = MutableStateFlow<String?>(null)
     val videoProcessingProgress: StateFlow<String?> = _videoProcessingProgress.asStateFlow()
 
-    private val _processingStatus = MutableStateFlow<String?>(null)
-    val processingStatus: StateFlow<String?> = _processingStatus.asStateFlow()
+    private val _processingState = MutableStateFlow<ProcessingState?>(null)
+    val processingState: StateFlow<ProcessingState?> = _processingState.asStateFlow()
 
-    val logMessages: StateFlow<List<com.hereliesaz.lexorcist.model.LogEntry>> = logService.logMessages
+    private val _logMessages = MutableStateFlow<List<com.hereliesaz.lexorcist.model.LogEntry>>(emptyList())
+    val logMessages: StateFlow<List<com.hereliesaz.lexorcist.model.LogEntry>> = _logMessages.asStateFlow()
 
     private val _navigateToTranscriptionScreen = MutableSharedFlow<Int>()
     val navigateToTranscriptionScreen = _navigateToTranscriptionScreen.asSharedFlow()
@@ -173,6 +172,11 @@ constructor(
     init {
         loadThemeModePreference()
         _storageLocation.value = settingsManager.getStorageLocation()
+        viewModelScope.launch {
+            logService.logEventFlow.collect { newLog ->
+                _logMessages.value = listOf(newLog) + _logMessages.value
+            }
+        }
     }
 
     fun setStorageLocation(uri: android.net.Uri) {
@@ -478,7 +482,7 @@ constructor(
     }
 
     fun clearLogs() {
-        logService.clearLogs()
+        _logMessages.value = emptyList()
     }
 
     fun addTextEvidence(text: String) {
@@ -518,23 +522,21 @@ constructor(
         viewModelScope.launch {
             clearLogs()
             val case = selectedCase.value ?: return@launch
-            _isLoading.value = true
             try {
-                _processingStatus.value = "Uploading image..."
                 val (newEvidence, message) = ocrProcessingService.processImage(
                     uri = uri,
                     context = applicationContext,
                     caseId = case.id.toLong(),
                     spreadsheetId = case.spreadsheetId,
-                )
-                _processingStatus.value = "Image processing complete."
+                ) {
+                    _processingState.value = it
+                }
                 message?.let { viewModelScope.launch { _userMessage.emit(it) } }
                 if (newEvidence != null && newEvidence.content.isEmpty()) {
                     viewModelScope.launch { _userMessage.emit("No text found in the image.") }
                 }
             } finally {
-                _isLoading.value = false
-                _processingStatus.value = null
+                _processingState.value = null
                 loadEvidenceForSelectedCase()
             }
         }

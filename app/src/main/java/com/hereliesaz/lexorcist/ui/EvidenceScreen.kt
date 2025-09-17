@@ -37,6 +37,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.hereliesaz.lexorcist.R
+import com.hereliesaz.lexorcist.model.LogEntry
+import com.hereliesaz.lexorcist.model.ProcessingState
 import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import kotlinx.coroutines.flow.collectLatest
@@ -127,18 +129,17 @@ fun EvidenceScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                 }
             }
-            val isLoading by caseViewModel.isLoading.collectAsState()
-            val processingStatus by caseViewModel.processingStatus.collectAsState()
-            if (isLoading) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-                    CircularProgressIndicator()
-                    processingStatus?.let {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(it, style = MaterialTheme.typography.bodySmall)
-                    }
-                }
+            val processingState by caseViewModel.processingState.collectAsState()
+            val logMessages by caseViewModel.logMessages.collectAsState()
+
+            processingState?.let {
+                ProcessingProgressView(
+                    processingState = it,
+                    logMessages = logMessages
+                )
             }
-            if (showAddTextEvidence) {
+
+            if (showAddTextEvidence && processingState == null) {
                 OutlinedTextField(
                     value = text,
                     onValueChange = { text = it },
@@ -164,7 +165,7 @@ fun EvidenceScreen(
                     onClick = { showAddTextEvidence = false },
                     text = stringResource(R.string.cancel).uppercase(Locale.getDefault())
                 )
-            } else {
+            } else if (processingState == null) {
                 LexorcistOutlinedButton(onClick = { showAddTextEvidence = true }, text = stringResource(R.string.add_text_evidence).uppercase(Locale.getDefault()))
                 LexorcistOutlinedButton(onClick = { imagePickerLauncher.launch("image/*") }, text = stringResource(R.string.add_image_evidence).uppercase(Locale.getDefault()))
                 LexorcistOutlinedButton(onClick = { audioPickerLauncher.launch("audio/*") }, text = stringResource(R.string.add_audio_evidence).uppercase(Locale.getDefault()))
@@ -172,24 +173,6 @@ fun EvidenceScreen(
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-
-            val logMessages by caseViewModel.logMessages.collectAsState()
-            if (logMessages.isNotEmpty()) {
-                LazyColumn(modifier = Modifier.weight(1f)) {
-                    items(logMessages) { logEntry ->
-                        val color = when (logEntry.level) {
-                            com.hereliesaz.lexorcist.model.LogLevel.INFO -> MaterialTheme.colorScheme.onSurface
-                            com.hereliesaz.lexorcist.model.LogLevel.ERROR -> MaterialTheme.colorScheme.error
-                            com.hereliesaz.lexorcist.model.LogLevel.DEBUG -> MaterialTheme.colorScheme.onSurfaceVariant
-                        }
-                        Text(
-                            text = "${SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date(logEntry.timestamp))} - ${logEntry.message}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = color
-                        )
-                    }
-                }
-            }
 
             LazyColumn(modifier = Modifier.weight(1f)) {
                 items(evidenceList) { evidence ->
@@ -237,5 +220,35 @@ fun EvidenceListItem(
             textAlign = TextAlign.End,
             maxLines = 3,
         )
+    }
+}
+
+@Composable
+fun ProcessingProgressView(
+    processingState: ProcessingState,
+    logMessages: List<LogEntry>
+) {
+    Column(horizontalAlignment = Alignment.End, modifier = Modifier.fillMaxWidth()) {
+        LinearProgressIndicator(
+            progress = processingState.progress / 100f,
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(processingState.currentTask, style = MaterialTheme.typography.bodySmall)
+        Spacer(modifier = Modifier.height(16.dp))
+        LazyColumn(modifier = Modifier.fillMaxWidth().height(200.dp)) {
+            items(logMessages) { logEntry ->
+                val color = when (logEntry.level) {
+                    com.hereliesaz.lexorcist.model.LogLevel.INFO -> MaterialTheme.colorScheme.onSurface
+                    com.hereliesaz.lexorcist.model.LogLevel.ERROR -> MaterialTheme.colorScheme.error
+                    com.hereliesaz.lexorcist.model.LogLevel.DEBUG -> MaterialTheme.colorScheme.onSurfaceVariant
+                }
+                Text(
+                    text = "${SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date(logEntry.timestamp))} - ${logEntry.message}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = color
+                )
+            }
+        }
     }
 }
