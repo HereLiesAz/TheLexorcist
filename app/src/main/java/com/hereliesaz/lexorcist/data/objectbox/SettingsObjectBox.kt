@@ -12,5 +12,6 @@ data class SettingsObjectBox(
     var theme: String = "System",
     var exportFormat: String = "PDF",
     var caseFolderPath: String? = null,
-    var cloudSyncEnabled: Boolean = true
+    var cloudSyncEnabled: Boolean = true,
+    var selectedCloudProvider: String? = null // Added field
 )

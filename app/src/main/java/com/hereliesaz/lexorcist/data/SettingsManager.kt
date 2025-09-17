@@ -16,13 +16,15 @@ class SettingsManager @Inject constructor(
     private val settingsBox = boxStore.boxFor(SettingsObjectBox::class.java)
 
     init {
+        // Initialize with default settings if none exist
         if (settingsBox.isEmpty) {
             settingsBox.put(SettingsObjectBox())
         }
     }
 
     private fun getSettings(): SettingsObjectBox {
-        return settingsBox.get(1) ?: SettingsObjectBox()
+        // Retrieve settings; ensure a non-null return, defaulting if necessary
+        return settingsBox.get(1) ?: SettingsObjectBox().also { settingsBox.put(it) }
     }
 
     fun saveStorageLocation(uri: String) {
@@ -73,5 +75,14 @@ class SettingsManager @Inject constructor(
 
     fun getCloudSyncEnabled(): Boolean {
         return getSettings().cloudSyncEnabled
+    }
+
+    fun saveSelectedCloudProvider(provider: String?) {
+        val settings = getSettings().copy(selectedCloudProvider = provider)
+        settingsBox.put(settings)
+    }
+
+    fun getSelectedCloudProvider(): String? {
+        return getSettings().selectedCloudProvider
     }
 }

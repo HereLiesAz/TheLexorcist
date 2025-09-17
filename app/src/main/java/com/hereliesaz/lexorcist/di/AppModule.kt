@@ -4,8 +4,9 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.credentials.CredentialManager
 import androidx.work.WorkManager
-import com.google.gson.Gson // Moved import
+import com.google.gson.Gson
 import com.hereliesaz.lexorcist.data.SettingsManager
+import com.hereliesaz.lexorcist.data.objectbox.MyObjectBox // Added import for MyObjectBox
 import com.hereliesaz.lexorcist.service.ScriptRunner
 import com.hereliesaz.lexorcist.utils.CacheManager
 import dagger.Module
@@ -13,6 +14,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import io.objectbox.BoxStore // Added import for BoxStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -39,11 +41,21 @@ class AppModule {
         @ApplicationContext context: Context,
     ): SharedPreferences = context.getSharedPreferences("LexorcistAppPrefs", Context.MODE_PRIVATE)
 
+    // Provider for BoxStore
+    @Provides
+    @Singleton
+    fun provideBoxStore(@ApplicationContext context: Context): BoxStore {
+        return MyObjectBox.builder()
+            .androidContext(context.applicationContext)
+            .build()
+    }
+
     @Provides
     @Singleton
     fun provideSettingsManager(
         @ApplicationContext context: Context,
-    ): SettingsManager = SettingsManager(context)
+        boxStore: BoxStore // Added BoxStore parameter
+    ): SettingsManager = SettingsManager(context, boxStore) // Pass BoxStore to constructor
 
     @Provides
     @Singleton
@@ -63,7 +75,6 @@ class AppModule {
 
     @Provides
     @Singleton
-    fun provideGson(): Gson = Gson() // Changed to use the imported Gson
+    fun provideGson(): Gson = Gson()
 
-    // Removed provideLogService() as LogService has @Inject constructor
 }
