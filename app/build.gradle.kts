@@ -20,11 +20,10 @@ plugins {
 
 }
 
-// Add KSP configuration block to exclude the Room KSP processor
+// Add KSP configuration block
 ksp {
     arg("dagger.validateTransitiveComponentDependencies", "ENABLED")
     arg("dagger.fullBindingGraphValidation", "ERROR") // You can also try "WARNING"
-    arg("ksp.excluded.processors", "androidx.room.compiler.processing.ksp.RoomKspProcessor") // Keep this
 }
 
 android {
