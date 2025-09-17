@@ -1127,9 +1127,10 @@ class GoogleApiService @Inject constructor(
         description: String,
         content: String,
         type: String,
-    ): Boolean =
+        authorEmail: String,
+    ): Result<Unit> =
         withContext(Dispatchers.IO) {
-            val sheets = getSheetsService() ?: return@withContext false
+            val sheets = getSheetsService() ?: return@withContext Result.Error(IOException("Credential not available for Sheets service"))
             try {
                 val spreadsheetId = "18hB2Kx5Le1uaF2pImeITgWntcBB-JfYxvpU2aqTzRr8" // Constant
                 val sheetName = if (type == "Script") "Scripts" else "Templates"
@@ -1150,7 +1151,7 @@ class GoogleApiService @Inject constructor(
                             name,
                             description,
                             content,
-                            "self", // Author
+                            authorEmail, // Use the provided author email
                             0.0, // Rating
                             0, // NumRatings
                         ),
@@ -1162,9 +1163,103 @@ class GoogleApiService @Inject constructor(
                     .append(spreadsheetId, sheetName, body)
                     .setValueInputOption("RAW")
                     .execute()
-                true
+                Result.Success(Unit)
+            } catch (e: UserRecoverableAuthIOException) {
+                Result.UserRecoverableError(e)
             } catch (e: IOException) {
-                false
+                Result.Error(e)
+            }
+        }
+
+    private suspend fun findRowOfSharedItem(
+        sheets: Sheets,
+        spreadsheetId: String,
+        sheetName: String,
+        itemId: String,
+    ): Int {
+        val idColumnRange = "$sheetName!A:A"
+        val response = sheets.spreadsheets().values().get(spreadsheetId, idColumnRange).execute()
+        val values = response.getValues() ?: return -1
+        return values.indexOfFirst { it.isNotEmpty() && it[0].toString() == itemId }
+    }
+
+    suspend fun updateSharedItem(
+        item: Any,
+        userEmail: String,
+    ): Result<Unit> =
+        withContext(Dispatchers.IO) {
+            val sheets = getSheetsService() ?: return@withContext Result.Error(IOException("Credential not available for Sheets service"))
+            try {
+                val spreadsheetId = "18hB2Kx5Le1uaF2pImeITgWntcBB-JfYxvpU2aqTzRr8"
+                val (sheetName, itemId, author, rowData) =
+                    when (item) {
+                        is Script -> Triple("Scripts", item.id, item.author, listOf(item.id, item.name, item.description, item.content, item.author, item.rating, item.numRatings))
+                        is Template -> Triple("Templates", item.id, item.author, listOf(item.id, item.name, item.description, item.content, item.author, item.rating, item.numRatings))
+                        else -> return@withContext Result.Error(IllegalArgumentException("Unsupported item type"))
+                    }
+
+                if (userEmail != author && userEmail != "hereliesaz@gmail.com") {
+                    return@withContext Result.Error(SecurityException("User not authorized to edit this item."))
+                }
+
+                val rowIndex = findRowOfSharedItem(sheets, spreadsheetId, sheetName, itemId)
+                if (rowIndex == -1) {
+                    return@withContext Result.Error(IOException("Item with ID $itemId not found."))
+                }
+
+                val valueRange = ValueRange().setValues(listOf(rowData))
+                val updateRange = "$sheetName!A${rowIndex + 1}"
+                sheets.spreadsheets().values().update(spreadsheetId, updateRange, valueRange)
+                    .setValueInputOption("RAW").execute()
+                Result.Success(Unit)
+            } catch (e: UserRecoverableAuthIOException) {
+                Result.UserRecoverableError(e)
+            } catch (e: IOException) {
+                Result.Error(e)
+            }
+        }
+
+    suspend fun deleteSharedItem(
+        item: Any,
+        userEmail: String,
+    ): Result<Unit> =
+        withContext(Dispatchers.IO) {
+            val sheets = getSheetsService() ?: return@withContext Result.Error(IOException("Credential not available for Sheets service"))
+            try {
+                val spreadsheetId = "18hB2Kx5Le1uaF2pImeITgWntcBB-JfYxvpU2aqTzRr8"
+                val (sheetName, itemId, author) =
+                    when (item) {
+                        is Script -> Triple("Scripts", item.id, item.author)
+                        is Template -> Triple("Templates", item.id, item.author)
+                        else -> return@withContext Result.Error(IllegalArgumentException("Unsupported item type"))
+                    }
+
+                if (userEmail != author && userEmail != "hereliesaz@gmail.com") {
+                    return@withContext Result.Error(SecurityException("User not authorized to delete this item."))
+                }
+
+                val rowIndex = findRowOfSharedItem(sheets, spreadsheetId, sheetName, itemId)
+                if (rowIndex == -1) {
+                    return@withContext Result.Error(IOException("Item with ID $itemId not found."))
+                }
+
+                val sheetId =
+                    sheets.spreadsheets().get(spreadsheetId).execute().sheets
+                        .firstOrNull { it.properties.title == sheetName }?.properties?.sheetId ?: 0
+
+                val request =
+                    Request().setDeleteDimension(
+                        DeleteDimensionRequest().setRange(
+                            DimensionRange().setSheetId(sheetId).setDimension("ROWS").setStartIndex(rowIndex).setEndIndex(rowIndex + 1),
+                        ),
+                    )
+                val batchUpdateRequest = BatchUpdateSpreadsheetRequest().setRequests(listOf(request))
+                sheets.spreadsheets().batchUpdate(spreadsheetId, batchUpdateRequest).execute()
+                Result.Success(Unit)
+            } catch (e: UserRecoverableAuthIOException) {
+                Result.UserRecoverableError(e)
+            } catch (e: IOException) {
+                Result.Error(e)
             }
         }
 

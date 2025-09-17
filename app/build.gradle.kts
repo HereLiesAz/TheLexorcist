@@ -5,8 +5,8 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("kotlin-parcelize") // Added kotlin-parcelize plugin
     id("com.google.dagger.hilt.android")
-    id("org.jetbrains.kotlin.plugin.compose") version "2.2.20"
-    id("com.google.devtools.ksp") version "2.2.20-2.0.3"
+    id("org.jetbrains.kotlin.plugin.compose")
+    id("com.google.devtools.ksp")
     id("com.google.gms.google-services") // Added Google Services plugin
     id("com.palantir.git-version")
     id("io.realm.kotlin") // Added Realm plugin
@@ -40,12 +40,6 @@ android {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-    kotlinOptions {
     }
     buildFeatures {
         compose = true
@@ -229,8 +223,8 @@ dependencies {
 }
 
 kotlin {
+    jvmToolchain(17)
     compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_17)
         freeCompilerArgs.add("-opt-in=androidx.compose.material3.ExperimentalMaterial3Api")
     }
 }
