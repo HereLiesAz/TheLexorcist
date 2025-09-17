@@ -9,6 +9,7 @@ plugins {
     id("com.google.devtools.ksp") version "2.2.20-2.0.3"
     id("com.google.gms.google-services") // Added Google Services plugin
     id("com.palantir.git-version")
+    id("io.objectbox")
 }
 
 android {
@@ -205,6 +206,11 @@ dependencies {
 
 
     // Room IS NOT ALLOWED IN THIS PROJECT!!!!!
+
+    // ObjectBox
+    implementation("io.objectbox:objectbox-kotlin:${rootProject.extra["objectboxVersion"]}")
+    ksp("io.objectbox:objectbox-processor:${rootProject.extra["objectboxVersion"]}")
+
 
     // Google Cloud Speech-to-Text
     implementation(libs.google.cloud.speech)

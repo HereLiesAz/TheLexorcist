@@ -6,4 +6,5 @@ plugins {
     id("com.google.dagger.hilt.android") version "2.57.1" apply false // Updated Hilt plugin to 2.57.1
     id("com.google.devtools.ksp") version "2.2.20-2.0.3" apply false
     id("com.palantir.git-version") version "4.0.0" apply false
+    id("io.objectbox") version "4.3.1" apply false
 }
