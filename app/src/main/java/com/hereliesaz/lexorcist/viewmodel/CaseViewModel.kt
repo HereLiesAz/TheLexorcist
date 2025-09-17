@@ -51,6 +51,7 @@ constructor(
     private val transcriptionService: com.hereliesaz.lexorcist.service.TranscriptionService,
     private val workManager: androidx.work.WorkManager,
     private val logService: com.hereliesaz.lexorcist.service.LogService,
+    private val storageService: com.hereliesaz.lexorcist.data.StorageService,
 ) : ViewModel() {
     private val sharedPref =
         applicationContext.getSharedPreferences("CaseInfoPrefs", Context.MODE_PRIVATE)
@@ -642,6 +643,52 @@ constructor(
                         loadEvidenceForSelectedCase()
                     }
                 }
+            }
+        }
+    }
+
+    fun addPhotoGroupEvidence(photoUris: List<android.net.Uri>, description: String) {
+        viewModelScope.launch {
+            val case = selectedCase.value ?: return@launch
+            val savedPhotoPaths = mutableListOf<String>()
+
+            photoUris.forEach { uri ->
+                val mimeType = applicationContext.contentResolver.getType(uri) ?: "image/jpeg"
+                when (val result = storageService.uploadFile(case.spreadsheetId, uri, mimeType)) {
+                    is Result.Success -> {
+                        savedPhotoPaths.add(result.data)
+                    }
+                    is Result.Error -> {
+                        _errorMessage.value = "Failed to save photo: ${result.exception.message}"
+                        return@forEach
+                    }
+                    is Result.UserRecoverableError -> {
+                        // TODO Handle user recoverable error
+                    }
+                }
+            }
+
+            if (savedPhotoPaths.isNotEmpty()) {
+                val mediaUriJson = com.google.gson.Gson().toJson(savedPhotoPaths)
+                val newEvidence =
+                    com.hereliesaz.lexorcist.data.Evidence(
+                        caseId = case.id.toLong(),
+                        spreadsheetId = case.spreadsheetId,
+                        type = "photo_group",
+                        content = description,
+                        formattedContent = null,
+                        mediaUri = mediaUriJson,
+                        timestamp = System.currentTimeMillis(),
+                        sourceDocument = "Photo Group",
+                        documentDate = System.currentTimeMillis(),
+                        allegationId = null,
+                        category = "Photo",
+                        tags = listOf("photo", "group"),
+                        commentary = null,
+                        entities = emptyMap(),
+                    )
+                evidenceRepository.addEvidence(newEvidence)
+                loadEvidenceForSelectedCase()
             }
         }
     }
