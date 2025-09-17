@@ -11,6 +11,7 @@ import com.hereliesaz.lexorcist.DataParser
 import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.data.EvidenceRepository
 import com.hereliesaz.lexorcist.data.SettingsManager
+import com.hereliesaz.lexorcist.model.ProcessingState
 import com.hereliesaz.lexorcist.utils.ExifUtils
 import com.hereliesaz.lexorcist.utils.Result
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -168,15 +169,20 @@ class OcrProcessingService
             context: Context,
             caseId: Long,
             spreadsheetId: String,
+            onProgress: (ProcessingState) -> Unit
         ): Pair<Evidence?, String?> {
             logService.addLog("Starting image processing...")
+            onProgress(ProcessingState("Starting...", 0))
+
             logService.addLog("Uploading image to raw evidence folder...")
+            onProgress(ProcessingState("Uploading image...", 25))
             val mimeType = context.contentResolver.getType(uri) ?: "image/jpeg"
             val uploadResult = storageService.uploadFile(spreadsheetId, uri, mimeType)
 
             if (uploadResult is Result.Error) {
                 logService.addLog("Error uploading image: ${uploadResult.exception.message}", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
                 Log.e("OcrProcessingService", "Failed to upload image.", uploadResult.exception)
+                onProgress(ProcessingState("Error uploading image", 100))
                 return Pair(null, "Error uploading image: ${uploadResult.exception.message}")
             }
 
@@ -186,10 +192,12 @@ class OcrProcessingService
             val ocrText =
                 try {
                     logService.addLog("Recognizing text from image...")
+                    onProgress(ProcessingState("Recognizing text...", 50))
                     recognizeTextFromUri(context, newUri)
                 } catch (e: Exception) {
                     logService.addLog("Error recognizing text: ${e.message}", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
                     Log.e("OcrProcessingService", "Failed to recognize text from image.", e)
+                    onProgress(ProcessingState("Error recognizing text", 100))
                     "Error recognizing text from image: ${e.message}"
                 }
 
@@ -225,6 +233,7 @@ class OcrProcessingService
             val script = settingsManager.getScript()
             if (script.isNotBlank()) {
                 logService.addLog("Running script...")
+                onProgress(ProcessingState("Running analysis script...", 75))
                 val scriptResult = scriptRunner.runScript(script, newEvidence)
                 when (scriptResult) {
                     is Result.Success -> {
@@ -247,8 +256,10 @@ class OcrProcessingService
             }
 
             logService.addLog("Saving evidence...")
+            onProgress(ProcessingState("Saving evidence...", 90))
             val savedEvidence = evidenceRepository.addEvidence(newEvidence)
             logService.addLog("Evidence saved with ID: ${savedEvidence?.id}")
+            onProgress(ProcessingState("Complete", 100))
             return Pair(savedEvidence, "Raw evidence file saved.")
         }
     }
