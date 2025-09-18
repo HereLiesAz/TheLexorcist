@@ -1,19 +1,48 @@
-import com.hereliesaz.lexorcist.data.Allegation
-import com.hereliesaz.lexorcist.data.Evidence
-import com.hereliesaz.lexorcist.data.Schema
+package com.hereliesaz.lexorcist.data
+
+import android.util.Log
+import com.hereliesaz.lexorcist.data.CaseSheetParser
+import com.hereliesaz.lexorcist.utils.ErrorReporter
+import com.hereliesaz.lexorcist.model.SheetFilter
+import com.hereliesaz.lexorcist.service.GoogleApiService
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+import javax.inject.Singleton
+import com.google.api.services.drive.model.File as DriveFile
+import com.hereliesaz.lexorcist.utils.Result // Ensure this is the correct Result type
 
-\
-)
+@Singleton
+class CaseRepositoryImpl @Inject constructor(
+    private val storageService: StorageService,
+    private val errorReporter: ErrorReporter,
+    private val googleApiService: GoogleApiService, // Assuming this is needed for importSpreadsheet
+    private val caseSheetParser: CaseSheetParser, // Assuming this is needed for importSpreadsheet
+    private val evidenceRepository: EvidenceRepository // Assuming this is needed for importSpreadsheet
+) : CaseRepository {
+
+    private val tag = "CaseRepositoryImpl"
+    private val repositoryScope = CoroutineScope(Dispatchers.IO)
+
+    private val _cases = MutableStateFlow<List<Case>>(emptyList())
+    override val cases: Flow<List<Case>> = _cases.asStateFlow()
+
+    private val _selectedCase = MutableStateFlow<Case?>(null)
+    override val selectedCase: Flow<Case?> = _selectedCase.asStateFlow()
 
     private val _allegations = MutableStateFlow<List<Allegation>>(emptyList())
     override val selectedCaseAllegations: Flow<List<Allegation>> = _allegations.asStateFlow()
 
     private val _selectedCaseEvidence = MutableStateFlow<Result<List<Evidence>>>(Result.Success(emptyList()))
-    override val selectedCaseEvidence: Flow<Result<List<Schema.Evidence>>> = _selectedCaseEvidence.asStateFlow()
+    override val selectedCaseEvidence: Flow<Result<List<Evidence>>> = _selectedCaseEvidence.asStateFlow()
 
     private var loadAllegationsJob: Job? = null
     private var loadEvidenceJob: Job? = null
@@ -22,13 +51,12 @@ import kotlinx.coroutines.flow.asStateFlow
         when (val result = storageService.getAllCases()) {
             is Result.Loading -> {
                 Log.d(tag, "Refreshing cases: Loading...")
-                // Optionally, emit a loading state for the UI if it handles it for the cases list
             }
             is Result.Success -> {
                 _cases.value = result.data.sortedByDescending { it.lastModifiedTime ?: 0L }
             }
             is Result.Error -> errorReporter.reportError(result.exception)
-            is Result.UserRecoverableError -> errorReporter.reportError(result.exception) // Consider specific user UI for this
+            is Result.UserRecoverableError -> errorReporter.reportError(result.exception)
         }
     }
 
@@ -38,7 +66,6 @@ import kotlinx.coroutines.flow.asStateFlow
 
     override suspend fun selectCase(case: Case?) {
         if (_selectedCase.value?.spreadsheetId == case?.spreadsheetId && case != null) {
-            // Case already selected, optionally trigger a refresh of its details if desired
             return
         }
 
@@ -58,10 +85,8 @@ import kotlinx.coroutines.flow.asStateFlow
                 internalRefreshAllegations(case.spreadsheetId)
             }
             loadEvidenceJob = repositoryScope.launch {
-                // Assuming storageService.getEvidenceForCase also returns Result
-                // and might have a Loading state. The UI would observe _selectedCaseEvidence.
                 val result = storageService.getEvidenceForCase(case.spreadsheetId)
-                if (isActive) { // Check if the job is still active before emitting
+                if (isActive) {
                     _selectedCaseEvidence.value = result
                 }
             }
@@ -72,7 +97,6 @@ import kotlinx.coroutines.flow.asStateFlow
         when (val result = storageService.getAllegationsForCase(spreadsheetId)) {
             is Result.Loading -> {
                 Log.d(tag, "Refreshing allegations for $spreadsheetId: Loading...")
-                // _allegations.value is likely already emptyList() or a placeholder
             }
             is Result.Success -> if (repositoryScope.isActive) _allegations.value = result.data
             is Result.Error -> {
@@ -81,7 +105,7 @@ import kotlinx.coroutines.flow.asStateFlow
             }
             is Result.UserRecoverableError -> {
                 if (repositoryScope.isActive) _allegations.value = emptyList()
-                errorReporter.reportError(result.exception) // Consider specific user UI
+                errorReporter.reportError(result.exception)
             }
         }
     }
@@ -92,8 +116,8 @@ import kotlinx.coroutines.flow.asStateFlow
             loadAllegationsJob?.cancel()
             loadEvidenceJob?.cancel()
 
-            _allegations.value = emptyList() // Reset or show loading state
-            _selectedCaseEvidence.value = Result.Loading // Indicate evidence is loading
+            _allegations.value = emptyList()
+            _selectedCaseEvidence.value = Result.Loading
 
             loadAllegationsJob = repositoryScope.launch {
                 internalRefreshAllegations(spreadsheetId)
@@ -112,14 +136,13 @@ import kotlinx.coroutines.flow.asStateFlow
         caseJudge: String, plaintiffs: String, defendants: String, court: String
     ): Result<Case> {
         val caseDetails = Case(
-            name = caseName, spreadsheetId = "", // Placeholder, will be set by storageService
+            name = caseName, spreadsheetId = "", // Placeholder
             plaintiffs = plaintiffs,
             defendants = defendants, court = court,
-            // Initialize other Case properties as needed, ensure they have defaults or are set
-            id = 0, // Assuming ID is generated later or 0 is a valid temp ID
-            folderId = "", // Placeholder
+            id = 0, 
+            folderId = "", 
             isArchived = false,
-            lastModifiedTime = System.currentTimeMillis() // Set initial time
+            lastModifiedTime = System.currentTimeMillis()
         )
         return when (val creationResult = storageService.createCase(caseDetails)) {
             is Result.Loading -> Result.Loading
@@ -135,14 +158,14 @@ import kotlinx.coroutines.flow.asStateFlow
         }
     }
 
-    override suspend fun archiveCase(caseToArchive: Case): Result<Case> { // Renamed parameter
+    override suspend fun archiveCase(caseToArchive: Case): Result<Case> {
         val archivedDetails = caseToArchive.copy(isArchived = true, lastModifiedTime = System.currentTimeMillis())
-
         return when (val updateStorageResult = storageService.updateCase(archivedDetails)) {
             is Result.Loading -> Result.Loading
             is Result.Success -> {
-                // If storageService.updateCase was successful (even if it returns Result<Unit>),
-                // we assume 'archivedDetails' is the state we want to reflect.
+                 // Assuming updateStorageResult is Result<Unit> or Result<Case>
+                 // If Result<Unit>, it implies success, and archivedDetails is the correct state.
+                 // If Result<Case>, it would be updateStorageResult.data, but we use archivedDetails to be safe.
                 _cases.update { currentCaseList ->
                     currentCaseList.map { caseInList ->
                         if (caseInList.spreadsheetId == archivedDetails.spreadsheetId) {
@@ -152,18 +175,17 @@ import kotlinx.coroutines.flow.asStateFlow
                         }
                     }.sortedByDescending { it.lastModifiedTime ?: 0L }
                 }
-
                 if (_selectedCase.value?.spreadsheetId == archivedDetails.spreadsheetId) {
-                    selectCase(archivedDetails) // Refresh selected case details with the locally known 'archivedDetails'
+                    selectCase(archivedDetails) 
                 }
-                Result.Success(archivedDetails) // Return 'archivedDetails' as the outcome of the operation
+                Result.Success(archivedDetails)
             }
             is Result.Error -> Result.Error(updateStorageResult.exception)
             is Result.UserRecoverableError -> Result.UserRecoverableError(updateStorageResult.exception)
         }
     }
 
-    override suspend fun deleteCase(caseToDelete: Case): Result<Unit> { // Renamed parameter
+    override suspend fun deleteCase(caseToDelete: Case): Result<Unit> {
         return when (val deleteResult = storageService.deleteCase(caseToDelete)) {
             is Result.Loading -> Result.Loading
             is Result.Success -> {
@@ -193,13 +215,11 @@ import kotlinx.coroutines.flow.asStateFlow
             when (val createResult = storageService.createCase(newCase)) {
                 is Result.Loading -> {
                     Log.d(tag, "Import spreadsheet $spreadsheetId: Case creation is loading.")
-                    // Decide if we should return null or wait/retry. For now, return null.
-                    return null
+                    return null 
                 }
                 is Result.Success -> {
                     val createdCase = createResult.data
                     evidenceList.forEach { evidence ->
-                        // Assuming addEvidence can handle potential failures gracefully or returns a Result
                         evidenceRepository.addEvidence(evidence.copy(spreadsheetId = createdCase.spreadsheetId))
                     }
                     _cases.update {
@@ -212,7 +232,7 @@ import kotlinx.coroutines.flow.asStateFlow
                     Log.e(tag, "Import spreadsheet $spreadsheetId: Error creating case.", createResult.exception)
                 }
                 is Result.UserRecoverableError -> {
-                    errorReporter.reportError(createResult.exception) // Consider specific UI
+                    errorReporter.reportError(createResult.exception)
                     Log.w(tag, "Import spreadsheet $spreadsheetId: User recoverable error creating case.", createResult.exception)
                 }
             }
@@ -223,7 +243,7 @@ import kotlinx.coroutines.flow.asStateFlow
     }
 
     override suspend fun synchronize() {
-        storageService.synchronize() // Assuming this is a suspend function
+        storageService.synchronize() 
         refreshCases()
         if (_selectedCase.value != null) {
             refreshSelectedCaseDetails()
@@ -236,30 +256,44 @@ import kotlinx.coroutines.flow.asStateFlow
     }
 
     override fun getSheetFilters(spreadsheetId: String): Flow<List<SheetFilter>> = emptyFlow()
-    override suspend fun refreshSheetFilters(spreadsheetId: String) {}
-    override suspend fun addSheetFilter(spreadsheetId: String, name: String, value: String) {}
+    override suspend fun refreshSheetFilters(spreadsheetId: String) { /* TODO */ }
+    override suspend fun addSheetFilter(spreadsheetId: String, name: String, value: String) { /* TODO */ }
 
     override fun getHtmlTemplates(): Flow<List<DriveFile>> = emptyFlow()
-    override suspend fun refreshHtmlTemplates() {}
+    override suspend fun refreshHtmlTemplates() { /* TODO */ }
 
     override suspend fun addAllegation(spreadsheetId: String, allegationText: String) {
         val currentSelectedCaseId = _selectedCase.value?.spreadsheetId
         if (spreadsheetId == currentSelectedCaseId) {
-            val allegationDetails = Allegation(spreadsheetId = spreadsheetId, text = allegationText, id = 0) // Ensure ID is handled
+            // Assuming Allegation constructor takes (id, spreadsheetId, text)
+            // and id is auto-generated or handled by storageService.
+            // Passing 0 or a placeholder that storageService can interpret.
+            val allegationDetails = Allegation(id = 0, spreadsheetId = spreadsheetId, text = allegationText)
             when (val result = storageService.addAllegation(spreadsheetId, allegationDetails)) {
                 is Result.Loading -> {
                     Log.d(tag, "Adding allegation to $spreadsheetId: Loading...")
                 }
                 is Result.Success -> {
-                    _allegations.update { (it + result.data).distinctBy { al -> al.id } } // Ensure uniqueness if ID is key
+                    // Assuming result.data is the added Allegation or a list containing it
+                    // If addAllegation in storageService returns the created allegation:
+                     val newAllegation = result.data
+                    _allegations.update { currentAllegations ->
+                        (currentAllegations + newAllegation).distinctBy { it.id }
+                    }
+                    // If you need to refresh all allegations for the case:
+                    // internalRefreshAllegations(spreadsheetId)
                 }
                 is Result.Error -> {
                     errorReporter.reportError(result.exception)
                 }
                 is Result.UserRecoverableError -> {
-                    errorReporter.reportError(result.exception) // Consider specific UI
+                    errorReporter.reportError(result.exception)
                 }
             }
         } else {
-            val exception = Exception("C
-```
+            val exception = Exception("Attempted to add allegation to a non-selected case. Target: $spreadsheetId, Selected: $currentSelectedCaseId")
+            errorReporter.reportError(exception)
+            Log.w(tag, exception.message, exception)
+        }
+    }
+}

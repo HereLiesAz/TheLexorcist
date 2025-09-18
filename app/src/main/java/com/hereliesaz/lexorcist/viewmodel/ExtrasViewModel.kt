@@ -10,7 +10,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine // Added import for combine
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -32,7 +32,6 @@ class ExtrasViewModel @Inject constructor(
 
     private val _allItems = MutableStateFlow<List<SharedItem>>(emptyList())
 
-    // New StateFlows for sharing data
     private val _pendingSharedItemName = MutableStateFlow<String?>(null)
     val pendingSharedItemName: StateFlow<String?> = _pendingSharedItemName.asStateFlow()
 
@@ -42,7 +41,6 @@ class ExtrasViewModel @Inject constructor(
     private val _pendingSharedItemContent = MutableStateFlow<String?>(null)
     val pendingSharedItemContent: StateFlow<String?> = _pendingSharedItemContent.asStateFlow()
 
-
     init {
         observeSearchQuery()
     }
@@ -50,7 +48,7 @@ class ExtrasViewModel @Inject constructor(
     fun setAuthSource(authSignInState: StateFlow<SignInState>) {
         viewModelScope.launch {
             authSignInState.collect { signInState ->
-                val email = if (signInState is SignInState.Success) signInState.userInfo?.email else null // Used safe call
+                val email = if (signInState is SignInState.Success) signInState.userInfo?.email else null
                 _uiState.value = _uiState.value.copy(currentUserEmail = email)
                 if (email != null) {
                     loadSharedItems()
@@ -63,7 +61,6 @@ class ExtrasViewModel @Inject constructor(
 
     private fun observeSearchQuery() {
         viewModelScope.launch {
-            // Changed to directly combine _uiState and _allItems
             combine(_uiState, _allItems) { uiState, allItems ->
                 val query = uiState.searchQuery
                 if (query.isBlank()) {
@@ -91,7 +88,6 @@ class ExtrasViewModel @Inject constructor(
             when (val result = extrasRepository.getSharedItems()) {
                 is Result.Success -> {
                     _allItems.value = result.data
-                    // Ensure search filtering is reapplied after loading new items
                     val currentQuery = _uiState.value.searchQuery
                     val filteredItems = if (currentQuery.isBlank()) {
                         result.data
@@ -110,6 +106,9 @@ class ExtrasViewModel @Inject constructor(
                 is Result.UserRecoverableError -> {
                     _uiState.value = _uiState.value.copy(isLoading = false, error = result.exception.message ?: "A user recoverable error occurred.")
                 }
+                is Result.Loading -> {
+                    _uiState.value = _uiState.value.copy(isLoading = true) // Keep isLoading true
+                }
             }
         }
     }
@@ -117,10 +116,14 @@ class ExtrasViewModel @Inject constructor(
     fun deleteItem(item: SharedItem) {
         val userEmail = _uiState.value.currentUserEmail ?: return
         viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true) // Indicate loading state
             when (val result = extrasRepository.deleteSharedItem(item, userEmail)) {
-                is Result.Success -> loadSharedItems() // Refresh list on success
-                is Result.Error -> _uiState.value = _uiState.value.copy(error = "Failed to delete item: ${result.exception.localizedMessage}")
-                is Result.UserRecoverableError -> _uiState.value = _uiState.value.copy(error = "Failed to delete item: User recoverable error - ${result.exception.localizedMessage}")
+                is Result.Success -> loadSharedItems() // Refresh list on success, loadSharedItems will handle isLoading
+                is Result.Error -> _uiState.value = _uiState.value.copy(isLoading = false, error = "Failed to delete item: ${result.exception.localizedMessage}")
+                is Result.UserRecoverableError -> _uiState.value = _uiState.value.copy(isLoading = false, error = "Failed to delete item: User recoverable error - ${result.exception.localizedMessage}")
+                is Result.Loading -> {
+                    // isLoading is already true, or will be set by loadSharedItems if success
+                }
             }
         }
     }
@@ -130,29 +133,27 @@ class ExtrasViewModel @Inject constructor(
         return email != null && (item.author == email || email == "hereliesaz@gmail.com")
     }
 
-    // Added court parameter with a default value
     fun shareItem(name: String, description: String, content: String, type: String, court: String? = null) {
-        val authorEmail = _uiState.value.currentUserEmail ?: return // Ensure user is logged in
+        val authorEmail = _uiState.value.currentUserEmail ?: return
         viewModelScope.launch {
-            // Pass the court parameter to the repository
+            _uiState.value = _uiState.value.copy(isLoading = true) // Indicate loading state
             when (extrasRepository.shareItem(name, description, content, type, authorEmail, court)) {
                 is Result.Success -> {
-                    // Optionally, provide feedback to the user about successful sharing
-                    loadSharedItems() // Refresh list after sharing, if it makes sense for your UI
+                    loadSharedItems() // Refresh list after sharing, loadSharedItems will handle isLoading
                 }
                 is Result.Error -> {
-                    _uiState.value = _uiState.value.copy(error = "Failed to share item.")
-                    // Provide more specific error feedback if possible
+                    _uiState.value = _uiState.value.copy(isLoading = false, error = "Failed to share item.")
                 }
                  is Result.UserRecoverableError -> {
-                    _uiState.value = _uiState.value.copy(error = "Failed to share item. A recoverable error occurred.")
-                    // Provide more specific error feedback if possible
+                    _uiState.value = _uiState.value.copy(isLoading = false, error = "Failed to share item. A recoverable error occurred.")
+                }
+                is Result.Loading -> {
+                     // isLoading is already true
                 }
             }
         }
     }
 
-    // New methods for preparing and clearing shared data
     fun prepareForSharing(name: String, type: String, content: String) {
         _pendingSharedItemName.value = name
         _pendingSharedItemType.value = type
@@ -167,11 +168,12 @@ class ExtrasViewModel @Inject constructor(
 
     fun rateAddon(id: String, rating: Int, type: String) {
         viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true)
             val result = extrasRepository.rateAddon(id, rating, type)
             if (result) {
-                loadSharedItems()
+                loadSharedItems() // loadSharedItems will set isLoading to false on completion/error
             } else {
-                _uiState.value = _uiState.value.copy(error = "Failed to rate item.")
+                _uiState.value = _uiState.value.copy(isLoading = false, error = "Failed to rate item.")
             }
         }
     }

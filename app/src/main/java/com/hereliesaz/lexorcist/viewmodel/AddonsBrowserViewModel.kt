@@ -64,6 +64,10 @@ class AddonsBrowserViewModel
                     is Result.UserRecoverableError -> {
                         _shareOperationState.value = SaveState.Error("Failed to share addon: User recoverable error - ${shareResult.exception.localizedMessage ?: "Unknown user error"}")
                     }
+                    is Result.Loading -> {
+                        // The state is already SaveState.Saving, which is appropriate.
+                        // No specific action needed for Loading in this context, but the branch makes the 'when' exhaustive.
+                    }
                 }
             }
         }

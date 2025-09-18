@@ -24,7 +24,8 @@ class OcrViewModel @Inject constructor(
 
     fun performOcrOnUri(uri: Uri, context: Context, caseId: Long, spreadsheetId: String) {
         viewModelScope.launch {
-            _processingState.value = ProcessingState("Starting OCR...", 0)
+            // Removed: _processingState.value = ProcessingState("Starting OCR...", 0)
+            // The ocrProcessingService.processImage will set the initial state via the callback
             ocrProcessingService.processImage(uri, context, caseId, spreadsheetId) { state ->
                 _processingState.value = state
             }

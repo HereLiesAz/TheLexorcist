@@ -6,6 +6,7 @@ import androidx.credentials.CredentialManager
 import androidx.work.WorkManager
 import com.google.gson.Gson
 import com.hereliesaz.lexorcist.data.SettingsManager
+import com.hereliesaz.lexorcist.di.qualifiers.ApplicationScope // Import the qualifier
 // import com.hereliesaz.lexorcist.data.objectbox.MyObjectBox // REMOVED
 import com.hereliesaz.lexorcist.model.AllegationsSheet
 import com.hereliesaz.lexorcist.model.CaseInfoSheet
@@ -30,6 +31,7 @@ import javax.inject.Singleton
 class AppModule {
     @Provides
     @Singleton
+    @ApplicationScope // Add the qualifier
     fun provideApplicationScope(): CoroutineScope {
         return CoroutineScope(SupervisorJob() + Dispatchers.Default)
     }

@@ -11,13 +11,18 @@ import android.net.Uri
 import android.util.Log
 import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.data.EvidenceRepository
+import com.hereliesaz.lexorcist.model.LogLevel // Assuming this is your custom LogLevel
 import com.hereliesaz.lexorcist.model.VideoMetadata
+import com.hereliesaz.lexorcist.utils.Result 
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.IOException
 import java.nio.ByteBuffer
+import java.text.SimpleDateFormat
+import java.util.Locale
+import java.util.TimeZone
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -30,63 +35,105 @@ class VideoProcessingService @Inject constructor(
     private val logService: LogService
 ) {
 
+    // Pair to hold VideoMetadata and parsed creation time
+    private data class ExtractedMetadata(val videoMetadata: VideoMetadata, val parsedCreationTime: Long?)
+
     suspend fun processVideo(
         videoUri: Uri,
         caseId: Int,
         caseName: String,
         spreadsheetId: String,
-        googleApiService: GoogleApiService,
-        onProgress: (String) -> Unit
-    ): Evidence {
-        onProgress("Starting video processing...")
-        logService.addLog("Processing video: $videoUri")
+        onProgress: (percent: Float, message: String) -> Unit
+    ): Evidence? { 
+        onProgress(0.0f, "Starting video processing...")
+        logService.addLog("Processing video: $videoUri for case $caseName ($spreadsheetId)")
 
-        val metadata = extractVideoMetadata(videoUri)
+        val extractedMetadata = extractVideoMetadata(videoUri)
+        val metadata = extractedMetadata?.videoMetadata
+        val documentTimestamp = extractedMetadata?.parsedCreationTime ?: System.currentTimeMillis()
+        onProgress(0.05f, "Video metadata extracted.")
 
-        onProgress("Extracting audio...")
-        logService.addLog("Extracting audio...")
+        logService.addLog("Extracting audio from $videoUri")
         val audioUri = extractAudio(videoUri)
-        val (audioTranscript, error) = if (audioUri != null) {
-            transcriptionService.transcribeAudio(audioUri)
+        onProgress(0.15f, "Audio extraction attempt complete.")
+
+        var audioTranscript: String? = null
+        var transcriptionError: String? = null
+
+        if (audioUri != null) {
+            logService.addLog("Audio extracted to $audioUri. Transcribing...")
+            onProgress(0.20f, "Transcribing audio...")
+            when (val transcriptionResult = transcriptionService.transcribeAudio(audioUri)) {
+                is Result.Success -> {
+                    audioTranscript = transcriptionResult.data
+                    logService.addLog("Transcription successful: ${audioTranscript?.take(100)}...")
+                    onProgress(0.40f, "Audio transcription complete.")
+                }
+                is Result.Error -> {
+                    transcriptionError = transcriptionResult.exception.message ?: "Unknown transcription error"
+                    logService.addLog("Transcription failed: $transcriptionError", LogLevel.ERROR)
+                    onProgress(0.40f, "Audio transcription failed.")
+                }
+                is Result.UserRecoverableError -> {
+                    transcriptionError = transcriptionResult.exception.message ?: "User recoverable transcription error"
+                    logService.addLog("Transcription user recoverable error: $transcriptionError", LogLevel.INFO) // Changed to INFO
+                    onProgress(0.40f, "Audio transcription error (user recoverable).")
+                }
+                is Result.Loading -> {
+                    transcriptionError = "Transcription process started but did not complete."
+                    logService.addLog("Transcription returned Loading state, processing as incomplete.", LogLevel.INFO) // Changed to INFO
+                    onProgress(0.40f, "Audio transcription in progress but did not complete.")
+                }
+            }
         } else {
-            Pair("Audio could not be extracted.", "Audio could not be extracted.")
+            transcriptionError = "Audio could not be extracted from video."
+            logService.addLog(transcriptionError, LogLevel.ERROR)
+            onProgress(0.40f, "Audio extraction failed.")
+        }
+        
+        if (audioTranscript == null && transcriptionError != null) {
+            audioTranscript = "Transcription failed: $transcriptionError"
+        } else if (audioTranscript == null) {
+            audioTranscript = "No audio processed."
         }
 
-        if (error != null) {
-            logService.addLog("Transcription failed: $error", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
-        }
-
-        onProgress("Extracting frames...")
-        logService.addLog("Extracting frames...")
+        onProgress(0.45f, "Extracting frames for OCR...")
+        logService.addLog("Extracting frames from $videoUri")
         val frameUris = extractKeyframes(videoUri)
         val ocrTextBuilder = StringBuilder()
         if (frameUris.isNotEmpty()) {
-            logService.addLog("Extracted ${frameUris.size} keyframes")
-            frameUris.forEachIndexed { index, uri ->
-                val progressMessage = "Processing frame ${index + 1} of ${frameUris.size}..."
-                onProgress(progressMessage)
+            logService.addLog("Extracted ${frameUris.size} keyframes for OCR.")
+            val totalFrames = frameUris.size
+            frameUris.forEachIndexed { index, frameUri ->
+                val frameProgress = 0.45f + (0.45f * (index + 1) / totalFrames) 
+                val progressMessage = "Processing frame ${index + 1} of $totalFrames for OCR..."
+                onProgress(frameProgress, progressMessage)
                 logService.addLog(progressMessage)
                 val frameEvidence = ocrProcessingService.processImageFrame(
-                    uri = uri,
+                    uri = frameUri,
                     context = context,
                     caseId = caseId,
                     spreadsheetId = spreadsheetId,
                     parentVideoId = null,
                 )
-                if (frameEvidence != null) {
-                    logService.addLog("Found ${frameEvidence.content.length} characters in frame ${index + 1}")
+                if (frameEvidence != null && frameEvidence.content.isNotBlank()) {
+                    logService.addLog("OCR for frame ${index + 1} found ${frameEvidence.content.length} characters.")
                     ocrTextBuilder.append(frameEvidence.content).append("\n\n")
                 } else {
-                    logService.addLog("No evidence created for frame ${index + 1}", com.hereliesaz.lexorcist.model.LogLevel.DEBUG)
+                    logService.addLog("No text found or error in OCR for frame ${index + 1}. URI: $frameUri", LogLevel.DEBUG)
                 }
             }
+        } else {
+            logService.addLog("No keyframes extracted for OCR from $videoUri")
         }
+        onProgress(0.90f, "Frame OCR complete.")
 
-        val combinedContent = "Audio Transcript:\n${audioTranscript ?: "Transcription failed."}\n\nOCR from Frames:\n$ocrTextBuilder"
+        val videoOcrText = ocrTextBuilder.toString().trim()
+        val combinedContent = "Audio Transcript:\n${audioTranscript}\n\nOCR from Frames:\n${if (videoOcrText.isNotEmpty()) videoOcrText else "No text extracted from frames."}"
 
         val videoEvidence =
             Evidence(
-                id = 0,
+                id = 0, 
                 caseId = caseId.toLong(),
                 spreadsheetId = spreadsheetId,
                 type = "video",
@@ -94,54 +141,88 @@ class VideoProcessingService @Inject constructor(
                 formattedContent = "```\n$combinedContent\n```",
                 mediaUri = videoUri.toString(),
                 timestamp = System.currentTimeMillis(),
-                sourceDocument = videoUri.toString(),
-                documentDate = System.currentTimeMillis(),
+                sourceDocument = videoUri.toString(), 
+                documentDate = documentTimestamp, // Use parsed creation time or fallback
                 allegationId = null,
                 category = "Video Evidence",
-                tags = listOf("video", "transcription", "ocr"),
+                tags = listOfNotNull("video", if (audioTranscript?.contains("failed", ignoreCase = true) != true) "transcription" else null, if (videoOcrText.isNotEmpty()) "ocr" else null),
                 commentary = null,
-                parentVideoId = null,
-                entities = emptyMap(),
+                parentVideoId = null, 
+                entities = com.hereliesaz.lexorcist.DataParser.tagData(combinedContent),
                 audioTranscript = audioTranscript,
-                videoOcrText = ocrTextBuilder.toString(),
+                videoOcrText = videoOcrText.ifEmpty { null },
                 duration = metadata?.duration
             )
-        evidenceRepository.addEvidence(videoEvidence)
+        
+        onProgress(0.95f, "Saving video evidence...")
+        val savedEvidence = evidenceRepository.addEvidence(videoEvidence)
+        if (savedEvidence == null) {
+            logService.addLog("Failed to save main video evidence for $videoUri", LogLevel.ERROR)
+            onProgress(1.0f, "Failed to save video evidence.")
+            return null
+        }
 
-        onProgress("Video processing complete.")
-        return videoEvidence
+        logService.addLog("Video processing complete for $videoUri. Evidence ID: ${savedEvidence.id}")
+        onProgress(1.0f, "Video processing complete.")
+        return savedEvidence
     }
 
-    suspend fun extractVideoMetadata(uri: Uri): VideoMetadata? {
+    private suspend fun extractVideoMetadata(uri: Uri): ExtractedMetadata? {
         return withContext(Dispatchers.IO) {
             val retriever = MediaMetadataRetriever()
             try {
                 retriever.setDataSource(context, uri)
-                val duration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLong() ?: 0L
-                val width = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)?.toInt() ?: 0
-                val height = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)?.toInt() ?: 0
-                val frameRate = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_CAPTURE_FRAMERATE)?.toFloat() ?: 0f
-                VideoMetadata(duration, width, height, frameRate)
+                val duration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: 0L
+                val width = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)?.toIntOrNull() ?: 0
+                val height = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)?.toIntOrNull() ?: 0
+                val frameRate = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_CAPTURE_FRAMERATE)?.toFloatOrNull() ?: 0f
+                val creationTimeString = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DATE)
+                
+                val parsedCreationTime = creationTimeString?.let {
+                    // Try to parse different date formats from metadata
+                    val dateFormats = listOf(
+                        SimpleDateFormat("yyyyMMdd'T'HHmmss.SSS'Z'", Locale.US),
+                        SimpleDateFormat("yyyyMMdd'T'HHmmss'Z'", Locale.US),
+                        SimpleDateFormat("yyyyMMdd'T'HHmmss", Locale.US) 
+                    )
+                    dateFormats.forEach { sdf -> 
+                        sdf.timeZone = TimeZone.getTimeZone("UTC")
+                        try {
+                            return@let sdf.parse(it)?.time
+                        } catch (e: java.text.ParseException) {
+                            // Continue to next format
+                        }
+                    }
+                    Log.w("VideoProcessingService", "Could not parse date from metadata: $creationTimeString")
+                    null // Return null if all formats fail
+                }
+
+                ExtractedMetadata(VideoMetadata(duration, width, height, frameRate), parsedCreationTime)
             } catch (e: Exception) {
-                Log.e("VideoProcessingService", "Error extracting metadata", e)
+                Log.e("VideoProcessingService", "Error extracting metadata for $uri", e)
                 null
             } finally {
-                retriever.release()
+                try {
+                    retriever.release()
+                } catch (re: RuntimeException) {
+                     Log.e("VideoProcessingService", "Error releasing MediaMetadataRetriever for $uri", re)
+                }
             }
         }
     }
 
-    suspend fun extractAudio(videoUri: Uri): Uri? {
+    private suspend fun extractAudio(videoUri: Uri): Uri? {
         return withContext(Dispatchers.IO) {
             val extractor = MediaExtractor()
-            val outputFile = File(context.cacheDir, "audio_${System.currentTimeMillis()}.m4a")
+            val outputFile = File(context.cacheDir, "audio_ext_${System.currentTimeMillis()}.m4a")
             var muxer: MediaMuxer? = null
+            var success = false
 
             try {
                 extractor.setDataSource(context, videoUri, null)
                 val audioTrackIndex = findAudioTrack(extractor)
                 if (audioTrackIndex == -1) {
-                    Log.e("VideoProcessingService", "No audio track found in video")
+                    logService.addLog("No audio track found in video: $videoUri", LogLevel.INFO) // Changed to INFO
                     return@withContext null
                 }
 
@@ -154,33 +235,46 @@ class VideoProcessingService @Inject constructor(
 
                 val buffer = ByteBuffer.allocate(1024 * 1024)
                 val bufferInfo = MediaCodec.BufferInfo()
+                var sawEOS = false
 
-                while (true) {
-                    val sampleSize = extractor.readSampleData(buffer, 0)
-                    if (sampleSize < 0) {
-                        break
-                    }
+                while (!sawEOS) {
                     bufferInfo.offset = 0
-                    bufferInfo.size = sampleSize
-                    bufferInfo.presentationTimeUs = extractor.sampleTime
-                    bufferInfo.flags = if ((extractor.sampleFlags and MediaExtractor.SAMPLE_FLAG_SYNC) != 0) {
-                        MediaCodec.BUFFER_FLAG_KEY_FRAME
+                    bufferInfo.size = extractor.readSampleData(buffer, 0)
+
+                    if (bufferInfo.size < 0) {
+                        logService.addLog("Saw end of stream for audio extraction from $videoUri.", LogLevel.DEBUG)
+                        sawEOS = true
+                        bufferInfo.size = 0
                     } else {
-                        0
+                        bufferInfo.presentationTimeUs = extractor.sampleTime
+                        bufferInfo.flags = extractor.sampleFlags 
+                        muxer.writeSampleData(muxerTrackIndex, buffer, bufferInfo)
+                        extractor.advance()
                     }
-
-                    muxer.writeSampleData(muxerTrackIndex, buffer, bufferInfo)
-                    extractor.advance()
                 }
-
+                success = true
+                logService.addLog("Audio successfully extracted from $videoUri to ${outputFile.absolutePath}")
                 Uri.fromFile(outputFile)
             } catch (e: Exception) {
-                Log.e("VideoProcessingService", "Error extracting audio", e)
+                logService.addLog("Error extracting audio from $videoUri: ${e.message}", LogLevel.ERROR)
+                Log.e("VideoProcessingService", "Error extracting audio from $videoUri", e)
+                outputFile.delete()
                 null
             } finally {
-                muxer?.stop()
-                muxer?.release()
-                extractor.release()
+                try {
+                    muxer?.stop()
+                    muxer?.release()
+                } catch (e: Exception) {
+                    logService.addLog("Error stopping/releasing muxer for audio extraction from $videoUri: ${e.message}", LogLevel.INFO) // Changed to INFO
+                }
+                try {
+                    extractor.release()
+                } catch (e: Exception) {
+                    logService.addLog("Error releasing extractor for audio extraction from $videoUri: ${e.message}", LogLevel.INFO) // Changed to INFO
+                }
+                if (!success && outputFile.exists()) {
+                    outputFile.delete()
+                }
             }
         }
     }
@@ -190,44 +284,58 @@ class VideoProcessingService @Inject constructor(
             val format = extractor.getTrackFormat(i)
             val mime = format.getString(MediaFormat.KEY_MIME)
             if (mime?.startsWith("audio/") == true) {
+                logService.addLog("Audio track found at index $i with MIME: $mime")
                 return i
             }
         }
+        logService.addLog("No audio track found after checking ${extractor.trackCount} tracks.")
         return -1
     }
 
-    suspend fun extractKeyframes(videoUri: Uri, intervalUs: Long = 5 * 1000 * 1000L): List<Uri> =
+    private suspend fun extractKeyframes(videoUri: Uri, intervalUs: Long = 5 * 1000 * 1000L ): List<Uri> =
         withContext(Dispatchers.IO) {
             val retriever = MediaMetadataRetriever()
             val frameUris = mutableListOf<Uri>()
             try {
                 retriever.setDataSource(context, videoUri)
                 val durationString = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
-                val durationMs = durationString?.toLongOrNull() ?: 0L
+                val durationMs = durationString?.toLongOrNull()
+                if (durationMs == null || durationMs <= 0) {
+                    logService.addLog("Could not get valid video duration for $videoUri. Cannot extract frames.", LogLevel.INFO) // Changed to INFO
+                    return@withContext emptyList()
+                }
 
+                logService.addLog("Extracting keyframes from $videoUri (Duration: $durationMs ms) every $intervalUs us")
+                var frameCount = 0
                 for (timeUs in 0L until durationMs * 1000L step intervalUs) {
                     val bitmap = retriever.getFrameAtTime(timeUs, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
                     if (bitmap != null) {
-                        val outputFile = File(context.cacheDir, "frame_${System.currentTimeMillis()}.jpg")
+                        val outputFile = File(context.cacheDir, "frame_${System.nanoTime()}.jpg")
                         try {
                             outputFile.outputStream().use { out ->
-                                bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out)
+                                bitmap.compress(Bitmap.CompressFormat.JPEG, 85, out)
                             }
                             frameUris.add(Uri.fromFile(outputFile))
+                            frameCount++
+                            logService.addLog("Saved frame ${frameUris.size} at ${timeUs / 1000}ms from $videoUri to ${outputFile.name}", LogLevel.DEBUG)
                         } catch (e: IOException) {
-                            Log.e("VideoProcessingService", "Error saving frame", e)
+                            logService.addLog("Error saving frame at ${timeUs / 1000}ms from $videoUri: ${e.message}", LogLevel.ERROR)
                         } finally {
                             bitmap.recycle()
                         }
+                    } else {
+                        logService.addLog("Failed to retrieve frame at ${timeUs / 1000}ms from $videoUri", LogLevel.DEBUG)
                     }
                 }
+                 logService.addLog("Extracted $frameCount frames in total from $videoUri")
             } catch (e: Exception) {
-                Log.e("VideoProcessingService", "Error extracting keyframes", e)
+                logService.addLog("Error extracting keyframes from $videoUri: ${e.message}", LogLevel.ERROR)
+                Log.e("VideoProcessingService", "Error extracting keyframes from $videoUri", e)
             } finally {
                 try {
                     retriever.release()
-                } catch (e: Exception) {
-                    Log.e("VideoProcessingService", "Error releasing MediaMetadataRetriever", e)
+                } catch (re: RuntimeException) { 
+                     Log.e("VideoProcessingService", "Error releasing MediaMetadataRetriever for $videoUri", re)
                 }
             }
             frameUris

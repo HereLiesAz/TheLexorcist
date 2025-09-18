@@ -11,6 +11,7 @@ import com.hereliesaz.lexorcist.DataParser
 import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.data.EvidenceRepository
 import com.hereliesaz.lexorcist.data.SettingsManager
+import com.hereliesaz.lexorcist.model.LogLevel // Assuming this is your custom LogLevel
 import com.hereliesaz.lexorcist.model.ProcessingState
 import com.hereliesaz.lexorcist.utils.ExifUtils
 import com.hereliesaz.lexorcist.utils.Result
@@ -22,6 +23,8 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
+import androidx.core.net.toUri
+// Removed: import java.util.logging.Level.WARNING
 
 @Singleton
 class OcrProcessingService
@@ -44,19 +47,23 @@ class OcrProcessingService
                     val image: InputImage
                     var inputStream: InputStream? = null
                     try {
-                        if (uri.scheme == "content") {
-                            inputStream = context.contentResolver.openInputStream(uri)
-                        } else if (uri.scheme == "file" || uri.scheme == null) {
-                            uri.path?.let {
-                                val file = File(it)
-                                if (file.exists()) {
-                                    inputStream = FileInputStream(file)
-                                } else {
-                                    throw java.io.FileNotFoundException("File not found at path: $it")
-                                }
-                            } ?: throw java.io.FileNotFoundException("URI path is null")
-                        } else {
-                            throw IllegalArgumentException("Unsupported URI scheme: ${uri.scheme}")
+                        when (uri.scheme) {
+                            "content" -> {
+                                inputStream = context.contentResolver.openInputStream(uri)
+                            }
+                            "file", null -> {
+                                uri.path?.let {
+                                    val file = File(it)
+                                    if (file.exists()) {
+                                        inputStream = FileInputStream(file)
+                                    } else {
+                                        throw java.io.FileNotFoundException("File not found at path: $it")
+                                    }
+                                } ?: throw java.io.FileNotFoundException("URI path is null")
+                            }
+                            else -> {
+                                throw IllegalArgumentException("Unsupported URI scheme: ${uri.scheme}")
+                            }
                         }
 
                         if (inputStream == null) {
@@ -104,7 +111,7 @@ class OcrProcessingService
                 try {
                     recognizeTextFromUri(context, uri)
                 } catch (e: Exception) {
-                    logService.addLog("Error recognizing text from frame: ${e.message}", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
+                    logService.addLog("Error recognizing text from frame: ${e.message}", LogLevel.ERROR)
                     Log.e("OcrProcessingService", "Failed to recognize text from image frame.", e)
                     "Error recognizing text from image frame: ${e.message}"
                 }
@@ -142,17 +149,16 @@ class OcrProcessingService
                 when (scriptResult) {
                     is Result.Loading -> {
                         logService.addLog("Script for frame is loading...")
-                        // Decide if you need to do anything else, like wait or skip tagging
                     }
                     is Result.Success -> {
                         newEvidence = newEvidence.copy(tags = newEvidence.tags + scriptResult.data)
                     }
                     is Result.Error -> {
-                        logService.addLog("Script error for frame: ${scriptResult.exception.message}", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
+                        logService.addLog("Script error for frame: ${scriptResult.exception.message}", LogLevel.ERROR)
                         Log.e("OcrProcessingService", "Script error for $uri: ${scriptResult.exception.message}", scriptResult.exception)
                     }
                     is Result.UserRecoverableError -> {
-                        logService.addLog("Script error for frame: ${scriptResult.exception.message}", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
+                        logService.addLog("Script error for frame: ${scriptResult.exception.message}", LogLevel.INFO) // Changed from WARNING to INFO
                         Log.e(
                             "OcrProcessingService",
                             "User recoverable script error for $uri: ${scriptResult.exception.message}",
@@ -175,106 +181,120 @@ class OcrProcessingService
             spreadsheetId: String,
             onProgress: (ProcessingState) -> Unit
         ): Pair<Evidence?, String?> {
+            var statusMessage: String // Initializer removed
             logService.addLog("Starting image processing...")
-            onProgress(ProcessingState("Starting...", 0))
+            onProgress(ProcessingState.InProgress(0.0f))
 
             logService.addLog("Uploading image to raw evidence folder...")
-            onProgress(ProcessingState("Uploading image...", 25))
+            onProgress(ProcessingState.InProgress(0.25f))
             val mimeType = context.contentResolver.getType(uri) ?: "image/jpeg"
             val uploadResult = storageService.uploadFile(spreadsheetId, uri, mimeType)
 
-            if (uploadResult is Result.Error) {
-                logService.addLog("Error uploading image: ${uploadResult.exception.message}", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
-                Log.e("OcrProcessingService", "Failed to upload image.", uploadResult.exception)
-                onProgress(ProcessingState("Error uploading image", 100))
-                return Pair(null, "Error uploading image: ${uploadResult.exception.message}")
-            }
-            // Add Result.Loading case for uploadResult
-            if (uploadResult is Result.Loading) {
-                 logService.addLog("Image upload in progress...")
-                 onProgress(ProcessingState("Uploading image...", 25)) // Keep progress or update as needed
-                 // Potentially return a specific state or wait/retry, for now, we'll log and let it proceed
-                 // which might not be ideal. Depending on how this is called, it might need to return early.
-            }
-
-
-            val newUri = Uri.parse((uploadResult as Result.Success).data)
-            logService.addLog("Image uploaded to: $newUri")
-
-            val ocrText =
-                try {
-                    logService.addLog("Recognizing text from image...")
-                    onProgress(ProcessingState("Recognizing text...", 50))
-                    recognizeTextFromUri(context, newUri)
-                } catch (e: Exception) {
-                    logService.addLog("Error recognizing text: ${e.message}", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
-                    Log.e("OcrProcessingService", "Failed to recognize text from image.", e)
-                    onProgress(ProcessingState("Error recognizing text", 100))
-                    "Error recognizing text from image: ${e.message}"
+            when (uploadResult) {
+                is Result.Error -> {
+                    statusMessage = "Error uploading image: ${uploadResult.exception.message}"
+                    logService.addLog(statusMessage, LogLevel.ERROR)
+                    Log.e("OcrProcessingService", "Failed to upload image.", uploadResult.exception)
+                    onProgress(ProcessingState.Failure(statusMessage))
+                    return Pair(null, statusMessage)
                 }
+                is Result.UserRecoverableError -> { 
+                    statusMessage = "User recoverable error during image upload: ${uploadResult.exception.message}"
+                    logService.addLog(statusMessage, LogLevel.INFO) // Changed from WARNING to INFO
+                    Log.w("OcrProcessingService", "User recoverable error during image upload.", uploadResult.exception)
+                    onProgress(ProcessingState.Failure(statusMessage))
+                    return Pair(null, statusMessage)
+                }
+                is Result.Loading -> {
+                    logService.addLog("Image upload in progress...")
+                    onProgress(ProcessingState.InProgress(0.25f)) 
+                    // statusMessage assignment removed as it was not used
+                    onProgress(ProcessingState.Failure("Image upload did not complete in time.")) 
+                    return Pair(null, "Image upload did not complete in time.")
+                }
+                is Result.Success -> {
+                    val newUri = uploadResult.data.toUri()
+                    logService.addLog("Image uploaded to: $newUri")
 
-            logService.addLog("Text recognition complete. Found ${ocrText.length} characters.")
-            val entities = DataParser.tagData(ocrText)
-            logService.addLog("Parsed ${entities.size} entities.")
-            val documentDate =
-                ExifUtils.getExifDate(context, newUri)
-                    ?: DataParser.parseDates(ocrText).firstOrNull()
-                    ?: System.currentTimeMillis()
-            logService.addLog("Determined document date: $documentDate")
+                    val ocrText =
+                        try {
+                            logService.addLog("Recognizing text from image...")
+                            onProgress(ProcessingState.InProgress(0.50f))
+                            recognizeTextFromUri(context, newUri)
+                        } catch (e: Exception) {
+                            statusMessage = "Error recognizing text from image: ${e.message}"
+                            logService.addLog(statusMessage, LogLevel.ERROR)
+                            Log.e("OcrProcessingService", "Failed to recognize text from image.", e)
+                            onProgress(ProcessingState.Failure(statusMessage))
+                            return Pair(null, statusMessage) 
+                        }
 
-            var newEvidence =
-                Evidence(
-                    id = 0,
-                    caseId = caseId,
-                    spreadsheetId = spreadsheetId,
-                    type = "image",
-                    content = ocrText,
-                    formattedContent = "```\n$ocrText\n```",
-                    mediaUri = newUri.toString(),
-                    timestamp = System.currentTimeMillis(),
-                    sourceDocument = newUri.toString(),
-                    documentDate = documentDate,
-                    allegationId = null,
-                    category = "Image OCR",
-                    tags = listOf("ocr", "image"),
-                    commentary = null,
-                    parentVideoId = null,
-                    entities = entities,
-                )
+                    logService.addLog("Text recognition complete. Found ${ocrText.length} characters.")
+                    val entities = DataParser.tagData(ocrText)
+                    logService.addLog("Parsed ${entities.size} entities.")
+                    val documentDate =
+                        ExifUtils.getExifDate(context, newUri)
+                            ?: DataParser.parseDates(ocrText).firstOrNull()
+                            ?: System.currentTimeMillis()
+                    logService.addLog("Determined document date: $documentDate")
 
-            val script = settingsManager.getScript()
-            if (script.isNotBlank()) {
-                logService.addLog("Running script...")
-                onProgress(ProcessingState("Running analysis script...", 75))
-                val scriptResult = scriptRunner.runScript(script, newEvidence)
-                when (scriptResult) {
-                    is Result.Loading -> { // Added missing Loading branch for the second scriptResult
-                        logService.addLog("Script for image is loading...")
-                    }
-                    is Result.Success -> {
-                        newEvidence = newEvidence.copy(tags = newEvidence.tags + scriptResult.data)
-                        logService.addLog("Script finished. Added tags: ${scriptResult.data.joinToString(", ")}")
-                    }
-                    is Result.Error -> {
-                        logService.addLog("Script error: ${scriptResult.exception.message}", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
-                        Log.e("OcrProcessingService", "Script error for $uri: ${scriptResult.exception.message}", scriptResult.exception)
-                    }
-                    is Result.UserRecoverableError -> {
-                        logService.addLog("Script error: ${scriptResult.exception.message}", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
-                        Log.e(
-                            "OcrProcessingService",
-                            "User recoverable script error for $uri: ${scriptResult.exception.message}",
-                            scriptResult.exception,
+                    var newEvidence =
+                        Evidence(
+                            id = 0,
+                            caseId = caseId,
+                            spreadsheetId = spreadsheetId,
+                            type = "image",
+                            content = ocrText,
+                            formattedContent = "```\n$ocrText\n```",
+                            mediaUri = newUri.toString(),
+                            timestamp = System.currentTimeMillis(),
+                            sourceDocument = newUri.toString(),
+                            documentDate = documentDate,
+                            allegationId = null,
+                            category = "Image OCR",
+                            tags = listOf("ocr", "image"),
+                            commentary = null,
+                            parentVideoId = null,
+                            entities = entities,
                         )
-                    }
-                }
-            }
 
-            logService.addLog("Saving evidence...")
-            onProgress(ProcessingState("Saving evidence...", 90))
-            val savedEvidence = evidenceRepository.addEvidence(newEvidence)
-            logService.addLog("Evidence saved with ID: ${savedEvidence?.id}")
-            onProgress(ProcessingState("Complete", 100))
-            return Pair(savedEvidence, "Raw evidence file saved.")
+                    val script = settingsManager.getScript()
+                    if (script.isNotBlank()) {
+                        logService.addLog("Running script...")
+                        onProgress(ProcessingState.InProgress(0.75f))
+                        val scriptResult = scriptRunner.runScript(script, newEvidence)
+                        when (scriptResult) {
+                            is Result.Loading -> {
+                                logService.addLog("Script for image is loading...")
+                            }
+                            is Result.Success -> {
+                                newEvidence = newEvidence.copy(tags = newEvidence.tags + scriptResult.data)
+                                logService.addLog("Script finished. Added tags: ${scriptResult.data.joinToString(", ")}")
+                            }
+                            is Result.Error -> {
+                                statusMessage = "Script error: ${scriptResult.exception.message}"
+                                logService.addLog(statusMessage, LogLevel.ERROR)
+                                Log.e("OcrProcessingService", "Script error for $uri: $statusMessage", scriptResult.exception)
+                                // Note: statusMessage is set but not immediately returned. It will be used if no further error occurs before final return.
+                            }
+                            is Result.UserRecoverableError -> {
+                                statusMessage = "User recoverable script error: ${scriptResult.exception.message}"
+                                logService.addLog(statusMessage, LogLevel.INFO) // Changed from WARNING to INFO
+                                Log.w("OcrProcessingService", "User recoverable script error for $uri: $statusMessage", scriptResult.exception)
+                                // Note: statusMessage is set but not immediately returned. 
+                            }
+                        }
+                    }
+
+                    logService.addLog("Saving evidence...")
+                    onProgress(ProcessingState.InProgress(0.90f))
+                    val savedEvidence = evidenceRepository.addEvidence(newEvidence)
+                    logService.addLog("Evidence saved with ID: ${savedEvidence?.id}")
+                    onProgress(ProcessingState.InProgress(1.0f))
+                    statusMessage = if (savedEvidence != null) "Image processed and evidence saved successfully." else "Image processed but failed to save evidence."
+                    onProgress(ProcessingState.Completed(statusMessage))
+                    return Pair(savedEvidence, statusMessage)
+                } 
+            } 
         }
     }

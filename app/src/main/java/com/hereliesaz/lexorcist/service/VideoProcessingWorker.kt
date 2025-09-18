@@ -15,7 +15,7 @@ class VideoProcessingWorker @AssistedInject constructor(
     @Assisted private val appContext: Context,
     @Assisted workerParams: WorkerParameters,
     private val videoProcessingService: VideoProcessingService,
-    private val googleApiService: GoogleApiService,
+    // private val googleApiService: GoogleApiService, // Removed googleApiService
     private val logService: LogService
 ) : CoroutineWorker(appContext, workerParams) {
 
@@ -26,32 +26,49 @@ class VideoProcessingWorker @AssistedInject constructor(
         val spreadsheetId = inputData.getString(KEY_SPREADSHEET_ID)
 
         if (videoUriString.isNullOrEmpty() || caseId == -1 || caseName.isNullOrEmpty() || spreadsheetId.isNullOrEmpty()) {
-            Log.e(
-                TAG,
-                "Invalid input data: videoUriString=$videoUriString, caseId=$caseId, caseName=$caseName, spreadsheetId=$spreadsheetId"
-            )
-            return Result.failure()
+            val errorMsg = "Invalid input data: videoUriString=$videoUriString, caseId=$caseId, caseName=$caseName, spreadsheetId=$spreadsheetId"
+            Log.e(TAG, errorMsg)
+            val outputData = Data.Builder().putString(RESULT_FAILURE, errorMsg).build()
+            return Result.failure(outputData)
         }
 
         val videoUri = Uri.parse(videoUriString)
+        var finalEvidenceProcessed: com.hereliesaz.lexorcist.data.Evidence? = null
 
         try {
-            videoProcessingService.processVideo(
+            finalEvidenceProcessed = videoProcessingService.processVideo(
                 videoUri = videoUri,
                 caseId = caseId,
                 caseName = caseName,
                 spreadsheetId = spreadsheetId,
-                googleApiService = googleApiService
-            ) { progress ->
-                setProgressAsync(Data.Builder().putString(PROGRESS, progress).build())
+                // Removed googleApiService from the call
+            ) { percent, message ->
+                val progressData = Data.Builder()
+                    .putFloat(PROGRESS_PERCENT, percent)
+                    .putString(PROGRESS_MESSAGE, message)
+                    .build()
+                setProgressAsync(progressData) 
             }
-        } catch (e: Exception) {
-            logService.addLog("Video processing failed: ${e.message}", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
-            Log.e(TAG, "Video processing failed", e)
-            return Result.failure()
-        }
 
-        return Result.success()
+            if (finalEvidenceProcessed != null) {
+                val successMsg = "Video processed successfully. Evidence ID: ${finalEvidenceProcessed.id}"
+                logService.addLog(successMsg)
+                val outputData = Data.Builder().putString(RESULT_SUCCESS, successMsg).build()
+                return Result.success(outputData)
+            } else {
+                val errorMsg = "Video processing finished but no evidence was created."
+                logService.addLog(errorMsg, com.hereliesaz.lexorcist.model.LogLevel.ERROR)
+                val outputData = Data.Builder().putString(RESULT_FAILURE, errorMsg).build()
+                return Result.failure(outputData)
+            }
+
+        } catch (e: Exception) {
+            val errorMsg = "Video processing failed: ${e.message}"
+            logService.addLog(errorMsg, com.hereliesaz.lexorcist.model.LogLevel.ERROR)
+            Log.e(TAG, errorMsg, e)
+            val outputData = Data.Builder().putString(RESULT_FAILURE, errorMsg).build()
+            return Result.failure(outputData)
+        }
     }
 
     companion object {
@@ -59,7 +76,13 @@ class VideoProcessingWorker @AssistedInject constructor(
         const val KEY_CASE_ID = "KEY_CASE_ID"
         const val KEY_CASE_NAME = "KEY_CASE_NAME"
         const val KEY_SPREADSHEET_ID = "KEY_SPREADSHEET_ID"
-        const val PROGRESS = "PROGRESS"
+        
+        const val PROGRESS_PERCENT = "PROGRESS_PERCENT"
+        const val PROGRESS_MESSAGE = "PROGRESS_MESSAGE"
+        
+        const val RESULT_SUCCESS = "RESULT_SUCCESS"
+        const val RESULT_FAILURE = "RESULT_FAILURE"
+
         private const val TAG = "VideoProcessingWorker"
     }
 }

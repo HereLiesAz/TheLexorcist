@@ -5,8 +5,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi // Added import
-import androidx.compose.foundation.layout.FlowRow // Added import
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -35,7 +35,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-// import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel // No longer needed if passed as param
 import androidx.navigation.NavController
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.model.LogEntry
@@ -47,15 +46,14 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class) // Added ExperimentalLayoutApi
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun EvidenceScreen(
     navController: NavController,
-    caseViewModel: CaseViewModel, // Accept CaseViewModel as a parameter
+    caseViewModel: CaseViewModel, 
 ) {
     var showAddTextEvidence by remember { mutableStateOf(false) }
     var text by remember { mutableStateOf("") }
-    // val selectedCase by caseViewModel.selectedCase.collectAsState() // Already present, but not directly used in button logic below
     val evidenceList by caseViewModel.selectedCaseEvidenceList.collectAsState()
     val videoProcessingProgress by caseViewModel.videoProcessingProgress.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -114,27 +112,34 @@ fun EvidenceScreen(
                 .fillMaxSize()
                 .padding(padding)
                 .padding(16.dp),
-            horizontalAlignment = Alignment.End, // Column aligns its children to the end (right)
+            horizontalAlignment = Alignment.End, 
             verticalArrangement = Arrangement.Top,
         ) {
-            videoProcessingProgress?.let { progress ->
+            // This specific videoProcessingProgress seems separate from the general ProcessingState below
+            // If it's a simple string message, it can remain. If it's more complex, it might need integration.
+            videoProcessingProgress?.let { progressMessage ->
                 Column(horizontalAlignment = Alignment.End) {
-                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-                    Text(progress, style = MaterialTheme.typography.bodySmall)
+                    // Assuming videoProcessingProgress is a simple string for now.
+                    // If it was meant to be a float for LinearProgressIndicator, it needs type change in ViewModel.
+                    Text(progressMessage, style = MaterialTheme.typography.bodySmall)
                     Spacer(modifier = Modifier.height(16.dp))
                 }
             }
             val processingState by caseViewModel.processingState.collectAsState()
             val logMessages by caseViewModel.logMessages.collectAsState()
 
+            // Show ProcessingProgressView if processingState is not null (i.e., not initial/irrelevant state)
             processingState?.let {
-                ProcessingProgressView(
-                    processingState = it,
-                    logMessages = logMessages
-                )
+                if (it !is ProcessingState.Idle || logMessages.isNotEmpty()) { // Show if not idle or if there are logs
+                    ProcessingProgressView(
+                        processingState = it,
+                        logMessages = logMessages
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
             }
 
-            if (showAddTextEvidence && processingState == null) {
+            if (showAddTextEvidence && (processingState == null || processingState is ProcessingState.Idle)) {
                 OutlinedTextField(
                     value = text,
                     onValueChange = { text = it },
@@ -142,7 +147,7 @@ fun EvidenceScreen(
                     modifier =
                     Modifier
                         .fillMaxWidth()
-                        .weight(1f),
+                        .weight(1f), // Takes available vertical space
                     placeholder = { Text(stringResource(R.string.enter_evidence_content)) },
                     textStyle = MaterialTheme.typography.bodyLarge.copy(textAlign = TextAlign.End),
                 )
@@ -160,17 +165,16 @@ fun EvidenceScreen(
                     onClick = { showAddTextEvidence = false },
                     text = stringResource(R.string.cancel).uppercase(Locale.getDefault())
                 )
-            } else if (processingState == null) {
+            } else if (processingState == null || processingState is ProcessingState.Idle) {
                 FlowRow(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
-                    verticalArrangement = Arrangement.spacedBy(8.dp) // Added vertical spacing for wrapped rows
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     LexorcistOutlinedButton(onClick = { showAddTextEvidence = true }, text = stringResource(R.string.add_text_evidence).uppercase(Locale.getDefault()))
                     LexorcistOutlinedButton(onClick = { imagePickerLauncher.launch("image/*") }, text = stringResource(R.string.add_image_evidence).uppercase(Locale.getDefault()))
                     LexorcistOutlinedButton(onClick = { audioPickerLauncher.launch("audio/*") }, text = stringResource(R.string.add_audio_evidence).uppercase(Locale.getDefault()))
                     LexorcistOutlinedButton(onClick = { videoPickerLauncher.launch("video/*") }, text = stringResource(R.string.add_video_evidence).uppercase(Locale.getDefault()))
-                    // "Take Photo" button moved to last and text changed
                     LexorcistOutlinedButton(onClick = { navController.navigate("photo_group") }, text = stringResource(R.string.take_photo).uppercase(Locale.getDefault())) 
                 }
             }
@@ -231,26 +235,70 @@ fun ProcessingProgressView(
     processingState: ProcessingState,
     logMessages: List<LogEntry>
 ) {
-    Column(horizontalAlignment = Alignment.End, modifier = Modifier.fillMaxWidth()) {
-        LinearProgressIndicator(
-            progress = { processingState.progress / 100f }, 
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(processingState.currentTask, style = MaterialTheme.typography.bodySmall)
-        Spacer(modifier = Modifier.height(16.dp))
-        LazyColumn(modifier = Modifier.fillMaxWidth().height(200.dp)) {
-            items(logMessages) { logEntry ->
-                val color = when (logEntry.level) {
-                    com.hereliesaz.lexorcist.model.LogLevel.INFO -> MaterialTheme.colorScheme.onSurface
-                    com.hereliesaz.lexorcist.model.LogLevel.ERROR -> MaterialTheme.colorScheme.error
-                    com.hereliesaz.lexorcist.model.LogLevel.DEBUG -> MaterialTheme.colorScheme.onSurfaceVariant
-                }
-                Text(
-                    text = "${SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date(logEntry.timestamp))} - ${logEntry.message}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = color
+    Column(horizontalAlignment = Alignment.End, modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+        when (processingState) {
+            is ProcessingState.InProgress -> {
+                LinearProgressIndicator(
+                    progress = { processingState.progress }, // Progress is 0.0f to 1.0f
+                    modifier = Modifier.fillMaxWidth()
                 )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Processing: ${"%.0f".format(processingState.progress * 100)}%",
+                    style = MaterialTheme.typography.bodySmall,
+                    textAlign = TextAlign.End,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+            is ProcessingState.Completed -> {
+                Text(
+                    text = "Completed: ${processingState.result}",
+                    style = MaterialTheme.typography.bodyMedium, // Changed to bodyMedium for more emphasis
+                    color = MaterialTheme.colorScheme.primary, // Using primary color for success
+                    textAlign = TextAlign.End,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+            is ProcessingState.Failure -> {
+                Text(
+                    text = "Failed: ${processingState.error}",
+                    style = MaterialTheme.typography.bodyMedium, // Changed to bodyMedium for more emphasis
+                    color = MaterialTheme.colorScheme.error,
+                    textAlign = TextAlign.End,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+            ProcessingState.Idle -> {
+                if (logMessages.isEmpty()) { // Only show Idle if there are no logs to display from a previous run
+                    Text(
+                        text = "Idle",
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.End,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+        }
+        
+        // Always show logs if any are present, regardless of Idle state
+        if (logMessages.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(16.dp))
+            LazyColumn(modifier = Modifier.fillMaxWidth().height(200.dp)) {
+                items(logMessages) {
+                    logEntry ->
+                    val color = when (logEntry.level) {
+                        com.hereliesaz.lexorcist.model.LogLevel.INFO -> MaterialTheme.colorScheme.onSurface
+                        com.hereliesaz.lexorcist.model.LogLevel.ERROR -> MaterialTheme.colorScheme.error
+                        com.hereliesaz.lexorcist.model.LogLevel.DEBUG -> MaterialTheme.colorScheme.onSurfaceVariant
+                    }
+                    Text(
+                        text = "${SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date(logEntry.timestamp))} - ${logEntry.message}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = color,
+                        textAlign = TextAlign.End,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
         }
     }
