@@ -1,5 +1,6 @@
 package com.hereliesaz.lexorcist.ui
 
+import android.util.Log
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -126,7 +127,7 @@ fun CasesScreen(
             )
 
             val isLoading by caseViewModel.isLoading.collectAsState()
-            if (isLoading) {
+            if (isLoading && unarchivedCases.isEmpty()) { // Show loader only if cases are empty
                 Column(
                     modifier = Modifier.fillMaxSize(),
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -172,7 +173,10 @@ fun CasesScreen(
                             case = case,
                             isLongPressed = longPressedCase == case,
                             isSelected = selectedCase?.id == case.id,
-                            onLongPress = { longPressedCase = case },
+                            onLongPress = {
+                                Log.d("CasesScreen", "onLongPress triggered for case: ${case.name}") 
+                                longPressedCase = case
+                            },
                             onDelete = {
                                 longPressedCase = case
                                 showDeleteConfirmDialog = true
@@ -181,12 +185,18 @@ fun CasesScreen(
                                 caseViewModel.archiveCaseWithRepository(case)
                                 longPressedCase = null
                             },
-                            onCancel = { longPressedCase = null },
+                            onCancel = { 
+                                Log.d("CasesScreen", "onCancel triggered (clearing longPressedCase)") 
+                                longPressedCase = null 
+                            },
                             onClick = {
+                                Log.d("CasesScreen", "onClick triggered for case: ${case.name}. longPressedCase is: ${longPressedCase?.name ?: "null"}")
                                 if (longPressedCase == null) {
+                                    Log.d("CasesScreen", "Calling caseViewModel.selectCase for: ${case.name}")
                                     caseViewModel.selectCase(case)
                                 } else {
-                                    longPressedCase = null
+                                    Log.d("CasesScreen", "onClick: longPressedCase was not null (${longPressedCase?.name}), setting it to null instead of selecting.")
+                                    longPressedCase = null 
                                 }
                             },
                         )
@@ -199,6 +209,7 @@ fun CasesScreen(
     if (showDeleteConfirmDialog && longPressedCase != null) {
         AlertDialog(
             onDismissRequest = {
+                Log.d("CasesScreen", "Delete dialog dismissed, clearing longPressedCase.")
                 showDeleteConfirmDialog = false
                 longPressedCase = null
             },
@@ -206,6 +217,7 @@ fun CasesScreen(
             text = { Text(stringResource(R.string.delete_case_confirmation, longPressedCase?.name ?: "")) },
             confirmButton = {
                 LexorcistOutlinedButton(onClick = {
+                    Log.d("CasesScreen", "Delete dialog confirmed, clearing longPressedCase.")
                     longPressedCase?.let { caseViewModel.deleteCaseWithRepository(it) }
                     showDeleteConfirmDialog = false
                     longPressedCase = null
@@ -213,6 +225,7 @@ fun CasesScreen(
             },
             dismissButton = {
                 LexorcistOutlinedButton(onClick = {
+                    Log.d("CasesScreen", "Delete dialog cancel button, clearing longPressedCase.")
                     showDeleteConfirmDialog = false
                     longPressedCase = null
                 }, text = stringResource(R.string.cancel))

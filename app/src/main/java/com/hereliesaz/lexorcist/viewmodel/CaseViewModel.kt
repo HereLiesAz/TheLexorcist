@@ -355,18 +355,26 @@ constructor(
     }
 
     fun selectCase(case: Case?) {
+        Log.d("CaseViewModel", "--- CaseViewModel.selectCase ENTERED with case: ${case?.name ?: "null"} ---")
         viewModelScope.launch {
+            Log.d("CaseViewModel", "viewModelScope.launch in selectCase for case: ${case?.name ?: "null"}")
+            Log.d("CaseViewModel", "isLoading SET TO true in selectCase for case: ${case?.name ?: "null"}")
             _isLoading.value = true
             try {
-                caseRepository.selectCase(case) 
+                caseRepository.selectCase(case)
+                Log.d("CaseViewModel", "IMMEDIATELY AFTER caseRepository.selectCase, ViewModel's own selectedCase.value is: ${selectedCase.value?.name ?: "null"}")
+
                 if (case != null) {
+                    Log.d("CaseViewModel", "Case is not null, proceeding to load filters/templates for ${case.name}")
                     loadSheetFiltersFromRepository(case.spreadsheetId)
                     loadHtmlTemplatesFromRepository()
                 } else {
+                    Log.d("CaseViewModel", "Case is null, clearing filters/templates.")
                     _sheetFilters.value = emptyList()
                     _htmlTemplates.value = emptyList()
                 }
             } finally {
+                Log.d("CaseViewModel", "isLoading SET TO false in selectCase finally block for case: ${case?.name ?: "null"}")
                 _isLoading.value = false
             }
         }
