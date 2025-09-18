@@ -1,10 +1,15 @@
 package com.hereliesaz.lexorcist.data
 
+import com.hereliesaz.lexorcist.model.CloudUser
 import com.hereliesaz.lexorcist.utils.Result
 import javax.inject.Inject
 
 // Placeholder implementation
 class GoogleDriveCloudStorageProvider @Inject constructor() : CloudStorageProvider {
+    override suspend fun getCurrentUser(): Result<CloudUser> {
+        return Result.Error(Exception("GoogleDriveCloudStorageProvider.getCurrentUser not implemented"))
+    }
+
     override suspend fun getRootFolderId(): Result<String> {
         return Result.Error(Exception("GoogleDriveCloudStorageProvider.getRootFolderId not implemented"))
     }

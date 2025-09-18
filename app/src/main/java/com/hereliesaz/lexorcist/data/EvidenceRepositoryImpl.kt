@@ -43,6 +43,7 @@ constructor(
         caseId: Long,
     ) {
         when (val result = storageService.getEvidenceForCase(spreadsheetId)) {
+            is Result.Loading -> { /* Handle loading state, perhaps log or emit a specific UI state */ }
             is Result.Success -> {
                 evidenceCacheManager.saveEvidence(caseId, result.data)
                 evidenceByCaseMap[spreadsheetId]?.value = result.data

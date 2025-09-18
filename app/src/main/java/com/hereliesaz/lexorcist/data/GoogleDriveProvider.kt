@@ -15,7 +15,8 @@ class GoogleDriveProvider @Inject constructor(
 ) : CloudStorageProvider {
 
     override suspend fun getCurrentUser(): Result<CloudUser> {
-        return Result.Error(NotImplementedError("getCurrentUser is not implemented for GoogleDriveProvider"))
+        // Wrap NotImplementedError in an Exception
+        return Result.Error(Exception(NotImplementedError("getCurrentUser is not implemented for GoogleDriveProvider")))
     }
 
     override suspend fun getRootFolderId(): Result<String> {
@@ -25,6 +26,7 @@ class GoogleDriveProvider @Inject constructor(
     override suspend fun listFiles(folderId: String): Result<List<CloudFile>> {
         val result = googleApiService.listFiles(folderId)
         return when (result) {
+            is Result.Loading -> Result.Loading // Added Loading branch
             is Result.Success -> {
                 val cloudFiles = result.data.map {
                     CloudFile(it.id, it.name, it.modifiedTime.value)
@@ -48,6 +50,7 @@ class GoogleDriveProvider @Inject constructor(
         tempFile.delete() // Clean up the temporary file
 
         return when (result) {
+            is Result.Loading -> Result.Loading // Added Loading branch
             is Result.Success -> {
                 val uploadedFile = result.data
                 if (uploadedFile != null) {
@@ -69,6 +72,7 @@ class GoogleDriveProvider @Inject constructor(
         tempFile.delete() // Clean up the temporary file
 
         return when (result) {
+            is Result.Loading -> Result.Loading // Added Loading branch
             is Result.Success -> {
                 val uploadedFile = result.data
                 if (uploadedFile != null) {
@@ -85,6 +89,7 @@ class GoogleDriveProvider @Inject constructor(
     override suspend fun getFileMetadata(fileId: String): Result<CloudFile> {
         val result = googleApiService.getFileMetadata(fileId)
         return when (result) {
+            is Result.Loading -> Result.Loading // Added Loading branch
             is Result.Success -> {
                 val file = result.data
                 Result.Success(CloudFile(file.id, file.name, file.modifiedTime.value))

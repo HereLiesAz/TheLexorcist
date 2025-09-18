@@ -1,52 +1,19 @@
-package com.hereliesaz.lexorcist.data
-
-import android.util.Log // Added for logging
-import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.data.Allegation
 import com.hereliesaz.lexorcist.data.Evidence
-import com.hereliesaz.lexorcist.model.SheetFilter
-import com.hereliesaz.lexorcist.service.GoogleApiService
-import com.hereliesaz.lexorcist.utils.Result
-import com.hereliesaz.lexorcist.utils.ErrorReporter
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import com.hereliesaz.lexorcist.data.Schema
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
-import javax.inject.Inject
-import javax.inject.Singleton
-import com.google.api.services.drive.model.File as DriveFile
 
-@Singleton
-class CaseRepositoryImpl @Inject constructor(
-    private val storageService: StorageService,
-    private val settingsManager: SettingsManager, // Kept for now, ensure it's used or remove
-    private val errorReporter: ErrorReporter,
-    private val caseSheetParser: CaseSheetParser,
-    private val googleApiService: GoogleApiService,
-    private val evidenceRepository: EvidenceRepository
-) : CaseRepository {
-
-    private val repositoryScope = CoroutineScope(Dispatchers.IO + SupervisorJob()) // Define before use
-    private val tag = "CaseRepositoryImpl" // Added for logging
-
-    private val _cases = MutableStateFlow<List<Case>>(emptyList())
-    override val cases: Flow<List<Case>> = _cases.asStateFlow()
-
-    private val _selectedCase = MutableStateFlow<Case?>(null)
-    override val selectedCase: Flow<Case?> = _selectedCase.asStateFlow()
+\
+)
 
     private val _allegations = MutableStateFlow<List<Allegation>>(emptyList())
     override val selectedCaseAllegations: Flow<List<Allegation>> = _allegations.asStateFlow()
 
     private val _selectedCaseEvidence = MutableStateFlow<Result<List<Evidence>>>(Result.Success(emptyList()))
-    override val selectedCaseEvidence: Flow<Result<List<Evidence>>> = _selectedCaseEvidence.asStateFlow()
+    override val selectedCaseEvidence: Flow<Result<List<Schema.Evidence>>> = _selectedCaseEvidence.asStateFlow()
 
     private var loadAllegationsJob: Job? = null
     private var loadEvidenceJob: Job? = null
@@ -174,21 +141,22 @@ class CaseRepositoryImpl @Inject constructor(
         return when (val updateStorageResult = storageService.updateCase(archivedDetails)) {
             is Result.Loading -> Result.Loading
             is Result.Success -> {
-                val updatedCase = updateStorageResult.data // Assuming updateCase returns the updated Case
+                // If storageService.updateCase was successful (even if it returns Result<Unit>),
+                // we assume 'archivedDetails' is the state we want to reflect.
                 _cases.update { currentCaseList ->
                     currentCaseList.map { caseInList ->
-                        if (caseInList.spreadsheetId == updatedCase.spreadsheetId) {
-                            updatedCase
+                        if (caseInList.spreadsheetId == archivedDetails.spreadsheetId) {
+                            archivedDetails
                         } else {
                             caseInList
                         }
                     }.sortedByDescending { it.lastModifiedTime ?: 0L }
                 }
 
-                if (_selectedCase.value?.spreadsheetId == updatedCase.spreadsheetId) {
-                    selectCase(updatedCase) // Refresh selected case details
+                if (_selectedCase.value?.spreadsheetId == archivedDetails.spreadsheetId) {
+                    selectCase(archivedDetails) // Refresh selected case details with the locally known 'archivedDetails'
                 }
-                Result.Success(updatedCase)
+                Result.Success(archivedDetails) // Return 'archivedDetails' as the outcome of the operation
             }
             is Result.Error -> Result.Error(updateStorageResult.exception)
             is Result.UserRecoverableError -> Result.UserRecoverableError(updateStorageResult.exception)
@@ -277,7 +245,7 @@ class CaseRepositoryImpl @Inject constructor(
     override suspend fun addAllegation(spreadsheetId: String, allegationText: String) {
         val currentSelectedCaseId = _selectedCase.value?.spreadsheetId
         if (spreadsheetId == currentSelectedCaseId) {
-            val allegationDetails = Allegation(spreadsheetId = spreadsheetId, text = allegationText, id = 0, timestamp = System.currentTimeMillis()) // Ensure ID and timestamp are handled
+            val allegationDetails = Allegation(spreadsheetId = spreadsheetId, text = allegationText, id = 0) // Ensure ID is handled
             when (val result = storageService.addAllegation(spreadsheetId, allegationDetails)) {
                 is Result.Loading -> {
                     Log.d(tag, "Adding allegation to $spreadsheetId: Loading...")
@@ -293,9 +261,5 @@ class CaseRepositoryImpl @Inject constructor(
                 }
             }
         } else {
-            val exception = Exception("Cannot add an allegation to a non-selected case or case ID mismatch.")
-            errorReporter.reportError(exception)
-            Log.e(tag, "Failed to add allegation: Attempted to add to $spreadsheetId but $currentSelectedCaseId is selected.", exception)
-        }
-    }
-}
+            val exception = Exception("C
+```

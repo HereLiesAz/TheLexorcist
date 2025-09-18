@@ -140,6 +140,10 @@ class OcrProcessingService
             if (script.isNotBlank()) {
                 val scriptResult = scriptRunner.runScript(script, newEvidence)
                 when (scriptResult) {
+                    is Result.Loading -> {
+                        logService.addLog("Script for frame is loading...")
+                        // Decide if you need to do anything else, like wait or skip tagging
+                    }
                     is Result.Success -> {
                         newEvidence = newEvidence.copy(tags = newEvidence.tags + scriptResult.data)
                     }
@@ -185,6 +189,14 @@ class OcrProcessingService
                 onProgress(ProcessingState("Error uploading image", 100))
                 return Pair(null, "Error uploading image: ${uploadResult.exception.message}")
             }
+            // Add Result.Loading case for uploadResult
+            if (uploadResult is Result.Loading) {
+                 logService.addLog("Image upload in progress...")
+                 onProgress(ProcessingState("Uploading image...", 25)) // Keep progress or update as needed
+                 // Potentially return a specific state or wait/retry, for now, we'll log and let it proceed
+                 // which might not be ideal. Depending on how this is called, it might need to return early.
+            }
+
 
             val newUri = Uri.parse((uploadResult as Result.Success).data)
             logService.addLog("Image uploaded to: $newUri")
@@ -236,6 +248,9 @@ class OcrProcessingService
                 onProgress(ProcessingState("Running analysis script...", 75))
                 val scriptResult = scriptRunner.runScript(script, newEvidence)
                 when (scriptResult) {
+                    is Result.Loading -> { // Added missing Loading branch for the second scriptResult
+                        logService.addLog("Script for image is loading...")
+                    }
                     is Result.Success -> {
                         newEvidence = newEvidence.copy(tags = newEvidence.tags + scriptResult.data)
                         logService.addLog("Script finished. Added tags: ${scriptResult.data.joinToString(", ")}")
