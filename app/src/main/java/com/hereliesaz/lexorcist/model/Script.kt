@@ -12,4 +12,5 @@ data class Script(
     val author: String, // User who shared it
     val rating: Double = 0.0,
     val numRatings: Int = 0,
+    val court: String? = null // Added court field
 ) : Parcelable
