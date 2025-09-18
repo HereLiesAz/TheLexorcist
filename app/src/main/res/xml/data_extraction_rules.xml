@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <data-extraction-rules>
     <cloud-backup>
-        <!-- TODO: Add domain-specific cloud backup rules here. -->
-        <!--
+        <!-- Back up all shared preferences -->
         <include domain="sharedpref" path="."/>
-        <exclude domain="sharedpref" path="device.xml"/>
-        -->
+        <!-- Back up the main data file -->
+        <include domain="file" path="lexorcist_data.xlsx"/>
     </cloud-backup>
 </data-extraction-rules>
