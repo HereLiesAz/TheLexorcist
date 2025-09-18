@@ -90,8 +90,14 @@ fun ExtrasScreen(
                             name = item.name,
                             description = item.description,
                             author = item.author,
-                            rating = 0f, // Rating is not fully implemented yet
-                            onRate = { /* TODO */ },
+                            rating = item.rating.toFloat(),
+                            onRate = { rating ->
+                                val type = when (item) {
+                                    is com.hereliesaz.lexorcist.data.ScriptItem -> "Script"
+                                    is com.hereliesaz.lexorcist.data.TemplateItem -> "Template"
+                                }
+                                extrasViewModel.rateAddon(item.id, rating, type)
+                            },
                             onClick = { showDetailsDialog = item }
                         )
                     }

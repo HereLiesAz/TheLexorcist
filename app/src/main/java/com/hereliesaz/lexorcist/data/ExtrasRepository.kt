@@ -14,6 +14,7 @@ sealed interface SharedItem {
     val description: String
     val author: String
     val content: String
+    val rating: Double
 }
 
 data class ScriptItem(val script: Script) : SharedItem {
@@ -22,6 +23,7 @@ data class ScriptItem(val script: Script) : SharedItem {
     override val description: String get() = script.description
     override val author: String get() = script.author
     override val content: String get() = script.content
+    override val rating: Double get() = script.rating
 }
 
 data class TemplateItem(val template: Template) : SharedItem {
@@ -30,6 +32,7 @@ data class TemplateItem(val template: Template) : SharedItem {
     override val description: String get() = template.description
     override val author: String get() = template.author
     override val content: String get() = template.content
+    override val rating: Double get() = template.rating
 }
 
 @Singleton
@@ -66,5 +69,9 @@ class ExtrasRepository @Inject constructor(
     // Added court: String? parameter and pass court ?: "" to googleApiService.shareAddon
     suspend fun shareItem(name: String, description: String, content: String, type: String, authorEmail: String, court: String?): Result<Unit> {
         return googleApiService.shareAddon(name, description, content, type, authorEmail, court ?: "")
+    }
+
+    suspend fun rateAddon(id: String, rating: Int, type: String): Boolean {
+        return googleApiService.rateAddon(id, rating, type)
     }
 }

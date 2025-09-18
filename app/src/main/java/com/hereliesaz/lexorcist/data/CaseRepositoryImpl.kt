@@ -241,13 +241,19 @@ class CaseRepositoryImpl @Inject constructor(
         val currentSelectedCaseId = _selectedCase.value?.spreadsheetId
         if (spreadsheetId == currentSelectedCaseId) {
             val allegationDetails = Allegation(spreadsheetId = spreadsheetId, text = allegationText)
-            // TODO: Call storageService.addAllegation. It should ideally return the created Allegation.
-            // storageService.addAllegation(spreadsheetId, allegationDetails)
-            // Then update _allegations cache directly if successful, similar to how cases are handled.
-            // For now, falling back to refresh all allegations for the selected case:
-            internalRefreshAllegations(spreadsheetId)
+            when (val result = storageService.addAllegation(spreadsheetId, allegationDetails)) {
+                is Result.Success -> {
+                    _allegations.update { it + result.data }
+                }
+                is Result.Error -> {
+                    errorReporter.reportError(result.exception)
+                }
+                is Result.UserRecoverableError -> {
+                    errorReporter.reportError(result.exception)
+                }
+            }
         } else {
-            // TODO: Decide how to handle adding an allegation to a non-selected case.
+            errorReporter.reportError(Exception("Cannot add an allegation to a non-selected case."))
         }
     }
 }
