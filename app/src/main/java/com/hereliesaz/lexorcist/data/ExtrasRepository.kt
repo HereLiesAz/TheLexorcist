@@ -63,7 +63,8 @@ class ExtrasRepository @Inject constructor(
         return googleApiService.updateSharedItem(originalItem, userEmail)
     }
 
-    suspend fun shareItem(name: String, description: String, content: String, type: String, authorEmail: String): Result<Unit> {
-        return googleApiService.shareAddon(name, description, content, type, authorEmail)
+    // Added court: String? parameter and pass court ?: "" to googleApiService.shareAddon
+    suspend fun shareItem(name: String, description: String, content: String, type: String, authorEmail: String, court: String?): Result<Unit> {
+        return googleApiService.shareAddon(name, description, content, type, authorEmail, court ?: "")
     }
 }

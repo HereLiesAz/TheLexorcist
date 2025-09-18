@@ -10,7 +10,7 @@ data class Script(
     val description: String,
     val content: String, // The actual script code
     val author: String, // User who shared it
+    val court: String? = null, // Standardized position
     val rating: Double = 0.0,
-    val numRatings: Int = 0,
-    val court: String? = null // Added court field
+    val numRatings: Int = 0
 ) : Parcelable

@@ -2,21 +2,19 @@ package com.hereliesaz.lexorcist.fragments.main
 
 import android.content.Context
 import android.os.Bundle
-import android.util.Log // Added import for Log
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import com.hereliesaz.lexorcist.databinding.FragmentMainBinding // Assuming this will be generated
+import com.hereliesaz.lexorcist.databinding.FragmentMainBinding
 import com.hereliesaz.lexorcist.model.StringConstants
 
 class MainFragment : Fragment() {
     private lateinit var binding: FragmentMainBinding
-    // MainFragmentListener related code removed
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
-        // Listener attachment logic removed
     }
 
     private fun setup() {
@@ -24,9 +22,10 @@ class MainFragment : Fragment() {
     }
 
     private fun generateDescription(script: String): String {
-        Log.d("MainFragment", "Generating description for script: $script") // Added Log
-        val includesRegex = """evidence\.(?:text|content)\.includes\(\"([^\"]+)\"\)""".toRegex() // Corrected
-        val tagsRegex = """parser\.tags\.push\(\"([^\"]+)\"\)""".toRegex() // Corrected
+        Log.d("MainFragment", "Generating description for script: $script")
+        val includesRegex = """evidence\.(?:text|content)\.includes\(\"([^\"]+)\"\)""".toRegex()
+        // Corrected regex definition using a standard string with escaped characters
+        val tagsRegex = "parser\\.tags\\.push\\(\\\"([^\\\"]+)\\\"\\)".toRegex()
 
         val includesMatches = includesRegex.findAll(script).mapNotNull { it.groupValues.getOrNull(1) }.toList()
         val tagsMatches = tagsRegex.findAll(script).mapNotNull { it.groupValues.getOrNull(1) }.toList()
@@ -41,7 +40,6 @@ class MainFragment : Fragment() {
     }
 
     private fun setOnClickListeners() {
-        // This block assumes FragmentMainBinding resolves and view IDs in fragment_main.xml are correct
         val buttons = mapOf(
             binding.fragmentMainAction1Button to StringConstants.String.Action1,
             binding.fragmentMainAction2Button to StringConstants.String.Action2,
