@@ -35,7 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+// import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel // No longer needed if passed as param
 import androidx.navigation.NavController
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.model.LogEntry
@@ -51,7 +51,7 @@ import java.util.Locale
 @Composable
 fun EvidenceScreen(
     navController: NavController,
-    caseViewModel: CaseViewModel = hiltViewModel(),
+    caseViewModel: CaseViewModel, // Accept CaseViewModel as a parameter
 ) {
     var showAddTextEvidence by remember { mutableStateOf(false) }
     var text by remember { mutableStateOf("") }

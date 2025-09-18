@@ -88,14 +88,15 @@ constructor(
             }
             .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
-    val selectedCase: StateFlow<Case?> =
-        caseRepository.selectedCase.stateIn(viewModelScope, SharingStarted.Lazily, null)
+    // New way of handling selectedCase in ViewModel
+    private val _vmSelectedCase = MutableStateFlow<Case?>(null)
+    val selectedCase: StateFlow<Case?> = _vmSelectedCase.asStateFlow()
 
     private val _sheetFilters = MutableStateFlow<List<SheetFilter>>(emptyList())
     val sheetFilters: StateFlow<List<SheetFilter>> = _sheetFilters.asStateFlow()
 
     val allegations: StateFlow<List<Allegation>> =
-        caseRepository.selectedCaseAllegations
+        caseRepository.selectedCaseAllegations // This should probably also collect into a _vmAllegations
             .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     private val _htmlTemplates = MutableStateFlow<List<DriveFile>>(emptyList())
@@ -169,12 +170,21 @@ constructor(
     val storageLocation: StateFlow<String?> = _storageLocation.asStateFlow()
 
     init {
+        Log.d("CaseViewModel", "--- CaseViewModel INIT --- instancia: $this")
         loadThemeModePreference()
         _storageLocation.value = settingsManager.getStorageLocation()
 
         viewModelScope.launch {
             logService.logEventFlow.collect { newLog ->
                 _logMessages.value = listOf(newLog) + _logMessages.value
+            }
+        }
+
+        viewModelScope.launch {
+            Log.d("CaseViewModel", "INIT: Starting to collect caseRepository.selectedCase. Current repo instance: ${caseRepository}")
+            caseRepository.selectedCase.collect { caseFromRepo ->
+                Log.d("CaseViewModel", "INIT COLLECTOR: caseRepository.selectedCase emitted: ${caseFromRepo?.name ?: "null"}. Updating _vmSelectedCase.")
+                _vmSelectedCase.value = caseFromRepo
             }
         }
 
@@ -355,14 +365,14 @@ constructor(
     }
 
     fun selectCase(case: Case?) {
-        Log.d("CaseViewModel", "--- CaseViewModel.selectCase ENTERED with case: ${case?.name ?: "null"} ---")
+        Log.d("CaseViewModel", "--- CaseViewModel.selectCase ENTERED with case: ${case?.name ?: "null"} --- instance: $this, repo instance: $caseRepository")
         viewModelScope.launch {
             Log.d("CaseViewModel", "viewModelScope.launch in selectCase for case: ${case?.name ?: "null"}")
             Log.d("CaseViewModel", "isLoading SET TO true in selectCase for case: ${case?.name ?: "null"}")
             _isLoading.value = true
             try {
-                caseRepository.selectCase(case)
-                Log.d("CaseViewModel", "IMMEDIATELY AFTER caseRepository.selectCase, ViewModel's own selectedCase.value is: ${selectedCase.value?.name ?: "null"}")
+                caseRepository.selectCase(case) // This call should trigger the collector in init
+                Log.d("CaseViewModel", "IMMEDIATELY AFTER caseRepository.selectCase, ViewModel's _vmSelectedCase.value is: ${_vmSelectedCase.value?.name ?: "null"}")
 
                 if (case != null) {
                     Log.d("CaseViewModel", "Case is not null, proceeding to load filters/templates for ${case.name}")
@@ -572,8 +582,10 @@ constructor(
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                val case = selectedCase.value ?: run {
-                    Log.w("CaseViewModel", "addTextEvidence: No case selected, aborting.")
+                 val currentCaseFromState = _vmSelectedCase.value
+                Log.d("CaseViewModel", "addTextEvidence: _vmSelectedCase.value AT START is: ${currentCaseFromState?.name ?: "null"}")
+                val caseToUse = currentCaseFromState ?: run {
+                    Log.w("CaseViewModel", "addTextEvidence: No case selected from StateFlow, aborting.")
                     viewModelScope.launch { _userMessage.emit("Please select a case first to add text evidence.") }
                     _isLoading.value = false
                     return@launch
@@ -581,8 +593,8 @@ constructor(
                 val entities = com.hereliesaz.lexorcist.DataParser.tagData(text)
                 val newEvidence =
                     com.hereliesaz.lexorcist.data.Evidence(
-                        caseId = case.id.toLong(),
-                        spreadsheetId = case.spreadsheetId,
+                        caseId = caseToUse.id.toLong(),
+                        spreadsheetId = caseToUse.spreadsheetId,
                         type = "text",
                         content = text,
                         formattedContent = null,
@@ -616,22 +628,23 @@ constructor(
 
     fun processImageEvidence(uri: android.net.Uri) {
         viewModelScope.launch {
-            Log.d("CaseViewModel", "processImageEvidence called with URI: $uri")
+            val currentCaseFromState = _vmSelectedCase.value
+            Log.d("CaseViewModel", "processImageEvidence: _vmSelectedCase.value AT START is: ${currentCaseFromState?.name ?: "null"}")
             _isLoading.value = true 
             clearLogs()
-            val case = selectedCase.value ?: run {
-                Log.w("CaseViewModel", "processImageEvidence: No case selected, aborting.")
+            val caseToUse = currentCaseFromState ?: run {
+                Log.w("CaseViewModel", "processImageEvidence: No case selected from StateFlow, aborting.")
                 viewModelScope.launch { _userMessage.emit("Please select a case first to add image evidence.") }
                 _isLoading.value = false 
                 return@launch
             }
             try {
-                Log.d("CaseViewModel", "Processing image for case: ${case.name}")
+                Log.d("CaseViewModel", "Processing image for case: ${caseToUse.name}")
                 val (newEvidence, message) = ocrProcessingService.processImage(
                     uri = uri,
                     context = applicationContext,
-                    caseId = case.id.toLong(),
-                    spreadsheetId = case.spreadsheetId,
+                    caseId = caseToUse.id.toLong(),
+                    spreadsheetId = caseToUse.spreadsheetId,
                 ) {
                     _processingState.value = it
                 }
@@ -657,22 +670,23 @@ constructor(
 
     fun processAudioEvidence(uri: android.net.Uri) {
         viewModelScope.launch(Dispatchers.IO) {
-            Log.d("CaseViewModel", "processAudioEvidence called with URI: $uri")
+            val currentCaseFromState = _vmSelectedCase.value
+            Log.d("CaseViewModel", "processAudioEvidence: _vmSelectedCase.value AT START is: ${currentCaseFromState?.name ?: "null"}")
             withContext(Dispatchers.Main) { _isLoading.value = true }
             clearLogs()
-            val case = selectedCase.value ?: run {
-                Log.w("CaseViewModel", "processAudioEvidence: No case selected, aborting.")
+            val caseToUse = currentCaseFromState ?: run {
+                Log.w("CaseViewModel", "processAudioEvidence: No case selected from StateFlow, aborting.")
                 viewModelScope.launch(Dispatchers.Main) { _userMessage.emit("Please select a case first to add audio evidence.") }
                 withContext(Dispatchers.Main) { _isLoading.value = false }
                 return@launch
             }
 
             try {
-                Log.d("CaseViewModel", "Processing audio for case: ${case.name}")
+                Log.d("CaseViewModel", "Processing audio for case: ${caseToUse.name}")
                 withContext(Dispatchers.Main) {
                     _processingStatus.value = "Uploading audio..."
                 }
-                val uploadResult = evidenceRepository.uploadFile(uri, case.name, case.spreadsheetId)
+                val uploadResult = evidenceRepository.uploadFile(uri, caseToUse.name, caseToUse.spreadsheetId)
                 if (uploadResult is Result.Success) {
                     Log.i("CaseViewModel", "Audio file uploaded: ${uploadResult.data}")
                     withContext(Dispatchers.Main) {
@@ -692,8 +706,8 @@ constructor(
 
                     val newEvidence =
                         com.hereliesaz.lexorcist.data.Evidence(
-                            caseId = case.id.toLong(),
-                            spreadsheetId = case.spreadsheetId,
+                            caseId = caseToUse.id.toLong(),
+                            spreadsheetId = caseToUse.spreadsheetId,
                             type = "audio",
                             content = transcribedText,
                             formattedContent = "```\n$transcribedText\n```",
@@ -757,25 +771,26 @@ constructor(
 
     fun processVideoEvidence(uri: android.net.Uri) {
         viewModelScope.launch {
-            Log.d("CaseViewModel", "processVideoEvidence called with URI: $uri")
+            val currentCaseFromState = _vmSelectedCase.value
+            Log.d("CaseViewModel", "processVideoEvidence: _vmSelectedCase.value AT START is: ${currentCaseFromState?.name ?: "null"}")
             _isLoading.value = true 
             clearLogs()
-            val case = selectedCase.value ?: run {
-                Log.w("CaseViewModel", "processVideoEvidence: No case selected, aborting.")
+            val caseToUse = currentCaseFromState ?: run {
+                Log.w("CaseViewModel", "processVideoEvidence: No case selected from StateFlow, aborting.")
                 viewModelScope.launch { _userMessage.emit("Please select a case first to add video evidence.") }
                 _isLoading.value = false 
                 return@launch
             }
-            Log.d("CaseViewModel", "Processing video for case: ${case.name}")
+            Log.d("CaseViewModel", "Processing video for case: ${caseToUse.name}")
             val workRequest =
                 androidx.work.OneTimeWorkRequestBuilder<com.hereliesaz.lexorcist.service.VideoProcessingWorker>()
                     .setInputData(
                         androidx.work.Data
                             .Builder()
                             .putString(com.hereliesaz.lexorcist.service.VideoProcessingWorker.KEY_VIDEO_URI, uri.toString())
-                            .putInt(com.hereliesaz.lexorcist.service.VideoProcessingWorker.KEY_CASE_ID, case.id)
-                            .putString(com.hereliesaz.lexorcist.service.VideoProcessingWorker.KEY_CASE_NAME, case.name)
-                            .putString(com.hereliesaz.lexorcist.service.VideoProcessingWorker.KEY_SPREADSHEET_ID, case.spreadsheetId)
+                            .putInt(com.hereliesaz.lexorcist.service.VideoProcessingWorker.KEY_CASE_ID, caseToUse.id)
+                            .putString(com.hereliesaz.lexorcist.service.VideoProcessingWorker.KEY_CASE_NAME, caseToUse.name)
+                            .putString(com.hereliesaz.lexorcist.service.VideoProcessingWorker.KEY_SPREADSHEET_ID, caseToUse.spreadsheetId)
                             .build(),
                     ).build()
             workManager.enqueue(workRequest)
@@ -800,8 +815,10 @@ constructor(
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                val case = selectedCase.value ?: run {
-                    Log.w("CaseViewModel", "addPhotoGroupEvidence: No case selected, aborting.")
+                val currentCaseFromState = _vmSelectedCase.value
+                Log.d("CaseViewModel", "addPhotoGroupEvidence: _vmSelectedCase.value AT START is: ${currentCaseFromState?.name ?: "null"}")
+                val caseToUse = currentCaseFromState ?: run {
+                    Log.w("CaseViewModel", "addPhotoGroupEvidence: No case selected from StateFlow, aborting.")
                     viewModelScope.launch { _userMessage.emit("Please select a case first to add photos.") }
                      _isLoading.value = false
                     return@launch
@@ -810,7 +827,7 @@ constructor(
 
                 photoUris.forEach { uri ->
                     val mimeType = applicationContext.contentResolver.getType(uri) ?: "image/jpeg"
-                    when (val result = storageService.uploadFile(case.spreadsheetId, uri, mimeType)) {
+                    when (val result = storageService.uploadFile(caseToUse.spreadsheetId, uri, mimeType)) {
                         is Result.Success -> {
                             savedPhotoPaths.add(result.data)
                         }
@@ -827,8 +844,8 @@ constructor(
                     val mediaUriJson = com.google.gson.Gson().toJson(savedPhotoPaths)
                     val newEvidence =
                         com.hereliesaz.lexorcist.data.Evidence(
-                            caseId = case.id.toLong(),
-                            spreadsheetId = case.spreadsheetId,
+                            caseId = caseToUse.id.toLong(),
+                            spreadsheetId = caseToUse.spreadsheetId,
                             type = "photo_group",
                             content = description,
                             formattedContent = null,

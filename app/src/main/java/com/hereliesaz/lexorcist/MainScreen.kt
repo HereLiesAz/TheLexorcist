@@ -178,6 +178,7 @@ fun MainScreen(
                                 composable("evidence") {
                                     EvidenceScreen(
                                         navController = navController,
+                                        caseViewModel = caseViewModel // Pass the MainScreen's instance
                                     )
                                 }
                                 composable("extras") {
