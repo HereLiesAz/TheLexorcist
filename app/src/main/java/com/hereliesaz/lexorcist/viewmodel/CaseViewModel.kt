@@ -93,7 +93,6 @@ constructor(
     private val _sheetFilters = MutableStateFlow<List<SheetFilter>>(emptyList())
     val sheetFilters: StateFlow<List<SheetFilter>> = _sheetFilters.asStateFlow()
 
-    // Directly expose allegations from the repository for the selected case
     val allegations: StateFlow<List<Allegation>> =
         caseRepository.selectedCaseAllegations
             .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
@@ -135,11 +134,9 @@ constructor(
     private val _timelineSortType = MutableStateFlow(TimelineSortType.DATE_OF_OCCURRENCE)
     val timelineSortType: StateFlow<TimelineSortType> = _timelineSortType.asStateFlow()
 
-    // This MutableStateFlow holds the evidence list for internal management (e.g., selection state)
     private val _selectedCaseEvidenceListInternal =
         MutableStateFlow<List<com.hereliesaz.lexorcist.data.Evidence>>(emptyList())
 
-    // This StateFlow is exposed to the UI, applying sorting to the internal list.
     val selectedCaseEvidenceList: StateFlow<List<com.hereliesaz.lexorcist.data.Evidence>> =
         _selectedCaseEvidenceListInternal
             .combine(timelineSortType) { evidence, sortType ->
@@ -154,7 +151,7 @@ constructor(
             .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     val selectedEvidence: StateFlow<List<com.hereliesaz.lexorcist.data.Evidence>> =
-        selectedCaseEvidenceList // This now correctly refers to the StateFlow above
+        selectedCaseEvidenceList
             .map { list -> list.filter { it.isSelected } }
             .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
@@ -180,22 +177,25 @@ constructor(
             }
         }
 
-        // Collect evidence for the selected case from the repository
         viewModelScope.launch {
             caseRepository.selectedCaseEvidence.collect { result ->
-                when (result) {
-                    is Result.Success -> {
-                        _selectedCaseEvidenceListInternal.value = result.data
+                _isLoading.value = true // Indicate loading while processing the result
+                try {
+                    when (result) {
+                        is Result.Success -> {
+                            _selectedCaseEvidenceListInternal.value = result.data
+                        }
+                        is Result.Error -> {
+                            _errorMessage.value = result.exception.message ?: "Error loading evidence"
+                            _selectedCaseEvidenceListInternal.value = emptyList()
+                        }
+                        is Result.UserRecoverableError -> {
+                            _userRecoverableAuthIntent.value = result.exception.intent
+                            _selectedCaseEvidenceListInternal.value = emptyList()
+                        }
                     }
-                    is Result.Error -> {
-                        _errorMessage.value = result.exception.message ?: "Error loading evidence"
-                        _selectedCaseEvidenceListInternal.value = emptyList() // Clear evidence on error
-                    }
-                    is Result.UserRecoverableError -> {
-                        _userRecoverableAuthIntent.value = result.exception.intent
-                        _selectedCaseEvidenceListInternal.value = emptyList()
-                    }
-                    // TODO: Handle a Result.Loading state if you add one to your Result class
+                } finally {
+                    _isLoading.value = false
                 }
             }
         }
@@ -203,26 +203,37 @@ constructor(
 
     fun setStorageLocation(uri: android.net.Uri) {
         viewModelScope.launch {
-            val oldLocation = settingsManager.getStorageLocation()
-            settingsManager.saveStorageLocation(uri.toString())
-            _storageLocation.value = uri.toString()
-            if (oldLocation != null) {
-                viewModelScope.launch { _userMessage.emit("Moving files to new location...") }
-                localFileStorageService.moveFilesToNewLocation(oldLocation, uri.toString())
-                viewModelScope.launch { _userMessage.emit("Files moved successfully.") }
+            _isLoading.value = true
+            try {
+                val oldLocation = settingsManager.getStorageLocation()
+                settingsManager.saveStorageLocation(uri.toString())
+                _storageLocation.value = uri.toString()
+                if (oldLocation != null) {
+                    viewModelScope.launch { _userMessage.emit("Moving files to new location...") }
+                    localFileStorageService.moveFilesToNewLocation(oldLocation, uri.toString())
+                    viewModelScope.launch { _userMessage.emit("Files moved successfully.") }
+                }
+            } finally {
+                _isLoading.value = false
             }
         }
     }
 
     private fun clearCaseData() {
-        viewModelScope.launch { caseRepository.selectCase(null) } // This will clear selected case data in repo
-        _sheetFilters.value = emptyList()
-        // _allegations.value is now driven by caseRepository.selectedCaseAllegations
-        _htmlTemplates.value = emptyList()
-        _plaintiffs.value = ""
-        _defendants.value = ""
-        _court.value = ""
-        saveCaseInfoToSharedPrefs()
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                caseRepository.selectCase(null) 
+                _sheetFilters.value = emptyList()
+                _htmlTemplates.value = emptyList()
+                _plaintiffs.value = ""
+                _defendants.value = ""
+                _court.value = ""
+                saveCaseInfoToSharedPrefs()
+            } finally {
+                _isLoading.value = false
+            }
+        }
     }
 
     fun showError(message: String) {
@@ -268,21 +279,38 @@ constructor(
 
     fun loadCasesFromRepository() {
         viewModelScope.launch {
-            caseRepository.refreshCases()
+            _isLoading.value = true
+            try {
+                caseRepository.refreshCases()
+            } finally {
+                _isLoading.value = false
+            }
         }
     }
 
     fun loadHtmlTemplatesFromRepository() {
         viewModelScope.launch {
-            caseRepository.refreshHtmlTemplates()
-            caseRepository.getHtmlTemplates().collect {
-                _htmlTemplates.value = it
+            _isLoading.value = true
+            try {
+                caseRepository.refreshHtmlTemplates()
+                caseRepository.getHtmlTemplates().collect {
+                    _htmlTemplates.value = it
+                }
+            } finally {
+                _isLoading.value = false
             }
         }
     }
 
     fun importSpreadsheetWithRepository(spreadsheetId: String) {
-        viewModelScope.launch { caseRepository.importSpreadsheet(spreadsheetId) }
+        viewModelScope.launch { 
+            _isLoading.value = true
+            try {
+                caseRepository.importSpreadsheet(spreadsheetId) 
+            } finally {
+                _isLoading.value = false
+            }
+        }
     }
 
     fun createCase(
@@ -294,51 +322,65 @@ constructor(
     ) {
         android.util.Log.d("CaseViewModel", "createCase called with name: $caseName")
         viewModelScope.launch {
-            val result =
-                caseRepository.createCase(
-                    caseName,
-                    exhibitSheetName,
-                    caseNumber,
-                    caseSection,
-                    caseJudge,
-                    plaintiffs.value,
-                    defendants.value,
-                    court.value,
-                )
-            when (result) {
-                is Result.Success -> {
-                    android.util.Log.d("CaseViewModel", "Case creation successful")
+            _isLoading.value = true
+            try {
+                val result =
+                    caseRepository.createCase(
+                        caseName,
+                        exhibitSheetName,
+                        caseNumber,
+                        caseSection,
+                        caseJudge,
+                        plaintiffs.value,
+                        defendants.value,
+                        court.value,
+                    )
+                when (result) {
+                    is Result.Success -> {
+                        android.util.Log.d("CaseViewModel", "Case creation successful")
+                    }
+                    is Result.Error -> {
+                        _errorMessage.value =
+                            result.exception.message ?: "Unknown error during case creation"
+                    }
+                    is Result.UserRecoverableError -> {
+                        _userRecoverableAuthIntent.value = result.exception.intent
+                    }
                 }
-                is Result.Error -> {
-                    _errorMessage.value =
-                        result.exception.message ?: "Unknown error during case creation"
-                }
-                is Result.UserRecoverableError -> {
-                    _userRecoverableAuthIntent.value = result.exception.intent
-                }
+            } finally {
+                _isLoading.value = false
             }
         }
     }
 
     fun selectCase(case: Case?) {
         viewModelScope.launch {
-            caseRepository.selectCase(case) // Repository now handles loading/clearing allegations & evidence
-            if (case != null) {
-                loadSheetFiltersFromRepository(case.spreadsheetId)
-                loadHtmlTemplatesFromRepository()
-            } else {
-                _sheetFilters.value = emptyList()
-                _htmlTemplates.value = emptyList()
-                // Allegations and evidence are cleared by collecting from repository flows
+            _isLoading.value = true
+            try {
+                caseRepository.selectCase(case) 
+                if (case != null) {
+                    loadSheetFiltersFromRepository(case.spreadsheetId)
+                    loadHtmlTemplatesFromRepository()
+                } else {
+                    _sheetFilters.value = emptyList()
+                    _htmlTemplates.value = emptyList()
+                }
+            } finally {
+                _isLoading.value = false
             }
         }
     }
 
     private fun loadSheetFiltersFromRepository(spreadsheetId: String) {
         viewModelScope.launch {
-            caseRepository.refreshSheetFilters(spreadsheetId)
-            caseRepository.getSheetFilters(spreadsheetId).collect {
-                _sheetFilters.value = it
+            _isLoading.value = true
+            try {
+                caseRepository.refreshSheetFilters(spreadsheetId)
+                caseRepository.getSheetFilters(spreadsheetId).collect {
+                    _sheetFilters.value = it
+                }
+            } finally {
+                _isLoading.value = false
             }
         }
     }
@@ -348,16 +390,25 @@ constructor(
         value: String,
     ) {
         viewModelScope.launch {
-            val spreadsheetId = selectedCase.value?.spreadsheetId ?: return@launch
-            caseRepository.addSheetFilter(spreadsheetId, name, value)
+            _isLoading.value = true
+            try {
+                val spreadsheetId = selectedCase.value?.spreadsheetId ?: return@launch
+                caseRepository.addSheetFilter(spreadsheetId, name, value)
+            } finally {
+                _isLoading.value = false
+            }
         }
     }
 
     fun addAllegationWithRepository(allegationText: String) {
         viewModelScope.launch {
-            val case = selectedCase.value ?: return@launch
-            caseRepository.addAllegation(case.spreadsheetId, allegationText)
-            // Allegations list will update via collection from caseRepository.selectedCaseAllegations
+            _isLoading.value = true
+            try {
+                val case = selectedCase.value ?: return@launch
+                caseRepository.addAllegation(case.spreadsheetId, allegationText)
+            } finally {
+                _isLoading.value = false
+            }
         }
     }
 
@@ -386,12 +437,15 @@ constructor(
         allegationId: Int,
     ) {
         viewModelScope.launch {
-            val evidence = _selectedCaseEvidenceListInternal.value.find { it.id == evidenceId }
-            if (evidence != null) {
-                val updatedEvidence = evidence.copy(allegationId = allegationId)
-                evidenceRepository.updateEvidence(updatedEvidence)
-                // Consider if refreshSelectedCaseDetails is needed if repo doesn't auto-update
-                // caseRepository.refreshSelectedCaseDetails() 
+            _isLoading.value = true
+            try {
+                val evidence = _selectedCaseEvidenceListInternal.value.find { it.id == evidenceId }
+                if (evidence != null) {
+                    val updatedEvidence = evidence.copy(allegationId = allegationId)
+                    evidenceRepository.updateEvidence(updatedEvidence)
+                }
+            } finally {
+                _isLoading.value = false
             }
         }
     }
@@ -421,52 +475,83 @@ constructor(
     }
 
     fun archiveCaseWithRepository(case: Case) {
-        viewModelScope.launch { caseRepository.archiveCase(case) }
+        viewModelScope.launch { 
+            _isLoading.value = true
+            try {
+                caseRepository.archiveCase(case) 
+            } finally {
+                _isLoading.value = false
+            }
+        }
     }
 
     fun deleteCaseWithRepository(case: Case) {
-        viewModelScope.launch { caseRepository.deleteCase(case) }
+        viewModelScope.launch { 
+            _isLoading.value = true
+            try {
+                caseRepository.deleteCase(case) 
+            } finally {
+                _isLoading.value = false
+            }
+        }
     }
 
     fun clearCache() {
         viewModelScope.launch {
-            caseRepository.clearCache()
-            clearCaseData() // This will also call selectCase(null) which handles repo state
-            sharedPref.edit().clear().apply()
-            loadThemeModePreference()
+            _isLoading.value = true
+            try {
+                caseRepository.clearCache()
+                clearCaseData()
+                sharedPref.edit().clear().apply()
+                loadThemeModePreference()
+            } finally {
+                _isLoading.value = false
+            }
         }
     }
 
     fun updateEvidence(evidence: com.hereliesaz.lexorcist.data.Evidence) {
         viewModelScope.launch {
-            evidenceRepository.updateEvidence(evidence)
-            val script = settingsManager.getScript()
-            val result = scriptRunner.runScript(script, evidence)
-            if (result is Result.Success) {
-                val updatedEvidence = evidence.copy(
-                    tags = evidence.tags + result.data
-                )
-                evidenceRepository.updateEvidence(updatedEvidence)
+            _isLoading.value = true
+            try {
+                evidenceRepository.updateEvidence(evidence)
+                val script = settingsManager.getScript()
+                val result = scriptRunner.runScript(script, evidence)
+                if (result is Result.Success) {
+                    val updatedEvidence = evidence.copy(
+                        tags = evidence.tags + result.data
+                    )
+                    evidenceRepository.updateEvidence(updatedEvidence)
+                }
+            } finally {
+                _isLoading.value = false
             }
-            // caseRepository.refreshSelectedCaseDetails() // Consider if needed
         }
     }
 
     fun deleteEvidence(evidence: com.hereliesaz.lexorcist.data.Evidence) {
         viewModelScope.launch {
-            evidenceRepository.deleteEvidence(evidence)
-            // caseRepository.refreshSelectedCaseDetails() // Consider if needed
+            _isLoading.value = true
+            try {
+                evidenceRepository.deleteEvidence(evidence)
+            } finally {
+                _isLoading.value = false
+            }
         }
     }
 
     fun assignAllegationToSelectedEvidence(allegationId: Int) {
         viewModelScope.launch {
-            selectedEvidence.value.forEach { evidence ->
-                val updatedEvidence = evidence.copy(allegationId = allegationId)
-                evidenceRepository.updateEvidence(updatedEvidence)
+            _isLoading.value = true
+            try {
+                selectedEvidence.value.forEach { evidence ->
+                    val updatedEvidence = evidence.copy(allegationId = allegationId)
+                    evidenceRepository.updateEvidence(updatedEvidence)
+                }
+                clearEvidenceSelection()
+            } finally {
+                _isLoading.value = false
             }
-            clearEvidenceSelection()
-            // caseRepository.refreshSelectedCaseDetails() // Consider if needed
         }
     }
 
@@ -476,41 +561,53 @@ constructor(
 
     fun addTextEvidence(text: String) {
         viewModelScope.launch {
-            val case = selectedCase.value ?: return@launch
-            val entities = com.hereliesaz.lexorcist.DataParser.tagData(text)
-            val newEvidence =
-                com.hereliesaz.lexorcist.data.Evidence(
-                    caseId = case.id.toLong(),
-                    spreadsheetId = case.spreadsheetId,
-                    type = "text",
-                    content = text,
-                    formattedContent = null,
-                    mediaUri = null,
-                    timestamp = System.currentTimeMillis(),
-                    sourceDocument = "Manual text entry",
-                    documentDate = System.currentTimeMillis(),
-                    allegationId = null,
-                    category = "",
-                    tags = emptyList(),
-                    commentary = null,
-                    entities = entities,
-                )
-            evidenceRepository.addEvidence(newEvidence)
-            // caseRepository.refreshSelectedCaseDetails() // Consider if needed
+            _isLoading.value = true
+            try {
+                val case = selectedCase.value ?: return@launch
+                val entities = com.hereliesaz.lexorcist.DataParser.tagData(text)
+                val newEvidence =
+                    com.hereliesaz.lexorcist.data.Evidence(
+                        caseId = case.id.toLong(),
+                        spreadsheetId = case.spreadsheetId,
+                        type = "text",
+                        content = text,
+                        formattedContent = null,
+                        mediaUri = null,
+                        timestamp = System.currentTimeMillis(),
+                        sourceDocument = "Manual text entry",
+                        documentDate = System.currentTimeMillis(),
+                        allegationId = null,
+                        category = "",
+                        tags = emptyList(),
+                        commentary = null,
+                        entities = entities,
+                    )
+                evidenceRepository.addEvidence(newEvidence)
+            } finally {
+                _isLoading.value = false
+            }
         }
     }
 
     fun updateCommentary(evidenceId: Int, commentary: String) {
         viewModelScope.launch {
-            evidenceRepository.updateCommentary(evidenceId, commentary)
-            // caseRepository.refreshSelectedCaseDetails() // Consider if needed
+            _isLoading.value = true
+            try {
+                evidenceRepository.updateCommentary(evidenceId, commentary)
+            } finally {
+                _isLoading.value = false
+            }
         }
     }
 
     fun processImageEvidence(uri: android.net.Uri) {
         viewModelScope.launch {
+            _isLoading.value = true // Set loading true at the beginning
             clearLogs()
-            val case = selectedCase.value ?: return@launch
+            val case = selectedCase.value ?: run {
+                _isLoading.value = false
+                return@launch
+            }
             try {
                 val (newEvidence, message) = ocrProcessingService.processImage(
                     uri = uri,
@@ -526,7 +623,7 @@ constructor(
                 }
             } finally {
                 _processingState.value = null
-                // caseRepository.refreshSelectedCaseDetails() // Consider if needed
+                _isLoading.value = false // Ensure loading is false in finally block
             }
         }
     }
@@ -534,7 +631,10 @@ constructor(
     fun processAudioEvidence(uri: android.net.Uri) {
         viewModelScope.launch(Dispatchers.IO) {
             clearLogs()
-            val case = selectedCase.value ?: return@launch
+            val case = selectedCase.value ?: run {
+                 withContext(Dispatchers.Main) { _isLoading.value = false }
+                return@launch
+            }
             withContext(Dispatchers.Main) {
                 _isLoading.value = true
                 _processingStatus.value = "Uploading audio..."
@@ -582,34 +682,49 @@ constructor(
                             _navigateToTranscriptionScreen.emit(newEvidenceWithId.id)
                         }
                     }
+                } else if (uploadResult is Result.Error) {
+                     withContext(Dispatchers.Main) {
+                        _errorMessage.value = uploadResult.exception.message ?: "Error uploading audio file."
+                    }
+                } else if (uploadResult is Result.UserRecoverableError) {
+                     withContext(Dispatchers.Main) {
+                        _userRecoverableAuthIntent.value = uploadResult.exception.intent
+                    }
                 }
             } finally {
                 withContext(Dispatchers.Main) {
                     _isLoading.value = false
                     _processingStatus.value = null
                 }
-                // caseRepository.refreshSelectedCaseDetails() // Consider if needed
             }
         }
     }
 
     fun updateTranscript(evidence: com.hereliesaz.lexorcist.data.Evidence, newTranscript: String, reason: String) {
         viewModelScope.launch {
-            logService.addLog("Updating transcript for evidence ${evidence.id}")
-            val result = evidenceRepository.updateTranscript(evidence, newTranscript, reason)
-            if (result is Result.Error) {
-                logService.addLog("Error updating transcript: ${result.exception.message}", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
-            } else {
-                logService.addLog("Transcript updated successfully")
-                // caseRepository.refreshSelectedCaseDetails() // Consider if needed
+            _isLoading.value = true
+            try {
+                logService.addLog("Updating transcript for evidence ${evidence.id}")
+                val result = evidenceRepository.updateTranscript(evidence, newTranscript, reason)
+                if (result is Result.Error) {
+                    logService.addLog("Error updating transcript: ${result.exception.message}", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
+                } else {
+                    logService.addLog("Transcript updated successfully")
+                }
+            } finally {
+                _isLoading.value = false
             }
         }
     }
 
     fun processVideoEvidence(uri: android.net.Uri) {
         viewModelScope.launch {
+            _isLoading.value = true // Set loading true initially
             clearLogs()
-            val case = selectedCase.value ?: return@launch
+            val case = selectedCase.value ?: run {
+                _isLoading.value = false
+                return@launch
+            }
             val workRequest =
                 androidx.work.OneTimeWorkRequestBuilder<com.hereliesaz.lexorcist.service.VideoProcessingWorker>()
                     .setInputData(
@@ -622,13 +737,14 @@ constructor(
                             .build(),
                     ).build()
             workManager.enqueue(workRequest)
+            _isLoading.value = false // Set loading false after enqueuing, progress handled by _videoProcessingProgress
+            
             workManager.getWorkInfoByIdLiveData(workRequest.id).asFlow().collectLatest { workInfo: androidx.work.WorkInfo? ->
                 if (workInfo != null) {
                     val progress = workInfo.progress.getString(com.hereliesaz.lexorcist.service.VideoProcessingWorker.PROGRESS)
                     _videoProcessingProgress.value = progress
                     if (workInfo.state.isFinished) {
                         _videoProcessingProgress.value = null
-                        // caseRepository.refreshSelectedCaseDetails() // Consider if needed
                     }
                 }
             }
@@ -637,48 +753,51 @@ constructor(
 
     fun addPhotoGroupEvidence(photoUris: List<android.net.Uri>, description: String) {
         viewModelScope.launch {
-            val case = selectedCase.value ?: return@launch
-            val savedPhotoPaths = mutableListOf<String>()
+            _isLoading.value = true
+            try {
+                val case = selectedCase.value ?: return@launch
+                val savedPhotoPaths = mutableListOf<String>()
 
-            photoUris.forEach { uri ->
-                val mimeType = applicationContext.contentResolver.getType(uri) ?: "image/jpeg"
-                when (val result = storageService.uploadFile(case.spreadsheetId, uri, mimeType)) {
-                    is Result.Success -> {
-                        savedPhotoPaths.add(result.data)
-                    }
-                    is Result.Error -> {
-                        _errorMessage.value = "Failed to save photo: ${result.exception.message}"
-                        return@forEach // continue to next photo in list
-                    }
-                    is Result.UserRecoverableError -> {
-                        // TODO Handle user recoverable error if necessary, e.g., by emitting to _userRecoverableAuthIntent
-                        _errorMessage.value = "User action required for photo: ${result.exception.message}"
-                        return@forEach
+                photoUris.forEach { uri ->
+                    val mimeType = applicationContext.contentResolver.getType(uri) ?: "image/jpeg"
+                    when (val result = storageService.uploadFile(case.spreadsheetId, uri, mimeType)) {
+                        is Result.Success -> {
+                            savedPhotoPaths.add(result.data)
+                        }
+                        is Result.Error -> {
+                            _errorMessage.value = "Failed to save photo: ${result.exception.message}"
+                            // Decide if you want to stop all or just skip this photo
+                        }
+                        is Result.UserRecoverableError -> {
+                            _userRecoverableAuthIntent.value = result.exception.intent
+                            // Decide if you want to stop all or just skip this photo
+                        }
                     }
                 }
-            }
 
-            if (savedPhotoPaths.isNotEmpty()) {
-                val mediaUriJson = com.google.gson.Gson().toJson(savedPhotoPaths)
-                val newEvidence =
-                    com.hereliesaz.lexorcist.data.Evidence(
-                        caseId = case.id.toLong(),
-                        spreadsheetId = case.spreadsheetId,
-                        type = "photo_group",
-                        content = description,
-                        formattedContent = null,
-                        mediaUri = mediaUriJson,
-                        timestamp = System.currentTimeMillis(),
-                        sourceDocument = "Photo Group",
-                        documentDate = System.currentTimeMillis(),
-                        allegationId = null,
-                        category = "Photo",
-                        tags = listOf("photo", "group"),
-                        commentary = null,
-                        entities = emptyMap(),
-                    )
-                evidenceRepository.addEvidence(newEvidence)
-                // caseRepository.refreshSelectedCaseDetails() // Consider if needed
+                if (savedPhotoPaths.isNotEmpty()) {
+                    val mediaUriJson = com.google.gson.Gson().toJson(savedPhotoPaths)
+                    val newEvidence =
+                        com.hereliesaz.lexorcist.data.Evidence(
+                            caseId = case.id.toLong(),
+                            spreadsheetId = case.spreadsheetId,
+                            type = "photo_group",
+                            content = description,
+                            formattedContent = null,
+                            mediaUri = mediaUriJson,
+                            timestamp = System.currentTimeMillis(),
+                            sourceDocument = "Photo Group",
+                            documentDate = System.currentTimeMillis(),
+                            allegationId = null,
+                            category = "Photo",
+                            tags = listOf("photo", "group"),
+                            commentary = null,
+                            entities = emptyMap(),
+                        )
+                    evidenceRepository.addEvidence(newEvidence)
+                }
+            } finally {
+                _isLoading.value = false
             }
         }
     }

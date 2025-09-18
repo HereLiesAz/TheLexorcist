@@ -50,7 +50,8 @@ class SettingsViewModel @Inject constructor(
 
     private fun loadSettings() {
         val themeName = settingsManager.getTheme()
-        _themeMode.value = ThemeMode.valueOf(themeName)
+        // Safely parse ThemeMode, ignoring case, and default to SYSTEM
+        _themeMode.value = ThemeMode.values().firstOrNull { it.name.equals(themeName, ignoreCase = true) } ?: ThemeMode.SYSTEM
         _caseFolderPath.value = settingsManager.getCaseFolderPath()
         _cloudSyncEnabled.value = settingsManager.getCloudSyncEnabled()
         _selectedCloudProvider.value = settingsManager.getSelectedCloudProvider()
@@ -62,7 +63,7 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun setThemeMode(themeMode: ThemeMode) {
-        settingsManager.saveTheme(themeMode.name)
+        settingsManager.saveTheme(themeMode.name) // Saves as "SYSTEM", "LIGHT", or "DARK"
         _themeMode.value = themeMode
     }
 

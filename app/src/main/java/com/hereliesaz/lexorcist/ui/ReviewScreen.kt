@@ -71,7 +71,7 @@ fun ReviewScreen(
 
     LaunchedEffect(selectedCase) {
         selectedCase?.let {
-            caseViewModel.loadEvidenceForSelectedCase()
+            // caseViewModel.loadEvidenceForSelectedCase() // Removed this line
             allegationsViewModel.loadAllegations(it.id.toString())
         }
     }
@@ -288,7 +288,7 @@ fun EvidenceItem(
                 )
                 if (evidence.category.isNotBlank()) {
                     Text(
-                        text = "Category: ${'$'}{evidence.category}",
+                        text = "Category: ${evidence.category}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.fillMaxWidth(),
@@ -296,7 +296,7 @@ fun EvidenceItem(
                 }
                 if (evidence.tags.isNotEmpty()) {
                     Text(
-                        text = "Tags: ${'$'}{evidence.tags.joinToString()}",
+                        text = "Tags: ${evidence.tags.joinToString()}",
                         style = MaterialTheme.typography.bodySmall,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -406,7 +406,7 @@ fun EditEvidenceDialog(
                         content = content,
                         sourceDocument = sourceDocument,
                         category = category,
-                        tags = tags.split(",").map { it.trim() }.filter { it.isNotEmpty() },
+                        tags = tags.split(", ").map { it.trim() }.filter { it.isNotEmpty() },
                     )
                 onSave(updatedEvidence)
             }, text = stringResource(R.string.save).uppercase(Locale.getDefault()))

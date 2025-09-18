@@ -5,6 +5,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi // Added import
+import androidx.compose.foundation.layout.FlowRow // Added import
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,7 +22,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -46,7 +47,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class) // Added ExperimentalLayoutApi
 @Composable
 fun EvidenceScreen(
     navController: NavController,
@@ -54,7 +55,7 @@ fun EvidenceScreen(
 ) {
     var showAddTextEvidence by remember { mutableStateOf(false) }
     var text by remember { mutableStateOf("") }
-    val selectedCase by caseViewModel.selectedCase.collectAsState()
+    // val selectedCase by caseViewModel.selectedCase.collectAsState() // Already present, but not directly used in button logic below
     val evidenceList by caseViewModel.selectedCaseEvidenceList.collectAsState()
     val videoProcessingProgress by caseViewModel.videoProcessingProgress.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -92,12 +93,6 @@ fun EvidenceScreen(
         }
     }
 
-    LaunchedEffect(selectedCase) {
-        selectedCase?.let {
-            caseViewModel.loadEvidenceForSelectedCase()
-        }
-    }
-
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
@@ -119,12 +114,12 @@ fun EvidenceScreen(
                 .fillMaxSize()
                 .padding(padding)
                 .padding(16.dp),
-            horizontalAlignment = Alignment.End,
+            horizontalAlignment = Alignment.End, // Column aligns its children to the end (right)
             verticalArrangement = Arrangement.Top,
         ) {
             videoProcessingProgress?.let { progress ->
                 Column(horizontalAlignment = Alignment.End) {
-                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth()) // This is the one for videoProcessingProgress, which is a String
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
                     Text(progress, style = MaterialTheme.typography.bodySmall)
                     Spacer(modifier = Modifier.height(16.dp))
                 }
@@ -166,11 +161,18 @@ fun EvidenceScreen(
                     text = stringResource(R.string.cancel).uppercase(Locale.getDefault())
                 )
             } else if (processingState == null) {
-                LexorcistOutlinedButton(onClick = { showAddTextEvidence = true }, text = stringResource(R.string.add_text_evidence).uppercase(Locale.getDefault()))
-                LexorcistOutlinedButton(onClick = { imagePickerLauncher.launch("image/*") }, text = stringResource(R.string.add_image_evidence).uppercase(Locale.getDefault()))
-                LexorcistOutlinedButton(onClick = { navController.navigate("photo_group") }, text = stringResource(R.string.take_photos).uppercase(Locale.getDefault()))
-                LexorcistOutlinedButton(onClick = { audioPickerLauncher.launch("audio/*") }, text = stringResource(R.string.add_audio_evidence).uppercase(Locale.getDefault()))
-                LexorcistOutlinedButton(onClick = { videoPickerLauncher.launch("video/*") }, text = stringResource(R.string.add_video_evidence).uppercase(Locale.getDefault()))
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+                    verticalArrangement = Arrangement.spacedBy(8.dp) // Added vertical spacing for wrapped rows
+                ) {
+                    LexorcistOutlinedButton(onClick = { showAddTextEvidence = true }, text = stringResource(R.string.add_text_evidence).uppercase(Locale.getDefault()))
+                    LexorcistOutlinedButton(onClick = { imagePickerLauncher.launch("image/*") }, text = stringResource(R.string.add_image_evidence).uppercase(Locale.getDefault()))
+                    LexorcistOutlinedButton(onClick = { audioPickerLauncher.launch("audio/*") }, text = stringResource(R.string.add_audio_evidence).uppercase(Locale.getDefault()))
+                    LexorcistOutlinedButton(onClick = { videoPickerLauncher.launch("video/*") }, text = stringResource(R.string.add_video_evidence).uppercase(Locale.getDefault()))
+                    // "Take Photo" button moved to last and text changed
+                    LexorcistOutlinedButton(onClick = { navController.navigate("photo_group") }, text = stringResource(R.string.take_photo).uppercase(Locale.getDefault())) 
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -231,7 +233,7 @@ fun ProcessingProgressView(
 ) {
     Column(horizontalAlignment = Alignment.End, modifier = Modifier.fillMaxWidth()) {
         LinearProgressIndicator(
-            progress = { processingState.progress / 100f }, // Changed to lambda
+            progress = { processingState.progress / 100f }, 
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(8.dp))
