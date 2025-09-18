@@ -60,9 +60,8 @@ class VideoProcessingWorkerTest {
         mockedStaticUri.`when`<Uri> { Uri.parse(testVideoUriString) }.thenReturn(mockParsedVideoUri)
         whenever(mockParsedVideoUri.toString()).thenReturn(testVideoUriString)
 
+        // Initialize mockedStaticLog but without any specific stubbings if they are unnecessary
         mockedStaticLog = Mockito.mockStatic(Log::class.java)
-        // Use ArgumentMatchers.anyString() for string arguments
-        mockedStaticLog.`when`<Int> { Log.e(ArgumentMatchers.anyString(), ArgumentMatchers.anyString()) }.thenReturn(0)
 
         mockEvidence = Evidence(
             id = 1,

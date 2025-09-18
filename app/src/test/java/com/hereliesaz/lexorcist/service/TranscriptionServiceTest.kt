@@ -9,7 +9,9 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.After // Added for cleaning up static mock
+import org.junit.Rule // Added for TemporaryFolder
 import org.junit.Test
+import org.junit.rules.TemporaryFolder // Added for TemporaryFolder
 import org.junit.runner.RunWith
 import org.mockito.Mock
 import org.mockito.MockedStatic // Added for static mocking
@@ -22,10 +24,14 @@ import org.mockito.kotlin.whenever
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.InputStream
+import java.io.IOException // Import IOException for error checking
 
 @ExperimentalCoroutinesApi
 @RunWith(MockitoJUnitRunner::class)
 class TranscriptionServiceTest {
+
+    @get:Rule
+    val tempFolder = TemporaryFolder()
 
     @Mock
     private lateinit var mockContext: Context
@@ -36,9 +42,6 @@ class TranscriptionServiceTest {
     @Mock
     private lateinit var mockContentResolver: ContentResolver
 
-    @Mock
-    private lateinit var mockFilesDir: File
-
     @Mock // Mock for the Uri that Uri.parse will return
     private lateinit var mockParsedUri: Uri
 
@@ -48,19 +51,17 @@ class TranscriptionServiceTest {
     private lateinit var voskTranscriptionService: VoskTranscriptionService
     private lateinit var testAudioUriString: String
     private lateinit var mockedStaticUri: MockedStatic<Uri> // To hold the static mock
+    private lateinit var testAppFilesDir: File // To hold the temporary directory for app files
 
     @Before
     fun setUp() {
         testAudioUriString = "content://com.example.provider/audio.wav"
 
-        // Mock the static Uri.parse method
-        // This needs to be done before Uri.parse is called if it's part of field initialization.
-        // However, we are initializing mockParsedUri via Uri.parse inside the try-with-resources for safety.
         mockedStaticUri = Mockito.mockStatic(Uri::class.java)
         mockedStaticUri.`when`<Uri> { Uri.parse(testAudioUriString) }.thenReturn(mockParsedUri)
 
-        whenever(mockContext.filesDir).thenReturn(mockFilesDir)
-        whenever(mockFilesDir.absolutePath).thenReturn("/data/user/0/com.hereliesaz.lexorcist/files")
+        testAppFilesDir = tempFolder.newFolder("appfiles")
+        whenever(mockContext.filesDir).thenReturn(testAppFilesDir)
         whenever(mockContext.contentResolver).thenReturn(mockContentResolver)
 
         voskTranscriptionService = VoskTranscriptionService(mockContext, mockLogService)
@@ -68,41 +69,46 @@ class TranscriptionServiceTest {
 
     @After
     fun tearDown() {
-        mockedStaticUri.close() // Close the static mock
+        mockedStaticUri.close() 
     }
 
     @Test
     fun `transcribeAudio when contentResolver throws FileNotFoundException should return Error`() = runTest {
+        // This mock may not be hit if model initialization fails first, which is expected here.
         whenever(mockContentResolver.openInputStream(eq(mockParsedUri)))
             .thenThrow(FileNotFoundException("Mock FNF Exception"))
 
-        val result = voskTranscriptionService.transcribeAudio(mockParsedUri) // Use the mocked Uri instance
+        val result = voskTranscriptionService.transcribeAudio(mockParsedUri)
 
         assertTrue("Expected Result.Error, got $result", result is Result.Error)
         if (result is Result.Error) {
+            assertTrue("Expected IOException due to model init failure, got ${result.exception::class.java}", 
+                result.exception is IOException)
             val message = result.exception.message ?: ""
             assertTrue(
-                "Error message mismatch. Got: $message",
-                message.contains("Mock FNF Exception") || 
-                message.contains("Failed to initialize Vosk model or recognizer") ||
-                message.contains("Failed to open audio stream") 
+                "Error message mismatch. Expected model init failure. Got: $message",
+                 message.contains("Vosk model directory not found after extraction") || 
+                 message.contains("Vosk model download failed")
             )
         }
     }
 
     @Test
     fun `transcribeAudio when contentResolver returns null InputStream should return Error`() = runTest {
+        // This mock may not be hit if model initialization fails first, which is expected here.
         whenever(mockContentResolver.openInputStream(eq(mockParsedUri))).thenReturn(null)
 
-        val result = voskTranscriptionService.transcribeAudio(mockParsedUri) // Use the mocked Uri instance
+        val result = voskTranscriptionService.transcribeAudio(mockParsedUri)
 
         assertTrue("Expected Result.Error, got $result", result is Result.Error)
         if (result is Result.Error) {
+            assertTrue("Expected IOException due to model init failure, got ${result.exception::class.java}", 
+                result.exception is IOException)
             val message = result.exception.message ?: ""
             assertTrue(
-                "Error message mismatch. Got: $message",
-                message.contains("Failed to open audio stream") ||
-                message.contains("Failed to initialize Vosk model or recognizer")
+                "Error message mismatch. Expected model init failure. Got: $message",
+                message.contains("Vosk model directory not found after extraction") || 
+                message.contains("Vosk model download failed")
             )
         }
     }

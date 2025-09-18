@@ -70,7 +70,7 @@ class TemplatesScreenTest {
     @Test
     fun `filterTemplates with California court returns correct templates including answer`() {
         val templatesWithCalifornia = templates +
-            Template("1", "California Pleading", "", "", "", "California") +
+            // Template("1", "California Pleading", "", "", "", "California") + // Removed duplicate
             Template("8", "California Answer", "", "", "", "California")
         val filtered = filterTemplates(templatesWithCalifornia, "California")
         assertEquals(4, filtered.size)
@@ -81,7 +81,7 @@ class TemplatesScreenTest {
     @Test
     fun `filterTemplates with Federal court returns correct templates including answer`() {
         val templatesWithFederal = templates +
-            Template("2", "Federal Pleading", "", "", "", "Federal") +
+            // Template("2", "Federal Pleading", "", "", "", "Federal") + // Removed duplicate
             Template("9", "Federal Answer", "", "", "", "Federal")
         val filtered = filterTemplates(templatesWithFederal, "Federal")
         assertEquals(4, filtered.size)
@@ -92,7 +92,7 @@ class TemplatesScreenTest {
     @Test
     fun `filterTemplates with Federal court returns correct templates including motion`() {
         val templatesWithFederal = templates +
-            Template("2", "Federal Pleading", "", "", "", "Federal") +
+            // Template("2", "Federal Pleading", "", "", "", "Federal") + // Removed duplicate
             Template("9", "Federal Answer", "", "", "", "Federal") +
             Template("10", "Federal Motion to Dismiss", "", "", "", "Federal")
         val filtered = filterTemplates(templatesWithFederal, "Federal")
@@ -105,7 +105,7 @@ class TemplatesScreenTest {
     @Test
     fun `filterTemplates with California court returns correct templates including motion`() {
         val templatesWithCalifornia = templates +
-            Template("1", "California Pleading", "", "", "", "California") +
+            // Template("1", "California Pleading", "", "", "", "California") + // Removed duplicate
             Template("8", "California Answer", "", "", "", "California") +
             Template("11", "California Motion to Dismiss", "", "", "", "California")
         val filtered = filterTemplates(templatesWithCalifornia, "California")
