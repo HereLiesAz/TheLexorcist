@@ -136,15 +136,25 @@ dependencies {
     implementation(libs.material3) // Explicitly use KTX version and direct coordinate
 
     // Core testing dependencies
-    testImplementation(libs.junit)
-    testImplementation(libs.junit.jupiter.api)
-    testRuntimeOnly(libs.junit.jupiter.engine)
-    testImplementation(libs.mockk.android)
-    testImplementation(libs.androidx.arch.core.testing)
-    testImplementation(libs.kotlinx.coroutines.test)
-    testImplementation(libs.turbine)
-    testImplementation(libs.kotlin.test.junit)
-    testImplementation(libs.mockwebserver)
+    testImplementation(libs.junit) // JUnit 4
+    // testImplementation(libs.junit.jupiter.api) // For JUnit 5 (Jupiter), if you use it. Remove if only JUnit 4.
+    // testRuntimeOnly(libs.junit.jupiter.engine) // For JUnit 5 (Jupiter), if you use it. Remove if only JUnit 4.
+    
+    // REMOVE MockK if using Mockito-Kotlin as primary
+    // testImplementation(libs.mockk.android) 
+
+    // ADD Mockito Core and Mockito-Kotlin
+    testImplementation("org.mockito:mockito-core:5.12.0")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
+
+    // ADD WorkManager Testing (version 2.10.4 matches your work-runtime-ktx)
+    testImplementation("androidx.work:work-testing:2.10.4")
+
+    testImplementation(libs.androidx.arch.core.testing) // For InstantTaskExecutorRule
+    testImplementation(libs.kotlinx.coroutines.test) // For coroutines testing (runTest, TestDispatchers)
+    testImplementation(libs.turbine) // For testing Kotlin Flows
+    // testImplementation(libs.kotlin.test.junit) // Standard Kotlin test assertions, can be kept
+    testImplementation(libs.mockwebserver) // For MockWebServer
 
     // AndroidX Test dependencies (androidTest)
     androidTestImplementation(libs.androidx.test.ext.junit)
@@ -152,7 +162,7 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.ui.test.manifest)
     androidTestImplementation(libs.androidx.test.uiautomator)
-    androidTestImplementation(libs.mockk.android)
+    androidTestImplementation(libs.mockk.android) // MockK for AndroidTest, if used there
     androidTestImplementation(libs.play.services.auth)
 
     implementation(libs.google.play.services.mlkit.text.recognition)
@@ -167,7 +177,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.process) // Added lifecycle-process
-    implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.androidx.work.runtime.ktx) // This is 2.10.4
     implementation(libs.androidx.compose.runtime.livedata)
 
     // Jetpack Compose
