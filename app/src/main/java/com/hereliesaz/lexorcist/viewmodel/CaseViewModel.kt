@@ -2,6 +2,7 @@ package com.hereliesaz.lexorcist.viewmodel
 
 import android.content.Context
 import android.content.Intent
+import android.util.Log // Added import for Log
 import androidx.core.content.edit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asFlow
@@ -320,7 +321,7 @@ constructor(
         caseSection: String,
         caseJudge: String,
     ) {
-        android.util.Log.d("CaseViewModel", "createCase called with name: $caseName")
+        Log.d("CaseViewModel", "createCase called with name: $caseName")
         viewModelScope.launch {
             _isLoading.value = true
             try {
@@ -337,7 +338,7 @@ constructor(
                     )
                 when (result) {
                     is Result.Success -> {
-                        android.util.Log.d("CaseViewModel", "Case creation successful")
+                        Log.d("CaseViewModel", "Case creation successful")
                     }
                     is Result.Error -> {
                         _errorMessage.value =
@@ -563,7 +564,12 @@ constructor(
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                val case = selectedCase.value ?: return@launch
+                val case = selectedCase.value ?: run {
+                    Log.w("CaseViewModel", "addTextEvidence: No case selected, aborting.")
+                    viewModelScope.launch { _userMessage.emit("Please select a case first to add text evidence.") }
+                    _isLoading.value = false
+                    return@launch
+                }
                 val entities = com.hereliesaz.lexorcist.DataParser.tagData(text)
                 val newEvidence =
                     com.hereliesaz.lexorcist.data.Evidence(
@@ -602,13 +608,17 @@ constructor(
 
     fun processImageEvidence(uri: android.net.Uri) {
         viewModelScope.launch {
-            _isLoading.value = true // Set loading true at the beginning
+            Log.d("CaseViewModel", "processImageEvidence called with URI: $uri")
+            _isLoading.value = true 
             clearLogs()
             val case = selectedCase.value ?: run {
-                _isLoading.value = false
+                Log.w("CaseViewModel", "processImageEvidence: No case selected, aborting.")
+                viewModelScope.launch { _userMessage.emit("Please select a case first to add image evidence.") }
+                _isLoading.value = false 
                 return@launch
             }
             try {
+                Log.d("CaseViewModel", "Processing image for case: ${case.name}")
                 val (newEvidence, message) = ocrProcessingService.processImage(
                     uri = uri,
                     context = applicationContext,
@@ -617,32 +627,46 @@ constructor(
                 ) {
                     _processingState.value = it
                 }
-                message?.let { viewModelScope.launch { _userMessage.emit(it) } }
+                message?.let { 
+                    Log.i("CaseViewModel", "Message from ocrProcessingService: $it")
+                    viewModelScope.launch { _userMessage.emit(it) } 
+                }
                 if (newEvidence != null && newEvidence.content.isEmpty()) {
+                    Log.i("CaseViewModel", "No text found in image for URI: $uri")
                     viewModelScope.launch { _userMessage.emit("No text found in the image.") }
                 }
+                Log.d("CaseViewModel", "Image processing finished for URI: $uri")
+            } catch (e: Exception) {
+                Log.e("CaseViewModel", "Error processing image URI: $uri", e)
+                viewModelScope.launch { _userMessage.emit("Error processing image: ${e.message}") }
             } finally {
                 _processingState.value = null
-                _isLoading.value = false // Ensure loading is false in finally block
+                _isLoading.value = false 
+                Log.d("CaseViewModel", "processImageEvidence finally block. isLoading set to false.")
             }
         }
     }
 
     fun processAudioEvidence(uri: android.net.Uri) {
         viewModelScope.launch(Dispatchers.IO) {
+            Log.d("CaseViewModel", "processAudioEvidence called with URI: $uri")
+            withContext(Dispatchers.Main) { _isLoading.value = true }
             clearLogs()
             val case = selectedCase.value ?: run {
-                 withContext(Dispatchers.Main) { _isLoading.value = false }
+                Log.w("CaseViewModel", "processAudioEvidence: No case selected, aborting.")
+                viewModelScope.launch(Dispatchers.Main) { _userMessage.emit("Please select a case first to add audio evidence.") }
+                withContext(Dispatchers.Main) { _isLoading.value = false }
                 return@launch
-            }
-            withContext(Dispatchers.Main) {
-                _isLoading.value = true
-                _processingStatus.value = "Uploading audio..."
             }
 
             try {
+                Log.d("CaseViewModel", "Processing audio for case: ${case.name}")
+                withContext(Dispatchers.Main) {
+                    _processingStatus.value = "Uploading audio..."
+                }
                 val uploadResult = evidenceRepository.uploadFile(uri, case.name, case.spreadsheetId)
                 if (uploadResult is Result.Success) {
+                    Log.i("CaseViewModel", "Audio file uploaded: ${uploadResult.data}")
                     withContext(Dispatchers.Main) {
                         _userMessage.value = "Raw evidence file saved."
                         _processingStatus.value = "Transcribing audio..."
@@ -650,13 +674,13 @@ constructor(
 
                     val (transcribedText, message) = transcriptionService.transcribeAudio(uri)
                     message?.let {
-                        withContext(Dispatchers.Main) {
-                            _userMessage.value = it
-                        }
+                        Log.i("CaseViewModel", "Message from transcriptionService: $it")
+                        withContext(Dispatchers.Main) { _userMessage.value = it }
                     }
                     withContext(Dispatchers.Main) {
                         _processingStatus.value = "Audio processing complete."
                     }
+                    Log.i("CaseViewModel", "Audio transcribed: $transcribedText")
 
                     val newEvidence =
                         com.hereliesaz.lexorcist.data.Evidence(
@@ -683,18 +707,24 @@ constructor(
                         }
                     }
                 } else if (uploadResult is Result.Error) {
-                     withContext(Dispatchers.Main) {
+                    Log.e("CaseViewModel", "Error uploading audio file: ${uploadResult.exception.message}", uploadResult.exception)
+                    withContext(Dispatchers.Main) {
                         _errorMessage.value = uploadResult.exception.message ?: "Error uploading audio file."
                     }
                 } else if (uploadResult is Result.UserRecoverableError) {
-                     withContext(Dispatchers.Main) {
+                    Log.w("CaseViewModel", "User recoverable error uploading audio: ${uploadResult.exception.message}")
+                    withContext(Dispatchers.Main) {
                         _userRecoverableAuthIntent.value = uploadResult.exception.intent
                     }
                 }
+            } catch (e: Exception) {
+                Log.e("CaseViewModel", "Error processing audio URI: $uri", e)
+                withContext(Dispatchers.Main) { _userMessage.emit("Error processing audio: ${e.message}") }
             } finally {
                 withContext(Dispatchers.Main) {
                     _isLoading.value = false
                     _processingStatus.value = null
+                    Log.d("CaseViewModel", "processAudioEvidence finally block. isLoading set to false.")
                 }
             }
         }
@@ -719,12 +749,16 @@ constructor(
 
     fun processVideoEvidence(uri: android.net.Uri) {
         viewModelScope.launch {
-            _isLoading.value = true // Set loading true initially
+            Log.d("CaseViewModel", "processVideoEvidence called with URI: $uri")
+            _isLoading.value = true 
             clearLogs()
             val case = selectedCase.value ?: run {
-                _isLoading.value = false
+                Log.w("CaseViewModel", "processVideoEvidence: No case selected, aborting.")
+                viewModelScope.launch { _userMessage.emit("Please select a case first to add video evidence.") }
+                _isLoading.value = false 
                 return@launch
             }
+            Log.d("CaseViewModel", "Processing video for case: ${case.name}")
             val workRequest =
                 androidx.work.OneTimeWorkRequestBuilder<com.hereliesaz.lexorcist.service.VideoProcessingWorker>()
                     .setInputData(
@@ -737,14 +771,17 @@ constructor(
                             .build(),
                     ).build()
             workManager.enqueue(workRequest)
-            _isLoading.value = false // Set loading false after enqueuing, progress handled by _videoProcessingProgress
-            
+            _isLoading.value = false // Set loading false after enqueuing
+            Log.i("CaseViewModel", "Video processing work enqueued for URI: $uri")
+
             workManager.getWorkInfoByIdLiveData(workRequest.id).asFlow().collectLatest { workInfo: androidx.work.WorkInfo? ->
                 if (workInfo != null) {
                     val progress = workInfo.progress.getString(com.hereliesaz.lexorcist.service.VideoProcessingWorker.PROGRESS)
                     _videoProcessingProgress.value = progress
+                    Log.d("CaseViewModel", "Video processing progress for $uri: $progress, State: ${workInfo.state}")
                     if (workInfo.state.isFinished) {
                         _videoProcessingProgress.value = null
+                        Log.i("CaseViewModel", "Video processing finished for URI: $uri, State: ${workInfo.state}")
                     }
                 }
             }
@@ -755,7 +792,12 @@ constructor(
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                val case = selectedCase.value ?: return@launch
+                val case = selectedCase.value ?: run {
+                    Log.w("CaseViewModel", "addPhotoGroupEvidence: No case selected, aborting.")
+                    viewModelScope.launch { _userMessage.emit("Please select a case first to add photos.") }
+                     _isLoading.value = false
+                    return@launch
+                }
                 val savedPhotoPaths = mutableListOf<String>()
 
                 photoUris.forEach { uri ->
@@ -766,11 +808,9 @@ constructor(
                         }
                         is Result.Error -> {
                             _errorMessage.value = "Failed to save photo: ${result.exception.message}"
-                            // Decide if you want to stop all or just skip this photo
                         }
                         is Result.UserRecoverableError -> {
                             _userRecoverableAuthIntent.value = result.exception.intent
-                            // Decide if you want to stop all or just skip this photo
                         }
                     }
                 }
