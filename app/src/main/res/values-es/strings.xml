@@ -1,0 +1,284 @@
+<resources>
+    <string name="app_name" translatable="false">TheLexorcist</string>
+    <string name="appTitle">The Lexorcist</string>
+    <string name="spreadsheet_import_service_tag">SpreadsheetImportSvc</string>
+    <string name="case_sheet_parser_tag">CaseSheetParser</string>
+    <string name="parse_store_failed_app_root_folder">parseAndStore: No se pudo obtener o crear la carpeta raíz de la aplicación.</string>
+    <string name="parse_store_failed_case_registry">parseAndStore: No se pudo obtener o crear la hoja de cálculo del registro de casos.</string>
+    <string name="case_info_sheet_name">Información del caso</string>
+    <string name="case_name_column">Nombre del caso</string>
+    <string name="imported_case_default_name">Caso importado %1$d</string>
+    <string name="parse_store_determined_case_name">parseAndStore: Se determinó el nombre del caso a partir de los datos de importación: %1$s</string>
+    <string name="parse_store_case_exists">parseAndStore: Ya existe un caso con el nombre \'%1$s\' en el registro. Importación cancelada. ID de la hoja de cálculo: %2$s</string>
+    <string name="parse_store_no_existing_case">parseAndStore: No se encontró ningún caso existente con el nombre \'%1$s\'. Se procederá a crear una nueva estructura de caso.</string>
+    <string name="parse_store_failed_create_folder">parseAndStore: No se pudo crear la carpeta para el nuevo caso: %1$s</string>
+    <string name="parse_store_failed_create_spreadsheet">parseAndStore: No se pudo crear la hoja de cálculo para el nuevo caso: %1$s</string>
+    <string name="default_imported_case_script">// Script predeterminado para caso importado\nfunction onOpen() {}</string>
+    <string name="parse_store_created_new_case">parseAndStore: Se creó una nueva estructura de caso: ID de carpeta %1$s, ID de hoja de cálculo %2$s</string>
+    <string name="parse_store_failed_add_case_to_registry">parseAndStore: No se pudo agregar el nuevo caso \'%1$s\' al registro. Se procederá con la importación de datos a su hoja, pero no se mostrará en la lista hasta que se solucione el problema del registro.</string>
+    <string name="exhibit_matrix_allegations_sheet_name">Matriz de pruebas - Alegaciones</string>
+    <string name="parse_store_failed_add_allegation">parseAndStore: No se pudo agregar la alegación: \'%1$s\' a %2$s</string>
+    <string name="evidence_sheet_name">Prueba</string>
+    <string name="imported_evidence_sheet_source">Importado - Hoja de pruebas</string>
+    <string name="comma_separator">,</string>
+    <string name="parse_store_failed_add_evidence">parseAndStore: No se pudo agregar la prueba: %1$s a %2$s</string>
+    <string name="parse_store_error_parsing_evidence_row">parseAndStore: Error al analizar la fila de prueba: %1$s</string>
+    <string name="parse_store_finished_import">parseAndStore: Se terminó de importar los datos para el caso: %1$s, ID de la hoja de cálculo: %2$s</string>
+    <string name="settings_preferences_name">lexorcist_settings</string>
+    <string name="settings_key_theme">theme</string>
+    <string name="settings_key_export_format">export_format</string>
+    <string name="settings_theme_light">Claro</string>
+    <string name="settings_theme_dark">Oscuro</string>
+    <string name="settings_theme_system">Sistema</string>
+    <string name="settings_export_format_pdf">PDF</string>
+    <string name="settings_export_format_csv">CSV</string>
+    <string name="select_image">Seleccionar imagen</string>
+    <string name="take_picture">Tomar foto</string>
+    <string name="add_text_evidence">Texto</string>
+    <string name="add_image_evidence">Imagen</string>
+    <string name="add_audio_evidence">Audio</string>
+    <string name="add_document">Agregar documento</string>
+    <string name="add_spreadsheet">Agregar hoja de cálculo</string>
+    <string name="image_for_review">Imagen para revisar</string>
+    <string name="rotate_left">Girar a la izquierda</string>
+    <string name="rotate_right">Girar a la derecha</string>
+    <string name="approve_image">Aprobar imagen</string>
+    <string name="cancel_review">Cancelar revisión</string>
+    <string name="nav_home">inicio</string>
+    <string name="nav_settings">configuración</string>
+    <string name="github_url">https://github.com/hereliesaz/TheLexorcist</string>
+    <string name="feedback_email">mailto:hereliesaz@gmail.com</string>
+    <string name="feedback_subject">The Lexorcist - Comentarios</string>
+    <string name="cases">Casos</string>
+    <string name="nav_cases">casos</string>
+    <string name="timeline">Línea de tiempo</string>
+    <string name="nav_timeline">línea de tiempo</string>
+    <string name="data_review">Revisar</string>
+    <string name="nav_data_review">revisión_de_datos</string>
+    <string name="visualization">Visualización</string>
+    <string name="nav_visualization">visualización</string>
+    <string name="nav_script_editor">editor_de_scripts</string>
+    <string name="evidence">Prueba</string>
+    <string name="nav_evidence">prueba</string>
+    <string name="record_audio">grabar_audio</string>
+    <string name="add">Agregar</string>
+    <string name="nav_add_evidence">agregar_prueba</string>
+    <string name="addons_browser">Navegador de complementos</string>
+    <string name="nav_addons_browser">navegador_de_complementos</string>
+    <string name="nav_share_addon">compartir_complemento</string>
+    <string name="settings">Configuración</string>
+    <string name="about">Acerca de</string>
+    <string name="feedback">Comentarios</string>
+    <string name="allegations">Alegaciones</string>
+    <string name="extras">Extras</string>
+    <string name="script_builder">Creador de scripts</string>
+    <string name="templates">Plantillas</string>
+    <string name="sign_in_with_google">Iniciar sesión con Google</string>
+    <string name="use_navigation_rail">Usa el riel de navegación para comenzar.</string>
+    <string name="tap_icon_to_open_menu">Toca el ícono en la parte superior para abrir el menú.</string>
+    <string name="create_new_case">Crear nuevo caso</string>
+    <string name="default_exhibit_sheet_name">Pruebas</string>
+    <string name="select_a_template">Seleccionar una plantilla</string>
+    <string name="no_templates_found">No se encontraron plantillas</string>
+    <string name="case_name_required">Nombre del caso*</string>
+    <string name="exhibit_sheet_name">Nombre de la hoja de pruebas</string>
+    <string name="case_number">Número de caso</string>
+    <string name="case_section">Sección del caso</string>
+    <string name="judge">Juez</string>
+    <string name="master_template_required">Plantilla maestra*</string>
+    <string name="no_templates_found_create_one">No se encontraron plantillas. Crea una desde la pantalla de inicio.</string>
+    <string name="unnamed_template">Plantilla sin nombre (ID: %1$s…)</string>
+    <string name="create">Crear</string>
+    <string name="cancel">Cancelar</string>
+    <string name="no_cases_found">No se encontraron casos. Haz clic en el botón \'+\' para crear un nuevo caso.</string>
+    <string name="no_cases_match_search">Ningún caso coincide con tu búsqueda.</string>
+    <string name="no_cases_found_line1">No se encontraron casos.</string>
+    <string name="no_cases_found_line2">Crea un nuevo caso o abre uno existente.</string>
+    <string name="theme_settings">Tema</string>
+    <string name="cache_settings">Caché</string>
+    <string name="clear_cache">Limpiar caché</string>
+    <string name="clear_cache_title">Limpiar caché</string>
+    <string name="clear_cache_confirmation">¿Estás seguro de que quieres limpiar la caché de la aplicación? Esta acción no se puede deshacer.</string>
+    <string name="dark_mode">Modo oscuro</string>
+    <string name="delete_evidence">Eliminar prueba</string>
+    <string name="delete_evidence_confirmation">¿Estás seguro de que quieres eliminar esta prueba?</string>
+    <string name="delete">Eliminar</string>
+    <string name="edit">Editar</string>
+    <string name="tags">Etiquetas</string>
+    <string name="edit_evidence">Editar prueba</string>
+    <string name="content">Contenido</string>
+    <string name="enter_evidence_content">Introduce el contenido de la prueba</string>
+    <string name="enter_tags">Introduce las etiquetas, separadas por comas</string>
+    <string name="category">Categoría</string>
+    <string name="enter_category">Introduce una categoría para esta prueba</string>
+    <string name="save">Guardar</string>
+    <string name="script_saved_successfully">Script guardado correctamente</string>
+    <string name="enter_your_script">Introduce tu script</string>
+    <string name="script_editor_placeholder">
+        // Tu script va aquí. Usa las variables disponibles para procesar la prueba.\n\n        // Ejemplo: if (evidence.content.includes(\"amenaza\")) { parser.tags.push(\"Amenaza\"); }\n\n        // Variables disponibles:\n\n        // - evidence: El objeto de prueba que se está procesando.\n\n        // - parser: Un objeto con un array `tags` para agregar nuevas etiquetas a la prueba.
+    </string>
+    <string name="save_script">Guardar script</string>
+    <string name="script_title">Título del script</string>
+    <string name="script_snippet_text_includes">evidence.text.includes(\"\")</string>
+    <string name="script_snippet_text_includes_label">text.includes(…)</string>
+    <string name="script_snippet_tags_includes">evidence.tags.includes(\"\")</string>
+    <string name="script_snippet_tags_includes_label">tags.includes(…)</string>
+    <string name="script_snippet_date_greater">evidence.documentDate &gt; new Date(\"YYYY-MM-DD\").getTime()</string>
+    <string name="script_snippet_date_greater_label">fecha &gt; …</string>
+    <string name="script_snippet_date_less">evidence.documentDate &lt; new Date(\"YYYY-MM-DD\").getTime()</string>
+    <string name="script_snippet_date_less_label">fecha &lt; …</string>
+    <string name="evidence_by_category">Prueba por categoría</string>
+    <string name="evidence_by_month">Prueba por mes</string>
+    <string name="search">Buscar</string>
+    <string name="archive">Archivar</string>
+    <string name="sort">Ordenar</string>
+    <string name="delete_case">Eliminar caso</string>
+    <string name="delete_case_confirmation">¿Estás seguro de que quieres eliminar el caso %1$s?</string>
+
+    <string name="script_tab_description">Descripción</string>
+    <string name="script_tab_editor">Editor</string>
+    <string name="script_description_placeholder">Introduce una breve descripción de tu script aquí. Esto te ayudará a identificarlo más tarde.</string>
+    <string name="script_editor_explanation">
+        Los scripts en The Lexorcist son herramientas poderosas para automatizar el etiquetado y la categorización de tus pruebas. Escritos en JavaScript, te permiten definir reglas que aplican etiquetas automáticamente según el contenido, la fecha o las etiquetas existentes de tus pruebas.\n\n        \n\n<b>Variables disponibles:</b>
+        \n- <b>evidence:</b> El objeto de prueba que se está procesando. Contiene propiedades como `content`, `documentDate` y `tags`.
+        \n- <b>parser:</b> Un objeto con un array `tags`. Puedes agregar nuevas etiquetas a tu prueba empujándolas a este array (p. ej., `parser.tags.push(\"Nueva etiqueta\");`).\n
+        \n\n<b>Ejemplos:</b>
+        \n- Etiquetado basado en palabras clave: `if (evidence.content.includes(\"palabra clave\")) { parser.tags.push(\"Etiqueta relevante\"); }`
+        \n- Categorización por fecha: `if (evidence.documentDate > new Date(\"2023-01-01\").getTime()) { parser.tags.push(\"Después de 2023\"); }`
+    </string>
+    <string name="script_editor_instructions">Usa los botones de arriba para insertar fragmentos o escribe tu propio código Javascript a continuación. El objeto `evidence` y un objeto `parser` están disponibles para ti.</string>
+
+    <string-array name="sample_scripts">
+        <item>// Ejemplo 1: Etiquetar amenazas\nif (evidence.content.includes(\"amenazar\")) {\n    parser.tags.push(\"Amenaza\");\n}</item>
+        <item>// Ejemplo 2: Etiquetar documentos financieros\nif (evidence.content.includes(\"factura\") || evidence.content.includes(\"recibo\")) {\n    parser.tags.push(\"Financiero\");\n}</item>
+        <item>// Ejemplo 3: Etiquetar pruebas de una persona específica\nif (evidence.content.includes(\"John Doe\")) {\n    parser.tags.push(\"De John Doe\");\n}</item>
+        <item>// Ejemplo 4: Categorizar pruebas antiguas\nif (evidence.documentDate &lt; new Date(\"2020-01-01\").getTime()) {\n    parser.tags.push(\"Prueba antigua\");\n}</item>
+        <item>// Ejemplo 5: Etiquetar pruebas que ya están etiquetadas como \"importante\"\nif (evidence.tags.includes(\"importante\")) {\n    parser.tags.push(\"Alta prioridad\");\n}</item>
+        <item>// Ejemplo 6: Identificar posible acoso\nif (evidence.content.match(/acosar/i)) {\n    parser.tags.push(\"Acoso\");\n}</item>
+        <item>// Ejemplo 7: Etiquetar imágenes\nif (evidence.type === \"image\") {\n    parser.tags.push(\"Imagen\");\n}</item>
+        <item>// Ejemplo 8: Etiquetar archivos de audio\nif (evidence.type === \"audio\") {\n    parser.tags.push(\"Grabación de audio\");\n}</item>
+        <item>// Ejemplo 9: Etiquetar pruebas relacionadas con un proyecto específico\nif (evidence.content.includes(\"Proyecto X\")) {\n    parser.tags.push(\"Proyecto X\");\n}</item>
+        <item>// Ejemplo 10: Encontrar pruebas con palabras clave específicas y después de una fecha determinada\nif (evidence.content.includes(\"contrato\") &amp;&amp; evidence.documentDate > new Date(\"2022-06-01\").getTime()) {\n    parser.tags.push(\"Contrato 2022\");\n}</item>
+    </string-array>
+
+    <string name="share_script_title">Compartir script</string>
+    <string name="share_script_confirmation">¿Compartir este script con otros usuarios? ¡Asegúrate de que no contenga información privada!</string>
+
+    <string name="data_review_title_case">REVISIÓN: %1$s</string>
+    <string name="please_select_case_for_evidence">Selecciona un caso para revisar sus pruebas.</string>
+    <string name="no_evidence_for_case">No se encontraron pruebas para este caso.</string>
+    <string name="source_document">Documento fuente</string>
+    <string name="tags_comma_separated">Etiquetas (separadas por comas)</string>
+    <string name="evidence_text_label">Texto de la prueba</string>
+
+    <string name="select_image_to_scan">Seleccionar imagen para escanear</string>
+    <string name="load_case">Cargar caso</string>
+    <string name="save_to_sheet">Guardar en hoja</string>
+    <string name="edit_app_script">Editar script de la aplicación</string>
+    <string name="selected_image_for_scanning">Imagen seleccionada para escanear</string>
+    <string name="all_entries">Todas las entradas</string>
+    <string name="filter">Filtrar</string>
+    <string name="total">Total</string>
+    <string name="enter_your_app_script_here">Introduce tu script de la aplicación aquí</string>
+    <string name="default_web_client_id">1079155203544-gqpiq4qq3d4n8amsmbn3k3o2jsqs5cg9.apps.googleusercontent.com</string>
+
+    <!-- MainViewModel and other app logic strings -->
+    <string name="case_info_prefs" translatable="false">CaseInfoPrefs</string>
+    <string name="prefs_plaintiffs" translatable="false">plaintiffs</string>
+    <string name="prefs_defendants" translatable="false">defendants</string>
+    <string name="prefs_court" translatable="false">court</string>
+    <string name="prefs_is_dark_mode" translatable="false">is_dark_mode</string>
+
+    <string name="google_api_scope_sheets" translatable="false">https://www.googleapis.com/auth/spreadsheets</string>
+    <string name="google_api_scope_drive_file" translatable="false">https://www.googleapis.com/auth/drive.file</string>
+
+    <string name="new_image_file_name" translatable="false">new_image.jpg</string>
+    <string name="mime_type_image" translatable="false">image/*</string>
+    <string name="mime_type_text" translatable="false">text/plain</string>
+    <string name="mime_type_pdf" translatable="false">application/pdf</string>
+    <string name="mime_type_xls" translatable="false">application/vnd.ms-excel</string>
+    <string name="mime_type_xlsx" translatable="false">application/vnd.openxmlformats-officedocument.spreadsheetml.sheet</string>
+    <string name="mime_type_doc" translatable="false">application/msword</string>
+    <string name="mime_type_docx" translatable="false">application/vnd.openxmlformats-officedocument.wordprocessingml.document</string>
+    <string name="unsupported_file_type">Tipo de archivo no compatible: %1$s para URI: %2$s</string>
+
+    <string name="lexorcist_export_spreadsheet_name">Exportación de Lexorcist</string>
+    <string name="default_sheet_name" translatable="false">Sheet1</string>
+    <string name="text_evidence_file_name_format" translatable="false">text-evidence-%1$d.txt</string>
+    <string name="text_input_no_case_source">Entrada de texto (sin caso)</string>
+
+    <string name="filters_sheet_name" translatable="false">Filters</string>
+    <string name="failed_to_recognize_text">No se pudo reconocer el texto.</string>
+
+    <!-- Error and Log Messages -->
+    <string name="file_upload_success">Archivo %1$s subido a Drive para el caso %2$s</string>
+    <string name="file_upload_error">addDriveFileEvidenceToSelectedCase: Sin caso o servicio de API.</string>
+    <string name="text_evidence_upload_error">addTextEvidenceToSelectedCase: Sin caso o servicio de API.</string>
+    <string name="import_spreadsheet_error">importSpreadsheet: Sin servicio de API.</string>
+    <string name="store_tagged_data_error">storeTaggedDataToSheet: Sin caso o servicio de API, se omite la actualización de la hoja.</string>
+    <string name="add_sheet_filter_error">addSelectedCaseSheetFilter: Falta el caso, el ID de la hoja de cálculo o el servicio de API.</string>
+    <string name="add_allegation_error">addAllegationToSelectedCase: Faltan datos.</string>
+    <string name="add_evidence_error">addEvidenceToSelectedCase: Faltan datos.</string>
+    <string name="update_evidence_error">updateEvidence: Faltan datos.</string>
+    <string name="delete_evidence_error">deleteEvidence: Faltan datos.</string>
+    <string name="create_case_error_no_api">createCase: Sin servicio de API.</string>
+    <string name="create_case_error_app_root">createCase: No se pudo obtener la carpeta raíz de la aplicación.</string>
+    <string name="create_case_error_case_registry">createCase: No se pudo obtener el registro de casos.</string>
+    <string name="create_case_error_case_folder">createCase: No se pudo crear la carpeta del caso para \'%1$s\'.</string>
+    <string name="create_case_error_download_template">createCase: No se pudo descargar la plantilla HTML (ID: %1$s).</string>
+    <string name="create_case_error_upload_snapshot">createCase: No se pudo subir la instantánea HTML para el caso \'%1$s\'. Se procederá sin ella.</string>
+    <string name="create_case_error_generate_pdf">createCase: No se pudo generar el PDF local a partir del HTML.</string>
+    <string name="create_case_error_upload_pdf">createCase: No se pudo subir el PDF generado a la carpeta de Drive %1$s.</string>
+    <string name="create_case_error_create_spreadsheet">createCase: No se pudo crear la hoja de cálculo del caso para \'%1$s\'.</string>
+    <string name="create_case_error_add_to_registry">No se pudo agregar el caso \'%1$s\' al registro.</string>
+    <string name="load_cases_error_no_api">loadCasesFromRegistry: Sin servicio de API.</string>
+    <string name="load_templates_error_no_api">loadHtmlTemplates: Sin servicio de API.</string>
+    <string name="load_sheet_filters_error_no_api">loadSelectedCaseSheetFilters: Sin servicio de API.</string>
+    <string name="load_allegations_error_no_api">loadAllegations: Sin servicio de API.</string>
+    <string name="no_evidence_placeholder">Todavía no hay pruebas en este caso. Agrega algunas pruebas para verlas en la línea de tiempo.</string>
+    <string name="share">Compartir</string>
+    <string name="take_photos">Tomar fotos</string>
+
+    <string-array name="sort_options">
+        <item>Ordenar por fecha (más reciente)</item>
+        <item>Ordenar por fecha (más antiguo)</item>
+        <item>Ordenar por cantidad (de mayor a menor)</item>
+        <item>Ordenar por cantidad (de menor a mayor)</item>
+    </string-array>
+    <string name="no_review_data_for_case">No se encontraron alegaciones ni pruebas para este caso.</string>
+    <string name="no_allegations_for_case">No se encontraron alegaciones para este caso.</string>
+
+    <string name="master_allegations">Alegaciones maestras</string>
+    <string name="no_allegations_match_search">Ninguna alegación coincide con tu búsqueda.</string>
+    <string name="no_allegations_found">No se encontraron alegaciones. La lista maestra puede estar vacía o todavía se está cargando.</string>
+    <string name="transcription">Transcripción</string>
+    <string name="transcript_label">Transcripción</string>
+    <string name="reason_for_edit">Motivo de la edición</string>
+    <string name="reason">Motivo</string>
+    <string name="confirm">Confirmar</string>
+    <string name="add_video_evidence">Video</string>
+    <string name="assign_to_allegation">Asignar a alegación</string>
+    <string name="add_evidence">Agregar prueba</string>
+
+    <string name="fragment_main_action_1_button_text">El texto incluye</string>
+    <string name="fragment_main_action_2_button_text">Las etiquetas incluyen</string>
+    <string name="fragment_main_action_3_button_text">Fecha &gt;</string>
+    <string name="fragment_main_action_4_button_text">Fecha &lt;</string>
+    <string name="fragment_main_action_5_button_text">Etiquetar amenazas</string>
+    <string name="fragment_main_action_6_button_text">Etiquetar financiero</string>
+    <string name="fragment_main_buttons_title">Fragmentos de script</string>
+    <string name="generate_description">Generar descripción</string>
+    <string name="save_edit">Guardar edición</string>
+    <string name="done">Hecho</string>
+    <string name="edit_history">Historial de ediciones</string>
+    <string name="edit_transcript">Editar transcripción</string>
+    <string name="fragment_main_script_text_input_layout_hint_text">Introduce el texto del script</string>
+
+    <string name="share_addon_title">Compartir complemento</string>
+    <string name="share_addon_name_label">Nombre</string>
+    <string name="share_addon_description_label">Descripción</string>
+    <string name="share_addon_content_label">Contenido</string>
+    <string name="share_addon_type_label">Tipo: %1$s</string>
+    <string name="share_addon_share_button">Compartir complemento</string>
+    <string name="take_photo">Tomar foto</string>
+</resources>

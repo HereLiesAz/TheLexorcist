@@ -30,6 +30,14 @@ The Lexorcist is licensed under the MIT License. See the [LICENSE](LICENSE) file
 
 This app is agent-maintained.
 
+## Localization
+
+This application and its documentation are also available in Spanish.
+
+- [Política de privacidad (Privacy Policy)](PRIVACY_POLICY_ES.md)
+- [Términos de servicio (Terms of Service)](TERMS_OF_SERVICE_ES.md)
+- [Ejemplos de scripts (Script Examples)](SCRIPT_EXAMPLES_ES.md)
+
 ## Project Status
 
 ### Implemented Features
