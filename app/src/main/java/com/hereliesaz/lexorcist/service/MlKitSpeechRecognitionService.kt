@@ -4,8 +4,6 @@ import android.content.Context
 import android.net.Uri
 import com.google.mlkit.common.MlKit
 import com.google.mlkit.common.*
-import com.google.mlkit.speech.RecognitionListener
-import com.google.mlkit.speech.SpeechRecognizer
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton

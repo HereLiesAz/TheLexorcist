@@ -24,6 +24,13 @@
             android:name="com.google.mlkit.vision.DEPENDENCIES"
             android:value="ocr" />
 
+        <!-- Add this for Dropbox AuthActivity -->
+        <activity
+            android:name="com.dropbox.core.android.AuthActivity"
+            android:exported="true"
+            tools:replace="android:exported">
+        </activity>
+
         <activity
             android:name=".MainActivity"
             android:exported="true">
@@ -31,17 +38,6 @@
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-        <activity
-            android:name="com.dropbox.core.android.AuthActivity"
-            android:configChanges="orientation|keyboard"
-            android:launchMode="singleTask" >
-            <intent-filter>
-                <data android:scheme="db-kc574fk4ljbmxeu" />
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
         <provider
