@@ -28,8 +28,8 @@ import com.hereliesaz.lexorcist.utils.Result as LexResult
 class VideoProcessingWorker
     @AssistedInject
     constructor(
-        @Assisted private val appContext: Context, // Made private val as it's used in methods
-        @Assisted workerParams: WorkerParameters,
+        @param:Assisted private val appContext: Context, // Made private val as it's used in methods
+        @param:Assisted workerParams: WorkerParameters,
         private val evidenceRepository: EvidenceRepository,
         private val ocrProcessingService: OcrProcessingService,
         private val transcriptionService: TranscriptionService,

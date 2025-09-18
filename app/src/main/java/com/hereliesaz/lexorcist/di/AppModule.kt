@@ -72,24 +72,5 @@ class AppModule {
     @Singleton
     fun provideGson(): Gson = Gson()
 
-    @Provides
-    @Singleton
-    fun provideSpreadsheetSchema(): SpreadsheetSchema {
-        return SpreadsheetSchema(
-            caseInfoSheet = CaseInfoSheet(
-                name = "CaseInfo",
-                caseNameLabel = "Case Name",
-                caseNameColumn = 1
-            ),
-            allegationsSheet = AllegationsSheet(
-                name = "Allegations",
-                allegationColumn = 0
-            ),
-            evidenceSheet = EvidenceSheet(
-                name = "Evidence",
-                contentColumn = 2,
-                tagsColumn = 3
-            )
-        )
-    }
+    // Removed provideSpreadsheetSchema method
 }

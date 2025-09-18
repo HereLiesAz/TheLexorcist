@@ -22,9 +22,7 @@ class MainActivity : ComponentActivity() {
     private val authViewModel: AuthViewModel by viewModels()
     private val mainViewModel: MainViewModel by viewModels()
     private val caseViewModel: CaseViewModel by viewModels()
-
-    @Inject
-    lateinit var scriptedMenuViewModel: ScriptedMenuViewModel
+    private val scriptedMenuViewModel: ScriptedMenuViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

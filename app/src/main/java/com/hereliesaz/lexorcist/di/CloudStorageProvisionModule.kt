@@ -15,30 +15,7 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object CloudStorageProvisionModule {
 
-    @Provides
-    @Singleton
-    @Named("googleDrive")
-    fun provideGoogleDriveCloudStorageProvider(
-        // In the future, you might add dependencies here if GoogleDriveCloudStorageProvider needs them
-    ): CloudStorageProvider {
-        return GoogleDriveCloudStorageProvider()
-    }
-
-    @Provides
-    @Singleton
-    @Named("dropbox")
-    fun provideDropboxCloudStorageProvider(
-        // In the future, you might add dependencies here if DropboxCloudStorageProvider needs them
-    ): CloudStorageProvider {
-        return DropboxCloudStorageProvider()
-    }
-
-    @Provides
-    @Singleton
-    @Named("oneDrive")
-    fun provideOneDriveCloudStorageProvider(
-        // In the future, you might add dependencies here if OneDriveCloudStorageProvider needs them
-    ): CloudStorageProvider {
-        return OneDriveCloudStorageProvider()
-    }
+    // Removed provideGoogleDriveCloudStorageProvider
+    // Removed provideDropboxCloudStorageProvider
+    // Removed provideOneDriveCloudStorageProvider
 }

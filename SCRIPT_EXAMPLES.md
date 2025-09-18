@@ -722,7 +722,6 @@ For this next set of scripts, we assume a more advanced API that allows for dire
         });
     });
     ```
-
 **44. De-identify and Anonymize to Column**
 *   **Description:** Uses an AI to find and replace all PII, saving this anonymized version to a new "AnonymizedText" column in the spreadsheet for safe sharing.
 *   **Script:**
