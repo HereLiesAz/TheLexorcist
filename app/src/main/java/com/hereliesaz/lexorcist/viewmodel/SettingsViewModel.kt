@@ -71,11 +71,16 @@ class SettingsViewModel @Inject constructor(
 
     private fun fetchDropboxUser() {
         viewModelScope.launch {
+            // Assuming getCurrentUser is defined in CloudStorageProvider and implemented
             when (val result = dropboxProvider.getCurrentUser()) {
+                is Result.Loading -> {
+                    _dropboxUser.value = null // Or a specific loading indicator state
+                }
                 is Result.Success -> _dropboxUser.value = result.data
                 is Result.Error -> _dropboxUser.value = null // Or handle error
                 is Result.UserRecoverableError -> {
-                    // Handle recoverable error
+                    _dropboxUser.value = null // Or handle error
+                    // Handle recoverable error, e.g., prompt user to re-authenticate
                 }
             }
         }
@@ -120,7 +125,11 @@ class SettingsViewModel @Inject constructor(
     fun testDropboxUpload() {
         viewModelScope.launch {
             val content = "Hello, Dropbox!".toByteArray()
+            _dropboxUploadStatus.value = "Starting Dropbox upload..." // Initial status
             when (val result = dropboxProvider.writeFile("", "test.txt", "text/plain", content)) {
+                is Result.Loading -> {
+                    _dropboxUploadStatus.value = "Uploading to Dropbox..."
+                }
                 is Result.Success -> {
                     _dropboxUploadStatus.value = "Successfully uploaded file to Dropbox with ID: ${result.data.id}"
                 }
@@ -128,7 +137,7 @@ class SettingsViewModel @Inject constructor(
                     _dropboxUploadStatus.value = "Error uploading file to Dropbox: ${result.exception.message}"
                 }
                 is Result.UserRecoverableError -> {
-                    _dropboxUploadStatus.value = "A recoverable error occurred: ${result.exception.message}"
+                    _dropboxUploadStatus.value = "A recoverable error occurred with Dropbox: ${result.exception.message}"
                 }
             }
         }
@@ -141,7 +150,12 @@ class SettingsViewModel @Inject constructor(
     fun testOneDriveUpload() {
         viewModelScope.launch {
             val content = "Hello, OneDrive!".toByteArray()
+            _oneDriveUploadStatus.value = "Starting OneDrive upload..." // Initial status
+            // Assuming writeFile is defined in CloudStorageProvider and implemented
             when (val result = oneDriveProvider.writeFile("root", "test.txt", "text/plain", content)) {
+                is Result.Loading -> {
+                    _oneDriveUploadStatus.value = "Uploading to OneDrive..."
+                }
                 is Result.Success -> {
                     _oneDriveUploadStatus.value = "Successfully uploaded file to OneDrive with ID: ${result.data.id}"
                 }
@@ -149,7 +163,7 @@ class SettingsViewModel @Inject constructor(
                     _oneDriveUploadStatus.value = "Error uploading file to OneDrive: ${result.exception.message}"
                 }
                 is Result.UserRecoverableError -> {
-                    _oneDriveUploadStatus.value = "A recoverable error occurred: ${result.exception.message}"
+                    _oneDriveUploadStatus.value = "A recoverable error occurred with OneDrive: ${result.exception.message}"
                 }
             }
         }

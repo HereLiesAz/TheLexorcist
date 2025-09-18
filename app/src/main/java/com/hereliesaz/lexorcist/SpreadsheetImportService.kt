@@ -16,21 +16,24 @@ class SpreadsheetImportService(
     suspend fun importAndSetupNewCaseFromData(sheetsData: Map<String, List<List<Any>>>): Case? {
         // 1. Get Root Folder and Registry IDs
         val appRootFolderIdResult = googleApiService.getOrCreateAppRootFolder()
-        val appRootFolderId: String? =
-            when (val result = appRootFolderIdResult) {
-                is Result.Success -> result.data
-                is Result.Error -> {
-                    Log.e(tag, "importAndSetup: Failed to get or create app root folder. Error: ${result.exception}")
-                    null
-                }
-                is Result.UserRecoverableError -> {
-                    Log.e(tag, "importAndSetup: User recoverable error getting or creating app root folder. Error: ${result.exception}")
-                    null
-                }
+        val appRootFolderId: String? = when (val result = appRootFolderIdResult) {
+            is Result.Loading -> {
+                Log.w(tag, "importAndSetup: Getting app root folder is still in progress.")
+                null
             }
+            is Result.Success -> result.data
+            is Result.Error -> {
+                Log.e(tag, "importAndSetup: Failed to get or create app root folder. Error: ${result.exception}")
+                null
+            }
+            is Result.UserRecoverableError -> {
+                Log.e(tag, "importAndSetup: User recoverable error getting or creating app root folder. Error: ${result.exception}")
+                null
+            }
+        }
 
         if (appRootFolderId == null) {
-            // Log message already handled in the when block above
+            // Log message already handled in the when block above or if Loading
             return null
         }
 
@@ -84,6 +87,10 @@ class SpreadsheetImportService(
         val newCaseSpreadsheetIdResult = googleApiService.createSpreadsheet(importedCaseName, newCaseFolderId)
         val newCaseSpreadsheetId: String =
             when (val result = newCaseSpreadsheetIdResult) {
+                is Result.Loading -> {
+                    Log.w(tag, "importAndSetup: Creating spreadsheet for new case '$importedCaseName' is still in progress.")
+                    return null // Cannot proceed without spreadsheet ID
+                }
                 is Result.Success -> {
                     val id = result.data
                     if (id == null) {
