@@ -1288,9 +1288,39 @@ class GoogleApiService @Inject constructor(
         type: String,
     ): Boolean =
         withContext(Dispatchers.IO) {
-            // TODO: Implement actual logic to rate an addon
-            // This might involve updating metadata for the shared addon file or a registry.
-            false
+            val sheets = getSheetsService() ?: return@withContext false
+            try {
+                val spreadsheetId = "18hB2Kx5Le1uaF2pImeITgWntcBB-JfYxvpU2aqTzRr8"
+                val sheetName = if (type == "Script") "Scripts" else "Templates"
+
+                val rowIndex = findRowOfSharedItem(sheets, spreadsheetId, sheetName, id)
+                if (rowIndex == -1) {
+                    return@withContext false
+                }
+
+                // Fetch current rating and numRatings
+                val range = "$sheetName!F${rowIndex + 1}:G${rowIndex + 1}"
+                val response = sheets.spreadsheets().values().get(spreadsheetId, range).execute()
+                val values = response.getValues()
+                if (values.isNullOrEmpty() || values[0].size < 2) {
+                    return@withContext false // or handle error
+                }
+
+                val currentRating = values[0][0].toString().toDoubleOrNull() ?: 0.0
+                val numRatings = values[0][1].toString().toIntOrNull() ?: 0
+
+                val newNumRatings = numRatings + 1
+                val newAverageRating = ((currentRating * numRatings) + rating) / newNumRatings
+
+                val valueRange = ValueRange().setValues(listOf(listOf(newAverageRating, newNumRatings)))
+                sheets.spreadsheets().values().update(spreadsheetId, range, valueRange)
+                    .setValueInputOption("RAW").execute()
+
+                true
+            } catch (e: IOException) {
+                Log.e("GoogleApiService", "Failed to rate addon", e)
+                false
+            }
         }
 
     suspend fun getSelectedAllegations(spreadsheetId: String): List<String> =

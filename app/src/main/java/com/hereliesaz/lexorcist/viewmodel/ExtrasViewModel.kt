@@ -164,4 +164,15 @@ class ExtrasViewModel @Inject constructor(
         _pendingSharedItemType.value = null
         _pendingSharedItemContent.value = null
     }
+
+    fun rateAddon(id: String, rating: Int, type: String) {
+        viewModelScope.launch {
+            val result = extrasRepository.rateAddon(id, rating, type)
+            if (result) {
+                loadSharedItems()
+            } else {
+                _uiState.value = _uiState.value.copy(error = "Failed to rate item.")
+            }
+        }
+    }
 }
