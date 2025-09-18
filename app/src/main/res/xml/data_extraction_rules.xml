@@ -1,10 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <data-extraction-rules>
     <cloud-backup>
-        <!-- TODO: Add domain-specific cloud backup rules here. -->
         <!--
-        <include domain="sharedpref" path="."/>
-        <exclude domain="sharedpref" path="device.xml"/>
+        This file defines the rules for device-to-device transfers and
+        Key/Value Backup for older Android versions.
+        The app uses a "local-first" approach, storing all critical user data,
+        including the main spreadsheet (`lexorcist_data.xlsx`), case data, raw evidence,
+        and user settings, on the device.
+
+        To ensure that all user data can be transferred to a new device, we will back up:
+        - All shared preferences, which store user settings.
+        - All files in the app's internal storage, which includes the main spreadsheet
+          and all evidence files.
         -->
+
+        <!-- Back up all shared preferences -->
+        <include domain="sharedpref" path="."/>
+
+        <!-- Back up all files in the app's internal storage -->
+        <include domain="file" path="."/>
     </cloud-backup>
 </data-extraction-rules>
