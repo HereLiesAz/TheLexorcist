@@ -19,6 +19,11 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.LegalParser"
         tools:targetApi="36">
+
+        <meta-data
+            android:name="com.google.mlkit.vision.DEPENDENCIES"
+            android:value="ocr" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true">
