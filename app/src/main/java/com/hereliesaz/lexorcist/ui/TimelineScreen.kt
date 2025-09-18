@@ -144,13 +144,13 @@ fun TimelineSortDropdown(
 ) {
     var expanded by remember { mutableStateOf(false) }
     Row(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().clickable { expanded = true },
         horizontalArrangement = Arrangement.End,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text("Sort by: $sortType")
-        Spacer(modifier = Modifier.height(8.dp))
-        LexorcistOutlinedButton(onClick = { expanded = true }, text = stringResource(id = R.string.sort))
+        Text("Sort by: ")
+        Text(sortType.toString(), color = MaterialTheme.colorScheme.primary)
+        Icon(Icons.Default.ArrowDropDown, contentDescription = "Sort by")
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
