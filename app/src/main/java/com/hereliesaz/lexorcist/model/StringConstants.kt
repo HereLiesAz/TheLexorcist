@@ -1,4 +1,4 @@
-package com.therealbluepandabear.lexorcist.models
+package com.hereliesaz.lexorcist.model
 
 object StringConstants {
     object String {

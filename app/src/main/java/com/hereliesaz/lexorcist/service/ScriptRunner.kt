@@ -6,12 +6,12 @@ import org.mozilla.javascript.Scriptable
 import org.mozilla.javascript.ScriptableObject
 // import android.util.Log // Uncomment if logging for non-string elements is added
 
-import com.hereliesaz.lexorcist.viewmodel.ScriptedMenuViewModel
+// import com.hereliesaz.lexorcist.viewmodel.ScriptedMenuViewModel // REMOVED
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class ScriptRunner @Inject constructor(private val scriptedMenuViewModel: ScriptedMenuViewModel) {
+class ScriptRunner @Inject constructor() { // REMOVED scriptedMenuViewModel
     class ScriptExecutionException(
         message: String,
         cause: Throwable, // Cause is non-null
@@ -41,42 +41,32 @@ class ScriptRunner @Inject constructor(private val scriptedMenuViewModel: Script
                 org.mozilla.javascript.Context
                     .javaToJS(tags, scope),
             )
-            ScriptableObject.putProperty(
-                scope,
-                "menu",
-                org.mozilla.javascript.Context
-                    .javaToJS(scriptedMenuViewModel, scope),
-            )
+            // ScriptableObject.putProperty( // REMOVED
+            //     scope, // REMOVED
+            //     "menu", // REMOVED
+            //     org.mozilla.javascript.Context // REMOVED
+            //         .javaToJS(scriptedMenuViewModel, scope), // REMOVED
+            // ) // REMOVED
             rhino.evaluateString(scope, script, "JavaScript<ScriptRunner>", 1, null)
 
-            // Safely retrieve and process the 'tags' property from the script scope
             val tagsPropertyFromScope: Any? = ScriptableObject.getProperty(scope, "tags")
             val convertedJavaList: Any? = org.mozilla.javascript.Context.jsToJava(tagsPropertyFromScope, List::class.java)
 
             if (convertedJavaList is List<*>) {
-                // It was successfully converted to a List. Now, filter for String instances.
                 val stringListFromTags: List<String> = convertedJavaList.filterIsInstance<String>()
-                
-                // Optional: Log or handle if some elements were not strings and got filtered out
-                // if (stringListFromTags.size < convertedJavaList.size) {
-                //     Log.w("ScriptRunner", "Script 'tags' list contained non-string elements that were ignored.")
-                // }
                 return Result.Success(stringListFromTags)
             } else {
-                // The 'tags' property from scope was not a list or could not be converted.
                 val actualType = if (convertedJavaList != null) convertedJavaList.javaClass.name else "null"
                 return Result.Error(
                     ScriptExecutionException(
                         "Script 'tags' property is not a List or could not be converted. Actual type: $actualType",
-                        Exception("Unexpected type for 'tags' property from script.") // Provide a generic cause
+                        Exception("Unexpected type for 'tags' property from script.")
                     )
                 )
             }
         } catch (e: org.mozilla.javascript.RhinoException) {
-            // Specific catch for errors during script execution (e.g., syntax errors in JS)
             return Result.Error(ScriptExecutionException("Error during JavaScript execution", e))
         } catch (e: Exception) {
-            // Catch other unexpected exceptions during the process
             return Result.Error(ScriptExecutionException("An unexpected error occurred while running script or processing results", e))
         } finally {
             org.mozilla.javascript.Context

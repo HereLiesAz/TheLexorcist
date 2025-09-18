@@ -1,12 +1,13 @@
 package com.hereliesaz.lexorcist.viewmodel
 
 import androidx.compose.runtime.mutableStateListOf
+import androidx.lifecycle.ViewModel // ADDED
 import com.hereliesaz.lexorcist.model.ScriptedMenuItem
+import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
-import javax.inject.Singleton
 
-@Singleton
-class ScriptedMenuViewModel @Inject constructor() {
+@HiltViewModel
+class ScriptedMenuViewModel @Inject constructor() : ViewModel() { // EXTEND ViewModel
     val menuItems = mutableStateListOf<ScriptedMenuItem>()
 
     fun addMenuItem(id: String, text: String, onClick: () -> Unit) {

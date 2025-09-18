@@ -1,15 +1,10 @@
-package com.therealbluepandabear.lexorcist.fragments.main
+package com.hereliesaz.lexorcist.fragments.main
 
 import android.content.Context
-import android.os.Bundle
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import com.google.android.material.button.MaterialButton
-import com.therealbluepandabear.lexorcist.databinding.FragmentMainBinding
-import com.therealbluepandabear.lexorcist.listeners.MainFragmentListener
-import com.therealbluepandabear.lexorcist.models.StringConstants
+import com.hereliesaz.lexorcist.model.StringConstants
 
 class MainFragment : Fragment() {
     private lateinit var binding: FragmentMainBinding

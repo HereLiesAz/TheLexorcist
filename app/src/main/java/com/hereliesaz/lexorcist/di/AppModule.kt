@@ -6,19 +6,20 @@ import androidx.credentials.CredentialManager
 import androidx.work.WorkManager
 import com.google.gson.Gson
 import com.hereliesaz.lexorcist.data.SettingsManager
-import com.hereliesaz.lexorcist.data.objectbox.MyObjectBox
+// import com.hereliesaz.lexorcist.data.objectbox.MyObjectBox // REMOVED
 import com.hereliesaz.lexorcist.model.AllegationsSheet
 import com.hereliesaz.lexorcist.model.CaseInfoSheet
 import com.hereliesaz.lexorcist.model.EvidenceSheet
 import com.hereliesaz.lexorcist.model.SpreadsheetSchema
-import com.hereliesaz.lexorcist.service.ScriptRunner
+// import com.hereliesaz.lexorcist.service.ScriptRunner // REMOVED for now
 import com.hereliesaz.lexorcist.utils.CacheManager
+// import com.hereliesaz.lexorcist.viewmodel.ScriptedMenuViewModel // REMOVED for now
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import io.objectbox.BoxStore
+// import io.objectbox.BoxStore // REMOVED
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -45,24 +46,15 @@ class AppModule {
         @ApplicationContext context: Context,
     ): SharedPreferences = context.getSharedPreferences("LexorcistAppPrefs", Context.MODE_PRIVATE)
 
-    // Provider for BoxStore
-    @Provides
-    @Singleton
-    fun provideBoxStore(@ApplicationContext context: Context): BoxStore {
-        return MyObjectBox.builder()
-            .androidContext(context.applicationContext)
-            .build()
-    }
-
     @Provides
     @Singleton
     fun provideSettingsManager(
         @ApplicationContext context: Context
     ): SettingsManager = SettingsManager(context) // Pass only Context to constructor
 
-    @Provides
-    @Singleton
-    fun provideScriptRunner(scriptedMenuViewModel: ScriptedMenuViewModel): ScriptRunner = ScriptRunner(scriptedMenuViewModel)
+    // @Provides // REMOVED for now
+    // @Singleton // REMOVED for now
+    // fun provideScriptRunner(scriptedMenuViewModel: ScriptedMenuViewModel): ScriptRunner = ScriptRunner(scriptedMenuViewModel) // REMOVED for now
 
     @Provides
     @Singleton
@@ -83,21 +75,20 @@ class AppModule {
     @Provides
     @Singleton
     fun provideSpreadsheetSchema(): SpreadsheetSchema {
-        // Provide a default schema. In a real app, this might be loaded from a JSON file in assets.
         return SpreadsheetSchema(
             caseInfoSheet = CaseInfoSheet(
                 name = "CaseInfo",
                 caseNameLabel = "Case Name",
-                caseNameColumn = 1 // Assuming 0-based indexing for columns, adjust if 1-based
+                caseNameColumn = 1
             ),
             allegationsSheet = AllegationsSheet(
                 name = "Allegations",
-                allegationColumn = 0 // Assuming 0-based indexing
+                allegationColumn = 0
             ),
             evidenceSheet = EvidenceSheet(
                 name = "Evidence",
-                contentColumn = 2, // Assuming 0-based indexing
-                tagsColumn = 3    // Assuming 0-based indexing
+                contentColumn = 2,
+                tagsColumn = 3
             )
         )
     }

@@ -17,7 +17,7 @@ plugins {
     id("com.google.devtools.ksp") // Changed from alias
     alias(libs.plugins.kotlin.compose) // Added Kotlin Compose Compiler plugin
     id("com.google.gms.google-services") // Added Google Services plugin
-
+    id("kotlin-parcelize") // ADDED
 }
 
 // Add KSP configuration block
@@ -64,6 +64,7 @@ android {
     }
     buildFeatures {
         compose = true
+        viewBinding = true // ADDED
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "2.2.20"
