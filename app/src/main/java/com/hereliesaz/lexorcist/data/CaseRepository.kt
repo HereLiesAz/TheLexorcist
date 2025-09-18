@@ -3,7 +3,7 @@ package com.hereliesaz.lexorcist.data
 import com.hereliesaz.lexorcist.model.SheetFilter
 import kotlinx.coroutines.flow.Flow
 import com.google.api.services.drive.model.File as DriveFile
-import com.hereliesaz.lexorcist.utils.Result // Added this import
+import com.hereliesaz.lexorcist.utils.Result
 
 interface CaseRepository {
     /**
@@ -13,11 +13,26 @@ interface CaseRepository {
     val cases: Flow<List<Case>>
     val selectedCase: Flow<Case?>
 
+    /**
+     * A flow of allegations for the currently selected case.
+     */
+    val selectedCaseAllegations: Flow<List<Allegation>>
+
+    /**
+     * A flow of evidence for the currently selected case, wrapped in a Result to handle loading/error states.
+     */
+    val selectedCaseEvidence: Flow<Result<List<Evidence>>>
+
     suspend fun getCaseBySpreadsheetId(spreadsheetId: String): Case?
 
     suspend fun selectCase(case: Case?)
 
     suspend fun refreshCases()
+
+    /**
+     * Refreshes the details (like allegations and evidence) for the currently selected case.
+     */
+    suspend fun refreshSelectedCaseDetails()
 
     suspend fun createCase(
         caseName: String,
@@ -28,11 +43,11 @@ interface CaseRepository {
         plaintiffs: String,
         defendants: String,
         court: String,
-    ): Result<Unit> // This should now correctly resolve to com.hereliesaz.lexorcist.utils.Result
+    ): Result<Case> // Changed to return Result<Case>
 
-    suspend fun archiveCase(case: Case)
+    suspend fun archiveCase(case: Case): Result<Case> // Changed to return Result<Case>
 
-    suspend fun deleteCase(case: Case)
+    suspend fun deleteCase(case: Case): Result<Unit> // Kept as Result<Unit> as per Impl
 
     fun getSheetFilters(spreadsheetId: String): Flow<List<SheetFilter>>
 
@@ -44,22 +59,10 @@ interface CaseRepository {
         value: String,
     )
 
-    fun getAllegations(
-        caseId: Int,
-        spreadsheetId: String,
-    ): Flow<List<Allegation>>
-
-    suspend fun refreshAllegations(
-        caseId: Int,
-        spreadsheetId: String,
-    )
-
     suspend fun addAllegation(
         spreadsheetId: String,
         allegationText: String,
     )
-
-    suspend fun getEvidenceForCase(spreadsheetId: String): Result<List<Evidence>> // This should now correctly resolve
 
     fun getHtmlTemplates(): Flow<List<DriveFile>>
 

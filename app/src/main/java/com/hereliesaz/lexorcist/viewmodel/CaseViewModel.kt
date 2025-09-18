@@ -93,8 +93,10 @@ constructor(
     private val _sheetFilters = MutableStateFlow<List<SheetFilter>>(emptyList())
     val sheetFilters: StateFlow<List<SheetFilter>> = _sheetFilters.asStateFlow()
 
-    private val _allegations = MutableStateFlow<List<Allegation>>(emptyList())
-    val allegations: StateFlow<List<Allegation>> = _allegations.asStateFlow()
+    // Directly expose allegations from the repository for the selected case
+    val allegations: StateFlow<List<Allegation>> =
+        caseRepository.selectedCaseAllegations
+            .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     private val _htmlTemplates = MutableStateFlow<List<DriveFile>>(emptyList())
     val htmlTemplates: StateFlow<List<DriveFile>> = _htmlTemplates.asStateFlow()
@@ -133,12 +135,13 @@ constructor(
     private val _timelineSortType = MutableStateFlow(TimelineSortType.DATE_OF_OCCURRENCE)
     val timelineSortType: StateFlow<TimelineSortType> = _timelineSortType.asStateFlow()
 
-    private val _selectedCaseEvidenceList =
+    // This MutableStateFlow holds the evidence list for internal management (e.g., selection state)
+    private val _selectedCaseEvidenceListInternal =
         MutableStateFlow<List<com.hereliesaz.lexorcist.data.Evidence>>(emptyList())
 
-    // Intermediate Flow for combined evidence
-    private val combinedEvidenceFlow: Flow<List<com.hereliesaz.lexorcist.data.Evidence>> =
-        _selectedCaseEvidenceList
+    // This StateFlow is exposed to the UI, applying sorting to the internal list.
+    val selectedCaseEvidenceList: StateFlow<List<com.hereliesaz.lexorcist.data.Evidence>> =
+        _selectedCaseEvidenceListInternal
             .combine(timelineSortType) { evidence, sortType ->
                 when (sortType) {
                     TimelineSortType.DATE_OF_OCCURRENCE -> evidence.sortedByDescending { it.documentDate }
@@ -148,19 +151,10 @@ constructor(
                     TimelineSortType.CUSTOM -> evidence
                 }
             }
+            .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
-    // Final StateFlow derived from the intermediate Flow
-    val selectedCaseEvidenceList: StateFlow<List<com.hereliesaz.lexorcist.data.Evidence>> =
-        combinedEvidenceFlow
-            .stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.Lazily,
-                initialValue = emptyList<com.hereliesaz.lexorcist.data.Evidence>()
-            )
-
-    // Refactored selectedEvidence to use map
     val selectedEvidence: StateFlow<List<com.hereliesaz.lexorcist.data.Evidence>> =
-        selectedCaseEvidenceList
+        selectedCaseEvidenceList // This now correctly refers to the StateFlow above
             .map { list -> list.filter { it.isSelected } }
             .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
@@ -179,9 +173,30 @@ constructor(
     init {
         loadThemeModePreference()
         _storageLocation.value = settingsManager.getStorageLocation()
+
         viewModelScope.launch {
             logService.logEventFlow.collect { newLog ->
                 _logMessages.value = listOf(newLog) + _logMessages.value
+            }
+        }
+
+        // Collect evidence for the selected case from the repository
+        viewModelScope.launch {
+            caseRepository.selectedCaseEvidence.collect { result ->
+                when (result) {
+                    is Result.Success -> {
+                        _selectedCaseEvidenceListInternal.value = result.data
+                    }
+                    is Result.Error -> {
+                        _errorMessage.value = result.exception.message ?: "Error loading evidence"
+                        _selectedCaseEvidenceListInternal.value = emptyList() // Clear evidence on error
+                    }
+                    is Result.UserRecoverableError -> {
+                        _userRecoverableAuthIntent.value = result.exception.intent
+                        _selectedCaseEvidenceListInternal.value = emptyList()
+                    }
+                    // TODO: Handle a Result.Loading state if you add one to your Result class
+                }
             }
         }
     }
@@ -200,9 +215,9 @@ constructor(
     }
 
     private fun clearCaseData() {
-        viewModelScope.launch { caseRepository.selectCase(null) }
+        viewModelScope.launch { caseRepository.selectCase(null) } // This will clear selected case data in repo
         _sheetFilters.value = emptyList()
-        _allegations.value = emptyList()
+        // _allegations.value is now driven by caseRepository.selectedCaseAllegations
         _htmlTemplates.value = emptyList()
         _plaintiffs.value = ""
         _defendants.value = ""
@@ -307,16 +322,14 @@ constructor(
 
     fun selectCase(case: Case?) {
         viewModelScope.launch {
-            caseRepository.selectCase(case)
+            caseRepository.selectCase(case) // Repository now handles loading/clearing allegations & evidence
             if (case != null) {
                 loadSheetFiltersFromRepository(case.spreadsheetId)
-                loadAllegationsFromRepository(case.id, case.spreadsheetId)
                 loadHtmlTemplatesFromRepository()
-                loadEvidenceForSelectedCase()
             } else {
                 _sheetFilters.value = emptyList()
-                _allegations.value = emptyList()
                 _htmlTemplates.value = emptyList()
+                // Allegations and evidence are cleared by collecting from repository flows
             }
         }
     }
@@ -340,44 +353,32 @@ constructor(
         }
     }
 
-    internal fun loadAllegationsFromRepository(
-        caseId: Int,
-        spreadsheetId: String,
-    ) {
-        viewModelScope.launch {
-            caseRepository.refreshAllegations(caseId, spreadsheetId)
-            caseRepository.getAllegations(caseId, spreadsheetId).collect {
-                _allegations.value = it
-            }
-        }
-    }
-
     fun addAllegationWithRepository(allegationText: String) {
         viewModelScope.launch {
             val case = selectedCase.value ?: return@launch
             caseRepository.addAllegation(case.spreadsheetId, allegationText)
-            loadAllegationsFromRepository(case.id, case.spreadsheetId)
+            // Allegations list will update via collection from caseRepository.selectedCaseAllegations
         }
     }
 
     fun toggleEvidenceSelection(evidenceId: Int) {
         val updatedList =
-            _selectedCaseEvidenceList.value.map {
+            _selectedCaseEvidenceListInternal.value.map {
                 if (it.id == evidenceId) {
                     it.copy(isSelected = !it.isSelected)
                 } else {
                     it
                 }
             }
-        _selectedCaseEvidenceList.value = updatedList
+        _selectedCaseEvidenceListInternal.value = updatedList
     }
 
     fun clearEvidenceSelection() {
         val list =
-            _selectedCaseEvidenceList.value.map {
+            _selectedCaseEvidenceListInternal.value.map {
                 it.copy(isSelected = false)
             }
-        _selectedCaseEvidenceList.value = list
+        _selectedCaseEvidenceListInternal.value = list
     }
 
     fun assignAllegationToEvidence(
@@ -385,29 +386,12 @@ constructor(
         allegationId: Int,
     ) {
         viewModelScope.launch {
-            val evidence = _selectedCaseEvidenceList.value.find { it.id == evidenceId }
+            val evidence = _selectedCaseEvidenceListInternal.value.find { it.id == evidenceId }
             if (evidence != null) {
                 val updatedEvidence = evidence.copy(allegationId = allegationId)
                 evidenceRepository.updateEvidence(updatedEvidence)
-                loadEvidenceForSelectedCase()
-            }
-        }
-    }
-
-    internal fun loadEvidenceForSelectedCase() {
-        viewModelScope.launch {
-            selectedCase.value?.let { case ->
-                when (val result = caseRepository.getEvidenceForCase(case.spreadsheetId)) {
-                    is Result.Success -> {
-                        _selectedCaseEvidenceList.value = result.data
-                    }
-                    is Result.Error -> {
-                        _errorMessage.value = result.exception.message ?: "Unknown error"
-                    }
-                    is Result.UserRecoverableError -> {
-                        _userRecoverableAuthIntent.value = result.exception.intent
-                    }
-                }
+                // Consider if refreshSelectedCaseDetails is needed if repo doesn't auto-update
+                // caseRepository.refreshSelectedCaseDetails() 
             }
         }
     }
@@ -447,10 +431,8 @@ constructor(
     fun clearCache() {
         viewModelScope.launch {
             caseRepository.clearCache()
-            clearCaseData()
-            // Clear shared preferences
+            clearCaseData() // This will also call selectCase(null) which handles repo state
             sharedPref.edit().clear().apply()
-            // After clearing, reload the theme preference as it's also stored in sharedPref
             loadThemeModePreference()
         }
     }
@@ -466,14 +448,14 @@ constructor(
                 )
                 evidenceRepository.updateEvidence(updatedEvidence)
             }
-            loadEvidenceForSelectedCase()
+            // caseRepository.refreshSelectedCaseDetails() // Consider if needed
         }
     }
 
     fun deleteEvidence(evidence: com.hereliesaz.lexorcist.data.Evidence) {
         viewModelScope.launch {
             evidenceRepository.deleteEvidence(evidence)
-            loadEvidenceForSelectedCase()
+            // caseRepository.refreshSelectedCaseDetails() // Consider if needed
         }
     }
 
@@ -484,7 +466,7 @@ constructor(
                 evidenceRepository.updateEvidence(updatedEvidence)
             }
             clearEvidenceSelection()
-            loadEvidenceForSelectedCase()
+            // caseRepository.refreshSelectedCaseDetails() // Consider if needed
         }
     }
 
@@ -514,14 +496,14 @@ constructor(
                     entities = entities,
                 )
             evidenceRepository.addEvidence(newEvidence)
-            loadEvidenceForSelectedCase()
+            // caseRepository.refreshSelectedCaseDetails() // Consider if needed
         }
     }
 
     fun updateCommentary(evidenceId: Int, commentary: String) {
         viewModelScope.launch {
             evidenceRepository.updateCommentary(evidenceId, commentary)
-            loadEvidenceForSelectedCase()
+            // caseRepository.refreshSelectedCaseDetails() // Consider if needed
         }
     }
 
@@ -544,7 +526,7 @@ constructor(
                 }
             } finally {
                 _processingState.value = null
-                loadEvidenceForSelectedCase()
+                // caseRepository.refreshSelectedCaseDetails() // Consider if needed
             }
         }
     }
@@ -606,7 +588,7 @@ constructor(
                     _isLoading.value = false
                     _processingStatus.value = null
                 }
-                loadEvidenceForSelectedCase()
+                // caseRepository.refreshSelectedCaseDetails() // Consider if needed
             }
         }
     }
@@ -619,7 +601,7 @@ constructor(
                 logService.addLog("Error updating transcript: ${result.exception.message}", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
             } else {
                 logService.addLog("Transcript updated successfully")
-                loadEvidenceForSelectedCase()
+                // caseRepository.refreshSelectedCaseDetails() // Consider if needed
             }
         }
     }
@@ -646,7 +628,7 @@ constructor(
                     _videoProcessingProgress.value = progress
                     if (workInfo.state.isFinished) {
                         _videoProcessingProgress.value = null
-                        loadEvidenceForSelectedCase()
+                        // caseRepository.refreshSelectedCaseDetails() // Consider if needed
                     }
                 }
             }
@@ -666,10 +648,12 @@ constructor(
                     }
                     is Result.Error -> {
                         _errorMessage.value = "Failed to save photo: ${result.exception.message}"
-                        return@forEach
+                        return@forEach // continue to next photo in list
                     }
                     is Result.UserRecoverableError -> {
-                        // TODO Handle user recoverable error
+                        // TODO Handle user recoverable error if necessary, e.g., by emitting to _userRecoverableAuthIntent
+                        _errorMessage.value = "User action required for photo: ${result.exception.message}"
+                        return@forEach
                     }
                 }
             }
@@ -694,7 +678,7 @@ constructor(
                         entities = emptyMap(),
                     )
                 evidenceRepository.addEvidence(newEvidence)
-                loadEvidenceForSelectedCase()
+                // caseRepository.refreshSelectedCaseDetails() // Consider if needed
             }
         }
     }
