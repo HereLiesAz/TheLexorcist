@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <full-backup-content>
-    <!-- TODO: Add domain-specific backup rules here. -->
-    <!--
+    <!-- Back up all shared preferences -->
     <include domain="sharedpref" path="."/>
-    <exclude domain="sharedpref" path="device.xml"/>
-    -->
+    <!-- Back up the main data file -->
+    <include domain="file" path="lexorcist_data.xlsx"/>
 </full-backup-content>
