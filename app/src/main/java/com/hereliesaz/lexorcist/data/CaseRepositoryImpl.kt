@@ -28,7 +28,8 @@ class CaseRepositoryImpl @Inject constructor(
     private val settingsManager: SettingsManager, // Kept for now, ensure it's used or remove
     private val errorReporter: ErrorReporter,
     private val caseSheetParser: CaseSheetParser,
-    private val googleApiService: GoogleApiService
+    private val googleApiService: GoogleApiService,
+    private val evidenceRepository: EvidenceRepository
 ) : CaseRepository {
 
     private val _cases = MutableStateFlow<List<Case>>(emptyList())
@@ -77,8 +78,7 @@ class CaseRepositoryImpl @Inject constructor(
             _selectedCaseEvidence.value = Result.Success(emptyList())
         } else {
             _allegations.value = emptyList() // Reset or show loading state
-            // TODO: Define a proper Result.Loading state in your com.hereliesaz.lexorcist.utils.Result class
-            _selectedCaseEvidence.value = Result.Success(emptyList()) 
+            _selectedCaseEvidence.value = Result.Loading
 
             loadAllegationsJob = repositoryScope.launch {
                 internalRefreshAllegations(case.spreadsheetId)
@@ -113,8 +113,7 @@ class CaseRepositoryImpl @Inject constructor(
             loadEvidenceJob?.cancel()
 
             _allegations.value = emptyList() // Reset or show loading state
-            // TODO: Define a proper Result.Loading state in your com.hereliesaz.lexorcist.utils.Result class
-            _selectedCaseEvidence.value = Result.Success(emptyList())
+            _selectedCaseEvidence.value = Result.Loading
 
             loadAllegationsJob = repositoryScope.launch {
                 internalRefreshAllegations(spreadsheetId)
@@ -200,10 +199,12 @@ class CaseRepositoryImpl @Inject constructor(
         val parsedData = caseSheetParser.parseCaseFromData(spreadsheetId, sheetData)
         if (parsedData != null) {
             val (newCase, evidenceList) = parsedData
-            val createResult = storageService.createCase(newCase) 
+            val createResult = storageService.createCase(newCase)
             if (createResult is Result.Success) {
                 val createdCase = createResult.data
-                // TODO: Handle evidenceList - this might involve another storageService call and cache update
+                evidenceList.forEach { evidence ->
+                    evidenceRepository.addEvidence(evidence.copy(spreadsheetId = createdCase.spreadsheetId))
+                }
                 _cases.update {
                     (it + createdCase).sortedByDescending { c -> c.lastModifiedTime ?: 0L }
                 }
