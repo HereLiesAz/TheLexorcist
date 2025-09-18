@@ -8,7 +8,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.navigation.compose.rememberNavController
-// import com.dropbox.core.android.Auth
+import com.dropbox.core.android.Auth
 import com.hereliesaz.lexorcist.ui.theme.LexorcistTheme
 import com.hereliesaz.lexorcist.viewmodel.AuthViewModel
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
@@ -69,9 +69,9 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        // val accessToken = Auth.getOAuth2Token()
-        // if (accessToken != null) {
-        //     authViewModel.storeDropboxAccessToken(accessToken)
-        // }
+        val accessToken = Auth.getOAuth2Token()
+        if (accessToken != null) {
+            authViewModel.storeDropboxAccessToken(accessToken)
+        }
     }
 }

@@ -1,6 +1,7 @@
 package com.hereliesaz.lexorcist.data
 
 import android.content.Context
+import com.hereliesaz.lexorcist.model.CloudUser
 import com.hereliesaz.lexorcist.service.GoogleApiService
 import com.hereliesaz.lexorcist.utils.Result
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -10,8 +11,12 @@ import javax.inject.Inject
 
 class GoogleDriveProvider @Inject constructor(
     private val googleApiService: GoogleApiService,
-    @param:ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context
 ) : CloudStorageProvider {
+
+    override suspend fun getCurrentUser(): Result<CloudUser> {
+        return Result.Error(NotImplementedError("getCurrentUser is not implemented for GoogleDriveProvider"))
+    }
 
     override suspend fun getRootFolderId(): Result<String> {
         return googleApiService.getOrCreateAppRootFolder()
