@@ -24,6 +24,7 @@ import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.auth.CredentialHolder
+import com.hereliesaz.lexorcist.auth.DropboxAuthManager
 import com.hereliesaz.lexorcist.di.IODispatcher
 import com.hereliesaz.lexorcist.model.SignInState
 import com.hereliesaz.lexorcist.model.UserInfo
@@ -48,6 +49,7 @@ class AuthViewModel
         private val credentialManager: CredentialManager,
         private val credentialHolder: CredentialHolder,
         private val firebaseAuth: FirebaseAuth, // Injected FirebaseAuth
+        private val dropboxAuthManager: DropboxAuthManager,
         @param:IODispatcher private val ioDispatcher: CoroutineDispatcher,
     ) : AndroidViewModel(application) {
         private val _signInState = MutableStateFlow<SignInState>(SignInState.Idle)
@@ -233,8 +235,6 @@ class AuthViewModel
         }
 
         fun storeDropboxAccessToken(accessToken: String) {
-            sharedPreferences.edit {
-                putString("dropbox_access_token", accessToken)
-            }
+            dropboxAuthManager.setAccessToken(accessToken)
         }
     }

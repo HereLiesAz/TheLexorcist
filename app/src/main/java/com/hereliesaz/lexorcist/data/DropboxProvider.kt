@@ -3,6 +3,7 @@ package com.hereliesaz.lexorcist.data
 import com.hereliesaz.lexorcist.auth.DropboxAuthManager
 import com.hereliesaz.lexorcist.utils.Result
 import com.dropbox.core.v2.files.WriteMode
+import com.hereliesaz.lexorcist.model.CloudUser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayInputStream
@@ -11,6 +12,20 @@ import javax.inject.Inject
 class DropboxProvider @Inject constructor(
     private val dropboxAuthManager: DropboxAuthManager
 ) : CloudStorageProvider {
+
+    override suspend fun getCurrentUser(): Result<CloudUser> = withContext(Dispatchers.IO) {
+        val client = dropboxAuthManager.getClient()
+        if (client == null) {
+            return@withContext Result.Error(Exception("Dropbox client not initialized."))
+        }
+
+        try {
+            val account = client.users().currentAccount
+            Result.Success(CloudUser(account.email, account.name.displayName))
+        } catch (e: Exception) {
+            Result.Error(e)
+        }
+    }
 
     override suspend fun getRootFolderId(): Result<String> {
         // For Dropbox, the root folder is just ""

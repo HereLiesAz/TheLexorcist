@@ -34,7 +34,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel // Updated import
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.dropbox.core.android.Auth
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.viewmodel.AuthViewModel
@@ -212,24 +212,20 @@ fun SettingsScreen(
                 modifier = Modifier.fillMaxWidth(),
             )
             Spacer(modifier = Modifier.height(16.dp))
-            LexorcistOutlinedButton(onClick = {
-                Auth.startOAuth2Authentication(context, "kc574fk4ljbmxeu")
-            }, text = "Connect to Dropbox")
 
-            Spacer(modifier = Modifier.height(16.dp))
+            val isDropboxAuthenticated by settingsViewModel.isDropboxAuthenticated.collectAsState()
+            val dropboxUser by settingsViewModel.dropboxUser.collectAsState()
 
-            Button(onClick = { settingsViewModel.testDropboxUpload() }) {
-                Text("Test Dropbox Upload")
-            }
-
-            val dropboxUploadStatus by settingsViewModel.dropboxUploadStatus.collectAsState()
-            dropboxUploadStatus?.let {
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(it)
+            if (isDropboxAuthenticated) {
+                Text("Connected as: ${dropboxUser?.email ?: "..."}")
                 Spacer(modifier = Modifier.height(8.dp))
-                Button(onClick = { settingsViewModel.clearDropboxUploadStatus() }) {
-                    Text("Clear Status")
-                }
+                LexorcistOutlinedButton(onClick = {
+                    settingsViewModel.disconnectDropbox()
+                }, text = "Disconnect from Dropbox")
+            } else {
+                LexorcistOutlinedButton(onClick = {
+                    Auth.startOAuth2Authentication(context, "kc574fk4ljbmxeu")
+                }, text = "Connect to Dropbox")
             }
 
             Spacer(modifier = Modifier.height(24.dp))

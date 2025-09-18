@@ -9,6 +9,8 @@ import kotlinx.coroutines.withContext
 // Removed org.json.* and java.net.* imports as the direct HTTP call is also being removed
 import javax.inject.Inject
 
+import com.hereliesaz.lexorcist.model.CloudUser
+
 class OneDriveProvider @Inject constructor(
     // private val oneDriveAuthManager: OneDriveAuthManager // Removed
 ) : CloudStorageProvider {
@@ -17,6 +19,9 @@ class OneDriveProvider @Inject constructor(
     private val logTag = "OneDriveProvider"
 
     // Removed getGraphServiceClient() method
+    override suspend fun getCurrentUser(): Result<CloudUser> {
+        return Result.Error(placeholderError)
+    }
 
     override suspend fun getRootFolderId(): Result<String> = withContext(Dispatchers.IO) {
         Log.d(logTag, "getRootFolderId called (placeholder)")

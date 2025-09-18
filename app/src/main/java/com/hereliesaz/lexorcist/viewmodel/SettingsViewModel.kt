@@ -3,14 +3,17 @@ package com.hereliesaz.lexorcist.viewmodel
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.hereliesaz.lexorcist.auth.DropboxAuthManager
 import com.hereliesaz.lexorcist.data.CloudStorageProvider
 import com.hereliesaz.lexorcist.data.SettingsManager
+import com.hereliesaz.lexorcist.model.CloudUser
 import com.hereliesaz.lexorcist.ui.theme.ThemeMode
 import com.hereliesaz.lexorcist.utils.Result
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Named
@@ -20,6 +23,7 @@ class SettingsViewModel @Inject constructor(
     private val settingsManager: SettingsManager,
     @Named("dropbox") private val dropboxProvider: CloudStorageProvider,
     @Named("oneDrive") private val oneDriveProvider: CloudStorageProvider,
+    private val dropboxAuthManager: DropboxAuthManager,
     application: Application
 ) : AndroidViewModel(application) {
 
@@ -44,13 +48,45 @@ class SettingsViewModel @Inject constructor(
     private val _oneDriveUploadStatus = MutableStateFlow<String?>(null)
     val oneDriveUploadStatus: StateFlow<String?> = _oneDriveUploadStatus.asStateFlow()
 
+    val isDropboxAuthenticated = dropboxAuthManager.isAuthenticated
+    private val _dropboxUser = MutableStateFlow<CloudUser?>(null)
+    val dropboxUser = _dropboxUser.asStateFlow()
+
     init {
         loadSettings()
+        observeDropboxAuthState()
+    }
+
+    private fun observeDropboxAuthState() {
+        viewModelScope.launch {
+            isDropboxAuthenticated.collectLatest { authenticated ->
+                if (authenticated) {
+                    fetchDropboxUser()
+                } else {
+                    _dropboxUser.value = null
+                }
+            }
+        }
+    }
+
+    private fun fetchDropboxUser() {
+        viewModelScope.launch {
+            when (val result = dropboxProvider.getCurrentUser()) {
+                is Result.Success -> _dropboxUser.value = result.data
+                is Result.Error -> _dropboxUser.value = null // Or handle error
+                is Result.UserRecoverableError -> {
+                    // Handle recoverable error
+                }
+            }
+        }
+    }
+
+    fun disconnectDropbox() {
+        dropboxAuthManager.clearAccessToken()
     }
 
     private fun loadSettings() {
         val themeName = settingsManager.getTheme()
-        // Safely parse ThemeMode, ignoring case, and default to SYSTEM
         _themeMode.value = ThemeMode.values().firstOrNull { it.name.equals(themeName, ignoreCase = true) } ?: ThemeMode.SYSTEM
         _caseFolderPath.value = settingsManager.getCaseFolderPath()
         _cloudSyncEnabled.value = settingsManager.getCloudSyncEnabled()
@@ -63,7 +99,7 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun setThemeMode(themeMode: ThemeMode) {
-        settingsManager.saveTheme(themeMode.name) // Saves as "SYSTEM", "LIGHT", or "DARK"
+        settingsManager.saveTheme(themeMode.name)
         _themeMode.value = themeMode
     }
 
