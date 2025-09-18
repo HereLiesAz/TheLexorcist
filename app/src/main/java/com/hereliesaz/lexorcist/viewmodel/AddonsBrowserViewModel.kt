@@ -37,8 +37,8 @@ class AddonsBrowserViewModel
             viewModelScope.launch {
                 // Use the injected googleApiService directly
                 // In a real scenario, you'd handle potential errors from these calls
-                _scripts.value = googleApiService.getSharedScripts() ?: emptyList()
-                _templates.value = googleApiService.getSharedTemplates() ?: emptyList()
+                _scripts.value = googleApiService.getSharedScripts()
+                _templates.value = googleApiService.getSharedTemplates()
             }
         }
 

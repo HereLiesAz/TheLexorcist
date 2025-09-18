@@ -10,7 +10,7 @@ import javax.inject.Inject
 
 class GoogleDriveProvider @Inject constructor(
     private val googleApiService: GoogleApiService,
-    @ApplicationContext private val context: Context
+    @param:ApplicationContext private val context: Context
 ) : CloudStorageProvider {
 
     override suspend fun getRootFolderId(): Result<String> {

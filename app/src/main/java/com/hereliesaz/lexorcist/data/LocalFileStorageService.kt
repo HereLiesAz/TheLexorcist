@@ -29,9 +29,9 @@ class LocalFileStorageService @Inject constructor(
     private val gson: Gson,
     private val settingsManager: SettingsManager,
     private val syncManager: SyncManager,
-    @Named("googleDrive") private val googleDriveProvider: CloudStorageProvider,
-    @Named("dropbox") private val dropboxProvider: CloudStorageProvider,
-    @Named("oneDrive") private val oneDriveProvider: CloudStorageProvider
+    @param:Named("googleDrive") private val googleDriveProvider: CloudStorageProvider,
+    @param:Named("dropbox") private val dropboxProvider: CloudStorageProvider,
+    @param:Named("oneDrive") private val oneDriveProvider: CloudStorageProvider
 ) : StorageService {
 
     private val storageDir: File by lazy {

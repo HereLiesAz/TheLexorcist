@@ -124,7 +124,7 @@ fun EvidenceScreen(
         ) {
             videoProcessingProgress?.let { progress ->
                 Column(horizontalAlignment = Alignment.End) {
-                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth()) // This is the one for videoProcessingProgress, which is a String
                     Text(progress, style = MaterialTheme.typography.bodySmall)
                     Spacer(modifier = Modifier.height(16.dp))
                 }
@@ -231,7 +231,7 @@ fun ProcessingProgressView(
 ) {
     Column(horizontalAlignment = Alignment.End, modifier = Modifier.fillMaxWidth()) {
         LinearProgressIndicator(
-            progress = processingState.progress / 100f,
+            progress = { processingState.progress / 100f }, // Changed to lambda
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(8.dp))

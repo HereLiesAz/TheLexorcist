@@ -10,9 +10,9 @@ import javax.inject.Singleton
 class CloudStorageService @Inject constructor(
     private val localFileStorageService: LocalFileStorageService,
     private val syncManager: SyncManager,
-    @Named("googleDrive") private val googleDriveProvider: CloudStorageProvider,
-    @Named("dropbox") private val dropboxProvider: CloudStorageProvider,
-    @Named("oneDrive") private val oneDriveProvider: CloudStorageProvider,
+    @param:Named("googleDrive") private val googleDriveProvider: CloudStorageProvider,
+    @param:Named("dropbox") private val dropboxProvider: CloudStorageProvider,
+    @param:Named("oneDrive") private val oneDriveProvider: CloudStorageProvider,
     private val settingsManager: SettingsManager
 ) : StorageService {
 
