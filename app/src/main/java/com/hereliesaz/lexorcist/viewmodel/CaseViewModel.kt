@@ -694,38 +694,40 @@ constructor(
                         _processingStatus.value = "Transcribing audio..."
                     }
 
-                    val (transcribedText, message) = transcriptionService.transcribeAudio(uri)
-                    message?.let {
-                        Log.i("CaseViewModel", "Message from transcriptionService: $it")
-                        withContext(Dispatchers.Main) { _userMessage.value = it }
-                    }
-                    withContext(Dispatchers.Main) {
-                        _processingStatus.value = "Audio processing complete."
-                    }
-                    Log.i("CaseViewModel", "Audio transcribed: $transcribedText")
+                    transcriptionService.start(uri)
+                    transcriptionService.processingState.collect { state ->
+                        _processingState.value = state
+                        if (state is ProcessingState.Completed) {
+                            val transcribedText = state.result
+                            withContext(Dispatchers.Main) {
+                                _processingStatus.value = "Audio processing complete."
+                            }
+                            Log.i("CaseViewModel", "Audio transcribed: $transcribedText")
 
-                    val newEvidence =
-                        com.hereliesaz.lexorcist.data.Evidence(
-                            caseId = caseToUse.id.toLong(),
-                            spreadsheetId = caseToUse.spreadsheetId,
-                            type = "audio",
-                            content = transcribedText,
-                            formattedContent = "```\n$transcribedText\n```",
-                            mediaUri = uri.toString(),
-                            timestamp = System.currentTimeMillis(),
-                            sourceDocument = uploadResult.data ?: uri.toString(),
-                            documentDate = System.currentTimeMillis(),
-                            allegationId = null,
-                            category = "Audio Transcription",
-                            tags = listOf("audio", "transcription"),
-                            commentary = null,
-                            parentVideoId = null,
-                            entities = emptyMap(),
-                        )
-                    val newEvidenceWithId = evidenceRepository.addEvidence(newEvidence)
-                    if (newEvidenceWithId != null && newEvidenceWithId.content.isNotEmpty()) {
-                        withContext(Dispatchers.Main) {
-                            _navigateToTranscriptionScreen.emit(newEvidenceWithId.id)
+                            val newEvidence =
+                                com.hereliesaz.lexorcist.data.Evidence(
+                                    caseId = caseToUse.id.toLong(),
+                                    spreadsheetId = caseToUse.spreadsheetId,
+                                    type = "audio",
+                                    content = transcribedText,
+                                    formattedContent = "```\n$transcribedText\n```",
+                                    mediaUri = uri.toString(),
+                                    timestamp = System.currentTimeMillis(),
+                                    sourceDocument = uploadResult.data ?: uri.toString(),
+                                    documentDate = System.currentTimeMillis(),
+                                    allegationId = null,
+                                    category = "Audio Transcription",
+                                    tags = listOf("audio", "transcription"),
+                                    commentary = null,
+                                    parentVideoId = null,
+                                    entities = emptyMap(),
+                                )
+                            val newEvidenceWithId = evidenceRepository.addEvidence(newEvidence)
+                            if (newEvidenceWithId != null && newEvidenceWithId.content.isNotEmpty()) {
+                                withContext(Dispatchers.Main) {
+                                    _navigateToTranscriptionScreen.emit(newEvidenceWithId.id)
+                                }
+                            }
                         }
                     }
                 } else if (uploadResult is Result.Error) {
