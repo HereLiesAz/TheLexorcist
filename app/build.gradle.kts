@@ -143,11 +143,12 @@ dependencies {
     // REMOVE MockK if using Mockito-Kotlin as primary
     // testImplementation(libs.mockk.android) 
 
-    // ADD Mockito Core and Mockito-Kotlin
+    // Mockito Core and Mockito-Kotlin
     testImplementation("org.mockito:mockito-core:5.12.0")
     testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
+    testImplementation("org.mockito:mockito-inline:5.2.0") // ADDED for static mocking
 
-    // ADD WorkManager Testing (version 2.10.4 matches your work-runtime-ktx)
+    // WorkManager Testing (version 2.10.4 matches your work-runtime-ktx)
     testImplementation("androidx.work:work-testing:2.10.4")
 
     testImplementation(libs.androidx.arch.core.testing) // For InstantTaskExecutorRule

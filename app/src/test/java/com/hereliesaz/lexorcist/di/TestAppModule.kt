@@ -8,7 +8,8 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import io.mockk.mockk
+import org.mockito.Answers
+import org.mockito.kotlin.mock // Import Mockito-Kotlin's mock function
 import javax.inject.Singleton
 
 @Module
@@ -16,17 +17,17 @@ import javax.inject.Singleton
 object TestAppModule {
     @Provides
     @Singleton
-    fun provideEvidenceRepository(): EvidenceRepository = mockk(relaxed = true)
+    fun provideEvidenceRepository(): EvidenceRepository = mock(defaultAnswer = Answers.RETURNS_DEEP_STUBS)
 
     @Provides
     @Singleton
-    fun provideSettingsManager(): SettingsManager = mockk(relaxed = true)
+    fun provideSettingsManager(): SettingsManager = mock(defaultAnswer = Answers.RETURNS_DEEP_STUBS)
 
     @Provides
     @Singleton
-    fun provideScriptRunner(): ScriptRunner = mockk(relaxed = true)
+    fun provideScriptRunner(): ScriptRunner = mock(defaultAnswer = Answers.RETURNS_DEEP_STUBS)
 
     @Provides
     @Singleton
-    fun provideCaseRepository(): CaseRepository = mockk(relaxed = true)
+    fun provideCaseRepository(): CaseRepository = mock(defaultAnswer = Answers.RETURNS_DEEP_STUBS)
 }

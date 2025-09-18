@@ -4,12 +4,9 @@ import android.app.Application
 import android.content.Context
 import android.net.Uri
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import com.hereliesaz.lexorcist.data.Evidence // Assuming Evidence is used by the service
 import com.hereliesaz.lexorcist.model.ProcessingState
 import com.hereliesaz.lexorcist.service.OcrProcessingService
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.mockk
-import io.mockk.slot
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -21,72 +18,95 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.mockito.Answers
+import org.mockito.ArgumentCaptor
+import org.mockito.Captor
+import org.mockito.Mock
+import org.mockito.junit.MockitoJUnitRunner
+import org.mockito.kotlin.any
+import org.mockito.kotlin.capture
+import org.mockito.kotlin.doAnswer
+import org.mockito.kotlin.eq
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.verify
+import org.mockito.kotlin.whenever
 
 @ExperimentalCoroutinesApi
-@RunWith(JUnit4::class)
+@RunWith(MockitoJUnitRunner::class) // Use MockitoJUnitRunner for @Mock initialization
 class OcrViewModelTest {
 
     @get:Rule
-    val instantTaskExecutorRule = InstantTaskExecutorRule()
+    val instantTaskExecutorRule = InstantTaskExecutorRule() // For LiveData
 
     private val testDispatcher = StandardTestDispatcher()
 
-    private lateinit var ocrViewModel: OcrViewModel
+    @Mock
+    private lateinit var mockApplication: Application
+
+    @Mock
     private lateinit var mockOcrProcessingService: OcrProcessingService
-    private lateinit var application: Application
+
+    @Captor
+    private lateinit var onProgressLambdaCaptor: ArgumentCaptor<(ProcessingState) -> Unit>
+
+    private lateinit var ocrViewModel: OcrViewModel
 
     @Before
     fun setup() {
-        Dispatchers.setMain(testDispatcher)
-        application = mockk(relaxed = true)
-        mockOcrProcessingService = mockk(relaxed = true) // Create a relaxed mock for OcrProcessingService
-        ocrViewModel = OcrViewModel(application, mockOcrProcessingService)
+        Dispatchers.setMain(testDispatcher) // Set main dispatcher for coroutines
+        ocrViewModel = OcrViewModel(mockApplication, mockOcrProcessingService)
     }
 
     @After
     fun tearDown() {
-        Dispatchers.resetMain()
+        Dispatchers.resetMain() // Reset main dispatcher
     }
 
     @Test
-    fun `performOcrOnUri calls processImage on service and updates state`() = runTest {
+    fun `performOcrOnUri calls processImage on service and updates state`() = runTest(testDispatcher) {
         // Given
-        val uri: Uri = mockk()
-        val context: Context = mockk(relaxed = true)
-        val caseId = 1L
-        val spreadsheetId = "spreadsheet1"
-        // Correctly type the slot for a non-suspending lambda
-        val onProgressLambdaSlot = slot<(ProcessingState) -> Unit>()
+        val testUri: Uri = mock(defaultAnswer = Answers.RETURNS_DEEP_STUBS) // Use mock with deep stubs for Uri if methods are called on it
+        val mockContext: Context = mock(defaultAnswer = Answers.RETURNS_DEEP_STUBS)
+        val testCaseId = 1L
+        val testSpreadsheetId = "spreadsheet1"
 
-        coEvery {
+        val mockEvidence: Evidence = mock() // Mock the evidence returned by the service
+
+        // Mock the behavior of ocrProcessingService.processImage
+        whenever(
             mockOcrProcessingService.processImage(
-                uri = eq(uri),
-                context = eq(context),
-                caseId = eq(caseId),
-                spreadsheetId = eq(spreadsheetId),
-                onProgress = capture(onProgressLambdaSlot)
+                eq(testUri),
+                eq(mockContext),
+                eq(testCaseId),
+                eq(testSpreadsheetId),
+                capture(onProgressLambdaCaptor)
             )
-        } coAnswers { // coAnswers allows us to invoke the captured lambda
-            // Simulate some progress updates by invoking the captured lambda
-            onProgressLambdaSlot.captured.invoke(ProcessingState.InProgress(0.5f))
-            onProgressLambdaSlot.captured.invoke(ProcessingState.Completed("Success"))
-            Pair(mockk(), "Processed") // Return a mocked Evidence and a message
+        ).doAnswer { invocation ->
+            // Simulate invoking the captured lambda by the service
+            val onProgress = invocation.getArgument<(ProcessingState) -> Unit>(4)
+            onProgress.invoke(ProcessingState.InProgress(0.5f))
+            onProgress.invoke(ProcessingState.Completed("Success from mock"))
+            Pair(mockEvidence, "Processed from mock") // Return a mocked Evidence and a message
         }
 
         // When
-        ocrViewModel.performOcrOnUri(uri, context, caseId, spreadsheetId)
+        ocrViewModel.performOcrOnUri(testUri, mockContext, testCaseId, testSpreadsheetId)
         testDispatcher.scheduler.advanceUntilIdle() // Ensure coroutines launched on main dispatcher complete
 
         // Then
-        coVerify {
-            mockOcrProcessingService.processImage(
-                uri = uri,
-                context = context,
-                caseId = caseId,
-                spreadsheetId = spreadsheetId,
-                onProgress = any() 
-            )
-        }
+        verify(mockOcrProcessingService).processImage(
+            eq(testUri),
+            eq(mockContext),
+            eq(testCaseId),
+            eq(testSpreadsheetId),
+            any() // Verify it was called with any lambda for onProgress (or capture and check)
+        )
+
+        // Optionally, assert that the ViewModel's LiveData/StateFlow for processingState was updated.
+        // This would require collecting the flow in the test using something like Turbine or testDispatcher.runCurrent().
+        // For example (simplified, assuming processingState is a StateFlow exposed by ViewModel):
+        // val resultState = ocrViewModel.processingState.value // Or collect if it's a Flow
+        // assert(resultState is ProcessingState.Completed)
+        // assertEquals("Success from mock", (resultState as ProcessingState.Completed).message)
     }
 }

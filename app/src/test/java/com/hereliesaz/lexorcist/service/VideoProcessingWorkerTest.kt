@@ -2,28 +2,32 @@ package com.hereliesaz.lexorcist.service
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log // Added import for Log
 import androidx.work.Data
 import androidx.work.ListenableWorker
 import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
-import androidx.work.testing.TestListenableWorkerBuilder // Correct import
+import androidx.work.testing.TestListenableWorkerBuilder
 import com.hereliesaz.lexorcist.data.Evidence
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mock
-import org.mockito.MockitoAnnotations // For openMocks
+import org.mockito.MockedStatic
+import org.mockito.Mockito
+import org.mockito.ArgumentMatchers // Import for anyString()
 import org.mockito.junit.MockitoJUnitRunner
-import org.mockito.kotlin.any
+import org.mockito.kotlin.any // Import for any<Type>()
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.whenever
 
 @ExperimentalCoroutinesApi
-@RunWith(MockitoJUnitRunner::class) // Use MockitoJUnitRunner for @Mock initialization if not using openMocks
+@RunWith(MockitoJUnitRunner::class)
 class VideoProcessingWorkerTest {
 
     @Mock
@@ -35,45 +39,58 @@ class VideoProcessingWorkerTest {
     @Mock
     private lateinit var mockLogService: LogService
 
-    private lateinit var worker: VideoProcessingWorker
+    @Mock // Mock for the Uri that Uri.parse will return
+    private lateinit var mockParsedVideoUri: Uri
 
-    private val testVideoUri = Uri.parse("file:///test.mp4")
-    private val testCaseIdInput = 1 // As an Int, like from worker inputData
+    private lateinit var worker: VideoProcessingWorker
+    private lateinit var testVideoUriString: String
+    private lateinit var mockedStaticUri: MockedStatic<Uri> // To hold the static mock for Uri
+    private lateinit var mockedStaticLog: MockedStatic<Log> // To hold the static mock for Log
+
+    private val testCaseIdInput = 1
     private val testCaseName = "Test Case"
     private val testSpreadsheetId = "test_spreadsheet_id"
-    
-    // Mock Evidence matching the Evidence.kt data class structure
-    private val mockEvidence = Evidence(
-        id = 1, // Int
-        caseId = testCaseIdInput.toLong(), // Long
-        spreadsheetId = testSpreadsheetId,
-        type = "video",
-        content = "Test content",
-        formattedContent = "Test formatted content",
-        mediaUri = testVideoUri.toString(),
-        timestamp = System.currentTimeMillis(),
-        sourceDocument = testVideoUri.toString(),
-        documentDate = System.currentTimeMillis(),
-        allegationId = null,
-        category = "Video Evidence",
-        tags = listOf("video"),
-        commentary = null,
-        linkedEvidenceIds = emptyList(),
-        parentVideoId = null,
-        entities = emptyMap(), // Corrected to emptyMap()
-        isSelected = false,
-        transcriptEdits = emptyList(),
-        audioTranscript = null,
-        videoOcrText = null,
-        duration = null
-    )
+    private lateinit var mockEvidence: Evidence
 
     @Before
     fun setup() {
-        MockitoAnnotations.openMocks(this) // Initialize @Mock annotated fields
+        testVideoUriString = "file:///test.mp4"
+
+        mockedStaticUri = Mockito.mockStatic(Uri::class.java)
+        mockedStaticUri.`when`<Uri> { Uri.parse(testVideoUriString) }.thenReturn(mockParsedVideoUri)
+        whenever(mockParsedVideoUri.toString()).thenReturn(testVideoUriString)
+
+        mockedStaticLog = Mockito.mockStatic(Log::class.java)
+        // Use ArgumentMatchers.anyString() for string arguments
+        mockedStaticLog.`when`<Int> { Log.e(ArgumentMatchers.anyString(), ArgumentMatchers.anyString()) }.thenReturn(0)
+
+        mockEvidence = Evidence(
+            id = 1,
+            caseId = testCaseIdInput.toLong(),
+            spreadsheetId = testSpreadsheetId,
+            type = "video",
+            content = "Test content",
+            formattedContent = "Test formatted content",
+            mediaUri = testVideoUriString,
+            timestamp = System.currentTimeMillis(),
+            sourceDocument = testVideoUriString,
+            documentDate = System.currentTimeMillis(),
+            allegationId = null,
+            category = "Video Evidence",
+            tags = listOf("video"),
+            commentary = null,
+            linkedEvidenceIds = emptyList(),
+            parentVideoId = null,
+            entities = emptyMap(),
+            isSelected = false,
+            transcriptEdits = emptyList(),
+            audioTranscript = null,
+            videoOcrText = null,
+            duration = null
+        )
 
         val inputData = Data.Builder()
-            .putString(VideoProcessingWorker.KEY_VIDEO_URI, testVideoUri.toString())
+            .putString(VideoProcessingWorker.KEY_VIDEO_URI, testVideoUriString)
             .putInt(VideoProcessingWorker.KEY_CASE_ID, testCaseIdInput)
             .putString(VideoProcessingWorker.KEY_CASE_NAME, testCaseName)
             .putString(VideoProcessingWorker.KEY_SPREADSHEET_ID, testSpreadsheetId)
@@ -102,15 +119,21 @@ class VideoProcessingWorkerTest {
             .build()
     }
 
+    @After
+    fun tearDown() {
+        mockedStaticUri.close() 
+        mockedStaticLog.close() 
+    }
+
     @Test
     fun `doWork when video processing is successful returns success`() = runTest {
         whenever(
             mockVideoProcessingService.processVideo(
-                eq(testVideoUri),
+                eq(mockParsedVideoUri),
                 eq(testCaseIdInput),
                 eq(testCaseName),
                 eq(testSpreadsheetId),
-                any() // For the onProgress lambda
+                any()
             )
         ).thenReturn(mockEvidence)
 
@@ -124,7 +147,7 @@ class VideoProcessingWorkerTest {
     @Test
     fun `doWork when video processing service returns null returns failure`() = runTest {
         whenever(
-            mockVideoProcessingService.processVideo(any(), any(), any(), any(), any())
+            mockVideoProcessingService.processVideo(eq(mockParsedVideoUri), any(), any(), any(), any())
         ).thenReturn(null)
 
         val result = worker.doWork()
@@ -138,7 +161,7 @@ class VideoProcessingWorkerTest {
     fun `doWork when video processing service throws exception returns failure`() = runTest {
         val exceptionMessage = "Test processing exception"
         whenever(
-            mockVideoProcessingService.processVideo(any(), any(), any(), any(), any())
+            mockVideoProcessingService.processVideo(eq(mockParsedVideoUri), any(), any(), any(), any())
         ).thenThrow(RuntimeException(exceptionMessage))
 
         val result = worker.doWork()
@@ -150,9 +173,26 @@ class VideoProcessingWorkerTest {
 
     @Test
     fun `doWork when input data is missing returns failure`() = runTest {
+        val workerFactory = object : WorkerFactory() { 
+            override fun createWorker(
+                appContext: Context,
+                workerClassName: String,
+                workerParameters: WorkerParameters
+            ): ListenableWorker? {
+                return if (workerClassName == VideoProcessingWorker::class.java.name) {
+                    VideoProcessingWorker(
+                        appContext,
+                        workerParameters,
+                        mockVideoProcessingService,
+                        mockLogService
+                    )
+                } else null
+            }
+        }
+
         val workerWithMissingData = TestListenableWorkerBuilder<VideoProcessingWorker>(mockContext)
-            .setInputData(Data.EMPTY) // Missing required input
-            .setWorkerFactory(worker.workerFactory) 
+            .setInputData(Data.EMPTY) 
+            .setWorkerFactory(workerFactory) 
             .build()
 
         val result = workerWithMissingData.doWork()
