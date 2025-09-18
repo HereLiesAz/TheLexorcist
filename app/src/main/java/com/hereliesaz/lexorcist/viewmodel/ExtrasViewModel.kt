@@ -32,6 +32,17 @@ class ExtrasViewModel @Inject constructor(
 
     private val _allItems = MutableStateFlow<List<SharedItem>>(emptyList())
 
+    // New StateFlows for sharing data
+    private val _pendingSharedItemName = MutableStateFlow<String?>(null)
+    val pendingSharedItemName: StateFlow<String?> = _pendingSharedItemName.asStateFlow()
+
+    private val _pendingSharedItemType = MutableStateFlow<String?>(null)
+    val pendingSharedItemType: StateFlow<String?> = _pendingSharedItemType.asStateFlow()
+
+    private val _pendingSharedItemContent = MutableStateFlow<String?>(null)
+    val pendingSharedItemContent: StateFlow<String?> = _pendingSharedItemContent.asStateFlow()
+
+
     init {
         observeSearchQuery()
     }
@@ -121,11 +132,36 @@ class ExtrasViewModel @Inject constructor(
 
     // Added court parameter with a default value
     fun shareItem(name: String, description: String, content: String, type: String, court: String? = null) {
-        val authorEmail = _uiState.value.currentUserEmail ?: return
+        val authorEmail = _uiState.value.currentUserEmail ?: return // Ensure user is logged in
         viewModelScope.launch {
             // Pass the court parameter to the repository
-            extrasRepository.shareItem(name, description, content, type, authorEmail, court)
-            loadSharedItems() // Refresh list after sharing
+            when (extrasRepository.shareItem(name, description, content, type, authorEmail, court)) {
+                is Result.Success -> {
+                    // Optionally, provide feedback to the user about successful sharing
+                    loadSharedItems() // Refresh list after sharing, if it makes sense for your UI
+                }
+                is Result.Error -> {
+                    _uiState.value = _uiState.value.copy(error = "Failed to share item.")
+                    // Provide more specific error feedback if possible
+                }
+                 is Result.UserRecoverableError -> {
+                    _uiState.value = _uiState.value.copy(error = "Failed to share item. A recoverable error occurred.")
+                    // Provide more specific error feedback if possible
+                }
+            }
         }
+    }
+
+    // New methods for preparing and clearing shared data
+    fun prepareForSharing(name: String, type: String, content: String) {
+        _pendingSharedItemName.value = name
+        _pendingSharedItemType.value = type
+        _pendingSharedItemContent.value = content
+    }
+
+    fun clearPendingSharedItem() {
+        _pendingSharedItemName.value = null
+        _pendingSharedItemType.value = null
+        _pendingSharedItemContent.value = null
     }
 }

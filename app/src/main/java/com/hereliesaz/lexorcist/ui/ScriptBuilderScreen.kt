@@ -51,11 +51,17 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.hereliesaz.lexorcist.model.Script
+import com.hereliesaz.lexorcist.viewmodel.ExtrasViewModel
 
 @OptIn(ExperimentalMaterial3Api::class) // Removed ExperimentalMaterial3ExpressiveApi
 @Composable
-fun ScriptBuilderScreen(viewModel: ScriptBuilderViewModel, navController: androidx.navigation.NavController) {
+fun ScriptBuilderScreen(
+    viewModel: ScriptBuilderViewModel, 
+    extrasViewModel: ExtrasViewModel = hiltViewModel(), // Added ExtrasViewModel
+    navController: androidx.navigation.NavController
+) {
     val scriptTitle by viewModel.scriptTitle.collectAsState()
     val scriptText by viewModel.scriptText.collectAsState()
     val caseScripts by viewModel.caseScripts.collectAsState()
@@ -239,7 +245,8 @@ fun ScriptBuilderScreen(viewModel: ScriptBuilderViewModel, navController: androi
             confirmButton = {
                 LexorcistOutlinedButton(
                     onClick = {
-                        navController.navigate("share_addon/Script/$scriptText")
+                        extrasViewModel.prepareForSharing(scriptTitle, "Script", scriptText)
+                        navController.navigate("share_addon_destination")
                         showShareDialog = false
                     },
                     text = stringResource(R.string.share)

@@ -51,10 +51,12 @@ import com.hereliesaz.lexorcist.ui.ScriptBuilderScreen
 import com.hereliesaz.lexorcist.ui.SettingsScreen
 import com.hereliesaz.lexorcist.ui.TemplatesScreen
 import com.hereliesaz.lexorcist.ui.PhotoGroupScreen
+import com.hereliesaz.lexorcist.ui.ShareAddonScreen // Ensure this import is present
 import com.hereliesaz.lexorcist.ui.TimelineScreen
 import com.hereliesaz.lexorcist.viewmodel.AddonsBrowserViewModel // Corrected import
 import com.hereliesaz.lexorcist.viewmodel.AuthViewModel
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
+import com.hereliesaz.lexorcist.viewmodel.ExtrasViewModel // Ensure this import is present
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 import com.hereliesaz.lexorcist.viewmodel.MasterAllegationsViewModel
 import com.hereliesaz.lexorcist.viewmodel.ScriptBuilderViewModel
@@ -181,28 +183,34 @@ fun MainScreen(
                                 composable("extras") {
                                     ExtrasScreen(
                                         onShare = {
-                                            navController.navigate("share_addon")
+                                            // This navigation will now go to a ShareAddonScreen that uses ExtrasViewModel
+                                            navController.navigate("share_addon") 
                                         }
                                     )
                                 }
-                                composable("share_addon") {
-                                    val extrasViewModel: com.hereliesaz.lexorcist.viewmodel.ExtrasViewModel = hiltViewModel()
-                                    com.hereliesaz.lexorcist.ui.ShareAddonScreen(
-                                        onShare = { name, description, content, type ->
-                                            extrasViewModel.shareItem(name, description, content, type)
-                                            navController.popBackStack()
-                                        }
+                                composable("share_addon") { // Route for general sharing from ExtrasScreen
+                                    val extrasViewModel: ExtrasViewModel = hiltViewModel()
+                                    ShareAddonScreen(
+                                        extrasViewModel = extrasViewModel,
+                                        navController = navController
+                                    )
+                                }
+                                composable("share_addon_destination") { // New route for ScriptBuilder
+                                    val extrasViewModel: ExtrasViewModel = hiltViewModel()
+                                    ShareAddonScreen(
+                                        extrasViewModel = extrasViewModel,
+                                        navController = navController
                                     )
                                 }
                                 composable("script_builder") {
-                                    ScriptBuilderScreen(viewModel = androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel<ScriptBuilderViewModel>(), navController = navController)
+                                    ScriptBuilderScreen(viewModel = hiltViewModel<ScriptBuilderViewModel>(), navController = navController) // extrasViewModel is injected by default in ScriptBuilderScreen now
                                 }
                                 // Renamed route for case-specific allegations
                                 composable("case_allegations_route") {
-                                    AllegationsScreen(androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel<MasterAllegationsViewModel>())
+                                    AllegationsScreen(hiltViewModel<MasterAllegationsViewModel>())
                                 }
                                 composable("templates") {
-                                    TemplatesScreen(androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel<AddonsBrowserViewModel>())
+                                    TemplatesScreen(hiltViewModel<AddonsBrowserViewModel>())
                                 }
                                 composable("timeline") {
                                     selectedCase?.let {
