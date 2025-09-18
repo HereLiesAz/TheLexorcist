@@ -155,36 +155,39 @@ class AuthViewModel
 
         // Renamed for clarity
         private fun onSignInSuccess(firebaseUser: FirebaseUser) {
-            val userEmail = firebaseUser.email
-            Log.d(TAG, "FirebaseUser details: Email='$userEmail', DisplayName='${firebaseUser.displayName}', UID='${firebaseUser.uid}'")
+            val userEmailFromFirebase = firebaseUser.email // Potentially nullable
+            Log.d(TAG, "FirebaseUser details: Email='$userEmailFromFirebase', DisplayName='${firebaseUser.displayName}', UID='${firebaseUser.uid}'")
 
-            if (userEmail.isNullOrBlank()) {
+            if (userEmailFromFirebase.isNullOrBlank()) { // Check for null or blank
                 Log.e(TAG, "Firebase user email is null or blank. Cannot proceed with Google API setup.")
                 onSignInFailure(Exception("Firebase user email is missing. This is required for Google API access."))
-                return
+                return // Exit if null or blank
             }
+
+            // At this point, userEmailFromFirebase is guaranteed to be non-null and non-blank.
+            // Assign to a new variable to help with smart casting if needed, or use directly.
+            val nonNullUserEmail: String = userEmailFromFirebase
 
             val userInfo =
                 UserInfo(
                     displayName = firebaseUser.displayName,
-                    email = userEmail,
+                    email = nonNullUserEmail, // Use the non-null version
                     photoUrl = firebaseUser.photoUrl?.toString(),
                 )
             _signInState.value = SignInState.Success(userInfo)
 
-            sharedPreferences.edit { putString(PREF_USER_EMAIL_KEY, userEmail) }
-            Log.d(TAG, "User email saved to SharedPreferences: '$userEmail'")
+            sharedPreferences.edit { putString(PREF_USER_EMAIL_KEY, nonNullUserEmail) } // Safe
+            Log.d(TAG, "User email saved to SharedPreferences: '$nonNullUserEmail'")
 
             val scopes = listOf(DriveScopes.DRIVE, SheetsScopes.SPREADSHEETS, "profile", "email")
             val accountCredential = GoogleAccountCredential.usingOAuth2(application, scopes)
 
-            // Create an Account object explicitly
-            val googleAccount = Account(userEmail, "com.google") // userEmail is known to be non-null here
+            // Create an Account object explicitly using the non-null email
+            val googleAccount = Account(nonNullUserEmail, "com.google")
             Log.d(TAG, "Attempting to set GoogleAccountCredential selectedAccount to: ${googleAccount.name}")
-            accountCredential.setSelectedAccount(googleAccount) // Use setSelectedAccount with the Account object
+            accountCredential.setSelectedAccount(googleAccount)
 
             credentialHolder.credential = accountCredential
-            // Removed assignment to credentialHolder.googleApiService as it's a val with a custom getter
             Log.d(TAG, "GoogleApiService will be initialized by CredentialHolder when accessed.")
         }
 

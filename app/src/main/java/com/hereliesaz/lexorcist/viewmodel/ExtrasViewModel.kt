@@ -10,7 +10,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.combine // Added import for combine
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -39,7 +39,7 @@ class ExtrasViewModel @Inject constructor(
     fun setAuthSource(authSignInState: StateFlow<SignInState>) {
         viewModelScope.launch {
             authSignInState.collect { signInState ->
-                val email = if (signInState is SignInState.Success) signInState.userInfo.email else null
+                val email = if (signInState is SignInState.Success) signInState.userInfo?.email else null // Used safe call
                 _uiState.value = _uiState.value.copy(currentUserEmail = email)
                 if (email != null) {
                     loadSharedItems()
@@ -52,11 +52,13 @@ class ExtrasViewModel @Inject constructor(
 
     private fun observeSearchQuery() {
         viewModelScope.launch {
-            _uiState.map { it.searchQuery }.combine(_allItems) { query, items ->
+            // Changed to directly combine _uiState and _allItems
+            combine(_uiState, _allItems) { uiState, allItems ->
+                val query = uiState.searchQuery
                 if (query.isBlank()) {
-                    items
+                    allItems
                 } else {
-                    items.filter {
+                    allItems.filter {
                         it.name.contains(query, ignoreCase = true) ||
                         it.description.contains(query, ignoreCase = true) ||
                         it.author.contains(query, ignoreCase = true)
@@ -78,13 +80,24 @@ class ExtrasViewModel @Inject constructor(
             when (val result = extrasRepository.getSharedItems()) {
                 is Result.Success -> {
                     _allItems.value = result.data
-                    _uiState.value = _uiState.value.copy(isLoading = false, error = null)
+                    // Ensure search filtering is reapplied after loading new items
+                    val currentQuery = _uiState.value.searchQuery
+                    val filteredItems = if (currentQuery.isBlank()) {
+                        result.data
+                    } else {
+                        result.data.filter {
+                            it.name.contains(currentQuery, ignoreCase = true) ||
+                            it.description.contains(currentQuery, ignoreCase = true) ||
+                            it.author.contains(currentQuery, ignoreCase = true)
+                        }
+                    }
+                    _uiState.value = _uiState.value.copy(isLoading = false, items = filteredItems, error = null)
                 }
                 is Result.Error -> {
                     _uiState.value = _uiState.value.copy(isLoading = false, error = result.exception.message ?: "An unknown error occurred.")
                 }
-                else -> {
-                    _uiState.value = _uiState.value.copy(isLoading = false, error = "An error occurred.")
+                is Result.UserRecoverableError -> {
+                    _uiState.value = _uiState.value.copy(isLoading = false, error = result.exception.message ?: "A user recoverable error occurred.")
                 }
             }
         }
@@ -93,10 +106,10 @@ class ExtrasViewModel @Inject constructor(
     fun deleteItem(item: SharedItem) {
         val userEmail = _uiState.value.currentUserEmail ?: return
         viewModelScope.launch {
-            when (extrasRepository.deleteSharedItem(item, userEmail)) {
+            when (val result = extrasRepository.deleteSharedItem(item, userEmail)) {
                 is Result.Success -> loadSharedItems() // Refresh list on success
-                is Result.Error -> _uiState.value = _uiState.value.copy(error = "Failed to delete item.")
-                else -> { /* Handle other cases */ }
+                is Result.Error -> _uiState.value = _uiState.value.copy(error = "Failed to delete item: ${result.exception.localizedMessage}")
+                is Result.UserRecoverableError -> _uiState.value = _uiState.value.copy(error = "Failed to delete item: User recoverable error - ${result.exception.localizedMessage}")
             }
         }
     }
@@ -106,11 +119,13 @@ class ExtrasViewModel @Inject constructor(
         return email != null && (item.author == email || email == "hereliesaz@gmail.com")
     }
 
-    fun shareItem(name: String, description: String, content: String, type: String) {
+    // Added court parameter with a default value
+    fun shareItem(name: String, description: String, content: String, type: String, court: String? = null) {
         val authorEmail = _uiState.value.currentUserEmail ?: return
         viewModelScope.launch {
-            extrasRepository.shareItem(name, description, content, type, authorEmail)
-            loadSharedItems()
+            // Pass the court parameter to the repository
+            extrasRepository.shareItem(name, description, content, type, authorEmail, court)
+            loadSharedItems() // Refresh list after sharing
         }
     }
 }

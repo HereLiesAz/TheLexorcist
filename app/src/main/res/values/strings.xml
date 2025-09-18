@@ -143,12 +143,10 @@
     <string name="script_tab_editor">Editor</string>
     <string name="script_description_placeholder">Enter a brief description of your script here. This will help you identify it later.</string>
     <string name="script_editor_explanation">
-        Scripts in The Lexorcist are powerful tools for automating the tagging and categorization of your evidence. Written in JavaScript, they allow you to define rules that automatically apply tags based on the content, date, or existing tags of your evidence.
-
+        Scripts in The Lexorcist are powerful tools for automating the tagging and categorization of your evidence. Written in JavaScript, they allow you to define rules that automatically apply tags based on the content, date, or existing tags of your evidence.\n
         \n\n<b>Available Variables:</b>
         \n- <b>evidence:</b> The evidence object being processed. It contains properties like `content`, `documentDate`, and `tags`.
-        \n- <b>parser:</b> An object with a `tags` array. You can add new tags to your evidence by pushing them to this array (e.g., `parser.tags.push("New Tag");`).
-
+        \n- <b>parser:</b> An object with a `tags` array. You can add new tags to your evidence by pushing them to this array (e.g., `parser.tags.push("New Tag");`).\n
         \n\n<b>Examples:</b>
         \n- Tagging based on keywords: `if (evidence.content.includes("keyword")) { parser.tags.push("Relevant Tag"); }`
         \n- Categorizing by date: `if (evidence.documentDate > new Date("2023-01-01").getTime()) { parser.tags.push("After 2023"); }`
@@ -244,6 +242,7 @@
     <string name="load_allegations_error_no_api">loadAllegations: No API service.</string>
     <string name="no_evidence_placeholder">There is no evidence in this case yet. Add some evidence to see it on the timeline.</string>
     <string name="share">Share</string>
+    <string name="take_photos">Take Photos</string>
 
     <string-array name="sort_options">
         <item>Sort by Date (Newest)</item>

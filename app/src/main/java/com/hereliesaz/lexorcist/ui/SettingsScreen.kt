@@ -48,12 +48,15 @@ import java.util.Locale
 @Composable
 fun SettingsScreen(
     caseViewModel: CaseViewModel,
-    settingsViewModel: SettingsViewModel = hiltViewModel()
+    settingsViewModel: SettingsViewModel = hiltViewModel(),
+    authViewModel: AuthViewModel = hiltViewModel()
 ) {
     val themeMode by settingsViewModel.themeMode.collectAsState()
     var showClearCacheDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val activity = context as android.app.Activity
+
+    val signInState by authViewModel.signInState.collectAsState()
 
     Scaffold(
         topBar = {
@@ -151,9 +154,6 @@ fun SettingsScreen(
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            val authViewModel: AuthViewModel = hiltViewModel()
-            val signInState by authViewModel.signInState.collectAsState()
-
             val selectedCloudProvider by settingsViewModel.selectedCloudProvider.collectAsState()
             val cloudProviders = listOf("GoogleDrive", "Dropbox", "OneDrive", "None")
 
@@ -161,7 +161,7 @@ fun SettingsScreen(
                 cloudProviders.forEach { provider ->
                     val isEnabled = when (provider) {
                         "GoogleDrive" -> signInState is SignInState.Success
-                        else -> true
+                        else -> true // Assuming other providers don't depend on Google Sign-In
                     }
                     Row(
                         Modifier
@@ -184,16 +184,15 @@ fun SettingsScreen(
             HorizontalDivider()
             Spacer(modifier = Modifier.height(24.dp))
 
-            val signInState by authViewModel.signInState.collectAsState()
-
-            when (signInState) {
+            // Google Sign-In Status
+            when (val currentSignInState = signInState) { // Use a different name to avoid conflict
                 is SignInState.Success -> {
-                    val userInfo = (signInState as SignInState.Success).userInfo
-                    Text("Signed in as: ${userInfo.email}")
+                    val userInfo = currentSignInState.userInfo
+                    Text("Signed in as: ${userInfo?.email ?: "Unknown Email"}") // Safe call and provide a default
                     Spacer(modifier = Modifier.height(8.dp))
                     LexorcistOutlinedButton(onClick = {
                         authViewModel.signOut()
-                        authViewModel.signIn(activity)
+                        authViewModel.signIn(activity) // Or provide a new activity instance if needed
                     }, text = "Switch Account")
                 }
                 else -> {

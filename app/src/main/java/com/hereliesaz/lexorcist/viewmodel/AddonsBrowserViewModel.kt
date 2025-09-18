@@ -6,6 +6,7 @@ import com.hereliesaz.lexorcist.common.state.SaveState
 import com.hereliesaz.lexorcist.model.Script
 import com.hereliesaz.lexorcist.model.Template
 import com.hereliesaz.lexorcist.service.GoogleApiService // Import GoogleApiService
+import com.hereliesaz.lexorcist.utils.Result // Import Result
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -46,16 +47,23 @@ class AddonsBrowserViewModel
             description: String,
             content: String,
             type: String,
+            authorEmail: String, // Added authorEmail parameter
+            court: String? // Added court parameter
         ) {
             viewModelScope.launch {
-                // Use the injected googleApiService directly
                 _shareOperationState.value = SaveState.Saving
-                val success = googleApiService.shareAddon(name, description, content, type)
-                if (success) {
-                    _shareOperationState.value = SaveState.Success
-                    loadAddons() // Refresh list after successful share
-                } else {
-                    _shareOperationState.value = SaveState.Error("Failed to share addon")
+                val shareResult = googleApiService.shareAddon(name, description, content, type, authorEmail, court ?: "")
+                when (shareResult) {
+                    is Result.Success -> {
+                        _shareOperationState.value = SaveState.Success
+                        loadAddons() // Refresh list after successful share
+                    }
+                    is Result.Error -> {
+                        _shareOperationState.value = SaveState.Error("Failed to share addon: ${shareResult.exception.localizedMessage ?: "Unknown error"}")
+                    }
+                    is Result.UserRecoverableError -> {
+                        _shareOperationState.value = SaveState.Error("Failed to share addon: User recoverable error - ${shareResult.exception.localizedMessage ?: "Unknown user error"}")
+                    }
                 }
             }
         }
@@ -67,8 +75,8 @@ class AddonsBrowserViewModel
         ) {
             viewModelScope.launch {
                 // Use the injected googleApiService directly
-                val success = googleApiService.rateAddon(id, rating, type)
-                if (success) {
+                val success = googleApiService.rateAddon(id, rating, type) // Assuming this returns Boolean or needs similar Result handling
+                if (success) { // Adjust if rateAddon also returns Result
                     loadAddons() // Refresh list to show updated ratings
                 } else {
                     // Handle rating failure, perhaps with a Snackbar or a different StateFlow for errors

@@ -19,7 +19,7 @@ class AllegationsRepositoryImpl
             val spreadsheetId = "1TN9MLnzpCJjcO9bwEhTeOjon3mRunYs5_tSxII6LizA" // Example, ensure this is correct
             Log.d("AllegationsRepository", "Fetching allegations from spreadsheet: $spreadsheetId for case: $caseId")
 
-            val sheetData = googleApiService.readSpreadsheet(spreadsheetId)
+            val sheetData = googleApiService.readSpreadsheet(spreadsheetId) // Explicit type argument removed
             if (sheetData.isNullOrEmpty()) {
                 Log.w("AllegationsRepository", "Sheet data is null or empty for spreadsheet: $spreadsheetId")
                 return emptyList()
