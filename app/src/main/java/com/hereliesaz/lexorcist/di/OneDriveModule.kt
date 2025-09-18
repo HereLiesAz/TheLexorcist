@@ -25,7 +25,7 @@ object OneDriveModule {
     @Provides
     @Singleton
     @Named("oneDrive")
-    fun provideOneDriveProvider(oneDriveAuthManager: OneDriveAuthManager): CloudStorageProvider {
-        return OneDriveProvider(oneDriveAuthManager)
+    fun provideOneDriveProvider(): CloudStorageProvider { // Removed oneDriveAuthManager parameter
+        return OneDriveProvider() // Calls no-argument constructor
     }
 }

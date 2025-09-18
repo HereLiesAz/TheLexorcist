@@ -56,6 +56,12 @@ constructor(
     private val sharedPref =
         applicationContext.getSharedPreferences("CaseInfoPrefs", Context.MODE_PRIVATE)
 
+    private val _isLoading = MutableStateFlow<Boolean>(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    private val _processingStatus = MutableStateFlow<String?>(null)
+    val processingStatus: StateFlow<String?> = _processingStatus.asStateFlow()
+
     private val _sortOrder = MutableStateFlow(SortOrder.DATE_DESC)
     val sortOrder: StateFlow<SortOrder> = _sortOrder.asStateFlow()
 

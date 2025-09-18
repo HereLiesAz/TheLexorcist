@@ -230,6 +230,9 @@ dependencies {
     implementation(libs.dropbox.android.sdk)
 
     // Microsoft Graph SDK for OneDrive
+    implementation(libs.microsoft.graph.core)
+    implementation(libs.microsoft.graph)
+
     implementation(libs.microsoft.graph)
     implementation(libs.msal)
 

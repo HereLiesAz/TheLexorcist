@@ -2,6 +2,7 @@ package com.hereliesaz.lexorcist.fragments.main
 
 import android.content.Context
 import android.os.Bundle
+import android.util.Log // Added import for Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -23,8 +24,9 @@ class MainFragment : Fragment() {
     }
 
     private fun generateDescription(script: String): String {
-        val includesRegex = """evidence\.(?:text|content)\.includes\(\"([^\"]+)\"\)"" ".toRegex()
-        val tagsRegex = """parser\.tags\.push\(\"([^\"]+)\"\)"" ".toRegex()
+        Log.d("MainFragment", "Generating description for script: $script") // Added Log
+        val includesRegex = """evidence\.(?:text|content)\.includes\(\"([^\"]+)\"\)""".toRegex() // Corrected
+        val tagsRegex = """parser\.tags\.push\(\"([^\"]+)\"\)""".toRegex() // Corrected
 
         val includesMatches = includesRegex.findAll(script).mapNotNull { it.groupValues.getOrNull(1) }.toList()
         val tagsMatches = tagsRegex.findAll(script).mapNotNull { it.groupValues.getOrNull(1) }.toList()
@@ -32,7 +34,7 @@ class MainFragment : Fragment() {
         if (includesMatches.isNotEmpty() && tagsMatches.isNotEmpty()) {
             val includesStr = includesMatches.joinToString(", ")
             val tagsStr = tagsMatches.joinToString(", ")
-            return "This script tags evidence that includes '${includesStr}' with the tag '${tagsStr}'."
+            return "This script tags evidence that includes \'${includesStr}\' with the tag \'${tagsStr}\'."
         }
 
         return "This script does not have a generated description."

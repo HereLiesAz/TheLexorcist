@@ -1083,7 +1083,7 @@ class GoogleApiService @Inject constructor(
         val scriptSheet = sheetData?.get("Scripts") ?: return emptyList()
 
         return scriptSheet.mapNotNull { row ->
-            if (row.size >= 7) {
+            if (row.size >= 8) { // Ensure there are enough columns for court
                 Script(
                     id = row[0].toString(),
                     name = row[1].toString(),
@@ -1092,6 +1092,7 @@ class GoogleApiService @Inject constructor(
                     author = row[4].toString(),
                     rating = row[5].toString().toDoubleOrNull() ?: 0.0,
                     numRatings = row[6].toString().toIntOrNull() ?: 0,
+                    court = row.getOrNull(7)?.toString() ?: "" // Added court
                 )
             } else {
                 null
@@ -1106,7 +1107,7 @@ class GoogleApiService @Inject constructor(
         val templateSheet = sheetData?.get("Templates") ?: return emptyList()
 
         return templateSheet.mapNotNull { row ->
-            if (row.size >= 7) {
+            if (row.size >= 8) { // Ensure there are enough columns for court
                 Template(
                     id = row[0].toString(),
                     name = row[1].toString(),
@@ -1115,6 +1116,7 @@ class GoogleApiService @Inject constructor(
                     author = row[4].toString(),
                     rating = row[5].toString().toDoubleOrNull() ?: 0.0,
                     numRatings = row[6].toString().toIntOrNull() ?: 0,
+                    court = row.getOrNull(7)?.toString() ?: "" // Added court
                 )
             } else {
                 null
@@ -1128,6 +1130,7 @@ class GoogleApiService @Inject constructor(
         content: String,
         type: String,
         authorEmail: String,
+        court: String // Added court parameter
     ): Result<Unit> =
         withContext(Dispatchers.IO) {
             val sheets = getSheetsService() ?: return@withContext Result.Error(IOException("Credential not available for Sheets service"))
@@ -1154,6 +1157,7 @@ class GoogleApiService @Inject constructor(
                             authorEmail, // Use the provided author email
                             0.0, // Rating
                             0, // NumRatings
+                            court // Added court
                         ),
                     )
                 val body = ValueRange().setValues(values)
@@ -1191,12 +1195,27 @@ class GoogleApiService @Inject constructor(
             val sheets = getSheetsService() ?: return@withContext Result.Error(IOException("Credential not available for Sheets service"))
             try {
                 val spreadsheetId = "18hB2Kx5Le1uaF2pImeITgWntcBB-JfYxvpU2aqTzRr8"
-                val (sheetName, itemId, author, rowData) =
-                    when (item) {
-                        is Script -> Triple("Scripts", item.id, item.author, listOf(item.id, item.name, item.description, item.content, item.author, item.rating, item.numRatings))
-                        is Template -> Triple("Templates", item.id, item.author, listOf(item.id, item.name, item.description, item.content, item.author, item.rating, item.numRatings))
-                        else -> return@withContext Result.Error(IllegalArgumentException("Unsupported item type"))
+                
+                val sheetName: String
+                val itemId: String
+                val author: String
+                val rowData: List<Any?>
+
+                when (item) {
+                    is Script -> {
+                        sheetName = "Scripts"
+                        itemId = item.id
+                        author = item.author
+                        rowData = listOf(item.id, item.name, item.description, item.content, item.author, item.rating, item.numRatings, item.court)
                     }
+                    is Template -> {
+                        sheetName = "Templates"
+                        itemId = item.id
+                        author = item.author
+                        rowData = listOf(item.id, item.name, item.description, item.content, item.author, item.rating, item.numRatings, item.court)
+                    }
+                    else -> return@withContext Result.Error(IllegalArgumentException("Unsupported item type"))
+                }
 
                 if (userEmail != author && userEmail != "hereliesaz@gmail.com") {
                     return@withContext Result.Error(SecurityException("User not authorized to edit this item."))
@@ -1227,7 +1246,7 @@ class GoogleApiService @Inject constructor(
             val sheets = getSheetsService() ?: return@withContext Result.Error(IOException("Credential not available for Sheets service"))
             try {
                 val spreadsheetId = "18hB2Kx5Le1uaF2pImeITgWntcBB-JfYxvpU2aqTzRr8"
-                val (sheetName, itemId, author) =
+                val (sheetName, itemId, author) = // This destructuring should be fine for Triple
                     when (item) {
                         is Script -> Triple("Scripts", item.id, item.author)
                         is Template -> Triple("Templates", item.id, item.author)
