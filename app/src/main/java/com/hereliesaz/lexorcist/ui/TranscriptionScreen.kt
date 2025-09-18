@@ -15,7 +15,10 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,6 +40,8 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+import com.hereliesaz.lexorcist.model.ProcessingState
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TranscriptionScreen(
@@ -47,6 +52,7 @@ fun TranscriptionScreen(
     var transcript by remember(evidence) { mutableStateOf(evidence.content) }
     var reason by remember { mutableStateOf("") }
     val isTranscriptChanged = transcript != evidence.content
+    val processingState by caseViewModel.processingState.collectAsState()
 
     Scaffold(
         topBar = {
@@ -62,60 +68,140 @@ fun TranscriptionScreen(
             )
         },
     ) { padding ->
-        Column(
-            modifier =
-            Modifier
+        Box(
+            modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp),
-            horizontalAlignment = Alignment.End
+                .padding(padding),
+            contentAlignment = Alignment.Center
         ) {
-            OutlinedTextField(
-                value = transcript,
-                onValueChange = { transcript = it },
-                label = { Text(stringResource(R.string.transcript_label)) },
-                modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                textStyle = TextStyle(textAlign = TextAlign.End)
-            )
-            Spacer(modifier = Modifier.height(16.dp))
+            when (val state = processingState) {
+                is ProcessingState.InProgress -> {
+                    CircularProgressIndicator()
+                }
+                is ProcessingState.Failure -> {
+                    Text(
+                        text = "Transcription failed: ${state.error}",
+                        color = MaterialTheme.colorScheme.error,
+                        textAlign = TextAlign.Center
+                    )
+                }
+                is ProcessingState.Completed -> {
+                    transcript = state.result
+                    Column(
+                        modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
+                        horizontalAlignment = Alignment.End
+                    ) {
+                        OutlinedTextField(
+                            value = transcript,
+                            onValueChange = { transcript = it },
+                            label = { Text(stringResource(R.string.transcript_label)) },
+                            modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .weight(1f),
+                            textStyle = TextStyle(textAlign = TextAlign.End)
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
 
-            if (isTranscriptChanged) {
-                OutlinedTextField(
-                    value = reason,
-                    onValueChange = { reason = it },
-                    label = { Text(stringResource(R.string.reason_for_edit)) },
-                    modifier = Modifier.fillMaxWidth(),
-                    textStyle = TextStyle(textAlign = TextAlign.End)
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-            }
+                        if (isTranscriptChanged) {
+                            OutlinedTextField(
+                                value = reason,
+                                onValueChange = { reason = it },
+                                label = { Text(stringResource(R.string.reason_for_edit)) },
+                                modifier = Modifier.fillMaxWidth(),
+                                textStyle = TextStyle(textAlign = TextAlign.End)
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                        }
 
-            LexorcistOutlinedButton(
-                onClick = {
-                    if (isTranscriptChanged) {
-                        caseViewModel.updateTranscript(evidence, transcript, reason)
+                        LexorcistOutlinedButton(
+                            onClick = {
+                                if (isTranscriptChanged) {
+                                    caseViewModel.updateTranscript(evidence, transcript, reason)
+                                }
+                                navController.popBackStack()
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = !isTranscriptChanged || reason.isNotBlank(),
+                            text = stringResource(if (isTranscriptChanged) R.string.save_edit else R.string.done).uppercase(Locale.getDefault())
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Text(
+                            stringResource(R.string.edit_history),
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.End
+                        )
+                        LazyColumn(modifier = Modifier.weight(1f)) {
+                            items(evidence.transcriptEdits.sortedByDescending { it.timestamp }) { edit ->
+                                EditHistoryItem(edit = edit)
+                            }
+                        }
                     }
-                    navController.popBackStack()
-                },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !isTranscriptChanged || reason.isNotBlank(),
-                text = stringResource(if (isTranscriptChanged) R.string.save_edit else R.string.done).uppercase(Locale.getDefault())
-            )
+                }
+                else -> {
+                    // Idle state, show the editor
+                    Column(
+                        modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
+                        horizontalAlignment = Alignment.End
+                    ) {
+                        OutlinedTextField(
+                            value = transcript,
+                            onValueChange = { transcript = it },
+                            label = { Text(stringResource(R.string.transcript_label)) },
+                            modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .weight(1f),
+                            textStyle = TextStyle(textAlign = TextAlign.End)
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
 
-            Spacer(modifier = Modifier.height(16.dp))
+                        if (isTranscriptChanged) {
+                            OutlinedTextField(
+                                value = reason,
+                                onValueChange = { reason = it },
+                                label = { Text(stringResource(R.string.reason_for_edit)) },
+                                modifier = Modifier.fillMaxWidth(),
+                                textStyle = TextStyle(textAlign = TextAlign.End)
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                        }
 
-            Text(
-                stringResource(R.string.edit_history),
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.End
-            )
-            LazyColumn(modifier = Modifier.weight(1f)) {
-                items(evidence.transcriptEdits.sortedByDescending { it.timestamp }) { edit ->
-                    EditHistoryItem(edit = edit)
+                        LexorcistOutlinedButton(
+                            onClick = {
+                                if (isTranscriptChanged) {
+                                    caseViewModel.updateTranscript(evidence, transcript, reason)
+                                }
+                                navController.popBackStack()
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = !isTranscriptChanged || reason.isNotBlank(),
+                            text = stringResource(if (isTranscriptChanged) R.string.save_edit else R.string.done).uppercase(Locale.getDefault())
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Text(
+                            stringResource(R.string.edit_history),
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.End
+                        )
+                        LazyColumn(modifier = Modifier.weight(1f)) {
+                            items(evidence.transcriptEdits.sortedByDescending { it.timestamp }) { edit ->
+                                EditHistoryItem(edit = edit)
+                            }
+                        }
+                    }
                 }
             }
         }
