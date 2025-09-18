@@ -26,7 +26,7 @@ class DropboxProvider @Inject constructor(
         try {
             val result = client.files().listFolder(folderId)
             val files = result.entries.map {
-                CloudFile(it.pathLower, it.name, (it as? com.dropbox.core.v2.files.FileMetadata)?.clientModified?.time ?: 0)
+                CloudFile(it.pathLower ?: "", it.name ?: "", (it as? com.dropbox.core.v2.files.FileMetadata)?.clientModified?.time ?: 0)
             }
             Result.Success(files)
         } catch (e: Exception) {
@@ -62,7 +62,7 @@ class DropboxProvider @Inject constructor(
                 .withMode(WriteMode.OVERWRITE)
                 .uploadAndFinish(inputStream)
 
-            Result.Success(CloudFile(path, uploadedFile.name, uploadedFile.clientModified.time))
+            Result.Success(CloudFile(path, uploadedFile.name ?: "", uploadedFile.clientModified.time)) // Added ?: "" for name
         } catch (e: Exception) {
             Result.Error(e)
         }
@@ -81,7 +81,7 @@ class DropboxProvider @Inject constructor(
                 .withMode(WriteMode.OVERWRITE)
                 .uploadAndFinish(inputStream)
 
-            Result.Success(CloudFile(path, uploadedFile.name, uploadedFile.clientModified.time))
+            Result.Success(CloudFile(path, uploadedFile.name ?: "", uploadedFile.clientModified.time)) // Added ?: "" for name
         } catch (e: Exception) {
             Result.Error(e)
         }
@@ -96,7 +96,7 @@ class DropboxProvider @Inject constructor(
         try {
             val metadata = client.files().getMetadata(fileId)
             val fileMetadata = metadata as com.dropbox.core.v2.files.FileMetadata
-            Result.Success(CloudFile(fileMetadata.pathLower, fileMetadata.name, fileMetadata.clientModified.time))
+            Result.Success(CloudFile(fileMetadata.pathLower ?: "", fileMetadata.name ?: "", fileMetadata.clientModified.time))
         } catch (e: Exception) {
             Result.Error(e)
         }

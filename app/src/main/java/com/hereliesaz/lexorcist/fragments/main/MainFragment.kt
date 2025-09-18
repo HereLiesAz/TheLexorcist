@@ -1,25 +1,33 @@
 package com.hereliesaz.lexorcist.fragments.main
 
 import android.content.Context
+import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import com.hereliesaz.lexorcist.databinding.FragmentMainBinding // Assuming this will be generated
 import com.hereliesaz.lexorcist.model.StringConstants
 
 class MainFragment : Fragment() {
     private lateinit var binding: FragmentMainBinding
-    private var caller: MainFragmentListener? = null
+    // MainFragmentListener related code removed
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        // Listener attachment logic removed
+    }
 
     private fun setup() {
         setOnClickListeners()
     }
 
     private fun generateDescription(script: String): String {
-        val includesRegex = """evidence\.(?:text|content)\.includes\("([^"]+)"\)""".toRegex()
-        val tagsRegex = """parser\.tags\.push\("([^"]+)"\)""".toRegex()
+        val includesRegex = """evidence\.(?:text|content)\.includes\(\"([^\"]+)\"\)"" ".toRegex()
+        val tagsRegex = """parser\.tags\.push\(\"([^\"]+)\"\)"" ".toRegex()
 
-        val includesMatches = includesRegex.findAll(script).map { it.groupValues[1] }.toList()
-        val tagsMatches = tagsRegex.findAll(script).map { it.groupValues[1] }.toList()
+        val includesMatches = includesRegex.findAll(script).mapNotNull { it.groupValues.getOrNull(1) }.toList()
+        val tagsMatches = tagsRegex.findAll(script).mapNotNull { it.groupValues.getOrNull(1) }.toList()
 
         if (includesMatches.isNotEmpty() && tagsMatches.isNotEmpty()) {
             val includesStr = includesMatches.joinToString(", ")
@@ -30,8 +38,8 @@ class MainFragment : Fragment() {
         return "This script does not have a generated description."
     }
 
-
     private fun setOnClickListeners() {
+        // This block assumes FragmentMainBinding resolves and view IDs in fragment_main.xml are correct
         val buttons = mapOf(
             binding.fragmentMainAction1Button to StringConstants.String.Action1,
             binding.fragmentMainAction2Button to StringConstants.String.Action2,
@@ -58,18 +66,9 @@ class MainFragment : Fragment() {
         fun newInstance() = MainFragment()
     }
 
-    override fun onAttach(context: Context) {
-        super.onAttach(context)
-        if (context is MainFragmentListener) {
-            caller = context
-        }
-    }
-
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         binding = FragmentMainBinding.inflate(inflater, container, false)
-
         setup()
-
         return binding.root
     }
 }
