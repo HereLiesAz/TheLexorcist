@@ -44,6 +44,9 @@ import com.pushpal.jetlime.JetLimeColumn
 import com.pushpal.jetlime.JetLimeDefaults
 import com.pushpal.jetlime.JetLimeEvent
 import com.pushpal.jetlime.JetLimeEventDefaults
+import com.pushpal.jetlime.JetLimeExtendedEvent
+import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class,
@@ -82,24 +85,35 @@ fun TimelineScreen(caseViewModel: CaseViewModel, navController: NavController) {
                 JetLimeColumn(
                     modifier = Modifier.padding(16.dp),
                     itemsList = ItemsList(evidenceList),
-                    key = { _: Int, item: Evidence -> item.id }, // Explicitly typed item
+                    key = { _: Int, item: Evidence -> item.id },
                     style = JetLimeDefaults.columnStyle(),
-                ) { _, item, position ->
-                    JetLimeEvent(
-                        style = JetLimeEventDefaults.eventStyle(position = position)
-                    ) {
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { showEvidenceDetailsDialog = item },
-                        ) {
-                            Column(modifier = Modifier.padding(8.dp)) {
-                                Text(item.sourceDocument, style = MaterialTheme.typography.titleMedium)
+                ) { _, item, _ ->
+                    val sdf = remember { SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()) }
+                    val formattedDate = remember(item.timestamp) { sdf.format(Date(item.timestamp)) }
+
+                    JetLimeExtendedEvent(
+                        startContent = {
+                            Column(horizontalAlignment = Alignment.End) {
+                                Text(formattedDate, style = MaterialTheme.typography.titleMedium)
                                 Spacer(modifier = Modifier.height(4.dp))
-                                Text(item.content)
+                                Text("Type: ${item.type}", style = MaterialTheme.typography.bodySmall)
+                                Text("Tags: ${item.tags.joinToString()}", style = MaterialTheme.typography.bodySmall)
+                            }
+                        },
+                        endContent = {
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { showEvidenceDetailsDialog = item },
+                            ) {
+                                Column(modifier = Modifier.padding(8.dp)) {
+                                    Text(item.sourceDocument, style = MaterialTheme.typography.titleMedium)
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(item.content)
+                                }
                             }
                         }
-                    }
+                    )
                 }
             } else {
                 Card(

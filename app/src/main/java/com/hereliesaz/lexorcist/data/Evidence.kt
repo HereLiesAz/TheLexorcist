@@ -26,5 +26,7 @@ data class Evidence(
     val transcriptEdits: List<com.hereliesaz.lexorcist.model.TranscriptEdit> = emptyList(),
     val audioTranscript: String? = null,
     val videoOcrText: String? = null,
-    val duration: Long? = null
+    val duration: Long? = null,
+    val metadata: Map<String, String> = emptyMap(),
+    val fileSize: Long = 0L
 ) : Parcelable

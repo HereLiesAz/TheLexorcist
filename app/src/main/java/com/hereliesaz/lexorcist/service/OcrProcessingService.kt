@@ -236,12 +236,16 @@ class OcrProcessingService
                         ExifUtils.getExifDate(context, newUri)
                             ?: DataParser.parseDates(ocrText).firstOrNull()
                             ?: System.currentTimeMillis()
+                    val metadata = ExifUtils.getExifData(context, newUri)
+                    val fileSize = ExifUtils.getFileSize(context, newUri)
                     logService.addLog("Determined document date: $documentDate")
 
                     var newEvidence =
                         Evidence(
                             id = 0,
                             caseId = caseId,
+                            metadata = metadata,
+                            fileSize = fileSize,
                             spreadsheetId = spreadsheetId,
                             type = "image",
                             content = ocrText,

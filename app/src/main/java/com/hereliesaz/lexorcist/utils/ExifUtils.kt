@@ -10,17 +10,55 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 
 object ExifUtils {
+
+    fun getExifData(context: Context, uri: Uri): Map<String, String> {
+        val metadata = mutableMapOf<String, String>()
+        try {
+            context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                val exifInterface = ExifInterface(inputStream)
+                val allTags = listOf(
+                    ExifInterface.TAG_DATETIME,
+                    ExifInterface.TAG_DATETIME_DIGITIZED,
+                    ExifInterface.TAG_DATETIME_ORIGINAL,
+                    ExifInterface.TAG_GPS_LATITUDE,
+                    ExifInterface.TAG_GPS_LONGITUDE,
+                    ExifInterface.TAG_MAKE,
+                    ExifInterface.TAG_MODEL,
+                    ExifInterface.TAG_IMAGE_WIDTH,
+                    ExifInterface.TAG_IMAGE_LENGTH
+                )
+
+                allTags.forEach { tag ->
+                    exifInterface.getAttribute(tag)?.let { value ->
+                        metadata[tag] = value
+                    }
+                }
+            }
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
+        return metadata
+    }
+
+    fun getFileSize(context: Context, uri: Uri): Long {
+        return try {
+            context.contentResolver.openFileDescriptor(uri, "r")?.use {
+                it.statSize
+            } ?: 0L
+        } catch (e: IOException) {
+            0L
+        }
+    }
+
     fun getExifDate(
         context: Context,
         uri: Uri,
-    ): Long? { // Added explicit return type for clarity
+    ): Long? {
         val inputStream = try {
             when (uri.scheme) {
                 "content" -> context.contentResolver.openInputStream(uri)
                 "file" -> uri.path?.let { FileInputStream(File(it)) }
                 else -> {
-                    // Fallback for URIs without a scheme, assuming it's a path
-                    // This might happen if Uri.parse() was used on a raw path
                     if (uri.path != null) {
                         FileInputStream(File(uri.path!!))
                     } else {
@@ -31,7 +69,7 @@ object ExifUtils {
         } catch (e: IOException) {
             e.printStackTrace()
             return null
-        } catch (e: SecurityException) { // Catch potential security exceptions for file access
+        } catch (e: SecurityException) {
             e.printStackTrace()
             return null
         }
@@ -46,7 +84,7 @@ object ExifUtils {
                 } else {
                     null
                 }
-            } catch (e: IOException) { // Catch IOException from ExifInterface constructor or operations
+            } catch (e: IOException) {
                 e.printStackTrace()
                 null
             }
