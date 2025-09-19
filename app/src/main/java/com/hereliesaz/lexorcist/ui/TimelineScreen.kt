@@ -9,10 +9,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -144,13 +147,13 @@ fun TimelineSortDropdown(
 ) {
     var expanded by remember { mutableStateOf(false) }
     Row(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().clickable { expanded = true },
         horizontalArrangement = Arrangement.End,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text("Sort by: $sortType")
-        Spacer(modifier = Modifier.height(8.dp))
-        LexorcistOutlinedButton(onClick = { expanded = true }, text = stringResource(id = R.string.sort))
+        Text("Sort by: ")
+        Text(sortType.toString(), color = MaterialTheme.colorScheme.primary)
+        Icon(Icons.Default.ArrowDropDown, contentDescription = "Sort by")
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },

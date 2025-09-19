@@ -1,5 +1,6 @@
 package com.hereliesaz.lexorcist.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -98,7 +99,12 @@ fun AllegationsScreen(viewModel: MasterAllegationsViewModel = hiltViewModel()) {
                             .padding(horizontal = 16.dp),
                 ) {
                     items(selectedAllegations.toList()) { allegation ->
-                        Text(text = allegation.name, modifier = Modifier.fillMaxWidth())
+                        AllegationItem(
+                            allegation = allegation,
+                            isSelected = true,
+                            onToggleSelection = { viewModel.toggleAllegationSelection(allegation) },
+                            onLongPress = { showDetailsDialog = it }
+                        )
                     }
                 }
             }
@@ -149,7 +155,7 @@ fun AllegationsScreen(viewModel: MasterAllegationsViewModel = hiltViewModel()) {
                             items(allegationList) { allegation ->
                                 AllegationItem(
                                     allegation = allegation,
-                                    isSelected = selectedAllegations.contains(allegation),
+                                    isSelected = selectedAllegations.any { it.name == allegation.name },
                                     onToggleSelection = { viewModel.toggleAllegationSelection(allegation) },
                                     onLongPress = { showDetailsDialog = it },
                                 )
@@ -168,7 +174,7 @@ fun AllegationsScreen(viewModel: MasterAllegationsViewModel = hiltViewModel()) {
                         items(allegationList) { allegation ->
                             AllegationItem(
                                 allegation = allegation,
-                                isSelected = selectedAllegations.contains(allegation),
+                                isSelected = selectedAllegations.any { it.name == allegation.name },
                                 onToggleSelection = { viewModel.toggleAllegationSelection(allegation) },
                                 onLongPress = { showDetailsDialog = it },
                             )
@@ -178,7 +184,7 @@ fun AllegationsScreen(viewModel: MasterAllegationsViewModel = hiltViewModel()) {
                     items(allegations) { allegation ->
                         AllegationItem(
                             allegation = allegation,
-                            isSelected = selectedAllegations.contains(allegation),
+                            isSelected = selectedAllegations.any { it.name == allegation.name },
                             onToggleSelection = { viewModel.toggleAllegationSelection(allegation) },
                             onLongPress = { showDetailsDialog = it },
                         )
@@ -190,7 +196,17 @@ fun AllegationsScreen(viewModel: MasterAllegationsViewModel = hiltViewModel()) {
                 AlertDialog(
                     onDismissRequest = { showDetailsDialog = null },
                     title = { Text(showDetailsDialog!!.name) },
-                    text = { Text(showDetailsDialog!!.description) },
+                    text = {
+                        Column {
+                            Text(showDetailsDialog!!.description)
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text("Court Level: ${showDetailsDialog!!.courtLevel}")
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text("Examples: (Coming soon)")
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text("Learn More: (Coming soon)")
+                        }
+                    },
                     confirmButton = {
                         LexorcistOutlinedButton(onClick = { showDetailsDialog = null }, text = "OK")
                     },
@@ -208,13 +224,13 @@ fun SortDropdown(
 ) {
     var expanded by remember { mutableStateOf(false) }
     Row(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().clickable { expanded = true },
         horizontalArrangement = Arrangement.End,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text("Sort by: $sortType")
-        Spacer(modifier = Modifier.height(8.dp))
-        LexorcistOutlinedButton(onClick = { expanded = true }, text = "Change")
+        Text("Sort by: ")
+        Text(sortType.toString(), color = MaterialTheme.colorScheme.primary)
+        Icon(Icons.Default.ArrowDropDown, contentDescription = "Sort by")
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },

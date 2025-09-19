@@ -44,9 +44,6 @@ class VideoProcessingWorkerTest {
 
     private lateinit var worker: VideoProcessingWorker
     private lateinit var testVideoUriString: String
-    private lateinit var mockedStaticUri: MockedStatic<Uri> // To hold the static mock for Uri
-    private lateinit var mockedStaticLog: MockedStatic<Log> // To hold the static mock for Log
-
     private val testCaseIdInput = 1
     private val testCaseName = "Test Case"
     private val testSpreadsheetId = "test_spreadsheet_id"
@@ -54,15 +51,7 @@ class VideoProcessingWorkerTest {
 
     @Before
     fun setup() {
-        testVideoUriString = "file:///test.mp4"
-
-        mockedStaticUri = Mockito.mockStatic(Uri::class.java)
-        mockedStaticUri.`when`<Uri> { Uri.parse(testVideoUriString) }.thenReturn(mockParsedVideoUri)
-        whenever(mockParsedVideoUri.toString()).thenReturn(testVideoUriString)
-
-        mockedStaticLog = Mockito.mockStatic(Log::class.java)
-        // Use ArgumentMatchers.anyString() for string arguments
-        mockedStaticLog.`when`<Int> { Log.e(ArgumentMatchers.anyString(), ArgumentMatchers.anyString()) }.thenReturn(0)
+        whenever(mockParsedVideoUri.toString()).thenReturn("file:///test.mp4")
 
         mockEvidence = Evidence(
             id = 1,
@@ -71,9 +60,9 @@ class VideoProcessingWorkerTest {
             type = "video",
             content = "Test content",
             formattedContent = "Test formatted content",
-            mediaUri = testVideoUriString,
+            mediaUri = "file:///test.mp4",
             timestamp = System.currentTimeMillis(),
-            sourceDocument = testVideoUriString,
+            sourceDocument = "file:///test.mp4",
             documentDate = System.currentTimeMillis(),
             allegationId = null,
             category = "Video Evidence",
@@ -90,7 +79,7 @@ class VideoProcessingWorkerTest {
         )
 
         val inputData = Data.Builder()
-            .putString(VideoProcessingWorker.KEY_VIDEO_URI, testVideoUriString)
+            .putString(VideoProcessingWorker.KEY_VIDEO_URI, "file:///test.mp4")
             .putInt(VideoProcessingWorker.KEY_CASE_ID, testCaseIdInput)
             .putString(VideoProcessingWorker.KEY_CASE_NAME, testCaseName)
             .putString(VideoProcessingWorker.KEY_SPREADSHEET_ID, testSpreadsheetId)
@@ -117,12 +106,6 @@ class VideoProcessingWorkerTest {
             .setInputData(inputData)
             .setWorkerFactory(workerFactory)
             .build()
-    }
-
-    @After
-    fun tearDown() {
-        mockedStaticUri.close() 
-        mockedStaticLog.close() 
     }
 
     @Test

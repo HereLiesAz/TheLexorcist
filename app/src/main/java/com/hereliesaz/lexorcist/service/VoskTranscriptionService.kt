@@ -77,34 +77,34 @@ class VoskTranscriptionService @Inject constructor(
 
     // transcribeAudio already uses withContext(Dispatchers.IO) which is appropriate.
     override suspend fun transcribeAudio(uri: Uri): Result<String> = withContext(Dispatchers.IO) {
-        _processingState.value = ProcessingState.InProgress(0.0f) 
+        _processingState.value = ProcessingState.InProgress(0.0f)
         logService.addLog("VoskService: transcribeAudio called for $uri")
         try {
             if (model == null) {
                 logService.addLog("VoskService: Model not initialized. Initializing...")
-                val modelPath = initializeVoskModel() 
+                val modelPath = initializeVoskModel()
                 model = Model(modelPath)
                 logService.addLog("VoskService: Model initialized.")
             }
 
-            val recognizer = Recognizer(model, 16000f) 
+            val recognizer = Recognizer(model, 16000f)
 
             val inputStream = context.contentResolver.openInputStream(uri)
-            if (inputStream == null) {
-                val errorMsg = "Failed to open audio stream from URI: $uri for transcribeAudio"
-                logService.addLog(errorMsg, com.hereliesaz.lexorcist.model.LogLevel.ERROR)
-                _processingState.value = ProcessingState.Failure(errorMsg)
-                return@withContext Result.Error(IOException(errorMsg))
-            }
-            
-            _processingState.value = ProcessingState.InProgress(0.5f) 
+                ?: return@withContext Result.Error(IOException("Failed to open audio stream from URI: $uri"))
+
+            _processingState.value = ProcessingState.InProgress(0.5f)
 
             val resultText = transcribeInputStream(recognizer, inputStream)
-            
-            _processingState.value = ProcessingState.InProgress(1.0f) 
+
+            _processingState.value = ProcessingState.InProgress(1.0f)
             logService.addLog("VoskService: transcribeAudio completed for $uri. Result: $resultText")
             _processingState.value = ProcessingState.Completed(resultText)
             Result.Success(resultText)
+        } catch (e: java.io.FileNotFoundException) {
+            val errorMsg = "File not found for URI: $uri"
+            logService.addLog(errorMsg, com.hereliesaz.lexorcist.model.LogLevel.ERROR)
+            _processingState.value = ProcessingState.Failure(errorMsg)
+            Result.Error(java.io.IOException(errorMsg, e))
         } catch (e: Exception) {
             val errorMsg = "transcribeAudio failed for $uri: ${e.message}"
             logService.addLog(errorMsg, com.hereliesaz.lexorcist.model.LogLevel.ERROR)
