@@ -5,9 +5,3 @@ data class LogEntry(
     val message: String,
     val level: LogLevel,
 )
-
-enum class LogLevel {
-    INFO,
-    ERROR,
-    DEBUG,
-}

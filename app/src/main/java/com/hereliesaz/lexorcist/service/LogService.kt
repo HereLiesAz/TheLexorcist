@@ -9,12 +9,11 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
-// import java.util.logging.Level // Removed java.util.logging.Level
-// import javax.inject.Inject // REMOVED
-// import javax.inject.Singleton // REMOVED
+import javax.inject.Inject // Added
+import javax.inject.Singleton // Added
 
-// Annotations removed for diagnostics
-class LogService { // REMOVED @Singleton and @Inject constructor()
+@Singleton // Added
+class LogService @Inject constructor() { // Added @Inject constructor()
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 

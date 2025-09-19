@@ -254,11 +254,13 @@ dependencies {
     androidTestImplementation(libs.google.dagger.hilt.android.testing)
     kspAndroidTest(libs.google.dagger.hilt.compiler) // Corrected alias
 
+    // Jetpack DataStore
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
 
     // Room IS NOT ALLOWED IN THIS PROJECT!!!!!
 
     // Vosk for on-device speech-to-text
-    // implementation(libs.vosk.android) // REMOVED
+    implementation(libs.vosk.android) // UNCOMMENTED
     // Explicit gRPC dependencies with consistent versions
     implementation(libs.grpc.okhttp)
     implementation(libs.grpc.core)

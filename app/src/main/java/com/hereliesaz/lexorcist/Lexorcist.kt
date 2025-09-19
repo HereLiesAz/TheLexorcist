@@ -1,16 +1,15 @@
 package com.hereliesaz.lexorcist
 
 import android.content.Context
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
 import androidx.work.WorkManager
+import com.google.api.client.util.store.DataStore
 import com.hereliesaz.lexorcist.service.LogService
-import com.hereliesaz.lexorcist.utils.SETTINGS_DATASTORE_NAME
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
 import java.io.File
+import java.util.prefs.Preferences
 
 object Lexorcist {
     const val SHARED_PREFS_NAME = "LexorcistPrefs"
