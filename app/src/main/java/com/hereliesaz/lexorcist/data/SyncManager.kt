@@ -102,18 +102,20 @@ class SyncManager @Inject constructor(
                             val cloudFilesInFolder = cloudFilesInFolderResult.data
                             // Upload new or updated local files
                             for (localFile in localFiles) {
-                                val cloudFile = cloudFilesInFolder.find { it.name == localFile.name }
-                                if (cloudFile == null) {
-                                    // Upload new file
-                                    val fileBytes = localFile.readBytes()
-                                    val mimeType = getMimeType(localFile)
-                                    cloudStorageProvider.writeFile(cloudCaseFolderId, localFile.name, mimeType, fileBytes)
-                                } else {
-                                    // Update existing file if modified
-                                    if (localFile.lastModified() > cloudFile.modifiedTime) {
+                                if (localFile.isFile) { // Added check here
+                                    val cloudFile = cloudFilesInFolder.find { it.name == localFile.name }
+                                    if (cloudFile == null) {
+                                        // Upload new file
                                         val fileBytes = localFile.readBytes()
                                         val mimeType = getMimeType(localFile)
-                                        cloudStorageProvider.updateFile(cloudFile.id, mimeType, fileBytes)
+                                        cloudStorageProvider.writeFile(cloudCaseFolderId, localFile.name, mimeType, fileBytes)
+                                    } else {
+                                        // Update existing file if modified
+                                        if (localFile.lastModified() > cloudFile.modifiedTime) {
+                                            val fileBytes = localFile.readBytes()
+                                            val mimeType = getMimeType(localFile)
+                                            cloudStorageProvider.updateFile(cloudFile.id, mimeType, fileBytes)
+                                        }
                                     }
                                 }
                             }
@@ -129,7 +131,8 @@ class SyncManager @Inject constructor(
                                     }
                                 } else {
                                     // Update existing file if modified
-                                    if (cloudFile.modifiedTime > localFile.lastModified()) {
+                                    // Check if localFile is a file before comparing lastModified and writing
+                                    if (localFile.isFile && cloudFile.modifiedTime > localFile.lastModified()) {
                                         val downloadResult = cloudStorageProvider.readFile(cloudFile.id)
                                         if (downloadResult is Result.Success) {
                                             FileOutputStream(localFile).use { it.write(downloadResult.data) }

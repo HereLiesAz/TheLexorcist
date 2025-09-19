@@ -29,7 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.ExperimentalComposeUiApi // Added for experimental APIs
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -42,16 +42,15 @@ import com.hereliesaz.lexorcist.viewmodel.TimelineSortType
 import com.pushpal.jetlime.ItemsList
 import com.pushpal.jetlime.JetLimeColumn
 import com.pushpal.jetlime.JetLimeDefaults
-import com.pushpal.jetlime.JetLimeEvent
 import com.pushpal.jetlime.JetLimeEventDefaults
-import com.pushpal.jetlime.JetLimeExtendedEvent
+import com.pushpal.jetlime.JetLimeExtendedEvent // Using JetLimeExtendedEvent
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class,
     ExperimentalComposeApi::class
-) // Added ExperimentalComposeUiApi
+)
 @Composable
 fun TimelineScreen(caseViewModel: CaseViewModel, navController: NavController) {
     val evidenceList by caseViewModel.selectedCaseEvidenceList.collectAsState()
@@ -87,33 +86,40 @@ fun TimelineScreen(caseViewModel: CaseViewModel, navController: NavController) {
                     itemsList = ItemsList(evidenceList),
                     key = { _: Int, item: Evidence -> item.id },
                     style = JetLimeDefaults.columnStyle(),
-                ) { _, item, _ ->
+                ) { index, item, position -> 
                     val sdf = remember { SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()) }
                     val formattedDate = remember(item.timestamp) { sdf.format(Date(item.timestamp)) }
 
                     JetLimeExtendedEvent(
-                        startContent = {
-                            Column(horizontalAlignment = Alignment.End) {
+                        modifier = Modifier, 
+                        style = JetLimeEventDefaults.eventStyle(position = position),
+                        additionalContent = { 
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalAlignment = Alignment.End 
+                            ) {
                                 Text(formattedDate, style = MaterialTheme.typography.titleMedium)
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text("Type: ${item.type}", style = MaterialTheme.typography.bodySmall)
                                 Text("Tags: ${item.tags.joinToString()}", style = MaterialTheme.typography.bodySmall)
                             }
-                        },
-                        endContent = {
-                            Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { showEvidenceDetailsDialog = item },
+                        }
+                    ) { 
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { showEvidenceDetailsDialog = item },
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(8.dp).fillMaxWidth(),
+                                horizontalAlignment = Alignment.Start 
                             ) {
-                                Column(modifier = Modifier.padding(8.dp)) {
-                                    Text(item.sourceDocument, style = MaterialTheme.typography.titleMedium)
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Text(item.content)
-                                }
+                                Text(item.sourceDocument, style = MaterialTheme.typography.titleMedium)
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(item.content)
                             }
                         }
-                    )
+                    }
                 }
             } else {
                 Card(
@@ -174,7 +180,7 @@ fun TimelineSortDropdown(
         ) {
             enumValues<TimelineSortType>().forEach { sortTypeEntry ->
                 DropdownMenuItem(
-                    text = { Text(sortTypeEntry.name.replace("_", " ").lowercase(Locale.getDefault()).replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }) }, // Corrected to use sortTypeEntry for display
+                    text = { Text(sortTypeEntry.name.replace("_", " ").lowercase(Locale.getDefault()).replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }) },
                     onClick = {
                         onSortChange(sortTypeEntry)
                         expanded = false

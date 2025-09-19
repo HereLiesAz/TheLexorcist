@@ -54,3 +54,6 @@ app/google-services.json
 /hs_err_pid20740.mdmp
 /backup.ps1
 /hs_err_pid20740.log
+/app/release/baselineProfiles/0/app-release.dm
+/app/release/baselineProfiles/1/app-release.dm
+/app/release/output-metadata.json

@@ -2,6 +2,7 @@ package com.hereliesaz.lexorcist.service
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log.e
 import com.google.gson.Gson
 // import com.hereliesaz.lexorcist.di.qualifiers.ApplicationScope // Removed qualifier import
 import com.hereliesaz.lexorcist.model.ProcessingState
@@ -41,7 +42,7 @@ class VoskTranscriptionService @Inject constructor(
 
     override suspend fun start(uri: Uri) {
         serviceScope.launch { // Use internal serviceScope
-            _processingState.value = ProcessingState.InProgress(0f) 
+            _processingState.value = ProcessingState.InProgress(0f)
             logService.addLog("VoskService: Starting transcription for $uri")
             try {
                 if (model == null) {
@@ -49,7 +50,7 @@ class VoskTranscriptionService @Inject constructor(
                     model = Model(modelPath)
                 }
 
-                val recognizer = Recognizer(model, 16000f) 
+                val recognizer = Recognizer(model, 16000f)
                 val inputStream = context.contentResolver.openInputStream(uri)
                 if (inputStream == null) {
                     val errorMsg = "Failed to open audio stream from URI: $uri"
@@ -117,18 +118,18 @@ class VoskTranscriptionService @Inject constructor(
     private suspend fun initializeVoskModel(): String {
         return withContext(serviceScope.coroutineContext) { // Can use serviceScope's context or Dispatchers.IO directly
             val modelDir = File(context.filesDir, "vosk-model")
-            if (!modelDir.exists() || modelDir.listFiles()?.isEmpty() == true) { 
+            if (!modelDir.exists() || modelDir.listFiles()?.isEmpty() == true) {
                 logService.addLog("Vosk model not found or empty at ${modelDir.absolutePath}, attempting to download and unzip...")
-                _processingState.value = ProcessingState.InProgress(0.0f) 
+                _processingState.value = ProcessingState.InProgress(0.0f)
                 val downloadResult = downloadAndUnzipModel(modelDir)
                 if (downloadResult is Result.Error) {
                     logService.addLog("Vosk model download failed: ${downloadResult.exception.message}", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
                      _processingState.value = ProcessingState.Failure("Model download failed: ${downloadResult.exception.message}")
-                    throw downloadResult.exception 
+                    throw downloadResult.exception
                 }
                 logService.addLog("Vosk model downloaded and unzipped successfully to ${modelDir.absolutePath}")
             }
-            modelDir.absolutePath 
+            modelDir.absolutePath
         }
     }
 
@@ -173,29 +174,77 @@ class VoskTranscriptionService @Inject constructor(
 
                 val zipInputStream = java.util.zip.ZipInputStream(java.io.FileInputStream(zipFile))
                 var zipEntry = zipInputStream.nextEntry
+                // Find the common root directory in the zip file
+                val entryNames = mutableListOf<String>()
+                while(zipEntry != null) {
+                    entryNames.add(zipEntry.name)
+                    zipInputStream.closeEntry() // Important: close entry before reading next
+                    zipEntry = zipInputStream.nextEntry
+                }
+                zipInputStream.close() // Close and reopen to reset
+                
+                var commonPrefix = ""
+                if (entryNames.isNotEmpty()) {
+                    // Normalize entry names to use '/'
+                    val normalizedEntryNames = entryNames.map { it.replace("\\", "/") }
+                    val firstEntryParts = normalizedEntryNames.first().split('/')
+                    if (firstEntryParts.size > 1 && firstEntryParts.first().isNotEmpty()) { // if the first entry is in a directory
+                        commonPrefix = firstEntryParts.first() + "/"
+                        var allHavePrefix = true
+                        for (name in normalizedEntryNames) {
+                            if (!name.startsWith(commonPrefix)) {
+                                allHavePrefix = false
+                                break
+                            }
+                        }
+                        if (!allHavePrefix) {
+                            commonPrefix = "" // Not all entries share this prefix
+                        }
+                    }
+                }
+                
+                // Re-open the stream for actual extraction
+                val freshZipInputStream = java.util.zip.ZipInputStream(java.io.FileInputStream(zipFile))
+                zipEntry = freshZipInputStream.nextEntry
+
                 while (zipEntry != null) {
-                    val newFile = File(modelDir, zipEntry.name) 
+                    var entryName = zipEntry.name.replace('\\', '/') // Corrected escape. Normalize entry name
+                    // Strip the common prefix
+                    if (commonPrefix.isNotEmpty() && entryName.startsWith(commonPrefix)) {
+                        entryName = entryName.substring(commonPrefix.length)
+                    }
+
+                    if (entryName.isEmpty()) { // Skip the root folder itself if it's an entry or an empty string after stripping
+                        freshZipInputStream.closeEntry()
+                        zipEntry = freshZipInputStream.nextEntry
+                        continue
+                    }
+
+                    val newFile = File(modelDir, entryName) 
                     if (!newFile.canonicalPath.startsWith(modelDir.canonicalPath)) {
+                         freshZipInputStream.closeEntry() // Close entry before throwing
                         throw SecurityException("Zip entry tried to escape model directory: ${zipEntry.name}")
                     }
                     if (zipEntry.isDirectory) {
-                        newFile.mkdirs()
+                        if (!newFile.exists()) { // Only create if it doesn't exist to avoid issues with existing dirs
+                           newFile.mkdirs()
+                        }
                     } else {
                         val parent = newFile.parentFile
                         if (parent != null && !parent.exists()) {
                             parent.mkdirs()
                         }
                         val entryOutputStream = java.io.FileOutputStream(newFile)
-                        var len2: Int
-                        while (zipInputStream.read(buffer).also { len2 = it } > 0) {
+                        var len2: Int = 0 // Initialized len2
+                        while (freshZipInputStream.read(buffer).also { len2 = it } > 0) {
                             entryOutputStream.write(buffer, 0, len2)
                         }
                         entryOutputStream.close()
                     }
-                    zipInputStream.closeEntry()
-                    zipEntry = zipInputStream.nextEntry
+                    freshZipInputStream.closeEntry()
+                    zipEntry = freshZipInputStream.nextEntry
                 }
-                zipInputStream.close()
+                freshZipInputStream.close()
                 zipFile.delete() 
                 logService.addLog("Vosk model unzipped successfully.")
                 _downloadProgress.value = 1.0f 
@@ -204,14 +253,15 @@ class VoskTranscriptionService @Inject constructor(
                 logService.addLog("Error during model download/unzip: ${e.message}", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
                 Result.Error(e)
             }
-        }
-    }
 
+        }
+
+    }
     // This is a blocking function, should be called from a coroutine on an IO dispatcher.
-    private fun transcribeInputStream(recognizer: Recognizer, inputStream: InputStream): String {
+    fun transcribeInputStream(recognizer: Recognizer, inputStream: InputStream): String {
         try {
             val buffer = ByteArray(4096) 
-            var nbytes: Int
+            var nbytes: Int = 0 // Initialized nbytes
             while (inputStream.read(buffer).also { nbytes = it } > 0) { 
                 if (recognizer.acceptWaveForm(buffer, nbytes)) {
                     // val partialJson = recognizer.partialResult
@@ -231,6 +281,5 @@ class VoskTranscriptionService @Inject constructor(
             recognizer.close() 
         }
     }
+    private data class FinalResult(val text: String)
 }
-
-private data class FinalResult(val text: String)
