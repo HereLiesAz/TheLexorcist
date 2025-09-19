@@ -3,12 +3,13 @@ package com.hereliesaz.lexorcist.service
 import android.content.Context
 import android.net.Uri
 import com.google.gson.Gson
+// import com.hereliesaz.lexorcist.di.qualifiers.ApplicationScope // Removed qualifier import
 import com.hereliesaz.lexorcist.model.ProcessingState
 import com.hereliesaz.lexorcist.utils.Result
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.SupervisorJob // Import SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -25,8 +26,10 @@ import javax.inject.Singleton
 class VoskTranscriptionService @Inject constructor(
     @ApplicationContext private val context: Context,
     private val logService: LogService
+    // Removed @ApplicationScope private val externalScope: CoroutineScope
 ) : TranscriptionService {
 
+    // Internal scope for this service's operations
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     private var model: Model? = null
@@ -37,16 +40,16 @@ class VoskTranscriptionService @Inject constructor(
     override val processingState: StateFlow<ProcessingState> = _processingState
 
     override suspend fun start(uri: Uri) {
-        serviceScope.launch {
-            _processingState.value = ProcessingState.InProgress(0f)
+        serviceScope.launch { // Use internal serviceScope
+            _processingState.value = ProcessingState.InProgress(0f) 
             logService.addLog("VoskService: Starting transcription for $uri")
             try {
                 if (model == null) {
-                    val modelPath = initializeVoskModel()
-                    model = Model(modelPath) // This should now get the correct subdirectory path
+                    val modelPath = initializeVoskModel() // This is a suspend function
+                    model = Model(modelPath)
                 }
 
-                val recognizer = Recognizer(model, 16000f)
+                val recognizer = Recognizer(model, 16000f) 
                 val inputStream = context.contentResolver.openInputStream(uri)
                 if (inputStream == null) {
                     val errorMsg = "Failed to open audio stream from URI: $uri"
@@ -55,6 +58,8 @@ class VoskTranscriptionService @Inject constructor(
                     return@launch
                 }
 
+                // transcribeInputStream is a blocking call, ensure it's called within a coroutine context
+                // that allows blocking IO, which serviceScope (Dispatchers.IO) does.
                 val resultText = transcribeInputStream(recognizer, inputStream)
                 logService.addLog("VoskService: Transcription completed for $uri. Result: $resultText")
                 _processingState.value = ProcessingState.Completed(resultText)
@@ -70,6 +75,7 @@ class VoskTranscriptionService @Inject constructor(
         logService.addLog("VoskService: Stop called, but Vosk processes file at once.")
     }
 
+    // transcribeAudio already uses withContext(Dispatchers.IO) which is appropriate.
     override suspend fun transcribeAudio(uri: Uri): Result<String> = withContext(Dispatchers.IO) {
         _processingState.value = ProcessingState.InProgress(0.0f)
         logService.addLog("VoskService: transcribeAudio called for $uri")
@@ -77,98 +83,65 @@ class VoskTranscriptionService @Inject constructor(
             if (model == null) {
                 logService.addLog("VoskService: Model not initialized. Initializing...")
                 val modelPath = initializeVoskModel()
-                model = Model(modelPath) // This should now get the correct subdirectory path
-                logService.addLog("VoskService: Model initialized from path: $modelPath")
+                model = Model(modelPath)
+                logService.addLog("VoskService: Model initialized.")
             }
 
             val recognizer = Recognizer(model, 16000f)
+
             val inputStream = context.contentResolver.openInputStream(uri)
-            if (inputStream == null) {
-                val errorMsg = "Failed to open audio stream from URI: $uri for transcribeAudio"
-                logService.addLog(errorMsg, com.hereliesaz.lexorcist.model.LogLevel.ERROR)
-                _processingState.value = ProcessingState.Failure(errorMsg)
-                return@withContext Result.Error(IOException(errorMsg))
-            }
-            
+                ?: return@withContext Result.Error(IOException("Failed to open audio stream from URI: $uri"))
+
             _processingState.value = ProcessingState.InProgress(0.5f)
+
             val resultText = transcribeInputStream(recognizer, inputStream)
+
             _processingState.value = ProcessingState.InProgress(1.0f)
             logService.addLog("VoskService: transcribeAudio completed for $uri. Result: $resultText")
             _processingState.value = ProcessingState.Completed(resultText)
             Result.Success(resultText)
+        } catch (e: java.io.FileNotFoundException) {
+            val errorMsg = "File not found for URI: $uri"
+            logService.addLog(errorMsg, com.hereliesaz.lexorcist.model.LogLevel.ERROR)
+            _processingState.value = ProcessingState.Failure(errorMsg)
+            Result.Error(java.io.IOException(errorMsg, e))
         } catch (e: Exception) {
             val errorMsg = "transcribeAudio failed for $uri: ${e.message}"
             logService.addLog(errorMsg, com.hereliesaz.lexorcist.model.LogLevel.ERROR)
             _processingState.value = ProcessingState.Failure(errorMsg)
-            Result.Error(e) // Propagate the original exception for the test to assert specific exceptions if needed.
+            Result.Error(e)
         }
     }
 
+    // initializeVoskModel is a suspend function and uses withContext(Dispatchers.IO)
     private suspend fun initializeVoskModel(): String {
-        return withContext(serviceScope.coroutineContext) {
-            val baseModelDir = File(context.filesDir, "vosk-model-assets") // Base directory for extraction
-            if (!baseModelDir.exists()) {
-                baseModelDir.mkdirs()
+        return withContext(serviceScope.coroutineContext) { // Can use serviceScope's context or Dispatchers.IO directly
+            val modelDir = File(context.filesDir, "vosk-model")
+            if (!modelDir.exists() || modelDir.listFiles()?.isEmpty() == true) { 
+                logService.addLog("Vosk model not found or empty at ${modelDir.absolutePath}, attempting to download and unzip...")
+                _processingState.value = ProcessingState.InProgress(0.0f) 
+                val downloadResult = downloadAndUnzipModel(modelDir)
+                if (downloadResult is Result.Error) {
+                    logService.addLog("Vosk model download failed: ${downloadResult.exception.message}", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
+                     _processingState.value = ProcessingState.Failure("Model download failed: ${downloadResult.exception.message}")
+                    throw downloadResult.exception 
+                }
+                logService.addLog("Vosk model downloaded and unzipped successfully to ${modelDir.absolutePath}")
             }
-
-            // Attempt to find an already extracted model directory
-            val actualModelDir = findActualModelDirectory(baseModelDir)
-            if (actualModelDir != null && actualModelDir.exists()) {
-                logService.addLog("Vosk model found at ${actualModelDir.absolutePath}")
-                return@withContext actualModelDir.absolutePath
-            }
-            
-            // If not found or if the found directory is empty (e.g. partial extraction), download and unzip
-            logService.addLog("Vosk model not found or invalid at ${baseModelDir.absolutePath}, attempting to download and unzip...")
-            _processingState.value = ProcessingState.InProgress(0.0f)
-            val downloadResult = downloadAndUnzipModel(baseModelDir) // Download to the base directory
-            if (downloadResult is Result.Error) {
-                val errorMsg = "Vosk model download failed: ${downloadResult.exception.message}"
-                logService.addLog(errorMsg, com.hereliesaz.lexorcist.model.LogLevel.ERROR)
-                _processingState.value = ProcessingState.Failure(errorMsg)
-                throw downloadResult.exception
-            }
-            logService.addLog("Vosk model downloaded and unzipped successfully to ${baseModelDir.absolutePath}")
-
-            // After download, find the actual model directory again
-            val newlyExtractedModelDir = findActualModelDirectory(baseModelDir)
-            if (newlyExtractedModelDir != null && newlyExtractedModelDir.exists()) {
-                logService.addLog("Using newly extracted Vosk model at ${newlyExtractedModelDir.absolutePath}")
-                return@withContext newlyExtractedModelDir.absolutePath
-            }
-
-            val finalErrorMsg = "Vosk model directory not found after extraction in ${baseModelDir.absolutePath}"
-            logService.addLog(finalErrorMsg, com.hereliesaz.lexorcist.model.LogLevel.ERROR)
-            throw IOException(finalErrorMsg)
+            modelDir.absolutePath 
         }
     }
 
-    // Helper to find the actual model directory (e.g., "vosk-model-small-en-us-0.15")
-    private fun findActualModelDirectory(baseDir: File): File? {
-        if (!baseDir.exists() || !baseDir.isDirectory) return null
-
-        // Strategy 1: Look for a directory that seems like a Vosk model (e.g., contains an "am" subdirectory)
-        baseDir.listFiles()?.forEach { file ->
-            if (file.isDirectory && File(file, "am").exists() && File(file, "conf").exists()) {
-                return file // Found a likely model directory
-            }
-        }
-        // Strategy 2: If the model is extracted directly into baseDir (less common for Vosk archives but a fallback)
-        if (File(baseDir, "am").exists() && File(baseDir, "conf").exists()){
-             return baseDir
-        }
-        return null // Model directory not found with these strategies
-    }
-
-    private suspend fun downloadAndUnzipModel(destinationBaseDir: File): Result<Unit> {
-        return withContext(serviceScope.coroutineContext) {
+    // downloadAndUnzipModel is a suspend function and uses withContext(Dispatchers.IO)
+    private suspend fun downloadAndUnzipModel(modelDir: File): Result<Unit> {
+        return withContext(serviceScope.coroutineContext) { // Can use serviceScope's context or Dispatchers.IO directly
             try {
                 val modelUrl = "https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip"
-                // Ensure the base directory exists
-                if (!destinationBaseDir.exists()) {
-                    destinationBaseDir.mkdirs()
+                
+                if (!modelDir.exists()) {
+                    modelDir.mkdirs()
                 }
-                val zipFile = File(destinationBaseDir, "vosk-model.zip")
+                val zipFile = File(modelDir, "vosk-model.zip")
 
                 logService.addLog("Downloading Vosk model from $modelUrl to ${zipFile.absolutePath}")
                 _downloadProgress.value = 0f
@@ -179,15 +152,15 @@ class VoskTranscriptionService @Inject constructor(
                 val fileLength = connection.contentLength
                 val inputStream = connection.getInputStream()
                 val fileOutputStream = java.io.FileOutputStream(zipFile)
-                val buffer = ByteArray(4096)
+                val buffer = ByteArray(4096) 
                 var len1: Int
                 var total: Long = 0
                 while (inputStream.read(buffer).also { len1 = it } > 0) {
                     total += len1
                     if (fileLength > 0) {
                         val progress = (total * 100 / fileLength).toFloat()
-                        _downloadProgress.value = progress / 100f
-                        _processingState.value = ProcessingState.InProgress(progress / 100f)
+                        _downloadProgress.value = progress / 100f 
+                        _processingState.value = ProcessingState.InProgress(progress / 100f) 
                     }
                     fileOutputStream.write(buffer, 0, len1)
                 }
@@ -195,21 +168,18 @@ class VoskTranscriptionService @Inject constructor(
                 inputStream.close()
                 logService.addLog("Vosk model ZIP downloaded. Size: $total bytes.")
 
-                logService.addLog("Unzipping Vosk model into ${destinationBaseDir.absolutePath}...")
-                _processingState.value = ProcessingState.InProgress(0.99f)
+                logService.addLog("Unzipping Vosk model...")
+                _processingState.value = ProcessingState.InProgress(0.99f) 
 
                 val zipInputStream = java.util.zip.ZipInputStream(java.io.FileInputStream(zipFile))
                 var zipEntry = zipInputStream.nextEntry
                 while (zipEntry != null) {
-                    val newFile = File(destinationBaseDir, zipEntry.name) // Extract relative to destinationBaseDir
-                     // Security check for Zip Slip vulnerability
-                    if (!newFile.canonicalPath.startsWith(destinationBaseDir.canonicalPath + File.separator)) {
-                        zipInputStream.close()
-                        zipFile.delete() // Clean up the downloaded zip
+                    val newFile = File(modelDir, zipEntry.name) 
+                    if (!newFile.canonicalPath.startsWith(modelDir.canonicalPath)) {
                         throw SecurityException("Zip entry tried to escape model directory: ${zipEntry.name}")
                     }
                     if (zipEntry.isDirectory) {
-                        if (!newFile.exists()) newFile.mkdirs()
+                        newFile.mkdirs()
                     } else {
                         val parent = newFile.parentFile
                         if (parent != null && !parent.exists()) {
@@ -226,9 +196,9 @@ class VoskTranscriptionService @Inject constructor(
                     zipEntry = zipInputStream.nextEntry
                 }
                 zipInputStream.close()
-                zipFile.delete()
-                logService.addLog("Vosk model unzipped successfully into ${destinationBaseDir.absolutePath}.")
-                _downloadProgress.value = 1.0f
+                zipFile.delete() 
+                logService.addLog("Vosk model unzipped successfully.")
+                _downloadProgress.value = 1.0f 
                 Result.Success(Unit)
             } catch (e: Exception) {
                 logService.addLog("Error during model download/unzip: ${e.message}", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
@@ -237,11 +207,12 @@ class VoskTranscriptionService @Inject constructor(
         }
     }
 
+    // This is a blocking function, should be called from a coroutine on an IO dispatcher.
     private fun transcribeInputStream(recognizer: Recognizer, inputStream: InputStream): String {
         try {
-            val buffer = ByteArray(4096)
+            val buffer = ByteArray(4096) 
             var nbytes: Int
-            while (inputStream.read(buffer).also { nbytes = it } > 0) {
+            while (inputStream.read(buffer).also { nbytes = it } > 0) { 
                 if (recognizer.acceptWaveForm(buffer, nbytes)) {
                     // val partialJson = recognizer.partialResult
                     // logService.addLog("Vosk partial: $partialJson")
@@ -249,20 +220,15 @@ class VoskTranscriptionService @Inject constructor(
             }
             val finalResultJson = recognizer.finalResult
             logService.addLog("Vosk final result JSON: $finalResultJson")
-            // Handle potentially null or empty finalResultJson
-            if (finalResultJson.isNullOrEmpty()) {
-                logService.addLog("Vosk final result JSON is null or empty.", com.hereliesaz.lexorcist.model.LogLevel.INFO)
-                return "" // Or throw an exception, depending on desired behavior
-            }
             val finalResult = Gson().fromJson(finalResultJson, FinalResult::class.java)
-            return finalResult?.text ?: "" // Handle case where parsing might somehow yield null FinalResult or null text
+            return finalResult.text
         } finally {
             try {
                 inputStream.close()
             } catch (ioe: IOException) {
                 logService.addLog("Error closing audio input stream: ${ioe.message}", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
             }
-            recognizer.close()
+            recognizer.close() 
         }
     }
 }

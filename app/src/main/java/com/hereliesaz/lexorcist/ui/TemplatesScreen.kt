@@ -55,7 +55,7 @@ import java.util.UUID
 internal fun filterTemplates(templates: List<Template>, court: String): List<Template> {
     return if (court.isNotBlank()) {
         templates.filter {
-            it.court.equals(court, ignoreCase = true) || it.court == "Generic"
+            it.court.equals(court, ignoreCase = true)
         }
     } else {
         templates
