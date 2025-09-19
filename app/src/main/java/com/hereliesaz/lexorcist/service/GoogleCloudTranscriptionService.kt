@@ -128,13 +128,16 @@ class GoogleCloudTranscriptionService @Inject constructor(
             }
             _processingState.value = ProcessingState.InProgress(0.25f)
 
-            val audio = RecognitionAudio.newBuilder().setContent(audioBytes).build()
-            val config = RecognitionConfig.newBuilder()
-                .setEncoding(RecognitionConfig.AudioEncoding.LINEAR16) // Ensure this matches your audio
-                .setSampleRateHertz(16000) // Ensure this matches your audio
-                .setLanguageCode("en-US") // Adjust as needed
-                .setEnableAutomaticPunctuation(true)
-                .build()
+            val audio = recognitionAudio {
+                this.content = audioBytes
+            }
+            val config = recognitionConfig {
+                this.encoding =
+                    RecognitionConfig.AudioEncoding.LINEAR16// Ensure this matches your audio
+                this.sampleRateHertz = 16000// Ensure this matches your audio
+                this.languageCode = "en-US"// Adjust as needed
+                this.enableAutomaticPunctuation = true
+            }
             _processingState.value = ProcessingState.InProgress(0.5f)
 
             logService.addLog("GoogleCloudTranscriptionService: Sending request to Google Cloud Speech API.")
