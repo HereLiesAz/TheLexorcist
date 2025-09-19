@@ -2,7 +2,6 @@ package com.hereliesaz.lexorcist.service
 
 import android.content.Context
 import android.net.Uri
-import android.util.Log // Added import for Log
 import androidx.work.Data
 import androidx.work.ListenableWorker
 import androidx.work.WorkerFactory
@@ -13,16 +12,15 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
-import org.junit.After
+import org.junit.After // @After is no longer strictly needed if mockedStaticUri is scoped locally
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mock
 import org.mockito.MockedStatic
 import org.mockito.Mockito
-import org.mockito.ArgumentMatchers // Import for anyString()
 import org.mockito.junit.MockitoJUnitRunner
-import org.mockito.kotlin.any // Import for any<Type>()
+import org.mockito.kotlin.any
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.whenever
 
@@ -39,13 +37,12 @@ class VideoProcessingWorkerTest {
     @Mock
     private lateinit var mockLogService: LogService
 
-    @Mock // Mock for the Uri that Uri.parse will return
+    @Mock // This mock is returned by Uri.parse, so it's still needed at class level
     private lateinit var mockParsedVideoUri: Uri
 
     private lateinit var worker: VideoProcessingWorker
     private lateinit var testVideoUriString: String
-    private lateinit var mockedStaticUri: MockedStatic<Uri> // To hold the static mock for Uri
-    private lateinit var mockedStaticLog: MockedStatic<Log> // To hold the static mock for Log
+    // private lateinit var mockedStaticUri: MockedStatic<Uri> // Removed from class level
 
     private val testCaseIdInput = 1
     private val testCaseName = "Test Case"
@@ -55,13 +52,7 @@ class VideoProcessingWorkerTest {
     @Before
     fun setup() {
         testVideoUriString = "file:///test.mp4"
-
-        mockedStaticUri = Mockito.mockStatic(Uri::class.java)
-        mockedStaticUri.`when`<Uri> { Uri.parse(testVideoUriString) }.thenReturn(mockParsedVideoUri)
-        whenever(mockParsedVideoUri.toString()).thenReturn(testVideoUriString)
-
-        // Initialize mockedStaticLog but without any specific stubbings if they are unnecessary
-        mockedStaticLog = Mockito.mockStatic(Log::class.java)
+        // Uri.parse mocking is moved to individual tests that need it.
 
         mockEvidence = Evidence(
             id = 1,
@@ -87,14 +78,14 @@ class VideoProcessingWorkerTest {
             videoOcrText = null,
             duration = null
         )
+    }
 
-        val inputData = Data.Builder()
-            .putString(VideoProcessingWorker.KEY_VIDEO_URI, testVideoUriString)
-            .putInt(VideoProcessingWorker.KEY_CASE_ID, testCaseIdInput)
-            .putString(VideoProcessingWorker.KEY_CASE_NAME, testCaseName)
-            .putString(VideoProcessingWorker.KEY_SPREADSHEET_ID, testSpreadsheetId)
-            .build()
+    // @After // No longer needed as static mocks are closed in finally blocks
+    // fun tearDown() {
+    //     // mockedStaticUri.close() // Removed
+    // }
 
+    private fun createWorker(inputData: Data): VideoProcessingWorker {
         val workerFactory = object : WorkerFactory() {
             override fun createWorker(
                 appContext: Context,
@@ -111,90 +102,113 @@ class VideoProcessingWorkerTest {
                 } else null
             }
         }
-
-        worker = TestListenableWorkerBuilder<VideoProcessingWorker>(mockContext)
+        return TestListenableWorkerBuilder<VideoProcessingWorker>(mockContext)
             .setInputData(inputData)
             .setWorkerFactory(workerFactory)
             .build()
     }
 
-    @After
-    fun tearDown() {
-        mockedStaticUri.close() 
-        mockedStaticLog.close() 
-    }
-
     @Test
     fun `doWork when video processing is successful returns success`() = runTest {
-        whenever(
-            mockVideoProcessingService.processVideo(
-                eq(mockParsedVideoUri),
-                eq(testCaseIdInput),
-                eq(testCaseName),
-                eq(testSpreadsheetId),
-                any()
-            )
-        ).thenReturn(mockEvidence)
+        var localMockedStaticUri: MockedStatic<Uri>? = null
+        try {
+            val inputData = Data.Builder()
+                .putString(VideoProcessingWorker.KEY_VIDEO_URI, testVideoUriString)
+                .putInt(VideoProcessingWorker.KEY_CASE_ID, testCaseIdInput)
+                .putString(VideoProcessingWorker.KEY_CASE_NAME, testCaseName)
+                .putString(VideoProcessingWorker.KEY_SPREADSHEET_ID, testSpreadsheetId)
+                .build()
+            worker = createWorker(inputData)
 
-        val result = worker.doWork()
+            localMockedStaticUri = Mockito.mockStatic(Uri::class.java)
+            localMockedStaticUri.`when`<Uri> { Uri.parse(testVideoUriString) }.thenReturn(mockParsedVideoUri)
+            
+            whenever(
+                mockVideoProcessingService.processVideo(
+                    eq(mockParsedVideoUri),
+                    eq(testCaseIdInput),
+                    eq(testCaseName),
+                    eq(testSpreadsheetId),
+                    any()
+                )
+            ).thenReturn(mockEvidence)
 
-        assertTrue(result is ListenableWorker.Result.Success)
-        val outputData = (result as ListenableWorker.Result.Success).outputData
-        assertTrue(outputData.getString(VideoProcessingWorker.RESULT_SUCCESS)?.contains("Video processed successfully") == true)
+            val result = worker.doWork()
+
+            assertTrue(result is ListenableWorker.Result.Success)
+            val outputData = (result as ListenableWorker.Result.Success).outputData
+            assertTrue(outputData.getString(VideoProcessingWorker.RESULT_SUCCESS)?.contains("Video processed successfully") == true)
+        } finally {
+            localMockedStaticUri?.close()
+        }
     }
 
     @Test
     fun `doWork when video processing service returns null returns failure`() = runTest {
-        whenever(
-            mockVideoProcessingService.processVideo(eq(mockParsedVideoUri), any(), any(), any(), any())
-        ).thenReturn(null)
+        var localMockedStaticUri: MockedStatic<Uri>? = null
+        try {
+            val inputData = Data.Builder()
+                .putString(VideoProcessingWorker.KEY_VIDEO_URI, testVideoUriString)
+                .putInt(VideoProcessingWorker.KEY_CASE_ID, testCaseIdInput)
+                .putString(VideoProcessingWorker.KEY_CASE_NAME, testCaseName)
+                .putString(VideoProcessingWorker.KEY_SPREADSHEET_ID, testSpreadsheetId)
+                .build()
+            worker = createWorker(inputData)
 
-        val result = worker.doWork()
+            localMockedStaticUri = Mockito.mockStatic(Uri::class.java)
+            localMockedStaticUri.`when`<Uri> { Uri.parse(testVideoUriString) }.thenReturn(mockParsedVideoUri)
 
-        assertTrue(result is ListenableWorker.Result.Failure)
-        val outputData = (result as ListenableWorker.Result.Failure).outputData
-        assertEquals("Video processing finished but no evidence was created.", outputData.getString(VideoProcessingWorker.RESULT_FAILURE))
+            whenever(
+                mockVideoProcessingService.processVideo(eq(mockParsedVideoUri), any(), any(), any(), any())
+            ).thenReturn(null)
+
+            val result = worker.doWork()
+
+            assertTrue(result is ListenableWorker.Result.Failure)
+            val outputData = (result as ListenableWorker.Result.Failure).outputData
+            assertEquals("Video processing finished but no evidence was created.", outputData.getString(VideoProcessingWorker.RESULT_FAILURE))
+        } finally {
+            localMockedStaticUri?.close()
+        }
     }
 
     @Test
     fun `doWork when video processing service throws exception returns failure`() = runTest {
-        val exceptionMessage = "Test processing exception"
-        whenever(
-            mockVideoProcessingService.processVideo(eq(mockParsedVideoUri), any(), any(), any(), any())
-        ).thenThrow(RuntimeException(exceptionMessage))
+        var localMockedStaticUri: MockedStatic<Uri>? = null
+        try {
+            val inputData = Data.Builder()
+                .putString(VideoProcessingWorker.KEY_VIDEO_URI, testVideoUriString)
+                .putInt(VideoProcessingWorker.KEY_CASE_ID, testCaseIdInput)
+                .putString(VideoProcessingWorker.KEY_CASE_NAME, testCaseName)
+                .putString(VideoProcessingWorker.KEY_SPREADSHEET_ID, testSpreadsheetId)
+                .build()
+            worker = createWorker(inputData)
 
-        val result = worker.doWork()
+            localMockedStaticUri = Mockito.mockStatic(Uri::class.java)
+            localMockedStaticUri.`when`<Uri> { Uri.parse(testVideoUriString) }.thenReturn(mockParsedVideoUri)
 
-        assertTrue(result is ListenableWorker.Result.Failure)
-        val outputData = (result as ListenableWorker.Result.Failure).outputData
-        assertEquals("Video processing failed: $exceptionMessage", outputData.getString(VideoProcessingWorker.RESULT_FAILURE))
+            val exceptionMessage = "Test processing exception"
+            whenever(
+                mockVideoProcessingService.processVideo(eq(mockParsedVideoUri), any(), any(), any(), any())
+            ).thenThrow(RuntimeException(exceptionMessage))
+
+            val result = worker.doWork()
+
+            assertTrue(result is ListenableWorker.Result.Failure)
+            val outputData = (result as ListenableWorker.Result.Failure).outputData
+            assertEquals("Video processing failed: $exceptionMessage", outputData.getString(VideoProcessingWorker.RESULT_FAILURE))
+        } finally {
+            localMockedStaticUri?.close()
+        }
     }
 
     @Test
     fun `doWork when input data is missing returns failure`() = runTest {
-        val workerFactory = object : WorkerFactory() { 
-            override fun createWorker(
-                appContext: Context,
-                workerClassName: String,
-                workerParameters: WorkerParameters
-            ): ListenableWorker? {
-                return if (workerClassName == VideoProcessingWorker::class.java.name) {
-                    VideoProcessingWorker(
-                        appContext,
-                        workerParameters,
-                        mockVideoProcessingService,
-                        mockLogService
-                    )
-                } else null
-            }
-        }
+        // No Uri.parse mocking needed here as it shouldn't be called
+        val inputData = Data.EMPTY
+        worker = createWorker(inputData)
 
-        val workerWithMissingData = TestListenableWorkerBuilder<VideoProcessingWorker>(mockContext)
-            .setInputData(Data.EMPTY) 
-            .setWorkerFactory(workerFactory) 
-            .build()
-
-        val result = workerWithMissingData.doWork()
+        val result = worker.doWork()
 
         assertTrue(result is ListenableWorker.Result.Failure)
         val outputData = (result as ListenableWorker.Result.Failure).outputData
