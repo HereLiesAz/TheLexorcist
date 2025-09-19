@@ -301,6 +301,9 @@ fun ProcessingProgressView(
                         com.hereliesaz.lexorcist.model.LogLevel.INFO -> MaterialTheme.colorScheme.onSurface
                         com.hereliesaz.lexorcist.model.LogLevel.ERROR -> MaterialTheme.colorScheme.error
                         com.hereliesaz.lexorcist.model.LogLevel.DEBUG -> MaterialTheme.colorScheme.onSurfaceVariant
+                        com.hereliesaz.lexorcist.model.LogLevel.WARNING -> MaterialTheme.colorScheme.tertiary
+                        com.hereliesaz.lexorcist.model.LogLevel.VERBOSE -> MaterialTheme.colorScheme.onSurfaceVariant
+                        com.hereliesaz.lexorcist.model.LogLevel.WTF -> MaterialTheme.colorScheme.error
                     }
                     Text(
                         text = "${SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date(logEntry.timestamp))} - ${logEntry.message}",

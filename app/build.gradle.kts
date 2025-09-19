@@ -212,6 +212,9 @@ dependencies {
     implementation(libs.google.api.services.script)
     implementation(libs.google.api.services.docs)
 
+    // Google Cloud Speech-to-Text
+    implementation("com.google.cloud:google-cloud-speech:4.69.0")
+
     implementation(libs.google.http.client.jackson2)
     implementation(libs.google.guava)
     implementation(libs.quickbirdstudios.opencv)
