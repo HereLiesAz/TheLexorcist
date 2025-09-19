@@ -15,7 +15,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.hilt.android)
     id("com.google.devtools.ksp") // Changed from alias
-    alias(libs.plugins.kotlin.compose) // Added Kotlin Compose Compiler plugin
+    alias(libs.plugins.compose.compiler) // UPDATED from libs.plugins.kotlin.compose
     id("com.google.gms.google-services") // Added Google Services plugin
     id("kotlin-parcelize") // ADDED
 }
@@ -67,7 +67,6 @@ android {
         viewBinding = true // ADDED
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = "2.2.20"
     }
     packaging {
         resources.excludes.add("META-INF/INDEX.LIST")
@@ -107,7 +106,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     buildToolsVersion = "36.0.0"
-    compileSdkExtension = 19
     ndkVersion = "29.0.13599879 rc2"
 }
 
@@ -142,12 +140,12 @@ dependencies {
     // testImplementation(libs.mockk.android) 
 
     // Mockito Core and Mockito-Kotlin
-    testImplementation("org.mockito:mockito-core:5.12.0")
-    testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
-    testImplementation("org.mockito:mockito-inline:5.2.0") // ADDED for static mocking
+    testImplementation(libs.mockito.core)
+    testImplementation(libs.kotlin.mockito.kotlin)
+    testImplementation(libs.mockito.inline) // ADDED for static mocking
 
     // WorkManager Testing (version 2.10.4 matches your work-runtime-ktx)
-    testImplementation("androidx.work:work-testing:2.10.4")
+    testImplementation(libs.androidx.work.testing)
 
     testImplementation(libs.androidx.arch.core.testing) // For InstantTaskExecutorRule
     testImplementation(libs.kotlinx.coroutines.test) // For coroutines testing (runTest, TestDispatchers)

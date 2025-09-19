@@ -13,6 +13,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
 
+// Adding a comment to try and force KSP reprocessing
 @Singleton
 class LogService @Inject constructor() {
 
@@ -28,5 +29,10 @@ class LogService @Inject constructor() {
             val newLog = LogEntry(System.currentTimeMillis(), message, level)
             _logEventFlow.emit(newLog)
         }
+    }
+
+    // Added to force KSP reprocessing
+    fun forceReprocess() {
+        // This method is intentionally left empty. Updated comment.
     }
 }

@@ -1,3 +1,4 @@
+\
 package com.hereliesaz.lexorcist.service
 
 import android.content.Context
@@ -85,7 +86,7 @@ class VoskTranscriptionService @Inject constructor(
                 logService.addLog("VoskService: Model not initialized. Initializing...")
                 val modelPath = initializeVoskModel()
                 model = Model(modelPath)
-                logService.addLog("VoskService: Model initialized.")
+                logService.addLog("VoskService: Model initialized at path: $modelPath")
             }
 
             val recognizer = Recognizer(model, 16000f)
@@ -116,20 +117,116 @@ class VoskTranscriptionService @Inject constructor(
 
     // initializeVoskModel is a suspend function and uses withContext(Dispatchers.IO)
     private suspend fun initializeVoskModel(): String {
-        return withContext(serviceScope.coroutineContext) { // Can use serviceScope's context or Dispatchers.IO directly
-            val modelDir = File(context.filesDir, "vosk-model")
-            if (!modelDir.exists() || modelDir.listFiles()?.isEmpty() == true) {
-                logService.addLog("Vosk model not found or empty at ${modelDir.absolutePath}, attempting to download and unzip...")
-                _processingState.value = ProcessingState.InProgress(0.0f)
-                val downloadResult = downloadAndUnzipModel(modelDir)
-                if (downloadResult is Result.Error) {
-                    logService.addLog("Vosk model download failed: ${downloadResult.exception.message}", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
-                     _processingState.value = ProcessingState.Failure("Model download failed: ${downloadResult.exception.message}")
-                    throw downloadResult.exception
-                }
-                logService.addLog("Vosk model downloaded and unzipped successfully to ${modelDir.absolutePath}")
+        return withContext(serviceScope.coroutineContext) {
+            val baseModelDir = File(context.filesDir, "vosk-model")
+
+            // Helper function to check if a directory looks like a valid Vosk model directory
+            fun isValidModelDir(dir: File): Boolean {
+                val amDir = File(dir, "am")
+                // Standard Vosk models have specific subdirectories like 'am', 'conf', 'graph'.
+                // 'conf/model.conf' or 'ivector/final.ie' are good indicators.
+                // For small models, 'am' and 'conf' are typical.
+                val confDir = File(dir, "conf")
+                val modelConfFile = File(confDir, "model.conf")
+                // More robust check: presence of key directories/files
+                // val rescoreDir = File(dir, "rescore") // Optional, but if present, indicates structure
+                // val rnnDir = File(dir, "rnn") // Optional
+
+                // Check for core components. Modify this if your model structure differs.
+                val hasCoreComponents = amDir.exists() && amDir.isDirectory &&
+                                        confDir.exists() && confDir.isDirectory &&
+                                        modelConfFile.exists() && modelConfFile.isFile
+
+                // You might also check for a graph directory or other specific files based on your model type
+                // val graphDir = File(dir, "graph")
+                // val hclgFile = File(graphDir, "HCLG.fst")
+                // return hasCoreComponents && graphDir.exists() && graphDir.isDirectory && hclgFile.exists()
+                                        
+                return hasCoreComponents
             }
-            modelDir.absolutePath
+
+            // 1. Check if the baseModelDir itself is a valid model
+            if (isValidModelDir(baseModelDir)) {
+                logService.addLog("Vosk model found and valid at ${baseModelDir.absolutePath}")
+                return@withContext baseModelDir.absolutePath
+            }
+
+            // 2. If not valid or doesn't exist, try to clean up and download/unzip
+            logService.addLog("Vosk model not found or invalid at ${baseModelDir.absolutePath}. Cleaning up and attempting to download and unzip...")
+            if (baseModelDir.exists()) {
+                logService.addLog("Deleting existing model directory: ${baseModelDir.absolutePath}")
+                if (!baseModelDir.deleteRecursively()) {
+                    logService.addLog("Failed to delete existing model directory: ${baseModelDir.absolutePath}", com.hereliesaz.lexorcist.model.LogLevel.WARNING)
+                    // If deletion fails, it might cause issues, but we proceed with caution
+                }
+            }
+            // Ensure base directory exists or can be created
+            if (!baseModelDir.exists()) {
+                if (!baseModelDir.mkdirs()) {
+                    val errorMsg = "Failed to create base model directory: ${baseModelDir.absolutePath}"
+                    logService.addLog(errorMsg, com.hereliesaz.lexorcist.model.LogLevel.ERROR)
+                    throw IOException(errorMsg)
+                }
+            }
+
+
+            _processingState.value = ProcessingState.InProgress(0.0f)
+            val downloadResult = downloadAndUnzipModel(baseModelDir) // downloadAndUnzipModel unzips into baseModelDir
+
+            if (downloadResult is Result.Error) {
+                logService.addLog("Vosk model download/unzip failed: ${downloadResult.exception.message}", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
+                _processingState.value = ProcessingState.Failure("Model download/unzip failed: ${downloadResult.exception.message}")
+                // Clean up if download failed to avoid issues on next attempt
+                if (baseModelDir.exists()) {
+                    if (!baseModelDir.deleteRecursively()) {
+                         logService.addLog("Failed to delete model directory after failed download: ${baseModelDir.absolutePath}", com.hereliesaz.lexorcist.model.LogLevel.WARNING)
+                    }
+                }
+                throw downloadResult.exception
+            }
+            logService.addLog("Vosk model downloaded and unzipped successfully to ${baseModelDir.absolutePath}")
+
+            // 3. After unzipping, re-check baseModelDir
+            if (isValidModelDir(baseModelDir)) {
+                logService.addLog("Vosk model successfully prepared at ${baseModelDir.absolutePath}")
+                return@withContext baseModelDir.absolutePath
+            }
+
+            // 4. If baseModelDir is still not a valid model, check for a single subdirectory
+            //    that might contain the actual model files (common with zips).
+            logService.addLog("Vosk model not directly in ${baseModelDir.absolutePath}. Checking subdirectories...")
+            val subFiles = baseModelDir.listFiles()
+            if (subFiles != null) {
+                val subDirs = subFiles.filter { it.isDirectory }.toList()
+                if (subDirs.size == 1) {
+                    val potentialModelDir = subDirs[0]
+                    if (isValidModelDir(potentialModelDir)) {
+                        logService.addLog("Vosk model found in subdirectory: ${potentialModelDir.absolutePath}")
+                        return@withContext potentialModelDir.absolutePath
+                    } else {
+                        logService.addLog("Subdirectory ${potentialModelDir.absolutePath} is not a valid Vosk model. Contents: ${potentialModelDir.listFiles()?.joinToString { it.name } ?: "N/A"}", com.hereliesaz.lexorcist.model.LogLevel.WARNING)
+                    }
+                } else if (subDirs.isEmpty()) {
+                    logService.addLog("No subdirectories found in ${baseModelDir.absolutePath} to check for model. Contents: ${baseModelDir.listFiles()?.joinToString { it.name } ?: "N/A"}", com.hereliesaz.lexorcist.model.LogLevel.WARNING)
+                } else {
+                    logService.addLog("Multiple subdirectories found in ${baseModelDir.absolutePath}: ${subDirs.joinToString { it.name }}. Cannot determine model path automatically.", com.hereliesaz.lexorcist.model.LogLevel.WARNING)
+                }
+            } else {
+                 logService.addLog("Could not list files in ${baseModelDir.absolutePath}.", com.hereliesaz.lexorcist.model.LogLevel.WARNING)
+            }
+
+
+            // 5. If model still not found, throw an error.
+            val errorMsg = "Failed to locate a valid Vosk model structure in ${baseModelDir.absolutePath} (or its direct subdirectory) after download and unzip. Please ensure the zip file directly contains model files or has them in one subdirectory."
+            logService.addLog(errorMsg, com.hereliesaz.lexorcist.model.LogLevel.ERROR)
+            _processingState.value = ProcessingState.Failure(errorMsg)
+            // Clean up to prevent issues on next launch by removing the potentially corrupt/incomplete model directory
+            if (baseModelDir.exists()) {
+                 if(!baseModelDir.deleteRecursively()) {
+                    logService.addLog("Failed to delete model directory after final failure: ${baseModelDir.absolutePath}", com.hereliesaz.lexorcist.model.LogLevel.WARNING)
+                 }
+            }
+            throw IOException(errorMsg)
         }
     }
 
@@ -186,7 +283,7 @@ class VoskTranscriptionService @Inject constructor(
                 var commonPrefix = ""
                 if (entryNames.isNotEmpty()) {
                     // Normalize entry names to use '/'
-                    val normalizedEntryNames = entryNames.map { it.replace("\\", "/") }
+                    val normalizedEntryNames = entryNames.map { it.replace("\\\\", "/") }
                     val firstEntryParts = normalizedEntryNames.first().split('/')
                     if (firstEntryParts.size > 1 && firstEntryParts.first().isNotEmpty()) { // if the first entry is in a directory
                         commonPrefix = firstEntryParts.first() + "/"
@@ -208,7 +305,7 @@ class VoskTranscriptionService @Inject constructor(
                 zipEntry = freshZipInputStream.nextEntry
 
                 while (zipEntry != null) {
-                    var entryName = zipEntry.name.replace('\\', '/') // Corrected escape. Normalize entry name
+                    var entryName = zipEntry.name.replace('\\\\', '/') // Corrected escape. Normalize entry name
                     // Strip the common prefix
                     if (commonPrefix.isNotEmpty() && entryName.startsWith(commonPrefix)) {
                         entryName = entryName.substring(commonPrefix.length)
