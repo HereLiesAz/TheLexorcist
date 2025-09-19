@@ -106,8 +106,6 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions {
-    }
     buildToolsVersion = "36.0.0"
     compileSdkExtension = 19
     ndkVersion = "29.0.13599879 rc2"
@@ -276,5 +274,6 @@ kotlin {
     jvmToolchain(17)
     compilerOptions {
         freeCompilerArgs.add("-opt-in=androidx.compose.material3.ExperimentalMaterial3Api")
+        freeCompilerArgs.add("-Xannotation-default-target=param-property")
     }
 }

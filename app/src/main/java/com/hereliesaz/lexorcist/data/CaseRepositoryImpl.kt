@@ -158,8 +158,8 @@ class CaseRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun archiveCase(caseToArchive: Case): Result<Case> {
-        val archivedDetails = caseToArchive.copy(isArchived = true, lastModifiedTime = System.currentTimeMillis())
+    override suspend fun archiveCase(case: Case): Result<Case> { // Changed caseToArchive to case
+        val archivedDetails = case.copy(isArchived = true, lastModifiedTime = System.currentTimeMillis())
         return when (val updateStorageResult = storageService.updateCase(archivedDetails)) {
             is Result.Loading -> Result.Loading
             is Result.Success -> {
@@ -185,15 +185,15 @@ class CaseRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun deleteCase(caseToDelete: Case): Result<Unit> {
-        return when (val deleteResult = storageService.deleteCase(caseToDelete)) {
+    override suspend fun deleteCase(case: Case): Result<Unit> { // Changed caseToDelete to case
+        return when (val deleteResult = storageService.deleteCase(case)) {
             is Result.Loading -> Result.Loading
             is Result.Success -> {
                 _cases.update {
-                    it.filterNot { c -> c.spreadsheetId == caseToDelete.spreadsheetId }
+                    it.filterNot { c -> c.spreadsheetId == case.spreadsheetId }
                         .sortedByDescending { c -> c.lastModifiedTime ?: 0L }
                 }
-                if (_selectedCase.value?.spreadsheetId == caseToDelete.spreadsheetId) {
+                if (_selectedCase.value?.spreadsheetId == case.spreadsheetId) {
                     selectCase(null)
                 }
                 Result.Success(Unit)

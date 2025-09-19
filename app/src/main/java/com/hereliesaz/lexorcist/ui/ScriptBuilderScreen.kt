@@ -51,7 +51,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel // Updated import
 import com.hereliesaz.lexorcist.model.Script
 import com.hereliesaz.lexorcist.viewmodel.ExtrasViewModel
 
