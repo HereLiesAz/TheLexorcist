@@ -10,28 +10,24 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 // import java.util.logging.Level // Removed java.util.logging.Level
-import javax.inject.Inject
-import javax.inject.Singleton
+// import javax.inject.Inject // REMOVED
+// import javax.inject.Singleton // REMOVED
 
-// Adding a comment to try and force KSP reprocessing
-@Singleton
-class LogService @Inject constructor() {
+// Annotations removed for diagnostics
+class LogService { // REMOVED @Singleton and @Inject constructor()
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     private val _logEventFlow = MutableSharedFlow<LogEntry>(replay = 100)
     val logEventFlow: SharedFlow<LogEntry> = _logEventFlow.asSharedFlow()
 
-    // Changed parameter 'level' to use com.hereliesaz.lexorcist.model.LogLevel
     fun addLog(message: String, level: LogLevel = LogLevel.INFO) {
         scope.launch {
-            // Assuming LogEntry constructor expects com.hereliesaz.lexorcist.model.LogLevel
             val newLog = LogEntry(System.currentTimeMillis(), message, level)
             _logEventFlow.emit(newLog)
         }
     }
 
-    // Added to force KSP reprocessing
     fun forceReprocess() {
         // This method is intentionally left empty. Updated comment.
     }

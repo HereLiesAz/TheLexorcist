@@ -258,7 +258,7 @@ dependencies {
     // Room IS NOT ALLOWED IN THIS PROJECT!!!!!
 
     // Vosk for on-device speech-to-text
-    implementation(libs.vosk.android)
+    // implementation(libs.vosk.android) // REMOVED
     // Explicit gRPC dependencies with consistent versions
     implementation(libs.grpc.okhttp)
     implementation(libs.grpc.core)
