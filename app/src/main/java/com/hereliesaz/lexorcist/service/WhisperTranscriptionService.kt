@@ -9,6 +9,7 @@ import com.hereliesaz.lexorcist.model.LogLevel
 import com.hereliesaz.lexorcist.model.ProcessingState
 import com.hereliesaz.lexorcist.model.TranscriptionModels
 import com.hereliesaz.lexorcist.utils.Result
+import com.hereliesaz.lexorcist.utils.VideoUtils
 import com.hereliesaz.whisper.asr.Whisper
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
@@ -188,6 +189,21 @@ class WhisperTranscriptionService @Inject constructor(
 
             continuation.invokeOnCancellation {
                 whisperInstance.stop()
+            }
+        }
+    }
+
+    suspend fun transcribeVideo(uri: Uri): Result<String> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val audioFilePath = VideoUtils.extractAudio(context, uri)
+                val audioFile = File(audioFilePath)
+                val audioUri = Uri.fromFile(audioFile)
+                val result = transcribeAudio(audioUri)
+                audioFile.delete() // Clean up the temporary audio file
+                result
+            } catch (e: IOException) {
+                Result.Error(e)
             }
         }
     }

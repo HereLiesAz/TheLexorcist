@@ -134,4 +134,13 @@ public class WaveUtil {
 
         return byteArray;
     }
+
+    public static void convertPcmToWav(java.io.File pcmFile, java.io.File wavFile, int numChannels, int sampleRate, int bitsPerSample) throws java.io.IOException {
+        java.io.FileInputStream fis = new java.io.FileInputStream(pcmFile);
+        byte[] pcmData = new byte[(int) pcmFile.length()];
+        fis.read(pcmData);
+        fis.close();
+
+        createWaveFile(wavFile.getAbsolutePath(), pcmData, sampleRate, numChannels, bitsPerSample / 8);
+    }
 }

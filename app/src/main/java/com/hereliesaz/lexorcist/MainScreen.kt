@@ -258,6 +258,19 @@ fun MainScreen(
                                         Text("Error: Evidence not found.")
                                     }
                                 }
+                                composable("video_evidence/{evidenceId}") { backStackEntry ->
+                                    val evidenceIdString = backStackEntry.arguments?.getString("evidenceId")
+                                    val evidenceId = remember(evidenceIdString) { evidenceIdString?.toIntOrNull() }
+                                    if (evidenceId != null) {
+                                        com.hereliesaz.lexorcist.ui.VideoEvidenceScreen(
+                                            navController = navController,
+                                            caseViewModel = caseViewModel,
+                                            evidenceId = evidenceId
+                                        )
+                                    } else {
+                                        Text("Error: Invalid evidence ID.")
+                                    }
+                                }
                             }
                         }
                     }

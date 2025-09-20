@@ -61,70 +61,55 @@ class VideoProcessingService @Inject constructor(
         onProgress(0.15f, "Audio extraction attempt complete.")
 
         var audioTranscript: String? = null
-        var transcriptionError: String? = null
-
-        if (audioUri != null) {
-            logService.addLog("Audio extracted to $audioUri. Transcribing...")
-            onProgress(0.20f, "Transcribing audio...")
-            when (val transcriptionResult = transcriptionService.transcribeAudio(audioUri)) {
+        if (transcriptionService is WhisperTranscriptionService) {
+            when (val transcriptionResult = transcriptionService.transcribeVideo(videoUri)) {
                 is Result.Success -> {
                     audioTranscript = transcriptionResult.data
                     logService.addLog("Transcription successful: ${audioTranscript?.take(100)}...")
                     onProgress(0.40f, "Audio transcription complete.")
                 }
                 is Result.Error -> {
-                    transcriptionError = transcriptionResult.exception.message ?: "Unknown transcription error"
+                    val transcriptionError = transcriptionResult.exception.message ?: "Unknown transcription error"
                     logService.addLog("Transcription failed: $transcriptionError", LogLevel.ERROR)
                     onProgress(0.40f, "Audio transcription failed.")
                 }
-                is Result.UserRecoverableError -> {
-                    transcriptionError = transcriptionResult.exception.message ?: "User recoverable transcription error"
-                    logService.addLog("Transcription user recoverable error: $transcriptionError", LogLevel.INFO) // Changed to INFO
-                    onProgress(0.40f, "Audio transcription error (user recoverable).")
-                }
-                is Result.Loading -> {
-                    transcriptionError = "Transcription process started but did not complete."
-                    logService.addLog("Transcription returned Loading state, processing as incomplete.", LogLevel.INFO) // Changed to INFO
-                    onProgress(0.40f, "Audio transcription in progress but did not complete.")
+                else -> {
+                    // Handle other cases if necessary
                 }
             }
-        } else {
-            transcriptionError = "Audio could not be extracted from video."
-            logService.addLog(transcriptionError, LogLevel.ERROR)
-            onProgress(0.40f, "Audio extraction failed.")
         }
         
-        if (audioTranscript == null && transcriptionError != null) {
-            audioTranscript = "Transcription failed: $transcriptionError"
-        } else if (audioTranscript == null) {
+        if (audioTranscript == null) {
             audioTranscript = "No audio processed."
         }
 
         onProgress(0.45f, "Extracting frames for OCR...")
         logService.addLog("Extracting frames from $videoUri")
-        val frameUris = extractKeyframes(videoUri)
+        val frameUris = com.hereliesaz.lexorcist.utils.VideoUtils.extractFrames(context, videoUri)
         val ocrTextBuilder = StringBuilder()
         if (frameUris.isNotEmpty()) {
             logService.addLog("Extracted ${frameUris.size} keyframes for OCR.")
             val totalFrames = frameUris.size
             frameUris.forEachIndexed { index, frameUri ->
-                val frameProgress = 0.45f + (0.45f * (index + 1) / totalFrames) 
+                val frameProgress = 0.45f + (0.45f * (index + 1) / totalFrames)
                 val progressMessage = "Processing frame ${index + 1} of $totalFrames for OCR..."
                 onProgress(frameProgress, progressMessage)
                 logService.addLog(progressMessage)
-                val frameEvidence = ocrProcessingService.processImageFrame(
+                val (ocrResult, _) = ocrProcessingService.processImage(
                     uri = frameUri,
                     context = context,
-                    caseId = caseId,
+                    caseId = caseId.toLong(),
                     spreadsheetId = spreadsheetId,
-                    parentVideoId = null,
-                )
-                if (frameEvidence != null && frameEvidence.content.isNotBlank()) {
-                    logService.addLog("OCR for frame ${index + 1} found ${frameEvidence.content.length} characters.")
-                    ocrTextBuilder.append(frameEvidence.content).append("\n\n")
+                ) { state ->
+                    // We can't easily update the progress here, as this is a callback
+                }
+                if (ocrResult != null && ocrResult.content.isNotBlank()) {
+                    logService.addLog("OCR for frame ${index + 1} found ${ocrResult.content.length} characters.")
+                    ocrTextBuilder.append(ocrResult.content).append("\n\n")
                 } else {
                     logService.addLog("No text found or error in OCR for frame ${index + 1}. URI: $frameUri", LogLevel.DEBUG)
                 }
+                frameUri.path?.let { File(it).delete() }
             }
         } else {
             logService.addLog("No keyframes extracted for OCR from $videoUri")
