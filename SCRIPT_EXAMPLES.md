@@ -928,6 +928,34 @@ For this next set of scripts, we assume a more advanced API that allows for dire
     });
     ```
 
+**59. Identify the "Most Persuasive" Evidence**
+*   **Description:** An AI ranks all evidence in the spreadsheet based on relevance, admissibility, and impact, then creates a "Top5Evidence" sheet with links to these key pieces.
+*   **Script:**
+    ```javascript
+    Spreadsheet.createSheet("Top5Evidence");
+    const allEvidence = Spreadsheet.query("Evidence", "SELECT *");
+    const rankings = AI.analyze("PersuasivenessRanker", { evidence: allEvidence, allegations: case.allegations });
+    rankings.slice(0, 5).forEach(item => {
+        Spreadsheet.appendRow("Top5Evidence", { "EvidenceID": item.id, "Rank": item.rank, "Reason": item.reason });
+    });
+    ```
+
+**60. AI-Powered Spreadsheet Query via Natural Language**
+*   **Description:** A user writes a question in a "Queries" sheet. The script sends it to an AI that converts it into a formal query, executes it, and pastes the results into the sheet.
+*   **Script:**
+    ```javascript
+    const newQueries = Spreadsheet.query("Queries", "SELECT * WHERE Result IS NULL");
+    newQueries.forEach(query => {
+        const formalQuery = AI.analyze("NLQtoSQL", { question: query.Question });
+        try {
+            const results = Spreadsheet.query(formalQuery.sheet, formalQuery.sql);
+            const resultsAsText = JSON.stringify(results, null, 2);
+            Spreadsheet.updateCell("Queries", `B${query.rowNumber}`, resultsAsText);
+        } catch (e) {
+            Spreadsheet.updateCell("Queries", `B${query.rowNumber}`, `Error: ${e.message}`);
+        }
+    });
+    ```
 ---
 
 ### **Level 16: Scripted Menu Items**
@@ -1015,31 +1043,240 @@ For this next set of scripts, we assume a more advanced API that allows for dire
     });
     ```
 
-**59. Identify the "Most Persuasive" Evidence**
-*   **Description:** An AI ranks all evidence in the spreadsheet based on relevance, admissibility, and impact, then creates a "Top5Evidence" sheet with links to these key pieces.
+---
+
+### **Level 17: Advanced Workflow and Integration Patterns**
+
+*This level pushes the boundaries of what scripts can do, introducing more complex logic, proactive behaviors, and deeper integration with both the UI and conceptual external services.*
+
+**New Assumed API:**
+*   `UI.prompt(title, options)`: A function that shows a dialog with a list of options and returns the selected one.
+*   `Tasks.create(taskText, dueDate)`: A function to create a task in a hypothetical integrated task manager.
+*   `Redactor.redact(text, piiTypes)`: A function to find and redact specific types of PII.
+*   `Share.asPDF(text, fileName)`: A function to generate a PDF and open a share sheet.
+*   `Case.getRecentTags(limit)`: Gets the most recently used tags in the case.
+*   `AI.compareSentiment(textA, textB)`: Compares the sentiment of two texts and returns a score.
+*   `Document.build(title, sections)`: A function to generate a document from structured content.
+
+**66. Dynamic 'Quick Action' Menu**
+*   **Description:** The menu item's label and action change to reflect the most recently used tag. If the last tag was "Financial", it offers to tag another item as "Financial". If it was "Threat", it offers to do the same. This provides a context-aware shortcut for repetitive tagging.
 *   **Script:**
     ```javascript
-    Spreadsheet.createSheet("Top5Evidence");
-    const allEvidence = Spreadsheet.query("Evidence", "SELECT *");
-    const rankings = AI.analyze("PersuasivenessRanker", { evidence: allEvidence, allegations: case.allegations });
-    rankings.slice(0, 5).forEach(item => {
-        Spreadsheet.appendRow("Top5Evidence", { "EvidenceID": item.id, "Rank": item.rank, "Reason": item.reason });
+    const recentTags = Case.getRecentTags(1);
+    const lastTag = recentTags.length > 0 ? recentTags[0] : null;
+
+    if (lastTag) {
+        MenuItem.setLabel(`Tag as '${lastTag}'`);
+        MenuItem.setIcon("label");
+        MenuItem.onClick(() => {
+            addTag(lastTag);
+            UI.toast(`Evidence tagged as '${lastTag}'.`);
+        });
+    } else {
+        MenuItem.setVisible(false); // Hide if no tags have been used yet
+    }
+    ```
+
+**67. Proactive Evidence Request Task**
+*   **Description:** Scans evidence text for mentions of communication on other platforms (e.g., "as I said in the email," "on WhatsApp") and creates a task in an external system to remind the user to acquire that evidence.
+*   **Script:**
+    ```javascript
+    const platforms = ["email", "whatsapp", "voicemail", "text message", "letter"];
+    const regex = new RegExp(`\\b(in the|on) (${platforms.join('|')})\\b`, 'i');
+    const match = evidence.text.match(regex);
+
+    if (match) {
+        const platform = match[2];
+        addTag("External Communication Mentioned");
+        Tasks.create(`Request the ${platform} conversation mentioned on ${evidence.metadata.date}`, new Date(Date.now() + 3 * 24 * 3600 * 1000)); // Due in 3 days
+        createNote(`Task created to request related ${platform} evidence.`);
+    }
+    ```
+
+**68. 'Tone Shift' Alert Item**
+*   **Description:** A menu item that only appears if an AI detects a significant negative shift in tone between the current evidence and the previous piece of communication from the same author. Clicking it provides a one-tap way to tag for escalation.
+*   **Script:**
+    ```javascript
+    const previousEvidence = case.evidence
+        .filter(e => e.metadata.author === evidence.metadata.author && new Date(e.metadata.date) < new Date(evidence.metadata.date))
+        .sort((a, b) => new Date(b.metadata.date) - new Date(a.metadata.date))[0];
+
+    if (previousEvidence) {
+        const sentimentComparison = AI.compareSentiment(evidence.text, previousEvidence.text);
+        // e.g., sentimentComparison = { shift: -0.5, from: 0.2, to: -0.3 }
+        if (sentimentComparison.shift < -0.4) { // A significant negative shift
+            MenuItem.setVisible(true);
+            MenuItem.setLabel("Flag Escalation?");
+            MenuItem.setIcon("trending_down");
+            MenuItem.onClick(() => {
+                addTag("Negative Tone Shift");
+                linkToAllegation("Harassment");
+                UI.toast("Escalation flagged.");
+                MenuItem.setVisible(false);
+            });
+        } else {
+            MenuItem.setVisible(false);
+        }
+    }
+    ```
+
+**69. Automated Redaction & Sharing**
+*   **Description:** A script that identifies PII, uses a conceptual `Redactor` API to create a clean version of the text, and then uses a `Share` API to generate a PDF and open the native share dialog.
+*   **Script:**
+    ```javascript
+    MenuItem.setLabel("Redact & Share");
+    MenuItem.setIcon("share");
+    MenuItem.onClick(() => {
+        const piiToRedact = ["Email Address", "Phone Number", "SSN"]; // Can be expanded
+        const redactedText = Redactor.redact(evidence.text, piiToRedact);
+        const fileName = `Redacted Evidence - ${evidence.id}.pdf`;
+        Share.asPDF(redactedText, fileName);
     });
     ```
 
-**60. AI-Powered Spreadsheet Query via Natural Language**
-*   **Description:** A user writes a question in a "Queries" sheet. The script sends it to an AI that converts it into a formal query, executes it, and pastes the results into the sheet.
+**70. Case Timeline 'Event Density' Visualizer**
+*   **Description:** This script changes the menu item's icon and color based on the "density" of recent evidence. A flurry of activity in the last 24 hours could indicate a critical event, and the menu item reflects this urgency.
 *   **Script:**
     ```javascript
-    const newQueries = Spreadsheet.query("Queries", "SELECT * WHERE Result IS NULL");
-    newQueries.forEach(query => {
-        const formalQuery = AI.analyze("NLQtoSQL", { question: query.Question });
-        try {
-            const results = Spreadsheet.query(formalQuery.sheet, formalQuery.sql);
-            const resultsAsText = JSON.stringify(results, null, 2);
-            Spreadsheet.updateCell("Queries", `B${query.rowNumber}`, resultsAsText);
-        } catch (e) {
-            Spreadsheet.updateCell("Queries", `B${query.rowNumber}`, `Error: ${e.message}`);
+    const oneDayAgo = new Date(Date.now() - 24 * 3600 * 1000);
+    const recentEvidenceCount = case.evidence.filter(e => new Date(e.metadata.date) > oneDayAgo).length;
+
+    MenuItem.setLabel(`${recentEvidenceCount} in 24h`);
+    if (recentEvidenceCount > 10) {
+        MenuItem.setIcon("whatshot"); // High activity
+        // MenuItem.setColor("#FF4500"); // Conceptual API to set color
+    } else if (recentEvidenceCount > 3) {
+        MenuItem.setIcon("hourglass_full"); // Medium activity
+        // MenuItem.setColor("#FFD700");
+    } else {
+        MenuItem.setIcon("hourglass_empty"); // Low activity
+    }
+    ```
+
+**71. Cross-Allegation Contradiction Finder**
+*   **Description:** Finds evidence where a person makes a claim under one allegation (e.g., "This was a gift") that directly contradicts a claim in another piece of evidence linked to a different allegation (e.g., "You need to repay that loan").
+*   **Script:**
+    ```javascript
+    const giftRegex = /\b(it was a gift)\b/i;
+    if (giftRegex.test(evidence.text) && evidence.allegations.includes("Financial Dispute")) {
+        const loanEvidence = case.evidence.find(e =>
+            e.allegations.includes("Unpaid Loan") &&
+            e.text.toLowerCase().includes("you owe me")
+        );
+        if (loanEvidence) {
+            addTag("Cross-Allegation Contradiction");
+            createNote(`This 'gift' claim contradicts evidence from ${loanEvidence.metadata.date} regarding a 'loan'.`);
+            setSeverity("High");
+        }
+    }
+    ```
+
+**72. 'Next Logical Step' Suggester**
+*   **Description:** An AI-powered menu item that analyzes the current evidence and suggests the most logical next step for the lawyer. The action of the menu item changes based on the AI's suggestion.
+*   **Script:**
+    ```javascript
+    const suggestion = AI.analyze("NextStepSuggester", { evidence: evidence, case: case });
+    // e.g., suggestion = { label: "Request Bank Statements", action: "CREATE_TASK", details: "Request bank statements for the period of the alleged loan." }
+
+    if (suggestion) {
+        MenuItem.setLabel(`AI Suggests: ${suggestion.label}`);
+        MenuItem.setIcon("lightbulb");
+        MenuItem.onClick(() => {
+            if (suggestion.action === "CREATE_TASK") {
+                Tasks.create(suggestion.details);
+                UI.toast("Task created based on AI suggestion.");
+            } else if (suggestion.action === "LINK_EVIDENCE") {
+                // Logic to find and link other evidence
+            }
+        });
+    } else {
+        MenuItem.setVisible(false);
+    }
+    ```
+
+**73. Interactive 'Build a Brief' Menu**
+*   **Description:** A highly interactive script that guides the user through building a document. It uses a conceptual `UI.prompt` to ask a series of questions, assembling the answers into a structured document.
+*   **Script:**
+    ```javascript
+    MenuItem.setLabel("Build a Brief...");
+    MenuItem.setIcon("article");
+    MenuItem.onClick(async () => {
+        const title = await UI.prompt("Enter Brief Title", { type: 'text' });
+        const allegation = await UI.prompt("Select Allegation", { type: 'select', options: case.allegations.map(a => a.name) });
+        const includeTimeline = await UI.prompt("Include Full Timeline?", { type: 'confirm' });
+
+        const sections = [{ title: "Introduction", content: `This brief concerns the allegation of ${allegation}.` }];
+        if (includeTimeline) {
+            const timelineEvents = case.evidence.sort((a,b) => new Date(a.metadata.date) - new Date(b.metadata.date)).map(e => `On ${e.metadata.date}: ${e.text.substring(0,100)}...`);
+            sections.push({ title: "Timeline of Events", content: timelineEvents.join('\n') });
+        }
+
+        Document.build(title, sections);
+        UI.toast("Document generation started.");
+    });
+    ```
+
+**74. Evidence Authenticity Score**
+*   **Description:** This script creates a composite "Authenticity Score" by checking for metadata anomalies (like in script #22) and combining it with a conceptual AI forgery detection score. The result is displayed clearly on the menu item itself.
+*   **Script:**
+    ```javascript
+    let score = 100;
+    let notes = [];
+
+    // Metadata check
+    if (evidence.metadata.exif && evidence.metadata.exif.dateCreated) {
+        const diffDays = Math.abs(new Date(evidence.metadata.exif.dateCreated) - new Date(evidence.metadata.date)) / (1000 * 3600 * 24);
+        if (diffDays > 1) {
+            score -= 25;
+            notes.push("EXIF date mismatch.");
+        }
+    }
+
+    // AI Forgery Check
+    const forgeryRisk = ForgeryDetectionAI.analyze(evidence.imagePath); // Returns 0.0 to 1.0
+    if (forgeryRisk > 0.5) {
+        score -= (forgeryRisk * 50); // Weighted deduction
+        notes.push(`AI forgery risk is high (${Math.round(forgeryRisk*100)}%).`);
+    }
+
+    MenuItem.setLabel(`Authenticity: ${Math.round(score)}%`);
+    if (score < 75) {
+        MenuItem.setIcon("warning");
+        // MenuItem.setColor("#FF4500");
+        MenuItem.onClick(() => {
+            createNote(`Authenticity concerns: ${notes.join(' ')}`);
+            UI.toast("Note added with authenticity concerns.");
+        });
+    } else {
+        MenuItem.setIcon("verified");
+    }
+    ```
+
+**75. Predictive Outcome Simulation**
+*   **Description:** The ultimate "what-if" tool. It allows a user to select a potential, unproven allegation from a list. The script then *temporarily* adds this allegation to the case data, runs a conceptual `OutcomePredictionAI`, displays the simulated change in outcome, and then rolls back the temporary change, leaving the original case data untouched.
+*   **Script:**
+    ```javascript
+    MenuItem.setLabel("Simulate Outcome");
+    MenuItem.setIcon("model_training");
+    MenuItem.onClick(async () => {
+        const potentialAllegations = ["Coercion", "Fraud", "Defamation"]; // Could be fetched from a central list
+        const allegationToSimulate = await UI.prompt("Simulate adding which allegation?", { type: 'select', options: potentialAllegations });
+
+        if (allegationToSimulate) {
+            // Get baseline prediction
+            const baseline = AI.analyze("OutcomePredictor", { case: case });
+
+            // Create a temporary, modified copy of the case for simulation
+            const simulatedCase = JSON.parse(JSON.stringify(case));
+            simulatedCase.allegations.push(allegationToSimulate);
+
+            // Get the "what-if" prediction
+            const simulation = AI.analyze("OutcomePredictor", { case: simulatedCase });
+
+            const baselinePercent = Math.round(baseline.confidence * 100);
+            const simPercent = Math.round(simulation.confidence * 100);
+
+            UI.toast(`Simulation: Adding '${allegationToSimulate}' changes outcome confidence from ${baselinePercent}% to ${simPercent}%.`);
         }
     });
     ```
