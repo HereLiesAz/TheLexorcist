@@ -13,12 +13,16 @@ import androidx.compose.foundation.verticalScroll
 import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -101,6 +105,51 @@ fun SettingsScreen(
                         RadioButton(
                             selected = (themeMode == mode),
                             onClick = { settingsViewModel.setThemeMode(mode) },
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+            HorizontalDivider()
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Language Settings
+            Text(
+                text = stringResource(R.string.language_settings),
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            val languages = mapOf("en" to "English", "es" to "Español")
+            val currentLanguage by settingsViewModel.language.collectAsState()
+            var expanded by remember { mutableStateOf(false) }
+
+            ExposedDropdownMenuBox(
+                expanded = expanded,
+                onExpandedChange = { expanded = !expanded }
+            ) {
+                TextField(
+                    value = languages[currentLanguage] ?: "",
+                    onValueChange = {},
+                    readOnly = true,
+                    trailingIcon = {
+                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                    },
+                    modifier = Modifier.menuAnchor()
+                )
+                ExposedDropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
+                ) {
+                    languages.forEach { (code, name) ->
+                        DropdownMenuItem(
+                            text = { Text(name) },
+                            onClick = {
+                                settingsViewModel.setLanguage(code)
+                                expanded = false
+                            }
                         )
                     }
                 }

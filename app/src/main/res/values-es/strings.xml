@@ -95,6 +95,7 @@
     <string name="no_cases_found_line1">No se encontraron casos.</string>
     <string name="no_cases_found_line2">Crea un nuevo caso o abre uno existente.</string>
     <string name="theme_settings">Tema</string>
+    <string name="language_settings">Idioma</string>
     <string name="cache_settings">Caché</string>
     <string name="clear_cache">Limpiar caché</string>
     <string name="clear_cache_title">Limpiar caché</string>
