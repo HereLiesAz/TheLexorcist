@@ -105,6 +105,14 @@ class VoskTranscriptionService @Inject constructor(
     }
 
     private suspend fun initializeVoskModel(): String {
+        // First, try to load from assets
+        copyModelFromAssets()?.let {
+            logService.addLog("Vosk model initialized from assets.")
+            return it
+        }
+
+        // If not in assets, proceed with download logic
+        logService.addLog("Vosk model not found in assets, attempting to download.", LogLevel.INFO)
         return withContext(serviceScope.coroutineContext) {
             val baseModelDir = File(context.filesDir, "vosk-model")
 
@@ -178,6 +186,40 @@ class VoskTranscriptionService @Inject constructor(
                 logService.addLog("Failed to delete model directory after final failure: ${baseModelDir.absolutePath}", LogLevel.WARNING)
             }
             throw IOException(errorMsg)
+        }
+    }
+
+    private fun copyModelFromAssets(): String? {
+        val assetModelPath = "vosk-model-en-us"
+        val destDir = File(context.cacheDir, "vosk-model")
+        try {
+            val assetFiles = context.assets.list(assetModelPath)
+            if (assetFiles == null || assetFiles.isEmpty()) {
+                logService.addLog("Vosk model not found in assets.", LogLevel.INFO)
+                return null
+            }
+
+            if (destDir.exists()) destDir.deleteRecursively()
+            destDir.mkdirs()
+
+            assetFiles.forEach { fileName ->
+                val assetFile = "$assetModelPath/$fileName"
+                val destFile = File(destDir, fileName)
+                context.assets.open(assetFile).use { inputStream ->
+                    FileOutputStream(destFile).use { outputStream ->
+                        inputStream.copyTo(outputStream)
+                    }
+                }
+            }
+            logService.addLog("Successfully copied Vosk model from assets to ${destDir.absolutePath}")
+            return destDir.absolutePath
+        } catch (e: IOException) {
+            logService.addLog("Failed to copy Vosk model from assets: ${e.message}", LogLevel.ERROR)
+            // If copying fails, clean up the destination directory
+            if (destDir.exists()) {
+                destDir.deleteRecursively()
+            }
+            return null
         }
     }
 

@@ -41,6 +41,7 @@ local.properties
 
 # Google services
 app/google-services.json
+dependencies.txt
 /app/src/main/res/raw/template_cover_sheet.gdoc
 /app/src/main/res/raw/template_custody_log.gdoc
 /app/src/main/res/raw/template_declaration.gdoc
@@ -57,3 +58,5 @@ app/google-services.json
 /app/release/baselineProfiles/0/app-release.dm
 /app/release/baselineProfiles/1/app-release.dm
 /app/release/output-metadata.json
+
+whisper_android/
