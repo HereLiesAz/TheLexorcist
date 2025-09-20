@@ -29,6 +29,11 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+    sourceSets {
+        getByName("main") {
+            assets.srcDirs("src/main/assets", "../whisper_android/whisper_java/app/src/main/assets")
+        }
+    }
 }
 
 dependencies {

@@ -78,11 +78,11 @@ fun SettingsScreen(
     ) { padding ->
         Column(
             modifier =
-            Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(padding)
-                .padding(16.dp),
+                Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(padding)
+                    .padding(16.dp),
             horizontalAlignment = Alignment.End,
         ) {
             // Theme Settings
