@@ -538,9 +538,10 @@ constructor(
                 val script = settingsManager.getScript()
                 val result = scriptRunner.runScript(script, evidence)
                 if (result is Result.Success) {
-                    val updatedEvidence = evidence.copy(
-                        tags = evidence.tags + result.data
-                    )
+                    val currentTagsInEvidence: List<String> = evidence.tags
+                    val newTagsFromScript: List<String> = result.data.tags // Corrected: result.data.tags
+                    val combinedTags: List<String> = currentTagsInEvidence + newTagsFromScript
+                    val updatedEvidence = evidence.copy(tags = combinedTags) // Corrected: combinedTags
                     evidenceRepository.updateEvidence(updatedEvidence)
                 }
             } finally {

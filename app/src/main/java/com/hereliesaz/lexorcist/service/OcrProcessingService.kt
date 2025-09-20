@@ -24,7 +24,6 @@ import javax.inject.Singleton
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import androidx.core.net.toUri
-// Removed: import java.util.logging.Level.WARNING
 
 @Singleton
 class OcrProcessingService
@@ -151,14 +150,17 @@ class OcrProcessingService
                         logService.addLog("Script for frame is loading...")
                     }
                     is Result.Success -> {
-                        newEvidence = newEvidence.copy(tags = newEvidence.tags + scriptResult.data)
+                        val currentTagsInFrame: List<String> = newEvidence.tags
+                        val newTagsFromScriptFrame: List<String> = scriptResult.data.tags
+                        val combinedTagsFrame: List<String> = currentTagsInFrame + newTagsFromScriptFrame
+                        newEvidence = newEvidence.copy(tags = combinedTagsFrame)
                     }
                     is Result.Error -> {
                         logService.addLog("Script error for frame: ${scriptResult.exception.message}", LogLevel.ERROR)
                         Log.e("OcrProcessingService", "Script error for $uri: ${scriptResult.exception.message}", scriptResult.exception)
                     }
                     is Result.UserRecoverableError -> {
-                        logService.addLog("Script error for frame: ${scriptResult.exception.message}", LogLevel.INFO) // Changed from WARNING to INFO
+                        logService.addLog("Script error for frame: ${scriptResult.exception.message}", LogLevel.INFO)
                         Log.e(
                             "OcrProcessingService",
                             "User recoverable script error for $uri: ${scriptResult.exception.message}",
@@ -181,7 +183,7 @@ class OcrProcessingService
             spreadsheetId: String,
             onProgress: (ProcessingState) -> Unit
         ): Pair<Evidence?, String?> {
-            var statusMessage: String // Initializer removed
+            var statusMessage: String
             logService.addLog("Starting image processing...")
             onProgress(ProcessingState.InProgress(0.0f))
 
@@ -200,7 +202,7 @@ class OcrProcessingService
                 }
                 is Result.UserRecoverableError -> { 
                     statusMessage = "User recoverable error during image upload: ${uploadResult.exception.message}"
-                    logService.addLog(statusMessage, LogLevel.INFO) // Changed from WARNING to INFO
+                    logService.addLog(statusMessage, LogLevel.INFO)
                     Log.w("OcrProcessingService", "User recoverable error during image upload.", uploadResult.exception)
                     onProgress(ProcessingState.Failure(statusMessage))
                     return Pair(null, statusMessage)
@@ -208,7 +210,6 @@ class OcrProcessingService
                 is Result.Loading -> {
                     logService.addLog("Image upload in progress...")
                     onProgress(ProcessingState.InProgress(0.25f)) 
-                    // statusMessage assignment removed as it was not used
                     onProgress(ProcessingState.Failure("Image upload did not complete in time.")) 
                     return Pair(null, "Image upload did not complete in time.")
                 }
@@ -272,20 +273,21 @@ class OcrProcessingService
                                 logService.addLog("Script for image is loading...")
                             }
                             is Result.Success -> {
-                                newEvidence = newEvidence.copy(tags = newEvidence.tags + scriptResult.data)
-                                logService.addLog("Script finished. Added tags: ${scriptResult.data.joinToString(", ")}")
+                                val currentTagsInImage: List<String> = newEvidence.tags
+                                val newTagsFromScriptImage: List<String> = scriptResult.data.tags
+                                val combinedTagsImage: List<String> = currentTagsInImage + newTagsFromScriptImage
+                                newEvidence = newEvidence.copy(tags = combinedTagsImage)
+                                logService.addLog("Script finished. Added tags: ${newTagsFromScriptImage.joinToString(", ")}")
                             }
                             is Result.Error -> {
                                 statusMessage = "Script error: ${scriptResult.exception.message}"
                                 logService.addLog(statusMessage, LogLevel.ERROR)
                                 Log.e("OcrProcessingService", "Script error for $uri: $statusMessage", scriptResult.exception)
-                                // Note: statusMessage is set but not immediately returned. It will be used if no further error occurs before final return.
                             }
                             is Result.UserRecoverableError -> {
                                 statusMessage = "User recoverable script error: ${scriptResult.exception.message}"
-                                logService.addLog(statusMessage, LogLevel.INFO) // Changed from WARNING to INFO
+                                logService.addLog(statusMessage, LogLevel.INFO)
                                 Log.w("OcrProcessingService", "User recoverable script error for $uri: $statusMessage", scriptResult.exception)
-                                // Note: statusMessage is set but not immediately returned. 
                             }
                         }
                     }

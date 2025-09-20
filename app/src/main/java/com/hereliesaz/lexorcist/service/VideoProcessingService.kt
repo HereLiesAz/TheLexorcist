@@ -147,8 +147,11 @@ class VideoProcessingService @Inject constructor(
             onProgress(0.92f, "Running script...")
             val scriptResult = scriptRunner.runScript(script, videoEvidence)
             if (scriptResult is Result.Success) {
-                logService.addLog("Script finished. Added tags: ${scriptResult.data.joinToString(", ")}")
-                videoEvidence = videoEvidence.copy(tags = videoEvidence.tags + scriptResult.data)
+                val currentTagsVideo: List<String> = videoEvidence.tags
+                val newTagsFromScriptVideo: List<String> = scriptResult.data.tags // Corrected: scriptResult.data.tags
+                logService.addLog("Script finished. Added tags: ${newTagsFromScriptVideo.joinToString(", ")}") // Corrected: newTagsFromScriptVideo
+                val combinedTagsVideo: List<String> = currentTagsVideo + newTagsFromScriptVideo
+                videoEvidence = videoEvidence.copy(tags = combinedTagsVideo) // Corrected: combinedTagsVideo
             } else if (scriptResult is Result.Error) {
                 logService.addLog("Script error: ${scriptResult.exception.message}", LogLevel.ERROR)
             }

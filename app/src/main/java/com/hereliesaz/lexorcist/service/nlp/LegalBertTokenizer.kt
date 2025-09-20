@@ -2,6 +2,7 @@ package com.hereliesaz.lexorcist.service.nlp
 
 import android.content.Context
 import java.io.BufferedReader
+import java.io.IOException // ADDED
 import java.io.InputStreamReader
 import java.util.Collections
 
