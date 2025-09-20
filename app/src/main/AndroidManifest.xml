@@ -53,7 +53,7 @@
         <!-- Disable default WorkManager Initializer -->
         <provider
             android:name="androidx.work.impl.WorkManagerInitializer"
-            android:authorities="com.hereliesaz.lexorcist.workmanager-init" <!-- Explicit applicationId -->
+            android:authorities="com.hereliesaz.lexorcist.workmanager-init"
             tools:node="remove" />
 
     </application>
