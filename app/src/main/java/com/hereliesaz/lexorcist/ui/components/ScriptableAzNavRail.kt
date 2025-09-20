@@ -14,6 +14,10 @@ fun ScriptableAzNavRail(
     onLogout: () -> Unit
 ) {
     AzNavRail {
+        azSettings(
+            displayAppNameInHeader = false,
+            packRailButtons = true,
+        )
         azRailItem(id = "cases", text = "Cases", onClick = { navController.navigate("cases") })
         azRailItem(id = "evidence", text = "Evidence", onClick = { navController.navigate("evidence") })
         azRailItem(
@@ -33,6 +37,6 @@ fun ScriptableAzNavRail(
         }
 
         azRailItem(id = "extras", text = "Extras", onClick = { navController.navigate("extras") })
-        azMenuItem(id = "settings", text = "Settings", onClick = { navController.navigate("settings") })
+        azRailItem(id = "settings", text = "Settings", onClick = { navController.navigate("settings") })
     }
 }
