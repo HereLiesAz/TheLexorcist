@@ -11,9 +11,10 @@ import android.net.Uri
 import android.util.Log
 import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.data.EvidenceRepository
+import com.hereliesaz.lexorcist.data.SettingsManager
 import com.hereliesaz.lexorcist.model.LogLevel // Assuming this is your custom LogLevel
 import com.hereliesaz.lexorcist.model.VideoMetadata
-import com.hereliesaz.lexorcist.utils.Result 
+import com.hereliesaz.lexorcist.utils.Result
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -32,7 +33,9 @@ class VideoProcessingService @Inject constructor(
     private val evidenceRepository: EvidenceRepository,
     private val ocrProcessingService: OcrProcessingService,
     private val transcriptionService: TranscriptionService,
-    private val logService: LogService
+    private val logService: LogService,
+    private val scriptRunner: ScriptRunner,
+    private val settingsManager: SettingsManager
 ) {
 
     // Pair to hold VideoMetadata and parsed creation time
@@ -131,9 +134,9 @@ class VideoProcessingService @Inject constructor(
         val videoOcrText = ocrTextBuilder.toString().trim()
         val combinedContent = "Audio Transcript:\n${audioTranscript}\n\nOCR from Frames:\n${if (videoOcrText.isNotEmpty()) videoOcrText else "No text extracted from frames."}"
 
-        val videoEvidence =
+        var videoEvidence =
             Evidence(
-                id = 0, 
+                id = 0,
                 caseId = caseId.toLong(),
                 spreadsheetId = spreadsheetId,
                 type = "video",
@@ -141,19 +144,31 @@ class VideoProcessingService @Inject constructor(
                 formattedContent = "```\n$combinedContent\n```",
                 mediaUri = videoUri.toString(),
                 timestamp = System.currentTimeMillis(),
-                sourceDocument = videoUri.toString(), 
+                sourceDocument = videoUri.toString(),
                 documentDate = documentTimestamp, // Use parsed creation time or fallback
                 allegationId = null,
                 category = "Video Evidence",
                 tags = listOfNotNull("video", if (audioTranscript?.contains("failed", ignoreCase = true) != true) "transcription" else null, if (videoOcrText.isNotEmpty()) "ocr" else null),
                 commentary = null,
-                parentVideoId = null, 
+                parentVideoId = null,
                 entities = com.hereliesaz.lexorcist.DataParser.tagData(combinedContent),
                 audioTranscript = audioTranscript,
                 videoOcrText = videoOcrText.ifEmpty { null },
                 duration = metadata?.duration
             )
-        
+        val script = settingsManager.getScript()
+        if (script.isNotBlank()) {
+            logService.addLog("Running script on video evidence...")
+            onProgress(0.92f, "Running script...")
+            val scriptResult = scriptRunner.runScript(script, videoEvidence)
+            if (scriptResult is Result.Success) {
+                logService.addLog("Script finished. Added tags: ${scriptResult.data.joinToString(", ")}")
+                videoEvidence = videoEvidence.copy(tags = videoEvidence.tags + scriptResult.data)
+            } else if (scriptResult is Result.Error) {
+                logService.addLog("Script error: ${scriptResult.exception.message}", LogLevel.ERROR)
+            }
+        }
+
         onProgress(0.95f, "Saving video evidence...")
         val savedEvidence = evidenceRepository.addEvidence(videoEvidence)
         if (savedEvidence == null) {
