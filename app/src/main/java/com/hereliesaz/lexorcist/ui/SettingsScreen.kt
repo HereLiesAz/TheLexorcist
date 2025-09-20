@@ -13,13 +13,21 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button // Keep this if used for other buttons like test upload
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem // Keep one
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox // Keep one
 import androidx.compose.material3.ExposedDropdownMenuDefaults // Keep one Material 3 version
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton // For Theme
 import androidx.compose.material3.Scaffold
@@ -41,10 +49,12 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.dropbox.core.android.Auth
 import com.hereliesaz.lexorcist.R
-import com.hereliesaz.lexorcist.viewmodel.AuthViewModel
+import com.hereliesaz.lexorcist.model.DownloadState
+import com.hereliesaz.lexorcist.model.LanguageModel
 import com.hereliesaz.lexorcist.model.SignInState
 import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
 import com.hereliesaz.lexorcist.ui.theme.ThemeMode
+import com.hereliesaz.lexorcist.viewmodel.AuthViewModel
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import com.hereliesaz.lexorcist.viewmodel.OneDriveViewModel
 import com.hereliesaz.lexorcist.viewmodel.SettingsViewModel
@@ -53,7 +63,7 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    caseViewModel: CaseViewModel, 
+    caseViewModel: CaseViewModel,
     settingsViewModel: SettingsViewModel = hiltViewModel(),
     authViewModel: AuthViewModel = hiltViewModel(),
     oneDriveViewModel: OneDriveViewModel = hiltViewModel()
@@ -78,19 +88,19 @@ fun SettingsScreen(
                 },
             )
         },
-    ) { paddingValues -> 
+    ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(paddingValues) 
+                .padding(paddingValues)
                 .padding(16.dp),
             horizontalAlignment = Alignment.End,
         ) {
             // Theme Settings
             Text(
                 text = stringResource(R.string.theme_settings),
-                style = MaterialTheme.typography.titleLarge, 
+                style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.fillMaxWidth(),
             )
             Spacer(modifier = Modifier.height(8.dp))
@@ -100,7 +110,7 @@ fun SettingsScreen(
                         Modifier
                             .fillMaxWidth()
                             .padding(vertical = 4.dp)
-                            .clickable { settingsViewModel.setThemeMode(mode) }, 
+                            .clickable { settingsViewModel.setThemeMode(mode) },
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.End,
                     ) {
@@ -126,7 +136,7 @@ fun SettingsScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             val currentAppLanguage by settingsViewModel.language.collectAsState()
-            val availableAppLanguages = settingsViewModel.availableLanguages
+            val availableAppLanguages = settingsViewModel.availableAppLanguages
             var appLanguageExpanded by remember { mutableStateOf(false) }
 
             ExposedDropdownMenuBox(
@@ -134,8 +144,8 @@ fun SettingsScreen(
                 onExpandedChange = { appLanguageExpanded = !appLanguageExpanded },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                TextField( 
-                    value = availableAppLanguages[currentAppLanguage] ?: currentAppLanguage, 
+                TextField(
+                    value = availableAppLanguages[currentAppLanguage] ?: currentAppLanguage,
                     onValueChange = {},
                     readOnly = true,
                     label = { Text(stringResource(R.string.language)) },
@@ -180,7 +190,7 @@ fun SettingsScreen(
                 onExpandedChange = { transcriptionServiceExpanded = !transcriptionServiceExpanded },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                TextField( 
+                TextField(
                     value = selectedTranscriptionService,
                     onValueChange = {},
                     readOnly = true,
@@ -204,7 +214,25 @@ fun SettingsScreen(
                     }
                 }
             }
-            
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Transcription Language Settings
+            val voskModels by settingsViewModel.voskLanguageModels.collectAsState()
+            val whisperModels by settingsViewModel.whisperLanguageModels.collectAsState()
+            val selectedLanguageCode by settingsViewModel.selectedTranscriptionLanguageCode.collectAsState()
+
+            val models = if (selectedTranscriptionService == "Vosk") voskModels else whisperModels
+
+            LanguageModelDownloader(
+                models = models,
+                selectedLanguageCode = selectedLanguageCode,
+                onLanguageSelected = { settingsViewModel.selectTranscriptionLanguage(it) },
+                onDownload = { settingsViewModel.downloadLanguage(it) },
+                onDelete = { settingsViewModel.deleteLanguage(it) }
+            )
+
+
             Spacer(modifier = Modifier.height(24.dp))
             HorizontalDivider()
             Spacer(modifier = Modifier.height(24.dp))
@@ -227,7 +255,7 @@ fun SettingsScreen(
 
             // Storage Settings
             Text(
-                text = stringResource(R.string.storage_settings), 
+                text = stringResource(R.string.storage_settings),
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -266,8 +294,8 @@ fun SettingsScreen(
             Column(Modifier.fillMaxWidth()) {
                 cloudProviders.forEach { provider ->
                     val isEnabled = when (provider) {
-                        "GoogleDrive" -> signInState is SignInState.Success || selectedCloudProvider == provider 
-                        else -> true 
+                        "GoogleDrive" -> signInState is SignInState.Success || selectedCloudProvider == provider
+                        else -> true
                     }
                     Row(
                         Modifier
@@ -294,7 +322,7 @@ fun SettingsScreen(
             // Google Sign-In Status
             Text(
                 text = stringResource(R.string.google_account),
-                style = MaterialTheme.typography.titleMedium, 
+                style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.fillMaxWidth(),
             )
             Spacer(modifier = Modifier.height(8.dp))
@@ -304,8 +332,8 @@ fun SettingsScreen(
                     Text(stringResource(R.string.signed_in_as_placeholder, userInfo?.email ?: stringResource(R.string.unknown_email)))
                     Spacer(modifier = Modifier.height(8.dp))
                     LexorcistOutlinedButton(onClick = {
-                        authViewModel.signOut() 
-                        if (activity != null) { 
+                        authViewModel.signOut()
+                        if (activity != null) {
                            authViewModel.signIn(activity)
                         }
                     }, text = stringResource(R.string.switch_account).uppercase(Locale.getDefault()))
@@ -318,7 +346,7 @@ fun SettingsScreen(
                     Text(stringResource(R.string.not_signed_in))
                     Spacer(modifier = Modifier.height(8.dp))
                     LexorcistOutlinedButton(onClick = {
-                         if (activity != null) { 
+                         if (activity != null) {
                            authViewModel.signIn(activity)
                         }
                     }, text = stringResource(R.string.sign_in).uppercase(Locale.getDefault()))
@@ -350,7 +378,7 @@ fun SettingsScreen(
                     Auth.startOAuth2Authentication(context, context.getString(R.string.dropbox_app_key))
                 }, text = stringResource(R.string.connect_to_dropbox).uppercase(Locale.getDefault()))
             }
-            
+
             Spacer(modifier = Modifier.height(16.dp))
             HorizontalDivider()
             Spacer(modifier = Modifier.height(16.dp))
@@ -404,7 +432,7 @@ fun SettingsScreen(
             confirmButton = {
                 LexorcistOutlinedButton(
                     onClick = {
-                        caseViewModel.clearCache() 
+                        caseViewModel.clearCache()
                         showClearCacheDialog = false
                     },
                     text = stringResource(R.string.delete).uppercase(Locale.getDefault())
@@ -420,3 +448,109 @@ fun SettingsScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun LanguageModelDownloader(
+    models: List<LanguageModel>,
+    selectedLanguageCode: String,
+    onLanguageSelected: (String) -> Unit,
+    onDownload: (LanguageModel) -> Unit,
+    onDelete: (LanguageModel) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val selectedModel = models.find { it.code == selectedLanguageCode }
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = { expanded = !expanded },
+        ) {
+            TextField(
+                value = selectedModel?.name ?: "Select Language",
+                onValueChange = {},
+                readOnly = true,
+                label = { Text(stringResource(R.string.transcription_language)) },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                modifier = Modifier
+                    .menuAnchor()
+                    .fillMaxWidth()
+            )
+            ExposedDropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+            ) {
+                models.forEach { model ->
+                    val downloadState by model.downloadState.collectAsState()
+                    DropdownMenuItem(
+                        text = {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(model.name)
+                                ModelStatusIcon(
+                                    downloadState = downloadState,
+                                    onDownload = { onDownload(model) },
+                                    onDelete = { onDelete(model) }
+                                )
+                            }
+                        },
+                        onClick = {
+                            onLanguageSelected(model.code)
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
+
+        // Show progress bar for any model that is currently downloading
+        val downloadingModel = models.find { it.downloadState.collectAsState().value is DownloadState.Downloading }
+        if (downloadingModel != null) {
+            val progress by downloadingModel.progress.collectAsState()
+            Spacer(modifier = Modifier.height(8.dp))
+            LinearProgressIndicator(
+                progress = progress,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+}
+
+@Composable
+fun ModelStatusIcon(
+    downloadState: DownloadState,
+    onDownload: () -> Unit,
+    onDelete: () -> Unit
+) {
+    when (downloadState) {
+        is DownloadState.NotDownloaded -> {
+            IconButton(onClick = onDownload) {
+                Icon(Icons.Default.Download, contentDescription = "Download")
+            }
+        }
+        is DownloadState.Downloading -> {
+            CircularProgressIndicator(modifier = Modifier.padding(8.dp))
+        }
+        is DownloadState.Downloaded -> {
+            Row {
+                Icon(
+                    Icons.Default.Check,
+                    contentDescription = "Downloaded",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.align(Alignment.CenterVertically)
+                )
+                IconButton(onClick = onDelete) {
+                    Icon(Icons.Default.Delete, contentDescription = "Delete")
+                }
+            }
+        }
+        is DownloadState.Error -> {
+            // TODO: Maybe show an error icon and allow retry
+            IconButton(onClick = onDownload) {
+                Icon(Icons.Default.Download, contentDescription = "Retry Download")
+            }
+        }
+    }
+}

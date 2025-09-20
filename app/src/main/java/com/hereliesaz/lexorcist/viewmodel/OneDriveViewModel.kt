@@ -60,15 +60,18 @@ class OneDriveViewModel @Inject constructor(
         oneDriveAuthManager.signOut(object : ISingleAccountPublicClientApplication.SignOutCallback {
             override fun onSignOut() {
                 _oneDriveSignInState.value = OneDriveSignInState.Idle
-                sharedPreferences.edit {
-                    remove("onedrive_access_token")
-                }
+                clearOneDriveAccessToken()
             }
 
-            override fun onError(exception: MsalException) { // Corrected here
-                // Handle error, perhaps update state to an error state
+            override fun onError(exception: MsalException) {
                 _oneDriveSignInState.value = OneDriveSignInState.Error("OneDrive sign-out failed.", exception)
             }
         })
+    }
+
+    private fun clearOneDriveAccessToken() {
+        sharedPreferences.edit {
+            remove("onedrive_access_token")
+        }
     }
 }

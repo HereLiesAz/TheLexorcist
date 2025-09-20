@@ -285,6 +285,7 @@
 
     <string name="language">Language</string>
     <string name="transcription_service">Transcription Service</string>
+    <string name="transcription_language">Transcription Language</string>
     <string name="storage_settings">Storage Settings</string>
     <string name="current_location_colon_placeholder">Current location: %1$s</string>
     <string name="default_text">Default</string>

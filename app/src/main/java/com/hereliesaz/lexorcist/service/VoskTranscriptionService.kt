@@ -3,24 +3,32 @@ package com.hereliesaz.lexorcist.service
 import android.content.Context
 import android.net.Uri
 import com.google.gson.Gson
-import com.hereliesaz.lexorcist.model.LogLevel // Import LogLevel
+import com.hereliesaz.lexorcist.data.SettingsManager
+import com.hereliesaz.lexorcist.model.DownloadState
+import com.hereliesaz.lexorcist.model.LanguageModel
+import com.hereliesaz.lexorcist.model.LogLevel
 import com.hereliesaz.lexorcist.model.ProcessingState
+import com.hereliesaz.lexorcist.model.TranscriptionModels
 import com.hereliesaz.lexorcist.utils.Result
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.vosk.Model // Vosk Model
+import org.vosk.Model
 import org.vosk.Recognizer
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.io.InputStream
 import java.net.URL
+import java.util.Collections
 import java.util.zip.ZipInputStream
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -28,16 +36,30 @@ import javax.inject.Singleton
 @Singleton
 class VoskTranscriptionService @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val logService: LogService
+    private val logService: LogService,
+    private val settingsManager: SettingsManager
 ) : TranscriptionService {
 
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    private var voskModel: Model? = null // Explicitly Vosk Model
-    private val _downloadProgress = MutableStateFlow(0f)
-    val downloadProgress: StateFlow<Float> = _downloadProgress
-
+    private var voskModel: Model? = null
     private val _processingState = MutableStateFlow<ProcessingState>(ProcessingState.Idle)
     override val processingState: StateFlow<ProcessingState> = _processingState
+
+    private val downloadProgresses = Collections.synchronizedMap(mutableMapOf<String, MutableStateFlow<Float>>())
+
+    fun getDownloadProgress(modelName: String): StateFlow<Float> {
+        return downloadProgresses.getOrPut(modelName) { MutableStateFlow(0f) }.asStateFlow()
+    }
+
+    fun downloadModel(model: LanguageModel): Flow<DownloadState> = flow {
+        emit(DownloadState.Downloading)
+        val result = downloadAndUnzipModel(model)
+        if (result is Result.Success) {
+            emit(DownloadState.Downloaded)
+        } else if (result is Result.Error) {
+            emit(DownloadState.Error(result.exception.message ?: "Unknown error"))
+        }
+    }
 
     override suspend fun start(uri: Uri) {
         serviceScope.launch {
@@ -105,148 +127,74 @@ class VoskTranscriptionService @Inject constructor(
     }
 
     private suspend fun initializeVoskModel(): String {
-        // First, try to load from assets
-        copyModelFromAssets()?.let {
-            logService.addLog("Vosk model initialized from assets.")
-            return it
+        val selectedLangCode = settingsManager.getTranscriptionLanguage()
+        val model = TranscriptionModels.voskModels.find { it.code == selectedLangCode }
+            ?: throw IOException("Selected language model '$selectedLangCode' not found.")
+
+        val modelDir = File(context.filesDir, model.modelName)
+        logService.addLog("Attempting to initialize model from: ${modelDir.absolutePath}")
+
+        fun isValidModelDir(dir: File): Boolean {
+            val amDir = File(dir, "am")
+            val confDir = File(dir, "conf")
+            val modelConfFile = File(confDir, "model.conf")
+            val isValid = amDir.exists() && amDir.isDirectory &&
+                    confDir.exists() && confDir.isDirectory &&
+                    modelConfFile.exists() && modelConfFile.isFile
+            if (!isValid) logService.addLog("Model directory is not valid: ${dir.absolutePath}", LogLevel.WARNING)
+            return isValid
         }
 
-        // If not in assets, proceed with download logic
-        logService.addLog("Vosk model not found in assets, attempting to download.", LogLevel.INFO)
-        return withContext(serviceScope.coroutineContext) {
-            val baseModelDir = File(context.filesDir, "vosk-model")
-
-            fun isValidModelDir(dir: File): Boolean {
-                val amDir = File(dir, "am")
-                val confDir = File(dir, "conf")
-                val modelConfFile = File(confDir, "model.conf")
-                return amDir.exists() && amDir.isDirectory &&
-                       confDir.exists() && confDir.isDirectory &&
-                       modelConfFile.exists() && modelConfFile.isFile
+        // The model might be in a subdirectory inside the model directory.
+        // e.g. vosk-model-small-en-us-0.15/vosk-model-small-en-us-0.15
+        fun findValidModelPath(baseDir: File): String? {
+            if (isValidModelDir(baseDir)) {
+                return baseDir.absolutePath
             }
-
-            if (isValidModelDir(baseModelDir)) {
-                logService.addLog("Vosk model found and valid at ${baseModelDir.absolutePath}")
-                return@withContext baseModelDir.absolutePath
-            }
-
-            logService.addLog("Vosk model not found or invalid at ${baseModelDir.absolutePath}. Cleaning up...", LogLevel.INFO)
-            if (baseModelDir.exists() && !baseModelDir.deleteRecursively()) {
-                logService.addLog("Failed to delete existing model directory: ${baseModelDir.absolutePath}", LogLevel.WARNING)
-            }
-            if (!baseModelDir.exists() && !baseModelDir.mkdirs()) {
-                val errorMsg = "Failed to create base model directory: ${baseModelDir.absolutePath}"
-                logService.addLog(errorMsg, LogLevel.ERROR)
-                throw IOException(errorMsg)
-            }
-
-            _processingState.value = ProcessingState.InProgress(0.0f)
-            val downloadResult = downloadAndUnzipModel(baseModelDir)
-
-            if (downloadResult is Result.Error) {
-                logService.addLog("Vosk model download/unzip failed: ${downloadResult.exception.message}", LogLevel.ERROR)
-                _processingState.value = ProcessingState.Failure("Model download/unzip failed: ${downloadResult.exception.message}")
-                if (baseModelDir.exists() && !baseModelDir.deleteRecursively()) {
-                     logService.addLog("Failed to delete model directory after failed download: ${baseModelDir.absolutePath}", LogLevel.WARNING)
-                }
-                throw downloadResult.exception
-            }
-            logService.addLog("Vosk model downloaded and unzipped successfully to ${baseModelDir.absolutePath}")
-
-            if (isValidModelDir(baseModelDir)) {
-                logService.addLog("Vosk model successfully prepared at ${baseModelDir.absolutePath}")
-                return@withContext baseModelDir.absolutePath
-            }
-
-            logService.addLog("Vosk model not directly in ${baseModelDir.absolutePath}. Checking subdirectories...")
-            val subFiles = baseModelDir.listFiles()
-            if (subFiles != null) {
-                val subDirs = subFiles.filter { it.isDirectory }
-                if (subDirs.size == 1) {
-                    val potentialModelDir = subDirs[0]
-                    if (isValidModelDir(potentialModelDir)) {
-                        logService.addLog("Vosk model found in subdirectory: ${potentialModelDir.absolutePath}")
-                        return@withContext potentialModelDir.absolutePath
-                    } else {
-                        logService.addLog("Subdirectory ${potentialModelDir.absolutePath} is not a valid Vosk model.", LogLevel.WARNING)
-                    }
-                } else if (subDirs.isEmpty()) {
-                    logService.addLog("No subdirectories found in ${baseModelDir.absolutePath} to check for model.", LogLevel.WARNING)
-                } else {
-                    logService.addLog("Multiple subdirectories found. Cannot determine model path.", LogLevel.WARNING)
-                }
-            } else {
-                 logService.addLog("Could not list files in ${baseModelDir.absolutePath}.", LogLevel.WARNING)
-            }
-
-            val errorMsg = "Failed to locate a valid Vosk model in ${baseModelDir.absolutePath} after download."
-            logService.addLog(errorMsg, LogLevel.ERROR)
-            _processingState.value = ProcessingState.Failure(errorMsg)
-            if (baseModelDir.exists() && !baseModelDir.deleteRecursively()) {
-                logService.addLog("Failed to delete model directory after final failure: ${baseModelDir.absolutePath}", LogLevel.WARNING)
-            }
-            throw IOException(errorMsg)
+            val subDirs = baseDir.listFiles { file -> file.isDirectory }
+            return subDirs?.firstOrNull { isValidModelDir(it) }?.absolutePath
         }
+
+        val validModelPath = findValidModelPath(modelDir)
+        if (validModelPath != null) {
+            logService.addLog("Vosk model found and valid at $validModelPath")
+            return validModelPath
+        }
+
+        val errorMsg = "Vosk model for language '$selectedLangCode' is not downloaded or invalid. Please download it from settings."
+        logService.addLog(errorMsg, LogLevel.ERROR)
+        throw IOException(errorMsg)
     }
 
-    private fun copyModelFromAssets(): String? {
-        val assetModelPath = "vosk-model-en-us"
-        val destDir = File(context.cacheDir, "vosk-model")
-        try {
-            val assetFiles = context.assets.list(assetModelPath)
-            if (assetFiles == null || assetFiles.isEmpty()) {
-                logService.addLog("Vosk model not found in assets.", LogLevel.INFO)
-                return null
-            }
+    private suspend fun downloadAndUnzipModel(model: LanguageModel): Result<Unit> {
+        val modelDir = File(context.filesDir, model.modelName)
+        val progressFlow = downloadProgresses.getOrPut(model.modelName) { MutableStateFlow(0f) }
 
-            if (destDir.exists()) destDir.deleteRecursively()
-            destDir.mkdirs()
-
-            assetFiles.forEach { fileName ->
-                val assetFile = "$assetModelPath/$fileName"
-                val destFile = File(destDir, fileName)
-                context.assets.open(assetFile).use { inputStream ->
-                    FileOutputStream(destFile).use { outputStream ->
-                        inputStream.copyTo(outputStream)
-                    }
-                }
-            }
-            logService.addLog("Successfully copied Vosk model from assets to ${destDir.absolutePath}")
-            return destDir.absolutePath
-        } catch (e: IOException) {
-            logService.addLog("Failed to copy Vosk model from assets: ${e.message}", LogLevel.ERROR)
-            // If copying fails, clean up the destination directory
-            if (destDir.exists()) {
-                destDir.deleteRecursively()
-            }
-            return null
-        }
-    }
-
-    private suspend fun downloadAndUnzipModel(modelDir: File): Result<Unit> {
         return withContext(Dispatchers.IO) {
             try {
-                val modelUrl = "https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip"
-                if (!modelDir.exists()) modelDir.mkdirs()
-                val zipFile = File(modelDir, "vosk-model.zip")
+                if (modelDir.exists() && !modelDir.deleteRecursively()) {
+                    logService.addLog("Failed to delete existing model directory: ${modelDir.absolutePath}", LogLevel.WARNING)
+                }
+                if (!modelDir.mkdirs()) {
+                    throw IOException("Failed to create model directory: ${modelDir.absolutePath}")
+                }
 
-                logService.addLog("Downloading Vosk model from $modelUrl to ${zipFile.absolutePath}")
-                _downloadProgress.value = 0f
+                val zipFile = File(modelDir, "${model.modelName}.zip")
+                logService.addLog("Downloading Vosk model from ${model.modelUrl} to ${zipFile.absolutePath}")
+                progressFlow.value = 0f
 
-                URL(modelUrl).openStream().use { inputStreamFromUrl ->
+                URL(model.modelUrl).openStream().use { inputStreamFromUrl ->
                     FileOutputStream(zipFile).use { fileOutputStream ->
-                        val connection = URL(modelUrl).openConnection()
+                        val connection = URL(model.modelUrl).openConnection()
                         connection.connect()
                         val fileLength = connection.contentLength
-                        val buffer = ByteArray(4096)
+                        val buffer = ByteArray(8192)
                         var len1: Int
                         var total: Long = 0
                         while (inputStreamFromUrl.read(buffer).also { len1 = it } > 0) {
                             total += len1
                             if (fileLength > 0) {
-                                val progress = (total * 100 / fileLength).toFloat()
-                                _downloadProgress.value = progress / 100f
-                                _processingState.value = ProcessingState.InProgress(progress / 100f)
+                                progressFlow.value = (total.toFloat() / fileLength.toFloat())
                             }
                             fileOutputStream.write(buffer, 0, len1)
                         }
@@ -255,27 +203,21 @@ class VoskTranscriptionService @Inject constructor(
                 logService.addLog("Vosk model ZIP downloaded.")
 
                 logService.addLog("Unzipping Vosk model...")
-                _processingState.value = ProcessingState.InProgress(0.99f) // Near end of download phase
-
                 ZipInputStream(zipFile.inputStream()).use { zis ->
                     var zipEntry = zis.nextEntry
                     while (zipEntry != null) {
                         val newFile = File(modelDir, zipEntry.name)
-                        // Prevent Zip Slip vulnerability
                         if (!newFile.canonicalPath.startsWith(modelDir.canonicalPath + File.separator)) {
-                            throw SecurityException("Zip entry is outside of the target dir: " + zipEntry.name)
+                            throw SecurityException("Zip entry is outside of the target dir: ${zipEntry.name}")
                         }
                         if (zipEntry.isDirectory) {
                             if (!newFile.isDirectory && !newFile.mkdirs()) {
-                                throw IOException("Failed to create directory " + newFile)
+                                throw IOException("Failed to create directory $newFile")
                             }
                         } else {
-                            // Fix for files in subdirectories
                             val parent = newFile.parentFile
-                            if (parent != null) {
-                                if (!parent.isDirectory && !parent.mkdirs()) {
-                                    throw IOException("Failed to create directory " + parent)
-                                }
+                            if (parent != null && !parent.isDirectory && !parent.mkdirs()) {
+                                throw IOException("Failed to create directory $parent")
                             }
                             FileOutputStream(newFile).use { fos ->
                                 zis.copyTo(fos)
@@ -288,11 +230,15 @@ class VoskTranscriptionService @Inject constructor(
 
                 zipFile.delete()
                 logService.addLog("Vosk model unzipped successfully.")
-                _downloadProgress.value = 1.0f
+                progressFlow.value = 1.0f
                 Result.Success(Unit)
             } catch (e: Exception) {
                 logService.addLog("Error during model download/unzip: ${e.message}", LogLevel.ERROR)
                 e.printStackTrace()
+                // Clean up failed download
+                if (modelDir.exists()) {
+                    modelDir.deleteRecursively()
+                }
                 Result.Error(e)
             }
         }

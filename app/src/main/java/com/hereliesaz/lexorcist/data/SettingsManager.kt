@@ -28,7 +28,8 @@ class SettingsManager
         private val keyUserScript = "user_script"
         private val keyStorageLocation = "storage_location"
         private val keyCloudProvider = "cloud_provider"
-        private val keyTranscriptionService = "transcription_service" // Added key
+        private val keyTranscriptionService = "transcription_service"
+        private val keyTranscriptionLanguage = "transcription_language"
 
         fun saveSelectedCloudProvider(provider: String) {
             sharedPreferences.edit().putString(keyCloudProvider, provider).apply()
@@ -99,5 +100,13 @@ class SettingsManager
 
         fun getTranscriptionService(): String {
             return sharedPreferences.getString(keyTranscriptionService, "Vosk") ?: "Vosk" // Default to Vosk
+        }
+
+        fun saveTranscriptionLanguage(languageCode: String) {
+            sharedPreferences.edit().putString(keyTranscriptionLanguage, languageCode).apply()
+        }
+
+        fun getTranscriptionLanguage(): String {
+            return sharedPreferences.getString(keyTranscriptionLanguage, "en-us") ?: "en-us" // Default to vosk english
         }
     }
