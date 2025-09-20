@@ -2,100 +2,62 @@ package com.hereliesaz.lexorcist.service
 
 import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.model.ScriptResult
+import com.hereliesaz.lexorcist.service.nlp.LegalBertService
 import com.hereliesaz.lexorcist.utils.Result
-// Removed: import com.hereliesaz.lexorcist.viewmodel.ScriptedMenuViewModel
-import kotlinx.coroutines.flow.MutableSharedFlow // ADDED
-import kotlinx.coroutines.flow.asSharedFlow // ADDED
-import kotlinx.coroutines.runBlocking
 import org.mozilla.javascript.Context
 import org.mozilla.javascript.Scriptable
 import org.mozilla.javascript.ScriptableObject
 import javax.inject.Inject
 import javax.inject.Singleton
-
-// ADDED: Sealed class for UI Actions
-sealed class ScriptRunnerUiAction {
-    data class AddOrUpdate(val id: String, val label: String, val isVisible: Boolean, val onClickAction: String?) : ScriptRunnerUiAction()
-    data class Remove(val id: String) : ScriptRunnerUiAction()
-    object ClearAll : ScriptRunnerUiAction()
-}
+import kotlin.math.sqrt
 
 @Singleton
 class ScriptRunner @Inject constructor(
-    private val generativeAIService: GenerativeAIService
-    // Removed: private val scriptedMenuViewModel: ScriptedMenuViewModel
+    private val legalBertService: LegalBertService
 ) {
-
-    // ADDED: SharedFlow for UI actions
-    private val _uiActions = MutableSharedFlow<ScriptRunnerUiAction>()
-    val uiActions = _uiActions.asSharedFlow()
-
-    class ScriptExecutionException(message: String, cause: Throwable) : Exception(message, cause)
-
-    inner class AIApi {
-        @Suppress("unused")
-        fun generateContent(prompt: String): String {
-            return runBlocking {
-                generativeAIService.generateContent(prompt)
-            }
-        }
-    }
-
-    inner class UIApi {
-        @Suppress("unused")
-        fun addOrUpdate(id: String, label: String, isVisible: Boolean, onClickAction: String?) {
-            // MODIFIED: Emit action
-            runBlocking { // Use runBlocking if emitting from a non-suspending context to a SharedFlow
-                _uiActions.emit(ScriptRunnerUiAction.AddOrUpdate(id, label, isVisible, onClickAction))
-            }
-        }
-
-        @Suppress("unused")
-        fun remove(id: String) {
-            // MODIFIED: Emit action
-            runBlocking {
-                _uiActions.emit(ScriptRunnerUiAction.Remove(id))
-            }
-        }
-
-        @Suppress("unused")
-        fun clearAll() {
-            // MODIFIED: Emit action
-            runBlocking {
-                _uiActions.emit(ScriptRunnerUiAction.ClearAll)
-            }
-        }
-    }
+    class ScriptExecutionException(
+        message: String,
+        cause: Throwable,
+    ) : Exception(message, cause)
 
     /**
-     * Executes a given script with provided evidence context and returns a structured result.
-     * This runner is backward compatible, supporting both a modern `lex` object API
-     * and a legacy API of global functions like `addTag()`.
+     * API wrapper for the local LegalBertService.
      */
-    fun runScript(script: String, evidence: Evidence): Result<ScriptResult> {
+    inner class LocalAIApi {
+        @Suppress("unused") // Used by Rhino
+        fun getEmbedding(text: String): Array<Float> {
+            return legalBertService.getEmbedding(text).toTypedArray()
+        }
+
+        @Suppress("unused") // Used by Rhino
+        fun calculateSimilarity(text1: String, text2: String): Double {
+            val embedding1 = legalBertService.getEmbedding(text1)
+            val embedding2 = legalBertService.getEmbedding(text2)
+            return cosineSimilarity(embedding1, embedding2)
+        }
+    }
+
+    fun runScript(
+        script: String,
+        evidence: Evidence,
+    ): Result<ScriptResult> {
         val rhino = Context.enter()
         @Suppress("deprecation")
-        rhino.optimizationLevel = -1
+        rhino.optimizationLevel = -1 // Necessary for Android compatibility
         try {
             val scope: Scriptable = rhino.initStandardObjects()
-
-            // This will hold all outputs from the script.
             val scriptResult = ScriptResult()
 
             // --- Modern API (`lex` object) ---
             val lexObject = rhino.newObject(scope)
             ScriptableObject.putProperty(scope, "lex", lexObject)
-            ScriptableObject.putProperty(lexObject, "ai", Context.javaToJS(AIApi(), scope))
-            ScriptableObject.putProperty(lexObject, "ui", Context.javaToJS(UIApi(), scope))
-
-            // For modern scripts that directly manipulate a 'tags' array.
+            val aiObject = rhino.newObject(scope)
+            ScriptableObject.putProperty(lexObject, "ai", aiObject)
+            ScriptableObject.putProperty(aiObject, "local", Context.javaToJS(LocalAIApi(), scope))
             ScriptableObject.putProperty(scope, "tags", Context.javaToJS(scriptResult.tags, scope))
 
             // --- Legacy API (Global Functions) ---
-            // Expose the result object to the script under a known name.
             ScriptableObject.putProperty(scope, "scriptResult", Context.javaToJS(scriptResult, scope))
-
-            // Define legacy functions in JS that manipulate the exposed 'scriptResult' object.
             val legacyFunctionDefinitions = """
                 function addTag(tag) { scriptResult.tags.add(tag); }
                 function setSeverity(level) { scriptResult.severity = level; }
@@ -104,29 +66,31 @@ class ScriptRunner @Inject constructor(
             """.trimIndent()
             rhino.evaluateString(scope, legacyFunctionDefinitions, "LegacyAPISetup", 1, null)
 
-
             // --- Context & Execution ---
             ScriptableObject.putProperty(scope, "evidence", Context.javaToJS(evidence, scope))
-            val tags = mutableListOf<String>()
-            ScriptableObject.putProperty(scope, "tags", Context.javaToJS(tags, scope))
-
-            // Execute the user's script
             rhino.evaluateString(scope, script, "JavaScript<ScriptRunner>", 1, null)
-            val tagsPropertyFromScope: Any? = ScriptableObject.getProperty(scope, "tags")
-            val convertedJavaList: Any? = Context.jsToJava(tagsPropertyFromScope, List::class.java)
-
-            // The scriptResult object has been modified by the script in-place,
-            // both through the legacy functions and potentially modern array access.
-            // No further extraction is needed.
 
             return Result.Success(scriptResult)
 
         } catch (e: org.mozilla.javascript.RhinoException) {
             return Result.Error(ScriptExecutionException("Error during JavaScript execution", e))
         } catch (e: Exception) {
-            return Result.Error(ScriptExecutionException("An unexpected error occurred while running script", e))
+            return Result.Error(ScriptExecutionException("An unexpected error occurred while running script or processing results", e))
         } finally {
             Context.exit()
         }
+    }
+
+    private fun cosineSimilarity(vec1: FloatArray, vec2: FloatArray): Double {
+        var dotProduct = 0.0
+        var norm1 = 0.0
+        var norm2 = 0.0
+        for (i in vec1.indices) {
+            dotProduct += vec1[i] * vec2[i]
+            norm1 += vec1[i] * vec1[i]
+            norm2 += vec2[i] * vec2[i]
+        }
+        if (norm1 == 0.0 || norm2 == 0.0) return 0.0
+        return dotProduct / (sqrt(norm1) * sqrt(norm2))
     }
 }

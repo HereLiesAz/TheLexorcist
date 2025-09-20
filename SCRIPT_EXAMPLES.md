@@ -270,18 +270,30 @@ For the purpose of these examples, we assume the script environment provides the
 
 *These scripts might require more advanced capabilities than simple JS, like hypothetical AI/ML libraries available in the script environment.*
 
-**17. Sentiment Shift Analysis**
-*   **Description:** Uses a hypothetical sentiment analysis library to track emotional tone over time and flags drastic shifts.
+**17. Semantic Shift Analysis (Functional)**
+*   **Description:** Detects a significant semantic shift in communication style or topic by comparing the current evidence to the recent history. This can indicate a change in tone, strategy, or the start of a new conflict.
 *   **Script:**
     ```javascript
-    // Assumes a hypothetical Sentiment library
-    const currentSentiment = Sentiment.analyze(evidence.text).score; // e.g., -0.8 (very negative)
+    // This script detects a significant semantic shift by comparing the current
+    // evidence's meaning to the combined meaning of recent evidence.
     const recentEvidence = case.evidence.slice(-5);
-    const avgPastSentiment = recentEvidence.reduce((acc, e) => acc + Sentiment.analyze(e.text).score, 0) / recentEvidence.length;
+    if (recentEvidence.length < 5) {
+        // Not enough history to compare.
+        return;
+    }
 
-    if (Math.abs(currentSentiment - avgPastSentiment) > 1.5) { // Detects a major shift
-        addTag("Sentiment Shift");
-        createNote(`Drastic sentiment shift from avg ${avgPastSentiment.toFixed(2)} to ${currentSentiment.toFixed(2)}.`);
+    // Create a single representative text for the recent history.
+    const recentHistoryText = recentEvidence.map(e => e.text).join(' ');
+
+    // Use the efficient, native calculateSimilarity function.
+    const similarity = lex.ai.local.calculateSimilarity(evidence.text, recentHistoryText);
+
+    // A low similarity (high distance) indicates a shift in topic or sentiment.
+    const distance = 1.0 - similarity;
+
+    if (distance > 0.4) { // Threshold for a significant shift
+        addTag("Semantic Shift");
+        createNote(`A significant semantic shift was detected (distance from recent history: ${distance.toFixed(2)}).`);
     }
     ```
 
@@ -499,15 +511,32 @@ For the purpose of these examples, we assume the script environment provides the
     }
     ```
 
-**30. Legal Precedent Suggester**
-*   **Description:** Identifies key phrases and concepts in the evidence and suggests searching for legal precedents related to them.
+**30. Legal Precedent Suggester (Functional)**
+*   **Description:** Identifies when evidence is semantically similar to complex legal concepts, suggesting topics for precedent research.
 *   **Script:**
     ```javascript
-    // Conceptual - requires a legal research API.
-    if (evidence.tags.includes("Gaslighting") && evidence.tags.includes("Financial")) {
-        createNote("Research Suggestion: Search for precedents on 'economic abuse' and 'coercive control'.");
-        // In a more advanced version:
-        // LegalResearchAPI.findPrecedents({topic: "economic abuse"});
+    // This script compares evidence against a predefined list of complex legal concepts
+    // and suggests topics for further research if a strong semantic match is found.
+    const legalConcepts = [
+        { name: "Economic Abuse", description: "Controlling a person's ability to acquire, use, and maintain financial resources." },
+        { name: "Coercive Control", description: "A pattern of intimidation, degradation, isolation, and control used to harm or frighten someone." },
+        { name: "Promissory Estoppel", description: "A legal principle that a promise is enforceable by law, even if made without formal consideration, when a party relies on that promise to their detriment." },
+        { name: "Constructive Fraud", description: "An act that is considered fraudulent under the law even without intent to deceive, such as a breach of a legal or equitable duty." }
+    ];
+
+    const evidenceText = evidence.text;
+    let suggestions = [];
+
+    legalConcepts.forEach(concept => {
+        const similarity = lex.ai.local.calculateSimilarity(evidenceText, concept.description);
+        if (similarity > 0.65) { // Confidence threshold
+            suggestions.push(concept.name);
+        }
+    });
+
+    if (suggestions.length > 0) {
+        addTag("Legal Research Suggested");
+        createNote(`This evidence shows semantic similarity to the following legal concepts: ${suggestions.join(', ')}. Consider researching relevant precedents.`);
     }
     ```
 
@@ -550,18 +579,28 @@ For the purpose of these examples, we assume the script environment provides the
 
 ### **Level 9: Generative & Predictive AI (Conceptual)**
 
-**33. Opposing Counsel Strategy Predictor**
-*   **Description:** Based on the evidence you have, this script tries to predict the opposing counsel's likely defense strategy.
+**33. Opposing Counsel Strategy Predictor (Functional)**
+*   **Description:** Based on the patterns of tags across all evidence, this script predicts the opposing counsel's likely defense strategy.
 *   **Script:**
     ```javascript
-    // Conceptual AI
-    const hasGaslighting = case.evidence.some(e => e.tags.includes("Gaslighting"));
-    const hasAdmissions = case.evidence.some(e => e.tags.includes("Admission"));
+    // This script looks for patterns in the tags of all evidence to predict the opponent's strategy.
+    // It relies on other scripts (like #8 Admission of Guilt and #63 Semantic Gaslighting Detector) having run first.
+    const hasSemanticGaslighting = case.evidence.some(e => e.tags.includes("Gaslighting (Semantic)"));
+    const hasAdmission = case.evidence.some(e => e.tags.includes("Admission"));
 
-    if (hasGaslighting && !hasAdmissions) {
-        createNote("Predicted Defense: Opposing counsel will likely argue the evidence is fabricated or that the client is unreliable ('unstable' defense).");
-    } else if (hasAdmissions) {
-        createNote("Predicted Defense: Opposing counsel may attempt a 'remorse' defense or argue the admissions were taken out of context.");
+    let prediction = null;
+
+    if (hasSemanticGaslighting && !hasAdmission) {
+        prediction = "Opposing counsel will likely attack the victim's credibility and state of mind ('unstable' defense).";
+    } else if (hasAdmission && !hasSemanticGaslighting) {
+        prediction = "Opposing counsel may attempt a 'remorse' defense or argue admissions were taken out of context or coerced.";
+    } else if (hasSemanticGaslighting && hasAdmission) {
+        prediction = "Opposing counsel faces a difficult case. They may try to minimize the admissions and paint the gaslighting as simple disagreements.";
+    }
+
+    if (prediction) {
+        createNote(`Predicted Opposing Strategy: ${prediction}`);
+        addTag("Strategy Prediction");
     }
     ```
 
@@ -735,14 +774,50 @@ For this next set of scripts, we assume a more advanced API that allows for dire
 
 ### **Level 12: AI for Classification and Scoring**
 
-**45. Advanced Emotion & Intent Analysis**
-*   **Description:** Analyzes text for nuanced emotions and perceived intent, writing these scores to corresponding columns in the "Evidence" sheet.
+**45. Advanced Emotion & Intent Analysis (Functional)**
+*   **Description:** Analyzes text for nuanced emotions and perceived intent by comparing it to a list of example sentences.
 *   **Script:**
     ```javascript
-    const analysis = AI.analyze("EmotionAndIntent", { text: evidence.text });
-    const row = Spreadsheet.query("Evidence", `SELECT * WHERE EvidenceID = '${evidence.id}'`)[0];
-    Spreadsheet.updateCell("Evidence", `J${row.rowNumber}`, analysis.emotion); // e.g., "Anger"
-    Spreadsheet.updateCell("Evidence", `K${row.rowNumber}`, analysis.intent);  // e.g., "Deceptive"
+    // This script attempts to classify the primary emotion and intent behind a piece
+    // of evidence by comparing it to text samples representing different categories.
+    const emotionSamples = [
+        { name: "Anger", text: "I am furious about this, you will regret it." },
+        { name: "Fear", text: "I am scared of what might happen next, please be careful." },
+        { name: "Sadness", text: "This whole situation just makes me incredibly sad and hopeless." }
+    ];
+
+    const intentSamples = [
+        { name: "Deceptive", text: "That's not what I said, you must have misunderstood me completely." },
+        { name: "Conciliatory", text: "I understand your position and I want to find a way to make this right." },
+        { name: "Threatening", text: "You should really think about what you're doing, there will be consequences." }
+    ];
+
+    const evidenceText = evidence.text;
+
+    // Find best emotion match
+    let bestEmotion = { name: null, similarity: -1.0 };
+    emotionSamples.forEach(sample => {
+        const similarity = lex.ai.local.calculateSimilarity(evidenceText, sample.text);
+        if (similarity > bestEmotion.similarity) {
+            bestEmotion = { name: sample.name, similarity: similarity };
+        }
+    });
+
+    // Find best intent match
+    let bestIntent = { name: null, similarity: -1.0 };
+    intentSamples.forEach(sample => {
+        const similarity = lex.ai.local.calculateSimilarity(evidenceText, sample.text);
+        if (similarity > bestIntent.similarity) {
+            bestIntent = { name: sample.name, similarity: similarity };
+        }
+    });
+
+    if (bestEmotion.name && bestEmotion.similarity > 0.5) {
+        addTag(`Emotion: ${bestEmotion.name}`);
+    }
+    if (bestIntent.name && bestIntent.similarity > 0.5) {
+        addTag(`Intent: ${bestIntent.name}`);
+    }
     ```
 
 **46. Legal Topic Classification**
@@ -930,150 +1005,35 @@ For this next set of scripts, we assume a more advanced API that allows for dire
 
 ---
 
-# Add-on Scripting: The `lex` Object
+## 63. Semantic Gaslighting Detector (Functional)
+*   **Description:** This script uses semantic similarity to detect phrases that are variations of gaslighting, even if they don't use the exact keywords from a predefined list.
+*   **Script:**
+    ```javascript
+    // This script uses semantic similarity to detect phrases that are variations of gaslighting,
+    // even if they don't use the exact keywords.
+    const gaslightingExamples = [
+        "You are being irrational and overly emotional.",
+        "That is not what happened, you are remembering it wrong.",
+        "I was just joking, you are too sensitive.",
+        "You are making a big deal out of nothing.",
+        "I am sorry you feel that way." // A non-apology
+    ];
 
-The scripting engine has been enhanced with a powerful new `lex` object, enabling scripts to interact with the UI and generative AI. While all the above scripts still work, this new API provides access to advanced features.
+    const evidenceText = evidence.text;
+    let isGaslighting = false;
 
-The `lex` object provides access to two powerful sub-systems:
-*   `lex.ai`: Interface with a powerful generative AI model (Google's Gemini).
-*   `lex.ui`: A toolkit for creating and managing dynamic UI elements, such as custom menu items and new screens.
+    gaslightingExamples.forEach(example => {
+        const similarity = lex.ai.local.calculateSimilarity(evidenceText, example);
+        if (similarity > 0.7) { // Confidence threshold
+            isGaslighting = true;
+        }
+    });
 
-Below are two examples that demonstrate how to use these new features.
-
----
-
-## 61. Simple Tutorial: "Hello, Dynamic Screens!"
-
-This script demonstrates the most basic use of the `lex.ui` object. It creates a new, clickable menu item in the main navigation rail. When you click this item, it opens a brand new screen that is completely defined by a JSON schema within the script.
-
-### What it Does:
-1.  Adds a menu item with the label "My Screen".
-2.  When clicked, opens a new screen with a title and a simple text message.
-3.  The new screen also contains a button that, when clicked, shows a temporary "toast" message at the bottom of the screen.
-
-### The Script:
-```javascript
-// This is the core of the Scriptable Screens feature.
-// We define a screen's layout and content using a JSON string.
-// This string is passed as part of the click action for a menu item.
-const myScreenSchema = {
-  // The 'title' property will be displayed in the app's top bar.
-  title: "Hello World",
-  // The 'elements' array defines the content of the screen, rendered top-to-bottom.
-  elements: [
-    {
-      type: "text",
-      properties: {
-        text: "Welcome to your first scripted screen!",
-        size: 20
-      }
-    },
-    {
-      type: "spacer",
-      properties: {
-        height: 16
-      }
-    },
-    {
-      type: "button",
-      properties: {
-        label: "Say Hello",
-        // The 'onClickAction' defines what happens when the button is pressed.
-        // The 'show_toast:' prefix is a special command handled by the app.
-        onClickAction: "show_toast:Hello from a scripted button!"
-      }
+    if (isGaslighting) {
+        addTag("Gaslighting (Semantic)");
+        linkToAllegation("Emotional Abuse");
     }
-  ]
-};
-
-// Use the lex.ui object to add or update a menu item.
-// This function takes an ID, a label, visibility, and a click action.
-lex.ui.addOrUpdate(
-  "my_first_screen_button", // A unique ID for this menu item.
-  "My Screen",              // The text that will appear in the navigation rail.
-  true,                     // 'true' to make the item visible.
-  // This is the action performed on click. We use a special prefix
-  // 'scripted_screen/' followed by our JSON schema. The app knows
-  // how to parse this and open our dynamic screen.
-  "scripted_screen/" + JSON.stringify(myScreenSchema)
-);
-```
-
----
-
-## 62. Advanced Tutorial: AI-Powered In-App Guide
-
-This script demonstrates the true power of combining the AI and UI APIs. It creates a "Tutorial & Tip" menu item that opens a custom screen. This screen not only provides a helpful guide to the app but also features a "Tip of the Day" that is freshly generated by the AI every time the script is run.
-
-### What it Does:
-1.  Calls the `lex.ai.generateContent()` function to get a random productivity tip.
-2.  Dynamically constructs a JSON schema for a new screen.
-3.  Injects the AI-generated tip directly into the content of the screen.
-4.  The screen itself serves as a mini-tutorial, explaining the app's main features.
-5.  Adds a menu item that, when clicked, displays this dynamic, AI-powered tutorial screen.
-
-### The Script:
-```javascript
-// Use the AI API to generate a piece of dynamic content.
-// The call is synchronous from the script's perspective.
-// The app handles the underlying network request and returns the text.
-const tipPrompt = "In one sentence, give me a useful and uncommon productivity tip for legal professionals.";
-const aiGeneratedTip = lex.ai.generateContent(tipPrompt);
-
-// Now, we'll build the JSON schema for our tutorial screen.
-const tutorialSchema = {
-  title: "App Tutorial",
-  elements: [
-    {
-      type: "text",
-      properties: {
-        text: "Welcome to The Lexorcist!",
-        size: 24
-      }
-    },
-    {
-      type: "text",
-      properties: {
-        text: "This app helps you organize, analyze, and build your case narrative.",
-        size: 16
-      }
-    },
-    { type: "spacer", properties: { height: 24 } },
-    {
-      type: "text",
-      properties: {
-        text: "AI Tip of the Day:",
-        size: 20
-      }
-    },
-    {
-      type: "text",
-      properties: {
-        // Here, we have embedded the content we received from the AI.
-        // Every time the script runs, this content will be different.
-        text: aiGeneratedTip,
-        size: 16
-      }
-    },
-    { type: "spacer", properties: { height: 24 } },
-    {
-      type: "text",
-      properties: {
-        text: "Use the navigation rail on the left to manage Cases, Evidence, and more.",
-        size: 16
-      }
-    }
-  ]
-};
-
-// Finally, create the menu item that will open our AI-powered screen.
-lex.ui.addOrUpdate(
-  "ai_tutorial_screen_button",
-  "Tutorial & Tip",
-  true,
-  "scripted_screen/" + JSON.stringify(tutorialSchema)
-);
-```
+    ```
 
 **59. Identify the "Most Persuasive" Evidence**
 *   **Description:** An AI ranks all evidence in the spreadsheet based on relevance, admissibility, and impact, then creates a "Top5Evidence" sheet with links to these key pieces.

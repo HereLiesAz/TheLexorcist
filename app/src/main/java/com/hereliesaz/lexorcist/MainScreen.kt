@@ -38,18 +38,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
-import android.widget.Toast
-import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.viewModelScope
-import androidx.navigation.NavType
-import androidx.navigation.navArgument
-import com.hereliesaz.lexorcist.ui.ScriptedScreen
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
-import java.net.URLDecoder
-import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
 import com.hereliesaz.aznavrail.*
 import com.hereliesaz.lexorcist.model.SignInState
 import com.hereliesaz.lexorcist.ui.AllegationsScreen
@@ -91,25 +79,6 @@ fun MainScreen(
     val caseSpecificErrorMessage by caseViewModel.errorMessage.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     var showCreateCaseDialog by remember { mutableStateOf(false) }
-    val context = LocalContext.current
-
-    // Collect menu items as state
-    val scriptedMenuItems by scriptedMenuViewModel.menuItems.collectAsState()
-
-    // Unified navigation and action handler
-    LaunchedEffect(key1 = Unit) {
-        scriptedMenuViewModel.navigationActions.onEach { action ->
-            if (action.startsWith("scripted_screen/")) {
-                val schema = action.substringAfter("scripted_screen/")
-                val encodedSchema = URLEncoder.encode(schema, StandardCharsets.UTF_8.toString())
-                navController.navigate("scripted_screen/$encodedSchema")
-            } else if (action.startsWith("show_toast:")) {
-                val message = action.substringAfter("show_toast:")
-                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-            }
-            // Add other action handlers here if needed
-        }.launchIn(mainViewModel.viewModelScope) // Use a ViewModel's scope
-    }
 
     LaunchedEffect(caseSpecificErrorMessage) {
         caseSpecificErrorMessage?.let {
@@ -154,14 +123,7 @@ fun MainScreen(
                 ) {
                     ScriptableAzNavRail(
                         navController = navController,
-                        scriptedMenuItems = scriptedMenuItems, // Pass the collected state
-                        onScriptedMenuItemClick = { item ->
-                            item.onClickAction?.let { action ->
-                                mainViewModel.viewModelScope.launch {
-                                    scriptedMenuViewModel.onMenuItemClicked(action)
-                                }
-                            }
-                        },
+                        scriptedMenuItems = scriptedMenuViewModel.menuItems,
                         onLogout = { authViewModel.signOut() }
                     )
 
@@ -264,23 +226,6 @@ fun MainScreen(
                                 }
                                 composable("data_review") {
                                     ReviewScreen(caseViewModel = caseViewModel)
-                                }
-                                composable(
-                                    route = "scripted_screen/{schema}",
-                                    arguments = listOf(navArgument("schema") { type = NavType.StringType })
-                                ) { backStackEntry ->
-                                    val schemaJson = backStackEntry.arguments?.getString("schema")
-                                    val decodedSchema = remember(schemaJson) {
-                                        URLDecoder.decode(schemaJson, StandardCharsets.UTF_8.toString())
-                                    }
-                                    ScriptedScreen(
-                                        schemaJson = decodedSchema,
-                                        onAction = { action ->
-                                            mainViewModel.viewModelScope.launch {
-                                                scriptedMenuViewModel.onMenuItemClicked(action)
-                                            }
-                                        }
-                                    )
                                 }
                                 composable("settings") { SettingsScreen(caseViewModel = caseViewModel) }
                                 composable("evidence_details/{evidenceId}") { backStackEntry ->

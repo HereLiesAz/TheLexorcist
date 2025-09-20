@@ -138,9 +138,13 @@ dependencies {
 
     // Firebase
     implementation(platform(libs.firebase.bom))
+<<<<<<< HEAD
     implementation(libs.google.firebase.auth.ktx)
     // implementation(libs.google.firebase.ai) // Temporarily commented out
     implementation("com.google.firebase:firebase-vertexai-ktx:1.0.0") // Direct implementation for testing
+=======
+    implementation(libs.google.firebase.auth)
+>>>>>>> origin/feat/add-scriptable-menu-item-examples
     implementation(libs.material3) // Explicitly use KTX version and direct coordinate
 
     // Core testing dependencies
