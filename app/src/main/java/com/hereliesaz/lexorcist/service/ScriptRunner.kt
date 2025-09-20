@@ -4,13 +4,9 @@ import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.utils.Result
 import org.mozilla.javascript.Scriptable
 import org.mozilla.javascript.ScriptableObject
-// import android.util.Log // Uncomment if logging for non-string elements is added
-
-// import com.hereliesaz.lexorcist.viewmodel.ScriptedMenuViewModel // REMOVED
 import javax.inject.Inject
 import javax.inject.Singleton
 
-import com.hereliesaz.lexorcist.viewmodel.ScriptedMenuViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -19,7 +15,7 @@ import org.mozilla.javascript.Function
 @Singleton
 class ScriptRunner @Inject constructor(
     private val generativeAIService: GenerativeAIService,
-    private val scriptedMenuViewModel: ScriptedMenuViewModel
+    private val scriptedMenuStateService: ScriptedMenuStateService // Changed from ScriptedMenuViewModel
 ) {
     class ScriptExecutionException(
         message: String,
@@ -30,11 +26,16 @@ class ScriptRunner @Inject constructor(
     inner class MenuItemApi {
         fun setLabel(label: String) {
             // Assuming a single menu item for now, with a fixed ID
-            scriptedMenuViewModel.setMenuItemLabel("scripted_item_1", label)
+            // Use CoroutineScope to call suspend function from non-suspend context
+            CoroutineScope(Dispatchers.Default).launch {
+                scriptedMenuStateService.updateLabel("scripted_item_1", label)
+            }
         }
 
         fun setVisible(isVisible: Boolean) {
-            scriptedMenuViewModel.setMenuItemVisibility("scripted_item_1", isVisible)
+            CoroutineScope(Dispatchers.Default).launch {
+                scriptedMenuStateService.updateVisibility("scripted_item_1", isVisible)
+            }
         }
     }
 
