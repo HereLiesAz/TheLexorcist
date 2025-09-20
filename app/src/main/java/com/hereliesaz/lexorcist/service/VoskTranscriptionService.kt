@@ -61,49 +61,16 @@ class VoskTranscriptionService @Inject constructor(
         }
     }
 
-    private suspend fun getOrInitializeModel(): Model {
-        if (voskModel != null) {
-            return voskModel!!
-        }
-        logService.addLog("VoskService: Model not initialized. Attempting to initialize...")
-        val modelPath = try {
-            initializeVoskModel() // This can throw IOException for model file/path issues
-        } catch (e: IOException) {
-            logService.addLog("VoskService: Failed to prepare model path: ${e.message}", LogLevel.ERROR)
-            _processingState.value = ProcessingState.Failure("Model preparation failed: ${e.message}")
-            throw e // Rethrow for transcribeAudio/start to handle
-        }
-
-        try {
-            val initializedModel = Model(modelPath) // Vosk's Model constructor
-            voskModel = initializedModel
-            logService.addLog("VoskService: Vosk Model object initialized successfully from path: $modelPath")
-            return initializedModel
-        } catch (e: UnsatisfiedLinkError) {
-            val errorMsg = "Failed to load Vosk native library: ${e.message}"
-            logService.addLog(errorMsg, LogLevel.ERROR)
-            _processingState.value = ProcessingState.Failure(errorMsg)
-            throw IOException(errorMsg, e) // Wrap and rethrow
-        } catch (e: NoClassDefFoundError) { // Often due to ExceptionInInitializerError from native issues
-            val errorMsg = "Failed to load Vosk model class (check native dependencies / JNI setup): ${e.message}"
-            logService.addLog(errorMsg, LogLevel.ERROR)
-            _processingState.value = ProcessingState.Failure(errorMsg)
-            throw IOException(errorMsg, e) // Wrap and rethrow
-        } catch (e: Exception) { // Catch any other unexpected exception during Model instantiation
-            val errorMsg = "Unexpected error during Vosk Model instantiation: ${e.message}"
-            logService.addLog(errorMsg, LogLevel.ERROR)
-            _processingState.value = ProcessingState.Failure(errorMsg)
-            throw IOException(errorMsg, e) // Wrap and rethrow
-        }
-    }
-
     override suspend fun start(uri: Uri) {
         serviceScope.launch {
             _processingState.value = ProcessingState.InProgress(0f)
             logService.addLog("VoskService: Starting transcription for $uri")
             try {
-                val currentModel = getOrInitializeModel()
-                val recognizer = Recognizer(currentModel, 16000f)
+                if (voskModel == null) {
+                    val modelPath = initializeVoskModel()
+                    voskModel = Model(modelPath)
+                }
+                val recognizer = Recognizer(voskModel, 16000f)
                 context.contentResolver.openInputStream(uri)?.use { inputStream ->
                     val resultText = transcribeAudioStream(recognizer, inputStream)
                     logService.addLog("VoskService: Transcription completed for $uri. Result: $resultText")
@@ -114,7 +81,7 @@ class VoskTranscriptionService @Inject constructor(
                     _processingState.value = ProcessingState.Failure(errorMsg)
                 }
             } catch (e: Exception) {
-                val errorMsg = "Transcription failed in start() for $uri: ${e.message}"
+                val errorMsg = "Transcription failed for $uri: ${e.message}"
                 logService.addLog(errorMsg, LogLevel.ERROR)
                 _processingState.value = ProcessingState.Failure(errorMsg)
                 e.printStackTrace()
@@ -130,8 +97,13 @@ class VoskTranscriptionService @Inject constructor(
         _processingState.value = ProcessingState.InProgress(0.0f)
         logService.addLog("VoskService: transcribeAudio called for $uri")
         try {
-            val currentModel = getOrInitializeModel()
-            val recognizer = Recognizer(currentModel, 16000f)
+            if (voskModel == null) {
+                logService.addLog("VoskService: Model not initialized. Initializing...")
+                val modelPath = initializeVoskModel()
+                voskModel = Model(modelPath)
+                logService.addLog("VoskService: Model initialized at path: $modelPath")
+            }
+            val recognizer = Recognizer(voskModel, 16000f)
             context.contentResolver.openInputStream(uri)?.use { inputStream ->
                 _processingState.value = ProcessingState.InProgress(0.5f)
                 val resultText = transcribeAudioStream(recognizer, inputStream)
@@ -194,64 +166,6 @@ class VoskTranscriptionService @Inject constructor(
         throw IOException(errorMsg)
     }
 
-    private fun copyModelFromAssets(): String? {
-        val assetModelPath = "vosk-model-en-us"
-        val destDir = File(context.cacheDir, "vosk-model")
-        try {
-            // Check if assets list is null or empty, indicating path doesn't exist or is empty
-            val assetFiles = context.assets.list(assetModelPath)
-            if (assetFiles == null || assetFiles.isEmpty()) {
-                logService.addLog("Vosk model not found in assets path: $assetModelPath", LogLevel.INFO)
-                return null
-            }
-
-            if (destDir.exists()) destDir.deleteRecursively()
-            destDir.mkdirs()
-
-            assetFiles.forEach { fileName ->
-                // Guard against copying directories, only copy files
-                // This simple check might need refinement if assets can have subdirs named like files
-                if (fileName.contains(".")) { // A basic heuristic for files vs directories
-                    val assetFile = "$assetModelPath/$fileName"
-                    val destFile = File(destDir, fileName)
-                    try {
-                        context.assets.open(assetFile).use { inputStream ->
-                            FileOutputStream(destFile).use { outputStream ->
-                                inputStream.copyTo(outputStream)
-                            }
-                        }
-                    } catch (e: IOException) {
-                        // This might happen if an entry in list() is a directory, and open() fails.
-                        logService.addLog("Skipping asset (possibly a directory or unreadable): $assetFile - ${e.message}", LogLevel.WARNING)
-                    }
-                } else {
-                    logService.addLog("Skipping asset (likely a directory): $assetModelPath/$fileName", LogLevel.INFO)
-                }
-            }
-
-            // After attempting to copy, check if the destination directory is a valid model
-            // This is a basic check; ideally, it should verify all necessary files exist.
-            val confDir = File(destDir, "conf")
-            val modelConfFile = File(confDir, "model.conf")
-            if (modelConfFile.exists()) {
-                logService.addLog("Successfully copied Vosk model from assets to ${destDir.absolutePath}")
-                return destDir.absolutePath
-            } else {
-                logService.addLog("Vosk model copy from assets to ${destDir.absolutePath} seems incomplete (model.conf missing).", LogLevel.WARNING)
-                if (destDir.exists()) destDir.deleteRecursively() // Clean up partial copy
-                return null
-            }
-
-        } catch (e: IOException) {
-            logService.addLog("Failed to list or copy Vosk model from assets path '$assetModelPath': ${e.message}", LogLevel.ERROR)
-            // If copying fails, clean up the destination directory
-            if (destDir.exists()) {
-                destDir.deleteRecursively()
-            }
-            return null
-        }
-    }
-
     private suspend fun downloadAndUnzipModel(model: LanguageModel): Result<Unit> {
         val modelDir = File(context.filesDir, model.modelName)
         val progressFlow = downloadProgresses.getOrPut(model.modelName) { MutableStateFlow(0f) }
@@ -293,11 +207,9 @@ class VoskTranscriptionService @Inject constructor(
                     var zipEntry = zis.nextEntry
                     while (zipEntry != null) {
                         val newFile = File(modelDir, zipEntry.name)
-                        // Prevent Zip Slip vulnerability
                         if (!newFile.canonicalPath.startsWith(modelDir.canonicalPath + File.separator)) {
                             throw SecurityException("Zip entry is outside of the target dir: ${zipEntry.name}")
                         }
-
                         if (zipEntry.isDirectory) {
                             if (!newFile.isDirectory && !newFile.mkdirs()) {
                                 throw IOException("Failed to create directory $newFile")
@@ -323,6 +235,10 @@ class VoskTranscriptionService @Inject constructor(
             } catch (e: Exception) {
                 logService.addLog("Error during model download/unzip: ${e.message}", LogLevel.ERROR)
                 e.printStackTrace()
+                // Clean up failed download
+                if (modelDir.exists()) {
+                    modelDir.deleteRecursively()
+                }
                 Result.Error(e)
             }
         }
@@ -338,14 +254,12 @@ class VoskTranscriptionService @Inject constructor(
                 }
             }
             val finalResultJson = recognizer.finalResult
-            // Assuming FinalResult is a simple data class like: data class FinalResult(val text: String)
             val finalResult = Gson().fromJson(finalResultJson, FinalResult::class.java)
             return finalResult?.text ?: ""
         } finally {
-            recognizer.close() // Ensure recognizer is closed
+            recognizer.close()
         }
     }
 
-    // Define FinalResult data class if it's not defined elsewhere accessible to this file.
     private data class FinalResult(val text: String)
 }
