@@ -41,6 +41,9 @@ class ExtrasViewModel @Inject constructor(
     private val _pendingSharedItemContent = MutableStateFlow<String?>(null)
     val pendingSharedItemContent: StateFlow<String?> = _pendingSharedItemContent.asStateFlow()
 
+    private val _pendingSharedItemDescription = MutableStateFlow<String?>(null)
+    val pendingSharedItemDescription: StateFlow<String?> = _pendingSharedItemDescription.asStateFlow()
+
     init {
         observeSearchQuery()
     }
@@ -154,14 +157,16 @@ class ExtrasViewModel @Inject constructor(
         }
     }
 
-    fun prepareForSharing(name: String, type: String, content: String) {
+    fun prepareForSharing(name: String, description: String, type: String, content: String) {
         _pendingSharedItemName.value = name
+        _pendingSharedItemDescription.value = description
         _pendingSharedItemType.value = type
         _pendingSharedItemContent.value = content
     }
 
     fun clearPendingSharedItem() {
         _pendingSharedItemName.value = null
+        _pendingSharedItemDescription.value = null
         _pendingSharedItemType.value = null
         _pendingSharedItemContent.value = null
     }

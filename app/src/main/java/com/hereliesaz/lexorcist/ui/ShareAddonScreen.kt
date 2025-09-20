@@ -42,6 +42,7 @@ fun ShareAddonScreen(
     extrasViewModel: ExtrasViewModel = hiltViewModel()
 ) {
     val pendingName by extrasViewModel.pendingSharedItemName.collectAsState()
+    val pendingDescription by extrasViewModel.pendingSharedItemDescription.collectAsState()
     val pendingContent by extrasViewModel.pendingSharedItemContent.collectAsState()
     val pendingType by extrasViewModel.pendingSharedItemType.collectAsState()
 
@@ -50,8 +51,9 @@ fun ShareAddonScreen(
     var content by remember { mutableStateOf("") }
     var type by remember { mutableStateOf("Script") } // Default to "Script"
 
-    LaunchedEffect(pendingName, pendingContent, pendingType) {
+    LaunchedEffect(pendingName, pendingDescription, pendingContent, pendingType) {
         pendingName?.let { name = it }
+        pendingDescription?.let { description = it }
         pendingContent?.let { content = it }
         pendingType?.let { type = it }
     }

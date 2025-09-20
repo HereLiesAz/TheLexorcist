@@ -32,6 +32,9 @@ class ScriptBuilderViewModel
         private val _scriptText = MutableStateFlow("")
         val scriptText: StateFlow<String> = _scriptText.asStateFlow()
 
+        private val _scriptDescription = MutableStateFlow("")
+        val scriptDescription: StateFlow<String> = _scriptDescription.asStateFlow()
+
         private val _caseScripts = MutableStateFlow<List<Script>>(emptyList())
         val caseScripts: StateFlow<List<Script>> = _caseScripts.asStateFlow()
 
@@ -45,6 +48,10 @@ class ScriptBuilderViewModel
 
         fun onScriptTitleChanged(newText: String) {
             _scriptTitle.value = newText
+        }
+
+        fun onScriptDescriptionChanged(newText: String) {
+            _scriptDescription.value = newText
         }
 
         fun onScriptTextChanged(newText: String) {
@@ -83,6 +90,7 @@ class ScriptBuilderViewModel
 
         fun loadScript(script: Script) {
             _scriptTitle.value = script.name
+            _scriptDescription.value = script.description
             _scriptText.value = script.content
         }
 
