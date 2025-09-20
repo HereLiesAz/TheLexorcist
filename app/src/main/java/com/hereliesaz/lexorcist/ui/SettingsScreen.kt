@@ -22,6 +22,7 @@ import androidx.compose.material3.Button // Keep this if used for other buttons 
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem // Keep one
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox // Keep one
 import androidx.compose.material3.ExposedDropdownMenuDefaults // Keep one Material 3 version
 import androidx.compose.material3.HorizontalDivider
@@ -46,7 +47,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel // UPDATED IMPORT
 import com.dropbox.core.android.Auth
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.model.DownloadState
@@ -150,7 +151,7 @@ fun SettingsScreen(
                     readOnly = true,
                     label = { Text(stringResource(R.string.language)) },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = appLanguageExpanded) },
-                    modifier = Modifier.menuAnchor().fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth().menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryEditable, enabled = true)
                 )
                 ExposedDropdownMenu(
                     expanded = appLanguageExpanded,
@@ -196,7 +197,7 @@ fun SettingsScreen(
                     readOnly = true,
                     label = { Text(stringResource(R.string.transcription_service)) },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = transcriptionServiceExpanded) },
-                    modifier = Modifier.menuAnchor().fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth().menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryEditable, enabled = true)
                 )
                 ExposedDropdownMenu(
                     expanded = transcriptionServiceExpanded,
@@ -472,8 +473,8 @@ fun LanguageModelDownloader(
                 label = { Text(stringResource(R.string.transcription_language)) },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                 modifier = Modifier
-                    .menuAnchor()
                     .fillMaxWidth()
+                    .menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryEditable, enabled = true)
             )
             ExposedDropdownMenu(
                 expanded = expanded,
@@ -511,7 +512,7 @@ fun LanguageModelDownloader(
             val progress by downloadingModel.progress.collectAsState()
             Spacer(modifier = Modifier.height(8.dp))
             LinearProgressIndicator(
-                progress = progress,
+                progress = { progress }, // UPDATED
                 modifier = Modifier.fillMaxWidth()
             )
         }

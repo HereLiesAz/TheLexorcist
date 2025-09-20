@@ -2,8 +2,8 @@ package com.hereliesaz.lexorcist.model
 
 object TranscriptionModels {
     private const val VOSK_BASE_URL = "https://alphacephei.com/vosk/models/"
-    // Using a placeholder for Whisper models. In a real scenario, these would be hosted.
-    private const val WHISPER_BASE_URL = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/"
+    // Using models from https://github.com/nyadla-sys/whisper.tflite
+    private const val WHISPER_TFLITE_BASE_URL = "https://github.com/nyadla-sys/whisper.tflite/raw/main/models/"
 
     val voskModels by lazy {
         listOf(
@@ -29,15 +29,33 @@ object TranscriptionModels {
         )
     }
 
-    // Models from https://github.com/ggerganov/whisper.cpp/tree/master/models
-    // Using the tiny models for mobile.
     val whisperModels by lazy {
         listOf(
-            LanguageModel("English", "en", "${WHISPER_BASE_URL}ggml-tiny.en.bin", "ggml-tiny.en"),
-            LanguageModel("Multilingual", "multi", "${WHISPER_BASE_URL}ggml-tiny.bin", "ggml-tiny")
-            // The whisper.cpp models are generally multilingual or english-only.
-            // The library can select the language internally from the multilingual model.
-            // For simplicity, we'll offer the tiny english and tiny multilingual models.
+            LanguageModel(
+                name = "English (TFLite Tiny)",
+                code = "en",
+                modelUrl = "${WHISPER_TFLITE_BASE_URL}whisper-tiny-en.tflite",
+                modelName = "whisper-tiny-en.tflite" // Filename for local storage
+            ),
+            LanguageModel(
+                name = "Multilingual (TFLite Tiny)",
+                code = "multi",
+                modelUrl = "${WHISPER_TFLITE_BASE_URL}whisper-tiny.tflite",
+                modelName = "whisper-tiny.tflite" // Filename for local storage
+            )
+            // You can add other models from the repository here if needed, e.g.:
+            // LanguageModel(
+            //     name = "English (TFLite Base)",
+            //     code = "en-base", // Ensure unique code if you add more English variants
+            //     modelUrl = "${WHISPER_TFLITE_BASE_URL}whisper-base-en.tflite",
+            //     modelName = "whisper-base-en.tflite"
+            // ),
+            // LanguageModel(
+            //     name = "Multilingual (TFLite Base)",
+            //     code = "multi-base", // Ensure unique code for multilingual variants
+            //     modelUrl = "${WHISPER_TFLITE_BASE_URL}whisper-base.tflite",
+            //     modelName = "whisper-base.tflite"
+            // )
         )
     }
 }
