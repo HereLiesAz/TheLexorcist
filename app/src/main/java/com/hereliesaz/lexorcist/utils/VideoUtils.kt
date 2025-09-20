@@ -5,6 +5,7 @@ import android.media.MediaCodec
 import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.net.Uri
+// REMOVED: import com.google.common.collect.Multimaps.index
 import com.hereliesaz.whisper.utils.WaveUtil
 import java.io.File
 import java.io.FileOutputStream
@@ -33,33 +34,41 @@ object VideoUtils {
         val pcmFile = File.createTempFile("audio", ".pcm", context.cacheDir)
         val fos = FileOutputStream(pcmFile)
 
-        val inputBuffers = codec.inputBuffers
-        val outputBuffers = codec.outputBuffers
+        // REMOVED: val inputBuffers = codec.getInputBuffer(index())
+        // REMOVED: val outputBuffers = codec.getOutputBuffer(index())
         val info = MediaCodec.BufferInfo()
         var isEOS = false
 
         while (!isEOS) {
             val inIndex = codec.dequeueInputBuffer(10000)
             if (inIndex >= 0) {
-                val buffer = inputBuffers[inIndex]
-                val sampleSize = extractor.readSampleData(buffer, 0)
-                if (sampleSize < 0) {
-                    codec.queueInputBuffer(inIndex, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
-                    isEOS = true
+                val buffer: ByteBuffer? = codec.getInputBuffer(inIndex)
+                if (buffer != null) { 
+                    val sampleSize = extractor.readSampleData(buffer, 0)
+                    if (sampleSize < 0) {
+                        codec.queueInputBuffer(inIndex, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
+                        isEOS = true
+                    } else {
+                        codec.queueInputBuffer(inIndex, 0, sampleSize, extractor.sampleTime, 0)
+                        extractor.advance()
+                    }
                 } else {
-                    codec.queueInputBuffer(inIndex, 0, sampleSize, extractor.sampleTime, 0)
-                    extractor.advance()
+                    // TODO log an error if buffer is null, though inIndex >= 0 should mean it's valid
                 }
             }
 
             var outIndex = codec.dequeueOutputBuffer(info, 10000)
             while (outIndex >= 0) {
-                val buffer = outputBuffers[outIndex]
-                val chunk = ByteArray(info.size)
-                buffer.get(chunk)
-                buffer.clear()
-                fos.write(chunk)
-                codec.releaseOutputBuffer(outIndex, false)
+                val buffer: ByteBuffer? = codec.getOutputBuffer(outIndex)
+                if (buffer != null) { 
+                    val chunk = ByteArray(info.size)
+                    buffer.get(chunk)
+                    buffer.clear()
+                    fos.write(chunk)
+                    codec.releaseOutputBuffer(outIndex, false)
+                } else {
+                     // TODO log an error if buffer is null
+                }
                 outIndex = codec.dequeueOutputBuffer(info, 10000)
             }
         }
@@ -110,7 +119,7 @@ object VideoUtils {
         val durationStr = retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION)
         val duration = durationStr?.toLong() ?: 0
 
-        for (i in 0 until duration step 1000) {
+        for (i in 0 until duration step 1000) { // iterate every second (duration is in ms)
             val bitmap = retriever.getFrameAtTime(i * 1000, android.media.MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
             if (bitmap != null) {
                 val frameFile = File.createTempFile("frame_", ".jpg", context.cacheDir)
@@ -118,6 +127,7 @@ object VideoUtils {
                 bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 90, fos)
                 fos.close()
                 frameUris.add(Uri.fromFile(frameFile))
+                bitmap.recycle() // Recycle bitmap after use
             }
         }
 

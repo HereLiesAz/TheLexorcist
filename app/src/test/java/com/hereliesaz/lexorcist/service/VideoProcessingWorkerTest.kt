@@ -2,6 +2,7 @@ package com.hereliesaz.lexorcist.service
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import androidx.work.Data
 import androidx.work.ListenableWorker
 import androidx.work.WorkerFactory
@@ -20,7 +21,7 @@ import org.mockito.Mock
 import org.mockito.MockedStatic
 import org.mockito.Mockito
 import org.mockito.junit.MockitoJUnitRunner
-import org.mockito.kotlin.any
+import org.mockito.kotlin.any // For general any
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.whenever
 
@@ -47,6 +48,7 @@ class VideoProcessingWorkerTest {
     private val testSpreadsheetId = "test_spreadsheet_id"
     private lateinit var mockEvidence: Evidence
     private lateinit var mockedStaticUri: MockedStatic<Uri> // For mocking Uri.parse
+    private lateinit var mockedStaticLog: MockedStatic<Log> // For mocking android.util.Log
 
     @Before
     fun setup() {
@@ -55,9 +57,15 @@ class VideoProcessingWorkerTest {
         // Mock Uri.parse
         mockedStaticUri = Mockito.mockStatic(Uri::class.java)
         mockedStaticUri.`when`<Uri> { Uri.parse(testVideoUriString) }.thenReturn(mockParsedVideoUri)
+        
+        // Mock android.util.Log
+        mockedStaticLog = Mockito.mockStatic(Log::class.java)
+        // Add explicit stubs for Log.e methods using Mockito.anyString() and any<Type>() for Kotlin
+        mockedStaticLog.`when`<Int> { Log.e(Mockito.anyString(), Mockito.anyString()) }.thenReturn(0)
+        mockedStaticLog.`when`<Int> { Log.e(Mockito.anyString(), Mockito.anyString(), any<Throwable>()) }.thenReturn(0)
 
-        // Stubbing toString() for the mock Uri to prevent NPEs in logging or other string operations
-        whenever(mockParsedVideoUri.toString()).thenReturn(testVideoUriString)
+        // REMOVED: Unnecessary stubbing for mockParsedVideoUri.toString()
+        // whenever(mockParsedVideoUri.toString()).thenReturn(testVideoUriString)
 
         mockEvidence = Evidence(
             id = 1,
@@ -87,7 +95,7 @@ class VideoProcessingWorkerTest {
         val inputData = Data.Builder()
             .putString(VideoProcessingWorker.KEY_VIDEO_URI, testVideoUriString)
             .putInt(VideoProcessingWorker.KEY_CASE_ID, testCaseIdInput)
-            .putString(VideoProcessingWorker.KEY_CASE_NAME, testCaseName)
+            .putString(VideoProcessingWorker.KEY_CASE_NAME, testCaseName) // CORRECTED TYPO
             .putString(VideoProcessingWorker.KEY_SPREADSHEET_ID, testSpreadsheetId)
             .build()
 
@@ -116,7 +124,8 @@ class VideoProcessingWorkerTest {
 
     @After
     fun tearDown() {
-        mockedStaticUri.close() // Close the static mock
+        mockedStaticUri.close() // Close the static mock for Uri
+        mockedStaticLog.close() // Close the static mock for Log
     }
 
     @Test

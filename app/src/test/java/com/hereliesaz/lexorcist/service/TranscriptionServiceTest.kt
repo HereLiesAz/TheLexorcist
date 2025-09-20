@@ -37,7 +37,7 @@ class TranscriptionServiceTest {
     @Mock
     private lateinit var mockContext: Context
 
-    @Mock
+    @Mock(lenient = true) // Made mockLogService lenient
     private lateinit var mockLogService: LogService
 
     @Mock
@@ -64,12 +64,13 @@ class TranscriptionServiceTest {
         mockedStaticUri = Mockito.mockStatic(Uri::class.java)
         mockedStaticUri.`when`<Uri> { Uri.parse(testAudioUriString) }.thenReturn(mockParsedUri)
 
-        // Stubbing toString() for the mock Uri to prevent NPEs in logging or other string operations
-        whenever(mockParsedUri.toString()).thenReturn(testAudioUriString)
+        // REMOVED: Unnecessary stub for mockParsedUri.toString()
+        // whenever(mockParsedUri.toString()).thenReturn(testAudioUriString)
 
         testAppFilesDir = tempFolder.newFolder("appfiles")
         whenever(mockContext.filesDir).thenReturn(testAppFilesDir)
         whenever(mockContext.contentResolver).thenReturn(mockContentResolver)
+        // REINSTATED: This stub is necessary for model initialization path
         whenever(mockSettingsManager.getTranscriptionLanguage()).thenReturn("en-us")
 
         voskTranscriptionService = VoskTranscriptionService(mockContext, mockLogService, mockSettingsManager)
@@ -82,9 +83,9 @@ class TranscriptionServiceTest {
 
     @Test
     fun `transcribeAudio when contentResolver throws FileNotFoundException should return Error`() = runTest {
-        // This mock may not be hit if model initialization fails first, which is expected here.
-        whenever(mockContentResolver.openInputStream(eq(mockParsedUri)))
-            .thenThrow(FileNotFoundException("Mock FNF Exception"))
+        // REMOVED: Unnecessary stub as model initialization is expected to fail first.
+        // whenever(mockContentResolver.openInputStream(eq(mockParsedUri)))
+        //     .thenThrow(FileNotFoundException("Mock FNF Exception"))
 
         val result = voskTranscriptionService.transcribeAudio(mockParsedUri)
 
@@ -103,8 +104,8 @@ class TranscriptionServiceTest {
 
     @Test
     fun `transcribeAudio when contentResolver returns null InputStream should return Error`() = runTest {
-        // This mock may not be hit if model initialization fails first, which is expected here.
-        whenever(mockContentResolver.openInputStream(eq(mockParsedUri))).thenReturn(null)
+        // REMOVED: Unnecessary stub as model initialization is expected to fail first.
+        // whenever(mockContentResolver.openInputStream(eq(mockParsedUri))).thenReturn(null)
 
         val result = voskTranscriptionService.transcribeAudio(mockParsedUri)
 

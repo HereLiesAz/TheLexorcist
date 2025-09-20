@@ -34,7 +34,7 @@ class MainActivity : ComponentActivity() {
     override fun attachBaseContext(newBase: Context) {
         val settingsManager = SettingsManager(newBase)
         val lang = settingsManager.getLanguage()
-        val locale = Locale(lang)
+        val locale = Locale.forLanguageTag(lang) // CORRECTED
         val context = newBase.createConfigurationContext(newBase.resources.configuration.apply { setLocale(locale) })
         super.attachBaseContext(context)
     }
