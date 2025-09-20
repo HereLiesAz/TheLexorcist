@@ -2,8 +2,8 @@ package com.hereliesaz.lexorcist.model
 
 object TranscriptionModels {
     private const val VOSK_BASE_URL = "https://alphacephei.com/vosk/models/"
-    // Using models from https://github.com/nyadla-sys/whisper.tflite
-    private const val WHISPER_TFLITE_BASE_URL = "https://github.com/nyadla-sys/whisper.tflite/raw/main/models/"
+    // Using a placeholder for Whisper models. In a real scenario, these would be hosted.
+    private const val WHISPER_BASE_URL = "https://github.com/vilassn/whisper_android/blob/master/whisper_java/app/src/main/assets/"
 
     val voskModels by lazy {
         listOf(
@@ -32,30 +32,19 @@ object TranscriptionModels {
     val whisperModels by lazy {
         listOf(
             LanguageModel(
-                name = "English (TFLite Tiny)",
+                name = "English",
                 code = "en",
-                modelUrl = "${WHISPER_TFLITE_BASE_URL}whisper-tiny-en.tflite",
-                modelName = "whisper-tiny-en.tflite" // Filename for local storage
+                modelUrl = "${WHISPER_BASE_URL}whisper-tiny-en.tflite?raw=true",
+                modelName = "whisper-tiny-en.tflite",
+                vocabUrl = "${WHISPER_BASE_URL}filters_vocab_en.bin?raw=true"
             ),
             LanguageModel(
-                name = "Multilingual (TFLite Tiny)",
+                name = "Multilingual",
                 code = "multi",
-                modelUrl = "${WHISPER_TFLITE_BASE_URL}whisper-tiny.tflite",
-                modelName = "whisper-tiny.tflite" // Filename for local storage
+                modelUrl = "${WHISPER_BASE_URL}whisper-tiny.tflite?raw=true",
+                modelName = "whisper-tiny.tflite",
+                vocabUrl = "${WHISPER_BASE_URL}filters_vocab_multilingual.bin?raw=true"
             )
-            // You can add other models from the repository here if needed, e.g.:
-            // LanguageModel(
-            //     name = "English (TFLite Base)",
-            //     code = "en-base", // Ensure unique code if you add more English variants
-            //     modelUrl = "${WHISPER_TFLITE_BASE_URL}whisper-base-en.tflite",
-            //     modelName = "whisper-base-en.tflite"
-            // ),
-            // LanguageModel(
-            //     name = "Multilingual (TFLite Base)",
-            //     code = "multi-base", // Ensure unique code for multilingual variants
-            //     modelUrl = "${WHISPER_TFLITE_BASE_URL}whisper-base.tflite",
-            //     modelName = "whisper-base.tflite"
-            // )
         )
     }
 }

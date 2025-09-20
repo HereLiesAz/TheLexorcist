@@ -63,30 +63,23 @@ class WhisperTranscriptionService @Inject constructor(
                 ?: throw IOException("Selected Whisper language '$selectedLangCode' not found or supported.")
 
             val modelFile = File(context.filesDir, model.modelName)
-            if (!modelFile.exists()) {
-                throw IOException("Whisper model file not found: ${modelFile.path}. Please download it from settings.")
+            val vocabFile = File(context.filesDir, model.modelName.replace(".tflite", ".bin"))
+
+            if (!modelFile.exists() || !vocabFile.exists()) {
+                throw IOException("Whisper model or vocab file not found. Please download it from settings.")
             }
 
-            // For whisper.cpp, vocab is part of the model file, so we don't need a separate vocab file.
-            // The `loadModel` in `Whisper.java` takes modelPath, vocabPath. We can pass the model path for both.
-            // Let's assume the underlying engine handles this. Or we can check Whisper.java again.
-            // Whisper.java's `loadModel` takes modelPath, vocabPath, and isMultilingual.
-            // The ggml models have the vocab built-in. The original implementation passed a separate vocab file for tflite.
-            // Let's assume for ggml, we can pass a dummy or null path for vocab. A quick look at Whisper.java shows it expects a valid path.
-            // Let's pass the model file path for the vocab path and see if the native layer handles it.
-            // This is a bit of a guess, but it's the most likely scenario for ggml models.
-            // The `isMultilingual` flag is important.
             val isMultilingual = model.code == "multi"
 
             try {
                 whisper = Whisper(context).apply {
-                    loadModel(modelFile.absolutePath, modelFile.absolutePath, isMultilingual)
+                    loadModel(modelFile.absolutePath, vocabFile.absolutePath, isMultilingual)
                 }
                 logService.addLog("Whisper model '${model.modelName}' loaded successfully.")
-            } catch (e: IOException) {
+            } catch (e: Exception) {
                 _processingState.value = ProcessingState.Failure("Failed to initialize Whisper: ${e.message}")
                 logService.addLog("Failed to initialize Whisper: ${e.message}", LogLevel.ERROR)
-                throw e
+                throw IOException("Failed to load Whisper model", e)
             }
         }
     }
@@ -98,36 +91,47 @@ class WhisperTranscriptionService @Inject constructor(
     fun downloadModel(model: LanguageModel): Flow<DownloadState> = flow {
         emit(DownloadState.Downloading)
         val modelFile = File(context.filesDir, model.modelName)
+        val vocabFile = File(context.filesDir, model.modelName.replace(".tflite", ".bin"))
         val progressFlow = downloadProgresses.getOrPut(model.modelName) { MutableStateFlow(0f) }
 
         try {
             withContext(Dispatchers.IO) {
-                URL(model.modelUrl).openStream().use { input ->
-                    FileOutputStream(modelFile).use { output ->
-                        val connection = URL(model.modelUrl).openConnection()
-                        connection.connect()
-                        val fileLength = connection.contentLength
-                        val buffer = ByteArray(8192)
-                        var bytesRead: Int
-                        var totalBytesRead: Long = 0
-                        while (input.read(buffer).also { bytesRead = it } != -1) {
-                            output.write(buffer, 0, bytesRead)
-                            totalBytesRead += bytesRead
-                            if (fileLength > 0) {
-                                progressFlow.value = (totalBytesRead.toFloat() / fileLength.toFloat())
-                            }
-                        }
-                    }
+                // Download model
+                downloadFile(URL(model.modelUrl), modelFile, progressFlow, 0.5f)
+                // Download vocab
+                model.vocabUrl?.let {
+                    downloadFile(URL(it), vocabFile, progressFlow, 1.0f)
                 }
             }
             progressFlow.value = 1.0f
-            logService.addLog("Whisper model '${model.modelName}' downloaded successfully.")
+            logService.addLog("Whisper model '${model.modelName}' and vocab downloaded successfully.")
             emit(DownloadState.Downloaded)
         } catch (e: Exception) {
             logService.addLog("Error downloading Whisper model '${model.modelName}': ${e.message}", LogLevel.ERROR)
             e.printStackTrace()
-            modelFile.delete() // Clean up failed download
+            modelFile.delete()
+            vocabFile.delete()
             emit(DownloadState.Error("Download failed: ${e.message}"))
+        }
+    }
+
+    private suspend fun downloadFile(url: URL, file: File, progress: MutableStateFlow<Float>, progressWeight: Float) {
+        url.openStream().use { input ->
+            FileOutputStream(file).use { output ->
+                val connection = url.openConnection()
+                connection.connect()
+                val fileLength = connection.contentLength
+                val buffer = ByteArray(8192)
+                var bytesRead: Int
+                var totalBytesRead: Long = 0
+                while (input.read(buffer).also { bytesRead = it } != -1) {
+                    output.write(buffer, 0, bytesRead)
+                    totalBytesRead += bytesRead
+                    if (fileLength > 0) {
+                        progress.value = (totalBytesRead.toFloat() / fileLength.toFloat()) * progressWeight
+                    }
+                }
+            }
         }
     }
 
