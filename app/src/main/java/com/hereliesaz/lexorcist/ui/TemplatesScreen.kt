@@ -39,7 +39,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel // Updated import
+import androidx.hilt.navigation.compose.hiltViewModel // Updated import
 import com.google.gson.Gson
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.model.SignInState
@@ -55,7 +55,7 @@ import java.util.UUID
 internal fun filterTemplates(templates: List<Template>, court: String): List<Template> {
     return if (court.isNotBlank()) {
         templates.filter {
-            it.court.equals(court, ignoreCase = true)
+            it.court.equals(court, ignoreCase = true) || it.court.equals("Generic", ignoreCase = true)
         }
     } else {
         templates

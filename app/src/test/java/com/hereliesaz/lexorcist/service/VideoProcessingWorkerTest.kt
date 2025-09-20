@@ -2,7 +2,6 @@ package com.hereliesaz.lexorcist.service
 
 import android.content.Context
 import android.net.Uri
-import android.util.Log // Added import for Log
 import androidx.work.Data
 import androidx.work.ListenableWorker
 import androidx.work.WorkerFactory
@@ -20,9 +19,8 @@ import org.junit.runner.RunWith
 import org.mockito.Mock
 import org.mockito.MockedStatic
 import org.mockito.Mockito
-import org.mockito.ArgumentMatchers // Import for anyString()
 import org.mockito.junit.MockitoJUnitRunner
-import org.mockito.kotlin.any // Import for any<Type>()
+import org.mockito.kotlin.any
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.whenever
 
@@ -39,7 +37,7 @@ class VideoProcessingWorkerTest {
     @Mock
     private lateinit var mockLogService: LogService
 
-    @Mock // Mock for the Uri that Uri.parse will return
+    @Mock
     private lateinit var mockParsedVideoUri: Uri
 
     private lateinit var worker: VideoProcessingWorker
@@ -48,10 +46,18 @@ class VideoProcessingWorkerTest {
     private val testCaseName = "Test Case"
     private val testSpreadsheetId = "test_spreadsheet_id"
     private lateinit var mockEvidence: Evidence
+    private lateinit var mockedStaticUri: MockedStatic<Uri> // For mocking Uri.parse
 
     @Before
     fun setup() {
-        whenever(mockParsedVideoUri.toString()).thenReturn("file:///test.mp4")
+        testVideoUriString = "file:///test.mp4" // Define before use
+
+        // Mock Uri.parse
+        mockedStaticUri = Mockito.mockStatic(Uri::class.java)
+        mockedStaticUri.`when`<Uri> { Uri.parse(testVideoUriString) }.thenReturn(mockParsedVideoUri)
+
+        // Stubbing toString() for the mock Uri to prevent NPEs in logging or other string operations
+        whenever(mockParsedVideoUri.toString()).thenReturn(testVideoUriString)
 
         mockEvidence = Evidence(
             id = 1,
@@ -60,9 +66,9 @@ class VideoProcessingWorkerTest {
             type = "video",
             content = "Test content",
             formattedContent = "Test formatted content",
-            mediaUri = "file:///test.mp4",
+            mediaUri = testVideoUriString,
             timestamp = System.currentTimeMillis(),
-            sourceDocument = "file:///test.mp4",
+            sourceDocument = testVideoUriString,
             documentDate = System.currentTimeMillis(),
             allegationId = null,
             category = "Video Evidence",
@@ -79,7 +85,7 @@ class VideoProcessingWorkerTest {
         )
 
         val inputData = Data.Builder()
-            .putString(VideoProcessingWorker.KEY_VIDEO_URI, "file:///test.mp4")
+            .putString(VideoProcessingWorker.KEY_VIDEO_URI, testVideoUriString)
             .putInt(VideoProcessingWorker.KEY_CASE_ID, testCaseIdInput)
             .putString(VideoProcessingWorker.KEY_CASE_NAME, testCaseName)
             .putString(VideoProcessingWorker.KEY_SPREADSHEET_ID, testSpreadsheetId)
@@ -108,11 +114,16 @@ class VideoProcessingWorkerTest {
             .build()
     }
 
+    @After
+    fun tearDown() {
+        mockedStaticUri.close() // Close the static mock
+    }
+
     @Test
     fun `doWork when video processing is successful returns success`() = runTest {
         whenever(
             mockVideoProcessingService.processVideo(
-                eq(mockParsedVideoUri),
+                eq(mockParsedVideoUri), // This should now match correctly
                 eq(testCaseIdInput),
                 eq(testCaseName),
                 eq(testSpreadsheetId),
@@ -122,9 +133,12 @@ class VideoProcessingWorkerTest {
 
         val result = worker.doWork()
 
-        assertTrue(result is ListenableWorker.Result.Success)
+        assertTrue("Result should be Success, was $result", result is ListenableWorker.Result.Success)
         val outputData = (result as ListenableWorker.Result.Success).outputData
-        assertTrue(outputData.getString(VideoProcessingWorker.RESULT_SUCCESS)?.contains("Video processed successfully") == true)
+        assertTrue(
+            "Output data should contain success message", 
+            outputData.getString(VideoProcessingWorker.RESULT_SUCCESS)?.contains("Video processed successfully") == true
+        )
     }
 
     @Test
@@ -135,9 +149,12 @@ class VideoProcessingWorkerTest {
 
         val result = worker.doWork()
 
-        assertTrue(result is ListenableWorker.Result.Failure)
+        assertTrue("Result should be Failure, was $result", result is ListenableWorker.Result.Failure)
         val outputData = (result as ListenableWorker.Result.Failure).outputData
-        assertEquals("Video processing finished but no evidence was created.", outputData.getString(VideoProcessingWorker.RESULT_FAILURE))
+        assertEquals(
+            "Video processing finished but no evidence was created.", 
+            outputData.getString(VideoProcessingWorker.RESULT_FAILURE)
+        )
     }
 
     @Test
@@ -149,13 +166,22 @@ class VideoProcessingWorkerTest {
 
         val result = worker.doWork()
 
-        assertTrue(result is ListenableWorker.Result.Failure)
+        assertTrue("Result should be Failure, was $result", result is ListenableWorker.Result.Failure)
         val outputData = (result as ListenableWorker.Result.Failure).outputData
-        assertEquals("Video processing failed: $exceptionMessage", outputData.getString(VideoProcessingWorker.RESULT_FAILURE))
+        assertEquals(
+            "Video processing failed: $exceptionMessage", 
+            outputData.getString(VideoProcessingWorker.RESULT_FAILURE)
+        )
     }
 
     @Test
     fun `doWork when input data is missing returns failure`() = runTest {
+        // Need to re-initialize Uri mock for this specific test if it runs independently or setup is not run before each test
+        // However, with JUnit, @Before runs before each @Test, so mockedStaticUri should still be active.
+        // If Uri.parse is called by the worker with an empty string or null, it might throw an error before our check.
+        // Let's ensure the Uri.parse for the specific empty/null case is handled if necessary or assume the worker handles it.
+        // The worker is expected to fail due to missing KEY_VIDEO_URI, etc., before parsing a potentially problematic Uri string.
+
         val workerFactory = object : WorkerFactory() { 
             override fun createWorker(
                 appContext: Context,
@@ -180,8 +206,11 @@ class VideoProcessingWorkerTest {
 
         val result = workerWithMissingData.doWork()
 
-        assertTrue(result is ListenableWorker.Result.Failure)
+        assertTrue("Result should be Failure, was $result", result is ListenableWorker.Result.Failure)
         val outputData = (result as ListenableWorker.Result.Failure).outputData
-        assertTrue(outputData.getString(VideoProcessingWorker.RESULT_FAILURE)?.startsWith("Invalid input data") == true)
+        assertTrue(
+            "Failure message should indicate invalid input data",
+            outputData.getString(VideoProcessingWorker.RESULT_FAILURE)?.startsWith("Invalid input data") == true
+        )
     }
 }

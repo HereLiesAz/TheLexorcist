@@ -294,12 +294,6 @@ class VoskTranscriptionService @Inject constructor(
                     while (zipEntry != null) {
                         val newFile = File(modelDir, zipEntry.name)
                         // Prevent Zip Slip vulnerability
-                        val canonicalModelDirPath = modelDir.canonicalPath
-                        val canonicalNewFilePath = newFile.canonicalPath
-
-                        if (!canonicalNewFilePath.startsWith(canonicalModelDirPath)) {
-                            throw SecurityException("Zip entry is outside of the target dir: " + zipEntry.name)
-                        }
                         if (!newFile.canonicalPath.startsWith(modelDir.canonicalPath + File.separator)) {
                             throw SecurityException("Zip entry is outside of the target dir: ${zipEntry.name}")
                         }
