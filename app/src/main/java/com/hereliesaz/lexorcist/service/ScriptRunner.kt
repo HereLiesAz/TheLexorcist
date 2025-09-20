@@ -11,24 +11,50 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.sqrt
 
+/**
+ * A Hilt Singleton service responsible for executing user-provided Javascript scripts
+ * within a sandboxed Mozilla Rhino environment.
+ *
+ * This class sets up the script's execution context, providing a rich API for scripts
+ * to interact with application data and services in a controlled manner. It supports
+ * both a modern, namespaced API (`lex.ai.local`) and a legacy, global function API
+ * (`addTag()`, etc.) for backward compatibility.
+ *
+ * @property legalBertService The injected service for local AI model interactions.
+ */
 @Singleton
 class ScriptRunner @Inject constructor(
     private val legalBertService: LegalBertService
 ) {
+    /**
+     * Custom exception thrown when a script fails to execute or returns an error.
+     */
     class ScriptExecutionException(
         message: String,
         cause: Throwable,
     ) : Exception(message, cause)
 
     /**
-     * API wrapper for the local LegalBertService.
+     * An inner class that acts as a bridge to the `LegalBertService`. An instance of this
+     * class is exposed to the Javascript environment under `lex.ai.local`.
      */
     inner class LocalAIApi {
+        /**
+         * Exposes `LegalBertService.getEmbedding` to scripts.
+         * @param text The text to embed.
+         * @return An array of Floats representing the text embedding.
+         */
         @Suppress("unused") // Used by Rhino
         fun getEmbedding(text: String): Array<Float> {
             return legalBertService.getEmbedding(text).toTypedArray()
         }
 
+        /**
+         * Exposes a high-level cosine similarity function to scripts.
+         * @param text1 The first text to compare.
+         * @param text2 The second text to compare.
+         * @return A Double between -1.0 and 1.0 indicating the semantic similarity.
+         */
         @Suppress("unused") // Used by Rhino
         fun calculateSimilarity(text1: String, text2: String): Double {
             val embedding1 = legalBertService.getEmbedding(text1)
@@ -37,6 +63,14 @@ class ScriptRunner @Inject constructor(
         }
     }
 
+    /**
+     * Executes a given script against a piece of evidence.
+     *
+     * @param script The Javascript code to execute.
+     * @param evidence The evidence object to be analyzed by the script.
+     * @return A [Result] wrapper containing the populated [ScriptResult] on success,
+     *         or a [ScriptExecutionException] on failure.
+     */
     fun runScript(
         script: String,
         evidence: Evidence,
@@ -81,6 +115,12 @@ class ScriptRunner @Inject constructor(
         }
     }
 
+    /**
+     * Calculates the cosine similarity between two vectors.
+     * @param vec1 The first vector.
+     * @param vec2 The second vector.
+     * @return A value between -1.0 and 1.0, where 1.0 means identical.
+     */
     private fun cosineSimilarity(vec1: FloatArray, vec2: FloatArray): Double {
         var dotProduct = 0.0
         var norm1 = 0.0
