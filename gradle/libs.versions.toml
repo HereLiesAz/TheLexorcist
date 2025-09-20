@@ -5,10 +5,7 @@ aznavrail = "3.2"
 browser = "1.9.0"
 # compiler = "1.5.15" # REMOVED as per new setup
 dropboxCoreSdk = "7.0.0"
-errorProneAnnotations = "2.42.0"
-firebaseAuthKtx = "23.2.1"
-firebaseCore = "21.1.1"
-firebaseVertexai = "17.3.0" # Version for firebase-ai, as per hypothesis
+errorProneAnnotations = "2.41.0"
 grpcContext = "1.75.0"
 grpcCore = "1.75.0"
 grpcOkhttp = "1.75.0"
@@ -24,7 +21,7 @@ libraryBase = "3.0.0"
 material = "1.13.0"
 microsoftGraph = "6.53.0"
 microsoftGraphCore = "3.6.5"
-mockitoCore = "5.20.0"
+mockitoCore = "5.19.0"
 mockitoInline = "5.2.0"
 mockitoKotlinVersion = "6.0.0"
 mockwebserver = "5.1.0"
@@ -67,8 +64,8 @@ googleApiServicesSheets = "v4-rev20250616-2.0.0"
 googleApiServicesScript = "v1-rev20250623-2.0.0"
 googleApiServicesDocs = "v1-rev20250325-2.0.0"
 googleHttpClientJackson2 = "2.0.0" # Version was "2.0.0" in build file, not a variable
-firebaseBom = "34.3.0"
-guava = "33.5.0-android"
+firebaseBom = "34.2.0"
+guava = "33.4.8-android"
 opencv = "4.5.3"
 mozillaRhino = "1.8.0"
 materialKolor = "3.0.1"
@@ -96,8 +93,6 @@ androidx-work-testing = { module = "androidx.work:work-testing", version.ref = "
 aznavrail = { module = "com.github.hereliesaz:aznavrail", version.ref = "aznavrail" }
 dropbox-core-sdk = { module = "com.dropbox.core:dropbox-core-sdk", version.ref = "dropboxCoreSdk" }
 dropbox-android-sdk = { module = "com.dropbox.core:dropbox-android-sdk", version.ref = "dropboxCoreSdk" }
-firebase-auth-ktx = { module = "com.google.firebase:firebase-auth-ktx" }
-firebase-core = { module = "com.google.firebase:firebase-core", version.ref = "firebaseCore" }
 google-android-material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 androidx-navigation-runtime-ktx = { group = "androidx.navigation", name = "navigation-runtime-ktx", version.ref = "navigationRuntimeKtx" }
 google-errorprone-annotations = { group = "com.google.errorprone", name = "error_prone_annotations", version.ref = "errorProneAnnotations" }
@@ -105,8 +100,7 @@ kotlin-mockito-kotlin = { module = "org.mockito.kotlin:mockito-kotlin", version.
 kotlin-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version.ref = "kotlinStdlib" }
 google-firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
 google-firebase-auth = { module = "com.google.firebase:firebase-auth" }
-google-firebase-auth-ktx = { module = "com.google.firebase:firebase-auth-ktx", version.ref = "firebaseAuthKtx" }
-google-firebase-ai = { group = "com.google.firebase", name = "firebase-ai", version.ref = "firebaseVertexai" } # UPDATED to firebase-ai
+google-firebase-ai = { module = "com.google.firebase:firebase-ai" }
 grpc-context = { module = "io.grpc:grpc-context", version.ref = "grpcContext" }
 grpc-core = { module = "io.grpc:grpc-core", version.ref = "grpcCore" }
 grpc-okhttp = { module = "io.grpc:grpc-okhttp", version.ref = "grpcOkhttp" }

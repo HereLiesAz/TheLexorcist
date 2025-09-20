@@ -138,10 +138,9 @@ dependencies {
 
     // Firebase
     implementation(platform(libs.firebase.bom))
-    implementation(libs.google.firebase.ai) // Restored alias
     implementation(libs.google.firebase.auth)
+    implementation(libs.google.firebase.ai)
     implementation(libs.material3) // Explicitly use KTX version and direct coordinate
-    implementation(platform("com.google.firebase:firebase-bom:34.3.0"))
 
     // Core testing dependencies
     testImplementation(libs.junit) // JUnit 4
@@ -267,7 +266,7 @@ dependencies {
     kspAndroidTest(libs.google.dagger.hilt.compiler) // Corrected alias
 
     // Jetpack DataStore
-    implementation("androidx.datastore:datastore-preferences:1.1.7")
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
 
     // Room IS NOT ALLOWED IN THIS PROJECT!!!!!
 
