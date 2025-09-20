@@ -282,4 +282,34 @@
     <string name="share_addon_type_label">Type: %1$s</string>
     <string name="share_addon_share_button">Share Addon</string>
     <string name="take_photo">Take Photo</string>
+
+    <string name="language">Language</string>
+    <string name="transcription_service">Transcription Service</string>
+    <string name="storage_settings">Storage Settings</string>
+    <string name="current_location_colon_placeholder">Current location: %1$s</string>
+    <string name="default_text">Default</string>
+    <string name="change_storage_location">Change Storage Location</string>
+    <string name="cloud_service_settings">Cloud Service Settings</string>
+    <string name="google_account">Google Account</string>
+    <string name="signed_in_as_placeholder">Signed in as: %1$s</string>
+    <string name="unknown_email">Unknown Email</string>
+    <string name="switch_account">Switch Account</string>
+    <string name="sign_out">Sign Out</string>
+    <string name="not_signed_in">Not Signed In</string>
+    <string name="sign_in">Sign In</string>
+    <string name="dropbox">Dropbox</string>
+    <string name="connected_as_placeholder">Connected as: %1$s</string>
+    <string name="disconnect_from_dropbox">Disconnect from Dropbox</string>
+    <string name="dropbox_app_key">Dropbox App Key</string>
+    <string name="connect_to_dropbox">Connect to Dropbox</string>
+    <string name="onedrive">OneDrive</string>
+    <string name="connect_to_onedrive">Connect to OneDrive</string>
+    <string name="connecting_to_onedrive">Connecting to OneDrive...</string>
+    <string name="connected_to_onedrive_as_placeholder">Connected to OneDrive as: %1$s</string>
+    <string name="unknown_account">Unknown Account</string>
+    <string name="disconnectFromOneDrive">Disconnect from OneDrive</string>
+    <string name="disconnect_from_onedrive">Disconnect From OneDrive</string>
+    <string name="error_connecting_to_onedrive_placeholder">Error connecting to OneDrive: %1$s</string>
+    <string name="unknown_error">Unknown Error</string>
+    <string name="retry">Retry</string>
 </resources>
