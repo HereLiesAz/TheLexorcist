@@ -37,6 +37,7 @@
     <string name="add_text_evidence">Text</string>
     <string name="add_image_evidence">Image</string>
     <string name="add_audio_evidence">Audio</string>
+    <string name="video_evidence">Video Evidence</string>
     <string name="add_document">Add Document</string>
     <string name="add_spreadsheet">Add Spreadsheet</string>
     <string name="image_for_review">Image for review</string>

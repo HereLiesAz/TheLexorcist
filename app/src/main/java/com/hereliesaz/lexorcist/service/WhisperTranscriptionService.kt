@@ -9,6 +9,7 @@ import com.hereliesaz.lexorcist.model.LogLevel
 import com.hereliesaz.lexorcist.model.ProcessingState
 import com.hereliesaz.lexorcist.model.TranscriptionModels
 import com.hereliesaz.lexorcist.utils.Result
+import com.hereliesaz.lexorcist.utils.VideoUtils
 import com.hereliesaz.whisper.asr.Whisper
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
@@ -67,15 +68,6 @@ class WhisperTranscriptionService @Inject constructor(
                 throw IOException("Whisper model file not found: ${modelFile.path}. Please download it from settings.")
             }
 
-            // For whisper.cpp, vocab is part of the model file, so we don't need a separate vocab file.
-            // The `loadModel` in `Whisper.java` takes modelPath, vocabPath. We can pass the model path for both.
-            // Let's assume the underlying engine handles this. Or we can check Whisper.java again.
-            // Whisper.java's `loadModel` takes modelPath, vocabPath, and isMultilingual.
-            // The ggml models have the vocab built-in. The original implementation passed a separate vocab file for tflite.
-            // Let's assume for ggml, we can pass a dummy or null path for vocab. A quick look at Whisper.java shows it expects a valid path.
-            // Let's pass the model file path for the vocab path and see if the native layer handles it.
-            // This is a bit of a guess, but it's the most likely scenario for ggml models.
-            // The `isMultilingual` flag is important.
             val isMultilingual = model.code == "multi"
 
             try {
@@ -184,6 +176,21 @@ class WhisperTranscriptionService @Inject constructor(
 
             continuation.invokeOnCancellation {
                 whisperInstance.stop()
+            }
+        }
+    }
+
+    suspend fun transcribeVideo(uri: Uri): Result<String> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val audioFilePath = VideoUtils.extractAudio(context, uri)
+                val audioFile = File(audioFilePath)
+                val audioUri = Uri.fromFile(audioFile)
+                val result = transcribeAudio(audioUri)
+                audioFile.delete() // Clean up the temporary audio file
+                result
+            } catch (e: IOException) {
+                Result.Error(e)
             }
         }
     }

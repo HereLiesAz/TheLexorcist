@@ -185,10 +185,10 @@ fun EvidenceScreen(
                     EvidenceListItem(
                         evidence = evidence,
                         onClick = {
-                            if (evidence.type == "audio") {
-                                navController.navigate("transcription/${evidence.id}")
-                            } else {
-                                navController.navigate("evidence_details/${evidence.id}")
+                                    when (evidence.type) {
+                                        "audio" -> navController.navigate("transcription/${evidence.id}")
+                                        "video" -> navController.navigate("video_evidence/${evidence.id}")
+                                        else -> navController.navigate("evidence_details/${evidence.id}")
                             }
                         }
                     )
