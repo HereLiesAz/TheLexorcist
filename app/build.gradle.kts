@@ -136,11 +136,19 @@ dependencies {
     implementation(libs.androidx.credentials.play.services.auth)
     implementation(libs.google.id)
 
-    // Firebase
+    // Firebase & Google Play Services BoMs
     implementation(platform(libs.firebase.bom))
     implementation(libs.google.firebase.auth)
     implementation(libs.google.firebase.ai)
     implementation(libs.material3) // Explicitly use KTX version and direct coordinate
+    implementation(platform(libs.google.play.services.bom)) // ADDED Play Services BoM
+
+    // AI Client SDK for Gemini (via Play Services)
+    implementation(libs.google.ai.client.generative) // UPDATED to use new alias for AI Client SDK
+
+    // Other Firebase dependencies
+    implementation(libs.google.firebase.auth) // Using non-KTX alias from TOML, BoM may provide KTX
+    implementation(libs.material3) // This is androidx.compose.material3, not Firebase
 
     // Core testing dependencies
     testImplementation(libs.junit) // JUnit 4
@@ -175,8 +183,8 @@ dependencies {
 
     implementation(libs.google.play.services.mlkit.text.recognition)
     implementation(libs.play.services.base) // Added
-
-
+    implementation(libs.ai.delivery)
+    implementation(libs.google.generativeai)
     // Gson
     implementation(libs.google.code.gson)
 
