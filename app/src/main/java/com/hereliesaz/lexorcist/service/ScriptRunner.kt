@@ -1,6 +1,7 @@
 package com.hereliesaz.lexorcist.service
 
 import com.hereliesaz.lexorcist.data.Evidence
+import com.hereliesaz.lexorcist.model.ScriptResult
 import com.hereliesaz.lexorcist.utils.Result
 import com.hereliesaz.lexorcist.viewmodel.ScriptedMenuViewModel
 import kotlinx.coroutines.runBlocking
@@ -28,8 +29,6 @@ class ScriptRunner @Inject constructor(
     inner class AIApi {
         @Suppress("unused") // Used by Rhino
         fun generateContent(prompt: String): String {
-            // Bridge the suspend function to the synchronous JS world.
-            // This blocks the script's thread, which is acceptable as scripts run in the background.
             return runBlocking {
                 generativeAIService.generateContent(prompt)
             }
@@ -57,47 +56,56 @@ class ScriptRunner @Inject constructor(
         }
     }
 
-    fun runScript(script: String, evidence: Evidence): Result<List<String>> {
+    /**
+     * Executes a given script with provided evidence context and returns a structured result.
+     * This runner is backward compatible, supporting both a modern `lex` object API
+     * and a legacy API of global functions like `addTag()`.
+     */
+    fun runScript(script: String, evidence: Evidence): Result<ScriptResult> {
         val rhino = Context.enter()
         @Suppress("deprecation")
         rhino.optimizationLevel = -1 // Necessary for Android compatibility
         try {
             val scope: Scriptable = rhino.initStandardObjects()
 
-            // Set up the 'lex' namespace
+            // This will hold all outputs from the script.
+            val scriptResult = ScriptResult()
+
+            // --- Modern API (`lex` object) ---
             val lexObject = rhino.newObject(scope)
             ScriptableObject.putProperty(scope, "lex", lexObject)
-
-            // Add APIs to the 'lex' namespace
             ScriptableObject.putProperty(lexObject, "ai", Context.javaToJS(AIApi(), scope))
             ScriptableObject.putProperty(lexObject, "ui", Context.javaToJS(UIApi(), scope))
 
-            // Provide context-specific data
-            ScriptableObject.putProperty(scope, "evidence", Context.javaToJS(evidence, scope))
+            // For modern scripts that directly manipulate a 'tags' array.
+            ScriptableObject.putProperty(scope, "tags", Context.javaToJS(scriptResult.tags, scope))
 
-            // The script is expected to modify this 'tags' array
-            val tags = mutableListOf<String>()
-            ScriptableObject.putProperty(scope, "tags", Context.javaToJS(tags, scope))
+            // --- Legacy API (Global Functions) ---
+            // Expose the result object to the script under a known name.
+            ScriptableObject.putProperty(scope, "scriptResult", Context.javaToJS(scriptResult, scope))
+
+            // Define legacy functions in JS that manipulate the exposed 'scriptResult' object.
+            val legacyFunctionDefinitions = """
+                function addTag(tag) { scriptResult.tags.add(tag); }
+                function setSeverity(level) { scriptResult.severity = level; }
+                function createNote(note) { scriptResult.note = note; }
+                function linkToAllegation(allegation) { scriptResult.linkedAllegation = allegation; }
+            """.trimIndent()
+            rhino.evaluateString(scope, legacyFunctionDefinitions, "LegacyAPISetup", 1, null)
+
+
+            // --- Context & Execution ---
+            ScriptableObject.putProperty(scope, "evidence", Context.javaToJS(evidence, scope))
 
             // Execute the user's script
             rhino.evaluateString(scope, script, "JavaScript<ScriptRunner>", 1, null)
 
-            // Extract the results from the 'tags' variable in the script's scope
-            val tagsPropertyFromScope: Any? = ScriptableObject.getProperty(scope, "tags")
-            val convertedJavaList: Any? = Context.jsToJava(tagsPropertyFromScope, List::class.java)
+            // The scriptResult object has been modified by the script in-place,
+            // both through the legacy functions and potentially modern array access.
+            // No further extraction is needed.
 
-            @Suppress("UNCHECKED_CAST")
-            return if (convertedJavaList is List<*>) {
-                Result.Success(convertedJavaList as List<String>)
-            } else {
-                val actualType = if (convertedJavaList != null) convertedJavaList.javaClass.name else "null"
-                Result.Error(
-                    ScriptExecutionException(
-                        "Script 'tags' property is not a List or could not be converted. Actual type: $actualType",
-                        Exception("Unexpected type for 'tags' property from script.")
-                    )
-                )
-            }
+            return Result.Success(scriptResult)
+
         } catch (e: org.mozilla.javascript.RhinoException) {
             return Result.Error(ScriptExecutionException("Error during JavaScript execution", e))
         } catch (e: Exception) {

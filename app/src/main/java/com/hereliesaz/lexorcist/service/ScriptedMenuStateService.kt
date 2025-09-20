@@ -26,7 +26,7 @@ class ScriptedMenuStateService @Inject constructor() {
     suspend fun updateVisibility(itemId: String, isVisible: Boolean) {
         _menuItemUpdates.emit(MenuItemUpdate(id = itemId, isVisible = isVisible))
     }
-    
+
     // In case you want to set an action, e.g. from a script
     suspend fun setOnClickAction(itemId: String, actionId: String) {
         _menuItemUpdates.emit(MenuItemUpdate(id = itemId, onClickActionId = actionId))
