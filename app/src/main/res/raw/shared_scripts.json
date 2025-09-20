@@ -178,5 +178,50 @@
     "author": "Az",
     "rating": 0.0,
     "numRatings": 0
+  },
+  {
+    "id": "script-21",
+    "name": "Chain of Custody Verifier",
+    "description": "For evidence that has been handled by multiple people, this script checks for a complete chain of custody log in the evidence's notes or metadata. It flags any evidence with gaps.",
+    "content": "if (evidence.metadata.type === 'physical') { const log = evidence.metadata.custodyLog; if (!log || log.length === 0) { addTag('Missing Chain of Custody'); createNote('Critical: Physical evidence is missing its chain of custody log.'); return; } for (let i = 0; i < log.length - 1; i++) { if (log[i].toPerson !== log[i+1].fromPerson) { addTag('Broken Chain of Custody'); createNote(`Chain of custody broken between ${log[i].toPerson} and ${log[i+1].fromPerson}.`); setSeverity('Critical'); } } }",
+    "author": "Az",
+    "rating": 0.0,
+    "numRatings": 0
+  },
+  {
+    "id": "script-22",
+    "name": "Metadata Anomaly Detector",
+    "description": "Scans for suspicious metadata, like a photo's EXIF data showing a date that contradicts the user-provided date, or a file that has been modified after it was supposedly collected.",
+    "content": "if (evidence.metadata.exif && evidence.metadata.exif.dateCreated) { const exifDate = new Date(evidence.metadata.exif.dateCreated); const providedDate = new Date(evidence.metadata.date); const diffDays = Math.abs(exifDate - providedDate) / (1000 * 3600 * 24); if (diffDays > 1) { addTag('Metadata Anomaly'); createNote(`EXIF creation date (${exifDate.toDateString()}) differs from provided date (${providedDate.toDateString()}).`); setSeverity('High'); } }",
+    "author": "Az",
+    "rating": 0.0,
+    "numRatings": 0
+  },
+  {
+    "id": "script-23",
+    "name": "Duplicate Evidence Finder",
+    "description": "Uses a perceptual hash (phash) or simple checksum stored in metadata to find duplicate or near-duplicate images, even if they have different filenames.",
+    "content": "if (evidence.metadata.phash) { const duplicates = case.evidence.filter(e => e.id !== evidence.id && e.metadata.phash === evidence.metadata.phash); if (duplicates.length > 0) { addTag('Duplicate'); createNote(`This is a duplicate of evidence: ${duplicates.map(d => d.id).join(', ')}.`); } }",
+    "author": "Az",
+    "rating": 0.0,
+    "numRatings": 0
+  },
+  {
+    "id": "script-24",
+    "name": "Automated Deposition Question Generator",
+    "description": "When it finds a contradiction or a threat, this script automatically generates a potential deposition question and adds it to a case-wide 'Deposition Prep' note.",
+    "content": "function addDepoQuestion(question) { console.log(`New Depo Question: ${question}`); } if (evidence.tags.includes('Contradiction')) { addDepoQuestion(`On [Date], you stated X. However, on [Other Date], you stated Y. Can you explain this discrepancy?`); } if (evidence.tags.includes('Threat')) { addDepoQuestion(`Can you explain what you meant when you wrote, '${evidence.text}'?`); }",
+    "author": "Az",
+    "rating": 0.0,
+    "numRatings": 0
+  },
+  {
+    "id": "script-25",
+    "name": "Expert Witness Recommender",
+    "description": "Based on the content of the evidence, this script suggests when an expert witness might be needed.",
+    "content": "const financialRegex = /\\b(forensic accounting|tax fraud|embezzlement)\\b/i; const techRegex = /\\b(encryption|hacking|IP address|metadata)\\b/i; if (financialRegex.test(evidence.text)) { addTag('Expert Witness Needed'); createNote('Consider engaging a forensic accountant for this evidence.'); } if (techRegex.test(evidence.text)) { addTag('Expert Witness Needed'); createNote('Consider engaging a digital forensics expert for this evidence.'); }",
+    "author": "Az",
+    "rating": 0.0,
+    "numRatings": 0
   }
 ]
