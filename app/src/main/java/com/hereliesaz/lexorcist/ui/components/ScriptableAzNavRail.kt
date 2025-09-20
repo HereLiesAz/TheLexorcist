@@ -32,7 +32,7 @@ fun ScriptableAzNavRail(
             }
         }
 
-        azMenuItem(id = "extras", text = "Extras", onClick = { navController.navigate("extras") })
+        azRailItem(id = "extras", text = "Extras", onClick = { navController.navigate("extras") })
         azMenuItem(id = "settings", text = "Settings", onClick = { navController.navigate("settings") })
     }
 }
