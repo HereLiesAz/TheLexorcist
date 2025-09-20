@@ -9,6 +9,7 @@ import com.hereliesaz.lexorcist.auth.OneDriveAuthManager
 import com.hereliesaz.lexorcist.model.OneDriveSignInState
 import com.microsoft.identity.client.AuthenticationCallback
 import com.microsoft.identity.client.IAuthenticationResult
+import com.microsoft.identity.client.ISingleAccountPublicClientApplication
 import com.microsoft.identity.client.exception.MsalException
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -52,6 +53,25 @@ class OneDriveViewModel @Inject constructor(
     private fun storeOneDriveAccessToken(accessToken: String) {
         sharedPreferences.edit {
             putString("onedrive_access_token", accessToken)
+        }
+    }
+
+    fun disconnectFromOneDrive() {
+        oneDriveAuthManager.signOut(object : ISingleAccountPublicClientApplication.SignOutCallback {
+            override fun onSignOut() {
+                _oneDriveSignInState.value = OneDriveSignInState.Idle
+                clearOneDriveAccessToken()
+            }
+
+            override fun onError(exception: MsalException) {
+                _oneDriveSignInState.value = OneDriveSignInState.Error("OneDrive sign-out failed.", exception)
+            }
+        })
+    }
+
+    private fun clearOneDriveAccessToken() {
+        sharedPreferences.edit {
+            remove("onedrive_access_token")
         }
     }
 }
