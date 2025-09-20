@@ -7,7 +7,7 @@ browser = "1.9.0"
 dropboxCoreSdk = "7.0.0"
 errorProneAnnotations = "2.42.0"
 firebaseAuthKtx = "23.2.1"
-firebaseVertexai = "16.5.0"
+firebaseVertexaiKtxVersion = "1.0.0" # ADDED for explicit versioning
 grpcContext = "1.75.0"
 grpcCore = "1.75.0"
 grpcOkhttp = "1.75.0"
@@ -104,7 +104,7 @@ kotlin-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib", versio
 google-firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
 google-firebase-auth = { module = "com.google.firebase:firebase-auth" }
 google-firebase-auth-ktx = { module = "com.google.firebase:firebase-auth-ktx", version.ref = "firebaseAuthKtx" }
-google-firebase-ai = { group = "com.google.firebase", name = "firebase-vertexai", version.ref = "firebaseVertexai" }
+google-firebase-ai = { group = "com.google.firebase", name = "firebase-vertexai-ktx", version.ref = "firebaseVertexaiKtxVersion" } # UPDATED with explicit version
 grpc-context = { module = "io.grpc:grpc-context", version.ref = "grpcContext" }
 grpc-core = { module = "io.grpc:grpc-core", version.ref = "grpcCore" }
 grpc-okhttp = { module = "io.grpc:grpc-okhttp", version.ref = "grpcOkhttp" }

@@ -139,7 +139,8 @@ dependencies {
     // Firebase
     implementation(platform(libs.firebase.bom))
     implementation(libs.google.firebase.auth.ktx)
-    implementation(libs.google.firebase.ai)
+    // implementation(libs.google.firebase.ai) // Temporarily commented out
+    implementation("com.google.firebase:firebase-vertexai-ktx:1.0.0") // Direct implementation for testing
     implementation(libs.material3) // Explicitly use KTX version and direct coordinate
 
     // Core testing dependencies
