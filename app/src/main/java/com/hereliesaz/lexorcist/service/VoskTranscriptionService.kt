@@ -105,6 +105,14 @@ class VoskTranscriptionService @Inject constructor(
     }
 
     private suspend fun initializeVoskModel(): String {
+        // First, try to load from assets
+        copyModelFromAssets()?.let {
+            logService.addLog("Vosk model initialized from assets.")
+            return it
+        }
+
+        // If not in assets, proceed with download logic
+        logService.addLog("Vosk model not found in assets, attempting to download.", LogLevel.INFO)
         return withContext(serviceScope.coroutineContext) {
             val baseModelDir = File(context.filesDir, "vosk-model")
 
@@ -181,8 +189,42 @@ class VoskTranscriptionService @Inject constructor(
         }
     }
 
+    private fun copyModelFromAssets(): String? {
+        val assetModelPath = "vosk-model-en-us"
+        val destDir = File(context.cacheDir, "vosk-model")
+        try {
+            val assetFiles = context.assets.list(assetModelPath)
+            if (assetFiles == null || assetFiles.isEmpty()) {
+                logService.addLog("Vosk model not found in assets.", LogLevel.INFO)
+                return null
+            }
+
+            if (destDir.exists()) destDir.deleteRecursively()
+            destDir.mkdirs()
+
+            assetFiles.forEach { fileName ->
+                val assetFile = "$assetModelPath/$fileName"
+                val destFile = File(destDir, fileName)
+                context.assets.open(assetFile).use { inputStream ->
+                    FileOutputStream(destFile).use { outputStream ->
+                        inputStream.copyTo(outputStream)
+                    }
+                }
+            }
+            logService.addLog("Successfully copied Vosk model from assets to ${destDir.absolutePath}")
+            return destDir.absolutePath
+        } catch (e: IOException) {
+            logService.addLog("Failed to copy Vosk model from assets: ${e.message}", LogLevel.ERROR)
+            // If copying fails, clean up the destination directory
+            if (destDir.exists()) {
+                destDir.deleteRecursively()
+            }
+            return null
+        }
+    }
+
     private suspend fun downloadAndUnzipModel(modelDir: File): Result<Unit> {
-        return withContext(Dispatchers.IO) { // Explicitly Dispatchers.IO
+        return withContext(Dispatchers.IO) {
             try {
                 val modelUrl = "https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip"
                 if (!modelDir.exists()) modelDir.mkdirs()
@@ -215,63 +257,35 @@ class VoskTranscriptionService @Inject constructor(
                 logService.addLog("Unzipping Vosk model...")
                 _processingState.value = ProcessingState.InProgress(0.99f) // Near end of download phase
 
-                val entryNames = mutableListOf<String>()
-                ZipInputStream(zipFile.inputStream()).use { zis ->
-                    generateSequence { zis.nextEntry }.forEach { entry ->
-                        entryNames.add(entry.name)
-                        zis.closeEntry()
-                    }
-                }
-
-                var commonPrefix = ""
-                if (entryNames.isNotEmpty()) {
-                    val normalizedEntryNames = entryNames.map { it.replace('\', '/') }
-                    val firstEntryParts = normalizedEntryNames.first().split('/')
-                    if (firstEntryParts.size > 1 && firstEntryParts.first().isNotEmpty()) {
-                        val potentialPrefix = firstEntryParts.first() + "/"
-                        if (normalizedEntryNames.all { it.startsWith(potentialPrefix) }) {
-                            commonPrefix = potentialPrefix
-                        }
-                    }
-                }
-
                 ZipInputStream(zipFile.inputStream()).use { zis ->
                     var zipEntry = zis.nextEntry
-                    val buffer = ByteArray(4096)
                     while (zipEntry != null) {
-                        var entryNameString = zipEntry.name.replace('\', '/')
-                        if (commonPrefix.isNotEmpty() && entryNameString.startsWith(commonPrefix)) {
-                            entryNameString = entryNameString.substring(commonPrefix.length)
+                        val newFile = File(modelDir, zipEntry.name)
+                        // Prevent Zip Slip vulnerability
+                        if (!newFile.canonicalPath.startsWith(modelDir.canonicalPath + File.separator)) {
+                            throw SecurityException("Zip entry is outside of the target dir: " + zipEntry.name)
                         }
-
-                        if (entryNameString.isEmpty()) {
-                            zis.closeEntry()
-                            zipEntry = zis.nextEntry
-                            continue
-                        }
-
-                        val newFile = File(modelDir, entryNameString)
-                        if (!newFile.canonicalPath.startsWith(modelDir.canonicalPath)) {
-                            zis.closeEntry()
-                            throw SecurityException("Zip entry tried to escape model directory: ${zipEntry.name}")
-                        }
-
                         if (zipEntry.isDirectory) {
-                            if (!newFile.exists()) newFile.mkdirs()
+                            if (!newFile.isDirectory && !newFile.mkdirs()) {
+                                throw IOException("Failed to create directory " + newFile)
+                            }
                         } else {
+                            // Fix for files in subdirectories
                             val parent = newFile.parentFile
-                            if (parent != null && !parent.exists()) parent.mkdirs()
-                            FileOutputStream(newFile).use { fos ->
-                                var len2: Int
-                                while (zis.read(buffer).also { len2 = it } > 0) {
-                                    fos.write(buffer, 0, len2)
+                            if (parent != null) {
+                                if (!parent.isDirectory && !parent.mkdirs()) {
+                                    throw IOException("Failed to create directory " + parent)
                                 }
+                            }
+                            FileOutputStream(newFile).use { fos ->
+                                zis.copyTo(fos)
                             }
                         }
                         zis.closeEntry()
                         zipEntry = zis.nextEntry
                     }
                 }
+
                 zipFile.delete()
                 logService.addLog("Vosk model unzipped successfully.")
                 _downloadProgress.value = 1.0f
@@ -284,27 +298,19 @@ class VoskTranscriptionService @Inject constructor(
         }
     }
 
-    // This is a blocking function, should be called from a coroutine on an IO dispatcher.
     private fun transcribeAudioStream(recognizer: Recognizer, inputStream: InputStream): String {
-        // Removed `inputStream.use` from here as it's handled by the caller or this function's finally block.
-        // The caller (transcribeAudio, start) now uses `use` which will close the stream.
         try {
             val buffer = ByteArray(4096)
-            var nbytes = 0 // Initialized
+            var nbytes: Int
             while (inputStream.read(buffer).also { nbytes = it } > 0) {
                 if (recognizer.acceptWaveForm(buffer, nbytes)) {
-                    // val partialJson = recognizer.partialResult
-                    // logService.addLog("Vosk partial: $partialJson")
+                    // Partial result logic can be added here if needed
                 }
             }
             val finalResultJson = recognizer.finalResult
-            logService.addLog("Vosk final result JSON: $finalResultJson")
             val finalResult = Gson().fromJson(finalResultJson, FinalResult::class.java)
             return finalResult?.text ?: ""
         } finally {
-            // inputStream is managed by the caller's `use` block.
-            // Recognizer should be closed if it's single-use, or managed by the class lifecycle.
-            // For now, closing it here as per original logic.
             recognizer.close()
         }
     }

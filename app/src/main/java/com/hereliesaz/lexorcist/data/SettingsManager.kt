@@ -112,4 +112,20 @@ class SettingsManager
         fun getCloudSyncEnabled(): Boolean {
             return sharedPreferences.getBoolean("cloud_sync_enabled", true)
         }
+
+        fun saveTranscriptionService(service: String) {
+            sharedPreferences.edit().putString("transcription_service", service).apply()
+        }
+
+        fun getTranscriptionService(): String {
+            return sharedPreferences.getString("transcription_service", "Vosk") ?: "Vosk"
+        }
+
+        fun saveTranscriptionLanguage(language: String) {
+            sharedPreferences.edit().putString("transcription_language", language).apply()
+        }
+
+        fun getTranscriptionLanguage(): String {
+            return sharedPreferences.getString("transcription_language", "en-us") ?: "en-us"
+        }
     }

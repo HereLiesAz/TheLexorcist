@@ -28,12 +28,6 @@ ksp {
 
 android {
     signingConfigs {
-        maybeCreate("debug").apply {
-            storeFile = file("G://My Drive//az_apk_keystore.jks")
-            storePassword = localProperties.getProperty("MY_KEYSTORE_PASSWORD") ?: System.getenv("MY_KEYSTORE_PASSWORD") ?: ""
-            keyAlias = "key0"
-            keyPassword = localProperties.getProperty("MY_KEY_PASSWORD") ?: System.getenv("MY_KEY_PASSWORD") ?: ""
-        }
         maybeCreate("release").apply {
             storeFile = file("G://My Drive//az_apk_keystore.jks")
             storePassword = localProperties.getProperty("MY_KEYSTORE_PASSWORD") ?: System.getenv("MY_KEYSTORE_PASSWORD") ?: ""
@@ -97,6 +91,7 @@ android {
         resources.excludes.add("google/protobuf/timestamp.proto")
         resources.excludes.add("google/protobuf/type.proto")
         resources.excludes.add("google/protobuf/wrappers.proto")
+        resources.excludes.add("META-INF/services/org.tensorflow.lite.TfLiteFlexDelegate")
     }
     lint {
         baseline = file("lint-baseline.xml")
@@ -113,6 +108,21 @@ dependencies {
 
     constraints {
         implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable:0.3.5") {
+            because("Align kotlin versions")
+        }
+        implementation("org.tensorflow:tensorflow-lite-api:2.14.0") {
+            because("Align tensorflow-lite versions")
+        }
+        implementation("org.tensorflow:tensorflow-lite-support-api:0.4.4") {
+            because("Align tensorflow-lite-support versions")
+        }
+        implementation("org.jetbrains.kotlin:kotlin-stdlib:2.2.20") {
+            because("Align kotlin versions")
+        }
+        implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.2.20") {
+            because("Align kotlin versions")
+        }
+        implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.2.20") {
             because("Align kotlin versions")
         }
     }
@@ -212,9 +222,6 @@ dependencies {
     implementation(libs.google.api.services.script)
     implementation(libs.google.api.services.docs)
 
-    // Google Cloud Speech-to-Text
-    implementation("com.google.cloud:google-cloud-speech:4.69.0")
-
     implementation(libs.google.http.client.jackson2)
     implementation(libs.google.guava)
     implementation(libs.quickbirdstudios.opencv)
@@ -264,6 +271,9 @@ dependencies {
 
     // Vosk for on-device speech-to-text
     implementation(libs.vosk.android) // UNCOMMENTED
+
+    // Whisper for on-device speech-to-text
+    implementation(project(":whisper"))
     // Explicit gRPC dependencies with consistent versions
     implementation(libs.grpc.okhttp)
     implementation(libs.grpc.core)

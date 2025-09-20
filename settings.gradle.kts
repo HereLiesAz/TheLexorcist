@@ -18,4 +18,4 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "The Lexorcist"
-include(":app")
+include(":app", ":whisper")
