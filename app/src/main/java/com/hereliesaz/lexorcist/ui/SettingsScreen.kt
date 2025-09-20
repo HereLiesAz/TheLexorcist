@@ -19,6 +19,10 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -105,6 +109,44 @@ fun SettingsScreen(
                         RadioButton(
                             selected = (themeMode == mode),
                             onClick = { settingsViewModel.setThemeMode(mode) },
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Language Selection
+            val languages = listOf("en-us", "es", "fr", "de") // Example languages
+            LanguageSelectionDropDown(settingsViewModel = settingsViewModel, languages = languages)
+
+
+            Spacer(modifier = Modifier.height(24.dp))
+            HorizontalDivider()
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Transcription Service Settings
+            Text(
+                text = "Transcription Service",
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            val selectedTranscriptionService by settingsViewModel.transcriptionService.collectAsState()
+            val transcriptionServices = listOf("Vosk", "Whisper")
+
+            Column(Modifier.fillMaxWidth()) {
+                transcriptionServices.forEach { service ->
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.End,
+                    ) {
+                        Text(text = service)
+                        RadioButton(
+                            selected = (selectedTranscriptionService == service),
+                            onClick = { settingsViewModel.setTranscriptionService(service) },
                         )
                     }
                 }
@@ -373,5 +415,43 @@ fun SettingsScreen(
                 LexorcistOutlinedButton(onClick = { showClearCacheDialog = false }, text = stringResource(R.string.cancel))
             },
         )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun LanguageSelectionDropDown(
+    settingsViewModel: SettingsViewModel,
+    languages: List<String>
+) {
+    val selectedLanguage by settingsViewModel.transcriptionLanguage.collectAsState()
+    var expanded by remember { mutableStateOf(false) }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded }
+    ) {
+        OutlinedTextField(
+            value = selectedLanguage,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("Language") },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier.menuAnchor()
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            languages.forEach { language ->
+                DropdownMenuItem(
+                    text = { Text(language) },
+                    onClick = {
+                        settingsViewModel.setTranscriptionLanguage(language)
+                        expanded = false
+                    }
+                )
+            }
+        }
     }
 }

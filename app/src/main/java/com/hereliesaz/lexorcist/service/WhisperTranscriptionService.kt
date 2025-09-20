@@ -4,11 +4,16 @@ import android.content.Context
 import android.net.Uri
 import com.hereliesaz.lexorcist.model.ProcessingState
 import com.hereliesaz.lexorcist.utils.Result
-import com.whispertflite.asr.Whisper
+import com.hereliesaz.whisper.asr.Whisper
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -24,6 +29,7 @@ class WhisperTranscriptionService @Inject constructor(
 ) : TranscriptionService {
 
     private var whisper: Whisper? = null
+    private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val _processingState = MutableStateFlow<ProcessingState>(ProcessingState.Idle)
     override val processingState: StateFlow<ProcessingState> = _processingState
 
@@ -31,30 +37,23 @@ class WhisperTranscriptionService @Inject constructor(
     private val vocabPath = "filters_vocab_en.bin"
 
     init {
-        try {
-            val modelFile = copyAssetToCache(modelPath)
-            val vocabFile = copyAssetToCache(vocabPath)
-            whisper = Whisper(context).apply {
-                loadModel(modelFile, vocabFile, false)
-            }
-            logService.addLog("Whisper model loaded successfully.")
-        } catch (e: IOException) {
-            _processingState.value = ProcessingState.Failure("Failed to initialize Whisper: ${e.message}")
-            logService.addLog("Failed to initialize Whisper: ${e.message}", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
+        serviceScope.launch {
+            initialize()
         }
     }
 
-    private fun copyAssetToCache(assetName: String): File {
-        val cacheFile = File(context.cacheDir, assetName)
-        if (cacheFile.exists()) {
-            return cacheFile
-        }
-        context.assets.open(assetName).use { inputStream ->
-            FileOutputStream(cacheFile).use { outputStream ->
-                inputStream.copyTo(outputStream)
+    private suspend fun initialize() {
+        withContext(Dispatchers.IO) {
+            try {
+                whisper = Whisper(context).apply {
+                    loadModelFromAssets(modelPath, vocabPath, false)
+                }
+                logService.addLog("Whisper model loaded successfully.")
+            } catch (e: IOException) {
+                _processingState.value = ProcessingState.Failure("Failed to initialize Whisper: ${e.message}")
+                logService.addLog("Failed to initialize Whisper: ${e.message}", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
             }
         }
-        return cacheFile
     }
 
     override suspend fun start(uri: Uri) {
@@ -66,6 +65,9 @@ class WhisperTranscriptionService @Inject constructor(
     }
 
     override suspend fun transcribeAudio(uri: Uri): Result<String> {
+        if (whisper == null) {
+            initialize()
+        }
         val whisperInstance = whisper ?: return Result.Error(IllegalStateException("Whisper not initialized"))
 
         return suspendCancellableCoroutine { continuation ->
@@ -97,7 +99,7 @@ class WhisperTranscriptionService @Inject constructor(
             })
 
             whisperInstance.setFilePath(audioFilePath)
-            whisperInstance.setAction(Whisper.ACTION_TRANSCRIBE)
+            whisperInstance.setAction(Whisper.Action.TRANSCRIBE)
             whisperInstance.start()
 
             continuation.invokeOnCancellation {

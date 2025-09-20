@@ -145,7 +145,7 @@ dependencies {
     testImplementation(libs.junit) // JUnit 4
     // testImplementation(libs.junit.jupiter.api) // For JUnit 5 (Jupiter), if you use it. Remove if only JUnit 4.
     // testRuntimeOnly(libs.junit.jupiter.engine) // For JUnit 5 (Jupiter), if you use it. Remove if only JUnit 4.
-
+    
     // REMOVE MockK if using Mockito-Kotlin as primary
     // testImplementation(libs.mockk.android) 
 
@@ -273,7 +273,7 @@ dependencies {
     implementation(libs.vosk.android) // UNCOMMENTED
 
     // Whisper for on-device speech-to-text
-    // implementation(project(":whisper")) // This will be added back later
+    implementation(project(":whisper"))
     // Explicit gRPC dependencies with consistent versions
     implementation(libs.grpc.okhttp)
     implementation(libs.grpc.core)
