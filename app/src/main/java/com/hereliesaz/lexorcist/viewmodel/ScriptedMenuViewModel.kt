@@ -24,4 +24,12 @@ class ScriptedMenuViewModel @Inject constructor() : ViewModel() { // EXTEND View
             menuItems[index] = menuItems[index].copy(isVisible = isVisible)
         }
     }
+
+    fun setMenuItemLabel(id: String, label: String) {
+        val index = menuItems.indexOfFirst { it.id == id }
+        if (index != -1) {
+            menuItems[index] = menuItems[index].copy(text = label)
+        }
+    }
+
 }
