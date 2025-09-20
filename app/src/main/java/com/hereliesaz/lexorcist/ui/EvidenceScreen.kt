@@ -137,15 +137,15 @@ fun EvidenceScreen(
                 }
             }
 
-            if (showAddTextEvidence && (processingState == null || processingState is ProcessingState.Idle)) {
+            // Show text input field if showAddTextEvidence is true AND processing is not in progress
+            if (showAddTextEvidence && (processingState == null || processingState !is ProcessingState.InProgress)) {
                 OutlinedTextField(
                     value = text,
                     onValueChange = { text = it },
                     label = { Text(stringResource(R.string.evidence_text_label)) },
                     modifier =
                     Modifier
-                        .fillMaxWidth()
-                        .weight(1f), 
+                        .fillMaxWidth(), // Removed .weight(1f)
                     placeholder = { Text(stringResource(R.string.enter_evidence_content)) },
                     textStyle = MaterialTheme.typography.bodyLarge.copy(textAlign = TextAlign.End),
                 )
@@ -163,7 +163,8 @@ fun EvidenceScreen(
                     onClick = { showAddTextEvidence = false },
                     text = stringResource(R.string.cancel).uppercase(Locale.getDefault())
                 )
-            } else if (processingState == null || processingState is ProcessingState.Idle) {
+            // Show action buttons if text input is not shown AND processing is not in progress
+            } else if (processingState == null || processingState !is ProcessingState.InProgress) {
                 FlowRow(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
@@ -242,7 +243,7 @@ fun ProcessingProgressView(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Processing: ${"%.0f".format(processingState.progress * 100)}%",
+                    text = "Processing: ${"%.0f".format(processingState.progress * 100)}%}",
                     style = MaterialTheme.typography.bodySmall,
                     textAlign = TextAlign.End,
                     modifier = Modifier.fillMaxWidth()

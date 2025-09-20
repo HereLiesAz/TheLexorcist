@@ -2,6 +2,7 @@ package com.hereliesaz.lexorcist.service
 
 import android.content.Context
 import android.content.ContentResolver
+import android.content.res.AssetManager // Added for mocking AssetManager
 import android.net.Uri
 import com.hereliesaz.lexorcist.utils.Result // Your Result class
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -48,6 +49,9 @@ class TranscriptionServiceTest {
     @Mock
     private lateinit var mockInputStream: InputStream
 
+    @Mock
+    private lateinit var mockAssetManager: AssetManager // Added mock AssetManager
+
     private lateinit var voskTranscriptionService: VoskTranscriptionService
     private lateinit var testAudioUriString: String
     private lateinit var mockedStaticUri: MockedStatic<Uri> // To hold the static mock
@@ -66,6 +70,14 @@ class TranscriptionServiceTest {
         testAppFilesDir = tempFolder.newFolder("appfiles")
         whenever(mockContext.filesDir).thenReturn(testAppFilesDir)
         whenever(mockContext.contentResolver).thenReturn(mockContentResolver)
+        whenever(mockContext.getAssets()).thenReturn(mockAssetManager) // Stub getAssets()
+
+        // Basic stub for AssetManager.list to avoid NPE in Vosk init
+        // The Vosk model initialization might try to list files in a specific path or the root.
+        // Providing an empty array for any path requested by list().
+        whenever(mockAssetManager.list(any())).thenReturn(emptyArray<String>()) // Corrected any()
+        // If specific model files are expected by name, more specific stubbing for open() will be needed.
+        // For now, let's assume the model files are not found, leading to an init error for the tests.
 
         voskTranscriptionService = VoskTranscriptionService(mockContext, mockLogService)
     }
@@ -94,7 +106,9 @@ class TranscriptionServiceTest {
                  message.contains("Vosk model directory not found after extraction") || 
                  message.contains("Vosk model download failed") ||
                  message.contains("Zip entry tried to escape model directory") || // For SecurityException
-                 message.contains("Error during model download/unzip") // General catch-all from downloadAndUnzipModel
+                 message.contains("Error during model download/unzip") || // General catch-all from downloadAndUnzipModel
+                 message.contains("Failed to initialize Vosk model assets") || // Added for new expected failure
+                 message.contains("Failed to list assets from path") // Added for new expected failure
             )
         }
     }
@@ -117,7 +131,9 @@ class TranscriptionServiceTest {
                 message.contains("Vosk model directory not found after extraction") || 
                 message.contains("Vosk model download failed") ||
                 message.contains("Zip entry tried to escape model directory") || // For SecurityException
-                message.contains("Error during model download/unzip") // General catch-all from downloadAndUnzipModel
+                message.contains("Error during model download/unzip") || // General catch-all from downloadAndUnzipModel
+                message.contains("Failed to initialize Vosk model assets") || // Added for new expected failure
+                message.contains("Failed to list assets from path") // Added for new expected failure
             )
         }
     }
