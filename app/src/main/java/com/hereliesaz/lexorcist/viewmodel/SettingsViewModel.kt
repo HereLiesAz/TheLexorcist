@@ -48,6 +48,9 @@ class SettingsViewModel @Inject constructor(
     private val _oneDriveUploadStatus = MutableStateFlow<String?>(null)
     val oneDriveUploadStatus: StateFlow<String?> = _oneDriveUploadStatus.asStateFlow()
 
+    private val _transcriptionService = MutableStateFlow("Vosk")
+    val transcriptionService: StateFlow<String> = _transcriptionService.asStateFlow()
+
     val isDropboxAuthenticated = dropboxAuthManager.isAuthenticated
     private val _dropboxUser = MutableStateFlow<CloudUser?>(null)
     val dropboxUser = _dropboxUser.asStateFlow()
@@ -96,6 +99,12 @@ class SettingsViewModel @Inject constructor(
         _caseFolderPath.value = settingsManager.getCaseFolderPath()
         _cloudSyncEnabled.value = settingsManager.getCloudSyncEnabled()
         _selectedCloudProvider.value = settingsManager.getSelectedCloudProvider()
+        _transcriptionService.value = settingsManager.getTranscriptionService()
+    }
+
+    fun setTranscriptionService(service: String) {
+        settingsManager.saveTranscriptionService(service)
+        _transcriptionService.value = service
     }
 
     fun setSelectedCloudProvider(provider: String) {

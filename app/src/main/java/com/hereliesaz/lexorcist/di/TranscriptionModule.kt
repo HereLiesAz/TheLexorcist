@@ -1,21 +1,29 @@
 package com.hereliesaz.lexorcist.di
 
-// import com.hereliesaz.lexorcist.service.GoogleCloudTranscriptionService // REMOVED or commented out
+import com.hereliesaz.lexorcist.data.SettingsManager
 import com.hereliesaz.lexorcist.service.TranscriptionService
-import com.hereliesaz.lexorcist.service.VoskTranscriptionService // UNCOMMENTED
-import dagger.Binds
+import com.hereliesaz.lexorcist.service.VoskTranscriptionService
+import com.hereliesaz.lexorcist.service.WhisperTranscriptionService
 import dagger.Module
+import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-abstract class TranscriptionModule {
+object TranscriptionModule {
 
-    @Binds
+    @Provides
     @Singleton
-    abstract fun bindTranscriptionService(
-        voskTranscriptionService: VoskTranscriptionService // CHANGED
-    ): TranscriptionService
+    fun provideTranscriptionService(
+        settingsManager: SettingsManager,
+        voskTranscriptionService: VoskTranscriptionService,
+        whisperTranscriptionService: WhisperTranscriptionService
+    ): TranscriptionService {
+        return when (settingsManager.getTranscriptionService()) {
+            "Whisper" -> whisperTranscriptionService
+            else -> voskTranscriptionService // Default to Vosk
+        }
+    }
 }

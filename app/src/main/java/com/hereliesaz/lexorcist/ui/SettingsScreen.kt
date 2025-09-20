@@ -110,6 +110,37 @@ fun SettingsScreen(
             HorizontalDivider()
             Spacer(modifier = Modifier.height(24.dp))
 
+            // Transcription Service Settings
+            Text(
+                text = "Transcription Service",
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            val selectedTranscriptionService by settingsViewModel.transcriptionService.collectAsState()
+            val transcriptionServices = listOf("Vosk", "Whisper")
+
+            Column(Modifier.fillMaxWidth()) {
+                transcriptionServices.forEach { service ->
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.End,
+                    ) {
+                        Text(text = service)
+                        RadioButton(
+                            selected = (selectedTranscriptionService == service),
+                            onClick = { settingsViewModel.setTranscriptionService(service) },
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+            HorizontalDivider()
+            Spacer(modifier = Modifier.height(24.dp))
+
             // Cache Settings
             Text(
                 text = stringResource(R.string.cache_settings),
