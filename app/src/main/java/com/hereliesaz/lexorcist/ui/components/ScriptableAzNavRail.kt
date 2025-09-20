@@ -3,17 +3,18 @@ package com.hereliesaz.lexorcist.ui.components
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import com.hereliesaz.aznavrail.AzNavRail
-// import com.hereliesaz.aznavrail.azMenuItem // Removed import
-// import com.hereliesaz.aznavrail.azRailItem // Removed import
+import com.hereliesaz.aznavrail.azMenuItem
+import com.hereliesaz.aznavrail.azRailItem
 import com.hereliesaz.lexorcist.model.ScriptedMenuItem
 
 @Composable
 fun ScriptableAzNavRail(
     navController: NavHostController,
     scriptedMenuItems: List<ScriptedMenuItem>,
+    onScriptedMenuItemClick: (ScriptedMenuItem) -> Unit,
     onLogout: () -> Unit
 ) {
-    AzNavRail {
+    AzNavRail(onLogoutClick = onLogout) {
         azRailItem(id = "cases", text = "Cases", onClick = { navController.navigate("cases") })
         azRailItem(id = "evidence", text = "Evidence", onClick = { navController.navigate("evidence") })
         azRailItem(
@@ -28,7 +29,7 @@ fun ScriptableAzNavRail(
 
         scriptedMenuItems.forEach { item ->
             if (item.isVisible) {
-                azMenuItem(id = item.id, text = item.text, onClick = item.onClick)
+                azMenuItem(id = item.id, text = item.label, onClick = { onScriptedMenuItemClick(item) })
             }
         }
 
