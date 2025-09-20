@@ -80,51 +80,11 @@ fun AllegationsScreen(viewModel: MasterAllegationsViewModel = hiltViewModel()) {
     ) { padding ->
         Column(
             modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(padding),
+            Modifier
+                .fillMaxSize()
+                .padding(padding),
             horizontalAlignment = Alignment.End
         ) {
-            if (selectedAllegations.isNotEmpty()) {
-                Text(
-                    text = "Selected Allegations:",
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.fillMaxWidth().padding(top = 16.dp, end = 16.dp),
-                )
-                LazyColumn(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .height(100.dp)
-                            .padding(horizontal = 16.dp),
-                ) {
-                    items(selectedAllegations.toList()) { allegation ->
-                        AllegationItem(
-                            allegation = allegation,
-                            isSelected = true,
-                            onToggleSelection = { viewModel.toggleAllegationSelection(allegation) },
-                            onLongPress = { showDetailsDialog = it }
-                        )
-                    }
-                }
-            }
-
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { viewModel.onSearchQueryChanged(it) },
-                label = { Text(stringResource(R.string.search)) },
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = stringResource(R.string.search)) },
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                keyboardActions =
-                    KeyboardActions(onSearch = {
-                        keyboardController?.hide()
-                    }),
-            )
-
             SortDropdown(
                 sortType = sortType,
                 onSortChange = { viewModel.onSortTypeChanged(it) },
@@ -132,7 +92,7 @@ fun AllegationsScreen(viewModel: MasterAllegationsViewModel = hiltViewModel()) {
             )
 
             LazyColumn(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.weight(1f),
             ) {
                 if (groupedAllegations != null) {
                     groupedAllegations.forEach { (type, allegationsForType) ->
@@ -155,7 +115,7 @@ fun AllegationsScreen(viewModel: MasterAllegationsViewModel = hiltViewModel()) {
                             items(allegationList) { allegation ->
                                 AllegationItem(
                                     allegation = allegation,
-                                    isSelected = selectedAllegations.any { it.name == allegation.name },
+                                    isSelected = allegation.isSelected,
                                     onToggleSelection = { viewModel.toggleAllegationSelection(allegation) },
                                     onLongPress = { showDetailsDialog = it },
                                 )
@@ -174,7 +134,7 @@ fun AllegationsScreen(viewModel: MasterAllegationsViewModel = hiltViewModel()) {
                         items(allegationList) { allegation ->
                             AllegationItem(
                                 allegation = allegation,
-                                isSelected = selectedAllegations.any { it.name == allegation.name },
+                                isSelected = allegation.isSelected,
                                 onToggleSelection = { viewModel.toggleAllegationSelection(allegation) },
                                 onLongPress = { showDetailsDialog = it },
                             )
@@ -184,13 +144,53 @@ fun AllegationsScreen(viewModel: MasterAllegationsViewModel = hiltViewModel()) {
                     items(allegations) { allegation ->
                         AllegationItem(
                             allegation = allegation,
-                            isSelected = selectedAllegations.any { it.name == allegation.name },
+                            isSelected = allegation.isSelected,
                             onToggleSelection = { viewModel.toggleAllegationSelection(allegation) },
                             onLongPress = { showDetailsDialog = it },
                         )
                     }
                 }
             }
+
+            if (selectedAllegations.isNotEmpty()) {
+                Text(
+                    text = "Selected Allegations:",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.fillMaxWidth().padding(top = 16.dp, end = 16.dp),
+                )
+                LazyColumn(
+                    modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(100.dp)
+                        .padding(horizontal = 16.dp),
+                ) {
+                    items(selectedAllegations.toList()) { allegation ->
+                        AllegationItem(
+                            allegation = allegation,
+                            isSelected = true,
+                            onToggleSelection = { viewModel.toggleAllegationSelection(allegation) },
+                            onLongPress = { showDetailsDialog = it }
+                        )
+                    }
+                }
+            }
+
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { viewModel.onSearchQueryChanged(it) },
+                label = { Text(stringResource(R.string.search)) },
+                modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = stringResource(R.string.search)) },
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                keyboardActions =
+                KeyboardActions(onSearch = {
+                    keyboardController?.hide()
+                }),
+            )
 
             if (showDetailsDialog != null) {
                 AlertDialog(
