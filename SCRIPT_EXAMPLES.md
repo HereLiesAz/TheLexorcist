@@ -140,11 +140,12 @@ For the purpose of these examples, we assume the script environment provides the
     ```
 
 **7. Analyze Communication Style**
-*   **Description:** Analyzes the linguistic style (e.g., sentence length, word choice) of a piece of evidence and compares it to the author's known baseline from other evidence. Flags messages that may have been written by someone else.
+*   **Description:** Analyzes the linguistic style (e.g., sentence length) of a piece of evidence and compares it to the author's known baseline from other evidence. Flags messages that may have been written by someone else.
 *   **Script:**
     ```javascript
     function getAvgSentenceLength(text) {
         const sentences = text.split(/[.!?]+/).filter(s => s.length > 0);
+        if (sentences.length === 0) return 0;
         return text.length / sentences.length;
     }
 
@@ -154,8 +155,7 @@ For the purpose of these examples, we assume the script environment provides the
         const baselineAvg = getAvgSentenceLength(baselineText);
         const currentAvg = getAvgSentenceLength(evidence.text);
 
-        // If current average is more than 50% different from the baseline
-        if (Math.abs(currentAvg - baselineAvg) / baselineAvg > 0.5) {
+        if (baselineAvg > 0 && Math.abs(currentAvg - baselineAvg) / baselineAvg > 0.5) {
             addTag("Atypical Style");
             createNote(`Communication style is inconsistent with author's baseline. (Current: ${currentAvg.toFixed(1)} chars/sentence, Baseline: ${baselineAvg.toFixed(1)})`);
         }
@@ -182,8 +182,8 @@ For the purpose of these examples, we assume the script environment provides the
     }
     ```
 
-**9. Detect Evidence Gaps**
-*   **Description:** Scans text for mentions of other documents (e.g., "the contract") or conversations (e.g., "in the email"). If that item doesn't appear to be in the case file, it tags the current evidence as having an "Evidence Gap" and creates a task note to request the missing item.
+**9. Detect Evidence Gaps and Create Tasks**
+*   **Description:** Scans text for mentions of other documents or conversations. If that item doesn't appear to be in the case file, it tags the current evidence as having an "Evidence Gap" and creates a task note to request the missing item.
 *   **Script:**
     ```javascript
     const mentionedItems = {
@@ -196,14 +196,15 @@ For the purpose of these examples, we assume the script environment provides the
         const matches = [...evidence.text.matchAll(regex)];
         if (matches.length > 0) {
             for (const match of matches) {
-                const keyword = match[1];
+                const keyword = match[0];
                 const hasEvidence = case.evidence.some(e => e.text.toLowerCase().includes(keyword));
 
                 if (!hasEvidence) {
                     addTag("Evidence Gap");
                     const note = `Evidence mentions a '${keyword}' (${itemType}) that may be missing.`;
                     createNote(note);
-                    createNote(`TASK: Request missing ${itemType} related to '${keyword}' mentioned in evidence from ${evidence.metadata.date}`);
+                    // This simulates creating a task by adding a specially formatted note.
+                    createNote(`TASK: Request missing ${itemType} related to '${keyword}' from evidence dated ${evidence.metadata.date}`);
                 }
             }
         }
@@ -238,10 +239,8 @@ For the purpose of these examples, we assume the script environment provides the
         const time = match[2];
         addTag(`Alibi: ${location} at ${time}`);
 
-        const conflictingEvidence = case.evidence.find(e => {
-            const conflictRegex = new RegExp(`i saw you at (?!${location})(.+?) at ${time}`, "i");
-            return conflictRegex.test(e.text);
-        });
+        const conflictRegex = new RegExp(`i saw you at (?!${location})(.+?) at ${time}`, "i");
+        const conflictingEvidence = case.evidence.find(e => conflictRegex.test(e.text));
 
         if (conflictingEvidence) {
             addTag("Alibi Conflict");
@@ -283,21 +282,21 @@ For the purpose of these examples, we assume the script environment provides the
 
 ---
 
-### **Heuristic & AI-like Analysis**
+### **Advanced Analysis & Generation**
 
-*Advanced tools that use self-contained logic to approximate AI-driven insights.*
+*Self-contained scripts that perform complex analysis or generate new content.*
 
 **14. Heuristic Sentiment Analysis**
 *   **Description:** Scores the emotional tone of the text by looking for positive and negative keywords defined within the script.
 *   **Script:**
     ```javascript
     const sentimentDict = {
-        "happy": 2, "love": 3, "great": 2, // positive
-        "sad": -2, "hate": -3, "terrible": -2, "angry": -2, // negative
-        "promise": 1, "help": 1,
-        "threat": -3, "stupid": -2, "idiot": -2
+        "happy": 2, "love": 3, "great": 2, "excellent": 2,
+        "sad": -2, "hate": -3, "terrible": -2, "angry": -2, "awful": -2,
+        "promise": 1, "help": 1, "agree": 1,
+        "threat": -3, "stupid": -2, "idiot": -2, "liar": -2, "fail": -1
     };
-    const words = evidence.text.toLowerCase().split(/\s+/);
+    const words = evidence.text.toLowerCase().split(/[\s,.]+/);
     let score = 0;
     words.forEach(word => {
         if (sentimentDict[word]) {
@@ -315,7 +314,7 @@ For the purpose of these examples, we assume the script environment provides the
     ```
 
 **15. Basic Text Summarizer**
-*   **Description:** Creates a simple summary of the evidence by extracting the first and last sentences.
+*   **Description:** Creates a simple summary of the evidence by extracting the first and last sentences. This is useful for getting the gist of very long text blocks.
 *   **Script:**
     ```javascript
     const sentences = evidence.text.match( /[^\.!\?]+[\.!\?]+/g );
@@ -324,6 +323,8 @@ For the purpose of these examples, we assume the script environment provides the
         const last = sentences[sentences.length - 1].trim();
         const summary = `Summary: "${first} ... ${last}"`;
         createNote(summary);
+    } else {
+        createNote("Summary: Text is too short to summarize.");
     }
     ```
 
@@ -335,14 +336,12 @@ For the purpose of these examples, we assume the script environment provides the
     let notes = [];
 
     if (evidence.metadata.exif) {
-        // Check for common editing software in EXIF
         const software = evidence.metadata.exif.software || "";
         if (software.toLowerCase().includes("photoshop") || software.toLowerCase().includes("gimp")) {
             score -= 40;
             notes.push("Evidence may have been processed with editing software.");
         }
 
-        // Check for date mismatch
         if (evidence.metadata.exif.dateCreated) {
             const diffDays = Math.abs(new Date(evidence.metadata.exif.dateCreated) - new Date(evidence.metadata.date)) / (1000 * 3600 * 24);
             if (diffDays > 1) {
@@ -351,7 +350,7 @@ For the purpose of these examples, we assume the script environment provides the
             }
         }
     } else {
-        score -= 10; // No EXIF data is a small penalty
+        score -= 10;
         notes.push("No EXIF metadata available for verification.");
     }
 
