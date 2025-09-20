@@ -2,89 +2,62 @@ package com.hereliesaz.lexorcist.service
 
 import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.model.ScriptResult
+import com.hereliesaz.lexorcist.service.nlp.LegalBertService
 import com.hereliesaz.lexorcist.utils.Result
-import com.hereliesaz.lexorcist.viewmodel.ScriptedMenuViewModel
-import kotlinx.coroutines.runBlocking
 import org.mozilla.javascript.Context
 import org.mozilla.javascript.Scriptable
 import org.mozilla.javascript.ScriptableObject
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.math.sqrt
 
 @Singleton
 class ScriptRunner @Inject constructor(
-    private val generativeAIService: GenerativeAIService,
-    private val scriptedMenuViewModel: ScriptedMenuViewModel
+    private val legalBertService: LegalBertService
 ) {
+    class ScriptExecutionException(
+        message: String,
+        cause: Throwable,
+    ) : Exception(message, cause)
 
     /**
-     * Custom exception for script execution errors.
+     * API wrapper for the local LegalBertService.
      */
-    class ScriptExecutionException(message: String, cause: Throwable) : Exception(message, cause)
-
-    /**
-     * API wrapper for the GenerativeAIService, exposed to Javascript.
-     * This makes calls appear synchronous to the script writer.
-     */
-    inner class AIApi {
+    inner class LocalAIApi {
         @Suppress("unused") // Used by Rhino
-        fun generateContent(prompt: String): String {
-            return runBlocking {
-                generativeAIService.generateContent(prompt)
-            }
+        fun getEmbedding(text: String): Array<Float> {
+            return legalBertService.getEmbedding(text).toTypedArray()
+        }
+
+        @Suppress("unused") // Used by Rhino
+        fun calculateSimilarity(text1: String, text2: String): Double {
+            val embedding1 = legalBertService.getEmbedding(text1)
+            val embedding2 = legalBertService.getEmbedding(text2)
+            return cosineSimilarity(embedding1, embedding2)
         }
     }
 
-    /**
-     * API wrapper for the ScriptedMenuViewModel, exposed to Javascript.
-     * Provides a clean interface for scripts to control the UI.
-     */
-    inner class UIApi {
-        @Suppress("unused") // Used by Rhino
-        fun addOrUpdate(id: String, label: String, isVisible: Boolean, onClickAction: String?) {
-            scriptedMenuViewModel.addOrUpdateMenuItem(id, label, isVisible, onClickAction)
-        }
-
-        @Suppress("unused") // Used by Rhino
-        fun remove(id: String) {
-            scriptedMenuViewModel.removeMenuItem(id)
-        }
-
-        @Suppress("unused") // Used by Rhino
-        fun clearAll() {
-            scriptedMenuViewModel.clearAllMenuItems()
-        }
-    }
-
-    /**
-     * Executes a given script with provided evidence context and returns a structured result.
-     * This runner is backward compatible, supporting both a modern `lex` object API
-     * and a legacy API of global functions like `addTag()`.
-     */
-    fun runScript(script: String, evidence: Evidence): Result<ScriptResult> {
+    fun runScript(
+        script: String,
+        evidence: Evidence,
+    ): Result<ScriptResult> {
         val rhino = Context.enter()
         @Suppress("deprecation")
         rhino.optimizationLevel = -1 // Necessary for Android compatibility
         try {
             val scope: Scriptable = rhino.initStandardObjects()
-
-            // This will hold all outputs from the script.
             val scriptResult = ScriptResult()
 
             // --- Modern API (`lex` object) ---
             val lexObject = rhino.newObject(scope)
             ScriptableObject.putProperty(scope, "lex", lexObject)
-            ScriptableObject.putProperty(lexObject, "ai", Context.javaToJS(AIApi(), scope))
-            ScriptableObject.putProperty(lexObject, "ui", Context.javaToJS(UIApi(), scope))
-
-            // For modern scripts that directly manipulate a 'tags' array.
+            val aiObject = rhino.newObject(scope)
+            ScriptableObject.putProperty(lexObject, "ai", aiObject)
+            ScriptableObject.putProperty(aiObject, "local", Context.javaToJS(LocalAIApi(), scope))
             ScriptableObject.putProperty(scope, "tags", Context.javaToJS(scriptResult.tags, scope))
 
             // --- Legacy API (Global Functions) ---
-            // Expose the result object to the script under a known name.
             ScriptableObject.putProperty(scope, "scriptResult", Context.javaToJS(scriptResult, scope))
-
-            // Define legacy functions in JS that manipulate the exposed 'scriptResult' object.
             val legacyFunctionDefinitions = """
                 function addTag(tag) { scriptResult.tags.add(tag); }
                 function setSeverity(level) { scriptResult.severity = level; }
@@ -93,25 +66,31 @@ class ScriptRunner @Inject constructor(
             """.trimIndent()
             rhino.evaluateString(scope, legacyFunctionDefinitions, "LegacyAPISetup", 1, null)
 
-
             // --- Context & Execution ---
             ScriptableObject.putProperty(scope, "evidence", Context.javaToJS(evidence, scope))
-
-            // Execute the user's script
             rhino.evaluateString(scope, script, "JavaScript<ScriptRunner>", 1, null)
-
-            // The scriptResult object has been modified by the script in-place,
-            // both through the legacy functions and potentially modern array access.
-            // No further extraction is needed.
 
             return Result.Success(scriptResult)
 
         } catch (e: org.mozilla.javascript.RhinoException) {
             return Result.Error(ScriptExecutionException("Error during JavaScript execution", e))
         } catch (e: Exception) {
-            return Result.Error(ScriptExecutionException("An unexpected error occurred while running script", e))
+            return Result.Error(ScriptExecutionException("An unexpected error occurred while running script or processing results", e))
         } finally {
             Context.exit()
         }
+    }
+
+    private fun cosineSimilarity(vec1: FloatArray, vec2: FloatArray): Double {
+        var dotProduct = 0.0
+        var norm1 = 0.0
+        var norm2 = 0.0
+        for (i in vec1.indices) {
+            dotProduct += vec1[i] * vec2[i]
+            norm1 += vec1[i] * vec1[i]
+            norm2 += vec2[i] * vec2[i]
+        }
+        if (norm1 == 0.0 || norm2 == 0.0) return 0.0
+        return dotProduct / (sqrt(norm1) * sqrt(norm2))
     }
 }

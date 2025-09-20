@@ -49,13 +49,6 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
-
-        <!-- Disable default WorkManager Initializer -->
-        <provider
-            android:name="androidx.work.impl.WorkManagerInitializer"
-            android:authorities="com.hereliesaz.lexorcist.workmanager-init"
-            tools:node="remove" />
-
     </application>
 
 </manifest>
