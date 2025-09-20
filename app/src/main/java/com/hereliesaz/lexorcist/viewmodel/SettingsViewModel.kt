@@ -52,6 +52,9 @@ class SettingsViewModel @Inject constructor(
     private val _dropboxUser = MutableStateFlow<CloudUser?>(null)
     val dropboxUser = _dropboxUser.asStateFlow()
 
+    private val _language = MutableStateFlow("en")
+    val language: StateFlow<String> = _language.asStateFlow()
+
     init {
         loadSettings()
         observeDropboxAuthState()
@@ -96,6 +99,7 @@ class SettingsViewModel @Inject constructor(
         _caseFolderPath.value = settingsManager.getCaseFolderPath()
         _cloudSyncEnabled.value = settingsManager.getCloudSyncEnabled()
         _selectedCloudProvider.value = settingsManager.getSelectedCloudProvider()
+        _language.value = settingsManager.getLanguage()
     }
 
     fun setSelectedCloudProvider(provider: String) {
@@ -116,6 +120,11 @@ class SettingsViewModel @Inject constructor(
     fun setCaseFolderPath(newPath: String) {
         settingsManager.saveCaseFolderPath(newPath)
         _caseFolderPath.value = newPath
+    }
+
+    fun setLanguage(language: String) {
+        settingsManager.saveLanguage(language)
+        _language.value = language
     }
 
     fun clearMigrationStatus() {

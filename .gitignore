@@ -57,3 +57,5 @@ app/google-services.json
 /app/release/baselineProfiles/0/app-release.dm
 /app/release/baselineProfiles/1/app-release.dm
 /app/release/output-metadata.json
+
+whisper_android/

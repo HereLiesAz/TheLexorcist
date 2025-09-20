@@ -112,4 +112,12 @@ class SettingsManager
         fun getCloudSyncEnabled(): Boolean {
             return sharedPreferences.getBoolean("cloud_sync_enabled", true)
         }
+
+        fun saveLanguage(language: String) {
+            sharedPreferences.edit().putString("language", language).apply()
+        }
+
+        fun getLanguage(): String {
+            return sharedPreferences.getString("language", "en") ?: "en"
+        }
     }
