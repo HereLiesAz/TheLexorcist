@@ -1,6 +1,7 @@
 package com.hereliesaz.lexorcist.di
 
 import com.hereliesaz.lexorcist.data.SettingsManager
+import com.hereliesaz.lexorcist.service.DynamicTranscriptionService
 import com.hereliesaz.lexorcist.service.TranscriptionService
 import com.hereliesaz.lexorcist.service.VoskTranscriptionService
 import com.hereliesaz.lexorcist.service.WhisperTranscriptionService
@@ -21,9 +22,8 @@ object TranscriptionModule {
         voskTranscriptionService: VoskTranscriptionService,
         whisperTranscriptionService: WhisperTranscriptionService
     ): TranscriptionService {
-        return when (settingsManager.getTranscriptionService()) {
-            "Whisper" -> whisperTranscriptionService
-            else -> voskTranscriptionService // Default to Vosk
-        }
+        // Provide the DynamicTranscriptionService which will delegate to the
+        // appropriate service based on current settings.
+        return DynamicTranscriptionService(settingsManager, voskTranscriptionService, whisperTranscriptionService)
     }
 }

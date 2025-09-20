@@ -23,8 +23,8 @@ fun ScriptableAzNavRail(
         )
         azRailItem(id = "templates", text = "Templates", onClick = { navController.navigate("templates") })
         azRailItem(id = "script_builder", text = "Script", onClick = { navController.navigate("script_builder") })
-        azRailItem(id = "data_review", text = "Review", onClick = { navController.navigate("data_review") })
         azRailItem(id = "timeline", text = "Timeline", onClick = { navController.navigate("timeline") })
+        azRailItem(id = "data_review", text = "Review", onClick = { navController.navigate("data_review") })
 
         scriptedMenuItems.forEach { item ->
             if (item.isVisible) {
@@ -34,6 +34,5 @@ fun ScriptableAzNavRail(
 
         azMenuItem(id = "extras", text = "Extras", onClick = { navController.navigate("extras") })
         azMenuItem(id = "settings", text = "Settings", onClick = { navController.navigate("settings") })
-        azMenuItem(id = "logout", text = "Logout", onClick = onLogout)
     }
 }
