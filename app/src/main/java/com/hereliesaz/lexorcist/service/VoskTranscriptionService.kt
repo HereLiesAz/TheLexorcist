@@ -282,7 +282,7 @@ class VoskTranscriptionService @Inject constructor(
                         var zipEntry = zis.nextEntry
                         val buffer = ByteArray(4096)
                         while (zipEntry != null) {
-                            var entryNameString = zipEntry.name.replace('\', '/')
+                            var entryNameString = zipEntry.name.replace('\\', '/')
                                 if (commonPrefix.isNotEmpty() && entryNameString.startsWith(commonPrefix)) {
                                     entryNameString = entryNameString.substring(commonPrefix.length)
                                 }
@@ -315,7 +315,7 @@ class VoskTranscriptionService @Inject constructor(
                             zis.closeEntry()
                             zipEntry = zis.nextEntry
                         }
-                    }
+
                     zipFile.delete()
                     logService.addLog("Vosk model unzipped successfully.")
                     _downloadProgress.value = 1.0f
