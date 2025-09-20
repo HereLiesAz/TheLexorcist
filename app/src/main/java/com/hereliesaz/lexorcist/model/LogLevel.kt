@@ -2,8 +2,9 @@ package com.hereliesaz.lexorcist.model
 
 enum class LogLevel {
     INFO,
-    WARNING,
     ERROR,
     DEBUG,
-    VERBOSE
+    WARNING,
+    VERBOSE,
+    WTF
 }
