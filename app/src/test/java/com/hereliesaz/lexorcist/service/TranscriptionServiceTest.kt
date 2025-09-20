@@ -3,6 +3,7 @@ package com.hereliesaz.lexorcist.service
 import android.content.Context
 import android.content.ContentResolver
 import android.net.Uri
+import com.hereliesaz.lexorcist.data.SettingsManager
 import com.hereliesaz.lexorcist.utils.Result // Your Result class
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
@@ -40,6 +41,9 @@ class TranscriptionServiceTest {
     private lateinit var mockLogService: LogService
 
     @Mock
+    private lateinit var mockSettingsManager: SettingsManager
+
+    @Mock
     private lateinit var mockContentResolver: ContentResolver
 
     @Mock // Mock for the Uri that Uri.parse will return
@@ -66,8 +70,9 @@ class TranscriptionServiceTest {
         testAppFilesDir = tempFolder.newFolder("appfiles")
         whenever(mockContext.filesDir).thenReturn(testAppFilesDir)
         whenever(mockContext.contentResolver).thenReturn(mockContentResolver)
+        whenever(mockSettingsManager.getTranscriptionLanguage()).thenReturn("en-us")
 
-        voskTranscriptionService = VoskTranscriptionService(mockContext, mockLogService)
+        voskTranscriptionService = VoskTranscriptionService(mockContext, mockLogService, mockSettingsManager)
     }
 
     @After
@@ -91,10 +96,7 @@ class TranscriptionServiceTest {
             val message = result.exception.message ?: ""
             assertTrue(
                 "Error message mismatch. Expected model init failure. Got: $message",
-                 message.contains("Vosk model directory not found after extraction") || 
-                 message.contains("Vosk model download failed") ||
-                 message.contains("Zip entry tried to escape model directory") || // For SecurityException
-                 message.contains("Error during model download/unzip") // General catch-all from downloadAndUnzipModel
+                message.contains("is not downloaded or invalid")
             )
         }
     }
@@ -114,10 +116,7 @@ class TranscriptionServiceTest {
             val message = result.exception.message ?: ""
             assertTrue(
                 "Error message mismatch. Expected model init failure. Got: $message",
-                message.contains("Vosk model directory not found after extraction") || 
-                message.contains("Vosk model download failed") ||
-                message.contains("Zip entry tried to escape model directory") || // For SecurityException
-                message.contains("Error during model download/unzip") // General catch-all from downloadAndUnzipModel
+                message.contains("is not downloaded or invalid")
             )
         }
     }

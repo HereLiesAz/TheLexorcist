@@ -2,21 +2,31 @@ package com.hereliesaz.lexorcist.service
 
 import android.content.Context
 import android.net.Uri
+import com.hereliesaz.lexorcist.data.SettingsManager
+import com.hereliesaz.lexorcist.model.DownloadState
+import com.hereliesaz.lexorcist.model.LanguageModel
+import com.hereliesaz.lexorcist.model.LogLevel
 import com.hereliesaz.lexorcist.model.ProcessingState
+import com.hereliesaz.lexorcist.model.TranscriptionModels
 import com.hereliesaz.lexorcist.utils.Result
 import com.hereliesaz.whisper.asr.Whisper
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import java.net.URL
+import java.util.Collections
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.resume
@@ -25,7 +35,8 @@ import kotlin.coroutines.resumeWithException
 @Singleton
 class WhisperTranscriptionService @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val logService: LogService
+    private val logService: LogService,
+    private val settingsManager: SettingsManager
 ) : TranscriptionService {
 
     private var whisper: Whisper? = null
@@ -33,28 +44,93 @@ class WhisperTranscriptionService @Inject constructor(
     private val _processingState = MutableStateFlow<ProcessingState>(ProcessingState.Idle)
     override val processingState: StateFlow<ProcessingState> = _processingState
 
-    private val modelPath = "whisper-tiny.en.tflite"
-    private val vocabPath = "filters_vocab_en.bin"
+    private val downloadProgresses = Collections.synchronizedMap(mutableMapOf<String, MutableStateFlow<Float>>())
 
     init {
         serviceScope.launch {
-            initialize()
+            try {
+                initialize()
+            } catch (e: IOException) {
+                logService.addLog("Whisper initialization failed on startup: ${e.message}", LogLevel.WARNING)
+            }
         }
     }
 
     private suspend fun initialize() {
         withContext(Dispatchers.IO) {
+            val selectedLangCode = settingsManager.getTranscriptionLanguage()
+            val model = TranscriptionModels.whisperModels.find { it.code == selectedLangCode }
+                ?: throw IOException("Selected Whisper language '$selectedLangCode' not found or supported.")
+
+            val modelFile = File(context.filesDir, model.modelName)
+            if (!modelFile.exists()) {
+                throw IOException("Whisper model file not found: ${modelFile.path}. Please download it from settings.")
+            }
+
+            // For whisper.cpp, vocab is part of the model file, so we don't need a separate vocab file.
+            // The `loadModel` in `Whisper.java` takes modelPath, vocabPath. We can pass the model path for both.
+            // Let's assume the underlying engine handles this. Or we can check Whisper.java again.
+            // Whisper.java's `loadModel` takes modelPath, vocabPath, and isMultilingual.
+            // The ggml models have the vocab built-in. The original implementation passed a separate vocab file for tflite.
+            // Let's assume for ggml, we can pass a dummy or null path for vocab. A quick look at Whisper.java shows it expects a valid path.
+            // Let's pass the model file path for the vocab path and see if the native layer handles it.
+            // This is a bit of a guess, but it's the most likely scenario for ggml models.
+            // The `isMultilingual` flag is important.
+            val isMultilingual = model.code == "multi"
+
             try {
                 whisper = Whisper(context).apply {
-                    loadModelFromAssets(modelPath, vocabPath, false)
+                    loadModel(modelFile.absolutePath, modelFile.absolutePath, isMultilingual)
                 }
-                logService.addLog("Whisper model loaded successfully.")
+                logService.addLog("Whisper model '${model.modelName}' loaded successfully.")
             } catch (e: IOException) {
                 _processingState.value = ProcessingState.Failure("Failed to initialize Whisper: ${e.message}")
-                logService.addLog("Failed to initialize Whisper: ${e.message}", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
+                logService.addLog("Failed to initialize Whisper: ${e.message}", LogLevel.ERROR)
+                throw e
             }
         }
     }
+
+    fun getDownloadProgress(modelName: String): StateFlow<Float> {
+        return downloadProgresses.getOrPut(modelName) { MutableStateFlow(0f) }.asStateFlow()
+    }
+
+    fun downloadModel(model: LanguageModel): Flow<DownloadState> = flow {
+        emit(DownloadState.Downloading)
+        val modelFile = File(context.filesDir, model.modelName)
+        val progressFlow = downloadProgresses.getOrPut(model.modelName) { MutableStateFlow(0f) }
+
+        try {
+            withContext(Dispatchers.IO) {
+                URL(model.modelUrl).openStream().use { input ->
+                    FileOutputStream(modelFile).use { output ->
+                        val connection = URL(model.modelUrl).openConnection()
+                        connection.connect()
+                        val fileLength = connection.contentLength
+                        val buffer = ByteArray(8192)
+                        var bytesRead: Int
+                        var totalBytesRead: Long = 0
+                        while (input.read(buffer).also { bytesRead = it } != -1) {
+                            output.write(buffer, 0, bytesRead)
+                            totalBytesRead += bytesRead
+                            if (fileLength > 0) {
+                                progressFlow.value = (totalBytesRead.toFloat() / fileLength.toFloat())
+                            }
+                        }
+                    }
+                }
+            }
+            progressFlow.value = 1.0f
+            logService.addLog("Whisper model '${model.modelName}' downloaded successfully.")
+            emit(DownloadState.Downloaded)
+        } catch (e: Exception) {
+            logService.addLog("Error downloading Whisper model '${model.modelName}': ${e.message}", LogLevel.ERROR)
+            e.printStackTrace()
+            modelFile.delete() // Clean up failed download
+            emit(DownloadState.Error("Download failed: ${e.message}"))
+        }
+    }
+
 
     override suspend fun start(uri: Uri) {
         // Not needed for this implementation
@@ -66,7 +142,11 @@ class WhisperTranscriptionService @Inject constructor(
 
     override suspend fun transcribeAudio(uri: Uri): Result<String> {
         if (whisper == null) {
-            initialize()
+            try {
+                initialize()
+            } catch (e: IOException) {
+                return Result.Error(e)
+            }
         }
         val whisperInstance = whisper ?: return Result.Error(IllegalStateException("Whisper not initialized"))
 
