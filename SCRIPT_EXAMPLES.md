@@ -1,147 +1,144 @@
-# The Lexorcist: Scripting Examples
+# Scripting in The Lexorcist: The `lex` Object
 
-This document provides a set of curated, functional scripts designed to showcase the powerful scripting capabilities of The Lexorcist. You can use these examples in the app's Script Builder to see the features in action or as a starting point for your own custom scripts.
+Welcome to the advanced scripting engine for The Lexorcist! You can automate tasks and create custom UI elements using Javascript. The primary interface for all advanced functionality is the global `lex` object.
 
-The scripting engine uses Javascript (Mozilla Rhino) and interacts with the application through a global `Lexorcist` object.
+The `lex` object provides access to two powerful sub-systems:
+*   `lex.ai`: Interface with a powerful generative AI model (Google's Gemini).
+*   `lex.ui`: A toolkit for creating and managing dynamic UI elements, such as custom menu items and new screens.
 
-- `Lexorcist.ui` is used to control user interface elements, like the navigation menu.
-- `Lexorcist.ai` is used to access the generative AI features.
+This document provides two examples to get you started.
 
 ---
 
-## Script 1: A Simple Dynamic Screen
+## 1. Simple Tutorial: "Hello, Dynamic Screens!"
 
-This is a "hello world" example for the Scriptable Screens feature. It demonstrates the absolute basics:
-1.  It defines a simple UI layout in a JSON string.
-2.  It uses `Lexorcist.ui.upsertMenuItem()` to add a new item to the left-hand navigation rail.
-3.  It links the menu item to the JSON screen definition. When you click the "Simple Screen" item, the app will dynamically build and display the screen.
+This script demonstrates the most basic use of the `lex.ui` object. It creates a new, clickable menu item in the main navigation rail. When you click this item, it opens a brand new screen that is completely defined by a JSON schema within the script.
 
-````javascript
-/****************************************************************
- * Simple Screen Tutorial
- *
- * This script adds a new item to the navigation menu called
- * "Simple Screen". Clicking it opens a basic screen that is
- * defined entirely by the JSON string below.
- ****************************************************************/
+### What it Does:
+1.  Adds a menu item with the label "My Screen".
+2.  When clicked, opens a new screen with a title and a simple text message.
+3.  The new screen also contains a button that, when clicked, shows a temporary "toast" message at the bottom of the screen.
 
-// 1. Define the UI for our screen in a JSON string.
-// This structure is parsed by the app to build a native UI.
-const simpleScreenJson = `{
-  "title": "My First Scripted Screen",
-  "components": [
+### The Script:
+```javascript
+// This is the core of the Scriptable Screens feature.
+// We define a screen's layout and content using a JSON string.
+// This string is passed as part of the click action for a menu item.
+const myScreenSchema = {
+  // The 'title' property will be displayed in the app's top bar.
+  title: "Hello World",
+  // The 'elements' array defines the content of the screen, rendered top-to-bottom.
+  elements: [
     {
-      "type": "text",
-      "content": "Hello from Javascript!",
-      "style": "headline"
+      type: "text",
+      properties: {
+        text: "Welcome to your first scripted screen!",
+        size: 20
+      }
     },
     {
-      "type": "text",
-      "content": "This entire screen was defined in a JSON string and rendered dynamically by the app. You can create custom user interfaces for your workflows."
+      type: "spacer",
+      properties: {
+        height: 16
+      }
+    },
+    {
+      type: "button",
+      properties: {
+        label: "Say Hello",
+        // The 'onClickAction' defines what happens when the button is pressed.
+        // The 'show_toast:' prefix is a special command handled by the app.
+        onClickAction: "show_toast:Hello from a scripted button!"
+      }
     }
   ]
-}`;
+};
 
-// 2. Create the menu item that will open our screen.
-Lexorcist.ui.upsertMenuItem(
-  "simple_tutorial_menu", // A unique ID for this menu item
-  "Simple Screen",        // The text label shown in the navigation rail
-  true,                   // true = visible, false = hidden
-  null,                   // The name of a JS function to call on click (we aren't using this here)
-  simpleScreenJson        // The JSON screen definition to load on click
+// Use the lex.ui object to add or update a menu item.
+// This function takes an ID, a label, visibility, and a click action.
+lex.ui.addOrUpdate(
+  "my_first_screen_button", // A unique ID for this menu item.
+  "My Screen",              // The text that will appear in the navigation rail.
+  true,                     // 'true' to make the item visible.
+  // This is the action performed on click. We use a special prefix
+  // 'scripted_screen/' followed by our JSON schema. The app knows
+  // how to parse this and open our dynamic screen.
+  "scripted_screen/" + JSON.stringify(myScreenSchema)
 );
-````
+```
 
 ---
 
-## Script 2: Comprehensive In-App Tutorial with AI
+## 2. Advanced Tutorial: AI-Powered In-App Guide
 
-This script is a more advanced example that creates a user-friendly, in-app tutorial. It demonstrates:
-1.  A more complex, scrollable screen layout with various text styles and buttons.
-2.  How to link a button's `onClickFunction` to a Javascript function within the script.
-3.  How to make an asynchronous call to the Generative AI using `Lexorcist.ai.generate()`.
-4.  How to handle the AI's response in a callback function and use it to modify the UI.
+This script demonstrates the true power of combining the AI and UI APIs. It creates a "Tutorial & Tip" menu item that opens a custom screen. This screen not only provides a helpful guide to the app but also features a "Tip of the Day" that is freshly generated by the AI every time the script is run.
 
-````javascript
-/****************************************************************
- * In-App Tutorial with AI Demonstration
- *
- * This script adds an "App Tutorial" item to the menu.
- * The tutorial screen explains the app's features and includes
- * a button to demonstrate the AI summarization capability.
- ****************************************************************/
+### What it Does:
+1.  Calls the `lex.ai.generateContent()` function to get a random productivity tip.
+2.  Dynamically constructs a JSON schema for a new screen.
+3.  Injects the AI-generated tip directly into the content of the screen.
+4.  The screen itself serves as a mini-tutorial, explaining the app's main features.
+5.  Adds a menu item that, when clicked, displays this dynamic, AI-powered tutorial screen.
 
-// This is the text content of the tutorial. We define it here so we can
-// easily pass it to the AI for summarization.
-const tutorialText = `
-  The Lexorcist is designed to help you securely collect, manage, and prepare
-  digital evidence for legal proceedings.
-  1. Cases: Use the 'Cases' menu to create or select a case. All your evidence
-     and notes will be organized under the currently selected case.
-  2. Evidence: Add evidence like photos, videos, or audio recordings from the
-     'Evidence' screen. The app can automatically extract text from images and audio.
-  3. Scripting: The 'Script' menu allows you to write Javascript code to automate
-     tasks. You can automatically tag evidence based on keywords, or even add new
-     UI elements to the app, like this tutorial screen itself!
-`;
+### The Script:
+```javascript
+// Use the AI API to generate a piece of dynamic content.
+// The call is synchronous from the script's perspective.
+// The app handles the underlying network request and returns the text.
+const tipPrompt = "In one sentence, give me a useful and uncommon productivity tip for legal professionals.";
+const aiGeneratedTip = lex.ai.generateContent(tipPrompt);
 
-// This function is the callback for our AI request.
-// It will be executed when the AI model returns its summary.
-function showAiSummary(summary) {
-  // The summary from the AI is passed as an argument.
-  // We will display this summary by creating a NEW, temporary menu item.
-  // This demonstrates how async operations can feed back into the UI.
-  Lexorcist.ui.upsertMenuItem(
-    "tutorial_summary_result",
-    "AI: " + summary.substring(0, 25) + "...", // Show a snippet of the summary
-    true,
-    null,
-    null // This menu item doesn't open a screen
-  );
-}
-
-// This function is called when the button on our tutorial screen is clicked.
-function summarizeTutorial() {
-  // We ask the AI to summarize the tutorial's text in one short sentence.
-  // We provide the text and the name of the function to call when done.
-  Lexorcist.ai.generate(
-    "Please summarize the following text in one short sentence: " + tutorialText,
-    showAiSummary // Pass the callback function itself
-  );
-}
-
-// Here we define the JSON for the tutorial screen.
-const tutorialScreenJson = `{
-  "title": "App Tutorial",
-  "components": [
-    { "type": "text", "content": "Welcome to The Lexorcist!", "style": "headline" },
-    { "type": "text", "content": "This application is designed to help you securely collect, manage, and prepare digital evidence for legal proceedings." },
-    { "type": "spacer" },
-    { "type": "text", "content": "1. Cases", "style": "title" },
-    { "type": "text", "content": "Use the 'Cases' menu to create or select a case. All your evidence and notes will be organized under the currently selected case." },
-    { "type":"spacer" },
-    { "type": "text", "content": "2. Evidence", "style": "title" },
-    { "type": "text", "content": "Add evidence like photos, videos, or audio recordings from the 'Evidence' screen. The app can automatically extract text from images and audio." },
-    { "type": "spacer" },
-    { "type": "text", "content": "3. Scripting", "style": "title" },
-    { "type": "text", "content": "The 'Script' menu allows you to write Javascript code to automate tasks. You can automatically tag evidence based on keywords, or even add new UI elements to the app, like this tutorial screen itself!" },
-    { "type": "spacer" },
-    { "type": "text", "content": "Demonstrate AI", "style": "title" },
-    { "type": "text", "content": "Click the button below to use the integrated AI to summarize the text on this page. The summary will appear as a new item in the navigation menu." },
+// Now, we'll build the JSON schema for our tutorial screen.
+const tutorialSchema = {
+  title: "App Tutorial",
+  elements: [
     {
-      "type": "button",
-      "label": "Summarize with AI",
-      "onClickFunction": "summarizeTutorial"
+      type: "text",
+      properties: {
+        text: "Welcome to The Lexorcist!",
+        size: 24
+      }
+    },
+    {
+      type: "text",
+      properties: {
+        text: "This app helps you organize, analyze, and build your case narrative.",
+        size: 16
+      }
+    },
+    { type: "spacer", properties: { height: 24 } },
+    {
+      type: "text",
+      properties: {
+        text: "AI Tip of the Day:",
+        size: 20
+      }
+    },
+    {
+      type: "text",
+      properties: {
+        // Here, we embed the content we received from the AI.
+        // Every time the script runs, this content will be different.
+        text: aiGeneratedTip,
+        size: 16
+      }
+    },
+    { type: "spacer", properties: { height: 24 } },
+    {
+      type: "text",
+      properties: {
+        text: "Use the navigation rail on the left to manage Cases, Evidence, and more.",
+        size: 16
+      }
     }
   ]
-}`;
+};
 
-// Finally, create the main menu item that opens the tutorial screen.
-Lexorcist.ui.upsertMenuItem(
-  "app_tutorial_menu",    // Unique ID
-  "App Tutorial",         // Label
-  true,                   // isVisible
-  null,                   // onClickFunction
-  tutorialScreenJson      // screenJson
+// Finally, create the menu item that will open our AI-powered screen.
+lex.ui.addOrUpdate(
+  "ai_tutorial_screen_button",
+  "Tutorial & Tip",
+  true,
+  "scripted_screen/" + JSON.stringify(tutorialSchema)
 );
-````
+```

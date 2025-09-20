@@ -1,7 +1,6 @@
 package com.hereliesaz.lexorcist.viewmodel
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.hereliesaz.lexorcist.model.ScriptedMenuItem
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -9,54 +8,43 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import javax.inject.Inject
-
-// Sealed class to represent the navigation or action events triggered by menu items.
-sealed class ScriptedMenuEvent {
-    data class NavigateToScreen(val screenJson: String) : ScriptedMenuEvent()
-    data class ExecuteJs(val functionName: String) : ScriptedMenuEvent()
-}
 
 @HiltViewModel
 class ScriptedMenuViewModel @Inject constructor() : ViewModel() {
 
-    // Holds the current list of scripted menu items.
+    // Expose an immutable StateFlow of the menu items to the UI.
     private val _menuItems = MutableStateFlow<List<ScriptedMenuItem>>(emptyList())
     val menuItems = _menuItems.asStateFlow()
 
-    // A flow for sending one-time events from the ViewModel to the UI.
-    private val _events = MutableSharedFlow<ScriptedMenuEvent>()
-    val events = _events.asSharedFlow()
+    // Use a SharedFlow to send one-off navigation events to the UI.
+    private val _navigationActions = MutableSharedFlow<String>()
+    val navigationActions = _navigationActions.asSharedFlow()
 
     /**
      * Adds a new menu item or updates an existing one with the same ID.
-     * This is intended to be called from the ScriptRunner.
+     * This provides a simple "upsert" functionality for scripts.
      */
-    fun upsertMenuItem(
-        id: String,
-        label: String,
-        isVisible: Boolean,
-        onClickFunction: String?,
-        screenJson: String?
-    ) {
-        _menuItems.update { currentItems ->
-            val newItem = ScriptedMenuItem(id, label, isVisible, onClickFunction, screenJson)
-            val existingIndex = currentItems.indexOfFirst { it.id == id }
+    fun addOrUpdateMenuItem(id: String, text: String, isVisible: Boolean, onClickAction: String?) {
+        _menuItems.update { currentList ->
+            val mutableList = currentList.toMutableList()
+            val index = mutableList.indexOfFirst { it.id == id }
+            val newItem = ScriptedMenuItem(id, text, isVisible, onClickAction)
 
-            if (existingIndex != -1) {
-                // Replace existing item
-                currentItems.toMutableList().apply { this[existingIndex] = newItem }
+            if (index != -1) {
+                // Replace the existing item at the found index.
+                mutableList[index] = newItem
             } else {
-                // Add new item
-                currentItems + newItem
+                // Add the new item to the end of the list.
+                mutableList.add(newItem)
             }
+            // Return the updated list to trigger the StateFlow.
+            mutableList
         }
     }
 
     /**
-     * Removes a menu item by its ID.
-     * Intended to be called from the ScriptRunner.
+     * Removes a menu item from the list by its unique ID.
      */
     fun removeMenuItem(id: String) {
         _menuItems.update { currentItems ->
@@ -65,17 +53,18 @@ class ScriptedMenuViewModel @Inject constructor() : ViewModel() {
     }
 
     /**
-     * Handles the click event for a menu item.
-     * It determines the correct action (navigate or execute JS) and emits an event.
+     * Clears all dynamically added menu items, resetting the state.
      */
-    fun onMenuItemClicked(item: ScriptedMenuItem) {
-        viewModelScope.launch {
-            // Priority is given to opening a screen.
-            if (item.screenJson != null) {
-                _events.emit(ScriptedMenuEvent.NavigateToScreen(item.screenJson))
-            } else if (item.onClickFunction != null) {
-                _events.emit(ScriptedMenuEvent.ExecuteJs(item.onClickFunction))
-            }
-        }
+    fun clearAllMenuItems() {
+        _menuItems.update { emptyList() }
+    }
+
+    /**
+     * Called by the UI when a menu item is clicked.
+     * This function emits the associated action string to the navigation flow,
+     * which the UI layer will observe to perform the navigation.
+     */
+    suspend fun onMenuItemClicked(action: String) {
+        _navigationActions.emit(action)
     }
 }
