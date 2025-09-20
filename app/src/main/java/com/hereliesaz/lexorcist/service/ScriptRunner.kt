@@ -10,12 +10,49 @@ import org.mozilla.javascript.ScriptableObject
 import javax.inject.Inject
 import javax.inject.Singleton
 
+import com.hereliesaz.lexorcist.viewmodel.ScriptedMenuViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import org.mozilla.javascript.Function
+
 @Singleton
-class ScriptRunner @Inject constructor() { // REMOVED scriptedMenuViewModel
+class ScriptRunner @Inject constructor(
+    private val generativeAIService: GenerativeAIService,
+    private val scriptedMenuViewModel: ScriptedMenuViewModel
+) {
     class ScriptExecutionException(
         message: String,
         cause: Throwable, // Cause is non-null
     ) : Exception(message, cause)
+
+    // API wrapper for MenuItem to be exposed to Javascript
+    inner class MenuItemApi {
+        fun setLabel(label: String) {
+            // Assuming a single menu item for now, with a fixed ID
+            scriptedMenuViewModel.setMenuItemLabel("scripted_item_1", label)
+        }
+
+        fun setVisible(isVisible: Boolean) {
+            scriptedMenuViewModel.setMenuItemVisibility("scripted_item_1", isVisible)
+        }
+    }
+
+    // API wrapper for AI service to handle async calls
+    inner class AIApi {
+        fun generate(prompt: String, callback: Function) {
+            CoroutineScope(Dispatchers.IO).launch {
+                val result = generativeAIService.generateContent(prompt)
+                val rhino = org.mozilla.javascript.Context.enter()
+                try {
+                    val scope = callback.parentScope
+                    callback.call(rhino, scope, scope, arrayOf(result))
+                } finally {
+                    org.mozilla.javascript.Context.exit()
+                }
+            }
+        }
+    }
 
     fun runScript(
         script: String,
@@ -41,12 +78,18 @@ class ScriptRunner @Inject constructor() { // REMOVED scriptedMenuViewModel
                 org.mozilla.javascript.Context
                     .javaToJS(tags, scope),
             )
-            // ScriptableObject.putProperty( // REMOVED
-            //     scope, // REMOVED
-            //     "menu", // REMOVED
-            //     org.mozilla.javascript.Context // REMOVED
-            //         .javaToJS(scriptedMenuViewModel, scope), // REMOVED
-            // ) // REMOVED
+            ScriptableObject.putProperty(
+                scope,
+                "MenuItem",
+                org.mozilla.javascript.Context
+                    .javaToJS(MenuItemApi(), scope),
+            )
+            ScriptableObject.putProperty(
+                scope,
+                "AI",
+                org.mozilla.javascript.Context
+                    .javaToJS(AIApi(), scope),
+            )
             rhino.evaluateString(scope, script, "JavaScript<ScriptRunner>", 1, null)
 
             val tagsPropertyFromScope: Any? = ScriptableObject.getProperty(scope, "tags")
