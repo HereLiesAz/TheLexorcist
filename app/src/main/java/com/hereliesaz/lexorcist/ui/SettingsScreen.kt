@@ -1,5 +1,8 @@
 package com.hereliesaz.lexorcist.ui
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,30 +13,23 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Button // Keep this if used for other buttons like test upload
+import androidx.compose.material3.DropdownMenuItem // Keep one
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.ExposedDropdownMenuBox // Keep one
+import androidx.compose.material3.ExposedDropdownMenuDefaults // Keep one Material 3 version
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RadioButton
+import androidx.compose.material3.RadioButton // For Theme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
+import androidx.compose.material3.TextField // Used by ExposedDropdownMenuBox
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -42,27 +38,30 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.dropbox.core.android.Auth
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.viewmodel.AuthViewModel
 import com.hereliesaz.lexorcist.model.SignInState
+import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
 import com.hereliesaz.lexorcist.ui.theme.ThemeMode
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
+import com.hereliesaz.lexorcist.viewmodel.OneDriveViewModel
 import com.hereliesaz.lexorcist.viewmodel.SettingsViewModel
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    caseViewModel: CaseViewModel,
+    caseViewModel: CaseViewModel, 
     settingsViewModel: SettingsViewModel = hiltViewModel(),
-    authViewModel: AuthViewModel = hiltViewModel()
+    authViewModel: AuthViewModel = hiltViewModel(),
+    oneDriveViewModel: OneDriveViewModel = hiltViewModel()
 ) {
     val themeMode by settingsViewModel.themeMode.collectAsState()
     var showClearCacheDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
-    val activity = context as android.app.Activity
+    val activity = context as? android.app.Activity // Safe cast
 
     val signInState by authViewModel.signInState.collectAsState()
 
@@ -79,20 +78,19 @@ fun SettingsScreen(
                 },
             )
         },
-    ) { padding ->
+    ) { paddingValues -> 
         Column(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(padding)
-                    .padding(16.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(paddingValues) 
+                .padding(16.dp),
             horizontalAlignment = Alignment.End,
         ) {
             // Theme Settings
             Text(
                 text = stringResource(R.string.theme_settings),
-                style = MaterialTheme.typography.headlineSmall,
+                style = MaterialTheme.typography.titleLarge, 
                 modifier = Modifier.fillMaxWidth(),
             )
             Spacer(modifier = Modifier.height(8.dp))
@@ -101,7 +99,8 @@ fun SettingsScreen(
                     Row(
                         Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 4.dp),
+                            .padding(vertical = 4.dp)
+                            .clickable { settingsViewModel.setThemeMode(mode) }, 
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.End,
                     ) {
@@ -115,164 +114,97 @@ fun SettingsScreen(
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-
-            // Language Selection
-            val languages = listOf("en-us", "es", "fr", "de") // Example languages
-            LanguageSelectionDropDown(settingsViewModel = settingsViewModel, languages = languages)
-
-
-            Spacer(modifier = Modifier.height(24.dp))
             HorizontalDivider()
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            // Transcription Service Settings
-            Text(
-                text = "Transcription Service",
-                style = MaterialTheme.typography.headlineSmall,
-                modifier = Modifier.fillMaxWidth(),
-            )
-            val selectedTranscriptionService by settingsViewModel.transcriptionService.collectAsState()
-            val transcriptionServices = listOf("Vosk", "Whisper")
-
-            Column(Modifier.fillMaxWidth()) {
-                transcriptionServices.forEach { service ->
-                    Row(
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.End,
-                    ) {
-                        Text(text = service)
-                        RadioButton(
-                            selected = (selectedTranscriptionService == service),
-                            onClick = { settingsViewModel.setTranscriptionService(service) },
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-            HorizontalDivider()
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Language Settings
+            // Language Settings (App Language)
             Text(
                 text = stringResource(R.string.language_settings),
-                style = MaterialTheme.typography.headlineSmall,
+                style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.fillMaxWidth(),
             )
             Spacer(modifier = Modifier.height(8.dp))
 
-            val languages = mapOf("en" to "English", "es" to "Español")
-            val currentLanguage by settingsViewModel.language.collectAsState()
-            var expanded by remember { mutableStateOf(false) }
+            val currentAppLanguage by settingsViewModel.language.collectAsState()
+            val availableAppLanguages = settingsViewModel.availableLanguages
+            var appLanguageExpanded by remember { mutableStateOf(false) }
 
             ExposedDropdownMenuBox(
-                expanded = expanded,
-                onExpandedChange = { expanded = !expanded }
+                expanded = appLanguageExpanded,
+                onExpandedChange = { appLanguageExpanded = !appLanguageExpanded },
+                modifier = Modifier.fillMaxWidth()
             ) {
-                TextField(
-                    value = languages[currentLanguage] ?: "",
+                TextField( 
+                    value = availableAppLanguages[currentAppLanguage] ?: currentAppLanguage, 
                     onValueChange = {},
                     readOnly = true,
-                    trailingIcon = {
-                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
-                    },
-                    modifier = Modifier.menuAnchor()
+                    label = { Text(stringResource(R.string.language)) },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = appLanguageExpanded) },
+                    modifier = Modifier.menuAnchor().fillMaxWidth()
                 )
                 ExposedDropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false }
+                    expanded = appLanguageExpanded,
+                    onDismissRequest = { appLanguageExpanded = false },
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    languages.forEach { (code, name) ->
+                    availableAppLanguages.forEach { (code, name) ->
                         DropdownMenuItem(
                             text = { Text(name) },
                             onClick = {
                                 settingsViewModel.setLanguage(code)
-                                expanded = false
+                                appLanguageExpanded = false
                             }
                         )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
             HorizontalDivider()
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Transcription Service Settings
             Text(
-                text = "Transcription Service",
-                style = MaterialTheme.typography.headlineSmall,
-                modifier = Modifier.fillMaxWidth(),
-            )
-            val selectedTranscriptionService by settingsViewModel.transcriptionService.collectAsState()
-            val transcriptionServices = listOf("Vosk", "Whisper")
-
-            Column(Modifier.fillMaxWidth()) {
-                transcriptionServices.forEach { service ->
-                    Row(
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.End,
-                    ) {
-                        Text(text = service)
-                        RadioButton(
-                            selected = (selectedTranscriptionService == service),
-                            onClick = { settingsViewModel.setTranscriptionService(service) },
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-            HorizontalDivider()
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Language Settings
-            Text(
-                text = stringResource(R.string.language_settings),
-                style = MaterialTheme.typography.headlineSmall,
+                text = stringResource(R.string.transcription_service),
+                style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.fillMaxWidth(),
             )
             Spacer(modifier = Modifier.height(8.dp))
 
-            val languages = mapOf("en" to "English", "es" to "Español")
-            val currentLanguage by settingsViewModel.language.collectAsState()
-            var expanded by remember { mutableStateOf(false) }
+            val selectedTranscriptionService by settingsViewModel.selectedTranscriptionService.collectAsState()
+            val availableTranscriptionServices = settingsViewModel.availableTranscriptionServices
+            var transcriptionServiceExpanded by remember { mutableStateOf(false) }
 
             ExposedDropdownMenuBox(
-                expanded = expanded,
-                onExpandedChange = { expanded = !expanded }
+                expanded = transcriptionServiceExpanded,
+                onExpandedChange = { transcriptionServiceExpanded = !transcriptionServiceExpanded },
+                modifier = Modifier.fillMaxWidth()
             ) {
-                TextField(
-                    value = languages[currentLanguage] ?: "",
+                TextField( 
+                    value = selectedTranscriptionService,
                     onValueChange = {},
                     readOnly = true,
-                    trailingIcon = {
-                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
-                    },
-                    modifier = Modifier.menuAnchor()
+                    label = { Text(stringResource(R.string.transcription_service)) },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = transcriptionServiceExpanded) },
+                    modifier = Modifier.menuAnchor().fillMaxWidth()
                 )
                 ExposedDropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false }
+                    expanded = transcriptionServiceExpanded,
+                    onDismissRequest = { transcriptionServiceExpanded = false },
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    languages.forEach { (code, name) ->
+                    availableTranscriptionServices.forEach { service ->
                         DropdownMenuItem(
-                            text = { Text(name) },
+                            text = { Text(service) },
                             onClick = {
-                                settingsViewModel.setLanguage(code)
-                                expanded = false
+                                settingsViewModel.selectTranscriptionService(service)
+                                transcriptionServiceExpanded = false
                             }
                         )
                     }
                 }
             }
-
+            
             Spacer(modifier = Modifier.height(24.dp))
             HorizontalDivider()
             Spacer(modifier = Modifier.height(24.dp))
@@ -280,11 +212,14 @@ fun SettingsScreen(
             // Cache Settings
             Text(
                 text = stringResource(R.string.cache_settings),
-                style = MaterialTheme.typography.headlineSmall,
+                style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.fillMaxWidth(),
             )
             Spacer(modifier = Modifier.height(16.dp))
-            LexorcistOutlinedButton(onClick = { showClearCacheDialog = true }, text = stringResource(R.string.clear_cache))
+            LexorcistOutlinedButton(
+                onClick = { showClearCacheDialog = true },
+                text = stringResource(R.string.clear_cache).uppercase(Locale.getDefault())
+            )
 
             Spacer(modifier = Modifier.height(24.dp))
             HorizontalDivider()
@@ -292,8 +227,8 @@ fun SettingsScreen(
 
             // Storage Settings
             Text(
-                text = "Storage Settings",
-                style = MaterialTheme.typography.headlineSmall,
+                text = stringResource(R.string.storage_settings), 
+                style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.fillMaxWidth(),
             )
             val storageLocation by caseViewModel.storageLocation.collectAsState()
@@ -306,9 +241,12 @@ fun SettingsScreen(
                 }
             )
             Spacer(modifier = Modifier.height(16.dp))
-            Text("Current location: ${storageLocation ?: "Default"}")
+            Text(stringResource(R.string.current_location_colon_placeholder, storageLocation ?: stringResource(R.string.default_text)))
             Spacer(modifier = Modifier.height(8.dp))
-            LexorcistOutlinedButton(onClick = { directoryPickerLauncher.launch(null) }, text = "Change Storage Location")
+            LexorcistOutlinedButton(
+                onClick = { directoryPickerLauncher.launch(null) },
+                text = stringResource(R.string.change_storage_location).uppercase(Locale.getDefault())
+            )
 
             Spacer(modifier = Modifier.height(24.dp))
             HorizontalDivider()
@@ -316,10 +254,11 @@ fun SettingsScreen(
 
             // Cloud Service Settings
             Text(
-                text = "Cloud Service Settings",
-                style = MaterialTheme.typography.headlineSmall,
+                text = stringResource(R.string.cloud_service_settings),
+                style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.fillMaxWidth(),
             )
+            Spacer(modifier = Modifier.height(8.dp))
 
             val selectedCloudProvider by settingsViewModel.selectedCloudProvider.collectAsState()
             val cloudProviders = listOf("GoogleDrive", "Dropbox", "OneDrive", "None")
@@ -327,13 +266,14 @@ fun SettingsScreen(
             Column(Modifier.fillMaxWidth()) {
                 cloudProviders.forEach { provider ->
                     val isEnabled = when (provider) {
-                        "GoogleDrive" -> signInState is SignInState.Success
-                        else -> true // Assuming other providers don't depend on Google Sign-In
+                        "GoogleDrive" -> signInState is SignInState.Success || selectedCloudProvider == provider 
+                        else -> true 
                     }
                     Row(
                         Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 4.dp),
+                            .padding(vertical = 4.dp)
+                            .clickable { if(isEnabled) settingsViewModel.setSelectedCloudProvider(provider) },
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.End,
                     ) {
@@ -347,96 +287,110 @@ fun SettingsScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
             HorizontalDivider()
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Google Sign-In Status
-            when (val currentSignInState = signInState) { // Use a different name to avoid conflict
+            Text(
+                text = stringResource(R.string.google_account),
+                style = MaterialTheme.typography.titleMedium, 
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            when (val currentSignInState = signInState) {
                 is SignInState.Success -> {
                     val userInfo = currentSignInState.userInfo
-                    Text("Signed in as: ${userInfo?.email ?: "Unknown Email"}") // Safe call and provide a default
+                    Text(stringResource(R.string.signed_in_as_placeholder, userInfo?.email ?: stringResource(R.string.unknown_email)))
                     Spacer(modifier = Modifier.height(8.dp))
                     LexorcistOutlinedButton(onClick = {
+                        authViewModel.signOut() 
+                        if (activity != null) { 
+                           authViewModel.signIn(activity)
+                        }
+                    }, text = stringResource(R.string.switch_account).uppercase(Locale.getDefault()))
+                     Spacer(modifier = Modifier.height(8.dp))
+                    LexorcistOutlinedButton(onClick = {
                         authViewModel.signOut()
-                        authViewModel.signIn(activity) // Or provide a new activity instance if needed
-                    }, text = "Switch Account")
+                    }, text = stringResource(R.string.sign_out).uppercase(Locale.getDefault()))
                 }
                 else -> {
-                    Text("Not signed in.")
+                    Text(stringResource(R.string.not_signed_in))
                     Spacer(modifier = Modifier.height(8.dp))
-                    LexorcistOutlinedButton(onClick = { authViewModel.signIn(activity) }, text = "Sign In")
+                    LexorcistOutlinedButton(onClick = {
+                         if (activity != null) { 
+                           authViewModel.signIn(activity)
+                        }
+                    }, text = stringResource(R.string.sign_in).uppercase(Locale.getDefault()))
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
             HorizontalDivider()
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Text(
-                text = "Dropbox",
-                style = MaterialTheme.typography.headlineSmall,
-                modifier = Modifier.fillMaxWidth(),
-            )
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Dropbox
+            Text(
+                text = stringResource(R.string.dropbox),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Spacer(modifier = Modifier.height(8.dp))
             val isDropboxAuthenticated by settingsViewModel.isDropboxAuthenticated.collectAsState()
             val dropboxUser by settingsViewModel.dropboxUser.collectAsState()
 
             if (isDropboxAuthenticated) {
-                Text("Connected as: ${dropboxUser?.email ?: "..."}")
+                Text(stringResource(R.string.connected_as_placeholder, dropboxUser?.email ?: "..."))
                 Spacer(modifier = Modifier.height(8.dp))
                 LexorcistOutlinedButton(onClick = {
                     settingsViewModel.disconnectDropbox()
-                }, text = "Disconnect from Dropbox")
+                }, text = stringResource(R.string.disconnect_from_dropbox).uppercase(Locale.getDefault()))
             } else {
                 LexorcistOutlinedButton(onClick = {
-                    Auth.startOAuth2Authentication(context, "kc574fk4ljbmxeu")
-                }, text = "Connect to Dropbox")
+                    Auth.startOAuth2Authentication(context, context.getString(R.string.dropbox_app_key))
+                }, text = stringResource(R.string.connect_to_dropbox).uppercase(Locale.getDefault()))
             }
-
-            Spacer(modifier = Modifier.height(24.dp))
+            
+            Spacer(modifier = Modifier.height(16.dp))
             HorizontalDivider()
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Text(
-                text = "OneDrive",
-                style = MaterialTheme.typography.headlineSmall,
-                modifier = Modifier.fillMaxWidth(),
-            )
             Spacer(modifier = Modifier.height(16.dp))
 
-            val oneDriveViewModel: com.hereliesaz.lexorcist.viewmodel.OneDriveViewModel = hiltViewModel()
+            // OneDrive
+            Text(
+                text = stringResource(R.string.onedrive),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            // val oneDriveViewModel: OneDriveViewModel = hiltViewModel() // Already injected as parameter
             val oneDriveSignInState by oneDriveViewModel.oneDriveSignInState.collectAsState()
 
             when (val state = oneDriveSignInState) {
                 is com.hereliesaz.lexorcist.model.OneDriveSignInState.Idle -> {
-                    LexorcistOutlinedButton(onClick = { oneDriveViewModel.connectToOneDrive(activity) }, text = "Connect to OneDrive")
+                    LexorcistOutlinedButton(onClick = {
+                        if (activity != null) {
+                            oneDriveViewModel.connectToOneDrive(activity)
+                        }
+                     }, text = stringResource(R.string.connect_to_onedrive).uppercase(Locale.getDefault()))
                 }
                 is com.hereliesaz.lexorcist.model.OneDriveSignInState.InProgress -> {
-                    Text("Connecting to OneDrive...")
+                    Text(stringResource(R.string.connecting_to_onedrive))
                 }
                 is com.hereliesaz.lexorcist.model.OneDriveSignInState.Success -> {
-                    Text("Connected to OneDrive as ${state.accountName}")
+                    Text(stringResource(R.string.connected_to_onedrive_as_placeholder, state.accountName ?: stringResource(R.string.unknown_account)))
+                     Spacer(modifier = Modifier.height(8.dp))
+                    LexorcistOutlinedButton(onClick = {
+                        oneDriveViewModel.disconnectFromOneDrive()
+                    }, text = stringResource(R.string.disconnect_from_onedrive).uppercase(Locale.getDefault()))
                 }
                 is com.hereliesaz.lexorcist.model.OneDriveSignInState.Error -> {
-                    Text("Error connecting to OneDrive: ${state.message}")
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Button(onClick = { settingsViewModel.testOneDriveUpload() }) {
-                Text("Test OneDrive Upload")
-            }
-
-            val oneDriveUploadStatus by settingsViewModel.oneDriveUploadStatus.collectAsState()
-            oneDriveUploadStatus?.let {
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(it)
-                Spacer(modifier = Modifier.height(8.dp))
-                Button(onClick = { settingsViewModel.clearOneDriveUploadStatus() }) {
-                    Text("Clear Status")
+                    Text(stringResource(R.string.error_connecting_to_onedrive_placeholder, state.message ?: stringResource(R.string.unknown_error)))
+                     Spacer(modifier = Modifier.height(8.dp))
+                     LexorcistOutlinedButton(onClick = {
+                        if (activity != null) {
+                            oneDriveViewModel.connectToOneDrive(activity)
+                        }
+                     }, text = stringResource(R.string.retry).uppercase(Locale.getDefault()))
                 }
             }
         }
@@ -450,53 +404,19 @@ fun SettingsScreen(
             confirmButton = {
                 LexorcistOutlinedButton(
                     onClick = {
-                        caseViewModel.clearCache()
+                        caseViewModel.clearCache() 
                         showClearCacheDialog = false
                     },
-                    text = stringResource(R.string.delete)
+                    text = stringResource(R.string.delete).uppercase(Locale.getDefault())
                 )
             },
             dismissButton = {
-                LexorcistOutlinedButton(onClick = { showClearCacheDialog = false }, text = stringResource(R.string.cancel))
+                LexorcistOutlinedButton(
+                    onClick = { showClearCacheDialog = false },
+                    text = stringResource(R.string.cancel).uppercase(Locale.getDefault())
+                )
             },
         )
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun LanguageSelectionDropDown(
-    settingsViewModel: SettingsViewModel,
-    languages: List<String>
-) {
-    val selectedLanguage by settingsViewModel.transcriptionLanguage.collectAsState()
-    var expanded by remember { mutableStateOf(false) }
-
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = !expanded }
-    ) {
-        OutlinedTextField(
-            value = selectedLanguage,
-            onValueChange = {},
-            readOnly = true,
-            label = { Text("Language") },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            modifier = Modifier.menuAnchor()
-        )
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            languages.forEach { language ->
-                DropdownMenuItem(
-                    text = { Text(language) },
-                    onClick = {
-                        settingsViewModel.setTranscriptionLanguage(language)
-                        expanded = false
-                    }
-                )
-            }
-        }
-    }
-}

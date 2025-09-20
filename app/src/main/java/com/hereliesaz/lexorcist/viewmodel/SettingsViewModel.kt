@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import java.util.Locale // Added for language list
 import javax.inject.Inject
 import javax.inject.Named
 
@@ -52,8 +53,31 @@ class SettingsViewModel @Inject constructor(
     private val _dropboxUser = MutableStateFlow<CloudUser?>(null)
     val dropboxUser = _dropboxUser.asStateFlow()
 
+    // App Language
     private val _language = MutableStateFlow("en")
     val language: StateFlow<String> = _language.asStateFlow()
+
+    // Available Languages (Code -> Display Name)
+    val availableLanguages: Map<String, String> = mapOf(
+        "en" to "English",
+        "es" to "Español",
+        "fr" to "Français",
+        "de" to "Deutsch",
+        "it" to "Italiano",
+        "ja" to "日本語",
+        "ko" to "한국어",
+        "pt" to "Português",
+        "ru" to "Русский",
+        "zh" to "中文"
+        // Add more as needed
+    )
+
+    // Transcription Service
+    private val _selectedTranscriptionService = MutableStateFlow("Vosk") // Default to Vosk
+    val selectedTranscriptionService: StateFlow<String> = _selectedTranscriptionService.asStateFlow()
+
+    val availableTranscriptionServices: List<String> = listOf("Vosk", "Whisper", "Google Cloud")
+
 
     init {
         loadSettings()
@@ -74,16 +98,14 @@ class SettingsViewModel @Inject constructor(
 
     private fun fetchDropboxUser() {
         viewModelScope.launch {
-            // Assuming getCurrentUser is defined in CloudStorageProvider and implemented
             when (val result = dropboxProvider.getCurrentUser()) {
                 is Result.Loading -> {
-                    _dropboxUser.value = null // Or a specific loading indicator state
+                    _dropboxUser.value = null 
                 }
                 is Result.Success -> _dropboxUser.value = result.data
-                is Result.Error -> _dropboxUser.value = null // Or handle error
+                is Result.Error -> _dropboxUser.value = null 
                 is Result.UserRecoverableError -> {
-                    _dropboxUser.value = null // Or handle error
-                    // Handle recoverable error, e.g., prompt user to re-authenticate
+                    _dropboxUser.value = null 
                 }
             }
         }
@@ -100,6 +122,7 @@ class SettingsViewModel @Inject constructor(
         _cloudSyncEnabled.value = settingsManager.getCloudSyncEnabled()
         _selectedCloudProvider.value = settingsManager.getSelectedCloudProvider()
         _language.value = settingsManager.getLanguage()
+        _selectedTranscriptionService.value = settingsManager.getTranscriptionService() // Load transcription service
     }
 
     fun setSelectedCloudProvider(provider: String) {
@@ -122,9 +145,15 @@ class SettingsViewModel @Inject constructor(
         _caseFolderPath.value = newPath
     }
 
-    fun setLanguage(language: String) {
-        settingsManager.saveLanguage(language)
-        _language.value = language
+    fun setLanguage(languageCode: String) { // Parameter changed to languageCode for clarity
+        settingsManager.saveLanguage(languageCode)
+        _language.value = languageCode
+    }
+
+    // Method to set the transcription service
+    fun selectTranscriptionService(service: String) {
+        settingsManager.saveTranscriptionService(service)
+        _selectedTranscriptionService.value = service
     }
 
     fun clearMigrationStatus() {
@@ -134,7 +163,7 @@ class SettingsViewModel @Inject constructor(
     fun testDropboxUpload() {
         viewModelScope.launch {
             val content = "Hello, Dropbox!".toByteArray()
-            _dropboxUploadStatus.value = "Starting Dropbox upload..." // Initial status
+            _dropboxUploadStatus.value = "Starting Dropbox upload..." 
             when (val result = dropboxProvider.writeFile("", "test.txt", "text/plain", content)) {
                 is Result.Loading -> {
                     _dropboxUploadStatus.value = "Uploading to Dropbox..."
@@ -159,8 +188,7 @@ class SettingsViewModel @Inject constructor(
     fun testOneDriveUpload() {
         viewModelScope.launch {
             val content = "Hello, OneDrive!".toByteArray()
-            _oneDriveUploadStatus.value = "Starting OneDrive upload..." // Initial status
-            // Assuming writeFile is defined in CloudStorageProvider and implemented
+            _oneDriveUploadStatus.value = "Starting OneDrive upload..." 
             when (val result = oneDriveProvider.writeFile("root", "test.txt", "text/plain", content)) {
                 is Result.Loading -> {
                     _oneDriveUploadStatus.value = "Uploading to OneDrive..."

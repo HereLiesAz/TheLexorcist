@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.model.LogEntry
+import com.hereliesaz.lexorcist.model.LogLevel // Added import for clarity
 import com.hereliesaz.lexorcist.model.ProcessingState
 import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
@@ -117,12 +118,8 @@ fun EvidenceScreen(
             horizontalAlignment = Alignment.End, 
             verticalArrangement = Arrangement.Top,
         ) {
-            // This specific videoProcessingProgress seems separate from the general ProcessingState below
-            // If it's a simple string message, it can remain. If it's more complex, it might need integration.
             videoProcessingProgress?.let { progressMessage ->
                 Column(horizontalAlignment = Alignment.End) {
-                    // Assuming videoProcessingProgress is a simple string for now.
-                    // If it was meant to be a float for LinearProgressIndicator, it needs type change in ViewModel.
                     Text(progressMessage, style = MaterialTheme.typography.bodySmall)
                     Spacer(modifier = Modifier.height(16.dp))
                 }
@@ -130,9 +127,8 @@ fun EvidenceScreen(
             val processingState by caseViewModel.processingState.collectAsState()
             val logMessages by caseViewModel.logMessages.collectAsState()
 
-            // Show ProcessingProgressView if processingState is not null (i.e., not initial/irrelevant state)
             processingState?.let {
-                if (it !is ProcessingState.Idle || logMessages.isNotEmpty()) { // Show if not idle or if there are logs
+                if (it !is ProcessingState.Idle || logMessages.isNotEmpty()) {
                     ProcessingProgressView(
                         processingState = it,
                         logMessages = logMessages
@@ -149,7 +145,7 @@ fun EvidenceScreen(
                     modifier =
                     Modifier
                         .fillMaxWidth()
-                        .weight(1f), // Takes available vertical space
+                        .weight(1f), 
                     placeholder = { Text(stringResource(R.string.enter_evidence_content)) },
                     textStyle = MaterialTheme.typography.bodyLarge.copy(textAlign = TextAlign.End),
                 )
@@ -241,7 +237,7 @@ fun ProcessingProgressView(
         when (processingState) {
             is ProcessingState.InProgress -> {
                 LinearProgressIndicator(
-                    progress = { processingState.progress }, // Progress is 0.0f to 1.0f
+                    progress = { processingState.progress }, 
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(modifier = Modifier.height(8.dp))
@@ -255,8 +251,8 @@ fun ProcessingProgressView(
             is ProcessingState.Completed -> {
                 Text(
                     text = "Completed: ${processingState.result}",
-                    style = MaterialTheme.typography.bodyMedium, // Changed to bodyMedium for more emphasis
-                    color = MaterialTheme.colorScheme.primary, // Using primary color for success
+                    style = MaterialTheme.typography.bodyMedium, 
+                    color = MaterialTheme.colorScheme.primary, 
                     textAlign = TextAlign.End,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -264,14 +260,14 @@ fun ProcessingProgressView(
             is ProcessingState.Failure -> {
                 Text(
                     text = "Failed: ${processingState.error}",
-                    style = MaterialTheme.typography.bodyMedium, // Changed to bodyMedium for more emphasis
+                    style = MaterialTheme.typography.bodyMedium, 
                     color = MaterialTheme.colorScheme.error,
                     textAlign = TextAlign.End,
                     modifier = Modifier.fillMaxWidth()
                 )
             }
             ProcessingState.Idle -> {
-                if (logMessages.isEmpty()) { // Only show Idle if there are no logs to display from a previous run
+                if (logMessages.isEmpty()) { 
                     Text(
                         text = "Idle",
                         style = MaterialTheme.typography.bodySmall,
@@ -282,7 +278,6 @@ fun ProcessingProgressView(
             }
         }
         
-        // Always show logs if any are present, regardless of Idle state
         if (logMessages.isNotEmpty()) {
             Spacer(modifier = Modifier.height(16.dp))
             LazyColumn(
@@ -298,11 +293,13 @@ fun ProcessingProgressView(
             ) {
                 items(logMessages) { logEntry ->
                     val color = when (logEntry.level) {
-                        com.hereliesaz.lexorcist.model.LogLevel.INFO -> MaterialTheme.colorScheme.onSurface
-                        com.hereliesaz.lexorcist.model.LogLevel.ERROR -> MaterialTheme.colorScheme.error
-                        com.hereliesaz.lexorcist.model.LogLevel.DEBUG -> MaterialTheme.colorScheme.onSurfaceVariant
-                        com.hereliesaz.lexorcist.model.LogLevel.WARNING -> MaterialTheme.colorScheme.tertiary
-                        com.hereliesaz.lexorcist.model.LogLevel.VERBOSE -> MaterialTheme.colorScheme.onSurfaceVariant
+                        LogLevel.INFO -> MaterialTheme.colorScheme.onSurface
+                        LogLevel.ERROR -> MaterialTheme.colorScheme.error
+                        LogLevel.DEBUG -> MaterialTheme.colorScheme.onSurfaceVariant
+                        LogLevel.WARNING -> MaterialTheme.colorScheme.tertiary
+                        LogLevel.VERBOSE -> MaterialTheme.colorScheme.onSurfaceVariant
+                        LogLevel.WTF -> MaterialTheme.colorScheme.error
+                        else -> MaterialTheme.colorScheme.onSurface // Default for any other unforeseen cases
                     }
                     Text(
                         text = "${SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date(logEntry.timestamp))} - ${logEntry.message}",
