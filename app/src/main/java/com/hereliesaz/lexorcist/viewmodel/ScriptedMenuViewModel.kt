@@ -1,25 +1,49 @@
 package com.hereliesaz.lexorcist.viewmodel
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope // ADDED
 import com.hereliesaz.lexorcist.model.ScriptedMenuItem
+import com.hereliesaz.lexorcist.service.ScriptRunner // ADDED
+import com.hereliesaz.lexorcist.service.ScriptRunnerUiAction // ADDED
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest // ADDED
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch // ADDED
 import javax.inject.Inject
 
 @HiltViewModel
-class ScriptedMenuViewModel @Inject constructor() : ViewModel() {
+class ScriptedMenuViewModel @Inject constructor(
+    private val scriptRunner: ScriptRunner // ADDED
+) : ViewModel() {
 
-    // Expose an immutable StateFlow of the menu items to the UI.
     private val _menuItems = MutableStateFlow<List<ScriptedMenuItem>>(emptyList())
     val menuItems = _menuItems.asStateFlow()
 
-    // Use a SharedFlow to send one-off navigation events to the UI.
     private val _navigationActions = MutableSharedFlow<String>()
     val navigationActions = _navigationActions.asSharedFlow()
+
+    // ADDED: init block to collect actions from ScriptRunner
+    init {
+        viewModelScope.launch {
+            scriptRunner.uiActions.collectLatest { action ->
+                when (action) {
+                    is ScriptRunnerUiAction.AddOrUpdate -> {
+                        addOrUpdateMenuItem(action.id, action.label, action.isVisible, action.onClickAction)
+                    }
+                    is ScriptRunnerUiAction.Remove -> {
+                        removeMenuItem(action.id)
+                    }
+                    ScriptRunnerUiAction.ClearAll -> {
+                        clearAllMenuItems()
+                    }
+                }
+            }
+        }
+    }
 
     /**
      * Adds a new menu item or updates an existing one with the same ID.
@@ -32,13 +56,10 @@ class ScriptedMenuViewModel @Inject constructor() : ViewModel() {
             val newItem = ScriptedMenuItem(id, text, isVisible, onClickAction)
 
             if (index != -1) {
-                // Replace the existing item at the found index.
                 mutableList[index] = newItem
             } else {
-                // Add the new item to the end of the list.
                 mutableList.add(newItem)
             }
-            // Return the updated list to trigger the StateFlow.
             mutableList
         }
     }

@@ -266,7 +266,7 @@ dependencies {
     kspAndroidTest(libs.google.dagger.hilt.compiler) // Corrected alias
 
     // Jetpack DataStore
-    implementation("androidx.datastore:datastore-preferences:1.1.1")
+    implementation("androidx.datastore:datastore-preferences:1.1.7")
 
     // Room IS NOT ALLOWED IN THIS PROJECT!!!!!
 

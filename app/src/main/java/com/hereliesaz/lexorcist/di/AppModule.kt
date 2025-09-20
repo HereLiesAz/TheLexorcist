@@ -12,7 +12,8 @@ import com.hereliesaz.lexorcist.model.AllegationsSheet
 import com.hereliesaz.lexorcist.model.CaseInfoSheet
 import com.hereliesaz.lexorcist.model.EvidenceSheet
 import com.hereliesaz.lexorcist.model.SpreadsheetSchema
-// import com.hereliesaz.lexorcist.service.ScriptRunner // REMOVED for now
+import com.hereliesaz.lexorcist.service.GenerativeAIService // ADDED
+import com.hereliesaz.lexorcist.service.ScriptRunner // ADDED
 import com.hereliesaz.lexorcist.utils.CacheManager
 // import com.hereliesaz.lexorcist.viewmodel.ScriptedMenuViewModel // REMOVED for now
 import dagger.Module
@@ -54,9 +55,9 @@ class AppModule {
         @ApplicationContext context: Context
     ): SettingsManager = SettingsManager(context) // Pass only Context to constructor
 
-    // @Provides // REMOVED for now
-    // @Singleton // REMOVED for now
-    // fun provideScriptRunner(scriptedMenuViewModel: ScriptedMenuViewModel): ScriptRunner = ScriptRunner(scriptedMenuViewModel) // REMOVED for now
+    @Provides
+    @Singleton
+    fun provideScriptRunner(generativeAIService: GenerativeAIService): ScriptRunner = ScriptRunner(generativeAIService) // UPDATED
 
     @Provides
     @Singleton

@@ -3,7 +3,9 @@ package com.hereliesaz.lexorcist.service
 import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.model.ScriptResult
 import com.hereliesaz.lexorcist.utils.Result
-import com.hereliesaz.lexorcist.viewmodel.ScriptedMenuViewModel
+// Removed: import com.hereliesaz.lexorcist.viewmodel.ScriptedMenuViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow // ADDED
+import kotlinx.coroutines.flow.asSharedFlow // ADDED
 import kotlinx.coroutines.runBlocking
 import org.mozilla.javascript.Context
 import org.mozilla.javascript.Scriptable
@@ -11,23 +13,27 @@ import org.mozilla.javascript.ScriptableObject
 import javax.inject.Inject
 import javax.inject.Singleton
 
+// ADDED: Sealed class for UI Actions
+sealed class ScriptRunnerUiAction {
+    data class AddOrUpdate(val id: String, val label: String, val isVisible: Boolean, val onClickAction: String?) : ScriptRunnerUiAction()
+    data class Remove(val id: String) : ScriptRunnerUiAction()
+    object ClearAll : ScriptRunnerUiAction()
+}
+
 @Singleton
 class ScriptRunner @Inject constructor(
-    private val generativeAIService: GenerativeAIService,
-    private val scriptedMenuViewModel: ScriptedMenuViewModel
+    private val generativeAIService: GenerativeAIService
+    // Removed: private val scriptedMenuViewModel: ScriptedMenuViewModel
 ) {
 
-    /**
-     * Custom exception for script execution errors.
-     */
+    // ADDED: SharedFlow for UI actions
+    private val _uiActions = MutableSharedFlow<ScriptRunnerUiAction>()
+    val uiActions = _uiActions.asSharedFlow()
+
     class ScriptExecutionException(message: String, cause: Throwable) : Exception(message, cause)
 
-    /**
-     * API wrapper for the GenerativeAIService, exposed to Javascript.
-     * This makes calls appear synchronous to the script writer.
-     */
     inner class AIApi {
-        @Suppress("unused") // Used by Rhino
+        @Suppress("unused")
         fun generateContent(prompt: String): String {
             return runBlocking {
                 generativeAIService.generateContent(prompt)
@@ -35,24 +41,29 @@ class ScriptRunner @Inject constructor(
         }
     }
 
-    /**
-     * API wrapper for the ScriptedMenuViewModel, exposed to Javascript.
-     * Provides a clean interface for scripts to control the UI.
-     */
     inner class UIApi {
-        @Suppress("unused") // Used by Rhino
+        @Suppress("unused")
         fun addOrUpdate(id: String, label: String, isVisible: Boolean, onClickAction: String?) {
-            scriptedMenuViewModel.addOrUpdateMenuItem(id, label, isVisible, onClickAction)
+            // MODIFIED: Emit action
+            runBlocking { // Use runBlocking if emitting from a non-suspending context to a SharedFlow
+                _uiActions.emit(ScriptRunnerUiAction.AddOrUpdate(id, label, isVisible, onClickAction))
+            }
         }
 
-        @Suppress("unused") // Used by Rhino
+        @Suppress("unused")
         fun remove(id: String) {
-            scriptedMenuViewModel.removeMenuItem(id)
+            // MODIFIED: Emit action
+            runBlocking {
+                _uiActions.emit(ScriptRunnerUiAction.Remove(id))
+            }
         }
 
-        @Suppress("unused") // Used by Rhino
+        @Suppress("unused")
         fun clearAll() {
-            scriptedMenuViewModel.clearAllMenuItems()
+            // MODIFIED: Emit action
+            runBlocking {
+                _uiActions.emit(ScriptRunnerUiAction.ClearAll)
+            }
         }
     }
 
@@ -64,7 +75,7 @@ class ScriptRunner @Inject constructor(
     fun runScript(script: String, evidence: Evidence): Result<ScriptResult> {
         val rhino = Context.enter()
         @Suppress("deprecation")
-        rhino.optimizationLevel = -1 // Necessary for Android compatibility
+        rhino.optimizationLevel = -1
         try {
             val scope: Scriptable = rhino.initStandardObjects()
 
@@ -96,9 +107,13 @@ class ScriptRunner @Inject constructor(
 
             // --- Context & Execution ---
             ScriptableObject.putProperty(scope, "evidence", Context.javaToJS(evidence, scope))
+            val tags = mutableListOf<String>()
+            ScriptableObject.putProperty(scope, "tags", Context.javaToJS(tags, scope))
 
             // Execute the user's script
             rhino.evaluateString(scope, script, "JavaScript<ScriptRunner>", 1, null)
+            val tagsPropertyFromScope: Any? = ScriptableObject.getProperty(scope, "tags")
+            val convertedJavaList: Any? = Context.jsToJava(tagsPropertyFromScope, List::class.java)
 
             // The scriptResult object has been modified by the script in-place,
             // both through the legacy functions and potentially modern array access.
