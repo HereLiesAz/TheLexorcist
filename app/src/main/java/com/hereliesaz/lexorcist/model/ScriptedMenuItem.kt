@@ -2,7 +2,7 @@ package com.hereliesaz.lexorcist.model
 
 data class ScriptedMenuItem(
     val id: String,
-    val text: String,
-    val isVisible: Boolean = true,
-    val onClick: () -> Unit
+    var text: String, // Changed to var to allow dynamic label changes
+    var isVisible: Boolean = true, // Changed to var for dynamic visibility
+    val onClickAction: String? = null // Replaced onClick lambda with a scriptable string action
 )
