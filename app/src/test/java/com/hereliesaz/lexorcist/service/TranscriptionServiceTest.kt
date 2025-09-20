@@ -2,11 +2,12 @@ package com.hereliesaz.lexorcist.service
 
 import android.content.Context
 import android.content.ContentResolver
+import android.content.res.AssetManager // Added for mocking AssetManager
 import android.net.Uri
-import com.hereliesaz.lexorcist.data.SettingsManager
 import com.hereliesaz.lexorcist.utils.Result // Your Result class
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.After // Added for cleaning up static mock
@@ -25,7 +26,7 @@ import org.mockito.kotlin.whenever
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.InputStream
-import java.io.IOException // Still useful to have, though the check is broader
+import java.io.IOException
 
 @ExperimentalCoroutinesApi
 @RunWith(MockitoJUnitRunner::class)
@@ -41,21 +42,21 @@ class TranscriptionServiceTest {
     private lateinit var mockLogService: LogService
 
     @Mock
-    private lateinit var mockSettingsManager: SettingsManager
-
-    @Mock
     private lateinit var mockContentResolver: ContentResolver
 
-    @Mock // Mock for the Uri that Uri.parse will return
+    @Mock
     private lateinit var mockParsedUri: Uri
 
     @Mock
     private lateinit var mockInputStream: InputStream
 
+    @Mock
+    private lateinit var mockAssetManager: AssetManager
+
     private lateinit var voskTranscriptionService: VoskTranscriptionService
     private lateinit var testAudioUriString: String
-    private lateinit var mockedStaticUri: MockedStatic<Uri> // To hold the static mock
-    private lateinit var testAppFilesDir: File // To hold the temporary directory for app files
+    private lateinit var mockedStaticUri: MockedStatic<Uri>
+    private lateinit var testAppFilesDir: File
 
     @Before
     fun setUp() {
@@ -64,25 +65,30 @@ class TranscriptionServiceTest {
         mockedStaticUri = Mockito.mockStatic(Uri::class.java)
         mockedStaticUri.`when`<Uri> { Uri.parse(testAudioUriString) }.thenReturn(mockParsedUri)
 
-        // Stubbing toString() for the mock Uri to prevent NPEs in logging or other string operations
         whenever(mockParsedUri.toString()).thenReturn(testAudioUriString)
 
         testAppFilesDir = tempFolder.newFolder("appfiles")
         whenever(mockContext.filesDir).thenReturn(testAppFilesDir)
         whenever(mockContext.contentResolver).thenReturn(mockContentResolver)
-        whenever(mockSettingsManager.getTranscriptionLanguage()).thenReturn("en-us")
+        whenever(mockContext.assets).thenReturn(mockAssetManager)
 
-        voskTranscriptionService = VoskTranscriptionService(mockContext, mockLogService, mockSettingsManager)
+        // This mock is intended to make copyModelFromAssets() in VoskTranscriptionService return null,
+        // forcing it to attempt the download path.
+        whenever(mockAssetManager.list(any())).thenReturn(emptyArray<String>())
+        // To ensure open() also fails if list() wasn't enough (e.g. if an empty dir was "found")
+        whenever(mockAssetManager.open(any())).thenThrow(IOException("Mock AssetManager open failed"))
+
+        voskTranscriptionService = VoskTranscriptionService(mockContext, mockLogService)
     }
 
     @After
     fun tearDown() {
-        mockedStaticUri.close() 
+        mockedStaticUri.close()
     }
 
     @Test
     fun `transcribeAudio when contentResolver throws FileNotFoundException should return Error`() = runTest {
-        // This mock may not be hit if model initialization fails first, which is expected here.
+        val expectedExceptionMessage = "File not found for URI: $testAudioUriString"
         whenever(mockContentResolver.openInputStream(eq(mockParsedUri)))
             .thenThrow(FileNotFoundException("Mock FNF Exception"))
 
@@ -90,34 +96,23 @@ class TranscriptionServiceTest {
 
         assertTrue("Expected Result.Error, got $result", result is Result.Error)
         if (result is Result.Error) {
-            // Changed from IOException to generic Exception to catch other init failures e.g. SecurityException
-            assertTrue("Expected Exception due to model init failure, got ${result.exception::class.java}", 
-                result.exception is Exception)
-            val message = result.exception.message ?: ""
-            assertTrue(
-                "Error message mismatch. Expected model init failure. Got: $message",
-                message.contains("is not downloaded or invalid")
-            )
+            assertTrue("Expected exception to be IOException, but was ${result.exception::class.java}", result.exception is IOException)
+            assertEquals("Exception message mismatch", expectedExceptionMessage, result.exception.message)
+            assertTrue("Expected cause to be FileNotFoundException", result.exception.cause is FileNotFoundException)
         }
     }
 
     @Test
     fun `transcribeAudio when contentResolver returns null InputStream should return Error`() = runTest {
-        // This mock may not be hit if model initialization fails first, which is expected here.
+        val expectedExceptionMessage = "Failed to open audio stream from URI: $testAudioUriString"
         whenever(mockContentResolver.openInputStream(eq(mockParsedUri))).thenReturn(null)
 
         val result = voskTranscriptionService.transcribeAudio(mockParsedUri)
 
         assertTrue("Expected Result.Error, got $result", result is Result.Error)
         if (result is Result.Error) {
-            // Changed from IOException to generic Exception to catch other init failures e.g. SecurityException
-            assertTrue("Expected Exception due to model init failure, got ${result.exception::class.java}", 
-                result.exception is Exception)
-            val message = result.exception.message ?: ""
-            assertTrue(
-                "Error message mismatch. Expected model init failure. Got: $message",
-                message.contains("is not downloaded or invalid")
-            )
+            assertTrue("Expected exception to be IOException, but was ${result.exception::class.java}", result.exception is IOException)
+            assertEquals("Exception message mismatch", expectedExceptionMessage, result.exception.message)
         }
     }
 }

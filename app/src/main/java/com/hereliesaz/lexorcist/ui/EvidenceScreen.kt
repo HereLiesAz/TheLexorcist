@@ -300,7 +300,6 @@ fun ProcessingProgressView(
                         LogLevel.WARNING -> MaterialTheme.colorScheme.tertiary
                         LogLevel.VERBOSE -> MaterialTheme.colorScheme.onSurfaceVariant
                         LogLevel.WTF -> MaterialTheme.colorScheme.error
-                        else -> MaterialTheme.colorScheme.onSurface // Default for any other unforeseen cases
                     }
                     Text(
                         text = "${SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date(logEntry.timestamp))} - ${logEntry.message}",
