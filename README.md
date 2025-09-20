@@ -23,6 +23,7 @@ This project is in an advanced stage of development, with a robust architecture 
 
 - **Automated Evidence Pipeline:** Capture images or screenshots and let the app handle the rest. The Lexorcist uses OCR to extract text and then feeds it into a powerful, user-scriptable engine for analysis.
 - **Customizable Tagging Engine:** Define your own keywords, patterns, and "dorks" using JavaScript to automatically tag evidence. This allows you to create highly specific rules for identifying content relevant to your case, such as threats, hate speech, or contract violations.
+    - **AI-Powered Analysis:** Go beyond simple keywords. The scripting engine now includes a local, on-device AI for semantic analysis (understanding the *meaning* of text) and a cloud-based generative AI for creating new content, allowing for incredibly sophisticated and nuanced evidence processing.
 - **Google Suite Integration:** Each case gets its own Google Sheet, where all evidence and its metadata are neatly organized. This serves as a central hub for your case data.
 - **Automatic Document Generation:** The app leverages a powerful Google Apps Script backend. From your case's Google Sheet, you can instantly generate a variety of court-ready documents using customizable HTML templates.
 - **Timeline View:** Visualize the chronology of your evidence with an interactive timeline, making it easy to see the sequence of events.
