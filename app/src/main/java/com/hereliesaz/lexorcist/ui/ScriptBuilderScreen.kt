@@ -63,6 +63,7 @@ fun ScriptBuilderScreen(
     navController: androidx.navigation.NavController
 ) {
     val scriptTitle by viewModel.scriptTitle.collectAsState()
+    val scriptDescription by viewModel.scriptDescription.collectAsState()
     val scriptText by viewModel.scriptText.collectAsState()
     val caseScripts by viewModel.caseScripts.collectAsState()
     val saveState by viewModel.saveState.collectAsState()
@@ -170,20 +171,16 @@ fun ScriptBuilderScreen(
                 }
                 when (tabIndex) {
                     0 -> { // Description Tab
-                        Column(
-                            modifier =
-                            Modifier
+                        val scriptDescription by viewModel.scriptDescription.collectAsState()
+                        OutlinedTextField(
+                            value = scriptDescription,
+                            onValueChange = { viewModel.onScriptDescriptionChanged(it) },
+                            label = { Text("Script Description") }, // Using hardcoded string
+                            modifier = Modifier
                                 .fillMaxSize()
-                                .padding(16.dp)
-                                .verticalScroll(rememberScrollState()),
-                            horizontalAlignment = Alignment.Start,
-                            verticalArrangement = Arrangement.Top,
-                        ) {
-                            Text(
-                                text = stringResource(R.string.script_editor_explanation),
-                                style = MaterialTheme.typography.bodyLarge,
-                            )
-                        }
+                                .padding(16.dp),
+                            placeholder = { Text("Describe what this script does...") } // Using hardcoded string
+                        )
                     }
                     1 -> { // Editor Tab
                         Column(modifier = Modifier.fillMaxSize()) {
@@ -245,7 +242,7 @@ fun ScriptBuilderScreen(
             confirmButton = {
                 LexorcistOutlinedButton(
                     onClick = {
-                        extrasViewModel.prepareForSharing(scriptTitle, "Script", scriptText)
+                        extrasViewModel.prepareForSharing(scriptTitle, scriptDescription, "Script", scriptText)
                         navController.navigate("share_addon_destination")
                         showShareDialog = false
                     },
