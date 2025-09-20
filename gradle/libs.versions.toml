@@ -6,7 +6,6 @@ browser = "1.9.0"
 # compiler = "1.5.15" # REMOVED as per new setup
 dropboxCoreSdk = "7.0.0"
 errorProneAnnotations = "2.41.0"
-firebaseAuthKtx = "23.2.1"
 grpcContext = "1.75.0"
 grpcCore = "1.75.0"
 grpcOkhttp = "1.75.0"
@@ -94,7 +93,6 @@ androidx-work-testing = { module = "androidx.work:work-testing", version.ref = "
 aznavrail = { module = "com.github.hereliesaz:aznavrail", version.ref = "aznavrail" }
 dropbox-core-sdk = { module = "com.dropbox.core:dropbox-core-sdk", version.ref = "dropboxCoreSdk" }
 dropbox-android-sdk = { module = "com.dropbox.core:dropbox-android-sdk", version.ref = "dropboxCoreSdk" }
-firebase-auth-ktx = { module = "com.google.firebase:firebase-auth-ktx" }
 google-android-material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 androidx-navigation-runtime-ktx = { group = "androidx.navigation", name = "navigation-runtime-ktx", version.ref = "navigationRuntimeKtx" }
 google-errorprone-annotations = { group = "com.google.errorprone", name = "error_prone_annotations", version.ref = "errorProneAnnotations" }
@@ -102,7 +100,6 @@ kotlin-mockito-kotlin = { module = "org.mockito.kotlin:mockito-kotlin", version.
 kotlin-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version.ref = "kotlinStdlib" }
 google-firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
 google-firebase-auth = { module = "com.google.firebase:firebase-auth" }
-google-firebase-auth-ktx = { module = "com.google.firebase:firebase-auth-ktx", version.ref = "firebaseAuthKtx" }
 grpc-context = { module = "io.grpc:grpc-context", version.ref = "grpcContext" }
 grpc-core = { module = "io.grpc:grpc-core", version.ref = "grpcCore" }
 grpc-okhttp = { module = "io.grpc:grpc-okhttp", version.ref = "grpcOkhttp" }
