@@ -40,7 +40,7 @@ For advanced functionality, scripts can use the global `lex` object, which provi
 *   **Description:** A simple script to tag any evidence containing common curse words. Useful for establishing a general tone of communication.
 *   **Script:**
     ```javascript
-    const curses = ["f***", "s***", "b****", "a******"]; // Add more as needed
+    const curses = ["fuck", "shit", "bitch", "cunt", "cock", "asshole"]; // Add more as needed
     const text = evidence.text.toLowerCase();
     if (curses.some(word => text.includes(word))) {
         addTag("Profanity");

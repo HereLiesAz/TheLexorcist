@@ -138,10 +138,16 @@ dependencies {
 
     // Firebase BoM
     implementation(platform(libs.firebase.bom))
-    // implementation(platform(libs.google.play.services.bom)) // REMOVED - Causing resolution issues
 
     // AI Client SDK for Gemini
     implementation(libs.google.ai.generative.sdk)
+
+    // Firebase ML Model Downloader
+    implementation(libs.firebase.ml.modeldownloader) // ADDED
+
+    // TensorFlow Lite
+    implementation(libs.tensorflow.lite) // Will use version from TOML (2.3.0)
+    implementation(libs.tensorflow.lite.support) // Will use version from TOML (0.4.4)
 
     // Other Firebase dependencies
     implementation(libs.google.firebase.auth) // Using non-KTX alias from TOML, BoM may provide KTX

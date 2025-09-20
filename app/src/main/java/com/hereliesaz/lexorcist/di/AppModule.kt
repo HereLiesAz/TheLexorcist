@@ -12,8 +12,9 @@ import com.hereliesaz.lexorcist.model.AllegationsSheet
 import com.hereliesaz.lexorcist.model.CaseInfoSheet
 import com.hereliesaz.lexorcist.model.EvidenceSheet
 import com.hereliesaz.lexorcist.model.SpreadsheetSchema
-import com.hereliesaz.lexorcist.service.GenerativeAIService // ADDED
-import com.hereliesaz.lexorcist.service.ScriptRunner // ADDED
+import com.hereliesaz.lexorcist.service.GenerativeAIService
+import com.hereliesaz.lexorcist.service.ScriptRunner
+import com.hereliesaz.lexorcist.service.nlp.LegalBertService // Ensure this is imported if not already
 import com.hereliesaz.lexorcist.utils.CacheManager
 // import com.hereliesaz.lexorcist.viewmodel.ScriptedMenuViewModel // REMOVED for now
 import dagger.Module
@@ -57,7 +58,7 @@ class AppModule {
 
     @Provides
     @Singleton
-    fun provideScriptRunner(generativeAIService: GenerativeAIService): ScriptRunner = ScriptRunner(generativeAIService) // UPDATED
+    fun provideScriptRunner(legalBertService: LegalBertService): ScriptRunner = ScriptRunner(legalBertService) // CORRECTED PARAMETER
 
     @Provides
     @Singleton

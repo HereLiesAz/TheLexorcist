@@ -1,8 +1,8 @@
 package com.hereliesaz.lexorcist.service
 
 import android.content.Context
-import com.google.firebase.ai.client.generativeai.FirebaseGenerativeAI
-import com.google.firebase.ai.client.generativeai.GenerativeModel
+import com.google.ai.client.generativeai.GenerativeModel
+import com.google.ai.client.generativeai.*
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -27,7 +27,7 @@ class GenerativeAIService @Inject constructor(
         // Initialize the Gemini Pro model. This could be made configurable in the future.
         // The Firebase SDK handles authentication automatically, preferring Application Default Credentials (ADC)
         // if available, and falling back to the API key in the google-services.json file.
-        generativeModel = FirebaseGenerativeAI.getInstance().generativeModel("gemini-pro")
+        generativeModel = GenerativeAI.getInstance().generativeModel("gemini-pro")
     }
 
     /**
