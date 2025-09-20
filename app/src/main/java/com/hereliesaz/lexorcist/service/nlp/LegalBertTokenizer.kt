@@ -2,7 +2,6 @@ package com.hereliesaz.lexorcist.service.nlp
 
 import android.content.Context
 import java.io.BufferedReader
-import java.io.IOException // ADDED
 import java.io.InputStreamReader
 import java.util.Collections
 
@@ -16,11 +15,9 @@ import java.util.Collections
  */
 class LegalBertTokenizer(private val context: Context) {
 
-    // A map from token strings to their integer IDs.
     private val vocab: MutableMap<String, Int> = mutableMapOf()
     private val inverseVocab: MutableMap<Int, String> = mutableMapOf()
 
-    // Special tokens used by BERT.
     private val clsToken = "[CLS]"
     private val sepToken = "[SEP]"
     private val unkToken = "[UNK]"

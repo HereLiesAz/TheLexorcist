@@ -136,22 +136,11 @@ dependencies {
     implementation(libs.androidx.credentials.play.services.auth)
     implementation(libs.google.id)
 
-    // Firebase BoM
+    // Firebase
     implementation(platform(libs.firebase.bom))
-
-    // AI Client SDK for Gemini
-    implementation(libs.google.ai.generative.sdk)
-
-    // Firebase ML Model Downloader
-    implementation(libs.firebase.ml.modeldownloader) // ADDED
-
-    // TensorFlow Lite
-    implementation(libs.tensorflow.lite) // Will use version from TOML (2.3.0)
-    implementation(libs.tensorflow.lite.support) // Will use version from TOML (0.4.4)
-
-    // Other Firebase dependencies
-    implementation(libs.google.firebase.auth) // Using non-KTX alias from TOML, BoM may provide KTX
-    implementation(libs.material3) // This is androidx.compose.material3, not Firebase
+    implementation(libs.google.firebase.auth)
+    implementation(libs.google.firebase.ai)
+    implementation(libs.material3) // Explicitly use KTX version and direct coordinate
 
     // Core testing dependencies
     testImplementation(libs.junit) // JUnit 4
@@ -277,7 +266,7 @@ dependencies {
     kspAndroidTest(libs.google.dagger.hilt.compiler) // Corrected alias
 
     // Jetpack DataStore
-    implementation("androidx.datastore:datastore-preferences:1.1.7")
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
 
     // Room IS NOT ALLOWED IN THIS PROJECT!!!!!
 

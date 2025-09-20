@@ -56,8 +56,6 @@ class LegalBertService @Inject constructor(
 
         // 2. Prepare the three input buffers required by the BERT model.
         // The byte buffers are allocated with space for maxSeqLength * 4 bytes (size of an Int).
-        // 2. Prepare inputs for the TFLite model.
-        // BERT models typically require 3 inputs: input_ids, attention_mask, and token_type_ids.
         val inputIdsBuffer = ByteBuffer.allocateDirect(maxSeqLength * 4).apply {
             order(ByteOrder.nativeOrder())
             tokenized.inputIds.forEach { putInt(it.toInt()) }

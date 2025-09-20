@@ -1,36 +1,33 @@
 package com.hereliesaz.lexorcist.service
 
 import android.content.Context
-import com.google.ai.client.generativeai.GenerativeModel // Specific import
+import com.google.firebase.ai.client.generativeai.FirebaseGenerativeAI
+import com.google.firebase.ai.client.generativeai.GenerativeModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * A service for interacting with cloud-based generative AI models.
- * This service provides capabilities for generating text content based on prompts using the Google AI SDK.
+ * A service for interacting with cloud-based generative AI models through the Firebase SDK.
+ * This service provides capabilities for generating text content based on prompts.
  *
  * It is provided as a Singleton by Hilt to ensure a single instance manages the connection
  * to the generative model service.
  *
- * @param context The application context, injected by Hilt. Currently unused but kept for potential future needs like resource access or API key providers.
+ * @param context The application context, injected by Hilt. Currently unused but kept for potential future needs like resource access.
  */
 @Singleton
 class GenerativeAIService @Inject constructor(
-    @ApplicationContext private val context: Context // Context might be used later for API key provider
+    @ApplicationContext private val context: Context
 ) {
 
     private val generativeModel: GenerativeModel
 
     init {
-        // Initialize the Gemini Pro model using the Google AI SDK.
-        // IMPORTANT: Replace "YOUR_API_KEY_PLACEHOLDER" with your actual Gemini API key.
-        // You should store your API key securely, e.g., in local.properties or a backend, and not hardcode it.
-        generativeModel = GenerativeModel(
-            modelName = "gemini-pro", 
-            apiKey = "YOUR_API_KEY_PLACEHOLDER"
-            // Optional: add safetySettings = listOf(...), generationConfig = generationConfig { ... } 
-        )
+        // Initialize the Gemini Pro model. This could be made configurable in the future.
+        // The Firebase SDK handles authentication automatically, preferring Application Default Credentials (ADC)
+        // if available, and falling back to the API key in the google-services.json file.
+        generativeModel = FirebaseGenerativeAI.getInstance().generativeModel("gemini-pro")
     }
 
     /**
