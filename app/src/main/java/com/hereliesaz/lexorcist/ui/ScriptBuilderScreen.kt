@@ -68,6 +68,7 @@ fun ScriptBuilderScreen(
     navController: NavController
 ) {
     val scriptTitle by viewModel.scriptTitle.collectAsState()
+    val scriptDescription by viewModel.scriptDescription.collectAsState()
     val scriptText by viewModel.scriptText.collectAsState()
     val caseScripts by viewModel.caseScripts.collectAsState()
     val saveState by viewModel.saveState.collectAsState()
@@ -210,6 +211,13 @@ fun ScriptBuilderScreen(
                                 text = stringResource(R.string.script_editor_explanation),
                                 style = MaterialTheme.typography.bodyLarge,
                             )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            OutlinedTextField(
+                                value = scriptDescription,
+                                onValueChange = { viewModel.onScriptDescriptionChanged(it) },
+                                label = { Text(stringResource(R.string.script_description)) },
+                                modifier = Modifier.fillMaxWidth(),
+                            )
                         }
                     }
                     1 -> { // Editor Tab
@@ -279,7 +287,7 @@ fun ScriptBuilderScreen(
             confirmButton = {
                 LexorcistOutlinedButton(
                     onClick = {
-                        extrasViewModel.prepareForSharing(scriptTitle, "Script", scriptText)
+                        extrasViewModel.prepareForSharing(scriptTitle, scriptDescription, scriptText)
                         navController.navigate("share_addon_destination")
                         showShareDialog = false
                     },

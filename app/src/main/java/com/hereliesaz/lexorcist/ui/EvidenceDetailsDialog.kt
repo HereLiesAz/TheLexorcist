@@ -24,7 +24,8 @@ import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
 fun EvidenceDetailsDialog(
     evidence: Evidence,
     onDismiss: () -> Unit,
-    onNavigateToEvidenceDetails: () -> Unit, // Added this parameter
+    onRemove: () -> Unit,
+    onNavigateToEvidenceDetails: () -> Unit,
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -50,6 +51,10 @@ fun EvidenceDetailsDialog(
         },
         confirmButton = {
             Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
+                LexorcistOutlinedButton(onClick = onRemove) {
+                    Text("Remove")
+                }
+                Spacer(modifier = Modifier.width(8.dp))
                 LexorcistOutlinedButton(onClick = onNavigateToEvidenceDetails) {
                     Text("View Full Details")
                 }

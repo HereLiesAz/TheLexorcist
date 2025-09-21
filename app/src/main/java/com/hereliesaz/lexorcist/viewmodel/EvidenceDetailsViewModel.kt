@@ -6,6 +6,10 @@ import com.hereliesaz.lexorcist.data.EvidenceRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
+import androidx.lifecycle.viewModelScope
+import com.hereliesaz.lexorcist.data.Evidence
+import kotlinx.coroutines.launch
+
 @HiltViewModel
 class EvidenceDetailsViewModel
     @Inject
@@ -13,5 +17,9 @@ class EvidenceDetailsViewModel
         application: Application,
         private val evidenceRepository: EvidenceRepository,
     ) : AndroidViewModel(application) {
-        // ... all the other code from the original file
+        fun removeEvidence(evidence: Evidence) {
+            viewModelScope.launch {
+                evidenceRepository.deleteEvidence(evidence)
+            }
+        }
     }

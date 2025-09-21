@@ -39,12 +39,25 @@ constructor(
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
-    private val _selectedAllegations = MutableStateFlow<Set<MasterAllegation>>(emptySet())
-    val selectedAllegations: StateFlow<Set<MasterAllegation>> =
-        _selectedAllegations.asStateFlow()
-
     private val _sortType = MutableStateFlow(AllegationSortType.TYPE)
     val sortType: StateFlow<AllegationSortType> = _sortType.asStateFlow()
+
+    val selectedAllegations: StateFlow<List<MasterAllegation>> =
+        caseRepository.selectedCase
+            .flatMapLatest { case ->
+                if (case == null) {
+                    return@flatMapLatest MutableStateFlow(emptyList<MasterAllegation>())
+                }
+                val selectedNamesFlow = caseAllegationSelectionRepository.getSelectedAllegations(case.spreadsheetId)
+                val masterAllegationsFlow = masterAllegationRepository.getMasterAllegations()
+
+                masterAllegationsFlow.combine(selectedNamesFlow) { masterList, selectedNames ->
+                    masterList.filter { masterAllegation ->
+                        selectedNames.contains(masterAllegation.name)
+                    }
+                }
+            }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val allegations: StateFlow<List<MasterAllegation>> =
         caseRepository.selectedCase
