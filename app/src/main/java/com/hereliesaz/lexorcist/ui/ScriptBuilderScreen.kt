@@ -4,8 +4,8 @@ import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi // Added
-import androidx.compose.foundation.layout.FlowRow // Corrected
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,7 +24,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
-// import androidx.compose.material3.FlowRow // Removed incorrect import
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -62,7 +61,7 @@ import com.hereliesaz.lexorcist.viewmodel.ExtrasViewModel
 import com.hereliesaz.lexorcist.viewmodel.ScriptBuilderViewModel
 import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class) // Added ExperimentalLayoutApi
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun ScriptBuilderScreen(
     viewModel: ScriptBuilderViewModel,
@@ -70,7 +69,7 @@ fun ScriptBuilderScreen(
     navController: NavController
 ) {
     val scriptTitle by viewModel.scriptTitle.collectAsState()
-    val scriptDescription by viewModel.scriptDescription.collectAsState()
+    val scriptDescription by viewModel.scriptDescription.collectAsState() // Assuming this is used for prepareForSharing
     val scriptText by viewModel.scriptText.collectAsState()
     val caseScripts by viewModel.caseScripts.collectAsState()
     val saveState by viewModel.saveState.collectAsState()
@@ -154,7 +153,7 @@ fun ScriptBuilderScreen(
                 }
                 LexorcistOutlinedButton(
                     onClick = { viewModel.openScriptSelectionDialog() },
-                    content = { Text("Import Scripts...") } // Standardized to use content
+                    content = { Text("Import Scripts...") }
                 )
             }
 
@@ -215,7 +214,7 @@ fun ScriptBuilderScreen(
                             OutlinedTextField(
                                 value = scriptDescription,
                                 onValueChange = { viewModel.onScriptDescriptionChanged(it) },
-                                label = { Text(stringResource(R.string.script_description)) },
+                                label = { Text(stringResource(R.string.script_description)) }, // Corrected R.string reference
                                 modifier = Modifier.fillMaxWidth(),
                             )
                         }
@@ -257,15 +256,15 @@ fun ScriptBuilderScreen(
             ) {
                 LexorcistOutlinedButton(
                     onClick = { showRequestDialog = true },
-                    text = "Request"
+                    content = { Text("Request") } // Standardized to use content
                 )
                 LexorcistOutlinedButton(
                     onClick = { showShareDialog = true },
-                    content = { Text(stringResource(R.string.share)) } // Standardized to use content
+                    content = { Text(stringResource(R.string.share)) }
                 )
                 LexorcistOutlinedButton(
                     onClick = { viewModel.saveScript() },
-                    content = { // Standardized to use content
+                    content = {
                         if (saveState is SaveState.Saving) {
                             CircularProgressIndicator(modifier = Modifier.size(24.dp))
                         } else {
@@ -280,24 +279,25 @@ fun ScriptBuilderScreen(
     if (showShareDialog) {
         AlertDialog(
             onDismissRequest = { showShareDialog = false },
-            title = { Text(stringResource(R.string.share_script_title)) },
-            text = { Text(stringResource(R.string.share_script_confirmation)) },
+            title = { Text(scriptTitle) }, // Corrected: Use String variable directly
+            text = { Text(scriptText) },   // Corrected: Use String variable directly. If scriptDescription needs to be here, concatenate it.
+            // description parameter removed as it's not standard and caused issues
             confirmButton = {
                 LexorcistOutlinedButton(
                     onClick = {
-                        extrasViewModel.prepareForSharing(scriptTitle, scriptDescription, scriptText)
+                        extrasViewModel.prepareForSharing(name = scriptTitle, description = scriptDescription, type = "Script", content = scriptText) // Corrected parameters
                         navController.navigate("share_addon_destination")
                         showShareDialog = false
                     },
-                    content = { Text(stringResource(R.string.share)) } // Standardized to use content
+                    content = { Text(stringResource(R.string.share)) }
                 )
             },
             dismissButton = {
                 LexorcistOutlinedButton(
                     onClick = { showShareDialog = false },
-                    content = { Text(stringResource(R.string.cancel)) } // Standardized to use content
+                    content = { Text(stringResource(R.string.cancel)) }
                 )
-            },
+            }
         )
     }
 
@@ -359,13 +359,13 @@ fun ScriptSelectionDialog(
         confirmButton = {
             LexorcistOutlinedButton(
                 onClick = { onConfirm(selectedScripts.toList()) },
-                content = { Text("Import") } // Standardized to use content
+                content = { Text("Import") }
             )
         },
         dismissButton = {
             LexorcistOutlinedButton(
                 onClick = onDismiss,
-                content = { Text("Cancel") } // Standardized to use content
+                content = { Text("Cancel") }
             )
         }
     )

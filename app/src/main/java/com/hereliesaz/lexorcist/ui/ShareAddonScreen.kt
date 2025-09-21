@@ -119,7 +119,7 @@ fun ShareAddonScreen(
                 LexorcistOutlinedButton(
                     onClick = { type = if (type == "Script") "Template" else "Script" },
                     modifier = Modifier.fillMaxWidth(),
-                    text = stringResource(R.string.share_addon_type_label, type)
+                    content = { Text(stringResource(R.string.share_addon_type_label, type)) } // Standardized
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 LexorcistOutlinedButton(
@@ -133,7 +133,7 @@ fun ShareAddonScreen(
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    text = stringResource(R.string.share_addon_share_button)
+                    content = { Text(stringResource(R.string.share_addon_share_button)) } // Standardized
                 )
             }
         }
