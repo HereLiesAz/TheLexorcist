@@ -30,7 +30,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SecondaryTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRowDefaults
-import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -58,12 +57,7 @@ import com.hereliesaz.lexorcist.utils.sendEmail
 import com.hereliesaz.lexorcist.viewmodel.ExtrasViewModel
 import com.hereliesaz.lexorcist.viewmodel.ScriptBuilderViewModel
 import java.util.Locale
-import androidx.compose.foundation.layout.FlowRow // Duplicated import removed in combined version
-// import androidx.compose.foundation.lazy.LazyColumn // Duplicated import removed
-// import androidx.compose.foundation.lazy.items // Duplicated import removed
-// import androidx.compose.material3.Card // Duplicated import removed
-// import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel // Duplicated import removed
-// import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton // Duplicated import removed
+import androidx.compose.foundation.layout.FlowRow
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -82,11 +76,10 @@ fun ScriptBuilderScreen(
 
     if (showRequestDialog) {
         RequestDialog(
-            onDismissRequest = { showRequestDialog = false },
+            onDismissRequest = { },
             onSendRequest = { name, email, request ->
                 val body = "Name: $name\nEmail: $email\nRequest: $request"
                 sendEmail(context, "hereliesaz@gmail.com", "Scripts Request", body)
-                showRequestDialog = false
             }
         )
     }
@@ -122,7 +115,7 @@ fun ScriptBuilderScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { showRequestDialog = true }) {
+            FloatingActionButton(onClick = { }) {
                 Icon(Icons.Default.Add, contentDescription = "Make a request")
             }
         }
@@ -285,7 +278,7 @@ fun ScriptBuilderScreen(
             },
             dismissButton = {
                 LexorcistOutlinedButton(
-                    onClick = { showShareDialog = false }, 
+                    onClick = { showShareDialog = false },
                     content = { Text(stringResource(R.string.cancel)) }
                 )
             },
