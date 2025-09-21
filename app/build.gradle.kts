@@ -47,6 +47,9 @@ android {
         versionName = "0.9.0"
 
         testInstrumentationRunner = "com.hereliesaz.lexorcist.HiltTestRunner"
+
+        // Expose the Google Sheets API key to the app
+        buildConfigField("String", "GOOGLE_SHEETS_API_KEY", "\"${localProperties.getProperty("GOOGLE_SHEETS_API_KEY")}\"")
     }
 
     buildTypes {

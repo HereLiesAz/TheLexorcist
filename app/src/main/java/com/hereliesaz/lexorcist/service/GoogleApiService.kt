@@ -44,12 +44,26 @@ class GoogleApiService @Inject constructor(
     private val gsonFactory = GsonFactory.getDefaultInstance()
     private val httpTransport = NetHttpTransport()
 
+    companion object {
+        private const val EXTRAS_SPREADSHEET_ID = "18hB2Kx5Le1uaF2pImeITgWntcBB-JfYxvpU2aqTzRr8"
+    }
+
     private fun getDriveService(): Drive? {
         return credentialHolder.credential?.let { cred ->
             Drive.Builder(httpTransport, gsonFactory, cred)
                 .setApplicationName(applicationName)
                 .build()
         }
+    }
+
+    private fun getPublicSheetsService(): Sheets {
+        return Sheets.Builder(httpTransport, gsonFactory, null) // No credential needed for public API access
+            .setApplicationName(applicationName)
+            .setGoogleClientRequestInitializer { request ->
+                val sheetsRequest = request as com.google.api.services.sheets.v4.SheetsRequest<*>
+                sheetsRequest.key = com.hereliesaz.lexorcist.BuildConfig.GOOGLE_SHEETS_API_KEY
+            }
+            .build()
     }
 
     private fun getSheetsService(): Sheets? {
@@ -1077,9 +1091,8 @@ class GoogleApiService @Inject constructor(
     }
 
     suspend fun getSharedScripts(): List<Script> {
-        val sheets = getSheetsService() ?: return emptyList()
-        val spreadsheetId = "18hB2Kx5Le1uaF2pImeITgWntcBB-JfYxvpU2aqTzRr8" // This should probably be a constant or configurable
-        val sheetData = readSpreadsheet(spreadsheetId) // This uses sheets internally
+        val sheets = getPublicSheetsService()
+        val sheetData = readSpreadsheet(EXTRAS_SPREADSHEET_ID) // This uses sheets internally
         val scriptSheet = sheetData?.get("Scripts") ?: return emptyList()
 
         return scriptSheet.mapNotNull { row ->
@@ -1101,9 +1114,8 @@ class GoogleApiService @Inject constructor(
     }
 
     suspend fun getSharedTemplates(): List<Template> {
-        val sheets = getSheetsService() ?: return emptyList()
-        val spreadsheetId = "18hB2Kx5Le1uaF2pImeITgWntcBB-JfYxvpU2aqTzRr8" // This should probably be a constant or configurable
-        val sheetData = readSpreadsheet(spreadsheetId) // This uses sheets internally
+        val sheets = getPublicSheetsService()
+        val sheetData = readSpreadsheet(EXTRAS_SPREADSHEET_ID) // This uses sheets internally
         val templateSheet = sheetData?.get("Templates") ?: return emptyList()
 
         return templateSheet.mapNotNull { row ->
@@ -1135,7 +1147,7 @@ class GoogleApiService @Inject constructor(
         withContext(Dispatchers.IO) {
             val sheets = getSheetsService() ?: return@withContext Result.Error(IOException("Credential not available for Sheets service"))
             try {
-                val spreadsheetId = "18hB2Kx5Le1uaF2pImeITgWntcBB-JfYxvpU2aqTzRr8" // Constant
+                val spreadsheetId = EXTRAS_SPREADSHEET_ID
                 val sheetName = if (type == "Script") "Scripts" else "Templates"
                 val range = "$sheetName!A:A"
                 val response =
@@ -1194,7 +1206,7 @@ class GoogleApiService @Inject constructor(
         withContext(Dispatchers.IO) {
             val sheets = getSheetsService() ?: return@withContext Result.Error(IOException("Credential not available for Sheets service"))
             try {
-                val spreadsheetId = "18hB2Kx5Le1uaF2pImeITgWntcBB-JfYxvpU2aqTzRr8"
+                val spreadsheetId = EXTRAS_SPREADSHEET_ID
                 
                 val sheetName: String
                 val itemId: String
@@ -1245,7 +1257,7 @@ class GoogleApiService @Inject constructor(
         withContext(Dispatchers.IO) {
             val sheets = getSheetsService() ?: return@withContext Result.Error(IOException("Credential not available for Sheets service"))
             try {
-                val spreadsheetId = "18hB2Kx5Le1uaF2pImeITgWntcBB-JfYxvpU2aqTzRr8"
+                val spreadsheetId = EXTRAS_SPREADSHEET_ID
                 val (sheetName, itemId, author) = // This destructuring should be fine for Triple
                     when (item) {
                         is Script -> Triple("Scripts", item.id, item.author)
@@ -1290,7 +1302,7 @@ class GoogleApiService @Inject constructor(
         withContext(Dispatchers.IO) {
             val sheets = getSheetsService() ?: return@withContext false
             try {
-                val spreadsheetId = "18hB2Kx5Le1uaF2pImeITgWntcBB-JfYxvpU2aqTzRr8"
+                val spreadsheetId = EXTRAS_SPREADSHEET_ID
                 val sheetName = if (type == "Script") "Scripts" else "Templates"
 
                 val rowIndex = findRowOfSharedItem(sheets, spreadsheetId, sheetName, id)

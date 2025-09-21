@@ -122,6 +122,9 @@ fun ExtrasScreen(
     }
 }
 
+import androidx.compose.ui.platform.LocalContext
+import com.hereliesaz.lexorcist.utils.shareText
+
 @Composable
 fun ItemDetailsDialog(
     item: SharedItem,
@@ -130,6 +133,7 @@ fun ItemDetailsDialog(
     onDelete: () -> Unit,
     onEdit: () -> Unit
 ) {
+    val context = LocalContext.current
     Dialog(onDismissRequest = onDismiss) {
         Card {
             Column(
@@ -149,6 +153,14 @@ fun ItemDetailsDialog(
                         Button(onClick = onDelete, colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)) {
                             Text("Delete")
                         }
+                    }
+                    Button(
+                        onClick = {
+                            shareText(context, subject = "Check out this ${item.type}: ${item.name}", text = item.content)
+                        },
+                        modifier = Modifier.padding(end = 8.dp)
+                    ) {
+                        Text("Share")
                     }
                     Spacer(modifier = Modifier.weight(1f))
                     Button(onClick = onDismiss) {
