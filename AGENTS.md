@@ -3,7 +3,7 @@
 This file contains instructions for AI agents working on this codebase.
 
 ### Your Goal
-
+Call for a code review every 10 changes. Could be across 10 different files, could be all on one file. But every 10 changes, you get a code review. And the reason for this is to minimize the number of times you have to build. You are only allowed one build, IF ANY AT ALL. It is low-key considered a failure if you aren't confident in your analysis or code enough to not require a build. 
 Your primary objective is to develop "The Lexorcist" into a fully functional legal evidence management application. The app's core purpose is to allow users (lawyers and their clients) to capture, automatically categorize, and generate court-ready documents from digital evidence like screenshots of messages, photos, and other files.
 
 ### The Workflow to Enable
