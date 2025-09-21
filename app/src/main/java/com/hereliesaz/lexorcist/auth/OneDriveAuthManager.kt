@@ -2,7 +2,9 @@ package com.hereliesaz.lexorcist.auth
 
 import android.app.Activity
 import android.content.Context
+import com.microsoft.identity.client.AcquireTokenSilentParameters
 import com.microsoft.identity.client.AuthenticationCallback
+import com.microsoft.identity.client.IAccount
 import com.microsoft.identity.client.IAuthenticationResult
 import com.microsoft.identity.client.IPublicClientApplication
 import com.microsoft.identity.client.ISingleAccountPublicClientApplication
@@ -65,10 +67,10 @@ class OneDriveAuthManager constructor(
 
     fun acquireTokenSilent(callback: AuthenticationCallback) {
         msalApplication?.getCurrentAccountAsync(object : ISingleAccountPublicClientApplication.CurrentAccountCallback {
-            override fun onAccountLoaded(activeAccount: com.microsoft.identity.client.IAccount?) {
+            override fun onAccountLoaded(activeAccount: IAccount?) {
                 if (activeAccount != null) {
                     val authority = activeAccount.authority
-                    val parameters = com.microsoft.identity.client.AcquireTokenSilentParameters.Builder()
+                    val parameters = AcquireTokenSilentParameters.Builder()
                         .withScopes(scopes.toList())
                         .forAccount(activeAccount)
                         .fromAuthority(authority)
@@ -80,7 +82,7 @@ class OneDriveAuthManager constructor(
                 }
             }
 
-            override fun onAccountChanged(priorAccount: com.microsoft.identity.client.IAccount?, currentAccount: com.microsoft.identity.client.IAccount?) {
+            override fun onAccountChanged(priorAccount: IAccount?, currentAccount: IAccount?) {
                 // Handle account change
             }
 
