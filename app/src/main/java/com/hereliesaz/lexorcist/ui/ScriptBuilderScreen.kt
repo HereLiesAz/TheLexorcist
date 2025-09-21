@@ -127,6 +127,10 @@ fun ScriptBuilderScreen(
                 OutlinedButton(onClick = { viewModel.insertText(snippetDateLessStr) }) {
                     Text(stringResource(R.string.script_snippet_date_less_label))
                 }
+                LexorcistOutlinedButton(
+                    onClick = { viewModel.openScriptSelectionDialog() },
+                    text = "Import Scripts..."
+                )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -257,6 +261,75 @@ fun ScriptBuilderScreen(
             },
         )
     }
+
+    val showDialog by viewModel.showScriptSelectionDialog.collectAsState()
+    if (showDialog) {
+        ScriptSelectionDialog(
+            scripts = caseScripts,
+            onDismiss = { viewModel.closeScriptSelectionDialog() },
+            onConfirm = { selectedScripts ->
+                viewModel.onScriptsSelected(selectedScripts)
+            }
+        )
+    }
+}
+
+@Composable
+fun ScriptSelectionDialog(
+    scripts: List<Script>,
+    onDismiss: () -> Unit,
+    onConfirm: (List<Script>) -> Unit
+) {
+    var selectedScripts by remember { mutableStateOf<Set<Script>>(emptySet()) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Select Scripts to Import") },
+        text = {
+            LazyColumn {
+                items(scripts) { script ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                selectedScripts = if (selectedScripts.contains(script)) {
+                                    selectedScripts - script
+                                } else {
+                                    selectedScripts + script
+                                }
+                            }
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        androidx.compose.material3.Checkbox(
+                            checked = selectedScripts.contains(script),
+                            onCheckedChange = { isChecked ->
+                                selectedScripts = if (isChecked) {
+                                    selectedScripts + script
+                                } else {
+                                    selectedScripts - script
+                                }
+                            }
+                        )
+                        Spacer(modifier = Modifier.size(16.dp))
+                        Text(text = script.name)
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            LexorcistOutlinedButton(
+                onClick = { onConfirm(selectedScripts.toList()) },
+                text = "Import"
+            )
+        },
+        dismissButton = {
+            LexorcistOutlinedButton(
+                onClick = onDismiss,
+                text = "Cancel"
+            )
+        }
+    )
 }
 
 @Composable

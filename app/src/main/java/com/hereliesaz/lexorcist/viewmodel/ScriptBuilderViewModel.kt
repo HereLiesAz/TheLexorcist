@@ -38,6 +38,33 @@ class ScriptBuilderViewModel
         private val _saveState = MutableStateFlow<SaveState>(SaveState.Idle)
         val saveState: StateFlow<SaveState> = _saveState.asStateFlow()
 
+        private val _showScriptSelectionDialog = MutableStateFlow(false)
+        val showScriptSelectionDialog: StateFlow<Boolean> = _showScriptSelectionDialog.asStateFlow()
+
+        fun openScriptSelectionDialog() {
+            _showScriptSelectionDialog.value = true
+        }
+
+        fun closeScriptSelectionDialog() {
+            _showScriptSelectionDialog.value = false
+        }
+
+        fun onScriptsSelected(selectedScripts: List<Script>) {
+            val currentScript = _scriptText.value
+            val newScripts = selectedScripts.joinToString(separator = "\n\n//---\n\n") {
+                "// Imported Script: ${it.name}\n${it.content}"
+            }
+
+            val combinedScript = if (currentScript.isNotBlank()) {
+                currentScript + "\n\n//---\n\n" + newScripts
+            } else {
+                newScripts
+            }
+
+            _scriptText.value = combinedScript
+            closeScriptSelectionDialog()
+        }
+
         init {
             loadSavedScript()
             loadSharedScripts()
