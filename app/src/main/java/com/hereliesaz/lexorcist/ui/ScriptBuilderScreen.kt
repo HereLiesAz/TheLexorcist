@@ -248,6 +248,10 @@ fun ScriptBuilderScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
             ) {
                 LexorcistOutlinedButton(
+                    onClick = { showRequestDialog = true },
+                    text = "Request"
+                )
+                LexorcistOutlinedButton(
                     onClick = { showShareDialog = true },
                     text = stringResource(R.string.share),
                     content = { Text(stringResource(R.string.share)) }

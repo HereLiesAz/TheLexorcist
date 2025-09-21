@@ -254,6 +254,8 @@ fun TemplatesScreen(
                 }, text = "Create New Template")
                 Spacer(modifier = Modifier.width(8.dp))
                 LexorcistOutlinedButton(onClick = { launcher.launch("application/json") }, text = "Import Template")
+                Spacer(modifier = Modifier.width(8.dp))
+                LexorcistOutlinedButton(onClick = { showRequestDialog = true }, text = "Request")
             }
             Spacer(modifier = Modifier.height(16.dp))
             LazyColumn {

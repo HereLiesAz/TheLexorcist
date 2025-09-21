@@ -96,8 +96,16 @@ fun AllegationsScreen(viewModel: MasterAllegationsViewModel = hiltViewModel()) {
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { showRequestDialog = true }) {
-                Icon(Icons.Default.Add, contentDescription = "Make a request")
+            OutlinedButton(
+                onClick = { showRequestDialog = true },
+                shape = androidx.compose.foundation.shape.CircleShape,
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
+                colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(
+                    containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                    contentColor = MaterialTheme.colorScheme.primary
+                )
+            ) {
+                Text("Request")
             }
         }
     ) { padding ->
