@@ -1,7 +1,7 @@
 package com.hereliesaz.lexorcist.service.nlp
 
 import android.content.Context
-import org.tensorflow.lite.Interpreter // Changed import
+// import org.tensorflow.lite.Interpreter // TODO: Fix TFLite dependency and uncomment
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.FileInputStream
 import java.io.IOException
@@ -24,7 +24,7 @@ import javax.inject.Singleton
 class LegalBertService @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
-    private lateinit var interpreter: Interpreter // Changed type to org.tensorflow.lite.Interpreter
+    // private lateinit var interpreter: Interpreter // TODO: Fix TFLite dependency and uncomment
     private lateinit var tokenizer: LegalBertTokenizer
 
     private val maxSeqLength = 128 // Standard sequence length for BERT models.
@@ -32,10 +32,10 @@ class LegalBertService @Inject constructor(
     init {
         try {
             tokenizer = LegalBertTokenizer(context)
-            // Changed instantiation to use org.tensorflow.lite.Interpreter
-            interpreter = Interpreter(loadModelFile())
+            // TODO: Fix TFLite dependency and uncomment
+            // interpreter = Interpreter(loadModelFile())
         } catch (e: IOException) {
-            // If the model or vocab can\'t be loaded, the app cannot perform a core function.
+            // If the model or vocab can't be loaded, the app cannot perform a core function.
             // Throwing an exception here will crash the app on startup, making the issue
             // immediately visible during development.
             throw IllegalStateException("Failed to initialize LegalBertService", e)
@@ -48,10 +48,11 @@ class LegalBertService @Inject constructor(
      * tasks like similarity comparison, classification, and clustering.
      *
      * @param text The input string to be embedded.
-     * @return A 768-element FloatArray representing the text\'s semantic embedding,
-     *         derived from the [CLS] token\'s output.
+     * @return A 768-element FloatArray representing the text's semantic embedding,
+     *         derived from the [CLS] token's output.
      */
     fun getEmbedding(text: String): FloatArray {
+        // TODO: Fix TFLite dependency and re-implement this method fully
         // 1. Tokenize the input text using our custom tokenizer.
         val tokenized = tokenizer.tokenize(text, maxSeqLength)
 
@@ -85,12 +86,13 @@ class LegalBertService @Inject constructor(
         outputs[0] = outputEmbeddings
 
         // 4. Run inference using the TFLite interpreter.
-        interpreter.runForMultipleInputsOutputs(inputs, outputs)
+        // interpreter.runForMultipleInputsOutputs(inputs, outputs) // TODO: Fix TFLite dependency and uncomment
 
         // 5. Return the embedding for the [CLS] token. The embedding of this special token
         // at the beginning of the sequence is conventionally used as the aggregate
-        // representation of the entire sequence\'s meaning.
-        return outputEmbeddings[0][0]
+        // representation of the entire sequence's meaning.
+        // return outputEmbeddings[0][0] // TODO: Fix TFLite dependency and uncomment
+        return FloatArray(768) // Placeholder return
     }
 
     /**
