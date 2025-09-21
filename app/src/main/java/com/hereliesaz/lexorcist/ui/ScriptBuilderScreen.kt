@@ -58,12 +58,11 @@ import com.hereliesaz.lexorcist.viewmodel.ExtrasViewModel
 @OptIn(ExperimentalMaterial3Api::class) // Removed ExperimentalMaterial3ExpressiveApi
 @Composable
 fun ScriptBuilderScreen(
-    viewModel: ScriptBuilderViewModel, 
+    viewModel: ScriptBuilderViewModel,
     extrasViewModel: ExtrasViewModel = hiltViewModel(), // Added ExtrasViewModel
     navController: androidx.navigation.NavController
 ) {
     val scriptTitle by viewModel.scriptTitle.collectAsState()
-    val scriptDescription by viewModel.scriptDescription.collectAsState()
     val scriptText by viewModel.scriptText.collectAsState()
     val caseScripts by viewModel.caseScripts.collectAsState()
     val saveState by viewModel.saveState.collectAsState()
@@ -103,10 +102,10 @@ fun ScriptBuilderScreen(
     ) { padding ->
         Column(
             modifier =
-            Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(8.dp),
+                Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .padding(8.dp),
             horizontalAlignment = Alignment.End,
         ) {
             // Script Builder Section
@@ -128,6 +127,10 @@ fun ScriptBuilderScreen(
                 OutlinedButton(onClick = { viewModel.insertText(snippetDateLessStr) }) {
                     Text(stringResource(R.string.script_snippet_date_less_label))
                 }
+                LexorcistOutlinedButton(
+                    onClick = { viewModel.openScriptSelectionDialog() },
+                    text = "Import Scripts..."
+                )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -171,16 +174,20 @@ fun ScriptBuilderScreen(
                 }
                 when (tabIndex) {
                     0 -> { // Description Tab
-                        val scriptDescription by viewModel.scriptDescription.collectAsState()
-                        OutlinedTextField(
-                            value = scriptDescription,
-                            onValueChange = { viewModel.onScriptDescriptionChanged(it) },
-                            label = { Text("Script Description") }, // Using hardcoded string
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(16.dp),
-                            placeholder = { Text("Describe what this script does...") } // Using hardcoded string
-                        )
+                        Column(
+                            modifier =
+                                Modifier
+                                    .fillMaxSize()
+                                    .padding(16.dp)
+                                    .verticalScroll(rememberScrollState()),
+                            horizontalAlignment = Alignment.Start,
+                            verticalArrangement = Arrangement.Top,
+                        ) {
+                            Text(
+                                text = stringResource(R.string.script_editor_explanation),
+                                style = MaterialTheme.typography.bodyLarge,
+                            )
+                        }
                     }
                     1 -> { // Editor Tab
                         Column(modifier = Modifier.fillMaxSize()) {
@@ -189,10 +196,10 @@ fun ScriptBuilderScreen(
                                 onValueChange = { viewModel.onScriptTextChanged(it) },
                                 label = { Text(stringResource(R.string.enter_your_script)) },
                                 modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .weight(1f)
-                                    .padding(horizontal = 16.dp),
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .weight(1f)
+                                        .padding(horizontal = 16.dp),
                             )
                         }
                     }
@@ -242,7 +249,7 @@ fun ScriptBuilderScreen(
             confirmButton = {
                 LexorcistOutlinedButton(
                     onClick = {
-                        extrasViewModel.prepareForSharing(scriptTitle, scriptDescription, "Script", scriptText)
+                        extrasViewModel.prepareForSharing(scriptTitle, "Script", scriptText)
                         navController.navigate("share_addon_destination")
                         showShareDialog = false
                     },
@@ -254,6 +261,96 @@ fun ScriptBuilderScreen(
             },
         )
     }
+
+    if (showShareDialog) {
+        AlertDialog(
+            onDismissRequest = { showShareDialog = false },
+            title = { Text(stringResource(R.string.share_script_title)) },
+            text = { Text(stringResource(R.string.share_script_confirmation)) },
+            confirmButton = {
+                LexorcistOutlinedButton(
+                    onClick = {
+                        extrasViewModel.prepareForSharing(scriptTitle, "Script", scriptText)
+                        navController.navigate("share_addon_destination")
+                        showShareDialog = false
+                    },
+                    text = stringResource(R.string.share)
+                )
+            },
+            dismissButton = {
+                LexorcistOutlinedButton(onClick = { showShareDialog = false }, text = stringResource(R.string.cancel))
+            },
+        )
+    }
+
+    val showDialog by viewModel.showScriptSelectionDialog.collectAsState()
+    if (showDialog) {
+        ScriptSelectionDialog(
+            scripts = caseScripts,
+            onDismiss = { viewModel.closeScriptSelectionDialog() },
+            onConfirm = { selectedScripts ->
+                viewModel.onScriptsSelected(selectedScripts)
+            }
+        )
+    }
+}
+
+@Composable
+fun ScriptSelectionDialog(
+    scripts: List<Script>,
+    onDismiss: () -> Unit,
+    onConfirm: (List<Script>) -> Unit
+) {
+    var selectedScripts by remember { mutableStateOf<Set<Script>>(emptySet()) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Select Scripts to Import") },
+        text = {
+            LazyColumn {
+                items(scripts) { script ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                selectedScripts = if (selectedScripts.contains(script)) {
+                                    selectedScripts - script
+                                } else {
+                                    selectedScripts + script
+                                }
+                            }
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        androidx.compose.material3.Checkbox(
+                            checked = selectedScripts.contains(script),
+                            onCheckedChange = { isChecked ->
+                                selectedScripts = if (isChecked) {
+                                    selectedScripts + script
+                                } else {
+                                    selectedScripts - script
+                                }
+                            }
+                        )
+                        Spacer(modifier = Modifier.size(16.dp))
+                        Text(text = script.name)
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            LexorcistOutlinedButton(
+                onClick = { onConfirm(selectedScripts.toList()) },
+                text = "Import"
+            )
+        },
+        dismissButton = {
+            LexorcistOutlinedButton(
+                onClick = onDismiss,
+                text = "Cancel"
+            )
+        }
+    )
 }
 
 @Composable

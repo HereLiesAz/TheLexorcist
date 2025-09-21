@@ -1,8 +1,8 @@
 package com.hereliesaz.lexorcist.service
 
 import com.google.firebase.Firebase
-import com.google.firebase.ai.GenerativeBackend
-import com.google.firebase.ai.generativeModel
+import com.google.firebase.ai.ai
+import com.google.firebase.ai.type.GenerativeBackend
 import javax.inject.Inject
 import javax.inject.Singleton
 

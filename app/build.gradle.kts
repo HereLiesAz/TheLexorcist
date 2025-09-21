@@ -110,12 +110,6 @@ dependencies {
         implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable:0.3.5") {
             because("Align kotlin versions")
         }
-        implementation("org.tensorflow:tensorflow-lite-api:2.14.0") {
-            because("Align tensorflow-lite versions")
-        }
-        implementation("org.tensorflow:tensorflow-lite-support-api:0.4.4") {
-            because("Align tensorflow-lite-support versions")
-        }
         implementation("org.jetbrains.kotlin:kotlin-stdlib:2.2.20") {
             because("Align kotlin versions")
         }
@@ -139,7 +133,9 @@ dependencies {
     // Firebase
     implementation(platform(libs.firebase.bom))
     implementation(libs.google.firebase.auth.ktx)
-    implementation(libs.google.firebase.ai)
+    implementation(libs.google.firebase.ai) {
+        exclude(group = "org.tensorflow")
+    }
     implementation(libs.material3) // Explicitly use KTX version and direct coordinate
 
     // Core testing dependencies
@@ -158,6 +154,8 @@ dependencies {
     // WorkManager Testing (version 2.10.4 matches your work-runtime-ktx)
     testImplementation(libs.androidx.work.testing)
 
+    // implementation("com.google.android.gms:play-services-tflite-java:16.4.0") // REMOVED to avoid conflict with litert
+    // implementation("com.google.android.gms:play-services-tflite-support:16.4.0") // REMOVED to avoid conflict with litert
     testImplementation(libs.androidx.arch.core.testing) // For InstantTaskExecutorRule
     testImplementation(libs.kotlinx.coroutines.test) // For coroutines testing (runTest, TestDispatchers)
     testImplementation(libs.turbine) // For testing Kotlin Flows
@@ -173,7 +171,9 @@ dependencies {
     androidTestImplementation(libs.mockk.android) // MockK for AndroidTest, if used there
     androidTestImplementation(libs.play.services.auth)
 
-    implementation(libs.google.play.services.mlkit.text.recognition)
+    implementation(libs.google.play.services.mlkit.text.recognition) {
+        exclude(group = "org.tensorflow")
+    }
     implementation(libs.play.services.base) // Added
 
 

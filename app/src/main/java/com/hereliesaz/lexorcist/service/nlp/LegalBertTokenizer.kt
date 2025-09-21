@@ -2,6 +2,7 @@ package com.hereliesaz.lexorcist.service.nlp
 
 import android.content.Context
 import java.io.BufferedReader
+import java.io.IOException
 import java.io.InputStreamReader
 import java.util.Collections
 
@@ -138,5 +139,25 @@ class LegalBertTokenizer(private val context: Context) {
         val attentionMask: LongArray,
         /** A segment mask to distinguish between different sentences (all 0s for single-sequence tasks). */
         val tokenTypeIds: LongArray
-    )
+    ) {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as TokenizerOutput
+
+            if (!inputIds.contentEquals(other.inputIds)) return false
+            if (!attentionMask.contentEquals(other.attentionMask)) return false
+            if (!tokenTypeIds.contentEquals(other.tokenTypeIds)) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = inputIds.contentHashCode()
+            result = 31 * result + attentionMask.contentHashCode()
+            result = 31 * result + tokenTypeIds.contentHashCode()
+            return result
+        }
+    }
 }

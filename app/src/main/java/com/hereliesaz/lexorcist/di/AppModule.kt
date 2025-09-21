@@ -58,7 +58,7 @@ class AppModule {
 
     @Provides
     @Singleton
-    fun provideScriptRunner(legalBertService: LegalBertService): ScriptRunner = ScriptRunner(legalBertService) // CORRECTED PARAMETER
+    fun provideScriptRunner(legalBertService: LegalBertService): ScriptRunner = ScriptRunner(GenerativeAIService()) // CORRECTED PARAMETER
 
     @Provides
     @Singleton

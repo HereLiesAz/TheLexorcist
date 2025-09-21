@@ -24,8 +24,8 @@ import javax.inject.Singleton
 class LegalBertService @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
-    private lateinit var interpreter: Interpreter
-    private lateinit var tokenizer: LegalBertTokenizer
+    private var interpreter: Interpreter
+    private var tokenizer: LegalBertTokenizer
 
     private val maxSeqLength = 128 // Standard sequence length for BERT models.
 

@@ -26,9 +26,7 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = "17"
-    }
+
     sourceSets {
         getByName("main") {
             assets.srcDirs("src/main/assets", "../whisper_android/whisper_java/app/src/main/assets")
@@ -39,9 +37,10 @@ android {
 dependencies {
     implementation("androidx.appcompat:appcompat:1.7.1")
     implementation("com.google.android.material:material:1.13.0")
-    implementation(libs.tensorflow.lite)
-    implementation(libs.tensorflow.lite.support)
-    implementation(libs.tensorflow.lite.gpu)
+    implementation("com.google.ai.edge.litert:litert:1.0.1")
+    implementation("com.google.ai.edge.litert:litert-gpu:1.0.1")
+    implementation("com.google.ai.edge.litert:litert-metadata:1.0.1")
+    implementation("com.google.ai.edge.litert:litert-support:1.0.1")
 }
 
 kotlin {
