@@ -93,24 +93,6 @@ fun EvidenceDetailsScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
             }
-            Spacer(modifier = Modifier.height(16.dp))
-            LexorcistOutlinedButton(
-                onClick = {
-                    caseViewModel.deleteEvidence(evidence)
-                    navController.popBackStack()
-                },
-                text = "Remove",
-                modifier = Modifier.fillMaxWidth()
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            LexorcistOutlinedButton(
-                onClick = {
-                    caseViewModel.deleteEvidence(evidence)
-                    navController.popBackStack()
-                },
-                text = "Remove",
-                modifier = Modifier.fillMaxWidth()
-            )
         }
     }
 }

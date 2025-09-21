@@ -54,7 +54,7 @@ fun EvidenceDetailsDialog(
                 LexorcistOutlinedButton(onClick = onRemove) {
                     Text("Remove")
                 }
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.weight(1f))
                 LexorcistOutlinedButton(onClick = onNavigateToEvidenceDetails) {
                     Text("View Full Details")
                 }

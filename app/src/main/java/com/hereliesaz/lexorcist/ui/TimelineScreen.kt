@@ -34,10 +34,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
+import com.hereliesaz.lexorcist.viewmodel.EvidenceDetailsViewModel
 import com.hereliesaz.lexorcist.viewmodel.TimelineSortType
 import com.pushpal.jetlime.ItemsList
 import com.pushpal.jetlime.JetLimeColumn
@@ -52,7 +54,11 @@ import java.util.Locale
     ExperimentalComposeApi::class
 )
 @Composable
-fun TimelineScreen(caseViewModel: CaseViewModel, navController: NavController) {
+fun TimelineScreen(
+    caseViewModel: CaseViewModel,
+    navController: NavController,
+    evidenceDetailsViewModel: EvidenceDetailsViewModel = hiltViewModel()
+) {
     val evidenceList by caseViewModel.selectedCaseEvidenceList.collectAsState()
     var showEvidenceDetailsDialog by remember { mutableStateOf<Evidence?>(null) }
     val timelineSortType by caseViewModel.timelineSortType.collectAsState()
@@ -154,7 +160,11 @@ fun TimelineScreen(caseViewModel: CaseViewModel, navController: NavController) {
         EvidenceDetailsDialog(
             evidence = evidence,
             onDismiss = { showEvidenceDetailsDialog = null },
-            onNavigateToEvidenceDetails = { navController.navigate("evidence_details/${evidence.id}") } 
+            onRemove = {
+                evidenceDetailsViewModel.removeEvidence(evidence)
+                showEvidenceDetailsDialog = null
+            },
+            onNavigateToEvidenceDetails = { navController.navigate("evidence_details/${evidence.id}") }
         )
     }
 }
