@@ -22,6 +22,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FlowRow
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -30,6 +31,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SecondaryTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRowDefaults
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -57,13 +59,12 @@ import com.hereliesaz.lexorcist.utils.sendEmail
 import com.hereliesaz.lexorcist.viewmodel.ExtrasViewModel
 import com.hereliesaz.lexorcist.viewmodel.ScriptBuilderViewModel
 import java.util.Locale
-import androidx.compose.foundation.layout.FlowRow
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class) // Removed ExperimentalMaterial3ExpressiveApi
 @Composable
 fun ScriptBuilderScreen(
     viewModel: ScriptBuilderViewModel,
-    extrasViewModel: ExtrasViewModel = hiltViewModel(),
+    extrasViewModel: ExtrasViewModel = hiltViewModel(), // Added ExtrasViewModel
     navController: NavController
 ) {
     val scriptTitle by viewModel.scriptTitle.collectAsState()
@@ -71,15 +72,16 @@ fun ScriptBuilderScreen(
     val caseScripts by viewModel.caseScripts.collectAsState()
     val saveState by viewModel.saveState.collectAsState()
     val context = LocalContext.current
-    var showShareDialog by remember { mutableStateOf(false) }
+    var showShareDialog by remember { mutableStateOf(false) } // Restored
     var showRequestDialog by remember { mutableStateOf(false) }
 
     if (showRequestDialog) {
         RequestDialog(
-            onDismissRequest = { },
+            onDismissRequest = { showRequestDialog = false },
             onSendRequest = { name, email, request ->
                 val body = "Name: $name\nEmail: $email\nRequest: $request"
                 sendEmail(context, "hereliesaz@gmail.com", "Scripts Request", body)
+                showRequestDialog = false
             }
         )
     }
@@ -115,7 +117,7 @@ fun ScriptBuilderScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { }) {
+            FloatingActionButton(onClick = { showRequestDialog = true }) {
                 Icon(Icons.Default.Add, contentDescription = "Make a request")
             }
         }
@@ -149,6 +151,7 @@ fun ScriptBuilderScreen(
                 }
                 LexorcistOutlinedButton(
                     onClick = { viewModel.openScriptSelectionDialog() },
+                    text = "Import Scripts...",
                     content = { Text("Import Scripts...") }
                 )
             }
@@ -177,6 +180,7 @@ fun ScriptBuilderScreen(
             Column(modifier = Modifier.weight(1f).fillMaxWidth()) {
                 SecondaryTabRow(
                     selectedTabIndex = tabIndex,
+                    // contentColor = MaterialTheme.colorScheme.primary,
                     indicator = {
                         TabRowDefaults.SecondaryIndicator(
                             Modifier.tabIndicatorOffset(tabIndex)
@@ -245,10 +249,12 @@ fun ScriptBuilderScreen(
             ) {
                 LexorcistOutlinedButton(
                     onClick = { showShareDialog = true },
+                    text = stringResource(R.string.share),
                     content = { Text(stringResource(R.string.share)) }
                 )
                 LexorcistOutlinedButton(
                     onClick = { viewModel.saveScript() },
+                    text = if (saveState is SaveState.Saving) "" else stringResource(R.string.save_script),
                     content = {
                         if (saveState is SaveState.Saving) {
                             CircularProgressIndicator(modifier = Modifier.size(24.dp))
@@ -273,14 +279,12 @@ fun ScriptBuilderScreen(
                         navController.navigate("share_addon_destination")
                         showShareDialog = false
                     },
+                    text = stringResource(R.string.share),
                     content = { Text(stringResource(R.string.share)) }
                 )
             },
             dismissButton = {
-                LexorcistOutlinedButton(
-                    onClick = { showShareDialog = false },
-                    content = { Text(stringResource(R.string.cancel)) }
-                )
+                LexorcistOutlinedButton(onClick = { showShareDialog = false }, text = stringResource(R.string.cancel))
             },
         )
     }
@@ -343,12 +347,14 @@ fun ScriptSelectionDialog(
         confirmButton = {
             LexorcistOutlinedButton(
                 onClick = { onConfirm(selectedScripts.toList()) },
+                text = "Import",
                 content = { Text("Import") }
             )
         },
         dismissButton = {
             LexorcistOutlinedButton(
                 onClick = onDismiss,
+                text = "Cancel",
                 content = { Text("Cancel") }
             )
         }
