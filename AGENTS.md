@@ -41,7 +41,8 @@ The file google-services.template.json located at the root of the /app/ folder s
 11. When the user taps a Case in the case list, it needs to highlight so they can see that a case was selected. Selecting a case should cause it to be loaded--its evidence previously added, the text parsed from that evidence, the allegations previously selected, the templates and scripts last loaded or edited or created for that case, etc. All screens should be in their most recent previous state. 
 12. All instances where data is being loaded should be indicated by a loading animation.
 13. The user should be able to select cloud services in Settings. 
-
+14. On the Script Builder screen, when the Share button is pushed, whatever script is in the editor tab, described in the description tab, and has its name in the Script Title box, is the listing to appear on the Extras screen (addon browser). Upon pressing the Share button, a dialog pops up for the user to set their name and email. 
+15. If the user ever wants to edit the shared script (or template) AFTER it's already shared, an edit button must be provided, which automatically sends that script (or template) to the creator's email (limit once per day). The user emails back their updated version, and that's as much security in ownership as is needed.
 ---
 
 ### Roadmap

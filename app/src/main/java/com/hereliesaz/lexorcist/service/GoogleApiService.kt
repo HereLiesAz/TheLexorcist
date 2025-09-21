@@ -917,6 +917,7 @@ class GoogleApiService @Inject constructor(
                             evidence.documentDate.toString(),
                             evidence.allegationId?.toString() ?: "",
                             evidence.category,
+                            evidence.tags.joinToString(",
                             evidence.tags.joinToString(","),
                             evidence.commentary ?: "",
                             evidence.linkedEvidenceIds.joinToString(","),
@@ -1207,7 +1208,7 @@ class GoogleApiService @Inject constructor(
             val sheets = getSheetsService() ?: return@withContext Result.Error(IOException("Credential not available for Sheets service"))
             try {
                 val spreadsheetId = EXTRAS_SPREADSHEET_ID
-                
+
                 val sheetName: String
                 val itemId: String
                 val author: String

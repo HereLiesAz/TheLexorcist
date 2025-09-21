@@ -9,7 +9,8 @@ data class Script(
     val name: String,
     val description: String,
     val content: String, // The actual script code
-    val author: String, // User who shared it
+    val authorName: String = "", // Manually entered name of the author
+    val authorEmail: String = "", // Email of the user who shared it (or manually entered)
     val court: String? = null, // Standardized position
     val rating: Double = 0.0,
     val numRatings: Int = 0

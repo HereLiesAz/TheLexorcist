@@ -1,6 +1,7 @@
 package com.hereliesaz.lexorcist.ui
 
 import android.widget.Toast
+import androidx.activity.ComponentActivity
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -49,7 +50,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.common.state.SaveState
@@ -64,15 +65,20 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun ScriptBuilderScreen(
-    viewModel: ScriptBuilderViewModel,
-    extrasViewModel: ExtrasViewModel = hiltViewModel(),
+    viewModel: ScriptBuilderViewModel = hiltViewModel(),
     navController: NavController
 ) {
+    val activity = LocalContext.current as ComponentActivity
+    val extrasViewModel: ExtrasViewModel = hiltViewModel(viewModelStoreOwner = activity)
+
     val scriptTitle by viewModel.scriptTitle.collectAsState()
-    val scriptDescription by viewModel.scriptDescription.collectAsState() // Assuming this is used for prepareForSharing
+    val scriptDescription by viewModel.scriptDescription.collectAsState()
     val scriptText by viewModel.scriptText.collectAsState()
     val caseScripts by viewModel.caseScripts.collectAsState()
     val saveState by viewModel.saveState.collectAsState()
+    val extrasUiState by extrasViewModel.uiState.collectAsState()
+    var previousExtrasIsLoading by remember { mutableStateOf(extrasUiState.isLoading) }
+
     val context = LocalContext.current
     var showShareDialog by remember { mutableStateOf(false) }
     var showRequestDialog by remember { mutableStateOf(false) }
@@ -105,6 +111,17 @@ fun ScriptBuilderScreen(
         }
     }
 
+    LaunchedEffect(extrasUiState) {
+        if (previousExtrasIsLoading && !extrasUiState.isLoading) {
+            if (extrasUiState.error != null) {
+                Toast.makeText(context, "Failed to share script: ${extrasUiState.error}", Toast.LENGTH_LONG).show()
+            } else {
+                Toast.makeText(context, "Script shared successfully!", Toast.LENGTH_SHORT).show()
+            }
+        }
+        previousExtrasIsLoading = extrasUiState.isLoading
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -132,7 +149,6 @@ fun ScriptBuilderScreen(
                 .padding(8.dp),
             horizontalAlignment = Alignment.End,
         ) {
-            // Script Builder Section
             Spacer(modifier = Modifier.height(16.dp))
             FlowRow(
                 modifier = Modifier.fillMaxWidth(),
@@ -170,7 +186,6 @@ fun ScriptBuilderScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Editor Section with Tabs
             var tabIndex by remember { mutableIntStateOf(0) }
             val tabs = listOf(
                 stringResource(R.string.script_tab_description),
@@ -196,7 +211,7 @@ fun ScriptBuilderScreen(
                     }
                 }
                 when (tabIndex) {
-                    0 -> { // Description Tab
+                    0 -> {
                         Column(
                             modifier =
                             Modifier
@@ -214,12 +229,12 @@ fun ScriptBuilderScreen(
                             OutlinedTextField(
                                 value = scriptDescription,
                                 onValueChange = { viewModel.onScriptDescriptionChanged(it) },
-                                label = { Text(stringResource(R.string.script_description)) }, // Corrected R.string reference
+                                label = { Text(stringResource(R.string.script_description)) },
                                 modifier = Modifier.fillMaxWidth(),
                             )
                         }
                     }
-                    1 -> { // Editor Tab
+                    1 -> {
                         Column(modifier = Modifier.fillMaxSize()) {
                             OutlinedTextField(
                                 value = scriptText,
@@ -233,12 +248,12 @@ fun ScriptBuilderScreen(
                             )
                         }
                     }
-                    2 -> { // Case Scripts Tab
+                    2 -> {
                         LazyColumn(modifier = Modifier.fillMaxSize().padding(16.dp)) {
                             items(caseScripts) { script ->
                                 ScriptItem(script = script, onClick = {
                                     viewModel.loadScript(script)
-                                    tabIndex = 1 // Switch to editor tab
+                                    tabIndex = 1
                                 })
                                 Spacer(modifier = Modifier.height(8.dp))
                             }
@@ -249,14 +264,13 @@ fun ScriptBuilderScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Action Buttons
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
             ) {
                 LexorcistOutlinedButton(
                     onClick = { showRequestDialog = true },
-                    content = { Text("Request") } // Standardized to use content
+                    content = { Text("Request") }
                 )
                 LexorcistOutlinedButton(
                     onClick = { showShareDialog = true },
@@ -277,17 +291,50 @@ fun ScriptBuilderScreen(
     }
 
     if (showShareDialog) {
+        var dialogAuthorName by remember { mutableStateOf("") }
+        var dialogAuthorEmail by remember { mutableStateOf("") }
+
         AlertDialog(
             onDismissRequest = { showShareDialog = false },
-            title = { Text(scriptTitle) }, // Corrected: Use String variable directly
-            text = { Text(scriptText) },   // Corrected: Use String variable directly. If scriptDescription needs to be here, concatenate it.
-            // description parameter removed as it's not standard and caused issues
+            title = { Text(scriptTitle.ifBlank { "Untitled Script" }) },
+            text = {
+                Column {
+                    Text(scriptDescription.ifBlank { "No description." })
+                    Spacer(modifier = Modifier.height(16.dp))
+                    OutlinedTextField(
+                        value = dialogAuthorName,
+                        onValueChange = { dialogAuthorName = it },
+                        label = { Text("Your Name") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = dialogAuthorEmail,
+                        onValueChange = { dialogAuthorEmail = it },
+                        label = { Text("Your Email") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
             confirmButton = {
                 LexorcistOutlinedButton(
                     onClick = {
-                        extrasViewModel.prepareForSharing(name = scriptTitle, description = scriptDescription, type = "Script", content = scriptText) // Corrected parameters
-                        navController.navigate("share_addon_destination")
-                        showShareDialog = false
+                        if (scriptTitle.isNotBlank() &&
+                            scriptText.isNotBlank() &&
+                            dialogAuthorName.isNotBlank() &&
+                            dialogAuthorEmail.isNotBlank()) {
+                            extrasViewModel.shareItem(
+                                name = scriptTitle,
+                                description = scriptDescription,
+                                content = scriptText,
+                                type = "Script",
+                                authorName = dialogAuthorName,
+                                authorEmail = dialogAuthorEmail
+                            )
+                            showShareDialog = false
+                        } else {
+                            Toast.makeText(context, "All fields including name and email are required for sharing.", Toast.LENGTH_LONG).show()
+                        }
                     },
                     content = { Text(stringResource(R.string.share)) }
                 )
@@ -380,7 +427,7 @@ fun ScriptItem(script: Script, onClick: () -> Unit) {
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(text = script.name, style = MaterialTheme.typography.titleMedium)
-            Text(text = "by ${script.author}", style = MaterialTheme.typography.bodySmall)
+            Text(text = "by ${script.authorName.ifBlank { script.authorEmail }}", style = MaterialTheme.typography.bodySmall) // Updated to use authorName, with fallback to authorEmail
             Text(text = script.description, style = MaterialTheme.typography.bodyMedium, maxLines = 2)
         }
     }

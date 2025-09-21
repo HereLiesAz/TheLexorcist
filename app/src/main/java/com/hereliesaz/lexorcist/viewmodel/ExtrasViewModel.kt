@@ -27,7 +27,6 @@ class ExtrasViewModel @Inject constructor(
     private val application: Application // Inject Application context
 ) : ViewModel() {
 
-    // Helper data class for parsing JSON
     data class DefaultExtras(
         val scripts: List<Script>,
         val templates: List<Template>
@@ -60,8 +59,7 @@ class ExtrasViewModel @Inject constructor(
 
     init {
         observeSearchQuery()
-        // Load default items immediately
-        loadExtras(isUserLoggedIn = false)
+        loadExtras(isUserLoggedIn = _uiState.value.currentUserEmail != null)
     }
 
     fun setAuthSource(authSignInState: StateFlow<SignInState>) {
@@ -69,27 +67,34 @@ class ExtrasViewModel @Inject constructor(
             authSignInState.collect { signInState ->
                 val email = if (signInState is SignInState.Success) signInState.userInfo?.email else null
                 _uiState.value = _uiState.value.copy(currentUserEmail = email)
-                // Refresh extras, this time with user context for remote data
+                // loadSharedItems() // Removed this line, as loadExtras below handles it
+                if (email == null) {
+                    _uiState.value = _uiState.value.copy(items = emptyList(), error = "Sign in to browse community extras.")
+                }
                 loadExtras(isUserLoggedIn = email != null)
+            }
+        }
+    }
+
+    private fun applySearchFilter(allItems: List<SharedItem>, query: String): List<SharedItem> {
+        return if (query.isBlank()) {
+            allItems
+        } else {
+            allItems.filter {
+                it.name.contains(query, ignoreCase = true) ||
+                it.description.contains(query, ignoreCase = true) ||
+                it.authorName.contains(query, ignoreCase = true) || 
+                it.authorEmail.contains(query, ignoreCase = true)
             }
         }
     }
 
     private fun observeSearchQuery() {
         viewModelScope.launch {
-            combine(_uiState, _allItems) { uiState, allItems ->
-                val query = uiState.searchQuery
-                if (query.isBlank()) {
-                    allItems
-                } else {
-                    allItems.filter {
-                        it.name.contains(query, ignoreCase = true) ||
-                        it.description.contains(query, ignoreCase = true) ||
-                        it.author.contains(query, ignoreCase = true)
-                    }
-                }
+            combine(_uiState.map { it.searchQuery }, _allItems) { query, allItems -> // Observe searchQuery directly
+                applySearchFilter(allItems, query)
             }.collect { filteredItems ->
-                _uiState.value = _uiState.value.copy(items = filteredItems)
+                _uiState.value = _uiState.value.copy(items = filteredItems) // Update only items, isLoading might be true
             }
         }
     }
@@ -108,46 +113,47 @@ class ExtrasViewModel @Inject constructor(
             sharedItems.addAll(extras.templates.map { SharedItem.from(it) })
             sharedItems
         } catch (e: IOException) {
-            _uiState.value = _uiState.value.copy(error = "Failed to load default extras.")
+            // Don't update _uiState.value.error here directly, let loadExtras handle error state if needed
             emptyList()
         }
     }
 
     fun loadExtras(isUserLoggedIn: Boolean) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
-            // Load local items first
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null) // Reset error on load
+            
             val localItems = loadDefaultExtras()
-            _allItems.value = localItems
-            _uiState.value = _uiState.value.copy(items = localItems) // Immediately display local items
+            _allItems.value = localItems // Update allItems with local ones first
+            // Immediately show local items, apply current search query
+            _uiState.value = _uiState.value.copy(items = applySearchFilter(localItems, _uiState.value.searchQuery))
 
-            // If user is logged in, fetch remote items and merge
             if (isUserLoggedIn) {
                 when (val result = extrasRepository.getSharedItems()) {
                     is Result.Success -> {
                         val remoteItems = result.data
                         val mergedItems = localItems.toMutableList()
-                        val localItemNames = localItems.map { it.name }.toSet()
-                        // Add remote items that are not in the local list
+                        val localItemIds = localItems.map { it.id }.toSet()
                         remoteItems.forEach { remoteItem ->
-                            if (!localItemNames.contains(remoteItem.name)) {
+                            if (!localItemIds.contains(remoteItem.id)) {
                                 mergedItems.add(remoteItem)
                             }
                         }
                         _allItems.value = mergedItems
-                        _uiState.value = _uiState.value.copy(isLoading = false, items = mergedItems, error = null)
+                        _uiState.value = _uiState.value.copy(isLoading = false, items = applySearchFilter(mergedItems, _uiState.value.searchQuery), error = null)
                     }
                     is Result.Error -> {
-                        // Failed to load remote items, but local items are still displayed.
-                        _uiState.value = _uiState.value.copy(isLoading = false, error = "Could not refresh extras from server.")
+                        _uiState.value = _uiState.value.copy(isLoading = false, error = result.exception.message ?: "Could not refresh extras from server.")
                     }
-                    else -> {
-                        // Handle other cases if necessary, for now just stop loading
-                         _uiState.value = _uiState.value.copy(isLoading = false)
+                    is Result.UserRecoverableError -> {
+                         _uiState.value = _uiState.value.copy(isLoading = false, error = result.exception.message ?: "A user recoverable error occurred.")
+                    }
+                    is Result.Loading -> {
+                        // isLoading is already true
                     }
                 }
             } else {
-                 _uiState.value = _uiState.value.copy(isLoading = false)
+                // Not logged in, local items are already shown, just ensure loading is false.
+                _uiState.value = _uiState.value.copy(isLoading = false)
             }
         }
     }
@@ -155,30 +161,35 @@ class ExtrasViewModel @Inject constructor(
     fun deleteItem(item: SharedItem) {
         val userEmail = _uiState.value.currentUserEmail ?: return
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true) // Indicate loading state
+            _uiState.value = _uiState.value.copy(isLoading = true)
             when (val result = extrasRepository.deleteSharedItem(item, userEmail)) {
-                is Result.Success -> loadExtras(isUserLoggedIn = true)
+                is Result.Success -> loadExtras(isUserLoggedIn = true) // Refresh list
                 is Result.Error -> _uiState.value = _uiState.value.copy(isLoading = false, error = "Failed to delete item: ${result.exception.localizedMessage}")
                 is Result.UserRecoverableError -> _uiState.value = _uiState.value.copy(isLoading = false, error = "Failed to delete item: User recoverable error - ${result.exception.localizedMessage}")
-                is Result.Loading -> {
-                    // isLoading is already true
-                }
+                is Result.Loading -> { /* isLoading is true */ }
             }
         }
     }
 
     fun isAuthor(item: SharedItem): Boolean {
         val email = _uiState.value.currentUserEmail
-        return email != null && (item.author == email || email == "hereliesaz@gmail.com")
+        return email != null && (item.authorEmail == email || email == "hereliesaz@gmail.com")
     }
 
-    fun shareItem(name: String, description: String, content: String, type: String, court: String? = null) {
-        val authorEmail = _uiState.value.currentUserEmail ?: return
+    fun shareItem(
+        name: String,
+        description: String,
+        content: String,
+        type: String,
+        authorName: String,
+        authorEmail: String,
+        court: String? = null
+    ) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true) // Indicate loading state
-            when (extrasRepository.shareItem(name, description, content, type, authorEmail, court)) {
+            _uiState.value = _uiState.value.copy(isLoading = true)
+            when (extrasRepository.shareItem(name, description, content, type, authorName, authorEmail, court)) {
                 is Result.Success -> {
-                    loadExtras(isUserLoggedIn = true)
+                    loadExtras(isUserLoggedIn = true) // Refresh list
                 }
                 is Result.Error -> {
                     _uiState.value = _uiState.value.copy(isLoading = false, error = "Failed to share item.")
@@ -186,9 +197,7 @@ class ExtrasViewModel @Inject constructor(
                  is Result.UserRecoverableError -> {
                     _uiState.value = _uiState.value.copy(isLoading = false, error = "Failed to share item. A recoverable error occurred.")
                 }
-                is Result.Loading -> {
-                     // isLoading is already true
-                }
+                is Result.Loading -> { /* isLoading is true */ }
             }
         }
     }
@@ -210,9 +219,9 @@ class ExtrasViewModel @Inject constructor(
     fun rateAddon(id: String, rating: Int, type: String) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
-            val result = extrasRepository.rateAddon(id, rating, type)
-            if (result) {
-                loadExtras(isUserLoggedIn = true)
+            val success = extrasRepository.rateAddon(id, rating, type)
+            if (success) {
+                loadExtras(isUserLoggedIn = true) // Refresh list
             } else {
                 _uiState.value = _uiState.value.copy(isLoading = false, error = "Failed to rate item.")
             }

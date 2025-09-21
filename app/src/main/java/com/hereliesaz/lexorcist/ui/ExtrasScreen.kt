@@ -41,8 +41,7 @@ import com.hereliesaz.lexorcist.viewmodel.ExtrasViewModel
 @Composable
 fun ExtrasScreen(
     extrasViewModel: ExtrasViewModel = hiltViewModel(),
-    authViewModel: AuthViewModel = hiltViewModel(),
-    onShare: () -> Unit,
+    authViewModel: AuthViewModel = hiltViewModel() // Removed onShare parameter
 ) {
     val uiState by extrasViewModel.uiState.collectAsState()
     var showDetailsDialog by remember { mutableStateOf<SharedItem?>(null) }
@@ -104,7 +103,7 @@ fun ExtrasScreen(
                         AddonItem(
                             name = item.name,
                             description = item.description,
-                            author = item.author,
+                            author = item.authorName.ifBlank { item.authorEmail }, // Updated to use authorName with fallback
                             rating = item.rating.toFloat(),
                             onRate = { rating ->
                                 val type = when (item) {
@@ -141,7 +140,7 @@ fun ItemDetailsDialog(
                 horizontalAlignment = Alignment.End
             ) {
                 Text(text = item.name, style = MaterialTheme.typography.headlineSmall)
-                Text(text = "by ${item.author}", style = MaterialTheme.typography.titleMedium)
+                Text(text = "by ${item.authorName.ifBlank { item.authorEmail }}", style = MaterialTheme.typography.titleMedium) // Updated
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(text = item.description, style = MaterialTheme.typography.bodyMedium)
                 Spacer(modifier = Modifier.height(16.dp))
@@ -176,7 +175,7 @@ fun ItemDetailsDialog(
 fun AddonItem(
     name: String,
     description: String,
-    author: String,
+    author: String, // This now receives authorName (with email fallback)
     rating: Float,
     onRate: (Int) -> Unit,
     onClick: () -> Unit

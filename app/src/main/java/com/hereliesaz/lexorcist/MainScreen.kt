@@ -51,12 +51,12 @@ import com.hereliesaz.lexorcist.ui.ScriptBuilderScreen
 import com.hereliesaz.lexorcist.ui.SettingsScreen
 import com.hereliesaz.lexorcist.ui.TemplatesScreen
 import com.hereliesaz.lexorcist.ui.PhotoGroupScreen
-import com.hereliesaz.lexorcist.ui.ShareAddonScreen // Ensure this import is present
+// import com.hereliesaz.lexorcist.ui.ShareAddonScreen // Removed import
 import com.hereliesaz.lexorcist.ui.TimelineScreen
 import com.hereliesaz.lexorcist.viewmodel.AddonsBrowserViewModel // Corrected import
 import com.hereliesaz.lexorcist.viewmodel.AuthViewModel
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
-import com.hereliesaz.lexorcist.viewmodel.ExtrasViewModel // Ensure this import is present
+// import com.hereliesaz.lexorcist.viewmodel.ExtrasViewModel // ExtrasViewModel is used by hiltViewModel() directly
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 import com.hereliesaz.lexorcist.viewmodel.MasterAllegationsViewModel
 import com.hereliesaz.lexorcist.viewmodel.ScriptBuilderViewModel
@@ -182,31 +182,13 @@ fun MainScreen(
                                     )
                                 }
                                 composable("extras") {
-                                    ExtrasScreen(
-                                        onShare = {
-                                            // This navigation will now go to a ShareAddonScreen that uses ExtrasViewModel
-                                            navController.navigate("share_addon")
-                                        }
-                                    )
+                                    ExtrasScreen() // Removed onShare argument
                                 }
-                                composable("share_addon") { // Route for general sharing from ExtrasScreen
-                                    val extrasViewModel: ExtrasViewModel = hiltViewModel()
-                                    ShareAddonScreen(
-                                        extrasViewModel = extrasViewModel,
-                                        navController = navController
-                                    )
-                                }
-                                composable("share_addon_destination") { // New route for ScriptBuilder
-                                    val extrasViewModel: ExtrasViewModel = hiltViewModel()
-                                    ShareAddonScreen(
-                                        extrasViewModel = extrasViewModel,
-                                        navController = navController
-                                    )
-                                }
+                                // Removed "share_addon" route
+                                // Removed "share_addon_destination" route
                                 composable("script_builder") {
-                                    ScriptBuilderScreen(viewModel = hiltViewModel<ScriptBuilderViewModel>(), navController = navController) // extrasViewModel is injected by default in ScriptBuilderScreen now
+                                    ScriptBuilderScreen(viewModel = hiltViewModel<ScriptBuilderViewModel>(), navController = navController)
                                 }
-                                // Renamed route for case-specific allegations
                                 composable("case_allegations_route") {
                                     AllegationsScreen(hiltViewModel<MasterAllegationsViewModel>())
                                 }

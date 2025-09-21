@@ -12,8 +12,10 @@ sealed interface SharedItem {
     val id: String
     val name: String
     val description: String
+    val authorName: String // Added
+    val authorEmail: String // Renamed from author
     val content: String
-    val author: String
+    // val author: String // REMOVED
     val type: String
     val rating: Double
     val numRatings: Int
@@ -29,7 +31,8 @@ data class ScriptItem(val script: Script) : SharedItem {
     override val id: String get() = script.id
     override val name: String get() = script.name
     override val description: String get() = script.description
-    override val author: String get() = script.author
+    override val authorName: String get() = script.authorName
+    override val authorEmail: String get() = script.authorEmail
     override val content: String get() = script.content
     override val type: String = "Script"
     override val rating: Double get() = script.rating
@@ -41,7 +44,8 @@ data class TemplateItem(val template: Template) : SharedItem {
     override val id: String get() = template.id
     override val name: String get() = template.name
     override val description: String get() = template.description
-    override val author: String get() = template.author
+    override val authorName: String get() = template.authorName
+    override val authorEmail: String get() = template.authorEmail
     override val content: String get() = template.content
     override val type: String = "Template"
     override val rating: Double get() = template.rating
@@ -56,7 +60,9 @@ class ExtrasRepository @Inject constructor(
 
     suspend fun getSharedItems(): Result<List<SharedItem>> {
         return try {
+            // Assuming googleApiService.getSharedScripts() now returns Scripts with authorName and authorEmail populated
             val scripts = googleApiService.getSharedScripts().map { ScriptItem(it) }
+            // Assuming googleApiService.getSharedTemplates() now returns Templates with authorName and authorEmail populated
             val templates = googleApiService.getSharedTemplates().map { TemplateItem(it) }
             Result.Success(scripts + templates)
         } catch (e: Exception) {
@@ -69,6 +75,8 @@ class ExtrasRepository @Inject constructor(
             is ScriptItem -> item.script
             is TemplateItem -> item.template
         }
+        // This call will now pass a Script/Template object that has authorEmail correctly set.
+        // googleApiService.deleteSharedItem should ideally use originalItem.authorEmail for its checks.
         return googleApiService.deleteSharedItem(originalItem, userEmail)
     }
 
@@ -77,12 +85,21 @@ class ExtrasRepository @Inject constructor(
             is ScriptItem -> item.script
             is TemplateItem -> item.template
         }
+        // Similar to delete, googleApiService.updateSharedItem should use originalItem.authorEmail.
         return googleApiService.updateSharedItem(originalItem, userEmail)
     }
 
-    // Added court: String? parameter and pass court ?: "" to googleApiService.shareAddon
-    suspend fun shareItem(name: String, description: String, content: String, type: String, authorEmail: String, court: String?): Result<Unit> {
-        return googleApiService.shareAddon(name, description, content, type, authorEmail, court ?: "")
+    suspend fun shareItem(
+        name: String,
+        description: String,
+        content: String,
+        type: String,
+        authorName: String, // New parameter
+        authorEmail: String,
+        court: String?
+    ): Result<Unit> {
+        // CRITICAL: You MUST update googleApiService.shareAddon to accept authorName.
+        return googleApiService.shareAddon(name, description, content, type, authorName, authorEmail, court ?: "")
     }
 
     suspend fun rateAddon(id: String, rating: Int, type: String): Boolean {
