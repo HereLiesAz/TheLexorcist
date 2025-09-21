@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 public class WhisperUtil {
+    public static final int MAX_DECODER_TOKENS = ;
     private static final String TAG = "WhisperUtil";
 
     public static final int WHISPER_SAMPLE_RATE = 16000;
@@ -114,7 +115,7 @@ public class WhisperUtil {
 
         // Add additional vocab ids
         int nVocabAdditional;
-        if (!multilingual) {
+        if (multilingual) {
             nVocabAdditional = vocab.nVocabEnglish;
         } else {
             nVocabAdditional = vocab.nVocabMultilingual;
@@ -271,10 +272,10 @@ public class WhisperUtil {
             float im = 0.0f;
             for (int n = 0; n < inSize; n++) {
                 float angle = (float) (2 * Math.PI * k * n / inSize);
-                re += input[n] * cos(angle);
-                im -= input[n] * sin(angle);
+                re += (float) (input[n] * cos(angle));
+                im -= (float) (input[n] * sin(angle));
             }
-            output[k * 2 + 0] = re;
+            output[k * 2] = re;
             output[k * 2 + 1] = im;
         }
     }
@@ -316,11 +317,11 @@ public class WhisperUtil {
             float theta = (float) (2 * Math.PI * k / inSize);
             float re = (float) cos(theta);
             float im = (float) -sin(theta);
-            float reOdd = oddFft[2 * k + 0];
+            float reOdd = oddFft[2 * k];
             float imOdd = oddFft[2 * k + 1];
-            output[2 * k + 0] = evenFft[2 * k + 0] + re * reOdd - im * imOdd;
+            output[2 * k] = evenFft[2 * k] + re * reOdd - im * imOdd;
             output[2 * k + 1] = evenFft[2 * k + 1] + re * imOdd + im * reOdd;
-            output[2 * (k + inSize / 2) + 0] = evenFft[2 * k + 0] - re * reOdd + im * imOdd;
+            output[2 * (k + inSize / 2)] = evenFft[2 * k] - re * reOdd + im * imOdd;
             output[2 * (k + inSize / 2) + 1] = evenFft[2 * k + 1] - re * imOdd - im * reOdd;
         }
     }

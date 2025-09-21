@@ -1,8 +1,8 @@
 package com.hereliesaz.lexorcist.service.nlp
 
 import android.content.Context
+import com.google.ai.edge.litert.Interpreter // Changed import
 import dagger.hilt.android.qualifiers.ApplicationContext
-import org.tensorflow.lite.Interpreter
 import java.io.FileInputStream
 import java.io.IOException
 import java.nio.ByteBuffer
@@ -24,17 +24,17 @@ import javax.inject.Singleton
 class LegalBertService @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
-    private var interpreter: Interpreter
-    private var tokenizer: LegalBertTokenizer
+    private lateinit var interpreter: com.google.ai.edge.litert.Interpreter
+    private lateinit var tokenizer: LegalBertTokenizer
 
     private val maxSeqLength = 128 // Standard sequence length for BERT models.
 
     init {
         try {
             tokenizer = LegalBertTokenizer(context)
-            interpreter = Interpreter(loadModelFile())
+            interpreter = com.google.ai.edge.litert.Interpreter(loadModelFile())
         } catch (e: IOException) {
-            // If the model or vocab can't be loaded, the app cannot perform a core function.
+            // If the model or vocab can\'t be loaded, the app cannot perform a core function.
             // Throwing an exception here will crash the app on startup, making the issue
             // immediately visible during development.
             throw IllegalStateException("Failed to initialize LegalBertService", e)
@@ -47,8 +47,8 @@ class LegalBertService @Inject constructor(
      * tasks like similarity comparison, classification, and clustering.
      *
      * @param text The input string to be embedded.
-     * @return A 768-element FloatArray representing the text's semantic embedding,
-     *         derived from the [CLS] token's output.
+     * @return A 768-element FloatArray representing the text\'s semantic embedding,
+     *         derived from the [CLS] token\'s output.
      */
     fun getEmbedding(text: String): FloatArray {
         // 1. Tokenize the input text using our custom tokenizer.
@@ -88,7 +88,7 @@ class LegalBertService @Inject constructor(
 
         // 5. Return the embedding for the [CLS] token. The embedding of this special token
         // at the beginning of the sequence is conventionally used as the aggregate
-        // representation of the entire sequence's meaning.
+        // representation of the entire sequence\'s meaning.
         return outputEmbeddings[0][0]
     }
 

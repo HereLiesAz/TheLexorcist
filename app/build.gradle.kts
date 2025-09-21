@@ -153,6 +153,7 @@ dependencies {
 
     // WorkManager Testing (version 2.10.4 matches your work-runtime-ktx)
     testImplementation(libs.androidx.work.testing)
+    implementation(libs.litert)
 
     // implementation("com.google.android.gms:play-services-tflite-java:16.4.0") // REMOVED to avoid conflict with litert
     // implementation("com.google.android.gms:play-services-tflite-support:16.4.0") // REMOVED to avoid conflict with litert

@@ -3,34 +3,31 @@ package com.hereliesaz.whisper.engine;
 import android.content.Context;
 import android.util.Log;
 
-//import com.google.android.gms.tflite.client.TfLiteInitializationOptions;
-//import com.google.android.gms.tflite.gpu.support.TfLiteGpu;
-//import com.google.android.gms.tflite.java.TfLite;
+import com.google.ai.edge.litert.LiteRuntime;
+import com.google.ai.edge.litert.InterpreterOptions;
+import com.google.ai.edge.litert.Interpreter;
+// It's possible delegate classes are also in com.google.ai.edge.lite, e.g., com.google.ai.edge.lite.delegates.GpuDelegate
+// For now, assuming InterpreterOptions handles delegate configuration internally if GPU dependency is added.
+
 import com.hereliesaz.whisper.utils.WaveUtil;
 import com.hereliesaz.whisper.utils.WhisperUtil;
-
-import org.tensorflow.lite.DataType;
-import org.tensorflow.lite.Interpreter;
-import org.tensorflow.lite.Tensor;
-//import org.tensorflow.lite.gpu.CompatibilityList;
-//import org.tensorflow.lite.gpu.GpuDelegate;
-//import org.tensorflow.lite.nnapi.NnApiDelegate;
-import org.tensorflow.lite.support.tensorbuffer.TensorBuffer;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
+import java.util.HashMap;
+import java.util.Map;
 
 public class WhisperEngineJava implements WhisperEngine {
     private final String TAG = "WhisperEngineJava";
     private final WhisperUtil mWhisperUtil = new WhisperUtil();
 
     private final Context mContext;
-    private boolean mIsInitialized = false;
+    private volatile boolean mIsInitialized = false;
+    private LiteRuntime mLiteRuntime = null;
     private Interpreter mInterpreter = null;
-//    private GpuDelegate gpuDelegate;
 
     public WhisperEngineJava(Context context) {
         mContext = context;
@@ -38,200 +35,234 @@ public class WhisperEngineJava implements WhisperEngine {
 
     @Override
     public boolean isInitialized() {
-        return mIsInitialized;
+        return mIsInitialized && mInterpreter != null;
     }
 
     @Override
-    public boolean initialize(String modelPath, String vocabPath, boolean multilingual) throws IOException {
-        // Load model
-        loadModel(modelPath);
-        Log.d(TAG, "Model is loaded..." + modelPath);
-
-        // Load filters and vocab
-        boolean ret = mWhisperUtil.loadFiltersAndVocab(multilingual, vocabPath);
-        if (ret) {
-            mIsInitialized = true;
-            Log.d(TAG, "Filters and Vocab are loaded..." + vocabPath);
-        } else {
-            mIsInitialized = false;
-            Log.d(TAG, "Failed to load Filters and Vocab...");
+    public boolean initialize(String modelPath, String vocabPath, boolean multilingual) {
+        mIsInitialized = false;
+        if (mLiteRuntime != null) {
+            Log.d(TAG, "LiteRuntime already initialized, re-initializing interpreter.");
+            // Proceed to load model and vocab with existing mLiteRuntime
+            try {
+                loadModelAndVocab(modelPath, vocabPath, multilingual);
+            } catch (IOException e) {
+                Log.e(TAG, "Failed to load model or vocab even with existing LiteRuntime.", e);
+                mIsInitialized = false;
+            }
+            return false; // Actual readiness depends on async loadModelAndVocab if it were async
         }
 
-        return mIsInitialized;
+        LiteRuntime.initialize(mContext)
+            .addOnSuccessListener(runtime -> {
+                Log.d(TAG, "LiteRuntime initialized successfully.");
+                mLiteRuntime = runtime;
+                try {
+                    loadModelAndVocab(modelPath, vocabPath, multilingual);
+                } catch (IOException e) {
+                    Log.e(TAG, "Failed to load model or vocab after LiteRuntime initialization.", e);
+                    mIsInitialized = false;
+                    // Consider de-initializing mLiteRuntime or cleaning up if partial failure
+                    if (mInterpreter != null) {
+                        mInterpreter.close();
+                        mInterpreter = null;
+                    }
+                     if (mLiteRuntime != null) {
+                        // mLiteRuntime itself doesn't have a close/deinitialize method in the typical examples
+                        // It's managed by the library or Play Services
+                    }
+                }
+            })
+            .addOnFailureListener(e -> {
+                Log.e(TAG, "LiteRuntime initialization failed.", e);
+                mLiteRuntime = null;
+                mIsInitialized = false;
+            });
+
+        return false; // Initialization is asynchronous
     }
 
-    // Unload the model by closing the interpreter
+    private void loadModelAndVocab(String modelPath, String vocabPath, boolean multilingual) throws IOException {
+        if (mLiteRuntime == null) {
+            throw new IOException("LiteRuntime is not initialized.");
+        }
+        loadModel(modelPath); // This will use mLiteRuntime to create the interpreter
+        Log.d(TAG, "Model is loaded: " + modelPath);
+
+        boolean vocabLoaded = mWhisperUtil.loadFiltersAndVocab(multilingual, vocabPath);
+        if (vocabLoaded && mInterpreter != null) {
+            mIsInitialized = true; // Fully initialized
+            Log.d(TAG, "Filters and Vocab are loaded: " + vocabPath);
+        } else {
+            mIsInitialized = false;
+            Log.e(TAG, "Failed to load Filters and Vocab, or interpreter is null.");
+            if (mInterpreter != null) {
+                mInterpreter.close();
+                mInterpreter = null;
+            }
+        }
+    }
+
+    private void loadModel(String modelPath) throws IOException {
+        if (mLiteRuntime == null) {
+            throw new IOException("LiteRuntime is not initialized, cannot load model.");
+        }
+        FileInputStream fileInputStream = null;
+        FileChannel fileChannel = null;
+        try {
+            fileInputStream = new FileInputStream(modelPath);
+            fileChannel = fileInputStream.getChannel();
+            long startOffset = 0;
+            long declaredLength = fileChannel.size();
+            ByteBuffer tfliteModel = fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength);
+
+            InterpreterOptions options = new InterpreterOptions();
+            options.setNumThreads(Runtime.getRuntime().availableProcessors());
+            // For GPU delegate with com.google.ai.edge.litert:litert-gpu:
+            // if (com.google.ai.edge.lite.delegates.GpuDelegateHelper.isGpuDelegateAvailable()) {
+            //     options.addDelegate(new com.google.ai.edge.lite.delegates.GpuDelegate());
+            // }
+            // The exact delegate mechanism might differ; check specific `com.google.ai.edge.lite` docs if GPU is needed.
+
+            mInterpreter = mLiteRuntime.createInterpreter(tfliteModel, options);
+        } finally {
+            if (fileChannel != null) {
+                try { fileChannel.close(); } catch (IOException e) { Log.e(TAG, "Failed to close FileChannel", e); }
+            }
+            if (fileInputStream != null) {
+                try { fileInputStream.close(); } catch (IOException e) { Log.e(TAG, "Failed to close FileInputStream", e); }
+            }
+        }
+    }
+
     @Override
     public void deinitialize() {
         if (mInterpreter != null) {
             mInterpreter.close();
-            mInterpreter = null; // Optional: Set to null to avoid accidental reuse
+            mInterpreter = null;
         }
+        // mLiteRuntime itself typically doesn't need explicit deinitialization from app code
+        // It's managed by the library / Play Services.
+        // mLiteRuntime = null; // Optionally nullify if you want to force re-init via initialize()
+        mIsInitialized = false;
+        Log.d(TAG, "WhisperEngine de-initialized.");
     }
 
     @Override
     public String transcribeFile(String wavePath) {
-        // Calculate Mel spectrogram
-        Log.d(TAG, "Calculating Mel spectrogram...");
+        if (!isInitialized()) {
+            Log.e(TAG, "Engine not initialized. Cannot transcribe.");
+            return "Error: Engine not initialized.";
+        }
+
+        Log.d(TAG, "Calculating Mel spectrogram for file: " + wavePath);
         float[] melSpectrogram = getMelSpectrogram(wavePath);
-        Log.d(TAG, "Mel spectrogram is calculated...!");
+        if (melSpectrogram == null) {
+            Log.e(TAG, "Mel spectrogram calculation failed.");
+            return "Error: Mel spectrogram calculation failed.";
+        }
+        Log.d(TAG, "Mel spectrogram calculated. Length: " + melSpectrogram.length);
 
-        // Perform inference
-        String result = runInference(melSpectrogram);
-        Log.d(TAG, "Inference is executed...!");
-
-        return result;
+        return runInference(melSpectrogram);
     }
 
     @Override
     public String transcribeBuffer(float[] samples) {
-        return null;
-    }
-
-    // Load TFLite model
-    private void loadModel(String modelPath) throws IOException {
-        FileInputStream fileInputStream = new FileInputStream(modelPath);
-        FileChannel fileChannel = fileInputStream.getChannel();
-        long startOffset = 0;
-        long declaredLength = fileChannel.size();
-        ByteBuffer tfliteModel = fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength);
-
-        // Set the number of threads for inference
-        Interpreter.Options options = new Interpreter.Options();
-        options.setNumThreads(Runtime.getRuntime().availableProcessors());
-//        options.setUseXNNPACK(true);
-
-//        boolean isNNAPI = true;
-//        if (isNNAPI) {
-//            // Initialize interpreter with NNAPI delegate for Android Pie or above
-//            NnApiDelegate nnapiDelegate = new NnApiDelegate();
-//            options.addDelegate(nnapiDelegate);
-////                    options.setUseNNAPI(false);
-//                    options.setAllowFp16PrecisionForFp32(true);
-//                    options.setAllowBufferHandleOutput(true);
-//            options.setUseNNAPI(true);
-//        }
-
-        // Check if GPU delegate is available asynchronously
-//        TfLiteGpu.isGpuDelegateAvailable(mContext).addOnCompleteListener(task -> {
-//            if (task.isSuccessful() && task.getResult()) {
-//                // GPU is available; initialize the interpreter with GPU delegate
-////                    GpuDelegate gpuDelegate = new GpuDelegate();
-////                    Interpreter.Options options = new Interpreter.Options().addDelegate(gpuDelegate);
-////                    tflite = new Interpreter(loadModelFile(), options);
-//                TfLite.initialize(mContext, TfLiteInitializationOptions.builder().setEnableGpuDelegateSupport(true).build());
-//                Log.d(TAG, "GPU is available; initialize the interpreter with GPU delegate........................");
-//            } else {
-//                // GPU is not available; fallback to CPU
-////                    tflite = new Interpreter(loadModelFile());
-////                    System.out.println("Initialized with CPU.");
-//                Log.d(TAG, "GPU is not available; fallback to CPU........................");
-//            }
-//        });
-
-//        boolean isGPU = true;
-//        if (isGPU) {
-//            gpuDelegate = new GpuDelegate();
-//            options.setPrecisionLossAllowed(true); // It seems that the default is true
-//            options.setInferencePreference(GpuDelegate.Options.INFERENCE_PREFERENCE_SUSTAINED_SPEED);
-//             .setPrecisionLossAllowed(true) // Allow FP16 precision for faster performance
-//                    .setInferencePreference(GpuDelegate.Options.INFERENCE_PREFERENCE_FAST_SINGLE_ANSWER);
-//            options.addDelegate(gpuDelegate);
-//        }
-
-        mInterpreter = new Interpreter(tfliteModel, options);
+        if (!isInitialized()) {
+            Log.e(TAG, "Engine not initialized. Cannot transcribe buffer.");
+            return "Error: Engine not initialized.";
+        }
+        Log.d(TAG, "Calculating Mel spectrogram for buffer...");
+        float[] melSpectrogram = mWhisperUtil.getMelSpectrogram(samples, samples.length, Runtime.getRuntime().availableProcessors());
+        if (melSpectrogram == null) {
+            Log.e(TAG, "Mel spectrogram calculation from buffer failed.");
+            return "Error: Mel spectrogram calculation failed (from buffer).";
+        }
+        Log.d(TAG, "Mel spectrogram from buffer calculated. Length: " + melSpectrogram.length);
+        return runInference(melSpectrogram);
     }
 
     private float[] getMelSpectrogram(String wavePath) {
-        // Get samples in PCM_FLOAT format
         float[] samples = WaveUtil.getSamples(wavePath);
-
+        if (samples == null) {
+            Log.e(TAG, "Failed to get samples from wave file: " + wavePath);
+            return null;
+        }
         int fixedInputSize = WhisperUtil.WHISPER_SAMPLE_RATE * WhisperUtil.WHISPER_CHUNK_SIZE;
         float[] inputSamples = new float[fixedInputSize];
         int copyLength = Math.min(samples.length, fixedInputSize);
         System.arraycopy(samples, 0, inputSamples, 0, copyLength);
-
         int cores = Runtime.getRuntime().availableProcessors();
         return mWhisperUtil.getMelSpectrogram(inputSamples, inputSamples.length, cores);
     }
 
-    private String runInference(float[] inputData) {
-        // Create input tensor
-        Tensor inputTensor = mInterpreter.getInputTensor(0);
-        TensorBuffer inputBuffer = TensorBuffer.createFixedSize(inputTensor.shape(), inputTensor.dataType());
-//        printTensorDump("Input Tensor Dump ===>", inputTensor);
-
-        // Create output tensor
-        Tensor outputTensor = mInterpreter.getOutputTensor(0);
-        TensorBuffer outputBuffer = TensorBuffer.createFixedSize(outputTensor.shape(), DataType.FLOAT32);
-//        printTensorDump("Output Tensor Dump ===>", outputTensor);
-
-        // Load input data
-        int inputSize = inputTensor.shape()[0] * inputTensor.shape()[1] * inputTensor.shape()[2] * Float.BYTES;
-        ByteBuffer inputBuf = ByteBuffer.allocateDirect(inputSize);
-        inputBuf.order(ByteOrder.nativeOrder());
-        for (float input : inputData) {
-            inputBuf.putFloat(input);
+    private String runInference(float[] melSpectrogramInput) {
+        if (mInterpreter == null) {
+            Log.e(TAG, "Interpreter is not initialized for inference.");
+            return "Error: Interpreter not initialized";
         }
 
-        // To test mel data as a input directly
-//        try {
-//            byte[] bytes = Files.readAllBytes(Paths.get("/data/user/0/com.example.tfliteaudio/files/mel_spectrogram.bin"));
-//            inputBuf = ByteBuffer.wrap(bytes);
-//        } catch (IOException e) {
-//            throw new RuntimeException(e);
-//        }
+        int inputSize = melSpectrogramInput.length * Float.BYTES;
+        ByteBuffer inputBuffer = ByteBuffer.allocateDirect(inputSize);
+        inputBuffer.order(ByteOrder.nativeOrder());
+        inputBuffer.rewind();
+        for (float val : melSpectrogramInput) {
+            inputBuffer.putFloat(val);
+        }
+        inputBuffer.rewind();
 
-        inputBuffer.loadBuffer(inputBuf);
+        Object[] inputsArray = new Object[1];
+        inputsArray[0] = inputBuffer;
 
-//        Log.d(TAG, "Before inference...");
-        // Run inference
-        mInterpreter.run(inputBuffer.getBuffer(), outputBuffer.getBuffer());
-//        Log.d(TAG, "After inference...");
+        final int MAX_OUTPUT_TOKENS = WhisperUtil.MAX_DECODER_TOKENS;
+        ByteBuffer outputByteBuffer = ByteBuffer.allocateDirect(1 * MAX_OUTPUT_TOKENS * Integer.BYTES);
+        outputByteBuffer.order(ByteOrder.nativeOrder());
+        outputByteBuffer.rewind();
 
-        // Retrieve the results
-        int outputLen = outputBuffer.getIntArray().length;
-        Log.d(TAG, "output_len: " + outputLen);
+        Map<Integer, Object> outputs = new HashMap<>();
+        outputs.put(0, outputByteBuffer);
+
+        try {
+            Log.d(TAG, "Running inference...");
+            mInterpreter.run(inputsArray, outputs);
+            Log.d(TAG, "Inference completed.");
+        } catch (Exception e) {
+            Log.e(TAG, "Error running inference", e);
+            return "Error: Inference execution failed";
+        }
+
+        outputByteBuffer.rewind();
         StringBuilder result = new StringBuilder();
-        for (int i = 0; i < outputLen; i++) {
-            int token = outputBuffer.getBuffer().getInt();
-            if (token == mWhisperUtil.getTokenEOT())
+        for (int i = 0; i < MAX_OUTPUT_TOKENS; i++) {
+            if (outputByteBuffer.remaining() < Integer.BYTES) {
+                Log.w(TAG, "Output buffer ended before MAX_OUTPUT_TOKENS at token " + i);
                 break;
+            }
+            int token = outputByteBuffer.getInt();
 
-            // Get word for token and Skip additional token
-            if (token < mWhisperUtil.getTokenEOT()) {
-                String word = mWhisperUtil.getWordFromToken(token);
-                //Log.d(TAG, "Adding token: " + token + ", word: " + word);
-                result.append(word);
+            if (token == mWhisperUtil.getTokenEOT()) {
+                Log.d(TAG, "EOT token encountered.");
+                break;
+            }
+            if (token < mWhisperUtil.getTokenSOT() || token > mWhisperUtil.getTokenNoSpeech()) { 
+                if (token < mWhisperUtil.getVocabSize()) { 
+                    String word = mWhisperUtil.getWordFromToken(token);
+                    result.append(word);
+                } else {
+                     Log.w(TAG, "Token out of expected vocab range (excluding EOT): " + token);
+                }
             } else {
-                if (token == mWhisperUtil.getTokenTranscribe())
-                    Log.d(TAG, "It is Transcription...");
-
-                if (token == mWhisperUtil.getTokenTranslate())
-                    Log.d(TAG, "It is Translation...");
-
-                String word = mWhisperUtil.getWordFromToken(token);
-                Log.d(TAG, "Skipping token: " + token + ", word: " + word);
+                String word = mWhisperUtil.getWordFromToken(token); 
+                if (token == mWhisperUtil.getTokenTranscribe()) {
+                    Log.d(TAG, "Special token: Transcribe (" + word + ")");
+                } else if (token == mWhisperUtil.getTokenTranslate()) {
+                    Log.d(TAG, "Special token: Translate (" + word + ")");
+                } else {
+                    Log.d(TAG, "Skipping special token: " + token + " (" + word + ")");
+                }
             }
         }
-
+        Log.d(TAG, "Transcription result: " + result.toString());
         return result.toString();
-    }
-
-    private void printTensorDump(String message, Tensor tensor) {
-        Log.d(TAG,"Output Tensor Dump ===>");
-        Log.d(TAG, "  shape.length: " + tensor.shape().length);
-        for (int i = 0; i < tensor.shape().length; i++)
-            Log.d(TAG, "    shape[" + i + "]: " + tensor.shape()[i]);
-        Log.d(TAG, "  dataType: " + tensor.dataType());
-        Log.d(TAG, "  name: " + tensor.name());
-        Log.d(TAG, "  numBytes: " + tensor.numBytes());
-        Log.d(TAG, "  index: " + tensor.index());
-        Log.d(TAG, "  numDimensions: " + tensor.numDimensions());
-        Log.d(TAG, "  numElements: " + tensor.numElements());
-        Log.d(TAG, "  shapeSignature.length: " + tensor.shapeSignature().length);
-        Log.d(TAG, "  quantizationParams.getScale: " + tensor.quantizationParams().getScale());
-        Log.d(TAG, "  quantizationParams.getZeroPoint: " + tensor.quantizationParams().getZeroPoint());
-        Log.d(TAG, "==================================================================");
     }
 }
