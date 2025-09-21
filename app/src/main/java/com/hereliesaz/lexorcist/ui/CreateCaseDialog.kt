@@ -137,11 +137,14 @@ fun CreateCaseDialog(
                         navController.navigate("cases")
                     }
                 },
-                text = stringResource(R.string.create)
+                content = { Text(stringResource(R.string.create)) } // Explicitly use content
             )
         },
         dismissButton = {
-            LexorcistOutlinedButton(onClick = onDismiss, text = stringResource(R.string.cancel))
+            LexorcistOutlinedButton(
+                onClick = onDismiss, 
+                content = { Text(stringResource(R.string.cancel)) } // Explicitly use content
+            )
         },
     )
 }

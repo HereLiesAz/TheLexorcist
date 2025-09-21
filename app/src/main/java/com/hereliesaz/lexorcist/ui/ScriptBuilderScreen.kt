@@ -58,19 +58,18 @@ import com.hereliesaz.lexorcist.utils.sendEmail
 import com.hereliesaz.lexorcist.viewmodel.ExtrasViewModel
 import com.hereliesaz.lexorcist.viewmodel.ScriptBuilderViewModel
 import java.util.Locale
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Card
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel // Updated import
-import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
+import androidx.compose.foundation.layout.FlowRow // Duplicated import removed in combined version
+// import androidx.compose.foundation.lazy.LazyColumn // Duplicated import removed
+// import androidx.compose.foundation.lazy.items // Duplicated import removed
+// import androidx.compose.material3.Card // Duplicated import removed
+// import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel // Duplicated import removed
+// import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton // Duplicated import removed
 
-@OptIn(ExperimentalMaterial3Api::class) // Removed ExperimentalMaterial3ExpressiveApi
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScriptBuilderScreen(
     viewModel: ScriptBuilderViewModel,
-    extrasViewModel: ExtrasViewModel = hiltViewModel(), // Added ExtrasViewModel
+    extrasViewModel: ExtrasViewModel = hiltViewModel(),
     navController: NavController
 ) {
     val scriptTitle by viewModel.scriptTitle.collectAsState()
@@ -78,7 +77,7 @@ fun ScriptBuilderScreen(
     val caseScripts by viewModel.caseScripts.collectAsState()
     val saveState by viewModel.saveState.collectAsState()
     val context = LocalContext.current
-    var showShareDialog by remember { mutableStateOf(false) } // Restored
+    var showShareDialog by remember { mutableStateOf(false) }
     var showRequestDialog by remember { mutableStateOf(false) }
 
     if (showRequestDialog) {
@@ -157,7 +156,6 @@ fun ScriptBuilderScreen(
                 }
                 LexorcistOutlinedButton(
                     onClick = { viewModel.openScriptSelectionDialog() },
-                    text = "Import Scripts...",
                     content = { Text("Import Scripts...") }
                 )
             }
@@ -186,7 +184,6 @@ fun ScriptBuilderScreen(
             Column(modifier = Modifier.weight(1f).fillMaxWidth()) {
                 SecondaryTabRow(
                     selectedTabIndex = tabIndex,
-                    // contentColor = MaterialTheme.colorScheme.primary,
                     indicator = {
                         TabRowDefaults.SecondaryIndicator(
                             Modifier.tabIndicatorOffset(tabIndex)
@@ -255,12 +252,10 @@ fun ScriptBuilderScreen(
             ) {
                 LexorcistOutlinedButton(
                     onClick = { showShareDialog = true },
-                    text = stringResource(R.string.share),
                     content = { Text(stringResource(R.string.share)) }
                 )
                 LexorcistOutlinedButton(
                     onClick = { viewModel.saveScript() },
-                    text = if (saveState is SaveState.Saving) "" else stringResource(R.string.save_script),
                     content = {
                         if (saveState is SaveState.Saving) {
                             CircularProgressIndicator(modifier = Modifier.size(24.dp))
@@ -285,15 +280,13 @@ fun ScriptBuilderScreen(
                         navController.navigate("share_addon_destination")
                         showShareDialog = false
                     },
-                    text = stringResource(R.string.share),
                     content = { Text(stringResource(R.string.share)) }
                 )
             },
             dismissButton = {
                 LexorcistOutlinedButton(
                     onClick = { showShareDialog = false }, 
-                    text = stringResource(R.string.cancel),
-                    content = { Text(stringResource(R.string.cancel)) } // Added content parameter
+                    content = { Text(stringResource(R.string.cancel)) }
                 )
             },
         )
@@ -357,14 +350,12 @@ fun ScriptSelectionDialog(
         confirmButton = {
             LexorcistOutlinedButton(
                 onClick = { onConfirm(selectedScripts.toList()) },
-                text = "Import",
                 content = { Text("Import") }
             )
         },
         dismissButton = {
             LexorcistOutlinedButton(
                 onClick = onDismiss,
-                text = "Cancel",
                 content = { Text("Cancel") }
             )
         }

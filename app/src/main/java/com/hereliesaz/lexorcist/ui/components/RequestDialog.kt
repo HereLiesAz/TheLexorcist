@@ -56,13 +56,13 @@ fun RequestDialog(
                 onClick = {
                     onSendRequest(name, email, request)
                 },
-                text = "Send"
+                content = { Text("Send") } // Corrected: Used content lambda
             )
         },
         dismissButton = {
             LexorcistOutlinedButton(
                 onClick = onDismissRequest,
-                text = "Cancel"
+                content = { Text("Cancel") } // Corrected: Used content lambda
             )
         }
     )
