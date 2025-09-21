@@ -4,6 +4,8 @@ import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi // Added
+import androidx.compose.foundation.layout.FlowRow // Corrected
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,7 +24,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.FlowRow
+// import androidx.compose.material3.FlowRow // Removed incorrect import
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -60,11 +62,11 @@ import com.hereliesaz.lexorcist.viewmodel.ExtrasViewModel
 import com.hereliesaz.lexorcist.viewmodel.ScriptBuilderViewModel
 import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class) // Removed ExperimentalMaterial3ExpressiveApi
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class) // Added ExperimentalLayoutApi
 @Composable
 fun ScriptBuilderScreen(
     viewModel: ScriptBuilderViewModel,
-    extrasViewModel: ExtrasViewModel = hiltViewModel(), // Added ExtrasViewModel
+    extrasViewModel: ExtrasViewModel = hiltViewModel(),
     navController: NavController
 ) {
     val scriptTitle by viewModel.scriptTitle.collectAsState()
@@ -73,7 +75,7 @@ fun ScriptBuilderScreen(
     val caseScripts by viewModel.caseScripts.collectAsState()
     val saveState by viewModel.saveState.collectAsState()
     val context = LocalContext.current
-    var showShareDialog by remember { mutableStateOf(false) } // Restored
+    var showShareDialog by remember { mutableStateOf(false) }
     var showRequestDialog by remember { mutableStateOf(false) }
 
     if (showRequestDialog) {
@@ -152,8 +154,7 @@ fun ScriptBuilderScreen(
                 }
                 LexorcistOutlinedButton(
                     onClick = { viewModel.openScriptSelectionDialog() },
-                    text = "Import Scripts...",
-                    content = { Text("Import Scripts...") }
+                    content = { Text("Import Scripts...") } // Standardized to use content
                 )
             }
 
@@ -181,7 +182,6 @@ fun ScriptBuilderScreen(
             Column(modifier = Modifier.weight(1f).fillMaxWidth()) {
                 SecondaryTabRow(
                     selectedTabIndex = tabIndex,
-                    // contentColor = MaterialTheme.colorScheme.primary,
                     indicator = {
                         TabRowDefaults.SecondaryIndicator(
                             Modifier.tabIndicatorOffset(tabIndex)
@@ -261,13 +261,11 @@ fun ScriptBuilderScreen(
                 )
                 LexorcistOutlinedButton(
                     onClick = { showShareDialog = true },
-                    text = stringResource(R.string.share),
-                    content = { Text(stringResource(R.string.share)) }
+                    content = { Text(stringResource(R.string.share)) } // Standardized to use content
                 )
                 LexorcistOutlinedButton(
                     onClick = { viewModel.saveScript() },
-                    text = if (saveState is SaveState.Saving) "" else stringResource(R.string.save_script),
-                    content = {
+                    content = { // Standardized to use content
                         if (saveState is SaveState.Saving) {
                             CircularProgressIndicator(modifier = Modifier.size(24.dp))
                         } else {
@@ -291,12 +289,14 @@ fun ScriptBuilderScreen(
                         navController.navigate("share_addon_destination")
                         showShareDialog = false
                     },
-                    text = stringResource(R.string.share),
-                    content = { Text(stringResource(R.string.share)) }
+                    content = { Text(stringResource(R.string.share)) } // Standardized to use content
                 )
             },
             dismissButton = {
-                LexorcistOutlinedButton(onClick = { showShareDialog = false }, text = stringResource(R.string.cancel))
+                LexorcistOutlinedButton(
+                    onClick = { showShareDialog = false },
+                    content = { Text(stringResource(R.string.cancel)) } // Standardized to use content
+                )
             },
         )
     }
@@ -359,15 +359,13 @@ fun ScriptSelectionDialog(
         confirmButton = {
             LexorcistOutlinedButton(
                 onClick = { onConfirm(selectedScripts.toList()) },
-                text = "Import",
-                content = { Text("Import") }
+                content = { Text("Import") } // Standardized to use content
             )
         },
         dismissButton = {
             LexorcistOutlinedButton(
                 onClick = onDismiss,
-                text = "Cancel",
-                content = { Text("Cancel") }
+                content = { Text("Cancel") } // Standardized to use content
             )
         }
     )
