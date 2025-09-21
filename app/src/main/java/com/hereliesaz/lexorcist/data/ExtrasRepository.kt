@@ -12,9 +12,17 @@ sealed interface SharedItem {
     val id: String
     val name: String
     val description: String
-    val author: String
     val content: String
+    val author: String
+    val type: String
     val rating: Double
+    val numRatings: Int
+    val court: String?
+
+    companion object {
+        fun from(script: Script): SharedItem = ScriptItem(script)
+        fun from(template: Template): SharedItem = TemplateItem(template)
+    }
 }
 
 data class ScriptItem(val script: Script) : SharedItem {
@@ -23,7 +31,10 @@ data class ScriptItem(val script: Script) : SharedItem {
     override val description: String get() = script.description
     override val author: String get() = script.author
     override val content: String get() = script.content
+    override val type: String = "Script"
     override val rating: Double get() = script.rating
+    override val numRatings: Int get() = script.numRatings
+    override val court: String? get() = script.court
 }
 
 data class TemplateItem(val template: Template) : SharedItem {
@@ -32,7 +43,10 @@ data class TemplateItem(val template: Template) : SharedItem {
     override val description: String get() = template.description
     override val author: String get() = template.author
     override val content: String get() = template.content
+    override val type: String = "Template"
     override val rating: Double get() = template.rating
+    override val numRatings: Int get() = template.numRatings
+    override val court: String? get() = template.court
 }
 
 @Singleton

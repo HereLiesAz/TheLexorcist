@@ -14,10 +14,24 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+import android.app.Application
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import com.hereliesaz.lexorcist.model.Script
+import com.hereliesaz.lexorcist.model.Template
+import java.io.IOException
+
 @HiltViewModel
 class ExtrasViewModel @Inject constructor(
-    private val extrasRepository: ExtrasRepository
+    private val extrasRepository: ExtrasRepository,
+    private val application: Application // Inject Application context
 ) : ViewModel() {
+
+    // Helper data class for parsing JSON
+    data class DefaultExtras(
+        val scripts: List<Script>,
+        val templates: List<Template>
+    )
 
     data class ExtrasUiState(
         val isLoading: Boolean = true,
@@ -46,6 +60,8 @@ class ExtrasViewModel @Inject constructor(
 
     init {
         observeSearchQuery()
+        // Load default items immediately
+        loadExtras(isUserLoggedIn = false)
     }
 
     fun setAuthSource(authSignInState: StateFlow<SignInState>) {
@@ -53,11 +69,8 @@ class ExtrasViewModel @Inject constructor(
             authSignInState.collect { signInState ->
                 val email = if (signInState is SignInState.Success) signInState.userInfo?.email else null
                 _uiState.value = _uiState.value.copy(currentUserEmail = email)
-                if (email != null) {
-                    loadSharedItems()
-                } else {
-                    _uiState.value = _uiState.value.copy(isLoading = false, items = emptyList(), error = "Please sign in to view extras.")
-                }
+                // Refresh extras, this time with user context for remote data
+                loadExtras(isUserLoggedIn = email != null)
             }
         }
     }
@@ -85,33 +98,56 @@ class ExtrasViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(searchQuery = query)
     }
 
-    fun loadSharedItems() {
+    private fun loadDefaultExtras(): List<SharedItem> {
+        return try {
+            val jsonString = application.assets.open("default_extras.json").bufferedReader().use { it.readText() }
+            val typeToken = object : TypeToken<DefaultExtras>() {}.type
+            val extras: DefaultExtras = Gson().fromJson(jsonString, typeToken)
+            val sharedItems = mutableListOf<SharedItem>()
+            sharedItems.addAll(extras.scripts.map { SharedItem.from(it) })
+            sharedItems.addAll(extras.templates.map { SharedItem.from(it) })
+            sharedItems
+        } catch (e: IOException) {
+            _uiState.value = _uiState.value.copy(error = "Failed to load default extras.")
+            emptyList()
+        }
+    }
+
+    fun loadExtras(isUserLoggedIn: Boolean) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
-            when (val result = extrasRepository.getSharedItems()) {
-                is Result.Success -> {
-                    _allItems.value = result.data
-                    val currentQuery = _uiState.value.searchQuery
-                    val filteredItems = if (currentQuery.isBlank()) {
-                        result.data
-                    } else {
-                        result.data.filter {
-                            it.name.contains(currentQuery, ignoreCase = true) ||
-                            it.description.contains(currentQuery, ignoreCase = true) ||
-                            it.author.contains(currentQuery, ignoreCase = true)
+            // Load local items first
+            val localItems = loadDefaultExtras()
+            _allItems.value = localItems
+            _uiState.value = _uiState.value.copy(items = localItems) // Immediately display local items
+
+            // If user is logged in, fetch remote items and merge
+            if (isUserLoggedIn) {
+                when (val result = extrasRepository.getSharedItems()) {
+                    is Result.Success -> {
+                        val remoteItems = result.data
+                        val mergedItems = localItems.toMutableList()
+                        val localItemNames = localItems.map { it.name }.toSet()
+                        // Add remote items that are not in the local list
+                        remoteItems.forEach { remoteItem ->
+                            if (!localItemNames.contains(remoteItem.name)) {
+                                mergedItems.add(remoteItem)
+                            }
                         }
+                        _allItems.value = mergedItems
+                        _uiState.value = _uiState.value.copy(isLoading = false, items = mergedItems, error = null)
                     }
-                    _uiState.value = _uiState.value.copy(isLoading = false, items = filteredItems, error = null)
+                    is Result.Error -> {
+                        // Failed to load remote items, but local items are still displayed.
+                        _uiState.value = _uiState.value.copy(isLoading = false, error = "Could not refresh extras from server.")
+                    }
+                    else -> {
+                        // Handle other cases if necessary, for now just stop loading
+                         _uiState.value = _uiState.value.copy(isLoading = false)
+                    }
                 }
-                is Result.Error -> {
-                    _uiState.value = _uiState.value.copy(isLoading = false, error = result.exception.message ?: "An unknown error occurred.")
-                }
-                is Result.UserRecoverableError -> {
-                    _uiState.value = _uiState.value.copy(isLoading = false, error = result.exception.message ?: "A user recoverable error occurred.")
-                }
-                is Result.Loading -> {
-                    _uiState.value = _uiState.value.copy(isLoading = true) // Keep isLoading true
-                }
+            } else {
+                 _uiState.value = _uiState.value.copy(isLoading = false)
             }
         }
     }
@@ -121,11 +157,11 @@ class ExtrasViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true) // Indicate loading state
             when (val result = extrasRepository.deleteSharedItem(item, userEmail)) {
-                is Result.Success -> loadSharedItems() // Refresh list on success, loadSharedItems will handle isLoading
+                is Result.Success -> loadExtras(isUserLoggedIn = true)
                 is Result.Error -> _uiState.value = _uiState.value.copy(isLoading = false, error = "Failed to delete item: ${result.exception.localizedMessage}")
                 is Result.UserRecoverableError -> _uiState.value = _uiState.value.copy(isLoading = false, error = "Failed to delete item: User recoverable error - ${result.exception.localizedMessage}")
                 is Result.Loading -> {
-                    // isLoading is already true, or will be set by loadSharedItems if success
+                    // isLoading is already true
                 }
             }
         }
@@ -142,7 +178,7 @@ class ExtrasViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(isLoading = true) // Indicate loading state
             when (extrasRepository.shareItem(name, description, content, type, authorEmail, court)) {
                 is Result.Success -> {
-                    loadSharedItems() // Refresh list after sharing, loadSharedItems will handle isLoading
+                    loadExtras(isUserLoggedIn = true)
                 }
                 is Result.Error -> {
                     _uiState.value = _uiState.value.copy(isLoading = false, error = "Failed to share item.")
@@ -176,7 +212,7 @@ class ExtrasViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(isLoading = true)
             val result = extrasRepository.rateAddon(id, rating, type)
             if (result) {
-                loadSharedItems() // loadSharedItems will set isLoading to false on completion/error
+                loadExtras(isUserLoggedIn = true)
             } else {
                 _uiState.value = _uiState.value.copy(isLoading = false, error = "Failed to rate item.")
             }
