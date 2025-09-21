@@ -58,7 +58,7 @@ import com.hereliesaz.lexorcist.viewmodel.ExtrasViewModel
 @OptIn(ExperimentalMaterial3Api::class) // Removed ExperimentalMaterial3ExpressiveApi
 @Composable
 fun ScriptBuilderScreen(
-    viewModel: ScriptBuilderViewModel,
+    viewModel: ScriptBuilderViewModel, 
     extrasViewModel: ExtrasViewModel = hiltViewModel(), // Added ExtrasViewModel
     navController: androidx.navigation.NavController
 ) {
@@ -102,10 +102,10 @@ fun ScriptBuilderScreen(
     ) { padding ->
         Column(
             modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .padding(8.dp),
+            Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(8.dp),
             horizontalAlignment = Alignment.End,
         ) {
             // Script Builder Section
@@ -176,10 +176,10 @@ fun ScriptBuilderScreen(
                     0 -> { // Description Tab
                         Column(
                             modifier =
-                                Modifier
-                                    .fillMaxSize()
-                                    .padding(16.dp)
-                                    .verticalScroll(rememberScrollState()),
+                            Modifier
+                                .fillMaxSize()
+                                .padding(16.dp)
+                                .verticalScroll(rememberScrollState()),
                             horizontalAlignment = Alignment.Start,
                             verticalArrangement = Arrangement.Top,
                         ) {
@@ -196,10 +196,10 @@ fun ScriptBuilderScreen(
                                 onValueChange = { viewModel.onScriptTextChanged(it) },
                                 label = { Text(stringResource(R.string.enter_your_script)) },
                                 modifier =
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .weight(1f)
-                                        .padding(horizontal = 16.dp),
+                                Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f)
+                                    .padding(horizontal = 16.dp),
                             )
                         }
                     }
@@ -239,27 +239,6 @@ fun ScriptBuilderScreen(
                 )
             }
         }
-    }
-
-    if (showShareDialog) {
-        AlertDialog(
-            onDismissRequest = { showShareDialog = false },
-            title = { Text(stringResource(R.string.share_script_title)) },
-            text = { Text(stringResource(R.string.share_script_confirmation)) },
-            confirmButton = {
-                LexorcistOutlinedButton(
-                    onClick = {
-                        extrasViewModel.prepareForSharing(scriptTitle, "Script", scriptText)
-                        navController.navigate("share_addon_destination")
-                        showShareDialog = false
-                    },
-                    text = stringResource(R.string.share)
-                )
-            },
-            dismissButton = {
-                LexorcistOutlinedButton(onClick = { showShareDialog = false }, text = stringResource(R.string.cancel))
-            },
-        )
     }
 
     if (showShareDialog) {
