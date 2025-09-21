@@ -22,7 +22,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.FlowRow
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -59,6 +58,13 @@ import com.hereliesaz.lexorcist.utils.sendEmail
 import com.hereliesaz.lexorcist.viewmodel.ExtrasViewModel
 import com.hereliesaz.lexorcist.viewmodel.ScriptBuilderViewModel
 import java.util.Locale
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Card
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel // Updated import
+import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
 
 @OptIn(ExperimentalMaterial3Api::class) // Removed ExperimentalMaterial3ExpressiveApi
 @Composable
@@ -284,7 +290,11 @@ fun ScriptBuilderScreen(
                 )
             },
             dismissButton = {
-                LexorcistOutlinedButton(onClick = { showShareDialog = false }, text = stringResource(R.string.cancel))
+                LexorcistOutlinedButton(
+                    onClick = { showShareDialog = false }, 
+                    text = stringResource(R.string.cancel),
+                    content = { Text(stringResource(R.string.cancel)) } // Added content parameter
+                )
             },
         )
     }
