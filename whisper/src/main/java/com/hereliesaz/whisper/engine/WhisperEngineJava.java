@@ -3,11 +3,9 @@ package com.hereliesaz.whisper.engine;
 import android.content.Context;
 import android.util.Log;
 
-import com.google.ai.edge.litert.LiteRuntime;
-import com.google.ai.edge.litert.InterpreterOptions;
-import com.google.ai.edge.litert.Interpreter;
-// It's possible delegate classes are also in com.google.ai.edge.lite, e.g., com.google.ai.edge.lite.delegates.GpuDelegate
-// For now, assuming InterpreterOptions handles delegate configuration internally if GPU dependency is added.
+// Standard TensorFlow Lite classes for Interpreter and its Options
+import org.tensorflow.lite.Interpreter;
+import org.tensorflow.lite.Interpreter.Options;
 
 import com.hereliesaz.whisper.utils.WaveUtil;
 import com.hereliesaz.whisper.utils.WhisperUtil;
@@ -24,10 +22,9 @@ public class WhisperEngineJava implements WhisperEngine {
     private final String TAG = "WhisperEngineJava";
     private final WhisperUtil mWhisperUtil = new WhisperUtil();
 
-    private final Context mContext;
-    private volatile boolean mIsInitialized = false;
-    private LiteRuntime mLiteRuntime = null;
-    private Interpreter mInterpreter = null;
+    private final Context mContext; // Keep context if needed for other things, like vocab loading path
+    private volatile boolean mIsFullyInitialized = false;   // Tracks if interpreter and vocab are ready
+    private Interpreter mInterpreter = null; // From org.tensorflow.lite.Interpreter
 
     public WhisperEngineJava(Context context) {
         mContext = context;
@@ -35,78 +32,42 @@ public class WhisperEngineJava implements WhisperEngine {
 
     @Override
     public boolean isInitialized() {
-        return mIsInitialized && mInterpreter != null;
+        return mIsFullyInitialized && mInterpreter != null;
     }
 
     @Override
     public boolean initialize(String modelPath, String vocabPath, boolean multilingual) {
-        mIsInitialized = false;
-        if (mLiteRuntime != null) {
-            Log.d(TAG, "LiteRuntime already initialized, re-initializing interpreter.");
-            // Proceed to load model and vocab with existing mLiteRuntime
-            try {
-                loadModelAndVocab(modelPath, vocabPath, multilingual);
-            } catch (IOException e) {
-                Log.e(TAG, "Failed to load model or vocab even with existing LiteRuntime.", e);
-                mIsInitialized = false;
-            }
-            return false; // Actual readiness depends on async loadModelAndVocab if it were async
-        }
+        mIsFullyInitialized = false;
+        Log.d(TAG, "Initializing WhisperEngine. Attempting to load model and vocab.");
 
-        LiteRuntime.initialize(mContext)
-            .addOnSuccessListener(runtime -> {
-                Log.d(TAG, "LiteRuntime initialized successfully.");
-                mLiteRuntime = runtime;
-                try {
-                    loadModelAndVocab(modelPath, vocabPath, multilingual);
-                } catch (IOException e) {
-                    Log.e(TAG, "Failed to load model or vocab after LiteRuntime initialization.", e);
-                    mIsInitialized = false;
-                    // Consider de-initializing mLiteRuntime or cleaning up if partial failure
-                    if (mInterpreter != null) {
-                        mInterpreter.close();
-                        mInterpreter = null;
-                    }
-                     if (mLiteRuntime != null) {
-                        // mLiteRuntime itself doesn't have a close/deinitialize method in the typical examples
-                        // It's managed by the library or Play Services
-                    }
+        try {
+            loadModel(modelPath); // This will create the org.tensorflow.lite.Interpreter
+            Log.d(TAG, "Model is loaded: " + modelPath);
+
+            boolean vocabLoaded = mWhisperUtil.loadFiltersAndVocab(multilingual, vocabPath);
+            if (vocabLoaded && mInterpreter != null) {
+                mIsFullyInitialized = true;
+                Log.d(TAG, "Filters and Vocab are loaded: " + vocabPath);
+            } else {
+                mIsFullyInitialized = false;
+                Log.e(TAG, "Failed to load Filters and Vocab, or interpreter became null.");
+                if (mInterpreter != null) {
+                    mInterpreter.close();
+                    mInterpreter = null;
                 }
-            })
-            .addOnFailureListener(e -> {
-                Log.e(TAG, "LiteRuntime initialization failed.", e);
-                mLiteRuntime = null;
-                mIsInitialized = false;
-            });
-
-        return false; // Initialization is asynchronous
-    }
-
-    private void loadModelAndVocab(String modelPath, String vocabPath, boolean multilingual) throws IOException {
-        if (mLiteRuntime == null) {
-            throw new IOException("LiteRuntime is not initialized.");
-        }
-        loadModel(modelPath); // This will use mLiteRuntime to create the interpreter
-        Log.d(TAG, "Model is loaded: " + modelPath);
-
-        boolean vocabLoaded = mWhisperUtil.loadFiltersAndVocab(multilingual, vocabPath);
-        if (vocabLoaded && mInterpreter != null) {
-            mIsInitialized = true; // Fully initialized
-            Log.d(TAG, "Filters and Vocab are loaded: " + vocabPath);
-        } else {
-            mIsInitialized = false;
-            Log.e(TAG, "Failed to load Filters and Vocab, or interpreter is null.");
+            }
+        } catch (IOException e) {
+            Log.e(TAG, "Failed to load model or vocab.", e);
+            mIsFullyInitialized = false;
             if (mInterpreter != null) {
                 mInterpreter.close();
                 mInterpreter = null;
             }
         }
+        return mIsFullyInitialized;
     }
 
     private void loadModel(String modelPath) throws IOException {
-        if (mLiteRuntime == null) {
-            throw new IOException("LiteRuntime is not initialized, cannot load model.");
-        }
         FileInputStream fileInputStream = null;
         FileChannel fileChannel = null;
         try {
@@ -116,15 +77,10 @@ public class WhisperEngineJava implements WhisperEngine {
             long declaredLength = fileChannel.size();
             ByteBuffer tfliteModel = fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength);
 
-            InterpreterOptions options = new InterpreterOptions();
+            Options options = new Options(); // org.tensorflow.lite.Interpreter.Options
             options.setNumThreads(Runtime.getRuntime().availableProcessors());
-            // For GPU delegate with com.google.ai.edge.litert:litert-gpu:
-            // if (com.google.ai.edge.lite.delegates.GpuDelegateHelper.isGpuDelegateAvailable()) {
-            //     options.addDelegate(new com.google.ai.edge.lite.delegates.GpuDelegate());
-            // }
-            // The exact delegate mechanism might differ; check specific `com.google.ai.edge.lite` docs if GPU is needed.
+            mInterpreter = new Interpreter(tfliteModel, options); // org.tensorflow.lite.Interpreter
 
-            mInterpreter = mLiteRuntime.createInterpreter(tfliteModel, options);
         } finally {
             if (fileChannel != null) {
                 try { fileChannel.close(); } catch (IOException e) { Log.e(TAG, "Failed to close FileChannel", e); }
@@ -141,10 +97,7 @@ public class WhisperEngineJava implements WhisperEngine {
             mInterpreter.close();
             mInterpreter = null;
         }
-        // mLiteRuntime itself typically doesn't need explicit deinitialization from app code
-        // It's managed by the library / Play Services.
-        // mLiteRuntime = null; // Optionally nullify if you want to force re-init via initialize()
-        mIsInitialized = false;
+        mIsFullyInitialized = false;
         Log.d(TAG, "WhisperEngine de-initialized.");
     }
 
@@ -154,15 +107,11 @@ public class WhisperEngineJava implements WhisperEngine {
             Log.e(TAG, "Engine not initialized. Cannot transcribe.");
             return "Error: Engine not initialized.";
         }
-
-        Log.d(TAG, "Calculating Mel spectrogram for file: " + wavePath);
         float[] melSpectrogram = getMelSpectrogram(wavePath);
         if (melSpectrogram == null) {
             Log.e(TAG, "Mel spectrogram calculation failed.");
             return "Error: Mel spectrogram calculation failed.";
         }
-        Log.d(TAG, "Mel spectrogram calculated. Length: " + melSpectrogram.length);
-
         return runInference(melSpectrogram);
     }
 
@@ -172,13 +121,11 @@ public class WhisperEngineJava implements WhisperEngine {
             Log.e(TAG, "Engine not initialized. Cannot transcribe buffer.");
             return "Error: Engine not initialized.";
         }
-        Log.d(TAG, "Calculating Mel spectrogram for buffer...");
         float[] melSpectrogram = mWhisperUtil.getMelSpectrogram(samples, samples.length, Runtime.getRuntime().availableProcessors());
         if (melSpectrogram == null) {
             Log.e(TAG, "Mel spectrogram calculation from buffer failed.");
             return "Error: Mel spectrogram calculation failed (from buffer).";
         }
-        Log.d(TAG, "Mel spectrogram from buffer calculated. Length: " + melSpectrogram.length);
         return runInference(melSpectrogram);
     }
 
@@ -202,29 +149,21 @@ public class WhisperEngineJava implements WhisperEngine {
             return "Error: Interpreter not initialized";
         }
 
-        int inputSize = melSpectrogramInput.length * Float.BYTES;
-        ByteBuffer inputBuffer = ByteBuffer.allocateDirect(inputSize);
+        ByteBuffer inputBuffer = ByteBuffer.allocateDirect(melSpectrogramInput.length * Float.BYTES);
         inputBuffer.order(ByteOrder.nativeOrder());
-        inputBuffer.rewind();
-        for (float val : melSpectrogramInput) {
-            inputBuffer.putFloat(val);
-        }
-        inputBuffer.rewind();
+        inputBuffer.asFloatBuffer().put(melSpectrogramInput);
 
-        Object[] inputsArray = new Object[1];
-        inputsArray[0] = inputBuffer;
+        Object[] inputsArray = {inputBuffer};
 
-        final int MAX_OUTPUT_TOKENS = WhisperUtil.MAX_DECODER_TOKENS;
-        ByteBuffer outputByteBuffer = ByteBuffer.allocateDirect(1 * MAX_OUTPUT_TOKENS * Integer.BYTES);
+        ByteBuffer outputByteBuffer = ByteBuffer.allocateDirect(WhisperUtil.MAX_DECODER_TOKENS * Integer.BYTES);
         outputByteBuffer.order(ByteOrder.nativeOrder());
-        outputByteBuffer.rewind();
 
         Map<Integer, Object> outputs = new HashMap<>();
         outputs.put(0, outputByteBuffer);
 
         try {
             Log.d(TAG, "Running inference...");
-            mInterpreter.run(inputsArray, outputs);
+            mInterpreter.runForMultipleInputsOutputs(inputsArray, outputs);
             Log.d(TAG, "Inference completed.");
         } catch (Exception e) {
             Log.e(TAG, "Error running inference", e);
@@ -233,7 +172,7 @@ public class WhisperEngineJava implements WhisperEngine {
 
         outputByteBuffer.rewind();
         StringBuilder result = new StringBuilder();
-        for (int i = 0; i < MAX_OUTPUT_TOKENS; i++) {
+        for (int i = 0; i < WhisperUtil.MAX_DECODER_TOKENS; i++) {
             if (outputByteBuffer.remaining() < Integer.BYTES) {
                 Log.w(TAG, "Output buffer ended before MAX_OUTPUT_TOKENS at token " + i);
                 break;
@@ -244,21 +183,32 @@ public class WhisperEngineJava implements WhisperEngine {
                 Log.d(TAG, "EOT token encountered.");
                 break;
             }
-            if (token < mWhisperUtil.getTokenSOT() || token > mWhisperUtil.getTokenNoSpeech()) { 
+
+            // Check if the token is a special token (SOT, PREV, NOT, etc.) or out of vocab range
+            if (token < mWhisperUtil.getTokenSOT() || token > mWhisperUtil.getTokenNoSpeech()) {
+                // Check if it's a valid vocabulary token before attempting to get the word
                 if (token < mWhisperUtil.getVocabSize()) { 
                     String word = mWhisperUtil.getWordFromToken(token);
-                    result.append(word);
+                    if (word != null) {
+                        result.append(word);
+                    } else {
+                        Log.w(TAG, "Null word for token (within vocab size but not found): " + token);
+                    }
                 } else {
-                     Log.w(TAG, "Token out of expected vocab range (excluding EOT): " + token);
+                    // Token is outside the normal vocabulary range (and not EOT)
+                    Log.w(TAG, "Token out of expected vocab range (and not EOT): " + token);
                 }
-            } else {
-                String word = mWhisperUtil.getWordFromToken(token); 
+            } else { // This 'else' covers SOT, TRANSCRIBE, TRANSLATE, and other special tokens within that range
+                String word = mWhisperUtil.getWordFromToken(token);
                 if (token == mWhisperUtil.getTokenTranscribe()) {
-                    Log.d(TAG, "Special token: Transcribe (" + word + ")");
+                    Log.d(TAG, "Special token: Transcribe (" + (word != null ? word : "null_word") + ")");
                 } else if (token == mWhisperUtil.getTokenTranslate()) {
-                    Log.d(TAG, "Special token: Translate (" + word + ")");
+                    Log.d(TAG, "Special token: Translate (" + (word != null ? word : "null_word") + ")");
+                } else if (token >= mWhisperUtil.getTokenSOT() && token <= mWhisperUtil.getTokenBEG()){
+                     Log.d(TAG, "Skipping other special token: " + token + " (" + (word != null ? word : "null_word") + ")");
                 } else {
-                    Log.d(TAG, "Skipping special token: " + token + " (" + word + ")");
+                    // This case should ideally not be hit if the above conditions are exhaustive for special tokens
+                    Log.w(TAG, "Unhandled token case in special token block: " + token + " (" + (word != null ? word : "null_word") + ")");
                 }
             }
         }

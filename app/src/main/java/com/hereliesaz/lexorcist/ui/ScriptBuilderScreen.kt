@@ -1,4 +1,5 @@
-
+package com.hereliesaz.lexorcist.ui
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,7 +16,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator // Added back
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FlowRow
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -48,11 +48,13 @@ import com.hereliesaz.lexorcist.viewmodel.ScriptBuilderViewModel
 import java.util.Locale
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel // Updated import
 import com.hereliesaz.lexorcist.model.Script
+import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
 import com.hereliesaz.lexorcist.viewmodel.ExtrasViewModel
 
 @OptIn(ExperimentalMaterial3Api::class) // Removed ExperimentalMaterial3ExpressiveApi
@@ -262,7 +264,11 @@ fun ScriptBuilderScreen(
                 )
             },
             dismissButton = {
-                LexorcistOutlinedButton(onClick = { showShareDialog = false }, text = stringResource(R.string.cancel))
+                LexorcistOutlinedButton(
+                    onClick = { showShareDialog = false }, 
+                    text = stringResource(R.string.cancel),
+                    content = { Text(stringResource(R.string.cancel)) } // Added content parameter
+                )
             },
         )
     }

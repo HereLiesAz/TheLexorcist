@@ -37,8 +37,15 @@ android {
 dependencies {
     implementation("androidx.appcompat:appcompat:1.7.1")
     implementation("com.google.android.material:material:1.13.0")
-    implementation("com.google.ai.edge.litert:litert:2.0.2")
-    implementation(libs.litert.api) // Changed to api
+
+    // Core litert library for runtime management
+    implementation("com.google.ai.edge.litert:litert:2.0.2") // This is libs.litert
+
+    // Standard TensorFlow Lite libraries - aligning with app module's version 2.14.0
+    implementation("org.tensorflow:tensorflow-lite-api:2.14.0")
+    implementation("org.tensorflow:tensorflow-lite:2.14.0")
+    // implementation("org.tensorflow:tensorflow-lite-gpu:2.14.0") // Add if you plan to use GPU delegate directly via TFLite APIs
+
 }
 
 kotlin {

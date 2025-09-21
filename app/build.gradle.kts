@@ -140,27 +140,23 @@ dependencies {
 
     // Core testing dependencies
     testImplementation(libs.junit) // JUnit 4
-    // testImplementation(libs.junit.jupiter.api) // For JUnit 5 (Jupiter), if you use it. Remove if only JUnit 4.
-    // testRuntimeOnly(libs.junit.jupiter.engine) // For JUnit 5 (Jupiter), if you use it. Remove if only JUnit 4.
-    
-    // REMOVE MockK if using Mockito-Kotlin as primary
-    // testImplementation(libs.mockk.android) 
-
-    // Mockito Core and Mockito-Kotlin
     testImplementation(libs.mockito.core)
     testImplementation(libs.kotlin.mockito.kotlin)
     testImplementation(libs.mockito.inline) // ADDED for static mocking
 
     // WorkManager Testing (version 2.10.4 matches your work-runtime-ktx)
     testImplementation(libs.androidx.work.testing)
-    implementation(libs.litert)
+    
+    // TensorFlow Lite / AI Edge Runtime
+    implementation(libs.litert) // com.google.ai.edge.litert:litert:2.0.2 (for runtime mgmt)
+    implementation("org.tensorflow:tensorflow-lite:${libs.versions.tensorflowLite.get()}")
+    implementation("org.tensorflow:tensorflow-lite-api:${libs.versions.tensorflowLite.get()}")
+    // REMOVED: implementation("com.google.android.gms:play-services-tflite-java:16.4.0")
+    // REMOVED: implementation("com.google.android.gms:play-services-tflite-support:16.4.0")
 
-    // implementation("com.google.android.gms:play-services-tflite-java:16.4.0") // REMOVED to avoid conflict with litert
-    // implementation("com.google.android.gms:play-services-tflite-support:16.4.0") // REMOVED to avoid conflict with litert
     testImplementation(libs.androidx.arch.core.testing) // For InstantTaskExecutorRule
     testImplementation(libs.kotlinx.coroutines.test) // For coroutines testing (runTest, TestDispatchers)
     testImplementation(libs.turbine) // For testing Kotlin Flows
-    // testImplementation(libs.kotlin.test.junit) // Standard Kotlin test assertions, can be kept
     testImplementation(libs.mockwebserver) // For MockWebServer
 
     // AndroidX Test dependencies (androidTest)
@@ -177,7 +173,6 @@ dependencies {
     }
     implementation(libs.play.services.base) // Added
 
-
     // Gson
     implementation(libs.google.code.gson)
 
@@ -190,7 +185,6 @@ dependencies {
     implementation(libs.androidx.compose.runtime.livedata)
 
     // Jetpack Compose
-
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.runtime)
@@ -213,8 +207,6 @@ dependencies {
     implementation(libs.apache.poi)
     implementation(libs.apache.poi.ooxml)
     implementation(libs.apache.poi.scratchpad)
-
-    // Google Sign-In (using the new Identity Services API)
 
     // Google APIs
     implementation(libs.google.api.client)
@@ -242,18 +234,11 @@ dependencies {
 
     // Dropbox SDK
     implementation(libs.dropbox.core.sdk)
-
-
-    // Dropbox SDK
-    implementation(libs.dropbox.core.sdk)
     implementation(libs.dropbox.android.sdk)
 
     // Microsoft Graph SDK for OneDrive
     implementation(libs.microsoft.graph.core)
     implementation(libs.microsoft.graph)
-
-    implementation(libs.microsoft.graph)
-    implementation(libs.msal)
 
     // Hilt
     implementation(libs.google.dagger.hilt.android)
@@ -268,7 +253,6 @@ dependencies {
 
     // Jetpack DataStore
     implementation("androidx.datastore:datastore-preferences:1.1.1")
-
     // Room IS NOT ALLOWED IN THIS PROJECT!!!!!
 
     // Vosk for on-device speech-to-text
@@ -279,7 +263,6 @@ dependencies {
     // Explicit gRPC dependencies with consistent versions
     implementation(libs.grpc.okhttp)
     implementation(libs.grpc.core)
-    // implementation(libs.grpc.protobuf.lite)
     implementation(libs.grpc.context)
 
     implementation(libs.aznavrail)

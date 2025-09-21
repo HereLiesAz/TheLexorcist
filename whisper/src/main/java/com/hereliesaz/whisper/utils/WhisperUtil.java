@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 public class WhisperUtil {
-    public static final int MAX_DECODER_TOKENS = ;
+    public static final int MAX_DECODER_TOKENS = 448;
     private static final String TAG = "WhisperUtil";
 
     public static final int WHISPER_SAMPLE_RATE = 16000;
@@ -63,6 +63,16 @@ public class WhisperUtil {
 
     public int getTokenBEG() {
         return vocab.tokenBEG;
+    }
+
+    // Added for WhisperEngineJava
+    public int getTokenNoSpeech() {
+        return vocab.tokenNOT; // Assuming tokenNOT is the intended "no speech" token
+    }
+
+    // Added for WhisperEngineJava
+    public int getVocabSize() {
+        return vocab.tokenToWord.size();
     }
 
     public String getWordFromToken(int token) {

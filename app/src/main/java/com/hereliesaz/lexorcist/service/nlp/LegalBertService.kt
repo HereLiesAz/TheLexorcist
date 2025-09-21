@@ -1,7 +1,7 @@
 package com.hereliesaz.lexorcist.service.nlp
 
 import android.content.Context
-import com.google.ai.edge.litert.Interpreter // Changed import
+import org.tensorflow.lite.Interpreter // Changed import
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.FileInputStream
 import java.io.IOException
@@ -24,7 +24,7 @@ import javax.inject.Singleton
 class LegalBertService @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
-    private lateinit var interpreter: com.google.ai.edge.litert.Interpreter
+    private lateinit var interpreter: Interpreter // Changed type to org.tensorflow.lite.Interpreter
     private lateinit var tokenizer: LegalBertTokenizer
 
     private val maxSeqLength = 128 // Standard sequence length for BERT models.
@@ -32,7 +32,8 @@ class LegalBertService @Inject constructor(
     init {
         try {
             tokenizer = LegalBertTokenizer(context)
-            interpreter = com.google.ai.edge.litert.Interpreter(loadModelFile())
+            // Changed instantiation to use org.tensorflow.lite.Interpreter
+            interpreter = Interpreter(loadModelFile())
         } catch (e: IOException) {
             // If the model or vocab can\'t be loaded, the app cannot perform a core function.
             // Throwing an exception here will crash the app on startup, making the issue
