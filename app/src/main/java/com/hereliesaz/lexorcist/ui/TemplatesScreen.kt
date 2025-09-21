@@ -16,8 +16,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -44,6 +48,8 @@ import com.google.gson.Gson
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.model.SignInState
 import com.hereliesaz.lexorcist.model.Template
+import com.hereliesaz.lexorcist.ui.components.RequestDialog
+import com.hereliesaz.lexorcist.utils.sendEmail
 import com.hereliesaz.lexorcist.viewmodel.AddonsBrowserViewModel
 import com.hereliesaz.lexorcist.viewmodel.AuthViewModel // Added import
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel // Added import
@@ -76,6 +82,18 @@ fun TemplatesScreen(
     val templatesFile = File(context.filesDir, "templates.json")
     val court by caseViewModel.court.collectAsState() // Assuming 'court' is a public StateFlow in CaseViewModel
     val signInState by authViewModel.signInState.collectAsState() // Collect signInState
+    var showRequestDialog by remember { mutableStateOf(false) }
+
+    if (showRequestDialog) {
+        RequestDialog(
+            onDismissRequest = { showRequestDialog = false },
+            onSendRequest = { name, email, request ->
+                val body = "Name: $name\nEmail: $email\nRequest: $request"
+                sendEmail(context, "hereliesaz@gmail.com", "Templates Request", body)
+                showRequestDialog = false
+            }
+        )
+    }
 
     fun saveTemplates(updatedTemplates: List<Template>) {
         val json = Gson().toJson(updatedTemplates)
@@ -183,6 +201,11 @@ fun TemplatesScreen(
                 ),
             )
         },
+        floatingActionButton = {
+            FloatingActionButton(onClick = { showRequestDialog = true }) {
+                Icon(Icons.Default.Add, contentDescription = "Make a request")
+            }
+        }
     ) { padding ->
         Column(modifier = Modifier.padding(padding).padding(16.dp), horizontalAlignment = Alignment.End) {
             Text(
