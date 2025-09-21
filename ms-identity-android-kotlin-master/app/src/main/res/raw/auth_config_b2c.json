@@ -1,0 +1,21 @@
+{
+  "client_id" : "94731625-3428-4175-af76-f944b07e4470",
+  "redirect_uri" : "msauth://com.azuresamples.msalandroidkotlinapp/l34Oa1n4x64E1f9Mh7r04i2RABg%3D",
+  "account_mode" : "MULTIPLE",
+  "broker_redirect_uri_registered": true,
+  "authorities": [
+    {
+      "type": "B2C",
+      "authority_url": "https://example.b2clogin.com/tfp/tenant/policy",
+      "default": true
+    },
+    {
+      "type": "B2C",
+      "authority_url": "https://example.b2clogin.com/tfp/tenant/policy"
+    },
+    {
+      "type": "B2C",
+      "authority_url": "https://example.b2clogin.com/tfp/tenant/policy"
+    }
+  ]
+}

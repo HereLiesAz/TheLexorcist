@@ -1,0 +1,16 @@
+{
+  "client_id" : "94731625-3428-4175-af76-f944b07e4470",
+  "authorization_user_agent" : "WEBVIEW",
+  "redirect_uri" : "msauth://com.azuresamples.msalandroidkotlinapp/l34Oa1n4x64E1f9Mh7r04i2RABg%3D",
+  "account_mode" : "SINGLE",
+  "broker_redirect_uri_registered": true,
+  "authorities" : [
+    {
+      "type": "AAD",
+      "audience": {
+        "type": "AzureADandPersonalMicrosoftAccount",
+        "tenant_id": "common"
+      }
+    }
+  ]
+}
