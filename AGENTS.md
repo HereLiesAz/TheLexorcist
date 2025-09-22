@@ -29,7 +29,8 @@ The file google-services.template.json located at the root of the /app/ folder s
 ### UI and UX
 
 1. Except for the AzNavRail, all components on every screen (text boxes, not text) need to be right aligned.
-2. All buttons need to be transparent with a stroke the color of the theme. Text inside the buttons should be that same color. 
+2. All buttons should be AzButtons, imported from the com.hereliesaz.AzNavRail library. If you find a button (or a toggle, or a small list of options) that is not an AzButton (or AzToggle, or AzCycler), notify the developer immediately. It MUST be changed.  
+3. When it comes to the DSL-style AzNavRail library, NEVER, NEVER, NEVER, i.e., do NOT fucking EVER guess how it works. Read the goddamned documentation, and FOLLOW THE INSTRUCTIONS, you lazy piece of shit.  https://github.com/HereLiesAz/AzNavRail
 3. All changes should be saved immediately and automatically to the case's folder. The folder must be saved and syncronized onto Google Drive often, but synchronization must always be attempted when the app is closed. That means the app will need to be explicit about being closed.
 4. When the user selects a photo, audio, or video file as evidence, text from the image/audio should be automatically parsed and formatted with markdown code, and saved.
 5. All raw evidence files should be copied into a raw evidence folder.
@@ -49,7 +50,7 @@ The file google-services.template.json located at the root of the /app/ folder s
 19. The Review screen must provide a functioning button to initiate an automatic evidence cleanup. This should be as automatic as possible, but must be possible to do manually as well. For example, if someone takes a series of screenshots to capture the entirety of a conversation, you wouldn't submit each screenshot as a separate piece of evidence. These need to be combined as a single piece of evidence. Another issue for auto cleaning is duplicate evidence files and repeated text.
 20. Once cleaned up, Evidence must then be collected into exhibits. These are thematic groupings to prove at least one of the required qualifications of an allegation. This does mean we must maintain a database of how to legally support each specific allegation.
 21. The Review screen is also where the user generates documents and files. The "Paperwork" button generates all the documents needed for the Case's exhibits using the templates the user loaded or created on the Templates screen. The "Finalize" button is a .zip generator that brings up a dialog for the user to choose what all in the Case folder should be included in the .zip file. At the bottom of the dialog, the user can choose to generate into the .zip or the .lex format (which is really just a .zip file with the extension changed to .lex, but is the file type that The Lexorcist immediately recognizes as a Case file/archive/backup to be imported on the Cases screen).
-22. 
+22. This app must implement 
 
 
 ---
