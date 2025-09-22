@@ -28,5 +28,7 @@ data class Evidence(
     val videoOcrText: String? = null,
     val duration: Long? = null,
     val metadata: Map<String, String> = emptyMap(),
-    val fileSize: Long = 0L
+    val fileSize: Long = 0L,
+    val fileHash: String? = null,
+    val isDuplicate: Boolean = false
 ) : Parcelable

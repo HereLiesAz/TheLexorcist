@@ -118,6 +118,7 @@ class VideoProcessingService @Inject constructor(
 
         val videoOcrText = ocrTextBuilder.toString().trim()
         val combinedContent = "Audio Transcript:\n${audioTranscript}\n\nOCR from Frames:\n${if (videoOcrText.isNotEmpty()) videoOcrText else "No text extracted from frames."}"
+        val fileHash = com.hereliesaz.lexorcist.utils.HashingUtils.getHash(context, videoUri)
 
         var videoEvidence =
             Evidence(
@@ -139,7 +140,8 @@ class VideoProcessingService @Inject constructor(
                 entities = com.hereliesaz.lexorcist.DataParser.tagData(combinedContent),
                 audioTranscript = audioTranscript,
                 videoOcrText = videoOcrText.ifEmpty { null },
-                duration = metadata?.duration
+                duration = metadata?.duration,
+                fileHash = fileHash
             )
         val script = settingsManager.getScript()
         if (script.isNotBlank()) {

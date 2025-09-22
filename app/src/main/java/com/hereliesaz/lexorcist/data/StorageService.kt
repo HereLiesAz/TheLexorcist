@@ -34,6 +34,12 @@ interface StorageService {
 
     suspend fun updateTranscript(evidence: Evidence, newTranscript: String, reason: String): Result<Unit>
 
+    // --- Exhibit Management ---
+    suspend fun getExhibitsForCase(caseSpreadsheetId: String): Result<List<Exhibit>>
+    suspend fun addExhibit(caseSpreadsheetId: String, exhibit: Exhibit): Result<Exhibit>
+    suspend fun updateExhibit(caseSpreadsheetId: String, exhibit: Exhibit): Result<Unit>
+    suspend fun deleteExhibit(caseSpreadsheetId: String, exhibit: Exhibit): Result<Unit>
+
     // --- Synchronization ---
 
     suspend fun synchronize(): Result<Unit>

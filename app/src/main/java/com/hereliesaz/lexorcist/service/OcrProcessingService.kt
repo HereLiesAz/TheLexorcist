@@ -122,6 +122,7 @@ class OcrProcessingService
                     ?: DataParser.parseDates(ocrText).firstOrNull()
                     ?: System.currentTimeMillis()
 
+            val fileHash = com.hereliesaz.lexorcist.utils.HashingUtils.getHash(context, uri)
             var newEvidence =
                 Evidence(
                     id = 0,
@@ -140,6 +141,7 @@ class OcrProcessingService
                     commentary = null,
                     parentVideoId = parentVideoId,
                     entities = entities,
+                    fileHash = fileHash
                 )
 
             val script = settingsManager.getScript()
@@ -240,6 +242,7 @@ class OcrProcessingService
                     val metadata = ExifUtils.getExifData(context, newUri)
                     val fileSize = ExifUtils.getFileSize(context, newUri)
                     logService.addLog("Determined document date: $documentDate")
+                    val fileHash = com.hereliesaz.lexorcist.utils.HashingUtils.getHash(context, newUri)
 
                     var newEvidence =
                         Evidence(
@@ -261,6 +264,7 @@ class OcrProcessingService
                             commentary = null,
                             parentVideoId = null,
                             entities = entities,
+                            fileHash = fileHash,
                         )
 
                     val script = settingsManager.getScript()

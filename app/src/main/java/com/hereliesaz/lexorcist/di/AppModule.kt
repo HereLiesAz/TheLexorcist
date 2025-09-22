@@ -25,6 +25,7 @@ import dagger.hilt.components.SingletonComponent
 // import io.objectbox.BoxStore // REMOVED
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import android.app.Application
 import kotlinx.coroutines.SupervisorJob
 import javax.inject.Singleton
 
@@ -75,6 +76,15 @@ class AppModule {
     @Provides
     @Singleton
     fun provideGson(): Gson = Gson()
+
+    @Provides
+    @Singleton
+    fun provideGoogleApiService(
+        credentialHolder: com.hereliesaz.lexorcist.auth.CredentialHolder,
+        application: Application
+    ): com.hereliesaz.lexorcist.service.GoogleApiService {
+        return com.hereliesaz.lexorcist.service.GoogleApiService(credentialHolder, application)
+    }
 
     // Removed provideSpreadsheetSchema method
 }

@@ -64,6 +64,22 @@ class CloudStorageService @Inject constructor(
         return localFileStorageService.updateTranscript(evidence, newTranscript, reason)
     }
 
+    override suspend fun getExhibitsForCase(caseSpreadsheetId: String): Result<List<Exhibit>> {
+        return localFileStorageService.getExhibitsForCase(caseSpreadsheetId)
+    }
+
+    override suspend fun addExhibit(caseSpreadsheetId: String, exhibit: Exhibit): Result<Exhibit> {
+        return localFileStorageService.addExhibit(caseSpreadsheetId, exhibit)
+    }
+
+    override suspend fun updateExhibit(caseSpreadsheetId: String, exhibit: Exhibit): Result<Unit> {
+        return localFileStorageService.updateExhibit(caseSpreadsheetId, exhibit)
+    }
+
+    override suspend fun deleteExhibit(caseSpreadsheetId: String, exhibit: Exhibit): Result<Unit> {
+        return localFileStorageService.deleteExhibit(caseSpreadsheetId, exhibit)
+    }
+
     override suspend fun synchronize(): Result<Unit> {
         val selectedProvider = settingsManager.getSelectedCloudProvider()
         val cloudStorageProvider = when (selectedProvider) {

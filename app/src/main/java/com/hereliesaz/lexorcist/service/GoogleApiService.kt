@@ -55,6 +55,39 @@ class GoogleApiService @Inject constructor(
         }
     }
 
+    suspend fun runGoogleAppsScript(
+        scriptId: String,
+        functionName: String,
+        parameters: List<Any>
+    ): Result<Any> = withContext(Dispatchers.IO) {
+        val scriptService = getScriptService() ?: return@withContext Result.Error(IOException("Credential not available for Script service"))
+        try {
+            val request = com.google.api.services.script.model.ExecutionRequest()
+                .setFunction(functionName)
+                .setParameters(parameters)
+            val response = scriptService.scripts().run(scriptId, request).execute()
+            if (response.error != null) {
+                val error = response.error.details
+                val message = error?.joinToString(separator = "\n") { it["errorMessage"] as? String ?: "" } ?: "Unknown script error"
+                Result.Error(IOException(message))
+            } else {
+                Result.Success(response.getResponse()?.get("result") ?: Unit)
+            }
+        } catch (e: UserRecoverableAuthIOException) {
+            Result.UserRecoverableError(e)
+        } catch (e: IOException) {
+            Result.Error(e)
+        }
+    }
+
+    private fun getScriptService(): com.google.api.services.script.Script? {
+        return credentialHolder.credential?.let { cred ->
+            com.google.api.services.script.Script.Builder(httpTransport, gsonFactory, cred)
+                .setApplicationName(applicationName)
+                .build()
+        }
+    }
+
     private fun getPublicSheetsService(): Sheets {
         return Sheets.Builder(httpTransport, gsonFactory, null) // No credential needed for public API access
             .setApplicationName(applicationName)

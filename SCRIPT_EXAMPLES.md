@@ -1146,3 +1146,39 @@ For this next set of scripts, we assume a more advanced API that allows for dire
     };
     lex.ui.addOrUpdate("ai_tutorial_screen_button", "Tutorial & Tip", true, "scripted_screen/" + JSON.stringify(tutorialSchema));
     ```
+
+---
+
+## Google Apps Script Integration
+
+You can trigger Google Apps Scripts from your scripts using the `lex.google.runAppsScript` function. This is useful for tasks like generating documents, sending emails, or interacting with other Google services.
+
+### `lex.google.runAppsScript(scriptId, functionName, parameters)`
+
+-   `scriptId`: The ID of the Google Apps Script to execute.
+-   `functionName`: The name of the function to call within the script.
+-   `parameters`: An array of parameters to pass to the function.
+
+**Example:**
+
+```javascript
+// This script generates a document from a template
+// and saves it to the case's Google Drive folder.
+
+var caseId = evidence.caseId;
+var exhibitId = 123; // This would likely come from the context in a real script
+var templateId = "your_template_id_here";
+
+var result = lex.google.runAppsScript(
+    "your_script_id_here",
+    "generateDocument",
+    [caseId, exhibitId, templateId]
+);
+
+if (result) {
+    lex.addTag("document_generated");
+    lex.createNote("Generated document: " + result.documentUrl);
+} else {
+    lex.addTag("document_generation_failed");
+}
+```
