@@ -179,7 +179,7 @@ fun MainScreen(
                                             Spacer(modifier = Modifier.height(32.dp))
                                             AzButton {
                                                 onClick { showCreateCaseDialog = true }
-                                                Text(stringResource(R.string.create_new_case))
+                                                text(stringResource(R.string.create_new_case))
                                             }
                                         }
                                     }
@@ -288,7 +288,7 @@ fun MainScreen(
                             Spacer(Modifier.height(halfScreenHeight))
                             AzButton {
                                 onClick { onSignInClick() }
-                                Text(stringResource(R.string.sign_in_with_google))
+                                text(stringResource(R.string.sign_in_with_google))
                             }
                             if (currentSignInState is SignInState.Error) {
                                 Spacer(modifier = Modifier.height(16.dp))
