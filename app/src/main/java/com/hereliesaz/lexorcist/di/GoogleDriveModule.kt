@@ -5,7 +5,7 @@ import android.content.Context
 import com.hereliesaz.lexorcist.data.CloudFile
 import com.hereliesaz.lexorcist.data.CloudStorageProvider
 import com.hereliesaz.lexorcist.data.GoogleDriveProvider
-import com.hereliesaz.lexorcist.service.GoogleApiService
+// import com.hereliesaz.lexorcist.service.GoogleApiService // Removed for diagnostics
 import com.hereliesaz.lexorcist.utils.Result
 import dagger.Module
 import dagger.Provides
@@ -30,12 +30,8 @@ object GoogleDriveModule {
     @Singleton
     @Named("googleDrive")
     fun provideGoogleDriveProvider(
-        googleApiService: GoogleApiService, // Changed to non-nullable
         @ApplicationContext context: Context
     ): CloudStorageProvider {
-        // The null check for googleApiService is removed as Hilt will provide a non-null instance.
-        // If GoogleApiService cannot operate (e.g., no credentials), its methods will handle that,
-        // and GoogleDriveProvider should be robust to those responses.
-        return GoogleDriveProvider(googleApiService, context)
+        return GoogleDriveProvider(context) // Now calling the modified constructor
     }
 }

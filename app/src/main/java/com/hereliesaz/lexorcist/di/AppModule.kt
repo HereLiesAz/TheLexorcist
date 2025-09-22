@@ -1,10 +1,12 @@
 package com.hereliesaz.lexorcist.di
 
+import android.app.Application
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.credentials.CredentialManager
 import androidx.work.WorkManager
 import com.google.gson.Gson
+import com.hereliesaz.lexorcist.auth.CredentialHolder
 import com.hereliesaz.lexorcist.data.SettingsManager
 import com.hereliesaz.lexorcist.di.qualifiers.ApplicationScope // Import the qualifier
 // import com.hereliesaz.lexorcist.data.objectbox.MyObjectBox // REMOVED
@@ -13,6 +15,7 @@ import com.hereliesaz.lexorcist.model.CaseInfoSheet
 import com.hereliesaz.lexorcist.model.EvidenceSheet
 import com.hereliesaz.lexorcist.model.SpreadsheetSchema
 import com.hereliesaz.lexorcist.service.GenerativeAIService
+import com.hereliesaz.lexorcist.service.GoogleApiService
 import com.hereliesaz.lexorcist.service.ScriptRunner
 import com.hereliesaz.lexorcist.service.nlp.LegalBertService // Ensure this is imported if not already
 import com.hereliesaz.lexorcist.utils.CacheManager
@@ -25,7 +28,6 @@ import dagger.hilt.components.SingletonComponent
 // import io.objectbox.BoxStore // REMOVED
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import android.app.Application
 import kotlinx.coroutines.SupervisorJob
 import javax.inject.Singleton
 
@@ -59,7 +61,11 @@ class AppModule {
 
     @Provides
     @Singleton
-    fun provideScriptRunner(legalBertService: LegalBertService): ScriptRunner = ScriptRunner(GenerativeAIService()) // CORRECTED PARAMETER
+    fun provideScriptRunner(
+        legalBertService: LegalBertService, 
+        generativeAIService: GenerativeAIService, 
+        googleApiService: GoogleApiService
+    ): ScriptRunner = ScriptRunner(generativeAIService, googleApiService)
 
     @Provides
     @Singleton
@@ -77,15 +83,14 @@ class AppModule {
     @Singleton
     fun provideGson(): Gson = Gson()
 
-    // Removed the @Provides method for GoogleApiService as it has an @Inject constructor
-    // @Provides
-    // @Singleton
-    // fun provideGoogleApiService(
-    //     credentialHolder: com.hereliesaz.lexorcist.auth.CredentialHolder,
-    //     application: Application
-    // ): com.hereliesaz.lexorcist.service.GoogleApiService {
-    //     return com.hereliesaz.lexorcist.service.GoogleApiService(credentialHolder, application)
-    // }
+    @Provides
+    @Singleton
+    fun provideGoogleApiService(
+        credentialHolder: CredentialHolder,
+        application: Application
+    ): GoogleApiService {
+        return GoogleApiService(credentialHolder, application)
+    }
 
     // Removed provideSpreadsheetSchema method
 }
