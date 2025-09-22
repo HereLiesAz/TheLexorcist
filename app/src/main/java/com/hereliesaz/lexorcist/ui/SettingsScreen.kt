@@ -59,6 +59,7 @@ import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
 import com.hereliesaz.lexorcist.ui.theme.ThemeMode
 import com.hereliesaz.lexorcist.viewmodel.AuthViewModel
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
+import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 import com.hereliesaz.lexorcist.viewmodel.OneDriveViewModel
 import com.hereliesaz.lexorcist.viewmodel.SettingsViewModel
 import java.util.Locale
@@ -67,6 +68,7 @@ import java.util.Locale
 @Composable
 fun SettingsScreen(
     caseViewModel: CaseViewModel,
+    mainViewModel: MainViewModel,
     settingsViewModel: SettingsViewModel = hiltViewModel(),
     authViewModel: AuthViewModel = hiltViewModel(),
     oneDriveViewModel: OneDriveViewModel = hiltViewModel()
@@ -267,7 +269,7 @@ fun SettingsScreen(
                 contract = ActivityResultContracts.OpenDocumentTree(),
                 onResult = { uri ->
                     uri?.let {
-                        caseViewModel.setStorageLocation(it)
+                        caseViewModel.setStorageLocation(it, mainViewModel)
                     }
                 }
             )
@@ -435,7 +437,7 @@ fun SettingsScreen(
             confirmButton = {
                 LexorcistOutlinedButton(
                     onClick = {
-                        caseViewModel.clearCache()
+                        caseViewModel.clearCache(mainViewModel)
                         showClearCacheDialog = false
                     },
                     text = stringResource(R.string.delete).uppercase(Locale.getDefault())

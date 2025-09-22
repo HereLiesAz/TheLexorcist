@@ -21,6 +21,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel // Updated import
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
+import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 import com.hereliesaz.lexorcist.viewmodel.PhotoGroupViewModel
 import java.io.File
 
@@ -29,7 +30,8 @@ import java.io.File
 fun PhotoGroupScreen(
     navController: NavController,
     caseViewModel: CaseViewModel = hiltViewModel(),
-    photoGroupViewModel: PhotoGroupViewModel = hiltViewModel()
+    photoGroupViewModel: PhotoGroupViewModel = hiltViewModel(),
+    mainViewModel: MainViewModel
 ) {
     val context = LocalContext.current
     val photoUris by photoGroupViewModel.photoUris.collectAsState()
@@ -74,7 +76,7 @@ fun PhotoGroupScreen(
         },
         floatingActionButton = {
             FloatingActionButton(onClick = {
-                caseViewModel.addPhotoGroupEvidence(photoUris, description)
+                caseViewModel.addPhotoGroupEvidence(photoUris, description, mainViewModel)
                 navController.popBackStack()
             }) {
                 Icon(Icons.Default.Save, contentDescription = "Save")

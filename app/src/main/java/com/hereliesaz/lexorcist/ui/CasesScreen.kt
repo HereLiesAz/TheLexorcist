@@ -55,6 +55,7 @@ import androidx.navigation.NavController
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
+import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -62,6 +63,7 @@ import java.util.Locale
 fun CasesScreen(
     caseViewModel: CaseViewModel,
     navController: NavController,
+    mainViewModel: MainViewModel,
 ) {
     val casesState by caseViewModel.cases.collectAsState()
     val sortOrder by caseViewModel.sortOrder.collectAsState() // Retain for logic if sort is re-added
@@ -182,7 +184,7 @@ fun CasesScreen(
                                 showDeleteConfirmDialog = true
                             },
                             onArchive = {
-                                caseViewModel.archiveCaseWithRepository(case)
+                                caseViewModel.archiveCaseWithRepository(case, mainViewModel)
                                 longPressedCase = null
                             },
                             onCancel = { 
@@ -193,7 +195,7 @@ fun CasesScreen(
                                 Log.d("CasesScreen", "onClick triggered for case: ${case.name}. longPressedCase is: ${longPressedCase?.name ?: "null"}")
                                 if (longPressedCase == null) {
                                     Log.d("CasesScreen", "Calling caseViewModel.selectCase for: ${case.name}")
-                                    caseViewModel.selectCase(case)
+                                    caseViewModel.selectCase(case, mainViewModel)
                                 } else {
                                     Log.d("CasesScreen", "onClick: longPressedCase was not null (${longPressedCase?.name}), setting it to null instead of selecting.")
                                     longPressedCase = null 
@@ -218,7 +220,7 @@ fun CasesScreen(
             confirmButton = {
                 LexorcistOutlinedButton(onClick = {
                     Log.d("CasesScreen", "Delete dialog confirmed, clearing longPressedCase.")
-                    longPressedCase?.let { caseViewModel.deleteCaseWithRepository(it) }
+                    longPressedCase?.let { caseViewModel.deleteCaseWithRepository(it, mainViewModel) }
                     showDeleteConfirmDialog = false
                     longPressedCase = null
                 }, text = stringResource(R.string.delete))
@@ -238,6 +240,7 @@ fun CasesScreen(
             caseViewModel = caseViewModel,
             navController = navController,
             onDismiss = { showCreateCaseDialog = false },
+            mainViewModel = mainViewModel,
         )
     }
 }

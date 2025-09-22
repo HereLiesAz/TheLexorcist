@@ -209,7 +209,7 @@ constructor(
         }
     }
 
-    fun setStorageLocation(uri: android.net.Uri) {
+    fun setStorageLocation(uri: android.net.Uri, mainViewModel: MainViewModel) {
         viewModelScope.launch {
             globalLoadingState.pushLoading()
             try {
@@ -227,7 +227,7 @@ constructor(
         }
     }
 
-    private fun clearCaseData() {
+    private fun clearCaseData(mainViewModel: MainViewModel) {
         viewModelScope.launch {
             globalLoadingState.pushLoading()
             try {
@@ -285,7 +285,7 @@ constructor(
         _searchQuery.value = query
     }
 
-    fun loadCasesFromRepository() {
+    fun loadCasesFromRepository(mainViewModel: MainViewModel) {
         viewModelScope.launch {
             globalLoadingState.pushLoading()
             try {
@@ -296,7 +296,7 @@ constructor(
         }
     }
 
-    fun loadHtmlTemplatesFromRepository() {
+    fun loadHtmlTemplatesFromRepository(mainViewModel: MainViewModel) {
         viewModelScope.launch {
             globalLoadingState.pushLoading()
             try {
@@ -310,7 +310,7 @@ constructor(
         }
     }
 
-    fun importSpreadsheetWithRepository(spreadsheetId: String) {
+    fun importSpreadsheetWithRepository(spreadsheetId: String, mainViewModel: MainViewModel) {
         viewModelScope.launch { 
             globalLoadingState.pushLoading()
             try {
@@ -327,6 +327,7 @@ constructor(
         caseNumber: String,
         caseSection: String,
         caseJudge: String,
+        mainViewModel: MainViewModel
     ) {
         Log.d("CaseViewModel", "createCase called with name: $caseName")
         viewModelScope.launch {
@@ -362,7 +363,7 @@ constructor(
         }
     }
 
-    fun selectCase(case: Case?) {
+    fun selectCase(case: Case?, mainViewModel: MainViewModel) {
         Log.d("CaseViewModel", "--- CaseViewModel.selectCase ENTERED with case: ${case?.name ?: "null"} --- instance: $this, repo instance: $caseRepository")
         viewModelScope.launch {
             Log.d("CaseViewModel", "viewModelScope.launch in selectCase for case: ${case?.name ?: "null"}")
@@ -377,8 +378,8 @@ constructor(
 
                 if (case != null) {
                     Log.d("CaseViewModel", "Case is not null, proceeding to load filters/templates for ${case.name}")
-                    loadSheetFiltersFromRepository(case.spreadsheetId)
-                    loadHtmlTemplatesFromRepository()
+                    loadSheetFiltersFromRepository(case.spreadsheetId, mainViewModel)
+                    loadHtmlTemplatesFromRepository(mainViewModel)
                 } else {
                     Log.d("CaseViewModel", "Case is null, clearing filters/templates.")
                     _sheetFilters.value = emptyList()
@@ -391,7 +392,7 @@ constructor(
         }
     }
 
-    private fun loadSheetFiltersFromRepository(spreadsheetId: String) {
+    private fun loadSheetFiltersFromRepository(spreadsheetId: String, mainViewModel: MainViewModel) {
         viewModelScope.launch {
             globalLoadingState.pushLoading()
             try {
@@ -408,6 +409,7 @@ constructor(
     fun addSheetFilterWithRepository(
         name: String,
         value: String,
+        mainViewModel: MainViewModel
     ) {
         viewModelScope.launch {
             globalLoadingState.pushLoading()
@@ -420,7 +422,7 @@ constructor(
         }
     }
 
-    fun addAllegationWithRepository(allegationText: String) {
+    fun addAllegationWithRepository(allegationText: String, mainViewModel: MainViewModel) {
         viewModelScope.launch {
             globalLoadingState.pushLoading()
             try {
@@ -455,6 +457,7 @@ constructor(
     fun assignAllegationToEvidence(
         evidenceId: Int,
         allegationId: Int,
+        mainViewModel: MainViewModel
     ) {
         viewModelScope.launch {
             globalLoadingState.pushLoading()
@@ -494,7 +497,7 @@ constructor(
             .apply()
     }
 
-    fun archiveCaseWithRepository(case: Case) {
+    fun archiveCaseWithRepository(case: Case, mainViewModel: MainViewModel) {
         viewModelScope.launch { 
             globalLoadingState.pushLoading()
             try {
@@ -505,7 +508,7 @@ constructor(
         }
     }
 
-    fun deleteCaseWithRepository(case: Case) {
+    fun deleteCaseWithRepository(case: Case, mainViewModel: MainViewModel) {
         viewModelScope.launch { 
             globalLoadingState.pushLoading()
             try {
@@ -516,12 +519,12 @@ constructor(
         }
     }
 
-    fun clearCache() {
+    fun clearCache(mainViewModel: MainViewModel) {
         viewModelScope.launch {
             globalLoadingState.pushLoading()
             try {
                 caseRepository.clearCache()
-                clearCaseData()
+                clearCaseData(mainViewModel)
                 sharedPref.edit().clear().apply()
                 loadThemeModePreference()
             } finally {
@@ -530,7 +533,7 @@ constructor(
         }
     }
 
-    fun updateEvidence(evidence: com.hereliesaz.lexorcist.data.Evidence) {
+    fun updateEvidence(evidence: com.hereliesaz.lexorcist.data.Evidence, mainViewModel: MainViewModel) {
         viewModelScope.launch {
             globalLoadingState.pushLoading()
             try {
@@ -550,7 +553,7 @@ constructor(
         }
     }
 
-    fun deleteEvidence(evidence: com.hereliesaz.lexorcist.data.Evidence) {
+    fun deleteEvidence(evidence: com.hereliesaz.lexorcist.data.Evidence, mainViewModel: MainViewModel) {
         viewModelScope.launch {
             globalLoadingState.pushLoading()
             try {
@@ -561,7 +564,7 @@ constructor(
         }
     }
 
-    fun assignAllegationToSelectedEvidence(allegationId: Int) {
+    fun assignAllegationToSelectedEvidence(allegationId: Int, mainViewModel: MainViewModel) {
         viewModelScope.launch {
             globalLoadingState.pushLoading()
             try {
@@ -581,7 +584,7 @@ constructor(
         _processingState.value = ProcessingState.Idle // Reset processing state when logs are cleared
     }
 
-    fun addTextEvidence(text: String) {
+    fun addTextEvidence(text: String, mainViewModel: MainViewModel) {
         viewModelScope.launch {
             globalLoadingState.pushLoading()
             try {
@@ -618,7 +621,7 @@ constructor(
         }
     }
 
-    fun updateCommentary(evidenceId: Int, commentary: String) {
+    fun updateCommentary(evidenceId: Int, commentary: String, mainViewModel: MainViewModel) {
         viewModelScope.launch {
             globalLoadingState.pushLoading()
             try {
@@ -629,7 +632,7 @@ constructor(
         }
     }
 
-    fun processImageEvidence(uri: android.net.Uri) {
+    fun processImageEvidence(uri: android.net.Uri, mainViewModel: MainViewModel) {
         viewModelScope.launch {
             val currentCaseFromState = _vmSelectedCase.value
             Log.d("CaseViewModel", "processImageEvidence: _vmSelectedCase.value AT START is: ${currentCaseFromState?.name ?: "null"}")
@@ -675,7 +678,7 @@ constructor(
         }
     }
 
-    fun processAudioEvidence(uri: android.net.Uri) {
+    fun processAudioEvidence(uri: android.net.Uri, mainViewModel: MainViewModel) {
         viewModelScope.launch(Dispatchers.Main) { // Ensure UI updates are on Main
             val currentCaseFromState = _vmSelectedCase.value
             Log.d("CaseViewModel", "processAudioEvidence: _vmSelectedCase.value AT START is: ${currentCaseFromState?.name ?: "null"}")
@@ -812,7 +815,7 @@ constructor(
         }
     }
 
-    fun updateTranscript(evidence: com.hereliesaz.lexorcist.data.Evidence, newTranscript: String, reason: String) {
+    fun updateTranscript(evidence: com.hereliesaz.lexorcist.data.Evidence, newTranscript: String, reason: String, mainViewModel: MainViewModel) {
         viewModelScope.launch {
             globalLoadingState.pushLoading()
             try {
@@ -829,7 +832,7 @@ constructor(
         }
     }
 
-    fun processVideoEvidence(uri: android.net.Uri) {
+    fun processVideoEvidence(uri: android.net.Uri, mainViewModel: MainViewModel) {
         viewModelScope.launch {
             val currentCaseFromState = _vmSelectedCase.value
             Log.d("CaseViewModel", "processVideoEvidence: _vmSelectedCase.value AT START is: ${currentCaseFromState?.name ?: "null"}")
@@ -903,7 +906,7 @@ constructor(
         }
     }
 
-    fun addPhotoGroupEvidence(photoUris: List<android.net.Uri>, description: String) {
+    fun addPhotoGroupEvidence(photoUris: List<android.net.Uri>, description: String, mainViewModel: MainViewModel) {
         viewModelScope.launch {
             globalLoadingState.pushLoading()
             clearLogs()

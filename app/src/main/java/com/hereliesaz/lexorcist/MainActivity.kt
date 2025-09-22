@@ -43,7 +43,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         currentLanguage = settingsManager.getLanguage()
 
-        authViewModel.signIn(this, silent = true)
+        authViewModel.signIn(this, mainViewModel, silent = true)
 
         setContent {
             val themeMode by caseViewModel.themeMode.collectAsState()
@@ -73,10 +73,10 @@ class MainActivity : ComponentActivity() {
                     authViewModel = authViewModel,
                     scriptedMenuViewModel = scriptedMenuViewModel,
                     onSignInClick = {
-                        authViewModel.signIn(this)
+                        authViewModel.signIn(this, mainViewModel)
                     },
                     onSignOutClick = {
-                        authViewModel.signOut()
+                        authViewModel.signOut(mainViewModel)
                     },
                 )
             }

@@ -29,6 +29,7 @@ import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
+import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 import java.util.Locale
 
 @Composable
@@ -36,6 +37,7 @@ fun EvidenceDetailsScreen(
     evidence: Evidence,
     caseViewModel: CaseViewModel,
     navController: NavController,
+    mainViewModel: MainViewModel,
 ) {
     var commentary by remember { mutableStateOf(evidence.commentary ?: "") }
 
@@ -84,7 +86,7 @@ fun EvidenceDetailsScreen(
                 modifier = Modifier.fillMaxWidth(), // TextField takes full width
             )
             Spacer(modifier = Modifier.height(16.dp))
-            LexorcistOutlinedButton(onClick = { caseViewModel.updateCommentary(evidence.id, commentary) }, text = "Save Commentary")
+            LexorcistOutlinedButton(onClick = { caseViewModel.updateCommentary(evidence.id, commentary, mainViewModel) }, text = "Save Commentary")
             if (evidence.type == "audio") {
                 Spacer(modifier = Modifier.height(16.dp))
                 LexorcistOutlinedButton(
