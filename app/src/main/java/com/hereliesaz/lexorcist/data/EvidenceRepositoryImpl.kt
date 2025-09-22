@@ -59,9 +59,23 @@ constructor(
     override fun getEvidence(id: Int): Flow<Evidence> = emptyFlow()
 
     override suspend fun addEvidence(evidence: Evidence): Evidence? {
-        return when (val result = storageService.addEvidence(evidence.spreadsheetId, evidence)) {
+        val existingEvidenceResult = storageService.getEvidenceForCase(evidence.spreadsheetId)
+        val existingEvidence = if (existingEvidenceResult is Result.Success) {
+            existingEvidenceResult.data
+        } else {
+            emptyList()
+        }
+        val isDuplicate = evidence.fileHash != null && existingEvidence.any { it.fileHash == evidence.fileHash }
+
+        val evidenceToAdd = if (isDuplicate) {
+            evidence.copy(isDuplicate = true)
+        } else {
+            evidence
+        }
+
+        return when (val result = storageService.addEvidence(evidenceToAdd.spreadsheetId, evidenceToAdd)) {
             is Result.Success -> {
-                refreshEvidence(evidence.spreadsheetId, evidence.caseId)
+                refreshEvidence(evidenceToAdd.spreadsheetId, evidenceToAdd.caseId)
                 result.data
             }
             else -> null
@@ -112,5 +126,29 @@ constructor(
             refreshEvidence(evidence.spreadsheetId, evidence.caseId)
         }
         return result
+    }
+
+    override suspend fun getExhibitsForCase(caseSpreadsheetId: String): Flow<List<Exhibit>> {
+        // This is a simple implementation that doesn't cache exhibits.
+        // A more robust implementation would cache the exhibits similar to how evidence is cached.
+        return when (val result = storageService.getExhibitsForCase(caseSpreadsheetId)) {
+            is Result.Success -> kotlinx.coroutines.flow.flowOf(result.data)
+            else -> emptyFlow()
+        }
+    }
+
+    override suspend fun addExhibit(caseSpreadsheetId: String, exhibit: Exhibit): Exhibit? {
+        return when (val result = storageService.addExhibit(caseSpreadsheetId, exhibit)) {
+            is Result.Success -> result.data
+            else -> null
+        }
+    }
+
+    override suspend fun updateExhibit(caseSpreadsheetId: String, exhibit: Exhibit) {
+        storageService.updateExhibit(caseSpreadsheetId, exhibit)
+    }
+
+    override suspend fun deleteExhibit(caseSpreadsheetId: String, exhibit: Exhibit) {
+        storageService.deleteExhibit(caseSpreadsheetId, exhibit)
     }
 }
