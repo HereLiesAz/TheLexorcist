@@ -40,7 +40,7 @@ class TranscriptionServiceTest {
     @Mock(lenient = true) // Made mockLogService lenient
     private lateinit var mockLogService: LogService
 
-    @Mock
+    @Mock(lenient = true) // Made mockSettingsManager lenient
     private lateinit var mockSettingsManager: SettingsManager
 
     @Mock
@@ -71,7 +71,7 @@ class TranscriptionServiceTest {
         whenever(mockContext.filesDir).thenReturn(testAppFilesDir)
         whenever(mockContext.contentResolver).thenReturn(mockContentResolver)
         // REINSTATED: This stub is necessary for model initialization path
-        whenever(mockSettingsManager.getTranscriptionLanguage()).thenReturn("en-us")
+        Mockito.lenient().whenever(mockSettingsManager.getTranscriptionLanguage()).thenReturn("en-us")
 
         voskTranscriptionService = VoskTranscriptionService(mockContext, mockLogService, mockSettingsManager)
     }

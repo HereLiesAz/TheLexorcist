@@ -427,7 +427,7 @@ fun ScriptItem(script: Script, onClick: () -> Unit) {
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(text = script.name, style = MaterialTheme.typography.titleMedium)
-            Text(text = "by ${script.authorName.ifBlank { script.authorEmail }}", style = MaterialTheme.typography.bodySmall) // Updated to use authorName, with fallback to authorEmail
+            Text(text = "by ${(script.authorName ?: "").ifBlank { script.authorEmail ?: "Unknown Author" }}", style = MaterialTheme.typography.bodySmall) // Updated to use authorName, with fallback to authorEmail
             Text(text = script.description, style = MaterialTheme.typography.bodyMedium, maxLines = 2)
         }
     }
