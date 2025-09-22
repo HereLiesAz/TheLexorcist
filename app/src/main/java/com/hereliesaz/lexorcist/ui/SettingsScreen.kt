@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -403,7 +405,7 @@ fun SettingsScreen(
                      }, text = stringResource(R.string.connect_to_onedrive).uppercase(Locale.getDefault()))
                 }
                 is com.hereliesaz.lexorcist.model.OneDriveSignInState.InProgress -> {
-                    Text(stringResource(R.string.connecting_to_onedrive))
+                    com.hereliesaz.lexorcist.ui.components.LexorcistLoadingIndicator()
                 }
                 is com.hereliesaz.lexorcist.model.OneDriveSignInState.Success -> {
                     Text(stringResource(R.string.connected_to_onedrive_as_placeholder, state.accountName ?: stringResource(R.string.unknown_account)))
@@ -511,8 +513,21 @@ fun LanguageModelDownloader(
         if (downloadingModel != null) {
             val progress by downloadingModel.progress.collectAsState()
             Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.End
+            ) {
+                Text(
+                    text = "Downloading: ${"%.0f".format(progress * 100)}%",
+                    style = MaterialTheme.typography.bodySmall
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                com.hereliesaz.lexorcist.ui.components.LexorcistLoadingIndicator(modifier = Modifier.size(24.dp))
+            }
+            Spacer(modifier = Modifier.height(8.dp))
             LinearProgressIndicator(
-                progress = { progress }, // Corrected progress
+                progress = progress,
                 modifier = Modifier.fillMaxWidth()
             )
         }
@@ -532,7 +547,7 @@ fun ModelStatusIcon(
             }
         }
         is DownloadState.Downloading -> {
-            CircularProgressIndicator(modifier = Modifier.padding(8.dp))
+            com.hereliesaz.lexorcist.ui.components.LexorcistLoadingIndicator(modifier = Modifier.size(24.dp).padding(8.dp))
         }
         is DownloadState.Downloaded -> {
             Row {

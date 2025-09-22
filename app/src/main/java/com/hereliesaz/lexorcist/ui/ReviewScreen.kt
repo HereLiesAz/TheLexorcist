@@ -112,7 +112,7 @@ fun ReviewScreen(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center,
                 ) {
-                    CircularProgressIndicator()
+                    com.hereliesaz.lexorcist.ui.components.LexorcistLoadingIndicator()
                 }
             } else if (selectedCase == null) {
                 Column(
