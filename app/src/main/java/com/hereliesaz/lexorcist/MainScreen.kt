@@ -13,7 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import com.hereliesaz.lexorcist.ui.components.CoinTossLoadingIndicator
-import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
+// import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton // Removed import
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -177,7 +177,10 @@ fun MainScreen(
                                                 style = MaterialTheme.typography.bodyLarge,
                                             )
                                             Spacer(modifier = Modifier.height(32.dp))
-                                            LexorcistOutlinedButton(onClick = { showCreateCaseDialog = true }, text = stringResource(R.string.create_new_case))
+                                            AzButton {
+                                                onClick { showCreateCaseDialog = true }
+                                                Text(stringResource(R.string.create_new_case))
+                                            }
                                         }
                                     }
                                     composable("cases") { CasesScreen(caseViewModel = caseViewModel, navController = navController, mainViewModel = mainViewModel) }
@@ -283,7 +286,10 @@ fun MainScreen(
                             verticalArrangement = Arrangement.Top,
                         ) {
                             Spacer(Modifier.height(halfScreenHeight))
-                            LexorcistOutlinedButton(onClick = onSignInClick, text = stringResource(R.string.sign_in_with_google))
+                            AzButton {
+                                onClick { onSignInClick() }
+                                Text(stringResource(R.string.sign_in_with_google))
+                            }
                             if (currentSignInState is SignInState.Error) {
                                 Spacer(modifier = Modifier.height(16.dp))
                                 Text(
