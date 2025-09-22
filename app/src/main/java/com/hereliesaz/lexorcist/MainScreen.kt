@@ -12,7 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import com.hereliesaz.lexorcist.ui.components.LexorcistLoadingIndicator
+import com.hereliesaz.lexorcist.ui.components.CoinTossLoadingIndicator
 import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -79,6 +79,7 @@ fun MainScreen(
     val caseSpecificErrorMessage by caseViewModel.errorMessage.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     var showCreateCaseDialog by remember { mutableStateOf(false) }
+    val isLoading by mainViewModel.isLoading.collectAsState()
 
     LaunchedEffect(caseSpecificErrorMessage) {
         caseSpecificErrorMessage?.let {
@@ -98,12 +99,16 @@ fun MainScreen(
         when (signInState) {
             is SignInState.Success -> {
                 caseViewModel.loadCasesFromRepository()
+                mainViewModel.hideLoading()
             }
             is SignInState.Idle -> {
                 caseViewModel.clearCache()
             }
+            is SignInState.InProgress -> {
+                mainViewModel.showLoading()
+            }
             else -> {
-                // Do nothing for InProgress or Error states in this effect
+                // Do nothing for Error state in this effect, already handled
             }
         }
     }
@@ -111,193 +116,204 @@ fun MainScreen(
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { paddingValues ->
-        when (val currentSignInState = signInState) {
-            is SignInState.Success -> {
-                val navBackStackEntry by navController.currentBackStackEntryAsState()
-                val currentRoute = navBackStackEntry?.destination?.route
+        Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+            when (val currentSignInState = signInState) {
+                is SignInState.Success -> {
+                    val navBackStackEntry by navController.currentBackStackEntryAsState()
+                    val currentRoute = navBackStackEntry?.destination?.route
 
-                Row(
-                    modifier =
+                    Row(
+                        modifier =
                         Modifier
                             .fillMaxSize(),
-                ) {
-                    ScriptableAzNavRail(
-                        navController = navController,
-                        scriptedMenuItems = scriptedMenuViewModel.menuItems,
-                        onLogout = { authViewModel.signOut() }
-                    )
+                    ) {
+                        ScriptableAzNavRail(
+                            navController = navController,
+                            scriptedMenuItems = scriptedMenuViewModel.menuItems,
+                            onLogout = { authViewModel.signOut(mainViewModel) }
+                        )
 
-                    BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxHeight().padding(paddingValues)) {
-                        val halfContentAreaHeight = this@BoxWithConstraints.maxHeight / 2
-                        val contentAreaViewportHeight = this@BoxWithConstraints.maxHeight
+                        BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                            val halfContentAreaHeight = this@BoxWithConstraints.maxHeight / 2
+                            val contentAreaViewportHeight = this@BoxWithConstraints.maxHeight
 
-                        Column(
-                            modifier =
+                            Column(
+                                modifier =
                                 Modifier
                                     .fillMaxSize()
                                     .verticalScroll(rememberScrollState()),
-                        ) {
-                            if (currentRoute == "home") {
-                                Spacer(Modifier.height(halfContentAreaHeight))
-                            }
-
-                            NavHost(
-                                navController = navController,
-                                startDestination = "home",
-                                modifier = Modifier.height(contentAreaViewportHeight),
                             ) {
-                                composable("home") {
-                                    Column(
-                                        modifier =
+                                if (currentRoute == "home") {
+                                    Spacer(Modifier.height(halfContentAreaHeight))
+                                }
+
+                                NavHost(
+                                    navController = navController,
+                                    startDestination = "home",
+                                    modifier = Modifier.height(contentAreaViewportHeight),
+                                ) {
+                                    composable("home") {
+                                        Column(
+                                            modifier =
                                             Modifier
                                                 .fillMaxSize()
                                                 .verticalScroll(rememberScrollState())
                                                 .padding(16.dp),
-                                        horizontalAlignment = Alignment.End,
-                                        verticalArrangement = Arrangement.Top, // Content aligns to its top
-                                    ) {
-                                        Text(
-                                            text = stringResource(R.string.app_name),
-                                            style = MaterialTheme.typography.headlineMedium,
-                                        )
-                                        Spacer(modifier = Modifier.height(16.dp))
-                                        Text(
-                                            text = stringResource(R.string.use_navigation_rail),
-                                            style = MaterialTheme.typography.bodyLarge,
-                                        )
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                        Text(
-                                            text = stringResource(R.string.tap_icon_to_open_menu),
-                                            style = MaterialTheme.typography.bodyLarge,
-                                        )
-                                        Spacer(modifier = Modifier.height(32.dp))
-                                        LexorcistOutlinedButton(onClick = { showCreateCaseDialog = true }, text = stringResource(R.string.create_new_case))
+                                            horizontalAlignment = Alignment.End,
+                                            verticalArrangement = Arrangement.Top, // Content aligns to its top
+                                        ) {
+                                            Text(
+                                                text = stringResource(R.string.app_name),
+                                                style = MaterialTheme.typography.headlineMedium,
+                                            )
+                                            Spacer(modifier = Modifier.height(16.dp))
+                                            Text(
+                                                text = stringResource(R.string.use_navigation_rail),
+                                                style = MaterialTheme.typography.bodyLarge,
+                                            )
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            Text(
+                                                text = stringResource(R.string.tap_icon_to_open_menu),
+                                                style = MaterialTheme.typography.bodyLarge,
+                                            )
+                                            Spacer(modifier = Modifier.height(32.dp))
+                                            LexorcistOutlinedButton(onClick = { showCreateCaseDialog = true }, text = stringResource(R.string.create_new_case))
+                                        }
                                     }
-                                }
-                                composable("cases") { CasesScreen(caseViewModel = caseViewModel, navController = navController) }
-                                composable("evidence") {
-                                    EvidenceScreen(
-                                        navController = navController,
-                                        caseViewModel = caseViewModel // Pass the MainScreen's instance
-                                    )
-                                }
-                                composable("extras") {
-                                    ExtrasScreen() // Removed onShare argument
-                                }
-                                // Removed "share_addon" route
-                                // Removed "share_addon_destination" route
-                                composable("script_builder") {
-                                    ScriptBuilderScreen(viewModel = hiltViewModel<ScriptBuilderViewModel>(), navController = navController)
-                                }
-                                composable("case_allegations_route") {
-                                    AllegationsScreen(hiltViewModel<MasterAllegationsViewModel>())
-                                }
-                                composable("templates") {
-                                    TemplatesScreen(hiltViewModel<AddonsBrowserViewModel>())
-                                }
-                                composable("timeline") {
-                                    selectedCase?.let {
-                                        TimelineScreen(
-                                            caseViewModel = caseViewModel,
+                                    composable("cases") { CasesScreen(caseViewModel = caseViewModel, navController = navController, mainViewModel = mainViewModel) }
+                                    composable("evidence") {
+                                        EvidenceScreen(
                                             navController = navController,
+                                            caseViewModel = caseViewModel, // Pass the MainScreen's instance
+                                            mainViewModel = mainViewModel
                                         )
                                     }
-                                }
-                                composable("photo_group") {
-                                    PhotoGroupScreen(navController = navController)
-                                }
-                                composable("data_review") {
-                                    ReviewScreen(caseViewModel = caseViewModel)
-                                }
-                                composable("settings") { SettingsScreen(caseViewModel = caseViewModel) }
-                                composable("evidence_details/{evidenceId}") { backStackEntry ->
-                                    val evidenceIdString = backStackEntry.arguments?.getString("evidenceId")
-                                    val evidenceId = remember(evidenceIdString) { evidenceIdString?.toIntOrNull() }
-                                    val evidence = caseViewModel.selectedCaseEvidenceList.collectAsState().value.find { it.id == evidenceId }
+                                    composable("extras") {
+                                        ExtrasScreen() // Removed onShare argument
+                                    }
+                                    // Removed "share_addon" route
+                                    // Removed "share_addon_destination" route
+                                    composable("script_builder") {
+                                        ScriptBuilderScreen(viewModel = hiltViewModel<ScriptBuilderViewModel>(), navController = navController)
+                                    }
+                                    composable("case_allegations_route") {
+                                        AllegationsScreen(hiltViewModel<MasterAllegationsViewModel>())
+                                    }
+                                    composable("templates") {
+                                        TemplatesScreen(hiltViewModel<AddonsBrowserViewModel>())
+                                    }
+                                    composable("timeline") {
+                                        selectedCase?.let {
+                                            TimelineScreen(
+                                                caseViewModel = caseViewModel,
+                                                navController = navController,
+                                                mainViewModel = mainViewModel
+                                            )
+                                        }
+                                    }
+                                    composable("photo_group") {
+                                        PhotoGroupScreen(navController = navController, mainViewModel = mainViewModel)
+                                    }
+                                    composable("data_review") {
+                                        ReviewScreen(caseViewModel = caseViewModel, mainViewModel = mainViewModel)
+                                    }
+                                    composable("settings") { SettingsScreen(caseViewModel = caseViewModel, mainViewModel = mainViewModel) }
+                                    composable("evidence_details/{evidenceId}") { backStackEntry ->
+                                        val evidenceIdString = backStackEntry.arguments?.getString("evidenceId")
+                                        val evidenceId = remember(evidenceIdString) { evidenceIdString?.toIntOrNull() }
+                                        val evidence = caseViewModel.selectedCaseEvidenceList.collectAsState().value.find { it.id == evidenceId }
 
-                                    if (evidence != null) {
-                                        EvidenceDetailsScreen(
-                                            evidence = evidence,
-                                            caseViewModel = caseViewModel,
-                                            navController = navController
-                                        )
-                                    } else {
-                                        Text("Error: Evidence not found.")
+                                        if (evidence != null) {
+                                            EvidenceDetailsScreen(
+                                                evidence = evidence,
+                                                caseViewModel = caseViewModel,
+                                                navController = navController,
+                                                mainViewModel = mainViewModel
+                                            )
+                                        } else {
+                                            Text("Error: Evidence not found.")
+                                        }
                                     }
-                                }
-                                composable("transcription/{evidenceId}") { backStackEntry ->
-                                    val evidenceIdString = backStackEntry.arguments?.getString("evidenceId")
-                                    val evidenceId = remember(evidenceIdString) { evidenceIdString?.toIntOrNull() }
-                                    val evidence = caseViewModel.selectedCaseEvidenceList.collectAsState().value.find { it.id == evidenceId }
+                                    composable("transcription/{evidenceId}") { backStackEntry ->
+                                        val evidenceIdString = backStackEntry.arguments?.getString("evidenceId")
+                                        val evidenceId = remember(evidenceIdString) { evidenceIdString?.toIntOrNull() }
+                                        val evidence = caseViewModel.selectedCaseEvidenceList.collectAsState().value.find { it.id == evidenceId }
 
-                                    if (evidence != null) {
-                                        com.hereliesaz.lexorcist.ui.TranscriptionScreen(
-                                            evidence = evidence,
-                                            caseViewModel = caseViewModel,
-                                            navController = navController
-                                        )
-                                    } else {
-                                        Text("Error: Evidence not found.")
+                                        if (evidence != null) {
+                                            com.hereliesaz.lexorcist.ui.TranscriptionScreen(
+                                                evidence = evidence,
+                                                caseViewModel = caseViewModel,
+                                                navController = navController,
+                                                mainViewModel = mainViewModel
+                                            )
+                                        } else {
+                                            Text("Error: Evidence not found.")
+                                        }
                                     }
-                                }
-                                composable("video_evidence/{evidenceId}") { backStackEntry ->
-                                    val evidenceIdString = backStackEntry.arguments?.getString("evidenceId")
-                                    val evidenceId = remember(evidenceIdString) { evidenceIdString?.toIntOrNull() }
-                                    if (evidenceId != null) {
-                                        com.hereliesaz.lexorcist.ui.VideoEvidenceScreen(
-                                            navController = navController,
-                                            caseViewModel = caseViewModel,
-                                            evidenceId = evidenceId
-                                        )
-                                    } else {
-                                        Text("Error: Invalid evidence ID.")
+                                    composable("video_evidence/{evidenceId}") { backStackEntry ->
+                                        val evidenceIdString = backStackEntry.arguments?.getString("evidenceId")
+                                        val evidenceId = remember(evidenceIdString) { evidenceIdString?.toIntOrNull() }
+                                        if (evidenceId != null) {
+                                            com.hereliesaz.lexorcist.ui.VideoEvidenceScreen(
+                                                navController = navController,
+                                                caseViewModel = caseViewModel,
+                                                evidenceId = evidenceId
+                                            )
+                                        } else {
+                                            Text("Error: Invalid evidence ID.")
+                                        }
                                     }
                                 }
                             }
                         }
                     }
                 }
-            }
-            is SignInState.InProgress -> {
-                Box(
-                    modifier = Modifier.fillMaxSize().padding(paddingValues),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    LexorcistLoadingIndicator()
+                is SignInState.InProgress -> {
+                    // This state is now handled by the global isLoading state
                 }
-            }
-            is SignInState.Idle, is SignInState.Error -> {
-                BoxWithConstraints(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-                    val halfScreenHeight = this@BoxWithConstraints.maxHeight / 2
-                    Column(
-                        modifier =
+                is SignInState.Idle, is SignInState.Error -> {
+                    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                        val halfScreenHeight = this@BoxWithConstraints.maxHeight / 2
+                        Column(
+                            modifier =
                             Modifier
                                 .fillMaxSize()
                                 .verticalScroll(rememberScrollState())
                                 .padding(horizontal = 16.dp),
-                        horizontalAlignment = Alignment.End,
-                        verticalArrangement = Arrangement.Top,
-                    ) {
-                        Spacer(Modifier.height(halfScreenHeight))
-                        LexorcistOutlinedButton(onClick = onSignInClick, text = stringResource(R.string.sign_in_with_google))
-                        if (currentSignInState is SignInState.Error) {
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text(
-                                text = currentSignInState.message,
-                                color = MaterialTheme.colorScheme.error,
-                            )
+                            horizontalAlignment = Alignment.End,
+                            verticalArrangement = Arrangement.Top,
+                        ) {
+                            Spacer(Modifier.height(halfScreenHeight))
+                            LexorcistOutlinedButton(onClick = onSignInClick, text = stringResource(R.string.sign_in_with_google))
+                            if (currentSignInState is SignInState.Error) {
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text(
+                                    text = currentSignInState.message,
+                                    color = MaterialTheme.colorScheme.error,
+                                )
+                            }
                         }
                     }
                 }
             }
-        }
 
-        if (showCreateCaseDialog) {
-            CreateCaseDialog(
-                caseViewModel = caseViewModel,
-                navController = navController,
+            if (isLoading) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CoinTossLoadingIndicator()
+                }
+            }
+
+            if (showCreateCaseDialog) {
+                CreateCaseDialog(
+                    caseViewModel = caseViewModel,
+                    navController = navController,
                 onDismiss = { showCreateCaseDialog = false },
-            )
+                mainViewModel = mainViewModel,
+                )
+            }
         }
     }
 }

@@ -36,6 +36,7 @@ import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.model.TranscriptEdit
 import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
+import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -48,6 +49,7 @@ fun TranscriptionScreen(
     evidence: Evidence,
     caseViewModel: CaseViewModel,
     navController: NavController,
+    mainViewModel: MainViewModel,
 ) {
     var transcript by remember(evidence) { mutableStateOf(evidence.content) }
     var reason by remember { mutableStateOf("") }
@@ -120,7 +122,7 @@ fun TranscriptionScreen(
                         LexorcistOutlinedButton(
                             onClick = {
                                 if (isTranscriptChanged) {
-                                    caseViewModel.updateTranscript(evidence, transcript, reason)
+                                    caseViewModel.updateTranscript(evidence, transcript, reason, mainViewModel)
                                 }
                                 navController.popBackStack()
                             },
@@ -179,7 +181,7 @@ fun TranscriptionScreen(
                         LexorcistOutlinedButton(
                             onClick = {
                                 if (isTranscriptChanged) {
-                                    caseViewModel.updateTranscript(evidence, transcript, reason)
+                                    caseViewModel.updateTranscript(evidence, transcript, reason, mainViewModel)
                                 }
                                 navController.popBackStack()
                             },

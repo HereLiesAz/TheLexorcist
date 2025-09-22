@@ -47,6 +47,7 @@ import com.hereliesaz.lexorcist.model.LogLevel // Added import for clarity
 import com.hereliesaz.lexorcist.model.ProcessingState
 import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
+import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 import kotlinx.coroutines.flow.collectLatest
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -56,7 +57,8 @@ import java.util.Locale
 @Composable
 fun EvidenceScreen(
     navController: NavController,
-    caseViewModel: CaseViewModel, 
+    caseViewModel: CaseViewModel,
+    mainViewModel: MainViewModel,
 ) {
     var showAddTextEvidence by remember { mutableStateOf(false) }
     var text by remember { mutableStateOf("") }
@@ -77,21 +79,21 @@ fun EvidenceScreen(
         rememberLauncherForActivityResult(
             contract = ActivityResultContracts.GetContent(),
         ) { uri ->
-            uri?.let { caseViewModel.processImageEvidence(it) }
+            uri?.let { caseViewModel.processImageEvidence(it, mainViewModel) }
         }
 
     val audioPickerLauncher =
         rememberLauncherForActivityResult(
             contract = ActivityResultContracts.GetContent(),
         ) { uri ->
-            uri?.let { caseViewModel.processAudioEvidence(it) }
+            uri?.let { caseViewModel.processAudioEvidence(it, mainViewModel) }
         }
 
     val videoPickerLauncher =
         rememberLauncherForActivityResult(
             contract = ActivityResultContracts.GetContent(),
         ) { uri ->
-            uri?.let { caseViewModel.processVideoEvidence(it) }
+            uri?.let { caseViewModel.processVideoEvidence(it, mainViewModel) }
         }
 
     LaunchedEffect(Unit) {
@@ -158,7 +160,7 @@ fun EvidenceScreen(
                 Spacer(modifier = Modifier.height(16.dp))
                 LexorcistOutlinedButton(
                     onClick = {
-                        caseViewModel.addTextEvidence(text)
+                        caseViewModel.addTextEvidence(text, mainViewModel)
                         text = ""
                         showAddTextEvidence = false
                     },

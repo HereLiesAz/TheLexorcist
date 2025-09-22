@@ -13,6 +13,7 @@ import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialException
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
@@ -66,7 +67,7 @@ class AuthViewModel
             val storedUserEmail = sharedPreferences.getString(PREF_USER_EMAIL_KEY, null)
             if (currentUser != null && currentUser.email == storedUserEmail) {
                 Log.d(TAG, "AuthViewModel initialized. User already signed in with Firebase. Email: ${currentUser.email}")
-                onSignInSuccess(currentUser)
+                onSignInSuccess(currentUser, null)
             } else {
                 Log.d(TAG, "AuthViewModel initialized. No persisted user found.")
             }
@@ -74,11 +75,12 @@ class AuthViewModel
 
         fun signIn(
             activity: Activity,
+            mainViewModel: MainViewModel,
             silent: Boolean = false,
         ) {
             viewModelScope.launch {
                 if (!silent) {
-                    _signInState.value = SignInState.InProgress
+                    mainViewModel.showLoading()
                 }
 
                 try {
@@ -88,7 +90,7 @@ class AuthViewModel
                         val storedUserEmail = sharedPreferences.getString(PREF_USER_EMAIL_KEY, null)
                         if (currentUser != null && currentUser.email == storedUserEmail) {
                             Log.d(TAG, "User already signed in with Firebase. Email: ${currentUser.email}")
-                            onSignInSuccess(currentUser)
+                            onSignInSuccess(currentUser, mainViewModel)
                             return@launch
                         } else if (storedUserEmail.isNullOrBlank()) {
                             // No stored email, so silent sign-in isn't possible if not already signed in
@@ -127,7 +129,7 @@ class AuthViewModel
                         val idToken = googleIdTokenCredential.idToken
                         if (idToken.isNullOrBlank()) {
                             Log.e(TAG, "Google ID token is null or blank.")
-                            onSignInFailure(Exception("Failed to get Google ID token."))
+                            onSignInFailure(Exception("Failed to get Google ID token."), mainViewModel)
                             return@launch
                         }
                         Log.d(TAG, "Successfully obtained Google ID token. Signing into Firebase...")
@@ -140,41 +142,42 @@ class AuthViewModel
 
                         if (firebaseUser != null) {
                             Log.d(TAG, "Firebase sign-in successful. User: ${firebaseUser.email}")
-                            onSignInSuccess(firebaseUser)
+                            onSignInSuccess(firebaseUser, mainViewModel)
                         } else {
                             Log.e(TAG, "Firebase sign-in successful but user is null.")
-                            onSignInFailure(Exception("Firebase sign-in successful but no user data received."))
+                            onSignInFailure(Exception("Firebase sign-in successful but no user data received."), mainViewModel)
                         }
                     } else {
                         Log.e(TAG, "Unexpected credential type: ${credentialFromResult.type}")
-                        onSignInFailure(Exception("Unexpected credential type from CredentialManager"))
+                        onSignInFailure(Exception("Unexpected credential type from CredentialManager"), mainViewModel)
                     }
                 } catch (e: GetCredentialException) {
                     Log.e(TAG, "GetCredentialException", e)
                     if (!silent) {
-                        onSignInFailure(e)
+                        onSignInFailure(e, mainViewModel)
                     } else {
                         _signInState.value = SignInState.Idle
                     }
                 } catch (e: GoogleIdTokenParsingException) {
                     Log.e(TAG, "Received an invalid google id token response", e)
-                    onSignInFailure(e)
+                    onSignInFailure(e, mainViewModel)
                 } catch (e: Exception) {
                     // Catch other exceptions like Firebase related ones
                     Log.e(TAG, "Sign-in failed with generic exception", e)
-                    onSignInFailure(e)
+                    onSignInFailure(e, mainViewModel)
                 }
             }
         }
 
         // Renamed for clarity
-        private fun onSignInSuccess(firebaseUser: FirebaseUser) {
+        private fun onSignInSuccess(firebaseUser: FirebaseUser, mainViewModel: MainViewModel? = null) {
+            mainViewModel?.hideLoading()
             val userEmailFromFirebase = firebaseUser.email // Potentially nullable
             Log.d(TAG, "FirebaseUser details: Email='$userEmailFromFirebase', DisplayName='${firebaseUser.displayName}', UID='${firebaseUser.uid}'")
 
             if (userEmailFromFirebase.isNullOrBlank()) { // Check for null or blank
                 Log.e(TAG, "Firebase user email is null or blank. Cannot proceed with Google API setup.")
-                onSignInFailure(Exception("Firebase user email is missing. This is required for Google API access."))
+                onSignInFailure(Exception("Firebase user email is missing. This is required for Google API access."), mainViewModel)
                 return // Exit if null or blank
             }
 
@@ -206,13 +209,15 @@ class AuthViewModel
         }
 
         // Renamed for clarity
-        private fun onSignInFailure(error: Exception) {
+        private fun onSignInFailure(error: Exception, mainViewModel: MainViewModel? = null) {
+            mainViewModel?.hideLoading()
             _signInState.value = SignInState.Error("Sign-in attempt failed. ${error.message}", error)
             Log.e(TAG, "Sign-in error reported to UI: ", error) // More detailed log for reported errors
         }
 
-        fun signOut() {
+        fun signOut(mainViewModel: MainViewModel) {
             viewModelScope.launch {
+                mainViewModel.showLoading()
                 Log.d(TAG, "Signing out...")
                 try {
                     withContext(ioDispatcher) {
@@ -228,6 +233,8 @@ class AuthViewModel
                 } catch (e: Exception) {
                     Log.e(TAG, "Error during sign out: ", e)
                     // Optionally update UI with sign-out error
+                } finally {
+                    mainViewModel.hideLoading()
                 }
             }
         }

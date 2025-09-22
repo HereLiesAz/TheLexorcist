@@ -54,6 +54,7 @@ import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
 import com.hereliesaz.lexorcist.viewmodel.AllegationsViewModel
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
+import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -61,10 +62,10 @@ import java.util.Locale
 fun ReviewScreen(
     caseViewModel: CaseViewModel = hiltViewModel(),
     allegationsViewModel: AllegationsViewModel = hiltViewModel(),
+    mainViewModel: MainViewModel,
 ) {
     val evidenceList by caseViewModel.selectedCaseEvidenceList.collectAsState()
     val selectedCase by caseViewModel.selectedCase.collectAsState()
-    val isLoading by caseViewModel.isLoading.collectAsState()
     val allegations by allegationsViewModel.allegations.collectAsState()
     val selectedAllegation by allegationsViewModel.selectedAllegation.collectAsState()
     val selectedEvidence by caseViewModel.selectedEvidence.collectAsState()
@@ -107,14 +108,7 @@ fun ReviewScreen(
                 .fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            if (isLoading) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    com.hereliesaz.lexorcist.ui.components.LexorcistLoadingIndicator()
-                }
-            } else if (selectedCase == null) {
+            if (selectedCase == null) {
                 Column(
                     modifier =
                     Modifier
@@ -176,7 +170,7 @@ fun ReviewScreen(
                 if (selectedAllegation != null && selectedEvidence.isNotEmpty()) {
                     LexorcistOutlinedButton(
                         onClick = {
-                            caseViewModel.assignAllegationToSelectedEvidence(selectedAllegation!!.id)
+                            caseViewModel.assignAllegationToSelectedEvidence(selectedAllegation!!.id, mainViewModel)
                         },
                         text = stringResource(R.string.assign_to_allegation),
                         modifier = Modifier.padding(16.dp)
@@ -191,7 +185,7 @@ fun ReviewScreen(
             evidence = evidenceToEdit!!,
             onDismiss = { showEditDialog = false },
             onSave = { updatedEvidence ->
-                caseViewModel.updateEvidence(updatedEvidence)
+                caseViewModel.updateEvidence(updatedEvidence, mainViewModel)
                 showEditDialog = false
             },
         )
@@ -204,7 +198,7 @@ fun ReviewScreen(
             text = { Text(stringResource(R.string.delete_evidence_confirmation)) },
             confirmButton = {
                 LexorcistOutlinedButton(onClick = {
-                    caseViewModel.deleteEvidence(evidenceToDelete!!)
+                    caseViewModel.deleteEvidence(evidenceToDelete!!, mainViewModel)
                     showDeleteConfirmDialog = false
                 }, text = stringResource(R.string.delete).uppercase(Locale.getDefault()))
             },

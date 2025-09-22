@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
+import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,6 +38,7 @@ fun CreateCaseDialog(
     caseViewModel: CaseViewModel,
     navController: NavController,
     onDismiss: () -> Unit,
+    mainViewModel: MainViewModel,
 ) {
     val context = LocalContext.current
     var caseName by remember { mutableStateOf("") }
@@ -130,6 +132,7 @@ fun CreateCaseDialog(
                             caseNumber = caseNumber,
                             caseSection = caseSection,
                             caseJudge = caseJudge,
+                            mainViewModel = mainViewModel,
                         )
                         // Dismissal and navigation should ideally happen based on successful case creation
                         // For now, keeping original logic. Consider observing a success event from ViewModel.
