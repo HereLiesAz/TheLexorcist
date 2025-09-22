@@ -1,31 +1,27 @@
 package com.hereliesaz.lexorcist.di
 
+import android.app.Application
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.credentials.CredentialManager
 import androidx.work.WorkManager
 import com.google.gson.Gson
+import com.hereliesaz.lexorcist.auth.CredentialHolder
 import com.hereliesaz.lexorcist.data.SettingsManager
-import com.hereliesaz.lexorcist.di.qualifiers.ApplicationScope // Import the qualifier
-// import com.hereliesaz.lexorcist.data.objectbox.MyObjectBox // REMOVED
-import com.hereliesaz.lexorcist.model.AllegationsSheet
-import com.hereliesaz.lexorcist.model.CaseInfoSheet
-import com.hereliesaz.lexorcist.model.EvidenceSheet
-import com.hereliesaz.lexorcist.model.SpreadsheetSchema
+import com.hereliesaz.lexorcist.di.qualifiers.ApplicationScope
 import com.hereliesaz.lexorcist.service.GenerativeAIService
+import com.hereliesaz.lexorcist.service.GoogleApiService
 import com.hereliesaz.lexorcist.service.ScriptRunner
-import com.hereliesaz.lexorcist.service.nlp.LegalBertService // Ensure this is imported if not already
+// Ensure LegalBertService is here if needed by ScriptRunner, otherwise remove import
+// import com.hereliesaz.lexorcist.service.nlp.LegalBertService 
 import com.hereliesaz.lexorcist.utils.CacheManager
-// import com.hereliesaz.lexorcist.viewmodel.ScriptedMenuViewModel // REMOVED for now
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-// import io.objectbox.BoxStore // REMOVED
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import android.app.Application
 import kotlinx.coroutines.SupervisorJob
 import javax.inject.Singleton
 
@@ -34,7 +30,7 @@ import javax.inject.Singleton
 class AppModule {
     @Provides
     @Singleton
-    @ApplicationScope // Add the qualifier
+    @ApplicationScope // Ensure this qualifier is defined
     fun provideApplicationScope(): CoroutineScope {
         return CoroutineScope(SupervisorJob() + Dispatchers.Default)
     }
@@ -55,11 +51,18 @@ class AppModule {
     @Singleton
     fun provideSettingsManager(
         @ApplicationContext context: Context
-    ): SettingsManager = SettingsManager(context) // Pass only Context to constructor
+    ): SettingsManager = SettingsManager(context)
 
     @Provides
     @Singleton
-    fun provideScriptRunner(legalBertService: LegalBertService): ScriptRunner = ScriptRunner(GenerativeAIService()) // CORRECTED PARAMETER
+    fun provideGenerativeAIService(): GenerativeAIService = GenerativeAIService()
+
+    @Provides
+    @Singleton
+    fun provideScriptRunner(
+        generativeAIService: GenerativeAIService,
+        googleApiService: GoogleApiService // Using the imported com.hereliesaz.lexorcist.service.GoogleApiService
+    ): ScriptRunner = ScriptRunner(generativeAIService, googleApiService)
 
     @Provides
     @Singleton
@@ -80,11 +83,9 @@ class AppModule {
     @Provides
     @Singleton
     fun provideGoogleApiService(
-        credentialHolder: com.hereliesaz.lexorcist.auth.CredentialHolder,
+        credentialHolder: CredentialHolder, // com.hereliesaz.lexorcist.auth.CredentialHolder
         application: Application
-    ): com.hereliesaz.lexorcist.service.GoogleApiService {
-        return com.hereliesaz.lexorcist.service.GoogleApiService(credentialHolder, application)
+    ): GoogleApiService { // com.hereliesaz.lexorcist.service.GoogleApiService
+        return GoogleApiService(credentialHolder, application)
     }
-
-    // Removed provideSpreadsheetSchema method
 }

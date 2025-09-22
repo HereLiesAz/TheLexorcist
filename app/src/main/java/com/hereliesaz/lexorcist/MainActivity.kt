@@ -52,7 +52,7 @@ class MainActivity : ComponentActivity() {
 
             LaunchedEffect(signInState) {
                 if (signInState is com.hereliesaz.lexorcist.model.SignInState.Success) {
-                    caseViewModel.loadCasesFromRepository(mainViewModel) // Passing mainViewModel
+                    caseViewModel.loadCasesFromRepository() // Removed mainViewModel
                 }
             }
 
