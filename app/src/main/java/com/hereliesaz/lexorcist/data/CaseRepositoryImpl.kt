@@ -4,7 +4,7 @@ import android.util.Log
 import com.hereliesaz.lexorcist.data.CaseSheetParser
 import com.hereliesaz.lexorcist.utils.ErrorReporter
 import com.hereliesaz.lexorcist.model.SheetFilter
-// import com.hereliesaz.lexorcist.service.GoogleApiService // Removed for diagnostics
+import com.hereliesaz.lexorcist.service.GoogleApiService // Restored
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -24,7 +24,7 @@ import com.hereliesaz.lexorcist.utils.Result // Ensure this is the correct Resul
 class CaseRepositoryImpl @Inject constructor(
     private val storageService: StorageService,
     private val errorReporter: ErrorReporter,
-    // private val googleApiService: GoogleApiService, // Removed for diagnostics
+    private val googleApiService: GoogleApiService, // Restored
     private val caseSheetParser: CaseSheetParser, 
     private val evidenceRepository: EvidenceRepository 
 ) : CaseRepository {
@@ -204,42 +204,41 @@ class CaseRepositoryImpl @Inject constructor(
     }
 
     override suspend fun importSpreadsheet(spreadsheetId: String): Case? {
-        Log.w(tag, "importSpreadsheet is currently disabled for diagnostics.")
-        // val sheetData = googleApiService.readSpreadsheet(spreadsheetId)
-        // if (sheetData.isNullOrEmpty()) {
-        //     Log.w(tag, "Import spreadsheet $spreadsheetId: No sheet data found.")
-        //     return null
-        // }
-        // val parsedData = caseSheetParser.parseCaseFromData(spreadsheetId, sheetData)
-        // if (parsedData != null) {
-        //     val (newCase, evidenceList) = parsedData
-        //     when (val createResult = storageService.createCase(newCase)) {
-        //         is Result.Loading -> {
-        //             Log.d(tag, "Import spreadsheet $spreadsheetId: Case creation is loading.")
-        //             return null 
-        //         }
-        //         is Result.Success -> {
-        //             val createdCase = createResult.data
-        //             evidenceList.forEach { evidence ->
-        //                 evidenceRepository.addEvidence(evidence.copy(spreadsheetId = createdCase.spreadsheetId))
-        //             }
-        //             _cases.update {
-        //                 (it + createdCase).sortedByDescending { c -> c.lastModifiedTime ?: 0L }
-        //             }
-        //             return createdCase
-        //         }
-        //         is Result.Error -> {
-        //             errorReporter.reportError(createResult.exception)
-        //             Log.e(tag, "Import spreadsheet $spreadsheetId: Error creating case.", createResult.exception)
-        //         }
-        //         is Result.UserRecoverableError -> {
-        //             errorReporter.reportError(createResult.exception)
-        //             Log.w(tag, "Import spreadsheet $spreadsheetId: User recoverable error creating case.", createResult.exception)
-        //         }
-        //     }
-        // } else {
-        //     Log.w(tag, "Import spreadsheet $spreadsheetId: Failed to parse case data.")
-        // }
+        val sheetData = googleApiService.readSpreadsheet(spreadsheetId)
+        if (sheetData.isNullOrEmpty()) {
+            Log.w(tag, "Import spreadsheet $spreadsheetId: No sheet data found.")
+            return null
+        }
+        val parsedData = caseSheetParser.parseCaseFromData(spreadsheetId, sheetData)
+        if (parsedData != null) {
+            val (newCase, evidenceList) = parsedData
+            when (val createResult = storageService.createCase(newCase)) {
+                is Result.Loading -> {
+                    Log.d(tag, "Import spreadsheet $spreadsheetId: Case creation is loading.")
+                    return null 
+                }
+                is Result.Success -> {
+                    val createdCase = createResult.data
+                    evidenceList.forEach { evidence ->
+                        evidenceRepository.addEvidence(evidence.copy(spreadsheetId = createdCase.spreadsheetId))
+                    }
+                    _cases.update {
+                        (it + createdCase).sortedByDescending { c -> c.lastModifiedTime ?: 0L }
+                    }
+                    return createdCase
+                }
+                is Result.Error -> {
+                    errorReporter.reportError(createResult.exception)
+                    Log.e(tag, "Import spreadsheet $spreadsheetId: Error creating case.", createResult.exception)
+                }
+                is Result.UserRecoverableError -> {
+                    errorReporter.reportError(createResult.exception)
+                    Log.w(tag, "Import spreadsheet $spreadsheetId: User recoverable error creating case.", createResult.exception)
+                }
+            }
+        } else {
+            Log.w(tag, "Import spreadsheet $spreadsheetId: Failed to parse case data.")
+        }
         return null
     }
 

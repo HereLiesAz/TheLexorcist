@@ -16,7 +16,7 @@ import com.hereliesaz.lexorcist.data.SettingsManager
 import com.hereliesaz.lexorcist.data.SortOrder
 import com.hereliesaz.lexorcist.model.ProcessingState
 import com.hereliesaz.lexorcist.model.SheetFilter
-// import com.hereliesaz.lexorcist.service.GoogleApiService // Removed for diagnostics
+import com.hereliesaz.lexorcist.service.GoogleApiService // Restored
 import com.hereliesaz.lexorcist.ui.theme.ThemeMode
 import com.hereliesaz.lexorcist.utils.Result
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -56,8 +56,8 @@ constructor(
     private val workManager: androidx.work.WorkManager,
     private val logService: com.hereliesaz.lexorcist.service.LogService,
     private val storageService: com.hereliesaz.lexorcist.data.StorageService,
-    private val globalLoadingState: com.hereliesaz.lexorcist.service.GlobalLoadingState
-    // private val googleApiService: com.hereliesaz.lexorcist.service.GoogleApiService // Removed for diagnostics
+    private val globalLoadingState: com.hereliesaz.lexorcist.service.GlobalLoadingState,
+    private val googleApiService: com.hereliesaz.lexorcist.service.GoogleApiService // Restored
 ) : ViewModel() {
     private val sharedPref =
         applicationContext.getSharedPreferences("CaseInfoPrefs", Context.MODE_PRIVATE)
@@ -1201,9 +1201,6 @@ constructor(
 
     fun generateDocument(exhibit: com.hereliesaz.lexorcist.data.Exhibit, template: com.google.api.services.drive.model.File) {
         viewModelScope.launch {
-            // GoogleApiService removed for diagnostics, so this function is disabled.
-            Log.d("CaseViewModel", "generateDocument is currently disabled for diagnostics.")
-            /*
             val scriptId = selectedCase.value?.scriptId ?: return@launch
             val caseId = selectedCase.value?.id ?: return@launch
             val templateId = template.id ?: return@launch
@@ -1227,7 +1224,6 @@ constructor(
                     logService.addLog("Unknown error generating document", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
                 }
             }
-            */
         }
     }
 
