@@ -29,16 +29,24 @@ class AddonsBrowserViewModel
         private val _shareOperationState = MutableStateFlow<SaveState>(SaveState.Idle)
         val shareOperationState: StateFlow<SaveState> = _shareOperationState.asStateFlow()
 
+        private val _isLoading = MutableStateFlow(false)
+        val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
         init {
             loadAddons()
         }
 
         private fun loadAddons() {
             viewModelScope.launch {
-                // Use the injected googleApiService directly
-                // In a real scenario, you'd handle potential errors from these calls
-                _scripts.value = googleApiService.getSharedScripts()
-                _templates.value = googleApiService.getSharedTemplates()
+                _isLoading.value = true // Set loading to true
+                try {
+                    // Use the injected googleApiService directly
+                    // In a real scenario, you'd handle potential errors from these calls
+                    _scripts.value = googleApiService.getSharedScripts()
+                    _templates.value = googleApiService.getSharedTemplates()
+                } finally {
+                    _isLoading.value = false // Set loading to false in finally
+                }
             }
         }
 

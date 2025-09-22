@@ -315,4 +315,10 @@
     <string name="error_connecting_to_onedrive_placeholder">Error connecting to OneDrive: %1$s</string>
     <string name="unknown_error">Unknown Error</string>
     <string name="retry">Retry</string>
+
+    <string name="scripts">Scripts</string>
+    <string name="no_scripts_available">No scripts available.</string>
+    <string name="no_templates_available">No templates available.</string>
+    <string name="share_content">Share Content</string>
+    <string name="close">Close</string>
 </resources>
