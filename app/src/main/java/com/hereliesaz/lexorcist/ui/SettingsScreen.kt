@@ -337,14 +337,14 @@ fun SettingsScreen(
                     Text(stringResource(R.string.signed_in_as_placeholder, userInfo?.email ?: stringResource(R.string.unknown_email)))
                     Spacer(modifier = Modifier.height(8.dp))
                     LexorcistOutlinedButton(onClick = {
-                        authViewModel.signOut()
+                        authViewModel.signOut(mainViewModel)
                         if (activity != null) {
-                           authViewModel.signIn(activity)
+                           authViewModel.signIn(activity, mainViewModel)
                         }
                     }, text = stringResource(R.string.switch_account).uppercase(Locale.getDefault()))
                      Spacer(modifier = Modifier.height(8.dp))
                     LexorcistOutlinedButton(onClick = {
-                        authViewModel.signOut()
+                        authViewModel.signOut(mainViewModel)
                     }, text = stringResource(R.string.sign_out).uppercase(Locale.getDefault()))
                 }
                 else -> {
@@ -352,7 +352,7 @@ fun SettingsScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     LexorcistOutlinedButton(onClick = {
                          if (activity != null) {
-                           authViewModel.signIn(activity)
+                           authViewModel.signIn(activity, mainViewModel)
                         }
                     }, text = stringResource(R.string.sign_in).uppercase(Locale.getDefault()))
                 }

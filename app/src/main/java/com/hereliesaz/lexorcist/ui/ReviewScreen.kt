@@ -236,7 +236,7 @@ fun ReviewScreen(
                     if (selectedAllegation != null && selectedEvidence.isNotEmpty()) {
                         LexorcistOutlinedButton(
                             onClick = {
-                                caseViewModel.assignAllegationToSelectedEvidence(selectedAllegation!!.id)
+                                caseViewModel.assignAllegationToSelectedEvidence(selectedAllegation!!.id, mainViewModel)
                             },
                             text = stringResource(R.string.assign_to_allegation),
                             modifier = Modifier.padding(start = 8.dp)
@@ -290,6 +290,7 @@ fun ReviewScreen(
     if (showCleanupDialog) {
         CleanupDialog(
             caseViewModel = caseViewModel,
+            mainViewModel = mainViewModel, // Added mainViewModel
             onDismiss = { showCleanupDialog = false }
         )
     }

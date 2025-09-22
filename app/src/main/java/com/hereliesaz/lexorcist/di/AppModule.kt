@@ -77,14 +77,15 @@ class AppModule {
     @Singleton
     fun provideGson(): Gson = Gson()
 
-    @Provides
-    @Singleton
-    fun provideGoogleApiService(
-        credentialHolder: com.hereliesaz.lexorcist.auth.CredentialHolder,
-        application: Application
-    ): com.hereliesaz.lexorcist.service.GoogleApiService {
-        return com.hereliesaz.lexorcist.service.GoogleApiService(credentialHolder, application)
-    }
+    // Removed the @Provides method for GoogleApiService as it has an @Inject constructor
+    // @Provides
+    // @Singleton
+    // fun provideGoogleApiService(
+    //     credentialHolder: com.hereliesaz.lexorcist.auth.CredentialHolder,
+    //     application: Application
+    // ): com.hereliesaz.lexorcist.service.GoogleApiService {
+    //     return com.hereliesaz.lexorcist.service.GoogleApiService(credentialHolder, application)
+    // }
 
     // Removed provideSpreadsheetSchema method
 }

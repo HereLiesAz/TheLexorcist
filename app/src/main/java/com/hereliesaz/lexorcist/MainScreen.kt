@@ -98,11 +98,11 @@ fun MainScreen(
     LaunchedEffect(signInState) {
         when (signInState) {
             is SignInState.Success -> {
-                caseViewModel.loadCasesFromRepository()
+                caseViewModel.loadCasesFromRepository(mainViewModel) // Updated
                 mainViewModel.hideLoading()
             }
             is SignInState.Idle -> {
-                caseViewModel.clearCache()
+                caseViewModel.clearCache(mainViewModel) // Updated
             }
             is SignInState.InProgress -> {
                 mainViewModel.showLoading()
@@ -206,8 +206,7 @@ fun MainScreen(
                                         selectedCase?.let {
                                             TimelineScreen(
                                                 caseViewModel = caseViewModel,
-                                                navController = navController,
-                                                mainViewModel = mainViewModel
+                                                navController = navController
                                             )
                                         }
                                     }
@@ -215,7 +214,7 @@ fun MainScreen(
                                         PhotoGroupScreen(navController = navController, mainViewModel = mainViewModel)
                                     }
                                     composable("data_review") {
-                                        ReviewScreen(caseViewModel = caseViewModel, mainViewModel = mainViewModel)
+                                        ReviewScreen(caseViewModel = caseViewModel, mainViewModel = mainViewModel) // Updated
                                     }
                                     composable("settings") { SettingsScreen(caseViewModel = caseViewModel, mainViewModel = mainViewModel) }
                                     composable("evidence_details/{evidenceId}") { backStackEntry ->
@@ -228,7 +227,7 @@ fun MainScreen(
                                                 evidence = evidence,
                                                 caseViewModel = caseViewModel,
                                                 navController = navController,
-                                                mainViewModel = mainViewModel
+                                                mainViewModel = mainViewModel // Reinstated this line
                                             )
                                         } else {
                                             Text("Error: Evidence not found.")

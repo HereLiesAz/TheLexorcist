@@ -1093,17 +1093,17 @@ constructor(
         }
     }
 
-    fun deleteDuplicates(group: com.hereliesaz.lexorcist.model.CleanupSuggestion.DuplicateGroup) {
+    fun deleteDuplicates(group: com.hereliesaz.lexorcist.model.CleanupSuggestion.DuplicateGroup, mainViewModel: MainViewModel) {
         viewModelScope.launch {
             val evidenceToDelete = group.evidence.drop(1)
             evidenceToDelete.forEach { evidence ->
-                deleteEvidence(evidence)
+                deleteEvidence(evidence, mainViewModel)
             }
             generateCleanupSuggestions() // Refresh suggestions
         }
     }
 
-    fun mergeImageSeries(group: com.hereliesaz.lexorcist.model.CleanupSuggestion.ImageSeriesGroup) {
+    fun mergeImageSeries(group: com.hereliesaz.lexorcist.model.CleanupSuggestion.ImageSeriesGroup, mainViewModel: MainViewModel) {
         viewModelScope.launch {
             val case = selectedCase.value ?: return@launch
             val caseDir = storageLocation.value?.let { File(it, case.spreadsheetId) } ?: return@launch
@@ -1154,7 +1154,7 @@ constructor(
             evidenceRepository.addEvidence(newEvidence)
 
             group.evidence.forEach { evidence ->
-                deleteEvidence(evidence)
+                deleteEvidence(evidence, mainViewModel)
             }
 
             generateCleanupSuggestions()

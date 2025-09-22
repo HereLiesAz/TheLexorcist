@@ -11,6 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.navigation.compose.rememberNavController
 import com.dropbox.core.android.Auth
 import com.hereliesaz.lexorcist.data.SettingsManager
+import com.hereliesaz.lexorcist.MainScreen // Added import
 import com.hereliesaz.lexorcist.ui.theme.LexorcistTheme
 import com.hereliesaz.lexorcist.viewmodel.AuthViewModel
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
@@ -51,7 +52,7 @@ class MainActivity : ComponentActivity() {
 
             LaunchedEffect(signInState) {
                 if (signInState is com.hereliesaz.lexorcist.model.SignInState.Success) {
-                    caseViewModel.loadCasesFromRepository()
+                    caseViewModel.loadCasesFromRepository(mainViewModel) // Passing mainViewModel
                 }
             }
 
