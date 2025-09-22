@@ -70,8 +70,8 @@ class TranscriptionServiceTest {
         testAppFilesDir = tempFolder.newFolder("appfiles")
         whenever(mockContext.filesDir).thenReturn(testAppFilesDir)
         whenever(mockContext.contentResolver).thenReturn(mockContentResolver)
-        // REINSTATED: This stub is necessary for model initialization path
-        Mockito.lenient().whenever(mockSettingsManager.getTranscriptionLanguage()).thenReturn("en-us")
+        // REINSTATED AND CORRECTED: This stub is necessary for model initialization path
+        whenever(mockSettingsManager.getTranscriptionLanguage()).thenReturn("en-us")
 
         voskTranscriptionService = VoskTranscriptionService(mockContext, mockLogService, mockSettingsManager)
     }

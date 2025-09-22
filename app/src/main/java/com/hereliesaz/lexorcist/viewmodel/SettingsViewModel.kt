@@ -142,8 +142,8 @@ class SettingsViewModel @Inject constructor(
         _selectedTranscriptionService.value = settingsManager.getTranscriptionService()
         _selectedTranscriptionLanguageCode.value = settingsManager.getTranscriptionLanguage()
         // Load author name and email from settingsManager
-        _authorName.value = settingsManager.getAuthorName()
-        _authorEmail.value = settingsManager.getAuthorEmail()
+        _authorName.value = settingsManager.getAuthorName() ?: ""
+        _authorEmail.value = settingsManager.getAuthorEmail() ?: ""
     }
 
     fun setSelectedCloudProvider(provider: String) {
