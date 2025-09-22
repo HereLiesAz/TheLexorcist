@@ -79,21 +79,21 @@ fun EvidenceScreen(
         rememberLauncherForActivityResult(
             contract = ActivityResultContracts.GetContent(),
         ) { uri ->
-            uri?.let { caseViewModel.processImageEvidence(it, mainViewModel) }
+            uri?.let { caseViewModel.processImageEvidence(it) }
         }
 
     val audioPickerLauncher =
         rememberLauncherForActivityResult(
             contract = ActivityResultContracts.GetContent(),
         ) { uri ->
-            uri?.let { caseViewModel.processAudioEvidence(it, mainViewModel) }
+            uri?.let { caseViewModel.processAudioEvidence(it) }
         }
 
     val videoPickerLauncher =
         rememberLauncherForActivityResult(
             contract = ActivityResultContracts.GetContent(),
         ) { uri ->
-            uri?.let { caseViewModel.processVideoEvidence(it, mainViewModel) }
+            uri?.let { caseViewModel.processVideoEvidence(it) }
         }
 
     LaunchedEffect(Unit) {
@@ -160,7 +160,7 @@ fun EvidenceScreen(
                 Spacer(modifier = Modifier.height(16.dp))
                 LexorcistOutlinedButton(
                     onClick = {
-                        caseViewModel.addTextEvidence(text, mainViewModel)
+                        caseViewModel.addTextEvidence(text)
                         text = ""
                         showAddTextEvidence = false
                     },

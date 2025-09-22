@@ -86,7 +86,7 @@ fun EvidenceDetailsScreen(
                 modifier = Modifier.fillMaxWidth(), // TextField takes full width
             )
             Spacer(modifier = Modifier.height(16.dp))
-            LexorcistOutlinedButton(onClick = { caseViewModel.updateCommentary(evidence.id, commentary, mainViewModel) }, text = "Save Commentary")
+            LexorcistOutlinedButton(onClick = { caseViewModel.updateCommentary(evidence.id, commentary) }, text = "Save Commentary")
             if (evidence.type == "audio") {
                 Spacer(modifier = Modifier.height(16.dp))
                 LexorcistOutlinedButton(

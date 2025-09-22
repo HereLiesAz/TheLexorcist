@@ -88,7 +88,7 @@ fun TranscriptionScreen(
                     )
                 }
                 is ProcessingState.Completed -> {
-                    transcript = state.result
+                    // transcript = state.result // Commented out as transcript is managed locally by OutlinedTextField
                     Column(
                         modifier =
                         Modifier
@@ -122,7 +122,7 @@ fun TranscriptionScreen(
                         LexorcistOutlinedButton(
                             onClick = {
                                 if (isTranscriptChanged) {
-                                    caseViewModel.updateTranscript(evidence, transcript, reason, mainViewModel)
+                                    caseViewModel.updateTranscript(evidence, transcript, reason)
                                 }
                                 navController.popBackStack()
                             },
@@ -181,7 +181,7 @@ fun TranscriptionScreen(
                         LexorcistOutlinedButton(
                             onClick = {
                                 if (isTranscriptChanged) {
-                                    caseViewModel.updateTranscript(evidence, transcript, reason, mainViewModel)
+                                    caseViewModel.updateTranscript(evidence, transcript, reason)
                                 }
                                 navController.popBackStack()
                             },

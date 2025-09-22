@@ -98,11 +98,11 @@ fun MainScreen(
     LaunchedEffect(signInState) {
         when (signInState) {
             is SignInState.Success -> {
-                caseViewModel.loadCasesFromRepository(mainViewModel) // Updated
+                caseViewModel.loadCasesFromRepository() // Updated
                 mainViewModel.hideLoading()
             }
             is SignInState.Idle -> {
-                caseViewModel.clearCache(mainViewModel) // Updated
+                caseViewModel.clearCache() // Updated
             }
             is SignInState.InProgress -> {
                 mainViewModel.showLoading()
@@ -214,7 +214,7 @@ fun MainScreen(
                                         PhotoGroupScreen(navController = navController, mainViewModel = mainViewModel)
                                     }
                                     composable("data_review") {
-                                        ReviewScreen(caseViewModel = caseViewModel, mainViewModel = mainViewModel) // Updated
+                                        ReviewScreen(caseViewModel = caseViewModel) // Updated
                                     }
                                     composable("settings") { SettingsScreen(caseViewModel = caseViewModel, mainViewModel = mainViewModel) }
                                     composable("evidence_details/{evidenceId}") { backStackEntry ->
@@ -309,8 +309,7 @@ fun MainScreen(
                 CreateCaseDialog(
                     caseViewModel = caseViewModel,
                     navController = navController,
-                onDismiss = { showCreateCaseDialog = false },
-                mainViewModel = mainViewModel,
+                    onDismiss = { showCreateCaseDialog = false } // Removed mainViewModel parameter
                 )
             }
         }

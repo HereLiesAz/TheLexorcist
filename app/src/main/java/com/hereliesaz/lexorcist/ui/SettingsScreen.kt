@@ -269,7 +269,7 @@ fun SettingsScreen(
                 contract = ActivityResultContracts.OpenDocumentTree(),
                 onResult = { uri ->
                     uri?.let {
-                        caseViewModel.setStorageLocation(it, mainViewModel)
+                        caseViewModel.setStorageLocation(it)
                     }
                 }
             )
@@ -437,7 +437,7 @@ fun SettingsScreen(
             confirmButton = {
                 LexorcistOutlinedButton(
                     onClick = {
-                        caseViewModel.clearCache(mainViewModel)
+                        caseViewModel.clearCache()
                         showClearCacheDialog = false
                     },
                     text = stringResource(R.string.delete).uppercase(Locale.getDefault())
