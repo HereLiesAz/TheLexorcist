@@ -249,7 +249,7 @@ fun ProcessingProgressView(
                     horizontalArrangement = Arrangement.End
                 ) {
                     Text(
-                        text = "Processing: ${"%.0f".format(processingState.progress * 100)}%}",
+                        text = "Processing: ${"%.0f".format(processingState.progress * 100)}%",
                         style = MaterialTheme.typography.bodySmall,
                         textAlign = TextAlign.End
                     )
@@ -258,7 +258,7 @@ fun ProcessingProgressView(
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 LinearProgressIndicator(
-                    progress = { processingState.progress },
+                    progress = processingState.progress,
                     modifier = Modifier.fillMaxWidth()
                 )
             }
