@@ -47,12 +47,14 @@ class AddonsBrowserViewModel
             description: String,
             content: String,
             type: String,
-            authorEmail: String, // Added authorEmail parameter
-            court: String? // Added court parameter
+            authorName: String, // Added authorName
+            authorEmail: String,
+            court: String?
         ) {
             viewModelScope.launch {
                 _shareOperationState.value = SaveState.Saving
-                val shareResult = googleApiService.shareAddon(name, description, content, type, authorEmail, court ?: "")
+                // Corrected call with all parameters in the right order:
+                val shareResult = googleApiService.shareAddon(name, description, content, type, authorName, authorEmail, court ?: "")
                 when (shareResult) {
                     is Result.Success -> {
                         _shareOperationState.value = SaveState.Success
@@ -65,8 +67,7 @@ class AddonsBrowserViewModel
                         _shareOperationState.value = SaveState.Error("Failed to share addon: User recoverable error - ${shareResult.exception.localizedMessage ?: "Unknown user error"}")
                     }
                     is Result.Loading -> {
-                        // The state is already SaveState.Saving, which is appropriate.
-                        // No specific action needed for Loading in this context, but the branch makes the 'when' exhaustive.
+                        // The state is already SaveState.Saving
                     }
                 }
             }

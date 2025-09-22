@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.hereliesaz.lexorcist.auth.DropboxAuthManager
 import com.hereliesaz.lexorcist.data.CloudStorageProvider
+import com.hereliesaz.lexorcist.data.ExtrasRepository // Added import
 import com.hereliesaz.lexorcist.data.SettingsManager
 import com.hereliesaz.lexorcist.model.CloudUser
 import com.hereliesaz.lexorcist.model.DownloadState
@@ -33,6 +34,7 @@ class SettingsViewModel @Inject constructor(
     private val dropboxAuthManager: DropboxAuthManager,
     private val voskTranscriptionService: VoskTranscriptionService,
     private val whisperTranscriptionService: WhisperTranscriptionService,
+    private val extrasRepository: ExtrasRepository, // Injected ExtrasRepository
     application: Application
 ) : AndroidViewModel(application) {
 
@@ -139,6 +141,9 @@ class SettingsViewModel @Inject constructor(
         _language.value = settingsManager.getLanguage()
         _selectedTranscriptionService.value = settingsManager.getTranscriptionService()
         _selectedTranscriptionLanguageCode.value = settingsManager.getTranscriptionLanguage()
+        // Load author name and email from settingsManager
+        _authorName.value = settingsManager.getAuthorName()
+        _authorEmail.value = settingsManager.getAuthorEmail()
     }
 
     fun setSelectedCloudProvider(provider: String) {
@@ -303,5 +308,39 @@ class SettingsViewModel @Inject constructor(
 
     fun clearOneDriveUploadStatus() {
         _oneDriveUploadStatus.value = null
+    }
+
+    // Author details for sharing
+    private val _authorName = MutableStateFlow("")
+    val authorName: StateFlow<String> = _authorName.asStateFlow()
+
+    private val _authorEmail = MutableStateFlow("")
+    val authorEmail: StateFlow<String> = _authorEmail.asStateFlow()
+
+    fun setAuthorName(name: String) {
+        settingsManager.saveAuthorName(name)
+        _authorName.value = name
+    }
+
+    fun setAuthorEmail(email: String) {
+        settingsManager.saveAuthorEmail(email)
+        _authorEmail.value = email
+    }
+
+    // Function to be called from UI/ExtrasViewModel to initiate sharing
+    suspend fun shareAddon(
+        name: String,
+        description: String,
+        content: String,
+        type: String,
+        authorName: String,
+        authorEmail: String,
+        court: String?
+    ): Result<Unit> {
+        // Persist authorName and authorEmail if they are being set/confirmed here
+        // though typically they'd be set via dedicated UI in settings
+        setAuthorName(authorName)
+        setAuthorEmail(authorEmail)
+        return extrasRepository.shareItem(name, description, content, type, authorName, authorEmail, court ?: "")
     }
 }

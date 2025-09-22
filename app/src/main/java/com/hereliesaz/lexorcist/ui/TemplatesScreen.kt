@@ -176,8 +176,10 @@ fun TemplatesScreen(
                         name = name,
                         description = description,
                         content = content,
-                        author = "Lexorcist",
+                        authorName = "Lexorcist",
+                        authorEmail = "lexorcist@example.com", // Placeholder for app-provided templates
                         court = courtValue,
+                        // rating and numRatings will use default values
                     )
                 }
             saveTemplates(templates.value) // Save initial templates
@@ -225,24 +227,20 @@ fun TemplatesScreen(
                                         reader.readText()
                                     }
                                 val template = Gson().fromJson(text, Template::class.java)
-                                // Assuming a method to add to local templates list and save
                                 val currentTemplates = templates.value.toMutableList()
-                                currentTemplates.add(template.copy(id = UUID.randomUUID().toString())) // Add as new, or update if exists
-                                saveTemplates(currentTemplates)
+                                // Ensure imported templates also have authorName and authorEmail if they are null
+                                val newAuthorName = template.authorName.takeIf { it.isNotBlank() } ?: "Imported User"
+                                val newAuthorEmail = template.authorEmail.takeIf { it.isNotBlank() } ?: "imported@example.com"
 
-                                // Optionally, also share it via viewmodel
-                                // val userEmail = if (signInState is SignInState.Success) (signInState as SignInState.Success).userInfo?.email else "unknown_author@example.com"
-                                // viewModel.shareAddon(
-                                // name = template.name,
-                                // description = template.description,
-                                // content = template.content,
-                                // type = "Template",
-                                // authorEmail = userEmail ?: "unknown_author@example.com",
-                                // court = template.court
-                                // )
+                                currentTemplates.add(template.copy(
+                                    id = UUID.randomUUID().toString(),
+                                    authorName = newAuthorName, 
+                                    authorEmail = newAuthorEmail
+                                ))
+                                saveTemplates(currentTemplates)
                             }
                         } catch (e: Exception) {
-                            // Handle exception, e.g., show a snackbar
+                            // Handle exception
                         }
                     }
                 }
@@ -269,13 +267,17 @@ fun TemplatesScreen(
                             showEditor = true
                         },
                         onShare = {
-                            val userEmail = if (signInState is SignInState.Success) (signInState as SignInState.Success).userInfo?.email else "unknown_author@example.com"
+                            val currentUserInfo = if (signInState is SignInState.Success) (signInState as SignInState.Success).userInfo else null
+                            val currentUserName = currentUserInfo?.displayName?.takeIf { it.isNotBlank() } ?: template.authorName // Changed to displayName
+                            val currentUserEmail = currentUserInfo?.email ?: template.authorEmail 
+
                             viewModel.shareAddon(
                                 name = template.name,
                                 description = template.description,
                                 content = template.content,
                                 type = "Template",
-                                authorEmail = userEmail ?: "unknown_author@example.com", // Pass authorEmail
+                                authorName = currentUserName,
+                                authorEmail = currentUserEmail,
                                 court = template.court
                             )
                         },
@@ -290,12 +292,28 @@ fun TemplatesScreen(
             template = selectedTemplate,
             onSave = { updatedTemplate ->
                 val currentTemplates = templates.value.toMutableList()
-                if (selectedTemplate == null || currentTemplates.none { it.id == updatedTemplate.id }) {
-                    currentTemplates.add(updatedTemplate.copy(id = UUID.randomUUID().toString()))
+                // When creating a new template via editor, author details will be empty initially from TemplateEditor
+                // These should be populated with current user's details if available before saving or sharing.
+                val finalTemplate = if (selectedTemplate == null && updatedTemplate.id.isBlank()) {
+                    // New template being saved from editor
+                    val currentUserInfo = if (signInState is SignInState.Success) (signInState as SignInState.Success).userInfo else null
+                    val currentUserName = currentUserInfo?.displayName?.takeIf { it.isNotBlank() } ?: "Local User" // Changed to displayName
+                    val currentUserEmail = currentUserInfo?.email ?: "local@example.com"
+                    updatedTemplate.copy(
+                        id = UUID.randomUUID().toString(), 
+                        authorName = currentUserName, 
+                        authorEmail = currentUserEmail
+                    )
                 } else {
-                    val index = currentTemplates.indexOfFirst { it.id == updatedTemplate.id }
+                    updatedTemplate
+                }
+
+                if (currentTemplates.none { it.id == finalTemplate.id }) {
+                    currentTemplates.add(finalTemplate)
+                } else {
+                    val index = currentTemplates.indexOfFirst { it.id == finalTemplate.id }
                     if (index != -1) {
-                        currentTemplates[index] = updatedTemplate
+                        currentTemplates[index] = finalTemplate
                     }
                 }
                 saveTemplates(currentTemplates)

@@ -43,13 +43,13 @@ android {
         minSdk = 26
         targetSdk = 36
 
-        versionCode = 3
-        versionName = "0.9.0"
+        versionCode = 4
+        versionName = "0.9.2"
 
         testInstrumentationRunner = "com.hereliesaz.lexorcist.HiltTestRunner"
 
-        // Expose the Google Sheets API key to the app
-        buildConfigField("String", "GOOGLE_SHEETS_API_KEY", "\"${localProperties.getProperty("GOOGLE_SHEETS_API_KEY")}\"")
+        // Expose the API key to the app
+        buildConfigField("String", "API_KEY", "\"${localProperties.getProperty("API_KEY")}\"")
     }
 
     buildTypes {
@@ -256,7 +256,7 @@ dependencies {
     kspAndroidTest(libs.google.dagger.hilt.compiler) // Corrected alias
 
     // Jetpack DataStore
-    implementation("androidx.datastore:datastore-preferences:1.1.1")
+    implementation("androidx.datastore:datastore-preferences:1.1.7")
     // Room IS NOT ALLOWED IN THIS PROJECT!!!!!
 
     // Vosk for on-device speech-to-text

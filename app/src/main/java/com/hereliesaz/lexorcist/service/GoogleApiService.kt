@@ -2,7 +2,6 @@ package com.hereliesaz.lexorcist.service
 
 import android.app.Application
 import android.util.Log
-import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
 import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException
 import com.google.api.client.http.FileContent
 import com.google.api.client.http.javanet.NetHttpTransport
@@ -61,7 +60,7 @@ class GoogleApiService @Inject constructor(
             .setApplicationName(applicationName)
             .setGoogleClientRequestInitializer { request ->
                 val sheetsRequest = request as com.google.api.services.sheets.v4.SheetsRequest<*>
-                sheetsRequest.key = com.hereliesaz.lexorcist.BuildConfig.GOOGLE_SHEETS_API_KEY
+                sheetsRequest.key = com.hereliesaz.lexorcist.BuildConfig.API_KEY
             }
             .build()
     }
@@ -917,7 +916,6 @@ class GoogleApiService @Inject constructor(
                             evidence.documentDate.toString(),
                             evidence.allegationId?.toString() ?: "",
                             evidence.category,
-                            evidence.tags.joinToString(",
                             evidence.tags.joinToString(","),
                             evidence.commentary ?: "",
                             evidence.linkedEvidenceIds.joinToString(","),
@@ -1092,58 +1090,72 @@ class GoogleApiService @Inject constructor(
     }
 
     suspend fun getSharedScripts(): List<Script> {
-        val sheets = getPublicSheetsService()
-        val sheetData = readSpreadsheet(EXTRAS_SPREADSHEET_ID) // This uses sheets internally
+        val sheets = getPublicSheetsService() // No credentials needed
+        val sheetData = readSpreadsheet(EXTRAS_SPREADSHEET_ID) // Uses getSheetsService internally, which might be an issue for public data
         val scriptSheet = sheetData?.get("Scripts") ?: return emptyList()
 
         return scriptSheet.mapNotNull { row ->
-            if (row.size >= 8) { // Ensure there are enough columns for court
-                Script(
-                    id = row[0].toString(),
-                    name = row[1].toString(),
-                    description = row[2].toString(),
-                    content = row[3].toString(),
-                    author = row[4].toString(),
-                    rating = row[5].toString().toDoubleOrNull() ?: 0.0,
-                    numRatings = row[6].toString().toIntOrNull() ?: 0,
-                    court = row.getOrNull(7)?.toString() ?: "" // Added court
-                )
+            if (row.size >= 9) { // Expect 9 columns: id, name, description, content, authorName, authorEmail, rating, numRatings, court
+                try {
+                    Script(
+                        id = row[0].toString(),
+                        name = row[1].toString(),
+                        description = row[2].toString(),
+                        content = row[3].toString(),
+                        authorName = row[4].toString(),
+                        authorEmail = row[5].toString(),
+                        rating = row[6].toString().toDoubleOrNull() ?: 0.0,
+                        numRatings = row[7].toString().toIntOrNull() ?: 0,
+                        court = row.getOrNull(8)?.toString() ?: ""
+                    )
+                } catch (e: Exception) {
+                    Log.e("GoogleApiService", "Error parsing Script row: $row", e)
+                    null
+                }
             } else {
+                Log.w("GoogleApiService", "Skipping Script row with not enough columns: $row")
                 null
             }
         }
     }
 
     suspend fun getSharedTemplates(): List<Template> {
-        val sheets = getPublicSheetsService()
-        val sheetData = readSpreadsheet(EXTRAS_SPREADSHEET_ID) // This uses sheets internally
+        val sheets = getPublicSheetsService() // No credentials needed
+        val sheetData = readSpreadsheet(EXTRAS_SPREADSHEET_ID) // Uses getSheetsService internally
         val templateSheet = sheetData?.get("Templates") ?: return emptyList()
 
         return templateSheet.mapNotNull { row ->
-            if (row.size >= 8) { // Ensure there are enough columns for court
-                Template(
-                    id = row[0].toString(),
-                    name = row[1].toString(),
-                    description = row[2].toString(),
-                    content = row[3].toString(),
-                    author = row[4].toString(),
-                    rating = row[5].toString().toDoubleOrNull() ?: 0.0,
-                    numRatings = row[6].toString().toIntOrNull() ?: 0,
-                    court = row.getOrNull(7)?.toString() ?: "" // Added court
-                )
+            if (row.size >= 9) { // Expect 9 columns: id, name, description, content, authorName, authorEmail, rating, numRatings, court
+                 try {
+                    Template(
+                        id = row[0].toString(),
+                        name = row[1].toString(),
+                        description = row[2].toString(),
+                        content = row[3].toString(),
+                        authorName = row[4].toString(),
+                        authorEmail = row[5].toString(),
+                        rating = row[6].toString().toDoubleOrNull() ?: 0.0,
+                        numRatings = row[7].toString().toIntOrNull() ?: 0,
+                        court = row.getOrNull(8)?.toString() ?: ""
+                    )
+                } catch (e: Exception) {
+                    Log.e("GoogleApiService", "Error parsing Template row: $row", e)
+                    null
+                }
             } else {
+                Log.w("GoogleApiService", "Skipping Template row with not enough columns: $row")
                 null
             }
         }
     }
-
     suspend fun shareAddon(
         name: String,
         description: String,
         content: String,
         type: String,
+        authorName: String, // New parameter
         authorEmail: String,
-        court: String // Added court parameter
+        court: String
     ): Result<Unit> =
         withContext(Dispatchers.IO) {
             val sheets = getSheetsService() ?: return@withContext Result.Error(IOException("Credential not available for Sheets service"))
@@ -1167,10 +1179,11 @@ class GoogleApiService @Inject constructor(
                             name,
                             description,
                             content,
-                            authorEmail, // Use the provided author email
+                            authorName, // Added authorName
+                            authorEmail,
                             0.0, // Rating
                             0, // NumRatings
-                            court // Added court
+                            court
                         ),
                     )
                 val body = ValueRange().setValues(values)
@@ -1202,7 +1215,7 @@ class GoogleApiService @Inject constructor(
 
     suspend fun updateSharedItem(
         item: Any,
-        userEmail: String,
+        userEmail: String, // This is the email of the logged-in user trying to perform the update
     ): Result<Unit> =
         withContext(Dispatchers.IO) {
             val sheets = getSheetsService() ?: return@withContext Result.Error(IOException("Credential not available for Sheets service"))
@@ -1211,26 +1224,26 @@ class GoogleApiService @Inject constructor(
 
                 val sheetName: String
                 val itemId: String
-                val author: String
+                val itemAuthorEmail: String // Email of the item's author
                 val rowData: List<Any?>
 
                 when (item) {
                     is Script -> {
                         sheetName = "Scripts"
                         itemId = item.id
-                        author = item.author
-                        rowData = listOf(item.id, item.name, item.description, item.content, item.author, item.rating, item.numRatings, item.court)
+                        itemAuthorEmail = item.authorEmail // Use item's authorEmail for check
+                        rowData = listOf(item.id, item.name, item.description, item.content, item.authorName, item.authorEmail, item.rating, item.numRatings, item.court)
                     }
                     is Template -> {
                         sheetName = "Templates"
                         itemId = item.id
-                        author = item.author
-                        rowData = listOf(item.id, item.name, item.description, item.content, item.author, item.rating, item.numRatings, item.court)
+                        itemAuthorEmail = item.authorEmail // Use item's authorEmail for check
+                        rowData = listOf(item.id, item.name, item.description, item.content, item.authorName, item.authorEmail, item.rating, item.numRatings, item.court)
                     }
                     else -> return@withContext Result.Error(IllegalArgumentException("Unsupported item type"))
                 }
 
-                if (userEmail != author && userEmail != "hereliesaz@gmail.com") {
+                if (userEmail != itemAuthorEmail && userEmail != "hereliesaz@gmail.com") {
                     return@withContext Result.Error(SecurityException("User not authorized to edit this item."))
                 }
 
@@ -1253,20 +1266,20 @@ class GoogleApiService @Inject constructor(
 
     suspend fun deleteSharedItem(
         item: Any,
-        userEmail: String,
+        userEmail: String, // This is the email of the logged-in user trying to perform the delete
     ): Result<Unit> =
         withContext(Dispatchers.IO) {
             val sheets = getSheetsService() ?: return@withContext Result.Error(IOException("Credential not available for Sheets service"))
             try {
                 val spreadsheetId = EXTRAS_SPREADSHEET_ID
-                val (sheetName, itemId, author) = // This destructuring should be fine for Triple
+                val (sheetName, itemId, itemAuthorEmail) =
                     when (item) {
-                        is Script -> Triple("Scripts", item.id, item.author)
-                        is Template -> Triple("Templates", item.id, item.author)
+                        is Script -> Triple("Scripts", item.id, item.authorEmail)
+                        is Template -> Triple("Templates", item.id, item.authorEmail)
                         else -> return@withContext Result.Error(IllegalArgumentException("Unsupported item type"))
                     }
 
-                if (userEmail != author && userEmail != "hereliesaz@gmail.com") {
+                if (userEmail != itemAuthorEmail && userEmail != "hereliesaz@gmail.com") { // Check against item's authorEmail
                     return@withContext Result.Error(SecurityException("User not authorized to delete this item."))
                 }
 
@@ -1311,11 +1324,14 @@ class GoogleApiService @Inject constructor(
                     return@withContext false
                 }
 
-                // Fetch current rating and numRatings
-                val range = "$sheetName!F${rowIndex + 1}:G${rowIndex + 1}"
+                // Fetch current rating and numRatings - Column F for rating (index 5), G for numRatings (index 6)
+                // New sheet structure has authorName, authorEmail, then rating, numRatings
+                // So Rating is column G (index 6), NumRatings is column H (index 7)
+                val range = "$sheetName!G${rowIndex + 1}:H${rowIndex + 1}"
                 val response = sheets.spreadsheets().values().get(spreadsheetId, range).execute()
                 val values = response.getValues()
                 if (values.isNullOrEmpty() || values[0].size < 2) {
+                    Log.e("GoogleApiService", "Could not fetch rating/numRatings for $id in $sheetName")
                     return@withContext false // or handle error
                 }
 
@@ -1323,7 +1339,7 @@ class GoogleApiService @Inject constructor(
                 val numRatings = values[0][1].toString().toIntOrNull() ?: 0
 
                 val newNumRatings = numRatings + 1
-                val newAverageRating = ((currentRating * numRatings) + rating) / newNumRatings
+                val newAverageRating = ((currentRating * numRatings) + rating) / newNumRatings.toDouble() // Ensure double division
 
                 val valueRange = ValueRange().setValues(listOf(listOf(newAverageRating, newNumRatings)))
                 sheets.spreadsheets().values().update(spreadsheetId, range, valueRange)

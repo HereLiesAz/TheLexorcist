@@ -30,6 +30,8 @@ class SettingsManager
         private val keyCloudProvider = "cloud_provider"
         private val keyTranscriptionService = "transcription_service"
         private val keyTranscriptionLanguage = "transcription_language"
+        private val keyAuthorName = "author_name" // Added key
+        private val keyAuthorEmail = "author_email" // Added key
 
         fun saveSelectedCloudProvider(provider: String) {
             sharedPreferences.edit().putString(keyCloudProvider, provider).apply()
@@ -108,5 +110,22 @@ class SettingsManager
 
         fun getTranscriptionLanguage(): String {
             return sharedPreferences.getString(keyTranscriptionLanguage, "en-us") ?: "en-us" // Default to vosk english
+        }
+
+        // Methods for author details
+        fun saveAuthorName(name: String) {
+            sharedPreferences.edit().putString(keyAuthorName, name).apply()
+        }
+
+        fun getAuthorName(): String {
+            return sharedPreferences.getString(keyAuthorName, "") ?: ""
+        }
+
+        fun saveAuthorEmail(email: String) {
+            sharedPreferences.edit().putString(keyAuthorEmail, email).apply()
+        }
+
+        fun getAuthorEmail(): String {
+            return sharedPreferences.getString(keyAuthorEmail, "") ?: ""
         }
     }
