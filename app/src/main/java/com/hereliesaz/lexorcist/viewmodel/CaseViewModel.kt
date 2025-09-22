@@ -27,13 +27,18 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import android.graphics.pdf.PdfDocument
+import android.provider.MediaStore
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map // Ensured import
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import androidx.core.net.toUri
 import kotlinx.coroutines.withContext
+import java.io.File
+import java.io.FileOutputStream
 
 @HiltViewModel
 class CaseViewModel
@@ -51,6 +56,7 @@ constructor(
     private val logService: com.hereliesaz.lexorcist.service.LogService,
     private val storageService: com.hereliesaz.lexorcist.data.StorageService,
     private val globalLoadingState: com.hereliesaz.lexorcist.service.GlobalLoadingState,
+    private val googleApiService: com.hereliesaz.lexorcist.service.GoogleApiService
 ) : ViewModel() {
     private val sharedPref =
         applicationContext.getSharedPreferences("CaseInfoPrefs", Context.MODE_PRIVATE)
@@ -94,6 +100,9 @@ constructor(
     val allegations: StateFlow<List<Allegation>> =
         caseRepository.selectedCaseAllegations
             .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+
+    private val _exhibits = MutableStateFlow<List<com.hereliesaz.lexorcist.data.Exhibit>>(emptyList())
+    val exhibits: StateFlow<List<com.hereliesaz.lexorcist.data.Exhibit>> = _exhibits.asStateFlow()
 
     private val _htmlTemplates = MutableStateFlow<List<DriveFile>>(emptyList())
     val htmlTemplates: StateFlow<List<DriveFile>> = _htmlTemplates.asStateFlow()
@@ -718,6 +727,7 @@ constructor(
                                 Log.i("CaseViewModel", "Audio transcribed: $transcribedText")
                                 _processingState.value = ProcessingState.InProgress(0.75f) // After transcription, before saving evidence
 
+                                val fileHash = com.hereliesaz.lexorcist.utils.HashingUtils.getHash(applicationContext, uri)
                                 val newEvidence =
                                     com.hereliesaz.lexorcist.data.Evidence(
                                         caseId = caseToUse.id.toLong(),
@@ -735,6 +745,7 @@ constructor(
                                         commentary = null,
                                         parentVideoId = null,
                                         entities = com.hereliesaz.lexorcist.DataParser.tagData(transcribedText),
+                                        fileHash = fileHash
                                     )
                                 val savedEvidence = withContext(Dispatchers.IO) {
                                     evidenceRepository.addEvidence(newEvidence)
@@ -994,6 +1005,239 @@ constructor(
                      // This is a fallback if somehow it's still InProgress.
                     _processingState.value = ProcessingState.Idle 
                 }
+            }
+        }
+    }
+
+    private val _cleanupSuggestions = MutableStateFlow<List<com.hereliesaz.lexorcist.model.CleanupSuggestion>>(emptyList())
+    val cleanupSuggestions: StateFlow<List<com.hereliesaz.lexorcist.model.CleanupSuggestion>> = _cleanupSuggestions.asStateFlow()
+
+    fun generateCleanupSuggestions() {
+        viewModelScope.launch {
+            globalLoadingState.pushLoading()
+            try {
+                _userMessage.value = "Scanning for duplicates and image series..."
+                val currentEvidence = _selectedCaseEvidenceListInternal.value
+
+                // Phase 1: Ensure all evidence has hashes. This is a one-by-one update.
+                // The flow should update automatically after each evidenceRepository.updateEvidence call.
+                // This might be inefficient but will work.
+                val evidenceToHash = currentEvidence.filter { it.mediaUri != null && it.fileHash.isNullOrEmpty() }
+                if (evidenceToHash.isNotEmpty()) {
+                    _userMessage.value = "Calculating hashes for ${evidenceToHash.size} items..."
+                    evidenceToHash.forEach { evidence ->
+                        try {
+                            // Parsing URI and getting hash can be slow, so it's good this is in a coroutine.
+                            val hash = com.hereliesaz.lexorcist.utils.HashingUtils.getHash(applicationContext, android.net.Uri.parse(evidence.mediaUri))
+                            if (hash != null) {
+                                // This update should trigger the flow to emit a new list.
+                                evidenceRepository.updateEvidence(evidence.copy(fileHash = hash))
+                            }
+                        } catch (e: SecurityException) {
+                            Log.e("Cleanup", "Permission error hashing ${evidence.mediaUri}, may need to re-grant access.", e)
+                            _errorMessage.value = "Permission error accessing a file. Please check storage permissions."
+                        } catch (e: Exception) {
+                            Log.e("Cleanup", "Failed to hash ${evidence.mediaUri}", e)
+                            // We can continue to the next item even if one fails.
+                        }
+                    }
+                }
+
+                // After hashing, the `selectedCaseEvidenceList` flow will have emitted the latest data.
+                val updatedEvidence = selectedCaseEvidenceList.value
+                val suggestions = mutableListOf<com.hereliesaz.lexorcist.model.CleanupSuggestion>()
+
+                // Phase 2: Find duplicates using hashes
+                val evidenceWithHashes = updatedEvidence.filterNot { it.fileHash.isNullOrEmpty() }
+                val duplicateGroups = evidenceWithHashes
+                    .groupBy { it.fileHash!! }
+                    .filter { it.value.size > 1 }
+                    .map { com.hereliesaz.lexorcist.model.CleanupSuggestion.DuplicateGroup(it.value) }
+
+                suggestions.addAll(duplicateGroups)
+
+                // Mark items as duplicates in the database for persistence.
+                duplicateGroups.flatMap { it.evidence }.forEach { evidence ->
+                    if (!evidence.isDuplicate) {
+                        evidenceRepository.updateEvidence(evidence.copy(isDuplicate = true))
+                    }
+                }
+
+                // Phase 3: Find image series (ensure we don't process duplicates here)
+                val nonDuplicateImageEvidence = updatedEvidence.filter { it.type == "image" && !it.isDuplicate }
+                val seriesCandidates = nonDuplicateImageEvidence.groupBy {
+                    // A more robust regex to handle names like "IMG_20230101_123456.jpg"
+                    it.sourceDocument.replace(Regex("[_\\d]"), "")
+                }.filter { it.value.size > 1 }
+
+                seriesCandidates.forEach { (_, series) ->
+                    suggestions.add(com.hereliesaz.lexorcist.model.CleanupSuggestion.ImageSeriesGroup(series))
+                }
+
+                _cleanupSuggestions.value = suggestions
+                _userMessage.value = if (suggestions.isNotEmpty()) {
+                    "Cleanup scan complete. Found ${suggestions.size} suggestion(s)."
+                } else {
+                    "Cleanup scan complete. No duplicates or image series found."
+                }
+
+            } catch (e: Exception) {
+                _errorMessage.value = "Failed to run cleanup scan: ${e.message}"
+                Log.e("Cleanup", "Error in generateCleanupSuggestions", e)
+            } finally {
+                globalLoadingState.popLoading()
+            }
+        }
+    }
+
+    fun deleteDuplicates(group: com.hereliesaz.lexorcist.model.CleanupSuggestion.DuplicateGroup) {
+        viewModelScope.launch {
+            val evidenceToDelete = group.evidence.drop(1)
+            evidenceToDelete.forEach { evidence ->
+                deleteEvidence(evidence)
+            }
+            generateCleanupSuggestions() // Refresh suggestions
+        }
+    }
+
+    fun mergeImageSeries(group: com.hereliesaz.lexorcist.model.CleanupSuggestion.ImageSeriesGroup) {
+        viewModelScope.launch {
+            val case = selectedCase.value ?: return@launch
+            val caseDir = storageLocation.value?.let { File(it, case.spreadsheetId) } ?: return@launch
+            val rawDir = File(caseDir, "raw").apply { if (!exists()) mkdirs() }
+            val pdfFile = File(rawDir, "merged_series_${System.currentTimeMillis()}.pdf")
+
+            val pdfDocument = PdfDocument()
+
+            try {
+                group.evidence.forEach { evidence ->
+                    val bitmap = MediaStore.Images.Media.getBitmap(applicationContext.contentResolver, android.net.Uri.parse(evidence.mediaUri))
+                    val pageInfo = PdfDocument.PageInfo.Builder(bitmap.width, bitmap.height, 1).create()
+                    val page = pdfDocument.startPage(pageInfo)
+                    page.canvas.drawBitmap(bitmap, 0f, 0f, null)
+                    pdfDocument.finishPage(page)
+                    bitmap.recycle()
+                }
+
+                pdfDocument.writeTo(FileOutputStream(pdfFile))
+            } catch (e: Exception) {
+                // Handle exception
+                e.printStackTrace()
+            } finally {
+                pdfDocument.close()
+            }
+
+            val combinedContent = group.evidence.joinToString("\n\n") { it.content }
+
+            val newEvidence = com.hereliesaz.lexorcist.data.Evidence(
+                caseId = case.id.toLong(),
+                spreadsheetId = case.spreadsheetId,
+                type = "pdf",
+                content = combinedContent,
+                formattedContent = "```\n$combinedContent\n```",
+                mediaUri = pdfFile.toUri().toString(),
+                timestamp = System.currentTimeMillis(),
+                sourceDocument = "Merged from image series",
+                documentDate = System.currentTimeMillis(),
+                allegationId = null,
+                category = "Document",
+                tags = listOf("pdf", "merged"),
+                commentary = null,
+                parentVideoId = null,
+                entities = emptyMap(),
+                fileHash = com.hereliesaz.lexorcist.utils.HashingUtils.getHash(applicationContext, pdfFile.toUri())
+            )
+
+            evidenceRepository.addEvidence(newEvidence)
+
+            group.evidence.forEach { evidence ->
+                deleteEvidence(evidence)
+            }
+
+            generateCleanupSuggestions()
+        }
+    }
+
+    fun loadExhibits() {
+        viewModelScope.launch {
+            selectedCase.value?.let {
+                evidenceRepository.getExhibitsForCase(it.spreadsheetId).collect { exhibits ->
+                    _exhibits.value = exhibits
+                }
+            }
+        }
+    }
+
+    fun addExhibit(name: String, description: String) {
+        viewModelScope.launch {
+            selectedCase.value?.let {
+                val newExhibit = com.hereliesaz.lexorcist.data.Exhibit(
+                    caseId = it.id.toLong(),
+                    name = name,
+                    description = description,
+                    evidenceIds = emptyList()
+                )
+                evidenceRepository.addExhibit(newExhibit)
+                loadExhibits()
+            }
+        }
+    }
+
+    fun addEvidenceToExhibit(exhibitId: Int, evidenceIds: List<Int>) {
+        viewModelScope.launch {
+            val exhibit = _exhibits.value.find { it.id == exhibitId }
+            if (exhibit != null) {
+                val newEvidenceIds = evidenceIds.filter { it !in exhibit.evidenceIds }
+                val updatedExhibit = exhibit.copy(evidenceIds = exhibit.evidenceIds + newEvidenceIds)
+                evidenceRepository.updateExhibit(updatedExhibit)
+                loadExhibits()
+            }
+        }
+    }
+
+    fun generateDocument(exhibit: com.hereliesaz.lexorcist.data.Exhibit, template: com.google.api.services.drive.model.File) {
+        viewModelScope.launch {
+            val scriptId = selectedCase.value?.scriptId ?: return@launch
+            val caseId = selectedCase.value?.id ?: return@launch
+            val templateId = template.id ?: return@launch
+            val params: List<Any> = listOf(caseId, exhibit.id, templateId)
+            when (val result = googleApiService.runGoogleAppsScript(
+                scriptId,
+                "generateDocument",
+                params
+            )) {
+                is Result.Success<*> -> {
+                    logService.addLog("Document generated successfully: ${result.data}")
+                }
+                is Result.Error -> {
+                    logService.addLog("Error generating document: ${result.exception.message}", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
+                }
+                is Result.UserRecoverableError -> {
+                    logService.addLog("User recoverable error generating document: ${result.exception.message}", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
+                    _userRecoverableAuthIntent.value = result.exception.intent
+                }
+                else -> {
+                    logService.addLog("Unknown error generating document", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
+                }
+            }
+        }
+    }
+
+    fun packageFiles(files: List<java.io.File>, packageName: String, extension: String) {
+        viewModelScope.launch {
+            val zipFile = java.io.File(storageLocation.value, "$packageName.$extension")
+            try {
+                java.util.zip.ZipOutputStream(java.io.FileOutputStream(zipFile)).use { zos ->
+                    files.forEach { file ->
+                        zos.putNextEntry(java.util.zip.ZipEntry(file.name))
+                        java.io.FileInputStream(file).use { fis ->
+                            fis.copyTo(zos)
+                        }
+                        zos.closeEntry()
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
     }

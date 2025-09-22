@@ -12,12 +12,27 @@ import javax.inject.Singleton
 
 @Singleton
 class ScriptRunner @Inject constructor(
-    private val generativeAIService: GenerativeAIService
+    private val generativeAIService: GenerativeAIService,
+    private val googleApiService: GoogleApiService
 ) {
     class ScriptExecutionException(
         message: String,
         cause: Throwable,
     ) : Exception(message, cause)
+
+    inner class GoogleApi {
+        @Suppress("unused") // Used by Rhino
+        fun runAppsScript(scriptId: String, functionName: String, parameters: Array<Any>): Any? {
+            return runBlocking {
+                when (val result = googleApiService.runGoogleAppsScript(scriptId, functionName, parameters.toList())) {
+                    is Result.Success -> result.data
+                    is Result.Error -> throw ScriptExecutionException("Error running Google Apps Script", result.exception)
+                    is Result.UserRecoverableError -> throw ScriptExecutionException("User recoverable error running Google Apps Script", result.exception)
+                    else -> null
+                }
+            }
+        }
+    }
 
     inner class GenerativeAIApi {
         @Suppress("unused") // Used by Rhino
@@ -45,6 +60,9 @@ class ScriptRunner @Inject constructor(
             val aiObject = rhino.newObject(scope)
             ScriptableObject.putProperty(lexObject, "ai", aiObject)
             ScriptableObject.putProperty(aiObject, "generate", Context.javaToJS(GenerativeAIApi(), scope))
+            val googleApiObject = rhino.newObject(scope)
+            ScriptableObject.putProperty(lexObject, "google", googleApiObject)
+            ScriptableObject.putProperty(googleApiObject, "runAppsScript", Context.javaToJS(GoogleApi(), scope))
             ScriptableObject.putProperty(scope, "tags", Context.javaToJS(scriptResult.tags, scope))
 
             // --- Legacy API (Global Functions) ---
