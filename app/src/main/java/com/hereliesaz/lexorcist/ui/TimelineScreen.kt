@@ -128,28 +128,37 @@ fun TimelineScreen(
                     }
                 }
             } else {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .padding(16.dp)
-                            .fillMaxWidth(),
-                        horizontalAlignment = Alignment.End
+                // Show a placeholder extended event when there is no evidence
+                JetLimeColumn(
+                    modifier = Modifier.padding(16.dp),
+                    itemsList = ItemsList(listOf(Unit)), // A single item list for the placeholder
+                    style = JetLimeDefaults.columnStyle(),
+                ) { _, _, position ->
+                    JetLimeExtendedEvent(
+                        style = JetLimeEventDefaults.eventStyle(position = position),
+                        additionalContent = {
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalAlignment = Alignment.End
+                            ) {
+                                Text("Example Event", style = MaterialTheme.typography.titleMedium)
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text("This is where the event details like type and tags would appear.", style = MaterialTheme.typography.bodySmall)
+                            }
+                        }
                     ) {
-                        Text(
-                            text = "No evidence yet",
-                            style = MaterialTheme.typography.headlineSmall,
-                            textAlign = TextAlign.End,
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = stringResource(R.string.no_evidence_placeholder),
-                            style = MaterialTheme.typography.bodyLarge,
-                            textAlign = TextAlign.End,
-                        )
+                        Card(
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(8.dp).fillMaxWidth(),
+                                horizontalAlignment = Alignment.Start
+                            ) {
+                                Text("Placeholder Evidence", style = MaterialTheme.typography.titleMedium)
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(stringResource(R.string.no_evidence_placeholder))
+                            }
+                        }
                     }
                 }
             }

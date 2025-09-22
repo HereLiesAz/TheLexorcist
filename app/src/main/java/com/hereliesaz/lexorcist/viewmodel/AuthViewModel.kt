@@ -60,6 +60,18 @@ class AuthViewModel
             const val PREF_USER_EMAIL_KEY = "user_email"
         }
 
+        init {
+            // Check for existing signed-in user on initialization
+            val currentUser = firebaseAuth.currentUser
+            val storedUserEmail = sharedPreferences.getString(PREF_USER_EMAIL_KEY, null)
+            if (currentUser != null && currentUser.email == storedUserEmail) {
+                Log.d(TAG, "AuthViewModel initialized. User already signed in with Firebase. Email: ${currentUser.email}")
+                onSignInSuccess(currentUser)
+            } else {
+                Log.d(TAG, "AuthViewModel initialized. No persisted user found.")
+            }
+        }
+
         fun signIn(
             activity: Activity,
             silent: Boolean = false,
