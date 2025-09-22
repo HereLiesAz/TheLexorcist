@@ -12,12 +12,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.hereliesaz.lexorcist.model.CleanupSuggestion
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
-import com.hereliesaz.lexorcist.viewmodel.MainViewModel // Added import
 
 @Composable
 fun CleanupDialog(
     caseViewModel: CaseViewModel,
-    mainViewModel: MainViewModel, // Added mainViewModel
     onDismiss: () -> Unit
 ) {
     val suggestions by caseViewModel.cleanupSuggestions.collectAsState()
@@ -35,7 +33,7 @@ fun CleanupDialog(
                                 suggestion.evidence.forEach { evidence ->
                                     Text("- ${evidence.sourceDocument}")
                                 }
-                                Button(onClick = { caseViewModel.deleteDuplicates(suggestion, mainViewModel) }) { // Added mainViewModel
+                                Button(onClick = { caseViewModel.deleteDuplicates(suggestion) }) {
                                     Text("Delete Duplicates")
                                 }
                             }
@@ -46,7 +44,7 @@ fun CleanupDialog(
                                 suggestion.evidence.forEach { evidence ->
                                     Text("- ${evidence.sourceDocument}")
                                 }
-                                Button(onClick = { caseViewModel.mergeImageSeries(suggestion, mainViewModel) }) { // Added mainViewModel
+                                Button(onClick = { caseViewModel.mergeImageSeries(suggestion) }) {
                                     Text("Merge into PDF")
                                 }
                             }

@@ -37,7 +37,7 @@ interface EvidenceRepository {
     ): Result<Unit>
 
     suspend fun getExhibitsForCase(caseSpreadsheetId: String): Flow<List<Exhibit>>
-    suspend fun addExhibit(exhibit: Exhibit): Exhibit?
-    suspend fun updateExhibit(exhibit: Exhibit)
-    suspend fun deleteExhibit(exhibit: Exhibit)
+    suspend fun addExhibit(caseSpreadsheetId: String, exhibit: Exhibit): Exhibit?
+    suspend fun updateExhibit(caseSpreadsheetId: String, exhibit: Exhibit)
+    suspend fun deleteExhibit(caseSpreadsheetId: String, exhibit: Exhibit)
 }

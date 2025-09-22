@@ -6,6 +6,8 @@ import com.hereliesaz.lexorcist.utils.Result
 import kotlinx.coroutines.runBlocking
 import org.mozilla.javascript.Context
 import org.mozilla.javascript.Scriptable
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.mozilla.javascript.ScriptableObject
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -87,6 +89,49 @@ class ScriptRunner @Inject constructor(
             return Result.Error(ScriptExecutionException("An unexpected error occurred while running script or processing results", e))
         } finally {
             Context.exit()
+        }
+    }
+
+    suspend fun runGenericScript(
+        script: String,
+        contextObjects: Map<String, Any>
+    ): Result<Any?> {
+        return withContext(Dispatchers.Default) {
+            val rhino = Context.enter()
+            @Suppress("deprecation")
+            rhino.optimizationLevel = -1
+            try {
+                val scope: Scriptable = rhino.initStandardObjects()
+
+                // Setup the lex object with google api
+                val lexObject = rhino.newObject(scope)
+                ScriptableObject.putProperty(scope, "lex", lexObject)
+                val googleApiObject = rhino.newObject(scope)
+                ScriptableObject.putProperty(lexObject, "google", googleApiObject)
+                ScriptableObject.putProperty(googleApiObject, "runAppsScript", Context.javaToJS(GoogleApi(), scope))
+
+                // Add context objects to the scope
+                for ((key, value) in contextObjects) {
+                    ScriptableObject.putProperty(scope, key, Context.javaToJS(value, scope))
+                }
+
+                val result = rhino.evaluateString(scope, script, "GenericScript", 1, null)
+
+                // Convert the result to a Kotlin type
+                val kotlinResult = if (result is org.mozilla.javascript.Undefined) {
+                    null
+                } else {
+                    Context.jsToJava(result, Any::class.java)
+                }
+                Result.Success(kotlinResult)
+
+            } catch (e: org.mozilla.javascript.RhinoException) {
+                Result.Error(ScriptExecutionException("Error during JavaScript execution", e))
+            } catch (e: Exception) {
+                Result.Error(ScriptExecutionException("An unexpected error occurred while running script", e))
+            } finally {
+                Context.exit()
+            }
         }
     }
 }

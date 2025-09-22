@@ -137,18 +137,18 @@ constructor(
         }
     }
 
-    override suspend fun addExhibit(exhibit: Exhibit): Exhibit? {
-        return when (val result = storageService.addExhibit(exhibit.caseId.toString(), exhibit)) {
+    override suspend fun addExhibit(caseSpreadsheetId: String, exhibit: Exhibit): Exhibit? {
+        return when (val result = storageService.addExhibit(caseSpreadsheetId, exhibit)) {
             is Result.Success -> result.data
             else -> null
         }
     }
 
-    override suspend fun updateExhibit(exhibit: Exhibit) {
-        storageService.updateExhibit(exhibit.caseId.toString(), exhibit)
+    override suspend fun updateExhibit(caseSpreadsheetId: String, exhibit: Exhibit) {
+        storageService.updateExhibit(caseSpreadsheetId, exhibit)
     }
 
-    override suspend fun deleteExhibit(exhibit: Exhibit) {
-        storageService.deleteExhibit(exhibit.caseId.toString(), exhibit)
+    override suspend fun deleteExhibit(caseSpreadsheetId: String, exhibit: Exhibit) {
+        storageService.deleteExhibit(caseSpreadsheetId, exhibit)
     }
 }
