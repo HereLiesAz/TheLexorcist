@@ -55,6 +55,7 @@ constructor(
     private val sharedPref =
         applicationContext.getSharedPreferences("CaseInfoPrefs", Context.MODE_PRIVATE)
 
+    val isLoading: StateFlow<Boolean> = globalLoadingState.isLoading
 
     private val _processingStatus = MutableStateFlow<String?>(null) // Consider removing if _processingState covers this
     val processingStatus: StateFlow<String?> = _processingStatus.asStateFlow()
@@ -868,7 +869,7 @@ constructor(
                     val progressMessage = workInfo.progress.getString(com.hereliesaz.lexorcist.service.VideoProcessingWorker.PROGRESS_MESSAGE) ?: "Processing video..."
                     
                     _processingState.value = ProcessingState.InProgress(progressPercent) // Update with percentage
-                    _videoProcessingProgress.value = "$progressMessage (${(progressPercent * 100).toInt()}%)" // For the separate String progress if still used
+                    _videoProcessingProgress.value = "$progressMessage (${(progressPercent * 100).toInt()}%)." // For the separate String progress if still used
                     
                     Log.d("CaseViewModel", "Video processing progress for $uri: $progressMessage ($progressPercent), State: ${workInfo.state}")
                     

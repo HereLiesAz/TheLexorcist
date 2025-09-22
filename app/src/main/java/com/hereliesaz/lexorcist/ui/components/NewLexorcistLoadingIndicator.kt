@@ -37,7 +37,7 @@ fun NewLexorcistLoadingIndicator(modifier: Modifier = Modifier) {
                 0f at 0
                 1f at 2500
             },
-            repeatMode = RepeatMode.RESTART
+            repeatMode = RepeatMode.Restart
         ),
         label = "progress"
     )
