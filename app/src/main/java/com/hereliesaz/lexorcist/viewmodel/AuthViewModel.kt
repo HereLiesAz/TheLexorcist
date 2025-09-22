@@ -28,6 +28,7 @@ import com.hereliesaz.lexorcist.auth.DropboxAuthManager
 import com.hereliesaz.lexorcist.di.IODispatcher
 import com.hereliesaz.lexorcist.model.SignInState
 import com.hereliesaz.lexorcist.model.UserInfo
+import com.hereliesaz.lexorcist.service.GlobalLoadingState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -51,6 +52,7 @@ class AuthViewModel
         private val firebaseAuth: FirebaseAuth, // Injected FirebaseAuth
         private val dropboxAuthManager: DropboxAuthManager,
         @param:IODispatcher private val ioDispatcher: CoroutineDispatcher,
+        private val globalLoadingState: GlobalLoadingState,
     ) : AndroidViewModel(application) {
         private val _signInState = MutableStateFlow<SignInState>(SignInState.Idle)
         val signInState: StateFlow<SignInState> = _signInState.asStateFlow()
@@ -78,9 +80,8 @@ class AuthViewModel
         ) {
             viewModelScope.launch {
                 if (!silent) {
-                    _signInState.value = SignInState.InProgress
+                    globalLoadingState.pushLoading()
                 }
-
                 try {
                     // Check if already signed in with Firebase for silent sign-in
                     if (silent) {
@@ -163,6 +164,10 @@ class AuthViewModel
                     // Catch other exceptions like Firebase related ones
                     Log.e(TAG, "Sign-in failed with generic exception", e)
                     onSignInFailure(e)
+                } finally {
+                    if (!silent) {
+                        globalLoadingState.popLoading()
+                    }
                 }
             }
         }
@@ -213,6 +218,7 @@ class AuthViewModel
 
         fun signOut() {
             viewModelScope.launch {
+                globalLoadingState.pushLoading()
                 Log.d(TAG, "Signing out...")
                 try {
                     withContext(ioDispatcher) {
@@ -228,6 +234,8 @@ class AuthViewModel
                 } catch (e: Exception) {
                     Log.e(TAG, "Error during sign out: ", e)
                     // Optionally update UI with sign-out error
+                } finally {
+                    globalLoadingState.popLoading()
                 }
             }
         }

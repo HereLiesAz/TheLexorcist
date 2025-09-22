@@ -405,7 +405,7 @@ fun SettingsScreen(
                      }, text = stringResource(R.string.connect_to_onedrive).uppercase(Locale.getDefault()))
                 }
                 is com.hereliesaz.lexorcist.model.OneDriveSignInState.InProgress -> {
-                    com.hereliesaz.lexorcist.ui.components.LexorcistLoadingIndicator()
+                    com.hereliesaz.lexorcist.ui.components.NewLexorcistLoadingIndicator()
                 }
                 is com.hereliesaz.lexorcist.model.OneDriveSignInState.Success -> {
                     Text(stringResource(R.string.connected_to_onedrive_as_placeholder, state.accountName ?: stringResource(R.string.unknown_account)))
@@ -523,7 +523,7 @@ fun LanguageModelDownloader(
                     style = MaterialTheme.typography.bodySmall
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                com.hereliesaz.lexorcist.ui.components.LexorcistLoadingIndicator(modifier = Modifier.size(24.dp))
+                com.hereliesaz.lexorcist.ui.components.NewLexorcistLoadingIndicator(modifier = Modifier.size(24.dp))
             }
             Spacer(modifier = Modifier.height(8.dp))
             LinearProgressIndicator(
@@ -547,7 +547,7 @@ fun ModelStatusIcon(
             }
         }
         is DownloadState.Downloading -> {
-            com.hereliesaz.lexorcist.ui.components.LexorcistLoadingIndicator(modifier = Modifier.size(24.dp).padding(8.dp))
+            com.hereliesaz.lexorcist.ui.components.NewLexorcistLoadingIndicator(modifier = Modifier.size(24.dp).padding(8.dp))
         }
         is DownloadState.Downloaded -> {
             Row {

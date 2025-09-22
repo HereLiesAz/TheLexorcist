@@ -76,7 +76,7 @@ fun TranscriptionScreen(
         ) {
             when (val state = processingState) {
                 is ProcessingState.InProgress -> {
-                    com.hereliesaz.lexorcist.ui.components.LexorcistLoadingIndicator()
+                    com.hereliesaz.lexorcist.ui.components.NewLexorcistLoadingIndicator()
                 }
                 is ProcessingState.Failure -> {
                     Text(

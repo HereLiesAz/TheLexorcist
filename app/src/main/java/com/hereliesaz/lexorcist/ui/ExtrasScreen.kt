@@ -146,7 +146,7 @@ fun ExtrasScreen(
         Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             if (isLoading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    com.hereliesaz.lexorcist.ui.components.LexorcistLoadingIndicator()
+                    com.hereliesaz.lexorcist.ui.components.NewLexorcistLoadingIndicator()
                 }
             } else {
                 val pagerState = rememberPagerState { 2 } // 0 for Scripts, 1 for Templates

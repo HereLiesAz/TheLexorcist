@@ -254,7 +254,7 @@ fun ProcessingProgressView(
                         textAlign = TextAlign.End
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    com.hereliesaz.lexorcist.ui.components.LexorcistLoadingIndicator(modifier = Modifier.size(24.dp))
+                    com.hereliesaz.lexorcist.ui.components.NewLexorcistLoadingIndicator(modifier = Modifier.size(24.dp))
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 LinearProgressIndicator(

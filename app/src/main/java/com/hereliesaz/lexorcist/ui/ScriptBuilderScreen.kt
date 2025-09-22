@@ -280,7 +280,7 @@ fun ScriptBuilderScreen(
                     onClick = { viewModel.saveScript() },
                     content = {
                         if (saveState is SaveState.Saving) {
-                            com.hereliesaz.lexorcist.ui.components.LexorcistLoadingIndicator(modifier = Modifier.size(24.dp))
+                            com.hereliesaz.lexorcist.ui.components.NewLexorcistLoadingIndicator(modifier = Modifier.size(24.dp))
                         } else {
                             Text(stringResource(R.string.save_script))
                         }

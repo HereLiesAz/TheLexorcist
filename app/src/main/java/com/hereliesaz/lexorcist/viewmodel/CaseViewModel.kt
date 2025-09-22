@@ -50,12 +50,11 @@ constructor(
     private val workManager: androidx.work.WorkManager,
     private val logService: com.hereliesaz.lexorcist.service.LogService,
     private val storageService: com.hereliesaz.lexorcist.data.StorageService,
+    private val globalLoadingState: com.hereliesaz.lexorcist.service.GlobalLoadingState,
 ) : ViewModel() {
     private val sharedPref =
         applicationContext.getSharedPreferences("CaseInfoPrefs", Context.MODE_PRIVATE)
 
-    private val _isLoading = MutableStateFlow<Boolean>(false)
-    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
     private val _processingStatus = MutableStateFlow<String?>(null) // Consider removing if _processingState covers this
     val processingStatus: StateFlow<String?> = _processingStatus.asStateFlow()
@@ -211,7 +210,7 @@ constructor(
 
     fun setStorageLocation(uri: android.net.Uri) {
         viewModelScope.launch {
-            _isLoading.value = true
+            globalLoadingState.pushLoading()
             try {
                 val oldLocation = settingsManager.getStorageLocation()
                 settingsManager.saveStorageLocation(uri.toString())
@@ -222,14 +221,14 @@ constructor(
                     viewModelScope.launch { _userMessage.emit("Files moved successfully.") }
                 }
             } finally {
-                _isLoading.value = false
+                globalLoadingState.popLoading()
             }
         }
     }
 
     private fun clearCaseData() {
         viewModelScope.launch {
-            _isLoading.value = true
+            globalLoadingState.pushLoading()
             try {
                 caseRepository.selectCase(null) 
                 _sheetFilters.value = emptyList()
@@ -239,7 +238,7 @@ constructor(
                 _court.value = ""
                 saveCaseInfoToSharedPrefs()
             } finally {
-                _isLoading.value = false
+                globalLoadingState.popLoading()
             }
         }
     }
@@ -287,36 +286,36 @@ constructor(
 
     fun loadCasesFromRepository() {
         viewModelScope.launch {
-            _isLoading.value = true
+            globalLoadingState.pushLoading()
             try {
                 caseRepository.refreshCases()
             } finally {
-                _isLoading.value = false
+                globalLoadingState.popLoading()
             }
         }
     }
 
     fun loadHtmlTemplatesFromRepository() {
         viewModelScope.launch {
-            _isLoading.value = true
+            globalLoadingState.pushLoading()
             try {
                 caseRepository.refreshHtmlTemplates()
                 caseRepository.getHtmlTemplates().collect {
                     _htmlTemplates.value = it
                 }
             } finally {
-                _isLoading.value = false
+                globalLoadingState.popLoading()
             }
         }
     }
 
     fun importSpreadsheetWithRepository(spreadsheetId: String) {
         viewModelScope.launch { 
-            _isLoading.value = true
+            globalLoadingState.pushLoading()
             try {
                 caseRepository.importSpreadsheet(spreadsheetId) 
             } finally {
-                _isLoading.value = false
+                globalLoadingState.popLoading()
             }
         }
     }
@@ -330,7 +329,7 @@ constructor(
     ) {
         Log.d("CaseViewModel", "createCase called with name: $caseName")
         viewModelScope.launch {
-            _isLoading.value = true
+            globalLoadingState.pushLoading()
             try {
                 val result =
                     caseRepository.createCase(
@@ -357,7 +356,7 @@ constructor(
                     is Result.Loading -> { /* Handle Loading if necessary */ }
                 }
             } finally {
-                _isLoading.value = false
+                globalLoadingState.popLoading()
             }
         }
     }
@@ -366,7 +365,7 @@ constructor(
         Log.d("CaseViewModel", "--- CaseViewModel.selectCase ENTERED with case: ${case?.name ?: "null"} --- instance: $this, repo instance: $caseRepository")
         viewModelScope.launch {
             Log.d("CaseViewModel", "viewModelScope.launch in selectCase for case: ${case?.name ?: "null"}")
-            _isLoading.value = true
+            globalLoadingState.pushLoading()
             try {
                 // Reset processing state when a new case is selected or deselected
                 _processingState.value = ProcessingState.Idle 
@@ -385,7 +384,7 @@ constructor(
                     _htmlTemplates.value = emptyList()
                 }
             } finally {
-                _isLoading.value = false
+                globalLoadingState.popLoading()
                 Log.d("CaseViewModel", "isLoading SET TO false in selectCase finally block for case: ${case?.name ?: "null"}")
             }
         }
@@ -393,14 +392,14 @@ constructor(
 
     private fun loadSheetFiltersFromRepository(spreadsheetId: String) {
         viewModelScope.launch {
-            _isLoading.value = true
+            globalLoadingState.pushLoading()
             try {
                 caseRepository.refreshSheetFilters(spreadsheetId)
                 caseRepository.getSheetFilters(spreadsheetId).collect {
                     _sheetFilters.value = it
                 }
             } finally {
-                _isLoading.value = false
+                globalLoadingState.popLoading()
             }
         }
     }
@@ -410,24 +409,24 @@ constructor(
         value: String,
     ) {
         viewModelScope.launch {
-            _isLoading.value = true
+            globalLoadingState.pushLoading()
             try {
                 val spreadsheetId = selectedCase.value?.spreadsheetId ?: return@launch
                 caseRepository.addSheetFilter(spreadsheetId, name, value)
             } finally {
-                _isLoading.value = false
+                globalLoadingState.popLoading()
             }
         }
     }
 
     fun addAllegationWithRepository(allegationText: String) {
         viewModelScope.launch {
-            _isLoading.value = true
+            globalLoadingState.pushLoading()
             try {
                 val case = selectedCase.value ?: return@launch
                 caseRepository.addAllegation(case.spreadsheetId, allegationText)
             } finally {
-                _isLoading.value = false
+                globalLoadingState.popLoading()
             }
         }
     }
@@ -457,7 +456,7 @@ constructor(
         allegationId: Int,
     ) {
         viewModelScope.launch {
-            _isLoading.value = true
+            globalLoadingState.pushLoading()
             try {
                 val evidence = _selectedCaseEvidenceListInternal.value.find { it.id == evidenceId }
                 if (evidence != null) {
@@ -465,7 +464,7 @@ constructor(
                     evidenceRepository.updateEvidence(updatedEvidence)
                 }
             } finally {
-                _isLoading.value = false
+                globalLoadingState.popLoading()
             }
         }
     }
@@ -496,43 +495,43 @@ constructor(
 
     fun archiveCaseWithRepository(case: Case) {
         viewModelScope.launch { 
-            _isLoading.value = true
+            globalLoadingState.pushLoading()
             try {
                 caseRepository.archiveCase(case) 
             } finally {
-                _isLoading.value = false
+                globalLoadingState.popLoading()
             }
         }
     }
 
     fun deleteCaseWithRepository(case: Case) {
         viewModelScope.launch { 
-            _isLoading.value = true
+            globalLoadingState.pushLoading()
             try {
                 caseRepository.deleteCase(case) 
             } finally {
-                _isLoading.value = false
+                globalLoadingState.popLoading()
             }
         }
     }
 
     fun clearCache() {
         viewModelScope.launch {
-            _isLoading.value = true
+            globalLoadingState.pushLoading()
             try {
                 caseRepository.clearCache()
                 clearCaseData()
                 sharedPref.edit().clear().apply()
                 loadThemeModePreference()
             } finally {
-                _isLoading.value = false
+                globalLoadingState.popLoading()
             }
         }
     }
 
     fun updateEvidence(evidence: com.hereliesaz.lexorcist.data.Evidence) {
         viewModelScope.launch {
-            _isLoading.value = true
+            globalLoadingState.pushLoading()
             try {
                 evidenceRepository.updateEvidence(evidence)
                 val script = settingsManager.getScript()
@@ -545,25 +544,25 @@ constructor(
                     evidenceRepository.updateEvidence(updatedEvidence)
                 }
             } finally {
-                _isLoading.value = false
+                globalLoadingState.popLoading()
             }
         }
     }
 
     fun deleteEvidence(evidence: com.hereliesaz.lexorcist.data.Evidence) {
         viewModelScope.launch {
-            _isLoading.value = true
+            globalLoadingState.pushLoading()
             try {
                 evidenceRepository.deleteEvidence(evidence)
             } finally {
-                _isLoading.value = false
+                globalLoadingState.popLoading()
             }
         }
     }
 
     fun assignAllegationToSelectedEvidence(allegationId: Int) {
         viewModelScope.launch {
-            _isLoading.value = true
+            globalLoadingState.pushLoading()
             try {
                 selectedEvidence.value.forEach { evidence ->
                     val updatedEvidence = evidence.copy(allegationId = allegationId)
@@ -571,7 +570,7 @@ constructor(
                 }
                 clearEvidenceSelection()
             } finally {
-                _isLoading.value = false
+                globalLoadingState.popLoading()
             }
         }
     }
@@ -583,14 +582,14 @@ constructor(
 
     fun addTextEvidence(text: String) {
         viewModelScope.launch {
-            _isLoading.value = true
+            globalLoadingState.pushLoading()
             try {
                  val currentCaseFromState = _vmSelectedCase.value
                 Log.d("CaseViewModel", "addTextEvidence: _vmSelectedCase.value AT START is: ${currentCaseFromState?.name ?: "null"}")
                 val caseToUse = currentCaseFromState ?: run {
                     Log.w("CaseViewModel", "addTextEvidence: No case selected from StateFlow, aborting.")
                     viewModelScope.launch { _userMessage.emit("Please select a case first to add text evidence.") }
-                    _isLoading.value = false
+                    globalLoadingState.popLoading()
                     return@launch
                 }
                 val entities = com.hereliesaz.lexorcist.DataParser.tagData(text)
@@ -613,18 +612,18 @@ constructor(
                     )
                 evidenceRepository.addEvidence(newEvidence)
             } finally {
-                _isLoading.value = false
+                globalLoadingState.popLoading()
             }
         }
     }
 
     fun updateCommentary(evidenceId: Int, commentary: String) {
         viewModelScope.launch {
-            _isLoading.value = true
+            globalLoadingState.pushLoading()
             try {
                 evidenceRepository.updateCommentary(evidenceId, commentary)
             } finally {
-                _isLoading.value = false
+                globalLoadingState.popLoading()
             }
         }
     }
@@ -633,12 +632,12 @@ constructor(
         viewModelScope.launch {
             val currentCaseFromState = _vmSelectedCase.value
             Log.d("CaseViewModel", "processImageEvidence: _vmSelectedCase.value AT START is: ${currentCaseFromState?.name ?: "null"}")
-            _isLoading.value = true 
+            globalLoadingState.pushLoading()
             clearLogs() // Clears logs and sets processingState to Idle
             val caseToUse = currentCaseFromState ?: run {
                 Log.w("CaseViewModel", "processImageEvidence: No case selected from StateFlow, aborting.")
                 _userMessage.value = "Please select a case first to add image evidence."
-                _isLoading.value = false 
+                globalLoadingState.popLoading()
                 _processingState.value = ProcessingState.Failure("No case selected")
                 return@launch
             }
@@ -669,7 +668,7 @@ constructor(
                 _processingState.value = ProcessingState.Failure(errorMsg)
             } finally {
                 // _processingState should now reflect the final state from the service
-                _isLoading.value = false 
+                globalLoadingState.popLoading()
                 Log.d("CaseViewModel", "processImageEvidence finally block. isLoading set to false. Final ProcessingState: ${_processingState.value}")
             }
         }
@@ -679,7 +678,7 @@ constructor(
         viewModelScope.launch(Dispatchers.Main) { // Ensure UI updates are on Main
             val currentCaseFromState = _vmSelectedCase.value
             Log.d("CaseViewModel", "processAudioEvidence: _vmSelectedCase.value AT START is: ${currentCaseFromState?.name ?: "null"}")
-            _isLoading.value = true
+            globalLoadingState.pushLoading()
             clearLogs() // Clears logs and sets processingState to Idle, then we set InProgress
             _processingState.value = ProcessingState.InProgress(0.0f) // Initial progress
 
@@ -688,7 +687,7 @@ constructor(
                 Log.w("CaseViewModel", "processAudioEvidence: No case selected. Message: $errorMsg")
                 _userMessage.value = errorMsg
                 _processingState.value = ProcessingState.Failure("No case selected")
-                _isLoading.value = false
+                globalLoadingState.popLoading()
                 return@launch
             }
 
@@ -804,7 +803,7 @@ constructor(
                 _userMessage.value = errorMsg
                 _processingState.value = ProcessingState.Failure(errorMsg)
             } finally {
-                _isLoading.value = false
+                globalLoadingState.popLoading()
                 // _processingState is set to its final value (Completed or Failure) within the try block.
                 // We don't reset it to null here, so the UI can show the final status.
                 Log.d("CaseViewModel", "processAudioEvidence finally block. isLoading set to false. Final ProcessingState: ${_processingState.value}")
@@ -814,7 +813,7 @@ constructor(
 
     fun updateTranscript(evidence: com.hereliesaz.lexorcist.data.Evidence, newTranscript: String, reason: String) {
         viewModelScope.launch {
-            _isLoading.value = true
+            globalLoadingState.pushLoading()
             try {
                 logService.addLog("Updating transcript for evidence ${evidence.id}")
                 val result = evidenceRepository.updateTranscript(evidence, newTranscript, reason)
@@ -824,7 +823,7 @@ constructor(
                     logService.addLog("Transcript updated successfully")
                 }
             } finally {
-                _isLoading.value = false
+                globalLoadingState.popLoading()
             }
         }
     }
@@ -833,7 +832,7 @@ constructor(
         viewModelScope.launch {
             val currentCaseFromState = _vmSelectedCase.value
             Log.d("CaseViewModel", "processVideoEvidence: _vmSelectedCase.value AT START is: ${currentCaseFromState?.name ?: "null"}")
-            _isLoading.value = true 
+            globalLoadingState.pushLoading()
             clearLogs()
             _processingState.value = ProcessingState.InProgress(0.0f) // Initial progress for video processing
 
@@ -842,7 +841,7 @@ constructor(
                 Log.w("CaseViewModel", "processVideoEvidence: No case selected. Message: $errorMsg")
                 _userMessage.value = errorMsg
                 _processingState.value = ProcessingState.Failure("No case selected")
-                _isLoading.value = false 
+                globalLoadingState.popLoading()
                 return@launch
             }
             Log.d("CaseViewModel", "Processing video for case: ${caseToUse.name}")
@@ -874,7 +873,7 @@ constructor(
                     Log.d("CaseViewModel", "Video processing progress for $uri: $progressMessage ($progressPercent), State: ${workInfo.state}")
                     
                     if (workInfo.state.isFinished) {
-                        _isLoading.value = false // Work is finished, set loading to false
+                        globalLoadingState.popLoading() // Work is finished, set loading to false
                         _videoProcessingProgress.value = null // Clear the specific string progress
                         when (workInfo.state) {
                             androidx.work.WorkInfo.State.SUCCEEDED -> {
@@ -905,7 +904,7 @@ constructor(
 
     fun addPhotoGroupEvidence(photoUris: List<android.net.Uri>, description: String) {
         viewModelScope.launch {
-            _isLoading.value = true
+            globalLoadingState.pushLoading()
             clearLogs()
             _processingState.value = ProcessingState.InProgress(0.0f)
             var currentProgress = 0.0f
@@ -919,7 +918,7 @@ constructor(
                     Log.w("CaseViewModel", "addPhotoGroupEvidence: No case selected. Message: $errorMsg")
                      _userMessage.value = errorMsg
                      _processingState.value = ProcessingState.Failure("No case selected for photo group")
-                     _isLoading.value = false
+                     globalLoadingState.popLoading()
                     return@launch
                 }
                 val savedPhotoPaths = mutableListOf<String>()
@@ -938,7 +937,7 @@ constructor(
                             val errorMsg = "Failed to save photo ${index + 1}: ${result.exception.message}"
                             _userMessage.value = errorMsg
                             _processingState.value = ProcessingState.Failure(errorMsg)
-                            _isLoading.value = false
+                            globalLoadingState.popLoading()
                             return@launch // Stop processing further photos on error
                         }
                         is Result.UserRecoverableError -> {
@@ -946,7 +945,7 @@ constructor(
                              _userMessage.value = errorMsg
                             _userRecoverableAuthIntent.value = result.exception.intent
                             _processingState.value = ProcessingState.Failure(errorMsg)
-                            _isLoading.value = false
+                            globalLoadingState.popLoading()
                             return@launch // Stop processing further photos on error
                         }
                         is Result.Loading -> {
@@ -988,7 +987,7 @@ constructor(
                 }
 
             } finally {
-                _isLoading.value = false
+                globalLoadingState.popLoading()
                 if (_processingState.value is ProcessingState.InProgress) {
                      // If loop finished due to error, state would be Failure. If success, Completed.
                      // This is a fallback if somehow it's still InProgress.
