@@ -318,7 +318,7 @@ fun AddonListItem(
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
                 RatingBar(rating = ratingValue.toFloat(), onRate = onRate)
                 Spacer(modifier = Modifier.width(8.dp))
-                Button(onClick = onShareClick, colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.primary), border = ButtonDefaults.outlinedButtonBorder) {
+                Button(onClick = onShareClick, colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.primary), border = ButtonDefaults.outlinedButtonBorder(enabled = true)) {
                     Text(stringResource(R.string.share))
                 }
             }
@@ -361,11 +361,11 @@ fun ItemDetailsDialog(
                         },
                         modifier = Modifier.padding(end = 8.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.primary), 
-                        border = ButtonDefaults.outlinedButtonBorder
+                        border = ButtonDefaults.outlinedButtonBorder(enabled = true)
                     ) {
                         Text(stringResource(R.string.share_content))
                     }
-                    Button(onClick = onDismiss, colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.primary), border = ButtonDefaults.outlinedButtonBorder) {
+                    Button(onClick = onDismiss, colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.primary), border = ButtonDefaults.outlinedButtonBorder(enabled = true)) {
                         Text(stringResource(R.string.close))
                     }
                 }

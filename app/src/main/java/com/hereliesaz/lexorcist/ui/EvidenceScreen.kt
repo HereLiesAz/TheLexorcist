@@ -260,7 +260,7 @@ fun ProcessingProgressView(
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 LinearProgressIndicator(
-                    progress = processingState.progress,
+                    progress = { processingState.progress },
                     modifier = Modifier.fillMaxWidth()
                 )
             }

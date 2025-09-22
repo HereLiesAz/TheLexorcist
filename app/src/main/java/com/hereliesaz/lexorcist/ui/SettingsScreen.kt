@@ -529,7 +529,7 @@ fun LanguageModelDownloader(
             }
             Spacer(modifier = Modifier.height(8.dp))
             LinearProgressIndicator(
-                progress = progress,
+                progress = { progress },
                 modifier = Modifier.fillMaxWidth()
             )
         }

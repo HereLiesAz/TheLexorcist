@@ -35,7 +35,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
+import androidx.compose.material3.PrimaryTabRow // Changed from TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -155,7 +155,7 @@ fun ReviewScreen(
                     Text(stringResource(R.string.no_evidence_for_case).uppercase(Locale.getDefault()))
                 }
             } else {
-                TabRow(selectedTabIndex = selectedTab) {
+                PrimaryTabRow(selectedTabIndex = selectedTab) { // Changed from TabRow
                     Tab(
                         selected = selectedTab == 0,
                         onClick = { selectedTab = 0 },
@@ -525,7 +525,7 @@ fun EditEvidenceDialog(
                         trailingIcon = {
                             ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
                         },
-                        modifier = Modifier.menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = true).fillMaxWidth(), // Updated line
+                        modifier = Modifier.menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = true).fillMaxWidth(), // This line was already correct
                         textStyle = MaterialTheme.typography.bodyLarge.copy(textAlign = TextAlign.End),
                     )
                     ExposedDropdownMenu(
@@ -808,7 +808,7 @@ fun GenerateDocumentDialog(
                         onValueChange = {},
                         readOnly = true,
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = exhibitExpanded) },
-                        modifier = Modifier.menuAnchor()
+                        modifier = Modifier.menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryEditable, enabled = true)
                     )
                     ExposedDropdownMenu(
                         expanded = exhibitExpanded,
@@ -837,7 +837,7 @@ fun GenerateDocumentDialog(
                         onValueChange = {},
                         readOnly = true,
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = templateExpanded) },
-                        modifier = Modifier.menuAnchor()
+                        modifier = Modifier.menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryEditable, enabled = true)
                     )
                     ExposedDropdownMenu(
                         expanded = templateExpanded,
