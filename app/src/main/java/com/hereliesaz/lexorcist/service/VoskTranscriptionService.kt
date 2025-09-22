@@ -155,13 +155,26 @@ class VoskTranscriptionService @Inject constructor(
             return subDirs?.firstOrNull { isValidModelDir(it) }?.absolutePath
         }
 
-        val validModelPath = findValidModelPath(modelDir)
+        var validModelPath = findValidModelPath(modelDir)
         if (validModelPath != null) {
             logService.addLog("Vosk model found and valid at $validModelPath")
             return validModelPath
         }
 
-        val errorMsg = "Vosk model for language '$selectedLangCode' is not downloaded or invalid. Please download it from settings."
+        // If model not found, try to download it automatically
+        logService.addLog("Vosk model for language '$selectedLangCode' not found. Attempting to download...", LogLevel.INFO)
+        val downloadResult = downloadAndUnzipModel(model)
+
+        if (downloadResult is Result.Success) {
+            logService.addLog("Model for '$selectedLangCode' downloaded successfully. Re-validating path.")
+            // After download, re-check for the valid model path
+            validModelPath = findValidModelPath(modelDir)
+            if (validModelPath != null) {
+                return validModelPath
+            }
+        }
+
+        val errorMsg = "Vosk model for language '$selectedLangCode' could not be found or downloaded."
         logService.addLog(errorMsg, LogLevel.ERROR)
         throw IOException(errorMsg)
     }

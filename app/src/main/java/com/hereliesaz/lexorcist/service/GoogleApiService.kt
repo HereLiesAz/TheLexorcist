@@ -771,12 +771,14 @@ class GoogleApiService @Inject constructor(
         return null
     }
 
-    suspend fun readSpreadsheet(spreadsheetId: String): Map<String, List<List<Any>>>? =
+    private suspend fun readSpreadsheet(
+        sheetsService: Sheets,
+        spreadsheetId: String,
+    ): Map<String, List<List<Any>>>? =
         withContext(Dispatchers.IO) {
-            val sheets = getSheetsService() ?: return@withContext null
             try {
                 val spreadsheet =
-                    sheets
+                    sheetsService
                         .spreadsheets()
                         .get(spreadsheetId)
                         .setIncludeGridData(false)
@@ -785,7 +787,7 @@ class GoogleApiService @Inject constructor(
                 spreadsheet.sheets.forEach { sheet ->
                     val range = "${sheet.properties.title}!A1:Z"
                     val response =
-                        sheets
+                        sheetsService
                             .spreadsheets()
                             .values()
                             .get(spreadsheetId, range)
@@ -1123,8 +1125,8 @@ class GoogleApiService @Inject constructor(
     }
 
     suspend fun getSharedScripts(): List<Script> {
-        val sheets = getPublicSheetsService() // No credentials needed
-        val sheetData = readSpreadsheet(EXTRAS_SPREADSHEET_ID) // Uses getSheetsService internally, which might be an issue for public data
+        val sheets = getPublicSheetsService()
+        val sheetData = readSpreadsheet(sheets, EXTRAS_SPREADSHEET_ID)
         val scriptSheet = sheetData?.get("Scripts") ?: return emptyList()
 
         return scriptSheet.mapNotNull { row ->
@@ -1153,8 +1155,8 @@ class GoogleApiService @Inject constructor(
     }
 
     suspend fun getSharedTemplates(): List<Template> {
-        val sheets = getPublicSheetsService() // No credentials needed
-        val sheetData = readSpreadsheet(EXTRAS_SPREADSHEET_ID) // Uses getSheetsService internally
+        val sheets = getPublicSheetsService()
+        val sheetData = readSpreadsheet(sheets, EXTRAS_SPREADSHEET_ID)
         val templateSheet = sheetData?.get("Templates") ?: return emptyList()
 
         return templateSheet.mapNotNull { row ->
@@ -1414,7 +1416,7 @@ class GoogleApiService @Inject constructor(
         val sheets = getSheetsService() ?: return // Or throw, or return Result
         withContext(Dispatchers.IO) {
             try {
-                val sheetData = readSpreadsheet(spreadsheetId) // Uses sheets internally
+                val sheetData = readSpreadsheet(sheets, spreadsheetId)
                 if (sheetData?.get("SelectedAllegations") == null) {
                     addSheet(spreadsheetId, "SelectedAllegations") // Uses sheets internally
                 } else {

@@ -9,9 +9,10 @@ import androidx.compose.foundation.layout.fillMaxWidth // Added import
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
+import com.hereliesaz.aznavrail.AzButton
+import com.hereliesaz.lexorcist.ui.components.AzAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.OutlinedTextField // Changed from TextField
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -71,9 +72,9 @@ fun CreateCaseDialog(
         }
     }
 
-    AlertDialog(
+    AzAlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.create_new_case)) },
+        title = stringResource(R.string.create_new_case),
         text = {
             Column(
                 modifier =
@@ -123,7 +124,7 @@ fun CreateCaseDialog(
             }
         },
         confirmButton = {
-            LexorcistOutlinedButton(
+            AzButton(
                 onClick = {
                     if (caseName.isNotBlank()) {
                         caseViewModel.createCase(
@@ -140,13 +141,13 @@ fun CreateCaseDialog(
                         navController.navigate("cases")
                     }
                 },
-                content = { Text(stringResource(R.string.create)) } // Explicitly use content
+                text = stringResource(R.string.create)
             )
         },
         dismissButton = {
-            LexorcistOutlinedButton(
-                onClick = onDismiss, 
-                content = { Text(stringResource(R.string.cancel)) } // Explicitly use content
+            AzButton(
+                onClick = onDismiss,
+                text = stringResource(R.string.cancel)
             )
         },
     )

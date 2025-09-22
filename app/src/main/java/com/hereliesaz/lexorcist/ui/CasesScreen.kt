@@ -21,7 +21,8 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
-import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
+import com.hereliesaz.aznavrail.AzButton
+import com.hereliesaz.lexorcist.ui.components.AzAlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -101,9 +102,11 @@ fun CasesScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { showCreateCaseDialog = true }) {
-                Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.create_new_case))
-            }
+            AzButton(
+                onClick = { showCreateCaseDialog = true },
+                icon = Icons.Filled.Add,
+                contentDescription = stringResource(R.string.create_new_case)
+            )
         },
         floatingActionButtonPosition = FabPosition.End,
     ) { innerPadding ->
@@ -209,16 +212,16 @@ fun CasesScreen(
     }
 
     if (showDeleteConfirmDialog && longPressedCase != null) {
-        AlertDialog(
+        AzAlertDialog(
             onDismissRequest = {
                 Log.d("CasesScreen", "Delete dialog dismissed, clearing longPressedCase.")
                 showDeleteConfirmDialog = false
                 longPressedCase = null
             },
-            title = { Text(stringResource(R.string.delete_case) + ": ${longPressedCase?.name ?: ""}") },
+            title = stringResource(R.string.delete_case) + ": ${longPressedCase?.name ?: ""}",
             text = { Text(stringResource(R.string.delete_case_confirmation, longPressedCase?.name ?: "")) },
             confirmButton = {
-                LexorcistOutlinedButton(onClick = {
+                AzButton(onClick = {
                     Log.d("CasesScreen", "Delete dialog confirmed, clearing longPressedCase.")
                     longPressedCase?.let { caseViewModel.deleteCaseWithRepository(it) }
                     showDeleteConfirmDialog = false
@@ -226,7 +229,7 @@ fun CasesScreen(
                 }, text = stringResource(R.string.delete))
             },
             dismissButton = {
-                LexorcistOutlinedButton(onClick = {
+                AzButton(onClick = {
                     Log.d("CasesScreen", "Delete dialog cancel button, clearing longPressedCase.")
                     showDeleteConfirmDialog = false
                     longPressedCase = null

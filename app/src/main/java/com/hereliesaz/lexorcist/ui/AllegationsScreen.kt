@@ -19,10 +19,11 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
-import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
+import com.hereliesaz.aznavrail.AzButton
+import com.hereliesaz.aznavrail.AzCycler
+import com.hereliesaz.lexorcist.ui.components.AzAlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -148,14 +149,20 @@ fun AllegationsScreen(viewModel: MasterAllegationsViewModel = hiltViewModel()) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.End
             ) {
-                LexorcistOutlinedButton(
+                AzButton(
                     onClick = { showRequestDialog = true },
                     text = "Request"
                 )
                 Spacer(modifier = Modifier.weight(1f))
-                SortDropdown(
-                    sortType = sortType,
-                    onSortChange = { viewModel.onSortTypeChanged(it) }
+                val sortOptions = AllegationSortType.entries.map { it.name.replace('_', ' ').lowercase().replaceFirstChar { char -> char.uppercase() } }
+                val selectedSortIndex = AllegationSortType.entries.indexOf(sortType)
+                AzCycler(
+                    items = sortOptions,
+                    selectedIndex = selectedSortIndex,
+                    onItemSelected = { index ->
+                        viewModel.onSortTypeChanged(AllegationSortType.entries[index])
+                    },
+                    label = "Sort by"
                 )
             }
             Spacer(modifier = Modifier.height(8.dp))
@@ -224,9 +231,9 @@ fun AllegationsScreen(viewModel: MasterAllegationsViewModel = hiltViewModel()) {
             }
 
             if (showDetailsDialog != null) {
-                AlertDialog(
+                AzAlertDialog(
                     onDismissRequest = { showDetailsDialog = null },
-                    title = { Text(showDetailsDialog!!.name) },
+                    title = showDetailsDialog!!.name,
                     text = {
                         Column {
                             Text(showDetailsDialog!!.description)
@@ -239,61 +246,11 @@ fun AllegationsScreen(viewModel: MasterAllegationsViewModel = hiltViewModel()) {
                         }
                     },
                     confirmButton = {
-                        LexorcistOutlinedButton(onClick = { showDetailsDialog = null }, text = "OK")
+                        AzButton(onClick = { showDetailsDialog = null }, text = "OK")
                     },
+                    dismissButton = {}
                 )
             }
-        }
-    }
-}
-
-@Composable
-fun SortDropdown(
-    sortType: AllegationSortType,
-    onSortChange: (AllegationSortType) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    var expanded by remember { mutableStateOf(false) }
-    Row(
-        modifier = modifier.fillMaxWidth().clickable { expanded = true },
-        horizontalArrangement = Arrangement.End,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text("Sort by: ")
-        Text(sortType.toString(), color = MaterialTheme.colorScheme.primary)
-        Icon(Icons.Default.ArrowDropDown, contentDescription = "Sort by")
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-        ) {
-            DropdownMenuItem(
-                text = { Text("Type") },
-                onClick = {
-                    onSortChange(AllegationSortType.TYPE)
-                    expanded = false
-                },
-            )
-            DropdownMenuItem(
-                text = { Text("Category") },
-                onClick = {
-                    onSortChange(AllegationSortType.CATEGORY)
-                    expanded = false
-                },
-            )
-            DropdownMenuItem(
-                text = { Text("Name") },
-                onClick = {
-                    onSortChange(AllegationSortType.NAME)
-                    expanded = false
-                },
-            )
-            DropdownMenuItem(
-                text = { Text("Court Level") },
-                onClick = {
-                    onSortChange(AllegationSortType.COURT_LEVEL)
-                    expanded = false
-                },
-            )
         }
     }
 }
