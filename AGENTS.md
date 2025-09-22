@@ -29,7 +29,7 @@ The file google-services.template.json located at the root of the /app/ folder s
 ### UI and UX
 
 1. Except for the AzNavRail, all components on every screen (text boxes, not text) need to be right aligned.
-2. All buttons should be AzButtons, imported from the com.hereliesaz.AzNavRail library. If you find a button (or a toggle, or a small list of options) that is not an AzButton (or AzToggle, or AzCycler), notify the developer immediately. It MUST be changed.  
+2. All buttons should be AzButtons, imported from the com.hereliesaz.AzNavRail library. If you find a button (or a toggle, or a small list of options) or a FAB that is not an AzButton (or AzToggle, or AzCycler), notify the developer immediately. It MUST be changed.  
 3. When it comes to the DSL-style AzNavRail library, NEVER, NEVER, NEVER, i.e., do NOT fucking EVER guess how it works. Read the goddamned documentation, and FOLLOW THE INSTRUCTIONS, you lazy piece of shit.  https://github.com/HereLiesAz/AzNavRail
 3. All changes should be saved immediately and automatically to the case's folder. The folder must be saved and syncronized onto Google Drive often, but synchronization must always be attempted when the app is closed. That means the app will need to be explicit about being closed.
 4. When the user selects a photo, audio, or video file as evidence, text from the image/audio should be automatically parsed and formatted with markdown code, and saved.
