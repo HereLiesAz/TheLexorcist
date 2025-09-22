@@ -92,6 +92,12 @@ class SettingsViewModel @Inject constructor(
     private val _downloadProgress = MutableStateFlow(0f)
     val downloadProgress: StateFlow<Float> = _downloadProgress.asStateFlow()
 
+    // Author details for sharing - MOVED BEFORE INIT
+    private val _authorName = MutableStateFlow("")
+    val authorName: StateFlow<String> = _authorName.asStateFlow()
+
+    private val _authorEmail = MutableStateFlow("")
+    val authorEmail: StateFlow<String> = _authorEmail.asStateFlow()
 
     init {
         _voskLanguageModels.value = TranscriptionModels.voskModels
@@ -309,13 +315,6 @@ class SettingsViewModel @Inject constructor(
     fun clearOneDriveUploadStatus() {
         _oneDriveUploadStatus.value = null
     }
-
-    // Author details for sharing
-    private val _authorName = MutableStateFlow("")
-    val authorName: StateFlow<String> = _authorName.asStateFlow()
-
-    private val _authorEmail = MutableStateFlow("")
-    val authorEmail: StateFlow<String> = _authorEmail.asStateFlow()
 
     fun setAuthorName(name: String) {
         settingsManager.saveAuthorName(name)
