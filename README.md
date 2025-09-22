@@ -1,16 +1,5 @@
 # The Lexorcist
 
-## Recent Changes (September 2025)
-
-*   **Evidence Screen:** Added a border around the log box for improved UI clarity.
-*   **Timeline Screen:** Implemented extended timeline events, showing date/time on one side and content on the other. Evidence metadata is now displayed for each event.
-*   **Evidence Metadata:** The app now automatically extracts and stores file metadata (including EXIF data and file size) when new evidence is added.
-*   **Extras Screen:**
-    *   Replaced the basic search bar with a more modern, outlined search box.
-    *   Right-aligned the screen title to match the app's overall design.
-    *   Removed the redundant "Sign in" prompt.
-    *   Removed the floating action button for a cleaner look.
-
 The Lexorcist empowers lawyers and their clients to capture, automatically analyze, and process digital evidence, transforming raw data into court-ready documentation with powerful, scriptable automation.
 
 Whether you're dealing with harassment screenshots, recorded threats,  slanderous slander, or proof of efforts, The Lexorcist provides the tools to streamline the entire workflow—from a picture on a phone to a fully prepared exhibit. A lawyer can literally hand this app to their client and let the legal assistants and interns take a long coffee break. No more spinning heads and green vomit. It's like Holy Water to legalitarians facing the demonic tedium of legal discovery.  You're on your own with the raspy voice and growls of profanity. 
