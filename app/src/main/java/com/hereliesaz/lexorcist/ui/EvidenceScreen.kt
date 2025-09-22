@@ -7,7 +7,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -240,15 +243,22 @@ fun ProcessingProgressView(
     Column(horizontalAlignment = Alignment.End, modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
         when (processingState) {
             is ProcessingState.InProgress -> {
-                LinearProgressIndicator(
-                    progress = { processingState.progress }, 
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    Text(
+                        text = "Processing: ${"%.0f".format(processingState.progress * 100)}%}",
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.End
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    com.hereliesaz.lexorcist.ui.components.LexorcistLoadingIndicator(modifier = Modifier.size(24.dp))
+                }
                 Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Processing: ${"%.0f".format(processingState.progress * 100)}%}",
-                    style = MaterialTheme.typography.bodySmall,
-                    textAlign = TextAlign.End,
+                LinearProgressIndicator(
+                    progress = { processingState.progress },
                     modifier = Modifier.fillMaxWidth()
                 )
             }
