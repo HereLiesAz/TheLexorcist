@@ -60,7 +60,7 @@ import com.hereliesaz.lexorcist.viewmodel.MasterAllegationsViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AllegationsScreen(viewModel: MasterAllegationsViewModel = hiltViewModel()) {
-    val allegations by viewModel.allegations.collectAsState()
+    val allAllegations by viewModel.allegations.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val selectedAllegations by viewModel.selectedAllegations.collectAsState()
     val sortType by viewModel.sortType.collectAsState()
@@ -69,8 +69,8 @@ fun AllegationsScreen(viewModel: MasterAllegationsViewModel = hiltViewModel()) {
     var showRequestDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
-    val groupedAllegations = if (sortType == AllegationSortType.TYPE) allegations.groupBy { it.type } else null
-    val groupedByCategory = if (sortType == AllegationSortType.CATEGORY) allegations.groupBy { it.category } else null
+    val groupedAllegations = if (sortType == AllegationSortType.TYPE) allAllegations.groupBy { it.type } else null
+    val groupedByCategory = if (sortType == AllegationSortType.CATEGORY) allAllegations.groupBy { it.category } else null
 
     if (showRequestDialog) {
         RequestDialog(
@@ -95,45 +95,31 @@ fun AllegationsScreen(viewModel: MasterAllegationsViewModel = hiltViewModel()) {
                     )
                 },
             )
-        },
-        floatingActionButton = {
-            OutlinedButton(
-                onClick = { showRequestDialog = true },
-                shape = androidx.compose.foundation.shape.CircleShape,
-                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
-                colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(
-                    containerColor = androidx.compose.ui.graphics.Color.Transparent,
-                    contentColor = MaterialTheme.colorScheme.primary
-                )
-            ) {
-                Text("Request")
-            }
         }
     ) { padding ->
         Column(
-            modifier =
-            Modifier
+            modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
             horizontalAlignment = Alignment.End
         ) {
+            // 1. Selected Allegations List
             if (selectedAllegations.isNotEmpty()) {
                 Text(
-                    text = "Selected Allegations:",
+                    text = "Applied Allegations:",
                     style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.fillMaxWidth().padding(top = 16.dp, end = 16.dp),
+                    modifier = Modifier.fillMaxWidth().padding(top = 16.dp, end = 16.dp, start = 16.dp),
                 )
                 LazyColumn(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .height(100.dp)
-                            .padding(horizontal = 16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(100.dp)
+                        .padding(horizontal = 16.dp),
                 ) {
-                    items(selectedAllegations.toList()) { allegation ->
+                    items(selectedAllegations) { allegation ->
                         AllegationItem(
                             allegation = allegation,
-                            isSelected = true,
+                            isSelected = true, // It's in the selected list, so it's always selected here
                             onToggleSelection = { viewModel.toggleAllegationSelection(allegation) },
                             onLongPress = { showDetailsDialog = it }
                         )
@@ -141,28 +127,41 @@ fun AllegationsScreen(viewModel: MasterAllegationsViewModel = hiltViewModel()) {
                 }
             }
 
+            // 2. Search Box
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { viewModel.onSearchQueryChanged(it) },
                 label = { Text(stringResource(R.string.search)) },
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = stringResource(R.string.search)) },
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                keyboardActions =
-                    KeyboardActions(onSearch = {
-                        keyboardController?.hide()
-                    }),
+                keyboardActions = KeyboardActions(onSearch = { keyboardController?.hide() }),
             )
 
-            SortDropdown(
-                sortType = sortType,
-                onSortChange = { viewModel.onSortTypeChanged(it) },
-                modifier = Modifier.padding(horizontal = 16.dp),
-            )
+            // 3. Request Button and Sort-by Option
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.End
+            ) {
+                LexorcistOutlinedButton(
+                    onClick = { showRequestDialog = true },
+                    text = "Request"
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                SortDropdown(
+                    sortType = sortType,
+                    onSortChange = { viewModel.onSortTypeChanged(it) }
+                )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
 
+
+            // 4. Complete list of available allegations
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
             ) {
@@ -187,7 +186,7 @@ fun AllegationsScreen(viewModel: MasterAllegationsViewModel = hiltViewModel()) {
                             items(allegationList) { allegation ->
                                 AllegationItem(
                                     allegation = allegation,
-                                    isSelected = selectedAllegations.any { it.name == allegation.name },
+                                    isSelected = allegation.isSelected,
                                     onToggleSelection = { viewModel.toggleAllegationSelection(allegation) },
                                     onLongPress = { showDetailsDialog = it },
                                 )
@@ -206,17 +205,17 @@ fun AllegationsScreen(viewModel: MasterAllegationsViewModel = hiltViewModel()) {
                         items(allegationList) { allegation ->
                             AllegationItem(
                                 allegation = allegation,
-                                isSelected = selectedAllegations.any { it.name == allegation.name },
+                                isSelected = allegation.isSelected,
                                 onToggleSelection = { viewModel.toggleAllegationSelection(allegation) },
                                 onLongPress = { showDetailsDialog = it },
                             )
                         }
                     }
                 } else {
-                    items(allegations) { allegation ->
+                    items(allAllegations) { allegation ->
                         AllegationItem(
                             allegation = allegation,
-                            isSelected = selectedAllegations.any { it.name == allegation.name },
+                            isSelected = allegation.isSelected,
                             onToggleSelection = { viewModel.toggleAllegationSelection(allegation) },
                             onLongPress = { showDetailsDialog = it },
                         )
