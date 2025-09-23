@@ -177,10 +177,11 @@ fun MainScreen(
                                                 style = MaterialTheme.typography.bodyLarge,
                                             )
                                             Spacer(modifier = Modifier.height(32.dp))
-                                            AzButton {
-                                                onClick { showCreateCaseDialog = true }
-                                                text(stringResource(R.string.create_new_case))
-                                            }
+                                            val createCaseText = stringResource(R.string.create_new_case)
+                                            AzButton(
+                                                text = createCaseText,
+                                                onClick = { showCreateCaseDialog = true }
+                                            )
                                         }
                                     }
                                     composable("cases") { CasesScreen(caseViewModel = caseViewModel, navController = navController, mainViewModel = mainViewModel) }
@@ -286,10 +287,11 @@ fun MainScreen(
                             verticalArrangement = Arrangement.Top,
                         ) {
                             Spacer(Modifier.height(halfScreenHeight))
-                            AzButton {
-                                onClick { onSignInClick() }
-                                text(stringResource(R.string.sign_in_with_google))
-                            }
+                            val signInText = stringResource(R.string.sign_in_with_google)
+                            AzButton(
+                                text = signInText,
+                                onClick = { onSignInClick() }
+                            )
                             if (currentSignInState is SignInState.Error) {
                                 Spacer(modifier = Modifier.height(16.dp))
                                 Text(

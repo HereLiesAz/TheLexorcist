@@ -7,14 +7,14 @@ import androidx.compose.runtime.Composable
 @Composable
 fun AzAlertDialog(
     onDismissRequest: () -> Unit,
-    title: String,
+    title: @Composable () -> Unit,
     text: @Composable () -> Unit,
     confirmButton: @Composable () -> Unit,
     dismissButton: @Composable () -> Unit
 ) {
     AlertDialog(
         onDismissRequest = onDismissRequest,
-        title = { Text(title) },
+        title = title,
         text = text,
         confirmButton = confirmButton,
         dismissButton = dismissButton

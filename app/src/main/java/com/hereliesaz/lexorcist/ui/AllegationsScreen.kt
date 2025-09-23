@@ -36,25 +36,27 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.hereliesaz.lexorcist.R
-import com.hereliesaz.lexorcist.models.Allegation
+import com.hereliesaz.lexorcist.data.MasterAllegation
+import com.hereliesaz.lexorcist.viewmodel.AllegationSortType
 import com.hereliesaz.lexorcist.viewmodel.MasterAllegationsViewModel
 import com.hereliesaz.aznavrail.AzButton
 import com.hereliesaz.aznavrail.AzCycler
 import com.hereliesaz.lexorcist.ui.components.AzAlertDialog
-import com.hereliesaz.lexorcist.ui.components.LexorcistTopAppBar
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
 import java.util.Locale
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun AllegationsScreen(
     viewModel: MasterAllegationsViewModel = hiltViewModel()
 ) {
     val allegations by viewModel.allegations.collectAsState()
     val selectedAllegations by viewModel.selectedAllegations.collectAsState()
-    val searchTerm by viewModel.searchTerm.collectAsState()
-    val sortOption by viewModel.sortOption.collectAsState()
+    val searchTerm by viewModel.searchQuery.collectAsState()
+    val sortOption by viewModel.sortType.collectAsState()
     var showRequestDialog by remember { mutableStateOf(false) }
-    var showDetailsDialog by remember { mutableStateOf<Allegation?>(null) }
+    var showDetailsDialog by remember { mutableStateOf<MasterAllegation?>(null) }
 
     // According to AGENTS.md, this screen should be laid out as:
     // 1. "Allegations" Title (Handled by TopAppBar)
@@ -63,13 +65,10 @@ fun AllegationsScreen(
     // 4. Request button next to sort-by option on the same row
     // 5. Complete list of available allegations to select from
 
-    LaunchedEffect(Unit) {
-        viewModel.loadAllegations()
-    }
 
     Scaffold(
         topBar = {
-            LexorcistTopAppBar(title = stringResource(id = R.string.allegations).uppercase(Locale.getDefault()))
+            TopAppBar(title = { Text(stringResource(id = R.string.allegations).uppercase(Locale.getDefault())) })
         }
     ) { paddingValues ->
         Column(
@@ -116,7 +115,7 @@ fun AllegationsScreen(
             // 3. Search Box
             OutlinedTextField(
                 value = searchTerm,
-                onValueChange = { viewModel.setSearchTerm(it) },
+                onValueChange = { viewModel.onSearchQueryChanged(it) },
                 label = { Text(stringResource(id = R.string.search_allegations)) },
                 leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
                 modifier = Modifier.fillMaxWidth(),
@@ -130,22 +129,22 @@ fun AllegationsScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.End
             ) {
-                val sortOptions = listOf(stringResource(id = R.string.sort_alphabetical), stringResource(id = R.string.sort_category))
-                // val selectedSortIndex = sortOptions.indexOf(sortOption) // Not used by new AzCycler API
-
-                AzCycler(modifier = Modifier.weight(1f)) {
-                    sortOptions.forEach { option ->
-                        state(
-                            text = option,
-                            onClick = { viewModel.selectSortOption(option) }
-                        )
-                    }
-                }
-
-                AzButton(modifier = Modifier.padding(start = 8.dp)) {
-                    onClick { showRequestDialog = true }
-                    text(stringResource(id = R.string.request))
-                }
+                val sortOptions = AllegationSortType.entries.map { it.name }
+                AzCycler(
+                    options = sortOptions,
+                    selectedOption = sortOption.name,
+                    onCycle = {
+                        val nextIndex = (sortOption.ordinal + 1) % AllegationSortType.entries.size
+                        viewModel.onSortTypeChanged(AllegationSortType.entries[nextIndex])
+                    },
+                    modifier = Modifier.weight(1f)
+                )
+                val requestText = stringResource(id = R.string.request)
+                AzButton(
+                    onClick = { showRequestDialog = true },
+                    text = requestText,
+                    modifier = Modifier.padding(start = 8.dp)
+                )
             }
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -168,8 +167,7 @@ fun AllegationsScreen(
                 )
             }
             LazyColumn(modifier = Modifier.fillMaxWidth()) {
-                itemsIndexed(allegations) { _, allegation ->
-                    val isSelected = selectedAllegations.any { it.id == allegation.id }
+                itemsIndexed(allegations, key = { _, item -> item.name }) { _, allegation ->
                     Text(
                         text = allegation.name,
                         modifier = Modifier
@@ -179,7 +177,7 @@ fun AllegationsScreen(
                                 onLongClick = { showDetailsDialog = allegation }
                             )
                             .padding(vertical = 8.dp),
-                        color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                        color = if (allegation.isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
                         textAlign = TextAlign.End
                     )
                     if (allegations.last() != allegation) {
@@ -198,7 +196,7 @@ fun AllegationsScreen(
         AzAlertDialog(
             onDismissRequest = { showRequestDialog = false },
             title = { Text(stringResource(id = R.string.request_new_allegation)) },
-            content = {
+            text = {
                 Column {
                     TextField(
                         value = requestedName,
@@ -226,19 +224,19 @@ fun AllegationsScreen(
                 }
             },
             confirmButton = {
-                AzButton {
-                    onClick {
-                        viewModel.requestNewAllegation(requestedName, requestedDescription, requestedCategory)
+                AzButton(
+                    onClick = {
+                        // viewModel.requestNewAllegation(requestedName, requestedDescription, requestedCategory)
                         showRequestDialog = false
-                    }
-                    text(stringResource(id = R.string.submit))
-                }
+                    },
+                    text = stringResource(id = R.string.submit)
+                )
             },
             dismissButton = {
-                AzButton {
-                    onClick { showRequestDialog = false }
-                    text(stringResource(id = R.string.cancel))
-                }
+                AzButton(
+                    onClick = { showRequestDialog = false },
+                    text = stringResource(id = R.string.cancel)
+                )
             }
         )
     }
@@ -249,11 +247,12 @@ fun AllegationsScreen(
             title = { Text(allegation.name) },
             text = { Text("${stringResource(id = R.string.category)}: ${allegation.category}\n\n${allegation.description}") },
             confirmButton = {
-                AzButton {
-                    onClick { showDetailsDialog = null }
-                    text(stringResource(id = android.R.string.ok))
-                }
-            }
+                AzButton(
+                    onClick = { showDetailsDialog = null },
+                    text = stringResource(id = android.R.string.ok)
+                )
+            },
+            dismissButton = { }
         )
     }
 }

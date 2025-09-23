@@ -78,6 +78,7 @@
     <string name="use_navigation_rail">Use the navigation rail to get started.</string>
     <string name="tap_icon_to_open_menu">Tap the icon at the top to open the menu.</string>
     <string name="create_new_case">Create New Case</string>
+    <string name="new_case_fab_text">New Case</string>
     <string name="default_exhibit_sheet_name">Exhibits</string>
     <string name="select_a_template">Select a Template</string>
     <string name="no_templates_found">No templates found</string>
@@ -137,6 +138,18 @@
     <string name="sort">Sort</string>
     <string name="delete_case">Delete Case</string>
     <string name="delete_case_confirmation">Are you sure you want to delete case %1$s?</string>
+
+    <string name="selected_allegations">Selected Allegations</string>
+    <string name="search_allegations">Search Allegations</string>
+    <string name="sort_alphabetical">Sort Alphabetical</string>
+    <string name="sort_category">Sort by Category</string>
+    <string name="request">Request</string>
+    <string name="no_allegations_found_for_search">No allegations found for \"%1$s\"</string>
+    <string name="no_allegations_available">No allegations available.</string>
+    <string name="request_new_allegation">Request New Allegation</string>
+    <string name="allegation_name">Allegation Name</string>
+    <string name="description">Description</string>
+    <string name="submit">Submit</string>
 
     <string name="script_tab_description">Description</string>
     <string name="script_tab_editor">Editor</string>
@@ -321,4 +334,8 @@
     <string name="no_templates_available">No templates available.</string>
     <string name="share_content">Share Content</string>
     <string name="close">Close</string>
+    <string name="download_model_description">Download</string>
+    <string name="model_downloaded_description">Downloaded</string>
+    <string name="delete_model_description">Delete</string>
+    <string name="retry_download_description">Retry Download</string>
 </resources>

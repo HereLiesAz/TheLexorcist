@@ -1,7 +1,7 @@
 
 [versions]
 androidApplication = "8.13.0" # Assuming a common version, adjust if needed from project level build.gradle
-aznavrail = "3.5"
+aznavrail = "3.6"
 browser = "1.9.0"
 # compiler = "1.5.15" # REMOVED as per new setup
 dropboxCoreSdk = "7.0.0"

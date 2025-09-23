@@ -102,11 +102,14 @@ fun CasesScreen(
             )
         },
         floatingActionButton = {
-            AzButton(
+            FloatingActionButton(
                 onClick = { showCreateCaseDialog = true },
-                icon = Icons.Filled.Add,
-                contentDescription = stringResource(R.string.create_new_case)
-            )
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Add,
+                    contentDescription = stringResource(R.string.new_case_fab_text)
+                )
+            }
         },
         floatingActionButtonPosition = FabPosition.End,
     ) { innerPadding ->
@@ -212,28 +215,36 @@ fun CasesScreen(
     }
 
     if (showDeleteConfirmDialog && longPressedCase != null) {
+        val deleteText = stringResource(R.string.delete)
+        val cancelText = stringResource(R.string.cancel)
         AzAlertDialog(
             onDismissRequest = {
                 Log.d("CasesScreen", "Delete dialog dismissed, clearing longPressedCase.")
                 showDeleteConfirmDialog = false
                 longPressedCase = null
             },
-            title = stringResource(R.string.delete_case) + ": ${longPressedCase?.name ?: ""}",
+            title = { Text(stringResource(R.string.delete_case) + ": ${longPressedCase?.name ?: ""}") },
             text = { Text(stringResource(R.string.delete_case_confirmation, longPressedCase?.name ?: "")) },
             confirmButton = {
-                AzButton(onClick = {
-                    Log.d("CasesScreen", "Delete dialog confirmed, clearing longPressedCase.")
-                    longPressedCase?.let { caseViewModel.deleteCaseWithRepository(it) }
-                    showDeleteConfirmDialog = false
-                    longPressedCase = null
-                }, text = stringResource(R.string.delete))
+                AzButton(
+                    onClick = {
+                        Log.d("CasesScreen", "Delete dialog confirmed, clearing longPressedCase.")
+                        longPressedCase?.let { caseViewModel.deleteCaseWithRepository(it) }
+                        showDeleteConfirmDialog = false
+                        longPressedCase = null
+                    },
+                    text = deleteText
+                )
             },
             dismissButton = {
-                AzButton(onClick = {
-                    Log.d("CasesScreen", "Delete dialog cancel button, clearing longPressedCase.")
-                    showDeleteConfirmDialog = false
-                    longPressedCase = null
-                }, text = stringResource(R.string.cancel))
+                AzButton(
+                    onClick = {
+                        Log.d("CasesScreen", "Delete dialog cancel button, clearing longPressedCase.")
+                        showDeleteConfirmDialog = false
+                        longPressedCase = null
+                    },
+                    text = cancelText
+                )
             },
         )
     }
@@ -242,8 +253,7 @@ fun CasesScreen(
         CreateCaseDialog(
             caseViewModel = caseViewModel,
             navController = navController,
-            onDismiss = { showCreateCaseDialog = false },
-            // mainViewModel = mainViewModel, // Removed parameter
+            onDismiss = { showCreateCaseDialog = false }
         )
     }
 }

@@ -111,14 +111,14 @@ fun SettingsScreen(
                 modifier = Modifier.fillMaxWidth(),
             )
             Spacer(modifier = Modifier.height(8.dp))
-            AzCycler(modifier = Modifier.fillMaxWidth()) {
-                ThemeMode.entries.forEach { themeModeEntry ->
-                    state(
-                        text = themeModeEntry.name.lowercase(Locale.getDefault()).replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() },
-                        onClick = { settingsViewModel.setThemeMode(themeModeEntry) }
-                    )
+            AzCycler(
+                options = ThemeMode.entries.map { it.name.lowercase(Locale.getDefault()).replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() } },
+                selectedOption = themeMode.name.lowercase(Locale.getDefault()).replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() },
+                onCycle = {
+                    val nextIndex = (themeMode.ordinal + 1) % ThemeMode.entries.size
+                    settingsViewModel.setThemeMode(ThemeMode.entries[nextIndex])
                 }
-            }
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
             HorizontalDivider()
@@ -131,16 +131,17 @@ fun SettingsScreen(
                 modifier = Modifier.fillMaxWidth(),
             )
             Spacer(modifier = Modifier.height(8.dp))
-            // val currentAppLanguage by settingsViewModel.language.collectAsState() // Not directly used by AzCycler's new API for initial state
+            val currentAppLanguage by settingsViewModel.language.collectAsState()
             val availableAppLanguages = settingsViewModel.availableAppLanguages
-            AzCycler(modifier = Modifier.fillMaxWidth()) {
-                availableAppLanguages.forEach { (langKey, langName) ->
-                    state(
-                        text = langName,
-                        onClick = { settingsViewModel.setLanguage(langKey) }
-                    )
+            AzCycler(
+                options = availableAppLanguages.values.toList(),
+                selectedOption = availableAppLanguages[currentAppLanguage] ?: "",
+                onCycle = {
+                    val currentIndex = availableAppLanguages.keys.indexOf(currentAppLanguage)
+                    val nextIndex = (currentIndex + 1) % availableAppLanguages.size
+                    settingsViewModel.setLanguage(availableAppLanguages.keys.elementAt(nextIndex))
                 }
-            }
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
             HorizontalDivider()
@@ -153,16 +154,17 @@ fun SettingsScreen(
                 modifier = Modifier.fillMaxWidth(),
             )
             Spacer(modifier = Modifier.height(8.dp))
-            // val selectedTranscriptionService by settingsViewModel.selectedTranscriptionService.collectAsState() // Not directly used
+            val selectedTranscriptionService by settingsViewModel.selectedTranscriptionService.collectAsState()
             val availableTranscriptionServices = settingsViewModel.availableTranscriptionServices
-            AzCycler(modifier = Modifier.fillMaxWidth()) {
-                availableTranscriptionServices.forEach { serviceName ->
-                    state(
-                        text = serviceName,
-                        onClick = { settingsViewModel.selectTranscriptionService(serviceName) }
-                    )
+            AzCycler(
+                options = availableTranscriptionServices,
+                selectedOption = selectedTranscriptionService,
+                onCycle = {
+                    val currentIndex = availableTranscriptionServices.indexOf(selectedTranscriptionService)
+                    val nextIndex = (currentIndex + 1) % availableTranscriptionServices.size
+                    settingsViewModel.selectTranscriptionService(availableTranscriptionServices[nextIndex])
                 }
-            }
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -170,7 +172,6 @@ fun SettingsScreen(
             val voskModels by settingsViewModel.voskLanguageModels.collectAsState()
             val whisperModels by settingsViewModel.whisperLanguageModels.collectAsState()
             val selectedLanguageCode by settingsViewModel.selectedTranscriptionLanguageCode.collectAsState()
-            val selectedTranscriptionService by settingsViewModel.selectedTranscriptionService.collectAsState() // Needed to pick models
 
             val models = if (selectedTranscriptionService == "Vosk") voskModels else whisperModels
 
@@ -194,10 +195,10 @@ fun SettingsScreen(
                 modifier = Modifier.fillMaxWidth(),
             )
             Spacer(modifier = Modifier.height(16.dp))
-            AzButton {
-                onClick { showClearCacheDialog = true }
-                text(stringResource(R.string.clear_cache).uppercase(Locale.getDefault()))
-            }
+            AzButton(
+                onClick = { showClearCacheDialog = true },
+                text = stringResource(R.string.clear_cache).uppercase(Locale.getDefault())
+            )
 
             Spacer(modifier = Modifier.height(24.dp))
             HorizontalDivider()
@@ -221,10 +222,10 @@ fun SettingsScreen(
             Spacer(modifier = Modifier.height(16.dp))
             Text(stringResource(R.string.current_location_colon_placeholder, storageLocation ?: stringResource(R.string.default_text)))
             Spacer(modifier = Modifier.height(8.dp))
-            AzButton {
-                onClick { directoryPickerLauncher.launch(null) }
-                text(stringResource(R.string.change_storage_location).uppercase(Locale.getDefault()))
-            }
+            AzButton(
+                onClick = { directoryPickerLauncher.launch(null) },
+                text = stringResource(R.string.change_storage_location).uppercase(Locale.getDefault())
+            )
 
             Spacer(modifier = Modifier.height(24.dp))
             HorizontalDivider()
@@ -237,16 +238,17 @@ fun SettingsScreen(
                 modifier = Modifier.fillMaxWidth(),
             )
             Spacer(modifier = Modifier.height(8.dp))
-            // val selectedCloudProvider by settingsViewModel.selectedCloudProvider.collectAsState() // Not directly used
+            val selectedCloudProvider by settingsViewModel.selectedCloudProvider.collectAsState()
             val cloudProviders = listOf("GoogleDrive", "Dropbox", "OneDrive", "None")
-            AzCycler(modifier = Modifier.fillMaxWidth()) {
-                cloudProviders.forEach { provider ->
-                    state(
-                        text = provider,
-                        onClick = { settingsViewModel.setSelectedCloudProvider(provider) }
-                    )
+            AzCycler(
+                options = cloudProviders,
+                selectedOption = selectedCloudProvider,
+                onCycle = {
+                    val currentIndex = cloudProviders.indexOf(selectedCloudProvider)
+                    val nextIndex = (currentIndex + 1) % cloudProviders.size
+                    settingsViewModel.setSelectedCloudProvider(cloudProviders[nextIndex])
                 }
-            }
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
             HorizontalDivider()
@@ -264,34 +266,34 @@ fun SettingsScreen(
                     val userInfo = currentSignInState.userInfo
                     Text(stringResource(R.string.signed_in_as_placeholder, userInfo?.email ?: stringResource(R.string.unknown_email)))
                     Spacer(modifier = Modifier.height(8.dp))
-                    AzButton {
-                        onClick {
+                    AzButton(
+                        onClick = {
                             authViewModel.signOut(mainViewModel)
                             if (activity != null) {
                                authViewModel.signIn(activity, mainViewModel)
                             }
-                        }
-                        text(stringResource(R.string.switch_account).uppercase(Locale.getDefault()))
-                    }
+                        },
+                        text = stringResource(R.string.switch_account).uppercase(Locale.getDefault())
+                    )
                      Spacer(modifier = Modifier.height(8.dp))
-                    AzButton {
-                        onClick {
+                    AzButton(
+                        onClick = {
                             authViewModel.signOut(mainViewModel)
-                        }
-                        text(stringResource(R.string.sign_out).uppercase(Locale.getDefault()))
-                    }
+                        },
+                        text = stringResource(R.string.sign_out).uppercase(Locale.getDefault())
+                    )
                 }
                 else -> {
                     Text(stringResource(R.string.not_signed_in))
                     Spacer(modifier = Modifier.height(8.dp))
-                    AzButton {
-                        onClick {
+                    AzButton(
+                        onClick = {
                              if (activity != null) {
                                authViewModel.signIn(activity, mainViewModel)
                             }
-                        }
-                        text(stringResource(R.string.sign_in).uppercase(Locale.getDefault()))
-                    }
+                        },
+                        text = stringResource(R.string.sign_in).uppercase(Locale.getDefault())
+                    )
                 }
             }
 
@@ -312,19 +314,19 @@ fun SettingsScreen(
             if (isDropboxAuthenticated) {
                 Text(stringResource(R.string.connected_as_placeholder, dropboxUser?.email ?: "..."))
                 Spacer(modifier = Modifier.height(8.dp))
-                AzButton {
-                    onClick {
+                AzButton(
+                    onClick = {
                         settingsViewModel.disconnectDropbox()
-                    }
-                    text(stringResource(R.string.disconnect_from_dropbox).uppercase(Locale.getDefault()))
-                }
+                    },
+                    text = stringResource(R.string.disconnect_from_dropbox).uppercase(Locale.getDefault())
+                )
             } else {
-                AzButton {
-                    onClick {
+                AzButton(
+                    onClick = {
                         Auth.startOAuth2Authentication(context, context.getString(R.string.dropbox_app_key))
-                    }
-                    text(stringResource(R.string.connect_to_dropbox).uppercase(Locale.getDefault()))
-                }
+                    },
+                    text = stringResource(R.string.connect_to_dropbox).uppercase(Locale.getDefault())
+                )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -340,41 +342,39 @@ fun SettingsScreen(
             Spacer(modifier = Modifier.height(8.dp))
             val oneDriveSignInState by oneDriveViewModel.oneDriveSignInState.collectAsState()
 
-            when (val stateVal = oneDriveSignInState) { // Renamed state to stateVal to avoid conflict with AzCycler's state function
+            when (val stateVal = oneDriveSignInState) {
                 is com.hereliesaz.lexorcist.model.OneDriveSignInState.Idle -> {
-                    AzButton {
-                        onClick {
+                    AzButton(
+                        onClick = {
                             if (activity != null) {
                                 oneDriveViewModel.connectToOneDrive(activity)
                             }
-                        }
-                        text(stringResource(R.string.connect_to_onedrive).uppercase(Locale.getDefault()))
-                    }
+                        },
+                        text = stringResource(R.string.connect_to_onedrive).uppercase(Locale.getDefault())
+                    )
                 }
                 is com.hereliesaz.lexorcist.model.OneDriveSignInState.InProgress -> {
-                    com.hereliesaz.lexorcist.ui.components.NewLexorcistLoadingIndicator() // Assuming this is a valid composable
+                    com.hereliesaz.lexorcist.ui.components.NewLexorcistLoadingIndicator()
                 }
                 is com.hereliesaz.lexorcist.model.OneDriveSignInState.Success -> {
                     Text(stringResource(R.string.connected_to_onedrive_as_placeholder, stateVal.accountName ?: stringResource(R.string.unknown_account)))
-                     Spacer(modifier = Modifier.height(8.dp))
-                    AzButton {
-                        onClick {
-                            oneDriveViewModel.disconnectFromOneDrive()
-                        }
-                        text(stringResource(R.string.disconnect_from_onedrive).uppercase(Locale.getDefault()))
-                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    AzButton(
+                        onClick = { oneDriveViewModel.disconnectFromOneDrive() },
+                        text = stringResource(R.string.disconnect_from_onedrive).uppercase(Locale.getDefault())
+                    )
                 }
                 is com.hereliesaz.lexorcist.model.OneDriveSignInState.Error -> {
                     Text(stringResource(R.string.error_connecting_to_onedrive_placeholder, stateVal.message ?: stringResource(R.string.unknown_error)))
-                     Spacer(modifier = Modifier.height(8.dp))
-                     AzButton {
-                        onClick {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    AzButton(
+                        onClick = {
                             if (activity != null) {
                                 oneDriveViewModel.connectToOneDrive(activity)
                             }
-                        }
-                        text(stringResource(R.string.retry).uppercase(Locale.getDefault()))
-                    }
+                        },
+                        text = stringResource(R.string.retry).uppercase(Locale.getDefault())
+                    )
                 }
             }
         }
@@ -386,19 +386,19 @@ fun SettingsScreen(
             title = { Text(stringResource(R.string.clear_cache_title)) },
             text = { Text(stringResource(R.string.clear_cache_confirmation)) },
             confirmButton = {
-                AzButton {
-                    onClick {
+                AzButton(
+                    onClick = {
                         caseViewModel.clearCache()
                         showClearCacheDialog = false
-                    }
-                    text(stringResource(R.string.delete).uppercase(Locale.getDefault()))
-                }
+                    },
+                    text = stringResource(R.string.delete).uppercase(Locale.getDefault())
+                )
             },
             dismissButton = {
-                AzButton {
-                    onClick { showClearCacheDialog = false }
-                    text(stringResource(R.string.cancel).uppercase(Locale.getDefault()))
-                }
+                AzButton(
+                    onClick = { showClearCacheDialog = false },
+                    text = stringResource(R.string.cancel).uppercase(Locale.getDefault())
+                )
             }
         )
     }
@@ -407,27 +407,24 @@ fun SettingsScreen(
 @Composable
 fun LanguageModelDownloader(
     models: List<LanguageModel>,
-    selectedLanguageCode: String, // May not be used to set initial state of AzCycler anymore
+    selectedLanguageCode: String,
     onLanguageSelected: (String) -> Unit,
     onDownload: (LanguageModel) -> Unit,
     onDelete: (LanguageModel) -> Unit
 ) {
-    // val selectedModel = models.find { it.code == selectedLanguageCode } // Not used to set AzCycler initial state
-    // val selectedIndex = models.indexOf(selectedModel) // Not used
-
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            AzCycler(modifier = Modifier.weight(1f)) {
-                models.forEach { model ->
-                    state(
-                        text = model.name,
-                        onClick = { onLanguageSelected(model.code) }
-                    )
+            AzCycler(
+                options = models.map { it.name },
+                selectedOption = models.find { it.code == selectedLanguageCode }?.name ?: "",
+                onCycle = {
+                    val currentIndex = models.indexOfFirst { it.code == selectedLanguageCode }
+                    val nextIndex = (currentIndex + 1) % models.size
+                    onLanguageSelected(models[nextIndex].code)
                 }
-            }
-            // Logic for showing download/delete icon based on selectedLanguageCode needs to adapt if AzCycler doesn't expose its current state
-            // For now, assume we can still find the selectedModel by the selectedLanguageCode from the ViewModel to display status
-            val currentSelectedModelForStatus = models.find { it.code == selectedLanguageCode }
+            )
+
+            val currentSelectedModelForStatus = models.firstOrNull { it.code == selectedLanguageCode }
             if (currentSelectedModelForStatus != null) {
                 Spacer(modifier = Modifier.width(8.dp))
                 val downloadState by currentSelectedModelForStatus.downloadState.collectAsState()
@@ -439,7 +436,7 @@ fun LanguageModelDownloader(
             }
         }
 
-        val downloadingModel = models.find { it.downloadState.collectAsState().value is DownloadState.Downloading }
+        val downloadingModel = models.firstOrNull { it.downloadState.collectAsState().value is DownloadState.Downloading }
         if (downloadingModel != null) {
             val progress by downloadingModel.progress.collectAsState()
             Spacer(modifier = Modifier.height(8.dp))
@@ -457,7 +454,7 @@ fun LanguageModelDownloader(
             }
             Spacer(modifier = Modifier.height(8.dp))
             LinearProgressIndicator(
-                progress = { progress }, // Ensure this is a float by an explicit cast if needed or if progress itself is not a direct float lambda
+                progress = progress,
                 modifier = Modifier.fillMaxWidth()
             )
         }
@@ -473,28 +470,27 @@ fun ModelStatusIcon(
     when (downloadState) {
         is DownloadState.NotDownloaded -> {
             IconButton(onClick = onDownload) {
-                Icon(Icons.Default.Download, contentDescription = "Download")
+                Icon(Icons.Default.Download, contentDescription = stringResource(id = R.string.download_model_description))
             }
         }
         is DownloadState.Downloading -> {
             com.hereliesaz.lexorcist.ui.components.NewLexorcistLoadingIndicator(modifier = Modifier.size(24.dp).padding(8.dp))
         }
         is DownloadState.Downloaded -> {
-            Row {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     Icons.Default.Check,
-                    contentDescription = "Downloaded",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.align(Alignment.CenterVertically)
+                    contentDescription = stringResource(id = R.string.model_downloaded_description),
+                    tint = MaterialTheme.colorScheme.primary
                 )
                 IconButton(onClick = onDelete) {
-                    Icon(Icons.Default.Delete, contentDescription = "Delete")
+                    Icon(Icons.Default.Delete, contentDescription = stringResource(id = R.string.delete_model_description))
                 }
             }
         }
         is DownloadState.Error -> {
             IconButton(onClick = onDownload) { // Retry
-                Icon(Icons.Default.Download, contentDescription = "Retry Download")
+                Icon(Icons.Default.Download, contentDescription = stringResource(id = R.string.retry_download_description))
             }
         }
     }

@@ -771,11 +771,16 @@ class GoogleApiService @Inject constructor(
         return null
     }
 
-    private suspend fun readSpreadsheet(
-        sheetsService: Sheets,
+    internal suspend fun readSpreadsheet(
         spreadsheetId: String,
+        isPublic: Boolean = false
     ): Map<String, List<List<Any>>>? =
         withContext(Dispatchers.IO) {
+            val sheetsService = if (isPublic) getPublicSheetsService() else getSheetsService()
+            if (sheetsService == null) {
+                Log.e("GoogleApiService", "Sheets service is not available.")
+                return@withContext null
+            }
             try {
                 val spreadsheet =
                     sheetsService
@@ -799,6 +804,7 @@ class GoogleApiService @Inject constructor(
                 }
                 sheetData
             } catch (e: IOException) {
+                Log.e("GoogleApiService", "Error reading spreadsheet ID: $spreadsheetId", e)
                 null
             }
         }
@@ -1126,7 +1132,7 @@ class GoogleApiService @Inject constructor(
 
     suspend fun getSharedScripts(): List<Script> {
         val sheets = getPublicSheetsService()
-        val sheetData = readSpreadsheet(sheets, EXTRAS_SPREADSHEET_ID)
+        val sheetData = readSpreadsheet(EXTRAS_SPREADSHEET_ID, isPublic = true)
         val scriptSheet = sheetData?.get("Scripts") ?: return emptyList()
 
         return scriptSheet.mapNotNull { row ->
@@ -1156,7 +1162,7 @@ class GoogleApiService @Inject constructor(
 
     suspend fun getSharedTemplates(): List<Template> {
         val sheets = getPublicSheetsService()
-        val sheetData = readSpreadsheet(sheets, EXTRAS_SPREADSHEET_ID)
+        val sheetData = readSpreadsheet(EXTRAS_SPREADSHEET_ID, isPublic = true)
         val templateSheet = sheetData?.get("Templates") ?: return emptyList()
 
         return templateSheet.mapNotNull { row ->
@@ -1416,7 +1422,7 @@ class GoogleApiService @Inject constructor(
         val sheets = getSheetsService() ?: return // Or throw, or return Result
         withContext(Dispatchers.IO) {
             try {
-                val sheetData = readSpreadsheet(sheets, spreadsheetId)
+                val sheetData = readSpreadsheet(spreadsheetId)
                 if (sheetData?.get("SelectedAllegations") == null) {
                     addSheet(spreadsheetId, "SelectedAllegations") // Uses sheets internally
                 } else {
