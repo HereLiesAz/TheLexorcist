@@ -315,10 +315,22 @@ constructor(
     fun loadCasesFromRepository() {
         viewModelScope.launch {
             globalLoadingState.pushLoading()
+            _processingState.value = ProcessingState.InProgress(0f, "Loading cases...")
+            _userMessage.value = "Loading cases..."
             try {
                 caseRepository.refreshCases()
+                _userMessage.value = "Cases loaded successfully." // User message updated on success
+                _processingState.value = ProcessingState.Completed("Cases loaded successfully.")
+            } catch (e: Exception) {
+                Log.e("CaseViewModel", "Error loading cases: ${e.message}", e)
+                _errorMessage.value = "Error loading cases: ${e.message}"
+                _processingState.value = ProcessingState.Failure("Error loading cases: ${e.message}")
             } finally {
                 globalLoadingState.popLoading()
+                // If the process is still InProgress, it implies an unexpected exit or that the try block didn't set a final state.
+                if (_processingState.value is ProcessingState.InProgress) {
+                    _processingState.value = ProcessingState.Idle // Reset to a neutral state
+                }
             }
         }
     }
@@ -326,24 +338,56 @@ constructor(
     fun loadHtmlTemplatesFromRepository() {
         viewModelScope.launch {
             globalLoadingState.pushLoading()
+            _processingState.value = ProcessingState.InProgress(0f, "Loading HTML templates...")
+            _userMessage.value = "Loading HTML templates..."
             try {
                 caseRepository.refreshHtmlTemplates()
                 caseRepository.getHtmlTemplates().collect {
                     _htmlTemplates.value = it
                 }
+                _userMessage.value = "HTML templates loaded successfully."
+                _processingState.value = ProcessingState.Completed("HTML templates loaded successfully.")
+            } catch (e: Exception) {
+                val errorMsg = "Error loading HTML templates: ${e.message}"
+                Log.e("CaseViewModel", "Error loading HTML templates: $errorMsg", e)
+                _errorMessage.value = errorMsg
+                _userMessage.value = errorMsg // Set user message to the error
+                _processingState.value = ProcessingState.Failure(errorMsg)
             } finally {
                 globalLoadingState.popLoading()
+                // Ensure a terminal state if still InProgress (e.g., due to cancellation or unexpected error path)
+                if (_processingState.value is ProcessingState.InProgress) {
+                    _processingState.value = ProcessingState.Idle 
+                }
             }
         }
     }
 
     fun importSpreadsheetWithRepository(spreadsheetId: String) {
-        viewModelScope.launch { 
+        viewModelScope.launch {
             globalLoadingState.pushLoading()
+            _processingState.value = ProcessingState.InProgress(0f, "Importing spreadsheet...")
+            _userMessage.value = "Importing spreadsheet..."
             try {
-                caseRepository.importSpreadsheet(spreadsheetId) 
+                // Assuming importSpreadsheet is a suspend function that might throw an exception
+                // and potentially return a Result wrapper or similar for more detailed success/failure.
+                // For now, we'll assume a successful call means it completed without exceptions.
+                caseRepository.importSpreadsheet(spreadsheetId)
+                _userMessage.value = "Spreadsheet imported successfully."
+                _processingState.value = ProcessingState.Completed("Spreadsheet imported successfully.")
+                // Potentially refresh cases or other data if an import changes the state
+                // loadCasesFromRepository() // Example: if import affects the list of cases
+            } catch (e: Exception) {
+                val errorMsg = "Error importing spreadsheet: ${e.message}"
+                Log.e("CaseViewModel", errorMsg, e)
+                _errorMessage.value = errorMsg
+                _userMessage.value = errorMsg // Update user message with error
+                _processingState.value = ProcessingState.Failure(errorMsg)
             } finally {
                 globalLoadingState.popLoading()
+                if (_processingState.value is ProcessingState.InProgress) {
+                    _processingState.value = ProcessingState.Idle
+                }
             }
         }
     }
