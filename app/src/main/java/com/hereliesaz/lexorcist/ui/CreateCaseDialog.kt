@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth // Added import
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import com.hereliesaz.aznavrail.AzButton
 import com.hereliesaz.lexorcist.ui.components.AzAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api

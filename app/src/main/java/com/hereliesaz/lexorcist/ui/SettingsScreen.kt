@@ -2,7 +2,6 @@ package com.hereliesaz.lexorcist.ui
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -268,12 +267,12 @@ fun SettingsScreen(
                         onClick {
                             authViewModel.signOut(mainViewModel)
                             if (activity != null) {
-                               authViewModel.signIn(activity, mainViewModel)
+                                authViewModel.signIn(activity, mainViewModel)
                             }
                         }
                         text(stringResource(R.string.switch_account).uppercase(Locale.getDefault()))
                     }
-                     Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
                     AzButton {
                         onClick {
                             authViewModel.signOut(mainViewModel)
@@ -286,8 +285,8 @@ fun SettingsScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     AzButton {
                         onClick {
-                             if (activity != null) {
-                               authViewModel.signIn(activity, mainViewModel)
+                            if (activity != null) {
+                                authViewModel.signIn(activity, mainViewModel)
                             }
                         }
                         text(stringResource(R.string.sign_in).uppercase(Locale.getDefault()))
@@ -356,7 +355,7 @@ fun SettingsScreen(
                 }
                 is com.hereliesaz.lexorcist.model.OneDriveSignInState.Success -> {
                     Text(stringResource(R.string.connected_to_onedrive_as_placeholder, stateVal.accountName ?: stringResource(R.string.unknown_account)))
-                     Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
                     AzButton {
                         onClick {
                             oneDriveViewModel.disconnectFromOneDrive()
@@ -366,8 +365,8 @@ fun SettingsScreen(
                 }
                 is com.hereliesaz.lexorcist.model.OneDriveSignInState.Error -> {
                     Text(stringResource(R.string.error_connecting_to_onedrive_placeholder, stateVal.message ?: stringResource(R.string.unknown_error)))
-                     Spacer(modifier = Modifier.height(8.dp))
-                     AzButton {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    AzButton {
                         onClick {
                             if (activity != null) {
                                 oneDriveViewModel.connectToOneDrive(activity)
@@ -407,27 +406,25 @@ fun SettingsScreen(
 @Composable
 fun LanguageModelDownloader(
     models: List<LanguageModel>,
-    selectedLanguageCode: String, // May not be used to set initial state of AzCycler anymore
+    selectedLanguageCode: String,
     onLanguageSelected: (String) -> Unit,
     onDownload: (LanguageModel) -> Unit,
     onDelete: (LanguageModel) -> Unit
 ) {
-    // val selectedModel = models.find { it.code == selectedLanguageCode } // Not used to set AzCycler initial state
-    // val selectedIndex = models.indexOf(selectedModel) // Not used
-
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            AzCycler(modifier = Modifier.weight(1f)) {
-                models.forEach { model ->
-                    state(
-                        text = model.name,
-                        onClick = { onLanguageSelected(model.code) }
-                    )
-                }
-            }
-            // Logic for showing download/delete icon based on selectedLanguageCode needs to adapt if AzCycler doesn't expose its current state
-            // For now, assume we can still find the selectedModel by the selectedLanguageCode from the ViewModel to display status
-            val currentSelectedModelForStatus = models.find { it.code == selectedLanguageCode }
+            AzCycler(
+                options = models.map { it.name },
+                selectedOption = models.find { it.code == selectedLanguageCode }?.name ?: "",
+                onCycle = {
+                    val currentIndex = models.indexOfFirst { it.code == selectedLanguageCode }
+                    val nextIndex = (currentIndex + 1) % models.size
+                    onLanguageSelected(models[nextIndex].code)
+                },
+                modifier = Modifier.weight(1f)
+            )
+
+            val currentSelectedModelForStatus = models.firstOrNull { it.code == selectedLanguageCode }
             if (currentSelectedModelForStatus != null) {
                 Spacer(modifier = Modifier.width(8.dp))
                 val downloadState by currentSelectedModelForStatus.downloadState.collectAsState()
@@ -439,7 +436,7 @@ fun LanguageModelDownloader(
             }
         }
 
-        val downloadingModel = models.find { it.downloadState.collectAsState().value is DownloadState.Downloading }
+        val downloadingModel = models.firstOrNull { it.downloadState.collectAsState().value is DownloadState.Downloading }
         if (downloadingModel != null) {
             val progress by downloadingModel.progress.collectAsState()
             Spacer(modifier = Modifier.height(8.dp))
@@ -457,7 +454,7 @@ fun LanguageModelDownloader(
             }
             Spacer(modifier = Modifier.height(8.dp))
             LinearProgressIndicator(
-                progress = { progress }, // Ensure this is a float by an explicit cast if needed or if progress itself is not a direct float lambda
+                progress = progress,
                 modifier = Modifier.fillMaxWidth()
             )
         }
@@ -473,28 +470,27 @@ fun ModelStatusIcon(
     when (downloadState) {
         is DownloadState.NotDownloaded -> {
             IconButton(onClick = onDownload) {
-                Icon(Icons.Default.Download, contentDescription = "Download")
+                Icon(Icons.Default.Download, contentDescription = stringResource(id = R.string.download_model_description))
             }
         }
         is DownloadState.Downloading -> {
             com.hereliesaz.lexorcist.ui.components.NewLexorcistLoadingIndicator(modifier = Modifier.size(24.dp).padding(8.dp))
         }
         is DownloadState.Downloaded -> {
-            Row {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     Icons.Default.Check,
-                    contentDescription = "Downloaded",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.align(Alignment.CenterVertically)
+                    contentDescription = stringResource(id = R.string.model_downloaded_description),
+                    tint = MaterialTheme.colorScheme.primary
                 )
                 IconButton(onClick = onDelete) {
-                    Icon(Icons.Default.Delete, contentDescription = "Delete")
+                    Icon(Icons.Default.Delete, contentDescription = stringResource(id = R.string.delete_model_description))
                 }
             }
         }
         is DownloadState.Error -> {
             IconButton(onClick = onDownload) { // Retry
-                Icon(Icons.Default.Download, contentDescription = "Retry Download")
+                Icon(Icons.Default.Download, contentDescription = stringResource(id = R.string.retry_download_description))
             }
         }
     }

@@ -38,7 +38,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.hereliesaz.aznavrail.*
+import com.hereliesaz.aznavrail.AzButton // Corrected import based on usage
 import com.hereliesaz.lexorcist.model.SignInState
 import com.hereliesaz.lexorcist.ui.AllegationsScreen
 import com.hereliesaz.lexorcist.ui.CasesScreen
@@ -177,10 +177,10 @@ fun MainScreen(
                                                 style = MaterialTheme.typography.bodyLarge,
                                             )
                                             Spacer(modifier = Modifier.height(32.dp))
-                                            AzButton {
-                                                onClick { showCreateCaseDialog = true }
-                                                text(stringResource(R.string.create_new_case))
-                                            }
+                                            AzButton(
+                                                text = stringResource(R.string.create_new_case),
+                                                onClick = { showCreateCaseDialog = true }
+                                            )
                                         }
                                     }
                                     composable("cases") { CasesScreen(caseViewModel = caseViewModel, navController = navController, mainViewModel = mainViewModel) }
@@ -286,10 +286,10 @@ fun MainScreen(
                             verticalArrangement = Arrangement.Top,
                         ) {
                             Spacer(Modifier.height(halfScreenHeight))
-                            AzButton {
-                                onClick { onSignInClick() }
-                                text(stringResource(R.string.sign_in_with_google))
-                            }
+                            AzButton(
+                                text = stringResource(R.string.sign_in_with_google),
+                                onClick = { onSignInClick() }
+                            )
                             if (currentSignInState is SignInState.Error) {
                                 Spacer(modifier = Modifier.height(16.dp))
                                 Text(

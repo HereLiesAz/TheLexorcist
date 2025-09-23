@@ -78,6 +78,7 @@
     <string name="use_navigation_rail">Use the navigation rail to get started.</string>
     <string name="tap_icon_to_open_menu">Tap the icon at the top to open the menu.</string>
     <string name="create_new_case">Create New Case</string>
+    <string name="new_case_fab_text">New Case</string>
     <string name="default_exhibit_sheet_name">Exhibits</string>
     <string name="select_a_template">Select a Template</string>
     <string name="no_templates_found">No templates found</string>
@@ -321,4 +322,17 @@
     <string name="no_templates_available">No templates available.</string>
     <string name="share_content">Share Content</string>
     <string name="close">Close</string>
+    <string name="download_model_description">Download</string>
+    <string name="model_downloaded_description">Downloaded</string>
+    <string name="delete_model_description">Delete</string>
+    <string name="retry_download_description">Retry Download</string>
+    <string name="selected_allegations">Selected</string>
+    <string name="search_allegations">Search...</string>
+    <string name="request">Request</string>
+    <string name="no_allegations_found_for_search">No allegations match.</string>
+    <string name="no_allegations_available">No allegations found.</string>
+    <string name="request_new_allegation">Need specific allegations not yet included?</string>
+    <string name="allegation_name">What\'s it called?</string>
+    <string name="description">Where, specifically? Through what court? Give me a description, I\'ll research and add it.</string>
+    <string name="submit">Submit</string>
 </resources>

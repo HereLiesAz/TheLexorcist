@@ -20,12 +20,10 @@ import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.AlertDialog
 import com.hereliesaz.aznavrail.AzButton
 import com.hereliesaz.lexorcist.ui.components.AzAlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 // import androidx.compose.material3.CircularProgressIndicator // Duplicate import removed
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
@@ -33,7 +31,6 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -80,7 +77,7 @@ fun CasesScreen(
         remember(casesState, searchQuery) {
             casesState.filter { case ->
                 !case.isArchived &&
-                    (searchQuery.isBlank() || case.name.contains(searchQuery, ignoreCase = true))
+                        (searchQuery.isBlank() || case.name.contains(searchQuery, ignoreCase = true))
             }
         }
 
@@ -102,20 +99,23 @@ fun CasesScreen(
             )
         },
         floatingActionButton = {
-            AzButton(
+            FloatingActionButton(
                 onClick = { showCreateCaseDialog = true },
-                icon = Icons.Filled.Add,
-                contentDescription = stringResource(R.string.create_new_case)
-            )
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Add,
+                    contentDescription = stringResource(R.string.new_case_fab_text)
+                )
+            }
         },
         floatingActionButtonPosition = FabPosition.End,
     ) { innerPadding ->
         Column(
             modifier =
-            Modifier
-                .padding(innerPadding) // Apply padding from Scaffold (e.g., for FAB)
-                .statusBarsPadding() // Add status bar padding directly to the content
-                .fillMaxSize(),
+                Modifier
+                    .padding(innerPadding) // Apply padding from Scaffold (e.g., for FAB)
+                    .statusBarsPadding() // Add status bar padding directly to the content
+                    .fillMaxSize(),
             horizontalAlignment = Alignment.End
         ) {
             OutlinedTextField(
@@ -123,9 +123,9 @@ fun CasesScreen(
                 onValueChange = { caseViewModel.onSearchQueryChanged(it) },
                 label = { Text(stringResource(R.string.search)) },
                 modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 8.dp),
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 8.dp),
                 // Padding for the search field
                 leadingIcon = { Icon(Icons.Filled.Search, contentDescription = stringResource(R.string.search)) },
                 singleLine = true,
@@ -143,10 +143,10 @@ fun CasesScreen(
             } else if (unarchivedCases.isEmpty()) {
                 Column(
                     modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                        .padding(horizontal = 16.dp),
+                        Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
+                            .padding(horizontal = 16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                 ) {
@@ -166,12 +166,12 @@ fun CasesScreen(
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding =
-                    PaddingValues( // Adjust padding as needed now that topBar is gone
-                        start = 16.dp,
-                        end = 16.dp,
-                        top = 8.dp, // Adjusted top padding
-                        bottom = 16.dp,
-                    ),
+                        PaddingValues( // Adjust padding as needed now that topBar is gone
+                            start = 16.dp,
+                            end = 16.dp,
+                            top = 8.dp, // Adjusted top padding
+                            bottom = 16.dp,
+                        ),
                 ) {
                     items(unarchivedCases, key = { it.id }) { case ->
                         CaseItem(
@@ -179,7 +179,7 @@ fun CasesScreen(
                             isLongPressed = longPressedCase == case,
                             isSelected = selectedCase?.id == case.id,
                             onLongPress = {
-                                Log.d("CasesScreen", "onLongPress triggered for case: ${case.name}") 
+                                Log.d("CasesScreen", "onLongPress triggered for case: ${case.name}")
                                 longPressedCase = case
                             },
                             onDelete = {
@@ -190,9 +190,9 @@ fun CasesScreen(
                                 caseViewModel.archiveCaseWithRepository(case)
                                 longPressedCase = null
                             },
-                            onCancel = { 
-                                Log.d("CasesScreen", "onCancel triggered (clearing longPressedCase)") 
-                                longPressedCase = null 
+                            onCancel = {
+                                Log.d("CasesScreen", "onCancel triggered (clearing longPressedCase)")
+                                longPressedCase = null
                             },
                             onClick = {
                                 Log.d("CasesScreen", "onClick triggered for case: ${case.name}. longPressedCase is: ${longPressedCase?.name ?: "null"}")
@@ -201,7 +201,7 @@ fun CasesScreen(
                                     caseViewModel.selectCase(case)
                                 } else {
                                     Log.d("CasesScreen", "onClick: longPressedCase was not null (${longPressedCase?.name}), setting it to null instead of selecting.")
-                                    longPressedCase = null 
+                                    longPressedCase = null
                                 }
                             },
                         )
@@ -242,8 +242,7 @@ fun CasesScreen(
         CreateCaseDialog(
             caseViewModel = caseViewModel,
             navController = navController,
-            onDismiss = { showCreateCaseDialog = false },
-            // mainViewModel = mainViewModel, // Removed parameter
+            onDismiss = { showCreateCaseDialog = false }
         )
     }
 }
