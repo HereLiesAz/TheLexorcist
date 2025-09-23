@@ -38,7 +38,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.hereliesaz.aznavrail.AzButton // Corrected import based on usage
+import com.hereliesaz.aznavrail.*
 import com.hereliesaz.lexorcist.model.SignInState
 import com.hereliesaz.lexorcist.ui.AllegationsScreen
 import com.hereliesaz.lexorcist.ui.CasesScreen
@@ -177,8 +177,9 @@ fun MainScreen(
                                                 style = MaterialTheme.typography.bodyLarge,
                                             )
                                             Spacer(modifier = Modifier.height(32.dp))
+                                            val createCaseText = stringResource(R.string.create_new_case)
                                             AzButton(
-                                                text = stringResource(R.string.create_new_case),
+                                                text = createCaseText,
                                                 onClick = { showCreateCaseDialog = true }
                                             )
                                         }
@@ -286,8 +287,9 @@ fun MainScreen(
                             verticalArrangement = Arrangement.Top,
                         ) {
                             Spacer(Modifier.height(halfScreenHeight))
+                            val signInText = stringResource(R.string.sign_in_with_google)
                             AzButton(
-                                text = stringResource(R.string.sign_in_with_google),
+                                text = signInText,
                                 onClick = { onSignInClick() }
                             )
                             if (currentSignInState is SignInState.Error) {

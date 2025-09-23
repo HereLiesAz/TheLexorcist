@@ -204,7 +204,7 @@ class CaseRepositoryImpl @Inject constructor(
     }
 
     override suspend fun importSpreadsheet(spreadsheetId: String): Case? {
-        val sheetData = googleApiService.readSpreadsheet(spreadsheetId)
+        val sheetData = googleApiService.readSpreadsheet(spreadsheetId, isPublic = false)
         if (sheetData.isNullOrEmpty()) {
             Log.w(tag, "Import spreadsheet $spreadsheetId: No sheet data found.")
             return null

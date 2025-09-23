@@ -139,6 +139,18 @@
     <string name="delete_case">Delete Case</string>
     <string name="delete_case_confirmation">Are you sure you want to delete case %1$s?</string>
 
+    <string name="selected_allegations">Selected Allegations</string>
+    <string name="search_allegations">Search Allegations</string>
+    <string name="sort_alphabetical">Sort Alphabetical</string>
+    <string name="sort_category">Sort by Category</string>
+    <string name="request">Request</string>
+    <string name="no_allegations_found_for_search">No allegations found for \"%1$s\"</string>
+    <string name="no_allegations_available">No allegations available.</string>
+    <string name="request_new_allegation">Request New Allegation</string>
+    <string name="allegation_name">Allegation Name</string>
+    <string name="description">Description</string>
+    <string name="submit">Submit</string>
+
     <string name="script_tab_description">Description</string>
     <string name="script_tab_editor">Editor</string>
     <string name="script_description_placeholder">Enter a brief description of your script here. This will help you identify it later.</string>
@@ -326,13 +338,4 @@
     <string name="model_downloaded_description">Downloaded</string>
     <string name="delete_model_description">Delete</string>
     <string name="retry_download_description">Retry Download</string>
-    <string name="selected_allegations">Selected</string>
-    <string name="search_allegations">Search...</string>
-    <string name="request">Request</string>
-    <string name="no_allegations_found_for_search">No allegations match.</string>
-    <string name="no_allegations_available">No allegations found.</string>
-    <string name="request_new_allegation">Need specific allegations not yet included?</string>
-    <string name="allegation_name">What\'s it called?</string>
-    <string name="description">Where, specifically? Through what court? Give me a description, I\'ll research and add it.</string>
-    <string name="submit">Submit</string>
 </resources>

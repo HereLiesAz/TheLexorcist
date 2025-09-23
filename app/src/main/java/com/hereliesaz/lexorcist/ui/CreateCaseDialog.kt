@@ -73,7 +73,7 @@ fun CreateCaseDialog(
 
     AzAlertDialog(
         onDismissRequest = onDismiss,
-        title = stringResource(R.string.create_new_case),
+        title = { Text(stringResource(R.string.create_new_case)) },
         text = {
             Column(
                 modifier =
@@ -123,6 +123,7 @@ fun CreateCaseDialog(
             }
         },
         confirmButton = {
+            val createText = stringResource(R.string.create)
             AzButton(
                 onClick = {
                     if (caseName.isNotBlank()) {
@@ -131,22 +132,20 @@ fun CreateCaseDialog(
                             exhibitSheetName = exhibitSheetName.ifBlank { context.getString(R.string.default_exhibit_sheet_name) },
                             caseNumber = caseNumber,
                             caseSection = caseSection,
-                            caseJudge = caseJudge,
-                            // mainViewModel = mainViewModel, // Removed argument
+                            caseJudge = caseJudge
                         )
-                        // Dismissal and navigation should ideally happen based on successful case creation
-                        // For now, keeping original logic. Consider observing a success event from ViewModel.
                         onDismiss()
                         navController.navigate("cases")
                     }
                 },
-                text = stringResource(R.string.create)
+                text = createText
             )
         },
         dismissButton = {
+            val cancelText = stringResource(R.string.cancel)
             AzButton(
                 onClick = onDismiss,
-                text = stringResource(R.string.cancel)
+                text = cancelText
             )
         },
     )
