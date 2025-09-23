@@ -258,7 +258,7 @@ constructor(
         viewModelScope.launch {
             globalLoadingState.pushLoading()
             try {
-                caseRepository.selectCase(null) 
+                caseRepository.selectCase(null)
                 _sheetFilters.value = emptyList()
                 _htmlTemplates.value = emptyList()
                 _plaintiffs.value = ""
@@ -315,7 +315,7 @@ constructor(
     fun loadCasesFromRepository() {
         viewModelScope.launch {
             globalLoadingState.pushLoading()
-            _processingState.value = ProcessingState.InProgress(0f, "Loading cases...")
+            _processingState.value = ProcessingState.InProgress(0f)
             _userMessage.value = "Loading cases..."
             try {
                 caseRepository.refreshCases()
@@ -338,7 +338,7 @@ constructor(
     fun loadHtmlTemplatesFromRepository() {
         viewModelScope.launch {
             globalLoadingState.pushLoading()
-            _processingState.value = ProcessingState.InProgress(0f, "Loading HTML templates...")
+            _processingState.value = ProcessingState.InProgress(0f)
             _userMessage.value = "Loading HTML templates..."
             try {
                 caseRepository.refreshHtmlTemplates()
@@ -357,7 +357,7 @@ constructor(
                 globalLoadingState.popLoading()
                 // Ensure a terminal state if still InProgress (e.g., due to cancellation or unexpected error path)
                 if (_processingState.value is ProcessingState.InProgress) {
-                    _processingState.value = ProcessingState.Idle 
+                    _processingState.value = ProcessingState.Idle
                 }
             }
         }
@@ -366,7 +366,7 @@ constructor(
     fun importSpreadsheetWithRepository(spreadsheetId: String) {
         viewModelScope.launch {
             globalLoadingState.pushLoading()
-            _processingState.value = ProcessingState.InProgress(0f, "Importing spreadsheet...")
+            _processingState.value = ProcessingState.InProgress(0f)
             _userMessage.value = "Importing spreadsheet..."
             try {
                 // Assuming importSpreadsheet is a suspend function that might throw an exception
@@ -440,7 +440,7 @@ constructor(
             globalLoadingState.pushLoading()
             try {
                 // Reset processing state when a new case is selected or deselected
-                _processingState.value = ProcessingState.Idle 
+                _processingState.value = ProcessingState.Idle
                 _logMessages.value = emptyList()
 
                 caseRepository.selectCase(case)
@@ -566,10 +566,10 @@ constructor(
     }
 
     fun archiveCaseWithRepository(case: Case) {
-        viewModelScope.launch { 
+        viewModelScope.launch {
             globalLoadingState.pushLoading()
             try {
-                caseRepository.archiveCase(case) 
+                caseRepository.archiveCase(case)
             } finally {
                 globalLoadingState.popLoading()
             }
@@ -577,10 +577,10 @@ constructor(
     }
 
     fun deleteCaseWithRepository(case: Case) {
-        viewModelScope.launch { 
+        viewModelScope.launch {
             globalLoadingState.pushLoading()
             try {
-                caseRepository.deleteCase(case) 
+                caseRepository.deleteCase(case)
             } finally {
                 globalLoadingState.popLoading()
             }
@@ -656,7 +656,7 @@ constructor(
         viewModelScope.launch {
             globalLoadingState.pushLoading()
             try {
-                 val currentCaseFromState = _vmSelectedCase.value
+                val currentCaseFromState = _vmSelectedCase.value
                 Log.d("CaseViewModel", "addTextEvidence: _vmSelectedCase.value AT START is: ${currentCaseFromState?.name ?: "null"}")
                 val caseToUse = currentCaseFromState ?: run {
                     Log.w("CaseViewModel", "addTextEvidence: No case selected from StateFlow, aborting.")
@@ -723,8 +723,8 @@ constructor(
                     caseId = caseToUse.id.toLong(),
                     spreadsheetId = caseToUse.spreadsheetId,
                 ) { state -> _processingState.value = state } // Pass the lambda to update ViewModel's state
-                
-                message?.let { 
+
+                message?.let {
                     Log.i("CaseViewModel", "Message from ocrProcessingService: $it")
                     _userMessage.value = it
                 }
@@ -781,7 +781,7 @@ constructor(
 
                         // 2. Transcribe audio
                         // The URI passed to transcribeAudio should be the original content URI for Vosk to access
-                        val transcriptionResult = transcriptionService.transcribeAudio(uri) 
+                        val transcriptionResult = transcriptionService.transcribeAudio(uri)
 
                         when (transcriptionResult) {
                             is Result.Success -> {
@@ -839,7 +839,7 @@ constructor(
                                 _userRecoverableAuthIntent.value = transcriptionResult.exception.intent
                                 _processingState.value = ProcessingState.Failure(errorMsg)
                             }
-                             is Result.Loading -> {
+                            is Result.Loading -> {
                                 // This case should ideally not be returned directly from transcribeAudio if it's a one-shot call.
                                 // If it can, we need to decide how to handle it, perhaps by observing TranscriptionService's own state.
                                 // For now, treat as unexpected if it gets here from a direct suspend call.
@@ -940,12 +940,12 @@ constructor(
                 if (workInfo != null) {
                     val progressPercent = workInfo.progress.getFloat(com.hereliesaz.lexorcist.service.VideoProcessingWorker.PROGRESS_PERCENT, 0f)
                     val progressMessage = workInfo.progress.getString(com.hereliesaz.lexorcist.service.VideoProcessingWorker.PROGRESS_MESSAGE) ?: "Processing video..."
-                    
+
                     _processingState.value = ProcessingState.InProgress(progressPercent) // Update with percentage
                     _videoProcessingProgress.value = "$progressMessage (${(progressPercent * 100).toInt()}%)." // For the separate String progress if still used
-                    
+
                     Log.d("CaseViewModel", "Video processing progress for $uri: $progressMessage ($progressPercent), State: ${workInfo.state}")
-                    
+
                     if (workInfo.state.isFinished) {
                         globalLoadingState.popLoading() // Work is finished, set loading to false
                         _videoProcessingProgress.value = null // Clear the specific string progress
@@ -990,9 +990,9 @@ constructor(
                 val caseToUse = currentCaseFromState ?: run {
                     val errorMsg = "Please select a case first to add photos."
                     Log.w("CaseViewModel", "addPhotoGroupEvidence: No case selected. Message: $errorMsg")
-                     _userMessage.value = errorMsg
-                     _processingState.value = ProcessingState.Failure("No case selected for photo group")
-                     globalLoadingState.popLoading()
+                    _userMessage.value = errorMsg
+                    _processingState.value = ProcessingState.Failure("No case selected for photo group")
+                    globalLoadingState.popLoading()
                     return@launch
                 }
                 val savedPhotoPaths = mutableListOf<String>()
@@ -1016,7 +1016,7 @@ constructor(
                         }
                         is Result.UserRecoverableError -> {
                             val errorMsg = "User error saving photo ${index + 1}: ${result.exception.message}"
-                             _userMessage.value = errorMsg
+                            _userMessage.value = errorMsg
                             _userRecoverableAuthIntent.value = result.exception.intent
                             _processingState.value = ProcessingState.Failure(errorMsg)
                             globalLoadingState.popLoading()
@@ -1025,7 +1025,7 @@ constructor(
                         is Result.Loading -> {
                             // If uploadFile can emit Loading, this needs more robust handling, 
                             // for now, we assume it completes or errors.
-                             _userMessage.value = "Photo ${index + 1} is uploading..."
+                            _userMessage.value = "Photo ${index + 1} is uploading..."
                         }
                     }
                 }
@@ -1063,9 +1063,9 @@ constructor(
             } finally {
                 globalLoadingState.popLoading()
                 if (_processingState.value is ProcessingState.InProgress) {
-                     // If loop finished due to error, state would be Failure. If success, Completed.
-                     // This is a fallback if somehow it's still InProgress.
-                    _processingState.value = ProcessingState.Idle 
+                    // If loop finished due to error, state would be Failure. If success, Completed.
+                    // This is a fallback if somehow it's still InProgress.
+                    _processingState.value = ProcessingState.Idle
                 }
             }
         }
