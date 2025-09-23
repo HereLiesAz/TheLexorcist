@@ -237,7 +237,8 @@ fun AllegationsScreen(
                     onClick = { showRequestDialog = false },
                     text = stringResource(id = R.string.cancel)
                 )
-            }
+            },
+
         )
     }
 
