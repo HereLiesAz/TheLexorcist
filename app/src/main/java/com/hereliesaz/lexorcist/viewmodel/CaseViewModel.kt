@@ -315,7 +315,7 @@ constructor(
     fun loadCasesFromRepository() {
         viewModelScope.launch {
             globalLoadingState.pushLoading()
-            _processingState.value = ProcessingState.InProgress(0f, "Loading cases...")
+            _processingState.value = ProcessingState.InProgress(0f)
             _userMessage.value = "Loading cases..."
             try {
                 caseRepository.refreshCases()
@@ -338,7 +338,7 @@ constructor(
     fun loadHtmlTemplatesFromRepository() {
         viewModelScope.launch {
             globalLoadingState.pushLoading()
-            _processingState.value = ProcessingState.InProgress(0f, "Loading HTML templates...")
+            _processingState.value = ProcessingState.InProgress(0f)
             _userMessage.value = "Loading HTML templates..."
             try {
                 caseRepository.refreshHtmlTemplates()
@@ -366,7 +366,7 @@ constructor(
     fun importSpreadsheetWithRepository(spreadsheetId: String) {
         viewModelScope.launch {
             globalLoadingState.pushLoading()
-            _processingState.value = ProcessingState.InProgress(0f, "Importing spreadsheet...")
+            _processingState.value = ProcessingState.InProgress(0f)
             _userMessage.value = "Importing spreadsheet..."
             try {
                 // Assuming importSpreadsheet is a suspend function that might throw an exception
