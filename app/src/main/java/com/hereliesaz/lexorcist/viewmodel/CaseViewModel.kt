@@ -668,6 +668,17 @@ constructor(
             try {
                 evidenceRepository.deleteEvidence(evidence)
             } finally {
+                globalLoadingation.popLoading()
+            }
+        }
+    }
+
+    fun updateEvidence(evidence: com.hereliesaz.lexorcist.data.Evidence) {
+        viewModelScope.launch {
+            globalLoadingState.pushLoading()
+            try {
+                evidenceRepository.updateEvidence(evidence)
+            } finally {
                 globalLoadingState.popLoading()
             }
         }

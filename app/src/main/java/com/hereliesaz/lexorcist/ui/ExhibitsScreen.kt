@@ -24,6 +24,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -116,11 +117,11 @@ fun ExhibitsScreen(
                         exhibitNames = exhibits.filter { it.evidenceIds.contains(evidence.id) }.joinToString { it.name },
                         onClick = { caseViewModel.toggleEvidenceSelection(evidence.id) },
                         onEditClick = {
-                            evidenceToEdit = it
+                            evidenceToEdit = evidence
                             showEditDialog = true
                         },
                         onDeleteClick = {
-                            evidenceToDelete = it
+                            evidenceToDelete = evidence
                             showDeleteConfirmDialog = true
                         }
                     )
@@ -209,4 +210,112 @@ fun AllegationElementItem(
             }
         }
     }
+}
+
+@Composable
+fun AllegationItem(
+    allegation: Allegation,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .padding(vertical = 4.dp)
+            .fillMaxWidth()
+            .pointerInput(Unit) {
+                detectTapGestures(onTap = { onClick() })
+            },
+        colors = CardDefaults.cardColors(
+            containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Text(
+            text = allegation.text,
+            modifier = Modifier.padding(16.dp),
+            style = MaterialTheme.typography.bodyLarge,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
+}
+
+@Composable
+fun EvidenceItem(
+    evidence: Evidence,
+    isSelected: Boolean,
+    allegationText: String?,
+    allegationElementName: String?,
+    exhibitNames: String,
+    onClick: () -> Unit,
+    onEditClick: () -> Unit,
+    onDeleteClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .padding(vertical = 4.dp)
+            .fillMaxWidth()
+            .pointerInput(Unit) {
+                detectTapGestures(onTap = { onClick() })
+            },
+        colors = CardDefaults.cardColors(
+            containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(evidence.content, style = MaterialTheme.typography.bodyLarge, maxLines = 3, overflow = TextOverflow.Ellipsis)
+            allegationText?.let { Text("Allegation: $it", style = MaterialTheme.typography.bodySmall) }
+            allegationElementName?.let { Text("Element: $it", style = MaterialTheme.typography.bodySmall) }
+            if (exhibitNames.isNotEmpty()) {
+                Text("Exhibits: $exhibitNames", style = MaterialTheme.typography.bodySmall)
+            }
+            Row {
+                IconButton(onClick = onEditClick) {
+                    Icon(Icons.Default.Edit, contentDescription = "Edit")
+                }
+                IconButton(onClick = onDeleteClick) {
+                    Icon(Icons.Default.Delete, contentDescription = "Delete")
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun EditEvidenceDialog(
+    evidence: Evidence,
+    onDismiss: () -> Unit,
+    onSave: (Evidence) -> Unit
+) {
+    var updatedContent by remember(evidence) { mutableStateOf(evidence.content) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Edit Evidence") },
+        text = {
+            OutlinedTextField(
+                value = updatedContent,
+                onValueChange = { updatedContent = it },
+                label = { Text("Evidence Content") },
+                modifier = Modifier.fillMaxWidth()
+            )
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    onSave(evidence.copy(content = updatedContent))
+                    onDismiss()
+                }
+            ) {
+                Text("Save")
+            }
+        },
+        dismissButton = {
+            Button(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
 }
