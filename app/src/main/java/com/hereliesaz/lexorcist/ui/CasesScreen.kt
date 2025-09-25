@@ -24,7 +24,6 @@ import com.hereliesaz.aznavrail.AzButton
 import com.hereliesaz.lexorcist.ui.components.AzAlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-// import androidx.compose.material3.CircularProgressIndicator // Duplicate import removed
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
@@ -54,6 +53,7 @@ import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
+import com.hereliesaz.lexorcist.viewmodel.SortOrder
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -64,14 +64,14 @@ fun CasesScreen(
     mainViewModel: MainViewModel,
 ) {
     val casesState by caseViewModel.cases.collectAsState()
-    val sortOrder by caseViewModel.sortOrder.collectAsState() // Retain for logic if sort is re-added
+    val sortOrder by caseViewModel.sortOrder.collectAsState()
     val searchQuery by caseViewModel.searchQuery.collectAsState()
     var longPressedCase by remember { mutableStateOf<Case?>(null) }
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
     var showCreateCaseDialog by remember { mutableStateOf(false) }
     var currentSortOrderState by remember { mutableStateOf(sortOrder) }
 
-    val selectedCase by caseViewModel.selectedCase.collectAsState()
+    val selectedCase by caseViewModel.currentCase.collectAsState()
 
     val unarchivedCases =
         remember(casesState, searchQuery) {
@@ -82,7 +82,7 @@ fun CasesScreen(
         }
 
     LaunchedEffect(currentSortOrderState) {
-        caseViewModel.onSortOrderChange(currentSortOrderState)
+        caseViewModel.setSortOrder(currentSortOrderState)
     }
 
     Scaffold(
@@ -113,8 +113,8 @@ fun CasesScreen(
         Column(
             modifier =
                 Modifier
-                    .padding(innerPadding) // Apply padding from Scaffold (e.g., for FAB)
-                    .statusBarsPadding() // Add status bar padding directly to the content
+                    .padding(innerPadding) 
+                    .statusBarsPadding() 
                     .fillMaxSize(),
             horizontalAlignment = Alignment.End
         ) {
@@ -126,13 +126,12 @@ fun CasesScreen(
                     Modifier
                         .fillMaxWidth()
                         .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 8.dp),
-                // Padding for the search field
                 leadingIcon = { Icon(Icons.Filled.Search, contentDescription = stringResource(R.string.search)) },
                 singleLine = true,
             )
 
             val isLoading by caseViewModel.isLoading.collectAsState()
-            if (isLoading && unarchivedCases.isEmpty()) { // Show loader only if cases are empty
+            if (isLoading && unarchivedCases.isEmpty()) { 
                 Column(
                     modifier = Modifier.fillMaxSize(),
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -166,10 +165,10 @@ fun CasesScreen(
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding =
-                        PaddingValues( // Adjust padding as needed now that topBar is gone
+                        PaddingValues( 
                             start = 16.dp,
                             end = 16.dp,
-                            top = 8.dp, // Adjusted top padding
+                            top = 8.dp, 
                             bottom = 16.dp,
                         ),
                 ) {
@@ -187,7 +186,7 @@ fun CasesScreen(
                                 showDeleteConfirmDialog = true
                             },
                             onArchive = {
-                                caseViewModel.archiveCaseWithRepository(case)
+                                caseViewModel.archiveCase(case)
                                 longPressedCase = null
                             },
                             onCancel = {
@@ -197,8 +196,8 @@ fun CasesScreen(
                             onClick = {
                                 Log.d("CasesScreen", "onClick triggered for case: ${case.name}. longPressedCase is: ${longPressedCase?.name ?: "null"}")
                                 if (longPressedCase == null) {
-                                    Log.d("CasesScreen", "Calling caseViewModel.selectCase for: ${case.name}")
-                                    caseViewModel.selectCase(case)
+                                    Log.d("CasesScreen", "Calling caseViewModel.setCurrentCase for: ${case.name}")
+                                    caseViewModel.setCurrentCase(case)
                                 } else {
                                     Log.d("CasesScreen", "onClick: longPressedCase was not null (${longPressedCase?.name}), setting it to null instead of selecting.")
                                     longPressedCase = null
@@ -226,7 +225,7 @@ fun CasesScreen(
                 AzButton(
                     onClick = {
                         Log.d("CasesScreen", "Delete dialog confirmed, clearing longPressedCase.")
-                        longPressedCase?.let { caseViewModel.deleteCaseWithRepository(it) }
+                        longPressedCase?.let { caseViewModel.deleteCase(it) }
                         showDeleteConfirmDialog = false
                         longPressedCase = null
                     },

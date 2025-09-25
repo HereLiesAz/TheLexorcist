@@ -78,8 +78,8 @@ fun MainScreen(
     onSignOutClick: () -> Unit,
 ) {
     val signInState by authViewModel.signInState.collectAsState()
-    val selectedCase by caseViewModel.selectedCase.collectAsState()
-    val caseSpecificErrorMessage by caseViewModel.errorMessage.collectAsState()
+    val selectedCase by caseViewModel.currentCase.collectAsState()
+    val caseSpecificErrorMessage by caseViewModel.error.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     var showCreateCaseDialog by remember { mutableStateOf(false) }
     val scriptBuilderViewModel: ScriptBuilderViewModel = hiltViewModel()
@@ -228,7 +228,7 @@ fun MainScreen(
                                     composable("evidence_details/{evidenceId}") { backStackEntry ->
                                         val evidenceIdString = backStackEntry.arguments?.getString("evidenceId")
                                         val evidenceId = remember(evidenceIdString) { evidenceIdString?.toIntOrNull() }
-                                        val evidence = caseViewModel.selectedCaseEvidenceList.collectAsState().value.find { it.id == evidenceId }
+                                        val evidence = caseViewModel.selectedCaseEvidenceList.collectAsState().value.find { it.id == evidenceId?.toString() }
 
                                         if (evidence != null) {
                                             EvidenceDetailsScreen(
@@ -244,7 +244,7 @@ fun MainScreen(
                                     composable("transcription/{evidenceId}") { backStackEntry ->
                                         val evidenceIdString = backStackEntry.arguments?.getString("evidenceId")
                                         val evidenceId = remember(evidenceIdString) { evidenceIdString?.toIntOrNull() }
-                                        val evidence = caseViewModel.selectedCaseEvidenceList.collectAsState().value.find { it.id == evidenceId }
+                                        val evidence = caseViewModel.selectedCaseEvidenceList.collectAsState().value.find { it.id == evidenceId?.toString() }
 
                                         if (evidence != null) {
                                             com.hereliesaz.lexorcist.ui.TranscriptionScreen(
@@ -264,7 +264,7 @@ fun MainScreen(
                                             com.hereliesaz.lexorcist.ui.VideoEvidenceScreen(
                                                 navController = navController,
                                                 caseViewModel = caseViewModel,
-                                                evidenceId = evidenceId
+                                                evidenceId = evidenceId.toString()
                                             )
                                         } else {
                                             Text("Error: Invalid evidence ID.")

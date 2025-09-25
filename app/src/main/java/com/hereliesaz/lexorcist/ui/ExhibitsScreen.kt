@@ -88,22 +88,22 @@ fun ExhibitsScreen(
                     )
                 }
             }
-            if (selectedAllegation != null) {
+            selectedAllegation?.let { allegation ->
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("Elements for ${selectedAllegation!!.text}", style = MaterialTheme.typography.titleMedium)
-                    selectedAllegation!!.elements.forEach { element ->
+                    Text("Elements for ${allegation.text}", style = MaterialTheme.typography.titleMedium)
+                    allegation.elements.forEach { element ->
                         AllegationElementItem(
                             element = element,
                             onAssignEvidence = {
-                                if (selectedEvidence.isNotEmpty()) {
-                                    caseViewModel.assignEvidenceToElement(selectedAllegation!!.id.toString(), element.name, selectedEvidence.map { it.id })
+                                selectedEvidence?.let {
+                                    caseViewModel.assignEvidenceToElement(it, allegation.id.toString(), element.name)
                                 }
                             }
                         )
                     }
                     CaseStrengthMeter(
                         evidenceList = evidenceList,
-                        allegation = selectedAllegation!!
+                        allegation = allegation
                     )
                 }
             }
@@ -111,10 +111,10 @@ fun ExhibitsScreen(
                 items(evidenceList) { evidence ->
                     EvidenceItem(
                         evidence = evidence,
-                        isSelected = selectedEvidence.any { it.id == evidence.id },
+                        isSelected = selectedEvidence?.id == evidence.id,
                         allegationText = allegations.find { it.id.toString() == evidence.allegationId }?.text,
                         allegationElementName = evidence.allegationElementName,
-                        exhibitNames = exhibits.filter { it.evidenceIds.contains(evidence.id) }.joinToString { it.name },
+                        exhibitNames = exhibits.find { it.id == evidence.id }?.content ?: "",
                         onClick = { caseViewModel.toggleEvidenceSelection(evidence.id) },
                         onEditClick = {
                             evidenceToEdit = evidence
@@ -175,7 +175,7 @@ fun CaseStrengthMeter(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(element.name, modifier = Modifier.weight(1f))
                 Row(modifier = Modifier.weight(1f)) {
-                    (0 until evidenceCount).forEach {
+                    (0 until evidenceCount).forEach { _ ->
                         Box(
                             modifier = Modifier
                                 .height(20.dp)

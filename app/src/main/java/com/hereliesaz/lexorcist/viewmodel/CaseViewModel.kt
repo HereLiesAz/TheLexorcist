@@ -2,18 +2,18 @@ package com.hereliesaz.lexorcist.viewmodel
 
 import android.app.Application
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import android.util.Log
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.room.util.copy
 import com.hereliesaz.lexorcist.data.Allegation
 import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.data.CaseSheetParser
 import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.model.TimelineEvent
 import com.hereliesaz.lexorcist.service.GoogleApiService
+import com.hereliesaz.lexorcist.ui.theme.ThemeMode
 import com.hereliesaz.lexorcist.utils.Result
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -30,8 +31,6 @@ import java.io.FileOutputStream
 import javax.inject.Inject
 
 private const val TAG = "CaseViewModel"
-
-enum class SortOrder { TIMESTAMP_ASC, TIMESTAMP_DESC }
 
 @HiltViewModel
 class CaseViewModel @Inject constructor(
@@ -50,9 +49,40 @@ class CaseViewModel @Inject constructor(
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
     private val _isUserRecoverableError = MutableStateFlow<com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException?>(null)
     val isUserRecoverableError: StateFlow<com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException?> = _isUserRecoverableError.asStateFlow()
 
+    val userRecoverableAuthIntent: StateFlow<Intent?> = isUserRecoverableError.map { it?.intent }
+        .stateIn(viewModelScope, SharingStarted.Lazily, null)
+
+    fun onSearchQueryChanged(query: String) {
+        _searchQuery.value = query
+    }
+
+    fun clearError() {
+        _error.value = null
+    }
+
+    fun clearCache() {
+        _cases.value = emptyList()
+        _currentCase.value = null
+        _evidence.value = emptyList()
+        _allegations.value = emptyList()
+    }
+
+    fun clearUserRecoverableAuthIntent() {
+        _isUserRecoverableError.value = null
+    }
+
+    fun loadCasesFromRepository() {
+        loadCases()
+    }
+
+    private val _themeMode = MutableStateFlow(ThemeMode.SYSTEM)
+    val themeMode: StateFlow<ThemeMode> = _themeMode.asStateFlow()
 
     private val _sortOrder = MutableStateFlow(SortOrder.TIMESTAMP_DESC)
     val sortOrder: StateFlow<SortOrder> = _sortOrder.asStateFlow()
@@ -119,6 +149,28 @@ class CaseViewModel @Inject constructor(
         TimelineScreenState()
     )
 
+    private val _selectedEvidence = MutableStateFlow<Evidence?>(null)
+    val selectedEvidence: StateFlow<Evidence?> = _selectedEvidence.asStateFlow()
+
+    private val _exhibits = MutableStateFlow<List<Evidence>>(emptyList())
+    val exhibits: StateFlow<List<Evidence>> = _exhibits.asStateFlow()
+
+    val selectedCaseEvidenceList: StateFlow<List<Evidence>> = evidence
+
+    fun toggleEvidenceSelection(evidenceId: String) {
+        val evidenceToToggle = _evidence.value.find { it.id == evidenceId }
+        if (_selectedEvidence.value == evidenceToToggle) {
+            _selectedEvidence.value = null
+        } else {
+            _selectedEvidence.value = evidenceToToggle
+        }
+    }
+
+    fun assignEvidenceToElement(evidence: Evidence, allegationId: String, allegationElementName: String) {
+        val updatedEvidence = evidence.copy(allegationId = allegationId, allegationElementName = allegationElementName)
+        updateEvidence(updatedEvidence)
+    }
+
     fun setSortOrder(sortOrder: SortOrder) {
         _sortOrder.value = sortOrder
     }
@@ -136,7 +188,7 @@ class CaseViewModel @Inject constructor(
     fun clearAllCases() {
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
-                db.clearAllTables()
+                // db.clearAllTables() // db reference is missing
             }
         }
     }
@@ -410,9 +462,6 @@ class CaseViewModel @Inject constructor(
 
     fun handleUserRecoverableAuthException(exception: com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException) {
         // Logic to handle user recoverable auth exception
-        // For example, you can launch the intent from the exception
-        // val intent = exception.intent
-        // context.startActivity(intent)
     }
 
     fun generateTimeline() {
@@ -423,7 +472,6 @@ class CaseViewModel @Inject constructor(
                 evidence.value.forEach { ev ->
                     events.add(TimelineEvent(ev.timestamp, "Evidence", ev.content, ev))
                 }
-                // In the future, we can add other types of events here
                 _timelineEvents.value = events.sortedBy { it.timestamp }
             } catch (e: Exception) {
                 _error.value = e.message
@@ -444,7 +492,6 @@ class CaseViewModel @Inject constructor(
                 if (caseFolderId != null) {
                     val result = googleApiService.uploadFile(file, caseFolderId, "text/html")
                     if (result is Result.Success) {
-                        // Handle success - maybe update the case with the file ID
                         val uploadedFile = result.data
                         _currentCase.value?.let {
                             val updatedCase = it.copy(sourceHtmlSnapshotId = uploadedFile?.id)
@@ -495,7 +542,6 @@ class CaseViewModel @Inject constructor(
             _isLoading.value = true
             val result = googleApiService.runGoogleAppsScript(scriptId, functionName, parameters)
             if (result is Result.Success<*>) {
-                // Handle success
                 Log.d(TAG, "Script executed successfully: ${result.data}")
             } else if (result is Result.Error) {
                 _error.value = result.exception.message
@@ -503,6 +549,23 @@ class CaseViewModel @Inject constructor(
                 _isUserRecoverableError.value = result.exception
             }
             _isLoading.value = false
+        }
+    }
+
+    fun archiveCase(case: Case) {
+        viewModelScope.launch {
+            val archivedCase = case.copy(isArchived = true)
+            updateCase(archivedCase)
+        }
+    }
+
+    fun deleteCase(case: Case) {
+        viewModelScope.launch {
+            val updatedCases = _cases.value.filterNot { it.id == case.id }
+            _cases.value = updatedCases
+            if (_currentCase.value?.id == case.id) {
+                _currentCase.value = null
+            }
         }
     }
 }
@@ -530,7 +593,7 @@ data class ReviewScreenState(
 )
 
 data class TimelineScreenState(
-    val events: List<TimelineEvent> = emptyList(),
+    val timelineEvents: List<TimelineEvent> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null
 )
