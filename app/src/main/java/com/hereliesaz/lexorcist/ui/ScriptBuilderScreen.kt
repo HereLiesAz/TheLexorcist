@@ -14,12 +14,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyColumnState
-import sh.calvin.reorderable.reorderable // Added import
+import sh.calvin.reorderable.ReorderableLazyColumn // Added import
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -53,7 +52,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel // Updated import
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.common.state.SaveState
@@ -119,8 +118,8 @@ fun ScriptBuilderScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 AzButton(
-                    onClick = { viewModel.insertText("some snippet") }, 
-                    text = "Snippets" // Corrected AzButton usage
+                    onClick = { viewModel.insertText("some snippet") },
+                    text = "Snippets"
                 )
                 AzButton(
                     onClick = { viewModel.openScriptSelectionDialog() },
@@ -210,12 +209,16 @@ fun ScriptBuilderScreen(
                         val reorderableState = rememberReorderableLazyColumnState(onMove = { from, to ->
                             viewModel.reorderActiveScripts(from.index, to.index)
                         })
-                        LazyColumn(
-                            state = reorderableState.listState,
-                            modifier = Modifier.fillMaxSize().padding(16.dp).reorderable(reorderableState)
+                        ReorderableLazyColumn( // Changed from LazyColumn
+                            state = reorderableState, // Pass the whole state
+                            modifier = Modifier.fillMaxSize().padding(16.dp) // Removed .reorderable()
                         ) {
                             items(activeScriptObjects, key = { it.id }) { script ->
-                                ReorderableItem(reorderableState, key = script.id) {
+                                ReorderableItem(
+                                    reorderableState = reorderableState, // Pass the main state
+                                    key = script.id,
+                                    lazyListState = reorderableState.lazyListState // Added based on error
+                                ) {
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
@@ -273,7 +276,7 @@ fun ScriptItem(script: Script, onClick: () -> Unit) {
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(text = script.name, style = MaterialTheme.typography.titleMedium)
-            Text(text = "by ${(script.authorName ?: "").ifBlank { script.authorEmail ?: "Unknown Author" }}", style = MaterialTheme.typography.bodySmall) // Updated to use authorName, with fallback to authorEmail
+            Text(text = "by ${(script.authorName ?: "").ifBlank { script.authorEmail ?: "Unknown Author" }}", style = MaterialTheme.typography.bodySmall)
             Text(text = script.description, style = MaterialTheme.typography.bodyMedium, maxLines = 2)
         }
     }
