@@ -85,6 +85,7 @@ litert = "2.0.2"
 litertApi = "1.4.0"
 leanback = "1.2.0"
 foundationLayout = "1.9.2"
+roomKtx = "2.8.1"
 
 [libraries]
 litert = { group = "com.google.ai.edge.litert", name = "litert", version.ref = "litert" }
@@ -200,6 +201,7 @@ vosk-android = { module = "com.alphacephei:vosk-android", version.ref = "voskAnd
 litert-api = { group = "com.google.ai.edge.litert", name = "litert-api", version.ref = "litertApi" }
 androidx-leanback = { group = "androidx.leanback", name = "leanback", version.ref = "leanback" }
 androidx-compose-foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "foundationLayout" }
+androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "roomKtx" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "androidApplication" }

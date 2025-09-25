@@ -23,6 +23,7 @@ import com.google.api.services.sheets.v4.model.ValueRange
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.hereliesaz.lexorcist.auth.CredentialHolder
+import com.hereliesaz.lexorcist.data.Allegation
 import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.model.Script
 import com.hereliesaz.lexorcist.model.Template
@@ -859,7 +860,7 @@ class GoogleApiService @Inject constructor(
         withContext(Dispatchers.IO) {
             val sheets = getSheetsService() ?: return@withContext emptyList()
             try {
-                val range = "Allegations!A:C" // Assuming allegations are in a sheet named "Allegations"
+                val range = "Allegations!A:D" // Assuming allegations are in a sheet named "Allegations"
                 val response =
                     sheets
                         .spreadsheets()
@@ -872,12 +873,11 @@ class GoogleApiService @Inject constructor(
                 } else {
                     values.mapNotNull { row ->
                         try {
-                            com.hereliesaz.lexorcist.data.Allegation(
-                                id = row[0].toString(),
+                            Allegation(
+                                id = row[0].toString().toInt(),
+                                spreadsheetId = row[1].toString(),
                                 text = row[2].toString(),
-                                description = "",
-                                elements = emptyList(),
-                                evidenceSuggestions = emptyList()
+                                allegationElementName = row[3].toString()
                             )
                         } catch (e: Exception) {
                             null // Skip row if parsing fails
@@ -984,6 +984,7 @@ class GoogleApiService @Inject constructor(
     suspend fun addAllegationToCase(
         spreadsheetId: String,
         allegationText: String,
+        allegationElementName: String
     ): Boolean =
         withContext(Dispatchers.IO) {
             val sheets = getSheetsService() ?: return@withContext false
@@ -995,6 +996,7 @@ class GoogleApiService @Inject constructor(
                             (System.currentTimeMillis() / 1000).toInt(),
                             spreadsheetId,
                             allegationText,
+                            allegationElementName
                         ),
                     )
                 val body = ValueRange().setValues(values)

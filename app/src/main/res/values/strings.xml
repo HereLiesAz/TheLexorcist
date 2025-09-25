@@ -342,4 +342,5 @@
     <string name="exhibits_slash">\\Exhibits\\</string>
     <string name="create_exhibit_slash">\\Create Exhibit\\</string>
     <string name="add_to_exhibit">\\Add to Exhibit\\</string>
+    <string name="exhibits">Exhibits</string>
 </resources>
