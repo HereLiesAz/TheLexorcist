@@ -136,8 +136,7 @@ fun AllegationsScreen(
                     onCycle = {
                         val nextIndex = (sortOption.ordinal + 1) % AllegationSortType.entries.size
                         viewModel.onSortTypeChanged(AllegationSortType.entries[nextIndex])
-                    },
-                    modifier = Modifier.weight(1f)
+                    }
                 )
                 val requestText = stringResource(id = R.string.request)
                 AzButton(

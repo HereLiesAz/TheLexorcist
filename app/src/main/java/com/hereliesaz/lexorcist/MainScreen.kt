@@ -184,6 +184,9 @@ fun MainScreen(
                                             )
                                         }
                                     }
+                                    composable("exhibits") {
+                                        com.hereliesaz.lexorcist.ui.ExhibitsScreen()
+                                    }
                                     composable("cases") { CasesScreen(caseViewModel = caseViewModel, navController = navController, mainViewModel = mainViewModel) }
                                     composable("evidence") {
                                         EvidenceScreen(
@@ -198,7 +201,7 @@ fun MainScreen(
                                     // Removed "share_addon" route
                                     // Removed "share_addon_destination" route
                                     composable("script_builder") {
-                                        ScriptBuilderScreen(viewModel = hiltViewModel<ScriptBuilderViewModel>(), navController = navController)
+                                        ScriptBuilderScreen(navController = navController, caseViewModel = caseViewModel)
                                     }
                                     composable("case_allegations_route") {
                                         AllegationsScreen(hiltViewModel<MasterAllegationsViewModel>())
