@@ -21,7 +21,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.ExperimentalComposeApi
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,15 +28,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel // Updated import
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.data.Evidence
-import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import com.hereliesaz.lexorcist.viewmodel.EvidenceDetailsViewModel
 import com.hereliesaz.lexorcist.viewmodel.TimelineSortType
@@ -45,15 +42,18 @@ import com.pushpal.jetlime.ItemsList
 import com.pushpal.jetlime.JetLimeColumn
 import com.pushpal.jetlime.JetLimeDefaults
 import com.pushpal.jetlime.JetLimeEventDefaults
-import com.pushpal.jetlime.JetLimeExtendedEvent // Using JetLimeExtendedEvent
+import com.pushpal.jetlime.JetLimeExtendedEvent
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import com.hereliesaz.lexorcist.data.Exhibit
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.RadioButton
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class,
-    ExperimentalComposeApi::class
-)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TimelineScreen(
     caseViewModel: CaseViewModel,
@@ -63,6 +63,8 @@ fun TimelineScreen(
     val evidenceList by caseViewModel.selectedCaseEvidenceList.collectAsState()
     var showEvidenceDetailsDialog by remember { mutableStateOf<Evidence?>(null) }
     val timelineSortType by caseViewModel.timelineSortType.collectAsState()
+    var showAssignExhibitDialog by remember { mutableStateOf<Evidence?>(null) }
+    val exhibits by caseViewModel.exhibits.collectAsState()
 
     Scaffold(
         topBar = {
@@ -91,9 +93,9 @@ fun TimelineScreen(
                 JetLimeColumn(
                     modifier = Modifier.padding(16.dp),
                     itemsList = ItemsList(evidenceList),
-                    key = { _: Int, item: Evidence -> item.id },
+                    key = { _, item -> item.id },
                     style = JetLimeDefaults.columnStyle(),
-                ) { index, item, position ->
+                ) { _, item, position ->
                     val sdf = remember { SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()) }
                     val formattedDate = remember(item.timestamp) { sdf.format(Date(item.timestamp)) }
 
@@ -181,9 +183,6 @@ fun TimelineScreen(
         )
     }
 
-    var showAssignExhibitDialog by remember { mutableStateOf<Evidence?>(null) }
-    val exhibits by caseViewModel.exhibits.collectAsState()
-
     if (showAssignExhibitDialog != null) {
         AssignExhibitDialog(
             evidence = showAssignExhibitDialog!!,
@@ -217,6 +216,7 @@ fun AssignExhibitDialog(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 4.dp)
+                            .clickable { selectedExhibit = exhibit }
                     ) {
                         RadioButton(
                             selected = selectedExhibit?.id == exhibit.id,
@@ -277,4 +277,28 @@ fun TimelineSortDropdown(
             }
         }
     }
+}
+
+@Composable
+fun EvidenceDetailsDialog(
+    evidence: Evidence,
+    onDismiss: () -> Unit,
+    onRemove: () -> Unit,
+    onNavigateToEvidenceDetails: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(evidence.sourceDocument) },
+        text = { Text(evidence.content) },
+        confirmButton = {
+            Button(onClick = onNavigateToEvidenceDetails) {
+                Text("View Details")
+            }
+        },
+        dismissButton = {
+            Button(onClick = onRemove) {
+                Text("Remove")
+            }
+        }
+    )
 }
