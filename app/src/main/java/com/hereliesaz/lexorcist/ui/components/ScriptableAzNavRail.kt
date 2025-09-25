@@ -37,6 +37,7 @@ fun ScriptableAzNavRail(
         }
 
         azRailItem(id = "extras", text = "Extras", onClick = { navController.navigate("extras") })
+        azRailItem(id = "exhibits", text = "Exhibits", onClick = { navController.navigate("exhibits") })
         azRailItem(id = "settings", text = "Settings", onClick = { navController.navigate("settings") })
     }
 }

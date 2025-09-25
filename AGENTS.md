@@ -50,7 +50,9 @@ The file google-services.template.json located at the root of the /app/ folder s
 19. The Review screen must provide a functioning button to initiate an automatic evidence cleanup. This should be as automatic as possible, but must be possible to do manually as well. For example, if someone takes a series of screenshots to capture the entirety of a conversation, you wouldn't submit each screenshot as a separate piece of evidence. These need to be combined as a single piece of evidence. Another issue for auto cleaning is duplicate evidence files and repeated text.
 20. Once cleaned up, Evidence must then be collected into exhibits. These are thematic groupings to prove at least one of the required qualifications of an allegation. This does mean we must maintain a database of how to legally support each specific allegation.
 21. The Review screen is also where the user generates documents and files. The "Paperwork" button generates all the documents needed for the Case's exhibits using the templates the user loaded or created on the Templates screen. The "Finalize" button is a .zip generator that brings up a dialog for the user to choose what all in the Case folder should be included in the .zip file. At the bottom of the dialog, the user can choose to generate into the .zip or the .lex format (which is really just a .zip file with the extension changed to .lex, but is the file type that The Lexorcist immediately recognizes as a Case file/archive/backup to be imported on the Cases screen).
-22. This app must implement 
+22. On the script builder screen, there are three tabs. One is for writing or editing a script. One is a description of the script as it currently is, which is programmatically generated AND the user can edit to add to the description. And the last tab is a list of all the scripts that will be applied on the next screen load.
+23. On every screen load, the app will run all active scripts on all evidence, but only if the evidence or the script has changed since the last run.
+24. 
 
 
 ---

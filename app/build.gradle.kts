@@ -43,7 +43,7 @@ android {
         minSdk = 26
         targetSdk = 36
 
-        versionCode = 4
+        versionCode = 5
         versionName = "0.9.2"
 
         testInstrumentationRunner = "com.hereliesaz.lexorcist.HiltTestRunner"
@@ -270,6 +270,7 @@ dependencies {
     implementation(libs.grpc.context)
 
     implementation(libs.aznavrail)
+    implementation("sh.calvin.reorderable:reorderable:3.0.0")
 }
 
 kotlin {

@@ -3,6 +3,7 @@ package com.hereliesaz.lexorcist.service
 import android.content.Context
 import android.net.Uri
 import android.util.Log
+import androidx.core.net.toUri
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.Data
@@ -32,7 +33,7 @@ class VideoProcessingWorker @AssistedInject constructor(
             return Result.failure(outputData)
         }
 
-        val videoUri = Uri.parse(videoUriString)
+        val videoUri = videoUriString.toUri()
         var finalEvidenceProcessed: com.hereliesaz.lexorcist.data.Evidence? = null
 
         try {

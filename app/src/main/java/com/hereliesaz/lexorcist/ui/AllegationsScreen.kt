@@ -142,7 +142,6 @@ fun AllegationsScreen(
                 AzButton(
                     onClick = { showRequestDialog = true },
                     text = requestText,
-                    modifier = Modifier.padding(start = 8.dp)
                 )
             }
             Spacer(modifier = Modifier.height(16.dp))

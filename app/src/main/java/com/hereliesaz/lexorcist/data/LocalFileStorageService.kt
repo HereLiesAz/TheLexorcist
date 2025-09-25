@@ -2,6 +2,7 @@ package com.hereliesaz.lexorcist.data
 
 import android.content.Context
 import android.net.Uri
+import androidx.core.net.toUri
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.hereliesaz.lexorcist.auth.CredentialHolder
@@ -37,7 +38,7 @@ class LocalFileStorageService @Inject constructor(
     private val storageDir: File by lazy {
         val customLocation = settingsManager.getStorageLocation()
         val dir = if (customLocation != null) {
-            File(Uri.parse(customLocation).path!!)
+            File(customLocation.toUri().path!!)
         } else {
             context.getExternalFilesDir(null) ?: context.filesDir
         }
@@ -147,8 +148,8 @@ class LocalFileStorageService @Inject constructor(
 
     suspend fun moveFilesToNewLocation(oldLocation: String, newLocation: String) {
         withContext(Dispatchers.IO) {
-            val oldDir = File(Uri.parse(oldLocation).path!!)
-            val newDir = File(Uri.parse(newLocation).path!!)
+            val oldDir = File(oldLocation.toUri().path!!)
+            val newDir = File(newLocation.toUri().path!!)
             if (oldDir.exists() && oldDir.isDirectory) {
                 oldDir.copyRecursively(newDir, overwrite = true)
                 oldDir.deleteRecursively()
