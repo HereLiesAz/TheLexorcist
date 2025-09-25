@@ -109,7 +109,7 @@ fun ScriptBuilderScreen(
             val tabs = listOf(
                 "Editor",
                 "Description",
-                "Active Scripts"
+                "Scripts"
             )
             var showLoadDialog by remember { mutableStateOf(false) }
             var showSnippetsDialog by remember { mutableStateOf(false) }
