@@ -12,20 +12,20 @@ import javax.inject.Singleton
 class ActiveScriptRepository @Inject constructor(@ApplicationContext private val context: Context) {
 
     private val prefs = context.getSharedPreferences("active_scripts", Context.MODE_PRIVATE)
-    private val _activeScripts = MutableStateFlow<Set<String>>(emptySet())
-    val activeScripts = _activeScripts.asStateFlow()
+    private val _activeScriptIds = MutableStateFlow<List<String>>(emptyList())
+    val activeScriptIds = _activeScriptIds.asStateFlow()
 
     init {
-        _activeScripts.value = prefs.getStringSet("active_scripts", emptySet()) ?: emptySet()
+        _activeScriptIds.value = getActiveScriptIdsFromPrefs()
     }
 
-    fun getActiveScriptIds(): List<String> {
+    private fun getActiveScriptIdsFromPrefs(): List<String> {
         val json = prefs.getString("active_scripts_order", "[]")
         return com.google.gson.Gson().fromJson(json, Array<String>::class.java).toList()
     }
 
     fun toggleActiveScript(scriptId: String) {
-        val currentIds = getActiveScriptIds().toMutableList()
+        val currentIds = _activeScriptIds.value.toMutableList()
         if (currentIds.contains(scriptId)) {
             currentIds.remove(scriptId)
         } else {
@@ -35,7 +35,7 @@ class ActiveScriptRepository @Inject constructor(@ApplicationContext private val
     }
 
     fun reorderActiveScripts(from: Int, to: Int) {
-        val currentIds = getActiveScriptIds().toMutableList()
+        val currentIds = _activeScriptIds.value.toMutableList()
         val item = currentIds.removeAt(from)
         currentIds.add(to, item)
         saveActiveScriptIds(currentIds)
@@ -45,8 +45,7 @@ class ActiveScriptRepository @Inject constructor(@ApplicationContext private val
         val json = com.google.gson.Gson().toJson(ids)
         prefs.edit {
             putString("active_scripts_order", json)
-            putStringSet("active_scripts", ids.toSet())
         }
-        _activeScripts.value = ids.toSet()
+        _activeScriptIds.value = ids
     }
 }

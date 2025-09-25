@@ -15,7 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
+import com.hereliesaz.aznavrail.AzButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Card
@@ -361,7 +361,7 @@ fun TemplateItem(
                     textAlign = TextAlign.End
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                LexorcistOutlinedButton(onClick = onShare, text = "Share")
+                AzButton(onClick = onShare, text = "Share")
             }
         }
     }

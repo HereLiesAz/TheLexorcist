@@ -23,9 +23,11 @@ class ScriptBuilderViewModel
 constructor(
     private val scriptRepository: ScriptRepository,
     private val activeScriptRepository: ActiveScriptRepository,
-    private val scriptStateRepository: com.hereliesaz.lexorcist.data.ScriptStateRepository,
     private val application: Application,
 ) : ViewModel() {
+    private val _scriptId = MutableStateFlow<String?>(null)
+    val scriptId: StateFlow<String?> = _scriptId.asStateFlow()
+
     private val _scriptTitle = MutableStateFlow("")
     val scriptTitle: StateFlow<String> = _scriptTitle.asStateFlow()
 
@@ -38,7 +40,7 @@ constructor(
     private val _allScripts = MutableStateFlow<List<Script>>(emptyList())
     val allScripts: StateFlow<List<Script>> = _allScripts.asStateFlow()
 
-    val activeScripts: StateFlow<Set<String>> = activeScriptRepository.activeScripts
+    val activeScripts: StateFlow<List<String>> = activeScriptRepository.activeScriptIds
 
     private val _saveState = MutableStateFlow<SaveState>(SaveState.Idle)
     val saveState: StateFlow<SaveState> = _saveState.asStateFlow()
@@ -97,12 +99,14 @@ constructor(
     }
 
     fun loadScript(script: Script) {
+        _scriptId.value = script.id
         _scriptTitle.value = script.name
         _scriptDescription.value = script.description
         _scriptText.value = script.content
     }
 
     fun newScript() {
+        _scriptId.value = null
         _scriptTitle.value = ""
         _scriptDescription.value = ""
         _scriptText.value = ""
@@ -113,10 +117,11 @@ constructor(
             _saveState.value = SaveState.Saving
             try {
                 val currentScripts = _allScripts.value.toMutableList()
-                val existingScriptIndex = currentScripts.indexOfFirst { it.name == _scriptTitle.value }
+                val id = _scriptId.value ?: UUID.randomUUID().toString()
+                val existingScriptIndex = currentScripts.indexOfFirst { it.id == id }
 
                 val newScript = Script(
-                    id = if (existingScriptIndex != -1) currentScripts[existingScriptIndex].id else UUID.randomUUID().toString(),
+                    id = id,
                     name = _scriptTitle.value,
                     description = _scriptDescription.value,
                     content = _scriptText.value
@@ -129,6 +134,7 @@ constructor(
                 }
                 scriptRepository.saveScripts(currentScripts)
                 _allScripts.value = currentScripts
+                _scriptId.value = id // Ensure new scripts have their ID set
                 _saveState.value = SaveState.Success
             } catch (e: Exception) {
                 _saveState.value = SaveState.Error("Failed to save script")
@@ -140,16 +146,8 @@ constructor(
         activeScriptRepository.toggleActiveScript(scriptId)
     }
 
-    fun runScripts(allEvidence: List<com.hereliesaz.lexorcist.data.Evidence>, caseViewModel: CaseViewModel) {
-        viewModelScope.launch {
-            allEvidence.forEach { evidence ->
-                caseViewModel.rerunScriptOnEvidence(evidence)
-            }
-        }
-    }
 
     fun reorderActiveScripts(from: Int, to: Int) {
         activeScriptRepository.reorderActiveScripts(from, to)
     }
 }
-// Removed local SaveState definition from here
