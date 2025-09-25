@@ -46,6 +46,7 @@ class VideoProcessingService @Inject constructor(
         caseId: Int,
         caseName: String,
         spreadsheetId: String,
+        activeScriptIds: List<String>, // Added
         onProgress: (percent: Float, message: String) -> Unit
     ): Evidence? { 
         onProgress(0.0f, "Starting video processing...")
@@ -100,6 +101,7 @@ class VideoProcessingService @Inject constructor(
                     context = context,
                     caseId = caseId.toLong(),
                     spreadsheetId = spreadsheetId,
+                    activeScriptIds = activeScriptIds, // Added
                 ) { state ->
                     // We can't easily update the progress here, as this is a callback
                 }
@@ -133,11 +135,12 @@ class VideoProcessingService @Inject constructor(
                 sourceDocument = videoUri.toString(),
                 documentDate = documentTimestamp, // Use parsed creation time or fallback
                 allegationId = null,
+                allegationElementName = null, // Added
                 category = "Video Evidence",
                 tags = listOfNotNull("video", if (audioTranscript?.contains("failed", ignoreCase = true) != true) "transcription" else null, if (videoOcrText.isNotEmpty()) "ocr" else null),
                 commentary = null,
                 parentVideoId = null,
-                entities = com.hereliesaz.lexorcist.DataParser.tagData(combinedContent),
+                entities = emptyMap<String, List<String>>(), // TODO: Implement entity parsing for combined video content
                 audioTranscript = audioTranscript,
                 videoOcrText = videoOcrText.ifEmpty { null },
                 duration = metadata?.duration,

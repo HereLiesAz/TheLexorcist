@@ -7,7 +7,8 @@ import android.util.Log
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
-import com.hereliesaz.lexorcist.DataParser
+// import com.hereliesaz.lexorcist.DataParser // Removed
+import com.hereliesaz.lexorcist.data.ActiveScriptRepository // Added
 import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.data.EvidenceRepository
 import com.hereliesaz.lexorcist.data.SettingsManager
@@ -32,6 +33,7 @@ class OcrProcessingService
         private val evidenceRepository: EvidenceRepository,
         private val scriptRepository: com.hereliesaz.lexorcist.data.ScriptRepository,
         private val scriptStateRepository: com.hereliesaz.lexorcist.data.ScriptStateRepository,
+        private val activeScriptRepository: ActiveScriptRepository, // Added
         private val scriptRunner: ScriptRunner,
         private val logService: LogService,
         private val storageService: com.hereliesaz.lexorcist.data.StorageService,
@@ -117,10 +119,10 @@ class OcrProcessingService
                 }
             logService.addLog("Frame recognition complete. Found ${ocrText.length} characters.")
 
-            val entities = DataParser.tagData(ocrText)
+            val entities = emptyMap<String, List<String>>() // TODO: Implement entity parsing
             val documentDate =
                 ExifUtils.getExifDate(context, uri)
-                    ?: DataParser.parseDates(ocrText).firstOrNull()
+                    // ?: DataParser.parseDates(ocrText).firstOrNull() // TODO: Implement date parsing
                     ?: System.currentTimeMillis()
 
             val fileHash = com.hereliesaz.lexorcist.utils.HashingUtils.getHash(context, uri)
@@ -137,6 +139,7 @@ class OcrProcessingService
                     sourceDocument = uri.toString(),
                     documentDate = documentDate,
                     allegationId = null,
+                    allegationElementName = null, // Added
                     category = "Video Frame OCR",
                     tags = listOf("ocr", "video_frame"),
                     commentary = null,
@@ -239,11 +242,11 @@ class OcrProcessingService
                         }
 
                     logService.addLog("Text recognition complete. Found ${ocrText.length} characters.")
-                    val entities = DataParser.tagData(ocrText)
+                    val entities = emptyMap<String, List<String>>() // TODO: Implement entity parsing
                     logService.addLog("Parsed ${entities.size} entities.")
                     val documentDate =
                         ExifUtils.getExifDate(context, newUri)
-                            ?: DataParser.parseDates(ocrText).firstOrNull()
+                            // ?: DataParser.parseDates(ocrText).firstOrNull() // TODO: Implement date parsing
                             ?: System.currentTimeMillis()
                     val metadata = ExifUtils.getExifData(context, newUri)
                     val fileSize = ExifUtils.getFileSize(context, newUri)
@@ -265,6 +268,7 @@ class OcrProcessingService
                             sourceDocument = newUri.toString(),
                             documentDate = documentDate,
                             allegationId = null,
+                            allegationElementName = null, // Added
                             category = "Image OCR",
                             tags = listOf("ocr", "image"),
                             commentary = null,
@@ -281,7 +285,7 @@ class OcrProcessingService
                         val activeScripts = allScripts.filter { activeScriptIds.contains(it.id) }
                         val sortedActiveScripts = activeScripts.sortedBy { script -> activeScriptIds.indexOf(script.id) }
 
-                        var evidenceToUpdate = savedEvidence
+                        var evidenceToUpdate = savedEvidence!! // Changed
                         sortedActiveScripts.forEach { script ->
                             val scriptResult = scriptRunner.runScript(script.content, evidenceToUpdate)
                             when (scriptResult) {
@@ -293,7 +297,7 @@ class OcrProcessingService
                                     val newTagsFromScriptImage: List<String> = scriptResult.data.tags
                                     val combinedTagsImage: List<String> = (currentTagsInImage + newTagsFromScriptImage).distinct()
                                     evidenceToUpdate = evidenceToUpdate.copy(tags = combinedTagsImage)
-                                    scriptStateRepository.addScriptState(savedEvidence.id, script.id)
+                                    scriptStateRepository.addScriptState(savedEvidence!!.id, script.id) // Changed
                                     logService.addLog("Script finished. Added tags: ${newTagsFromScriptImage.joinToString(", ")}")
                                 }
                                 is Result.Error -> {

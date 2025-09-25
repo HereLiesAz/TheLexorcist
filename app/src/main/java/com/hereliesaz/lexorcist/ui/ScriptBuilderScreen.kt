@@ -50,7 +50,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel // Updated import
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.common.state.SaveState
@@ -58,9 +58,10 @@ import com.hereliesaz.lexorcist.model.Script
 import com.hereliesaz.aznavrail.AzButton
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import com.hereliesaz.lexorcist.viewmodel.ScriptBuilderViewModel
-import sh.calvin.reorderable.ReorderableItem
-import sh.calvin.reorderable.rememberReorderableLazyColumnState
-import sh.calvin.reorderable.reorderable
+import com.hereliesaz.lexorcist.viewmodel.ExtrasViewModel // Added import
+import org.burnoutcrew.composereorderable.ReorderableItem
+import org.burnoutcrew.composereorderable.rememberReorderableLazyListState
+import org.burnoutcrew.composereorderable.reorderable
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -68,7 +69,8 @@ import java.util.Locale
 fun ScriptBuilderScreen(
     viewModel: ScriptBuilderViewModel = hiltViewModel(),
     navController: NavController,
-    caseViewModel: CaseViewModel
+    caseViewModel: CaseViewModel,
+    extrasViewModel: ExtrasViewModel = hiltViewModel() // Added
 ) {
     val scriptTitle by viewModel.scriptTitle.collectAsState()
     val scriptDescription by viewModel.scriptDescription.collectAsState()
@@ -83,6 +85,8 @@ fun ScriptBuilderScreen(
     var showShareDialog by remember { mutableStateOf(false) }
     var showRequestDialog by remember { mutableStateOf(false) }
 
+    // TODO: Implement RequestDialog and sendEmail functionality
+    /*
     if (showRequestDialog) {
         RequestDialog(
             onDismissRequest = { showRequestDialog = false },
@@ -93,6 +97,7 @@ fun ScriptBuilderScreen(
             }
         )
     }
+    */
 
     val snippetTextIncludesStr = stringResource(R.string.script_snippet_text_includes)
     val snippetTagsIncludesStr = stringResource(R.string.script_snippet_tags_includes)
@@ -235,7 +240,7 @@ fun ScriptBuilderScreen(
                     }
                     2 -> {
                         val activeScriptObjects = activeScripts.mapNotNull { scriptId -> allScripts.find { it.id == scriptId } }
-                        val reorderableState = rememberReorderableLazyColumnState(onMove = { from, to ->
+                        val reorderableState = rememberReorderableLazyListState(onMove = { from, to ->
                             viewModel.reorderActiveScripts(from.index, to.index)
                         })
                         LazyColumn(
@@ -243,7 +248,7 @@ fun ScriptBuilderScreen(
                             modifier = Modifier.fillMaxSize().padding(16.dp).reorderable(reorderableState)
                         ) {
                             items(activeScriptObjects, key = { it.id }) { script ->
-                                ReorderableItem(reorderableState, key = script.id) {
+                                ReorderableItem(reorderableState, key = script.id) { isDragging ->
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
@@ -321,7 +326,7 @@ fun ScriptBuilderScreen(
                 }
             },
             confirmButton = {
-                LexorcistOutlinedButton(
+                OutlinedButton( // Changed from LexorcistOutlinedButton
                     onClick = {
                         if (scriptTitle.isNotBlank() &&
                             scriptText.isNotBlank() &&
@@ -333,21 +338,20 @@ fun ScriptBuilderScreen(
                                 content = scriptText,
                                 type = "Script",
                                 authorName = dialogAuthorName,
-                                authorEmail = dialogAuthorEmail
+                                authorEmail = dialogAuthorEmail,
+                                court = "" // Added court parameter with a default value
                             )
                             showShareDialog = false
                         } else {
                             Toast.makeText(context, "All fields including name and email are required for sharing.", Toast.LENGTH_LONG).show()
                         }
-                    },
-                    content = { Text(stringResource(R.string.share)) }
-                )
+                    }
+                ) { Text(stringResource(R.string.share)) }
             },
             dismissButton = {
-                LexorcistOutlinedButton(
-                    onClick = { showShareDialog = false },
-                    content = { Text(stringResource(R.string.cancel)) }
-                )
+                OutlinedButton( // Changed from LexorcistOutlinedButton
+                    onClick = { showShareDialog = false }
+                ) { Text(stringResource(R.string.cancel)) }
             }
         )
     }
@@ -355,7 +359,7 @@ fun ScriptBuilderScreen(
     val showDialog by viewModel.showScriptSelectionDialog.collectAsState()
     if (showDialog) {
         ScriptSelectionDialog(
-            scripts = caseScripts,
+            scripts = allScripts, // Changed from caseScripts
             onDismiss = { viewModel.closeScriptSelectionDialog() },
             onConfirm = { selectedScripts ->
                 viewModel.onScriptsSelected(selectedScripts)
@@ -408,16 +412,14 @@ fun ScriptSelectionDialog(
             }
         },
         confirmButton = {
-            LexorcistOutlinedButton(
-                onClick = { onConfirm(selectedScripts.toList()) },
-                content = { Text("Import") }
-            )
+            OutlinedButton( // Changed from LexorcistOutlinedButton
+                onClick = { onConfirm(selectedScripts.toList()) }
+            ) { Text("Import") }
         },
         dismissButton = {
-            LexorcistOutlinedButton(
-                onClick = onDismiss,
-                content = { Text("Cancel") }
-            )
+            OutlinedButton( // Changed from LexorcistOutlinedButton
+                onClick = onDismiss
+            ) { Text("Cancel") }
         }
     )
 }
