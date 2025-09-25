@@ -50,10 +50,9 @@ import com.hereliesaz.lexorcist.model.Script
 import com.hereliesaz.aznavrail.AzButton
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import com.hereliesaz.lexorcist.viewmodel.ScriptBuilderViewModel
-// import org.burnoutcrew.reorderable.ReorderableItem
-// import org.burnoutcrew.reorderable.detectReorderAfterLongPress
-// import org.burnoutcrew.reorderable.rememberReorderableLazyListState
-// import org.burnoutcrew.reorderable.reorderable
+// import sh.calvin.reorderable.ReorderableItem
+// import sh.calvin.reorderable.rememberReorderableLazyColumnState
+// import sh.calvin.reorderable.reorderable
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -221,22 +220,16 @@ fun ScriptBuilderScreen(
                         )
                     }
                     2 -> {
-                        val activeScriptObjects = remember(activeScriptIds, allScripts) {
-                            activeScriptIds.mapNotNull { scriptId -> allScripts.find { it.id.toString() == scriptId } }
-                        }
-                        // val reorderableState = rememberReorderableLazyListState(onMove = { from, to ->
+                        val activeScriptObjects = activeScriptIds.mapNotNull { scriptId -> allScripts.find { it.id.toString() == scriptId } }
+                        // val reorderableState = rememberReorderableLazyColumnState(onMove = { from, to ->
                         //     viewModel.reorderActiveScripts(from.index, to.index)
                         // })
                         LazyColumn(
                             // state = reorderableState.listState,
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(16.dp)
-                                // .reorderable(reorderableState)
-                                // .detectReorderAfterLongPress(reorderableState)
+                            modifier = Modifier.fillMaxSize().padding(16.dp)//.reorderable(reorderableState)
                         ) {
                             items(activeScriptObjects, key = { it.id }) { script ->
-                                // ReorderableItem(reorderableState, key = script.id) { isDragging ->
+                                // ReorderableItem(reorderableState, key = script.id) {
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
