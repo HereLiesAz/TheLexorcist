@@ -230,6 +230,27 @@ constructor(
         }
     }
 
+    fun assignEvidenceToElement(allegationId: String, elementName: String, evidenceIds: List<Int>) {
+        viewModelScope.launch {
+            globalLoadingState.pushLoading()
+            try {
+                evidenceIds.forEach { evidenceId ->
+                    val evidence = _selectedCaseEvidenceListInternal.value.find { it.id == evidenceId }
+                    if (evidence != null) {
+                        val updatedEvidence = evidence.copy(
+                            allegationId = allegationId,
+                            allegationElementName = elementName
+                        )
+                        evidenceRepository.updateEvidence(updatedEvidence)
+                    }
+                }
+                clearEvidenceSelection()
+            } finally {
+                globalLoadingState.popLoading()
+            }
+        }
+    }
+
     fun updateExhibit(exhibit: com.hereliesaz.lexorcist.data.Exhibit) {
         viewModelScope.launch {
             selectedCase.value?.let {
@@ -655,7 +676,7 @@ constructor(
         }
     }
 
-    fun assignAllegationToSelectedEvidence(allegationId: Int) {
+    fun assignAllegationToSelectedEvidence(allegationId: String) {
         viewModelScope.launch {
             globalLoadingState.pushLoading()
             try {
@@ -1331,6 +1352,50 @@ constructor(
             } catch (e: Exception) {
                 e.printStackTrace()
             }
+        }
+    }
+
+    fun generateReadinessReport() {
+        viewModelScope.launch {
+            val case = selectedCase.value ?: return@launch
+            val evidence = selectedCaseEvidenceList.value
+            val exhibits = exhibits.value
+            val allegations = allegations.value
+
+            val report = StringBuilder()
+            report.append("Readiness Report for ${case.name}\n\n")
+
+            report.append("Allegations:\n")
+            allegations.forEach { allegation ->
+                report.append("- ${allegation.text}\n")
+                allegation.elements.forEach { element ->
+                    val elementEvidence = evidence.filter { it.allegationId == allegation.id && it.allegationElementName == element.name }
+                    report.append("  - ${element.name} (${elementEvidence.size} evidence)\n")
+                }
+            }
+            report.append("\n")
+
+            report.append("Exhibits:\n")
+            exhibits.forEach { exhibit ->
+                report.append("- ${exhibit.name}\n")
+                exhibit.evidenceIds.forEach { evidenceId ->
+                    val evidenceItem = evidence.find { it.id == evidenceId }
+                    if (evidenceItem != null) {
+                        report.append("  - ${evidenceItem.content}\n")
+                    }
+                }
+            }
+            report.append("\n")
+
+            report.append("Timeline:\n")
+            evidence.sortedBy { it.documentDate }.forEach { evidence ->
+                val date = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(evidence.documentDate)
+                report.append("- $date: ${evidence.content}\n")
+            }
+
+            // In a real app, you would save this report to a file or display it in a dialog.
+            // For now, we'll just log it.
+            println(report.toString())
         }
     }
 }
