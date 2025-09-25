@@ -32,10 +32,14 @@ import android.provider.MediaStore
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map // Ensured import
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import androidx.core.net.toUri
+import com.hereliesaz.lexorcist.data.AllegationElement
+import com.hereliesaz.lexorcist.data.CaseSheetParser
+import com.hereliesaz.lexorcist.data.ScriptRepository
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
@@ -57,7 +61,9 @@ constructor(
     private val logService: com.hereliesaz.lexorcist.service.LogService,
     private val storageService: com.hereliesaz.lexorcist.data.StorageService,
     private val globalLoadingState: com.hereliesaz.lexorcist.service.GlobalLoadingState,
-    private val googleApiService: com.hereliesaz.lexorcist.service.GoogleApiService
+    private val googleApiService: com.hereliesaz.lexorcist.service.GoogleApiService,
+    private val scriptRepository: ScriptRepository,
+    private val caseSheetParser: CaseSheetParser
 ) : ViewModel() {
     private val sharedPref =
         applicationContext.getSharedPreferences("CaseInfoPrefs", Context.MODE_PRIVATE)
@@ -563,7 +569,7 @@ constructor(
 
     fun assignAllegationToEvidence(
         evidenceId: Int,
-        allegationId: Int,
+        allegationId: String,
     ) {
         viewModelScope.launch {
             globalLoadingState.pushLoading()
@@ -645,7 +651,7 @@ constructor(
             try {
                 val activeScriptIds = activeScriptRepository.getActiveScriptIds()
                 val allScripts = scriptRepository.getScripts()
-                val scriptsToRun = allScripts.filter { activeScriptIds.contains(it.id) }
+                val scriptsToRun = allScripts.filter { activeScriptIds.contains(it.id.toString()) }
                 val sortedScriptsToRun = scriptsToRun.sortedBy { script -> activeScriptIds.indexOf(script.id) }
 
                 var updatedEvidence = evidence
@@ -708,7 +714,7 @@ constructor(
                     globalLoadingState.popLoading()
                     return@launch
                 }
-                val entities = com.hereliesaz.lexorcist.DataParser.tagData(text)
+                val entities = emptyMap<String, List<String>>()
                 val newEvidence =
                     com.hereliesaz.lexorcist.data.Evidence(
                         caseId = caseToUse.id.toLong(),
@@ -721,6 +727,7 @@ constructor(
                         sourceDocument = "Manual text entry",
                         documentDate = System.currentTimeMillis(),
                         allegationId = null,
+                        allegationElementName = null,
                         category = "",
                         tags = emptyList(),
                         commentary = null,
@@ -847,11 +854,12 @@ constructor(
                                         sourceDocument = uploadedFileUriString, // Or original file name if preferred
                                         documentDate = System.currentTimeMillis(), // Consider Exif or other means for original date
                                         allegationId = null,
+                                        allegationElementName = null,
                                         category = "Audio Transcription",
                                         tags = listOf("audio", "transcription"),
                                         commentary = null,
                                         parentVideoId = null,
-                                        entities = com.hereliesaz.lexorcist.DataParser.tagData(transcribedText),
+                                        entities = emptyMap(),
                                         fileHash = fileHash
                                     )
                                 val savedEvidence = withContext(Dispatchers.IO) {
@@ -1089,6 +1097,7 @@ constructor(
                             sourceDocument = "Photo Group",
                             documentDate = System.currentTimeMillis(),
                             allegationId = null,
+                            allegationElementName = null,
                             category = "Photo",
                             tags = listOf("photo", "group"),
                             commentary = null,
@@ -1247,6 +1256,7 @@ constructor(
                 sourceDocument = "Merged from image series",
                 documentDate = System.currentTimeMillis(),
                 allegationId = null,
+                allegationElementName = null,
                 category = "Document",
                 tags = listOf("pdf", "merged"),
                 commentary = null,
@@ -1369,7 +1379,7 @@ constructor(
             allegations.forEach { allegation ->
                 report.append("- ${allegation.text}\n")
                 allegation.elements.forEach { element ->
-                    val elementEvidence = evidence.filter { it.allegationId == allegation.id && it.allegationElementName == element.name }
+                    val elementEvidence = evidence.filter { it.allegationId == allegation.id.toString() && it.allegationElementName == element.name }
                     report.append("  - ${element.name} (${elementEvidence.size} evidence)\n")
                 }
             }
@@ -1398,4 +1408,17 @@ constructor(
             println(report.toString())
         }
     }
+
+    fun updateEvidenceInSheet(updatedEvidence: com.hereliesaz.lexorcist.data.Evidence) {
+        viewModelScope.launch {
+            evidenceRepository.updateEvidence(updatedEvidence)
+        }
+    }
+}
+enum class TimelineSortType {
+    DATE_OF_OCCURRENCE,
+    DATE_EVIDENCE_ADDED,
+    BY_ALLEGATION,
+    BY_FILE_TYPE,
+    CUSTOM
 }

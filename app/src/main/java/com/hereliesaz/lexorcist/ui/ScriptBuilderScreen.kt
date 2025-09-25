@@ -59,6 +59,7 @@ import com.hereliesaz.aznavrail.AzButton
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import com.hereliesaz.lexorcist.viewmodel.ScriptBuilderViewModel
 import com.hereliesaz.lexorcist.viewmodel.ExtrasViewModel // Added import
+import org.burnoutcrew.composereorderable.ItemPosition
 import org.burnoutcrew.composereorderable.ReorderableItem
 import org.burnoutcrew.composereorderable.rememberReorderableLazyListState
 import org.burnoutcrew.composereorderable.reorderable
@@ -248,7 +249,7 @@ fun ScriptBuilderScreen(
                             modifier = Modifier.fillMaxSize().padding(16.dp).reorderable(reorderableState)
                         ) {
                             items(activeScriptObjects, key = { it.id }) { script ->
-                                ReorderableItem(reorderableState, key = script.id) { isDragging ->
+                                ReorderableItem(reorderableState, key = script.id) {
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
