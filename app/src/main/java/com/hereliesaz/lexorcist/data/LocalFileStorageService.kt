@@ -121,9 +121,6 @@ class LocalFileStorageService @Inject constructor(
         }
     }
 
-    private fun getIntCellValueSafe(cell: Cell?): Int? {
-        return getNumericCellValueSafe(cell)?.toInt()
-    }
 
     private fun getLongCellValueSafe(cell: Cell?): Long? {
         return getNumericCellValueSafe(cell)?.toLong()
@@ -310,7 +307,7 @@ class LocalFileStorageService @Inject constructor(
             val documentDate = getLongCellValueSafe(documentDateCell) ?: 0L
 
             val allegationIdCell = row.getCell(9) // Corrected index for Evidence AllegationID
-            val allegationId = getIntCellValueSafe(allegationIdCell)
+            val allegationId = allegationIdCell?.stringCellValue
 
             val tagsCell = row.getCell(11) // Corrected index for Evidence Tags
             val tags = (tagsCell?.stringCellValue ?: "").split(",").filter { it.isNotBlank() }
@@ -367,7 +364,7 @@ class LocalFileStorageService @Inject constructor(
             createCell(6).setCellValue(newEvidence.timestamp.toDouble())
             createCell(7).setCellValue(newEvidence.sourceDocument)
             createCell(8).setCellValue(newEvidence.documentDate.toDouble())
-            newEvidence.allegationId?.let { createCell(9).setCellValue(it.toDouble()) }
+            createCell(9).setCellValue(newEvidence.allegationId ?: "")
             createCell(10).setCellValue(newEvidence.category)
             createCell(11).setCellValue(newEvidence.tags.joinToString(","))
             createCell(12).setCellValue(newEvidence.commentary ?: "")
@@ -388,8 +385,7 @@ class LocalFileStorageService @Inject constructor(
         (row.getCell(6) ?: row.createCell(6)).setCellValue(evidence.timestamp.toDouble())
         (row.getCell(7) ?: row.createCell(7)).setCellValue(evidence.sourceDocument)
         (row.getCell(8) ?: row.createCell(8)).setCellValue(evidence.documentDate.toDouble())
-        val allegationCell = row.getCell(9) ?: row.createCell(9)
-        evidence.allegationId?.let { allegationCell.setCellValue(it.toDouble()) } ?: allegationCell.setBlank()
+        (row.getCell(9) ?: row.createCell(9)).setCellValue(evidence.allegationId ?: "")
         (row.getCell(10) ?: row.createCell(10)).setCellValue(evidence.category)
         (row.getCell(11) ?: row.createCell(11)).setCellValue(evidence.tags.joinToString(","))
         (row.getCell(12) ?: row.createCell(12)).setCellValue(evidence.commentary ?: "")

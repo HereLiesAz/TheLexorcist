@@ -55,18 +55,12 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.data.Allegation
-import com.hereliesaz.lexorcist.data.AllegationElement
-import com.hereliesaz.lexorcist.data.AllegationProvider
 import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.data.Exhibit
 import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
 import com.hereliesaz.lexorcist.viewmodel.AllegationsViewModel
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import java.util.Locale
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.width
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.sp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -102,6 +96,8 @@ fun ReviewScreen(
     var exhibitToEdit by remember { mutableStateOf<Exhibit?>(null) }
     var showDeleteExhibitDialog by remember { mutableStateOf(false) }
     var exhibitToDelete by remember { mutableStateOf<Exhibit?>(null) }
+    var showReadinessReportDialog by remember { mutableStateOf(false) }
+    var readinessReport by remember { mutableStateOf("") }
 
     Scaffold(
         topBar = {
@@ -225,30 +221,6 @@ fun ReviewScreen(
                         }
                     }
                     Spacer(modifier = Modifier.height(8.dp))
-                    if (selectedAllegation != null) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("Elements for ${selectedAllegation!!.text}", style = MaterialTheme.typography.titleMedium)
-                            selectedAllegation!!.elements.forEach { element ->
-                                AllegationElementItem(
-                                    element = element,
-                                    onAssignEvidence = {
-                                        if (selectedEvidence.isNotEmpty()) {
-                                            caseViewModel.assignEvidenceToElement(selectedAllegation!!.id, element.name, selectedEvidence.map { it.id })
-                                        }
-                                    }
-                                )
-                            }
-                            Text("Suggested Evidence", style = MaterialTheme.typography.titleMedium)
-                            selectedAllegation!!.evidenceSuggestions.forEach { suggestion ->
-                                Text(suggestion)
-                            }
-                            CaseStrengthMeter(
-                                evidenceList = evidenceList,
-                                allegation = selectedAllegation!!
-                            )
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
                     LazyColumn(modifier = Modifier.weight(1f)) {
                         items(evidenceList) { evidence ->
                             EvidenceItem(
@@ -310,13 +282,23 @@ fun ReviewScreen(
                         modifier = Modifier.padding(start = 8.dp)
                     )
                     LexorcistOutlinedButton(
-                        onClick = { caseViewModel.generateReadinessReport() },
+                        onClick = {
+                            readinessReport = caseViewModel.generateReadinessReport()
+                            showReadinessReportDialog = true
+                        },
                         text = "Readiness Report",
                         modifier = Modifier.padding(start = 8.dp)
                     )
                 }
             }
         }
+    }
+
+    if (showReadinessReportDialog) {
+        ReadinessReportDialog(
+            report = readinessReport,
+            onDismiss = { showReadinessReportDialog = false }
+        )
     }
 
     if (showPackageFilesDialog) {
@@ -399,55 +381,6 @@ fun ReviewScreen(
                 }
             }
         )
-    }
-}
-
-@Composable
-fun CaseStrengthMeter(
-    evidenceList: List<Evidence>,
-    allegation: Allegation
-) {
-    Column {
-        Text("Case Strength", style = MaterialTheme.typography.titleMedium)
-        allegation.elements.forEach { element ->
-            val evidenceCount = evidenceList.count { it.allegationElementName == element.name }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(element.name, modifier = Modifier.weight(1f))
-                Row(modifier = Modifier.weight(1f)) {
-                    (0 until evidenceCount).forEach {
-                        Box(
-                            modifier = Modifier
-                                .height(20.dp)
-                                .width(20.dp)
-                                .background(Color.Green)
-                                .padding(2.dp)
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun AllegationElementItem(
-    element: AllegationElement,
-    onAssignEvidence: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .padding(vertical = 4.dp)
-            .fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        shape = MaterialTheme.shapes.medium
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(element.name, style = MaterialTheme.typography.titleMedium)
-            Text(element.description, style = MaterialTheme.typography.bodyMedium)
-            Button(onClick = onAssignEvidence) {
-                Text("Assign Selected Evidence")
-            }
-        }
     }
 }
 
@@ -866,6 +799,29 @@ fun PackageFilesDialog(
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ReadinessReportDialog(
+    report: String,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Readiness Report") },
+        text = {
+            LazyColumn {
+                item {
+                    Text(report)
+                }
+            }
+        },
+        confirmButton = {
+            Button(onClick = onDismiss) {
+                Text("Close")
+            }
+        }
+    )
+}
+
 @Composable
 fun GenerateDocumentDialog(
     caseViewModel: CaseViewModel,

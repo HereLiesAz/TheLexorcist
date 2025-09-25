@@ -69,7 +69,7 @@ class CaseSheetParser
                         timestamp = (row.getOrNull(6) as? Number)?.toLong() ?: 0L,
                         sourceDocument = row.getOrNull(7)?.toString() ?: "",
                         documentDate = (row.getOrNull(8) as? Number)?.toLong() ?: 0L,
-                        allegationId = (row.getOrNull(9) as? Number)?.toInt(),
+                        allegationId = row.getOrNull(9)?.toString(),
                         category = row.getOrNull(10)?.toString() ?: "",
                         tags = (row.getOrNull(11)?.toString() ?: "").split(",").filter { it.isNotBlank() },
                         commentary = row.getOrNull(12)?.toString(),

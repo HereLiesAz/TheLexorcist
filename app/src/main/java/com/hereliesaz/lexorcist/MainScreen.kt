@@ -189,7 +189,7 @@ fun MainScreen(
                                         }
                                     }
                                     composable("exhibits") {
-                                        com.hereliesaz.lexorcist.ui.ExhibitsScreen()
+                                        ExhibitsScreen()
                                     }
                                     composable("cases") { CasesScreen(caseViewModel = caseViewModel, navController = navController, mainViewModel = mainViewModel) }
                                     composable("evidence") {
@@ -214,7 +214,12 @@ fun MainScreen(
                                         TemplatesScreen(hiltViewModel<AddonsBrowserViewModel>())
                                     }
                                     composable("timeline") {
-                                        TimelineScreen()
+                                        selectedCase?.let {
+                                            TimelineScreen(
+                                                caseViewModel = caseViewModel,
+                                                navController = navController
+                                            )
+                                        }
                                     }
                                     composable("photo_group") {
                                         PhotoGroupScreen(navController = navController, mainViewModel = mainViewModel)

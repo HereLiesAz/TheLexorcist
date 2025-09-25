@@ -1,5 +1,6 @@
 package com.hereliesaz.lexorcist.data
 
+// TODO: Replace this with a dynamic data source, such as a remote database or a local file.
 object AllegationProvider {
 
     fun getAllAllegations(): List<Allegation> {

@@ -156,7 +156,7 @@ object DataParser {
                     spreadsheetId = spreadsheetId,
                     // Convert Int to Long as per Evidence data class
                     caseId = caseId.toLong(),
-                    allegationId = linkedAllegation?.id,
+                    allegationId = linkedAllegation?.id?.toString(),
                     content = sentence,
                     formattedContent = null,
                     mediaUri = null,

@@ -139,33 +139,17 @@ constructor(
     private val _navigateToTranscriptionScreen = MutableSharedFlow<Int>()
     val navigateToTranscriptionScreen = _navigateToTranscriptionScreen.asSharedFlow()
 
-    private val _timelineSortType = MutableStateFlow(TimelineSortType.DATE_OF_OCCURRENCE)
-    val timelineSortType: StateFlow<TimelineSortType> = _timelineSortType.asStateFlow()
-
     private val _selectedCaseEvidenceListInternal =
         MutableStateFlow<List<com.hereliesaz.lexorcist.data.Evidence>>(emptyList())
 
     val selectedCaseEvidenceList: StateFlow<List<com.hereliesaz.lexorcist.data.Evidence>> =
         _selectedCaseEvidenceListInternal
-            .combine(timelineSortType) { evidence, sortType ->
-                when (sortType) {
-                    TimelineSortType.DATE_OF_OCCURRENCE -> evidence.sortedByDescending { it.documentDate }
-                    TimelineSortType.DATE_EVIDENCE_ADDED -> evidence.sortedByDescending { it.timestamp }
-                    TimelineSortType.BY_ALLEGATION -> evidence.sortedBy { it.allegationId }
-                    TimelineSortType.BY_FILE_TYPE -> evidence.sortedBy { it.type }
-                    TimelineSortType.CUSTOM -> evidence
-                }
-            }
             .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     val selectedEvidence: StateFlow<List<com.hereliesaz.lexorcist.data.Evidence>> =
         selectedCaseEvidenceList
             .map { list -> list.filter { it.isSelected } }
             .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
-
-    fun onTimelineSortOrderChanged(sortType: TimelineSortType) {
-        _timelineSortType.value = sortType
-    }
 
     private val _themeMode =
         MutableStateFlow(ThemeMode.SYSTEM)
@@ -563,7 +547,7 @@ constructor(
 
     fun assignAllegationToEvidence(
         evidenceId: Int,
-        allegationId: Int,
+        allegationId: String,
     ) {
         viewModelScope.launch {
             globalLoadingState.pushLoading()
@@ -681,7 +665,10 @@ constructor(
             globalLoadingState.pushLoading()
             try {
                 selectedEvidence.value.forEach { evidence ->
-                    val updatedEvidence = evidence.copy(allegationId = allegationId)
+                    val updatedEvidence = evidence.copy(
+                        allegationId = allegationId,
+                        allegationElementName = null
+                    )
                     evidenceRepository.updateEvidence(updatedEvidence)
                 }
                 clearEvidenceSelection()
@@ -1355,47 +1342,43 @@ constructor(
         }
     }
 
-    fun generateReadinessReport() {
-        viewModelScope.launch {
-            val case = selectedCase.value ?: return@launch
-            val evidence = selectedCaseEvidenceList.value
-            val exhibits = exhibits.value
-            val allegations = allegations.value
+    fun generateReadinessReport(): String {
+        val case = selectedCase.value ?: return ""
+        val evidence = selectedCaseEvidenceList.value
+        val exhibits = exhibits.value
+        val allegations = allegations.value
 
-            val report = StringBuilder()
-            report.append("Readiness Report for ${case.name}\n\n")
+        val report = StringBuilder()
+        report.append("Readiness Report for ${case.name}\n\n")
 
-            report.append("Allegations:\n")
-            allegations.forEach { allegation ->
-                report.append("- ${allegation.text}\n")
-                allegation.elements.forEach { element ->
-                    val elementEvidence = evidence.filter { it.allegationId == allegation.id && it.allegationElementName == element.name }
-                    report.append("  - ${element.name} (${elementEvidence.size} evidence)\n")
-                }
+        report.append("Allegations:\n")
+        allegations.forEach { allegation ->
+            report.append("- ${allegation.text}\n")
+            allegation.elements.forEach { element ->
+                val elementEvidence = evidence.filter { it.allegationId == allegation.id && it.allegationElementName == element.name }
+                report.append("  - ${element.name} (${elementEvidence.size} evidence)\n")
             }
-            report.append("\n")
-
-            report.append("Exhibits:\n")
-            exhibits.forEach { exhibit ->
-                report.append("- ${exhibit.name}\n")
-                exhibit.evidenceIds.forEach { evidenceId ->
-                    val evidenceItem = evidence.find { it.id == evidenceId }
-                    if (evidenceItem != null) {
-                        report.append("  - ${evidenceItem.content}\n")
-                    }
-                }
-            }
-            report.append("\n")
-
-            report.append("Timeline:\n")
-            evidence.sortedBy { it.documentDate }.forEach { evidence ->
-                val date = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(evidence.documentDate)
-                report.append("- $date: ${evidence.content}\n")
-            }
-
-            // In a real app, you would save this report to a file or display it in a dialog.
-            // For now, we'll just log it.
-            println(report.toString())
         }
+        report.append("\n")
+
+        report.append("Exhibits:\n")
+        exhibits.forEach { exhibit ->
+            report.append("- ${exhibit.name}\n")
+            exhibit.evidenceIds.forEach { evidenceId ->
+                val evidenceItem = evidence.find { it.id == evidenceId }
+                if (evidenceItem != null) {
+                    report.append("  - ${evidenceItem.content}\n")
+                }
+            }
+        }
+        report.append("\n")
+
+        report.append("Timeline:\n")
+        evidence.sortedBy { it.documentDate }.forEach { evidence ->
+            val date = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(evidence.documentDate)
+            report.append("- $date: ${evidence.content}\n")
+        }
+
+        return report.toString()
     }
 }
