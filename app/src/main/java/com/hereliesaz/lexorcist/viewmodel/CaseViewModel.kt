@@ -7,11 +7,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asFlow
 import androidx.lifecycle.viewModelScope
 import com.google.api.services.drive.model.File as DriveFile
+import com.hereliesaz.lexorcist.data.ActiveScriptRepository
 import com.hereliesaz.lexorcist.data.Allegation
 import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.data.CaseRepository
 import com.hereliesaz.lexorcist.data.EvidenceRepository
 import com.hereliesaz.lexorcist.data.LocalFileStorageService
+import com.hereliesaz.lexorcist.data.ScriptRepository
 import com.hereliesaz.lexorcist.data.SettingsManager
 import com.hereliesaz.lexorcist.data.SortOrder
 import com.hereliesaz.lexorcist.model.ProcessingState
@@ -32,6 +34,7 @@ import android.provider.MediaStore
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map // Ensured import
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -47,16 +50,18 @@ constructor(
     @param:ApplicationContext private val applicationContext: Context,
     private val caseRepository: CaseRepository,
     private val evidenceRepository: EvidenceRepository,
-    private val settingsManager: SettingsManager,
     private val localFileStorageService: LocalFileStorageService,
     private val scriptRunner: com.hereliesaz.lexorcist.service.ScriptRunner,
     private val ocrProcessingService: com.hereliesaz.lexorcist.service.OcrProcessingService,
     private val transcriptionService: com.hereliesaz.lexorcist.service.TranscriptionService,
     private val workManager: androidx.work.WorkManager,
+    private val scriptRepository: ScriptRepository,
+    private val activeScriptRepository: ActiveScriptRepository,
     private val logService: com.hereliesaz.lexorcist.service.LogService,
     private val storageService: com.hereliesaz.lexorcist.data.StorageService,
     private val globalLoadingState: com.hereliesaz.lexorcist.service.GlobalLoadingState,
-    private val googleApiService: com.hereliesaz.lexorcist.service.GoogleApiService
+    private val googleApiService: com.hereliesaz.lexorcist.service.GoogleApiService,
+    private val settingsManager: SettingsManager
 ) : ViewModel() {
     private val sharedPref =
         applicationContext.getSharedPreferences("CaseInfoPrefs", Context.MODE_PRIVATE)
@@ -177,7 +182,6 @@ constructor(
     init {
         Log.d("CaseViewModel", "--- CaseViewModel INIT --- instancia: $this")
         loadThemeModePreference()
-        _storageLocation.value = settingsManager.getStorageLocation()
 
         viewModelScope.launch {
             logService.logEventFlow.collect { newLog ->
@@ -216,6 +220,17 @@ constructor(
                 }
             }
         }
+
+        viewModelScope.launch {
+            val lastSelectedCaseId = sharedPref.getString("last_selected_case_id", null)
+            if (lastSelectedCaseId != null) {
+                val allCases = caseRepository.cases.first()
+                val lastSelectedCase = allCases.find { it.spreadsheetId == lastSelectedCaseId }
+                if (lastSelectedCase != null) {
+                    selectCase(lastSelectedCase)
+                }
+            }
+        }
     }
 
     fun updateExhibit(exhibit: com.hereliesaz.lexorcist.data.Exhibit) {
@@ -240,14 +255,8 @@ constructor(
         viewModelScope.launch {
             globalLoadingState.pushLoading()
             try {
-                val oldLocation = settingsManager.getStorageLocation()
                 settingsManager.saveStorageLocation(uri.toString())
                 _storageLocation.value = uri.toString()
-                if (oldLocation != null) {
-                    viewModelScope.launch { _userMessage.emit("Moving files to new location...") }
-                    localFileStorageService.moveFilesToNewLocation(oldLocation, uri.toString())
-                    viewModelScope.launch { _userMessage.emit("Files moved successfully.") }
-                }
             } finally {
                 globalLoadingState.popLoading()
             }
@@ -444,6 +453,11 @@ constructor(
                 _logMessages.value = emptyList()
 
                 caseRepository.selectCase(case)
+                if (case != null) {
+                    sharedPref.edit().putString("last_selected_case_id", case.spreadsheetId).apply()
+                } else {
+                    sharedPref.edit().remove("last_selected_case_id").apply()
+                }
                 Log.d("CaseViewModel", "IMMEDIATELY AFTER caseRepository.selectCase, ViewModel's _vmSelectedCase.value is: ${_vmSelectedCase.value?.name ?: "null"}")
 
                 if (case != null) {
@@ -556,6 +570,17 @@ constructor(
         saveCaseInfoToSharedPrefs()
     }
 
+    fun updateEvidence(evidence: com.hereliesaz.lexorcist.data.Evidence) {
+        viewModelScope.launch {
+            globalLoadingState.pushLoading()
+            try {
+                evidenceRepository.updateEvidence(evidence)
+            } finally {
+                globalLoadingState.popLoading()
+            }
+        }
+    }
+
     private fun saveCaseInfoToSharedPrefs() {
         sharedPref
             .edit()
@@ -601,21 +626,36 @@ constructor(
         }
     }
 
-    fun updateEvidence(evidence: com.hereliesaz.lexorcist.data.Evidence) {
+    fun rerunAllScriptsOnAllEvidence() {
         viewModelScope.launch {
             globalLoadingState.pushLoading()
+            _userMessage.value = "Rerunning all active scripts on all evidence..."
             try {
-                evidenceRepository.updateEvidence(evidence)
-                val script = settingsManager.getScript()
-                val result = scriptRunner.runScript(script, evidence)
-                if (result is Result.Success) {
-                    val currentTagsInEvidence: List<String> = evidence.tags
-                    val newTagsFromScript: List<String> = result.data.tags // Corrected: result.data.tags
-                    val combinedTags: List<String> = currentTagsInEvidence + newTagsFromScript
-                    val updatedEvidence = evidence.copy(tags = combinedTags) // Corrected: combinedTags
+                val allEvidence = _selectedCaseEvidenceListInternal.value
+                val activeScriptIds = activeScriptRepository.activeScriptIds.value
+                val allScripts = scriptRepository.getScripts()
+                val scriptsToRun = allScripts.filter { activeScriptIds.contains(it.id) }
+                val sortedScriptsToRun = scriptsToRun.sortedBy { script -> activeScriptIds.indexOf(script.id) }
+
+                allEvidence.forEach { evidence ->
+                    var updatedEvidence = evidence
+                    sortedScriptsToRun.forEach { script ->
+                        val result = scriptRunner.runScript(script.content, updatedEvidence)
+                        if (result is Result.Success) {
+                            val currentTagsInEvidence: List<String> = updatedEvidence.tags
+                            val newTagsFromScript: List<String> = result.data.tags
+                            val combinedTags: List<String> = (currentTagsInEvidence + newTagsFromScript).distinct()
+                            updatedEvidence = updatedEvidence.copy(tags = combinedTags)
+                        }
+                    }
                     evidenceRepository.updateEvidence(updatedEvidence)
                 }
-            } finally {
+                _userMessage.value = "Finished rerunning scripts."
+                caseRepository.refreshSelectedCaseDetails()
+            } catch (e: Exception) {
+                _errorMessage.value = "Failed to rerun scripts: ${e.message}"
+            }
+            finally {
                 globalLoadingState.popLoading()
             }
         }
@@ -721,7 +761,7 @@ constructor(
                     uri = uri,
                     context = applicationContext,
                     caseId = caseToUse.id.toLong(),
-                    spreadsheetId = caseToUse.spreadsheetId,
+                    spreadsheetId = caseToUse.spreadsheetId
                 ) { state -> _processingState.value = state } // Pass the lambda to update ViewModel's state
 
                 message?.let {
