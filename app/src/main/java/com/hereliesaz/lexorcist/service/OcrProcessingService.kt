@@ -120,7 +120,7 @@ constructor(
             }
         logService.addLog("Frame recognition complete. Found ${ocrText.length} characters.")
 
-        val entities = DataParser.tagData(ocrText, "")
+        val entities = DataParser.tagData(ocrText)
         val documentDate =
             ExifUtils.getExifDate(context, uri)
                 ?: DataParser.parseDates(ocrText).firstOrNull()
@@ -256,7 +256,7 @@ constructor(
                 logService.addLog("Text recognition complete. Found ${ocrText.length} characters.")
                 onProgress(ProcessingState.InProgress(0.5f))
 
-                val entities = DataParser.tagData(ocrText, "")
+                val entities = DataParser.tagData(ocrText)
                 val documentDate = ExifUtils.getExifDate(context, newUri)
                     ?: DataParser.parseDates(ocrText).firstOrNull()
                     ?: System.currentTimeMillis()

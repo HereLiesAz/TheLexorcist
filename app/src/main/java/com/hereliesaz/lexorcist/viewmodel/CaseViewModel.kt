@@ -705,7 +705,7 @@ constructor(
                     globalLoadingState.popLoading()
                     return@launch
                 }
-                val entities = DataParser.tagData(text, allegationElementName)
+                val entities = DataParser.tagData(text)
                 val newEvidence =
                     com.hereliesaz.lexorcist.data.Evidence(
                         caseId = caseToUse.id.toLong(),
@@ -849,7 +849,7 @@ constructor(
                                         tags = listOf("audio", "transcription"),
                                         commentary = null,
                                         parentVideoId = null,
-                                        entities = DataParser.tagData(transcribedText, allegationElementName),
+                                        entities = DataParser.tagData(transcribedText),
                                         fileHash = fileHash
                                     )
                                 val savedEvidence = withContext(Dispatchers.IO) {
@@ -1091,7 +1091,7 @@ constructor(
                             category = "Photo",
                             tags = listOf("photo", "group"),
                             commentary = null,
-                            entities = DataParser.tagData(description, allegationElementName),
+                            entities = DataParser.tagData(description),
                         )
                     evidenceRepository.addEvidence(newEvidence)
                     _userMessage.value = "Photo group evidence saved successfully."
@@ -1251,7 +1251,7 @@ constructor(
                 tags = listOf("pdf", "merged"),
                 commentary = null,
                 parentVideoId = null,
-                entities = DataParser.tagData(combinedContent, allegationElementName),
+                entities = DataParser.tagData(combinedContent),
                 fileHash = com.hereliesaz.lexorcist.utils.HashingUtils.getHash(applicationContext, pdfFile.toUri())
             )
 
