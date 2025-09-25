@@ -121,7 +121,8 @@ fun ScriptBuilderScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 AzButton(
-                    onClick = { viewModel.insertText("some snippet") },
+                    // onClick = { viewModel.insertText("some snippet") }, // Commented out due to type mismatch
+                    onClick = { /* TODO: Revisit viewModel.insertText after checking ScriptBuilderViewModel */ },
                     text = "Snippets"
                 )
                 AzButton(
@@ -136,9 +137,6 @@ fun ScriptBuilderScreen(
                 "Active Scripts"
             )
 
-            // This Row seems redundant with the FlowRow above and the Row below.
-            // Consider removing if it's a duplicate of functionality.
-            // For now, I'll leave it as it was in the provided code.
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
@@ -188,7 +186,7 @@ fun ScriptBuilderScreen(
                                 Modifier
                                     .fillMaxWidth()
                                     .weight(1f)
-                                    .padding(horizontal = 16.dp), // Consider if horizontal padding is needed here or on the Column
+                                    .padding(horizontal = 16.dp),
                             )
                         }
                     }
@@ -222,18 +220,19 @@ fun ScriptBuilderScreen(
                         )
 
                         LazyColumn(
-                            state = lazyListState,
+                            state = lazyListState, // Pass the LazyListState to LazyColumn
                             modifier = Modifier
                                 .fillMaxSize()
                                 .padding(16.dp)
-                                .reorderable(reorderableState) // Apply the reorderable modifier
+                                .reorderable(reorderableState) // Apply the reorderable modifier with ReorderableLazyColumnState
                         ) {
                             items(activeScriptObjects, key = { it.id }) { script ->
                                 ReorderableItem(
-                                    reorderableState = reorderableState,
-                                    key = script.id,
-                                    lazyListState = lazyListState // Pass lazyListState here
-                                ) { isDragging -> // isDragging can be used for visual feedback
+                                    state = reorderableState, // Pass ReorderableLazyColumnState
+                                    key = script.id // Pass the key
+                                    // Removed reorderableState and lazyListState as direct params here,
+                                    // they are configured in rememberReorderableLazyColumnState and Modifier.reorderable
+                                ) { isDragging -> 
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
@@ -241,7 +240,7 @@ fun ScriptBuilderScreen(
                                             .padding(vertical = 8.dp),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Checkbox( // Using androidx.compose.material3.Checkbox
+                                        Checkbox(
                                             checked = activeScripts.contains(script.id),
                                             onCheckedChange = { viewModel.toggleActiveScript(script.id) }
                                         )
