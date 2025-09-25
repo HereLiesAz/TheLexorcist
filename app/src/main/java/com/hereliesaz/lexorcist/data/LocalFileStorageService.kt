@@ -488,8 +488,8 @@ class LocalFileStorageService @Inject constructor(
         val editsSheet = workbook.getSheet(TRANSCRIPT_EDITS_SHEET_NAME) ?: workbook.createSheet(TRANSCRIPT_EDITS_SHEET_NAME).also {
             it.createRow(0).apply { TRANSCRIPT_EDITS_HEADER.forEachIndexed { index, s -> createCell(index).setCellValue(s) } }
         }
-        editsSheet.createRow(editsheet.physicalNumberOfRows).apply {
-            createCell(0).setCellValue((editsheet.physicalNumberOfRows).toDouble()) // EditID
+        editsSheet.createRow(editsSheet.physicalNumberOfRows).apply {
+            createCell(0).setCellValue((editsSheet.physicalNumberOfRows).toDouble()) // EditID
             createCell(1).setCellValue(evidence.id.toDouble()) // EvidenceID
             createCell(2).setCellValue(System.currentTimeMillis().toDouble()) // Timestamp
             createCell(3).setCellValue(reason) // Reason
