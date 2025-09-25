@@ -2,32 +2,27 @@ package com.hereliesaz.lexorcist.data
 
 import android.content.Context
 import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import com.hereliesaz.lexorcist.model.Script
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class ScriptRepository @Inject constructor(
-    @ApplicationContext private val context: Context,
-    private val gson: Gson
-) {
-    private val scriptsFile: File by lazy { File(context.filesDir, "scripts.json") }
+class ScriptRepository @Inject constructor(@ApplicationContext private val context: Context) {
 
-    suspend fun getScripts(): List<Script> = withContext(Dispatchers.IO) {
-        if (scriptsFile.exists()) {
-            val json = scriptsFile.readText()
-            gson.fromJson(json, object : TypeToken<List<Script>>() {}.type)
-        } else {
-            emptyList()
+    private val scriptsFile = File(context.filesDir, "scripts.json")
+    private val gson = Gson()
+
+    fun getScripts(): List<Script> {
+        if (!scriptsFile.exists()) {
+            return emptyList()
         }
+        val json = scriptsFile.readText()
+        return gson.fromJson(json, Array<Script>::class.java).toList()
     }
 
-    suspend fun saveScripts(scripts: List<Script>) = withContext(Dispatchers.IO) {
+    fun saveScripts(scripts: List<Script>) {
         val json = gson.toJson(scripts)
         scriptsFile.writeText(json)
     }

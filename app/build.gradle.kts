@@ -150,7 +150,7 @@ dependencies {
 
     // WorkManager Testing (version 2.10.4 matches your work-runtime-ktx)
     testImplementation(libs.androidx.work.testing)
-
+    
     // TensorFlow Lite / AI Edge Runtime
     implementation(libs.litert) // com.google.ai.edge.litert:litert:2.0.2 (for runtime mgmt)
     implementation("org.tensorflow:tensorflow-lite:${libs.versions.tensorflowLite.get()}")
@@ -270,7 +270,7 @@ dependencies {
     implementation(libs.grpc.context)
 
     implementation(libs.aznavrail)
-    implementation("sh.calvin.reorderable:reorderable:3.0.0")
+    implementation("org.burnoutcrew.reorderable:reorderable:0.9.6")
 }
 
 kotlin {

@@ -7,7 +7,6 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -19,22 +18,21 @@ class ScriptStateRepository @Inject constructor(@ApplicationContext private val 
 
     private val SCRIPT_STATE_KEY = stringSetPreferencesKey("script_state")
 
-    val scriptState: Flow<Set<String>> = context.dataStore.data
-        .map { preferences ->
-            preferences[SCRIPT_STATE_KEY] ?: emptySet()
-        }
+    val scriptState = context.dataStore.data.map { preferences ->
+        preferences[SCRIPT_STATE_KEY] ?: emptySet()
+    }
 
-    suspend fun addScriptState(evidenceId: Int, scriptHash: Int) {
+    suspend fun addScriptState(evidenceId: Int, scriptId: String) {
         context.dataStore.edit { settings ->
-            val currentSet = settings[SCRIPT_STATE_KEY] ?: emptySet()
-            settings[SCRIPT_STATE_KEY] = currentSet + "${evidenceId}:${scriptHash}"
+            val currentState = settings[SCRIPT_STATE_KEY] ?: emptySet()
+            settings[SCRIPT_STATE_KEY] = currentState + "$evidenceId:$scriptId"
         }
     }
 
-    suspend fun clearScriptState(scriptHash: Int) {
+    suspend fun clearScriptState(scriptId: String) {
         context.dataStore.edit { settings ->
-            val currentSet = settings[SCRIPT_STATE_KEY] ?: emptySet()
-            settings[SCRIPT_STATE_KEY] = currentSet.filter { !it.endsWith(":${scriptHash}") }.toSet()
+            val currentState = settings[SCRIPT_STATE_KEY] ?: emptySet()
+            settings[SCRIPT_STATE_KEY] = currentState.filter { !it.endsWith(":$scriptId") }.toSet()
         }
     }
 }

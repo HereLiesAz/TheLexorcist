@@ -28,6 +28,7 @@ fun ScriptableAzNavRail(
         azRailItem(id = "templates", text = "Templates", onClick = { navController.navigate("templates") })
         azRailItem(id = "script_builder", text = "Script", onClick = { navController.navigate("script_builder") })
         azRailItem(id = "timeline", text = "Timeline", onClick = { navController.navigate("timeline") })
+        azRailItem(id = "exhibits", text = "Exhibits", onClick = { navController.navigate("exhibits") })
         azRailItem(id = "data_review", text = "Review", onClick = { navController.navigate("data_review") })
 
         scriptedMenuItems.forEach { item ->

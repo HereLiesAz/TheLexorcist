@@ -9,13 +9,9 @@ import com.hereliesaz.lexorcist.data.ActiveScriptRepository
 import com.hereliesaz.lexorcist.data.ScriptRepository
 import com.hereliesaz.lexorcist.data.ScriptStateRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.Flow // Added import
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.map 
-import kotlinx.coroutines.flow.stateIn 
-import kotlinx.coroutines.flow.SharingStarted 
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import com.hereliesaz.lexorcist.model.Script
@@ -42,9 +38,7 @@ constructor(
     private val _allScripts = MutableStateFlow<List<Script>>(emptyList())
     val allScripts: StateFlow<List<Script>> = _allScripts.asStateFlow()
 
-    val activeScripts: StateFlow<Set<String>> = (activeScriptRepository.activeScripts as Flow<List<String>>)
-        .map { list -> list.toSet() }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptySet())
+    val activeScripts: StateFlow<Set<String>> = activeScriptRepository.activeScripts
 
     private val _saveState = MutableStateFlow<SaveState>(SaveState.Idle)
     val saveState: StateFlow<SaveState> = _saveState.asStateFlow()
@@ -108,6 +102,12 @@ constructor(
         _scriptText.value = script.content
     }
 
+    fun newScript() {
+        _scriptTitle.value = ""
+        _scriptDescription.value = ""
+        _scriptText.value = ""
+    }
+
     fun saveScript() {
         viewModelScope.launch {
             _saveState.value = SaveState.Saving
@@ -140,13 +140,10 @@ constructor(
         activeScriptRepository.toggleActiveScript(scriptId)
     }
 
-    fun runScripts() {
+    fun runScripts(allEvidence: List<com.hereliesaz.lexorcist.data.Evidence>, caseViewModel: CaseViewModel) {
         viewModelScope.launch {
-            activeScriptRepository.getActiveScripts().forEach { scriptId ->
-                val script = _allScripts.value.find { it.id == scriptId }
-                if (script != null) {
-                    scriptStateRepository.clearScriptState(script.id.hashCode()) // Reverted to hashCode()
-                }
+            allEvidence.forEach { evidence ->
+                caseViewModel.rerunScriptOnEvidence(evidence)
             }
         }
     }
@@ -155,3 +152,4 @@ constructor(
         activeScriptRepository.reorderActiveScripts(from, to)
     }
 }
+// Removed local SaveState definition from here
