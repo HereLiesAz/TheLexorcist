@@ -53,6 +53,7 @@ constructor(
     private val ocrProcessingService: com.hereliesaz.lexorcist.service.OcrProcessingService,
     private val transcriptionService: com.hereliesaz.lexorcist.service.TranscriptionService,
     private val workManager: androidx.work.WorkManager,
+    private val activeScriptRepository: com.hereliesaz.lexorcist.data.ActiveScriptRepository,
     private val logService: com.hereliesaz.lexorcist.service.LogService,
     private val storageService: com.hereliesaz.lexorcist.data.StorageService,
     private val globalLoadingState: com.hereliesaz.lexorcist.service.GlobalLoadingState,
@@ -213,6 +214,17 @@ constructor(
                     is Result.Loading -> { // Handle loading state from repository if provided
                         // You might want a specific isLoadingEvidenceList StateFlow
                     }
+                }
+            }
+        }
+
+        viewModelScope.launch {
+            val lastSelectedCaseId = sharedPref.getString("last_selected_case_id", null)
+            if (lastSelectedCaseId != null) {
+                val allCases = caseRepository.cases.first()
+                val lastSelectedCase = allCases.find { it.spreadsheetId == lastSelectedCaseId }
+                if (lastSelectedCase != null) {
+                    selectCase(lastSelectedCase)
                 }
             }
         }
@@ -444,6 +456,11 @@ constructor(
                 _logMessages.value = emptyList()
 
                 caseRepository.selectCase(case)
+                if (case != null) {
+                    sharedPref.edit().putString("last_selected_case_id", case.spreadsheetId).apply()
+                } else {
+                    sharedPref.edit().remove("last_selected_case_id").apply()
+                }
                 Log.d("CaseViewModel", "IMMEDIATELY AFTER caseRepository.selectCase, ViewModel's _vmSelectedCase.value is: ${_vmSelectedCase.value?.name ?: "null"}")
 
                 if (case != null) {
@@ -601,20 +618,26 @@ constructor(
         }
     }
 
-    fun updateEvidence(evidence: com.hereliesaz.lexorcist.data.Evidence) {
+    fun rerunScriptOnEvidence(evidence: com.hereliesaz.lexorcist.data.Evidence) {
         viewModelScope.launch {
             globalLoadingState.pushLoading()
             try {
-                evidenceRepository.updateEvidence(evidence)
-                val script = settingsManager.getScript()
-                val result = scriptRunner.runScript(script, evidence)
-                if (result is Result.Success) {
-                    val currentTagsInEvidence: List<String> = evidence.tags
-                    val newTagsFromScript: List<String> = result.data.tags // Corrected: result.data.tags
-                    val combinedTags: List<String> = currentTagsInEvidence + newTagsFromScript
-                    val updatedEvidence = evidence.copy(tags = combinedTags) // Corrected: combinedTags
-                    evidenceRepository.updateEvidence(updatedEvidence)
+                val activeScriptIds = activeScriptRepository.getActiveScriptIds()
+                val allScripts = scriptRepository.getScripts()
+                val scriptsToRun = allScripts.filter { activeScriptIds.contains(it.id) }
+                val sortedScriptsToRun = scriptsToRun.sortedBy { script -> activeScriptIds.indexOf(script.id) }
+
+                var updatedEvidence = evidence
+                sortedScriptsToRun.forEach { script ->
+                    val result = scriptRunner.runScript(script.content, updatedEvidence)
+                    if (result is Result.Success) {
+                        val currentTagsInEvidence: List<String> = updatedEvidence.tags
+                        val newTagsFromScript: List<String> = result.data.tags
+                        val combinedTags: List<String> = (currentTagsInEvidence + newTagsFromScript).distinct()
+                        updatedEvidence = updatedEvidence.copy(tags = combinedTags)
+                    }
                 }
+                evidenceRepository.updateEvidence(updatedEvidence)
             } finally {
                 globalLoadingState.popLoading()
             }
@@ -722,6 +745,7 @@ constructor(
                     context = applicationContext,
                     caseId = caseToUse.id.toLong(),
                     spreadsheetId = caseToUse.spreadsheetId,
+                    activeScriptIds = activeScriptRepository.getActiveScriptIds(),
                 ) { state -> _processingState.value = state } // Pass the lambda to update ViewModel's state
 
                 message?.let {

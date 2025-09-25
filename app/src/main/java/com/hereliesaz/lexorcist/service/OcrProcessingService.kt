@@ -30,7 +30,8 @@ class OcrProcessingService
     @Inject
     constructor(
         private val evidenceRepository: EvidenceRepository,
-        private val settingsManager: SettingsManager,
+        private val scriptRepository: com.hereliesaz.lexorcist.data.ScriptRepository,
+        private val scriptStateRepository: com.hereliesaz.lexorcist.data.ScriptStateRepository,
         private val scriptRunner: ScriptRunner,
         private val logService: LogService,
         private val storageService: com.hereliesaz.lexorcist.data.StorageService,
@@ -144,9 +145,13 @@ class OcrProcessingService
                     fileHash = fileHash
                 )
 
-            val script = settingsManager.getScript()
-            if (script.isNotBlank()) {
-                val scriptResult = scriptRunner.runScript(script, newEvidence)
+            val allScripts = scriptRepository.getScripts()
+            val activeScriptIds = activeScriptRepository.getActiveScriptIds()
+            val activeScripts = allScripts.filter { activeScriptIds.contains(it.id) }
+            val sortedActiveScripts = activeScripts.sortedBy { script -> activeScriptIds.indexOf(script.id) }
+
+            sortedActiveScripts.forEach { script ->
+                val scriptResult = scriptRunner.runScript(script.content, newEvidence)
                 when (scriptResult) {
                     is Result.Loading -> {
                         logService.addLog("Script for frame is loading...")
@@ -154,7 +159,7 @@ class OcrProcessingService
                     is Result.Success -> {
                         val currentTagsInFrame: List<String> = newEvidence.tags
                         val newTagsFromScriptFrame: List<String> = scriptResult.data.tags
-                        val combinedTagsFrame: List<String> = currentTagsInFrame + newTagsFromScriptFrame
+                        val combinedTagsFrame: List<String> = (currentTagsInFrame + newTagsFromScriptFrame).distinct()
                         newEvidence = newEvidence.copy(tags = combinedTagsFrame)
                     }
                     is Result.Error -> {
@@ -183,6 +188,7 @@ class OcrProcessingService
             context: Context,
             caseId: Long,
             spreadsheetId: String,
+            activeScriptIds: List<String>,
             onProgress: (ProcessingState) -> Unit
         ): Pair<Evidence?, String?> {
             var statusMessage: String
@@ -267,38 +273,43 @@ class OcrProcessingService
                             fileHash = fileHash,
                         )
 
-                    val script = settingsManager.getScript()
-                    if (script.isNotBlank()) {
-                        logService.addLog("Running script...")
-                        onProgress(ProcessingState.InProgress(0.75f))
-                        val scriptResult = scriptRunner.runScript(script, newEvidence)
-                        when (scriptResult) {
-                            is Result.Loading -> {
-                                logService.addLog("Script for image is loading...")
-                            }
-                            is Result.Success -> {
-                                val currentTagsInImage: List<String> = newEvidence.tags
-                                val newTagsFromScriptImage: List<String> = scriptResult.data.tags
-                                val combinedTagsImage: List<String> = currentTagsInImage + newTagsFromScriptImage
-                                newEvidence = newEvidence.copy(tags = combinedTagsImage)
-                                logService.addLog("Script finished. Added tags: ${newTagsFromScriptImage.joinToString(", ")}")
-                            }
-                            is Result.Error -> {
-                                statusMessage = "Script error: ${scriptResult.exception.message}"
-                                logService.addLog(statusMessage, LogLevel.ERROR)
-                                Log.e("OcrProcessingService", "Script error for $uri: $statusMessage", scriptResult.exception)
-                            }
-                            is Result.UserRecoverableError -> {
-                                statusMessage = "User recoverable script error: ${scriptResult.exception.message}"
-                                logService.addLog(statusMessage, LogLevel.INFO)
-                                Log.w("OcrProcessingService", "User recoverable script error for $uri: $statusMessage", scriptResult.exception)
-                            }
-                        }
-                    }
-
                     logService.addLog("Saving evidence...")
                     onProgress(ProcessingState.InProgress(0.90f))
                     val savedEvidence = evidenceRepository.addEvidence(newEvidence)
+                    if (savedEvidence != null) {
+                        val allScripts = scriptRepository.getScripts()
+                        val activeScripts = allScripts.filter { activeScriptIds.contains(it.id) }
+                        val sortedActiveScripts = activeScripts.sortedBy { script -> activeScriptIds.indexOf(script.id) }
+
+                        var evidenceToUpdate = savedEvidence
+                        sortedActiveScripts.forEach { script ->
+                            val scriptResult = scriptRunner.runScript(script.content, evidenceToUpdate)
+                            when (scriptResult) {
+                                is Result.Loading -> {
+                                    logService.addLog("Script for image is loading...")
+                                }
+                                is Result.Success -> {
+                                    val currentTagsInImage: List<String> = evidenceToUpdate.tags
+                                    val newTagsFromScriptImage: List<String> = scriptResult.data.tags
+                                    val combinedTagsImage: List<String> = (currentTagsInImage + newTagsFromScriptImage).distinct()
+                                    evidenceToUpdate = evidenceToUpdate.copy(tags = combinedTagsImage)
+                                    scriptStateRepository.addScriptState(savedEvidence.id, script.id)
+                                    logService.addLog("Script finished. Added tags: ${newTagsFromScriptImage.joinToString(", ")}")
+                                }
+                                is Result.Error -> {
+                                    statusMessage = "Script error: ${scriptResult.exception.message}"
+                                    logService.addLog(statusMessage, LogLevel.ERROR)
+                                    Log.e("OcrProcessingService", "Script error for $uri: $statusMessage", scriptResult.exception)
+                                }
+                                is Result.UserRecoverableError -> {
+                                    statusMessage = "User recoverable script error: ${scriptResult.exception.message}"
+                                    logService.addLog(statusMessage, LogLevel.INFO)
+                                    Log.w("OcrProcessingService", "User recoverable script error for $uri: $statusMessage", scriptResult.exception)
+                                }
+                            }
+                        }
+                        evidenceRepository.updateEvidence(evidenceToUpdate)
+                    }
                     logService.addLog("Evidence saved with ID: ${savedEvidence?.id}")
                     onProgress(ProcessingState.InProgress(1.0f))
                     statusMessage = if (savedEvidence != null) "Image processed and evidence saved successfully." else "Image processed but failed to save evidence."

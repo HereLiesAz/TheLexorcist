@@ -270,6 +270,7 @@ dependencies {
     implementation(libs.grpc.context)
 
     implementation(libs.aznavrail)
+    implementation("org.burnoutcrew.reorderable:reorderable:0.9.6")
 }
 
 kotlin {

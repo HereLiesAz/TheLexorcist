@@ -20,8 +20,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -203,11 +201,6 @@ fun TemplatesScreen(
                 ),
             )
         },
-        floatingActionButton = {
-            FloatingActionButton(onClick = { showRequestDialog = true }) {
-                Icon(Icons.Default.Add, contentDescription = "Make a request")
-            }
-        }
     ) { padding ->
         Column(modifier = Modifier.padding(padding).padding(16.dp), horizontalAlignment = Alignment.End) {
             Text(
@@ -246,14 +239,14 @@ fun TemplatesScreen(
                 }
 
             Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
-                LexorcistOutlinedButton(onClick = {
+                AzButton(onClick = {
                     selectedTemplate = null
                     showEditor = true
-                }, text = "Create New Template")
+                }, text = "Create")
                 Spacer(modifier = Modifier.width(8.dp))
-                LexorcistOutlinedButton(onClick = { launcher.launch("application/json") }, text = "Import Template")
+                AzButton(onClick = { launcher.launch("application/json") }, text = "Import")
                 Spacer(modifier = Modifier.width(8.dp))
-                LexorcistOutlinedButton(onClick = { showRequestDialog = true }, text = "Request")
+                AzButton(onClick = { showRequestDialog = true }, text = "Request")
             }
             Spacer(modifier = Modifier.height(16.dp))
             LazyColumn {

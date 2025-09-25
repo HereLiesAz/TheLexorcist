@@ -55,26 +55,26 @@ import androidx.navigation.NavController
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.common.state.SaveState
 import com.hereliesaz.lexorcist.model.Script
-import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
-import com.hereliesaz.lexorcist.ui.components.RequestDialog
-import com.hereliesaz.lexorcist.utils.sendEmail
-import com.hereliesaz.lexorcist.viewmodel.ExtrasViewModel
+import com.hereliesaz.aznavrail.AzButton
+import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import com.hereliesaz.lexorcist.viewmodel.ScriptBuilderViewModel
+import sh.calvin.reorderable.ReorderableItem
+import sh.calvin.reorderable.rememberReorderableLazyColumnState
+import sh.calvin.reorderable.reorderable
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun ScriptBuilderScreen(
     viewModel: ScriptBuilderViewModel = hiltViewModel(),
-    navController: NavController
+    navController: NavController,
+    caseViewModel: CaseViewModel
 ) {
-    val activity = LocalContext.current as ComponentActivity
-    val extrasViewModel: ExtrasViewModel = hiltViewModel(viewModelStoreOwner = activity)
-
     val scriptTitle by viewModel.scriptTitle.collectAsState()
     val scriptDescription by viewModel.scriptDescription.collectAsState()
     val scriptText by viewModel.scriptText.collectAsState()
-    val caseScripts by viewModel.caseScripts.collectAsState()
+    val allScripts by viewModel.allScripts.collectAsState()
+    val activeScripts by viewModel.activeScripts.collectAsState()
     val saveState by viewModel.saveState.collectAsState()
     val extrasUiState by extrasViewModel.uiState.collectAsState()
     var previousExtrasIsLoading by remember { mutableStateOf(extrasUiState.isLoading) }
@@ -135,11 +135,6 @@ fun ScriptBuilderScreen(
                 },
             )
         },
-        floatingActionButton = {
-            FloatingActionButton(onClick = { showRequestDialog = true }) {
-                Icon(Icons.Default.Add, contentDescription = "Make a request")
-            }
-        }
     ) { padding ->
         Column(
             modifier =
@@ -149,49 +144,37 @@ fun ScriptBuilderScreen(
                 .padding(8.dp),
             horizontalAlignment = Alignment.End,
         ) {
-            Spacer(modifier = Modifier.height(16.dp))
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                OutlinedButton(onClick = { viewModel.insertText(snippetTextIncludesStr) }) {
-                    Text(stringResource(R.string.script_snippet_text_includes_label))
-                }
-                OutlinedButton(onClick = { viewModel.insertText(snippetTagsIncludesStr) }) {
-                    Text(stringResource(R.string.script_snippet_tags_includes_label))
-                }
-                OutlinedButton(onClick = { viewModel.insertText(snippetDateGreaterStr) }) {
-                    Text(stringResource(R.string.script_snippet_date_greater_label))
-                }
-                OutlinedButton(onClick = { viewModel.insertText(snippetDateLessStr) }) {
-                    Text(stringResource(R.string.script_snippet_date_less_label))
-                }
-                LexorcistOutlinedButton(
-                    onClick = { viewModel.openScriptSelectionDialog() },
-                    content = { Text("Import Scripts...") }
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            OutlinedTextField(
-                value = scriptTitle,
-                onValueChange = { viewModel.onScriptTitleChanged(it) },
-                label = { Text(stringResource(R.string.script_title)) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
 
             var tabIndex by remember { mutableIntStateOf(0) }
             val tabs = listOf(
-                stringResource(R.string.script_tab_description),
-                stringResource(R.string.script_tab_editor),
-                "Case Scripts"
+                "Editor",
+                "Description",
+                "Active Scripts"
             )
+            var showLoadDialog by remember { mutableStateOf(false) }
+
+            if (showLoadDialog) {
+                AlertDialog(
+                    onDismissRequest = { showLoadDialog = false },
+                    title = { Text("Load Script") },
+                    text = {
+                        LazyColumn {
+                            items(allScripts) { script ->
+                                ScriptItem(script = script) {
+                                    viewModel.loadScript(script)
+                                    showLoadDialog = false
+                                }
+                            }
+                        }
+                    },
+                    confirmButton = {
+                        AzButton(
+                            onClick = { showLoadDialog = false },
+                            text = "Cancel"
+                        )
+                    }
+                )
+            }
 
             Column(modifier = Modifier.weight(1f).fillMaxWidth()) {
                 SecondaryTabRow(
@@ -212,30 +195,14 @@ fun ScriptBuilderScreen(
                 }
                 when (tabIndex) {
                     0 -> {
-                        Column(
-                            modifier =
-                            Modifier
-                                .fillMaxSize()
-                                .padding(16.dp)
-                                .verticalScroll(rememberScrollState()),
-                            horizontalAlignment = Alignment.Start,
-                            verticalArrangement = Arrangement.Top,
-                        ) {
-                            Text(
-                                text = stringResource(R.string.script_editor_explanation),
-                                style = MaterialTheme.typography.bodyLarge,
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
-                            OutlinedTextField(
-                                value = scriptDescription,
-                                onValueChange = { viewModel.onScriptDescriptionChanged(it) },
-                                label = { Text(stringResource(R.string.script_description)) },
+                        Column(modifier = Modifier.fillMaxSize()) {
+                             OutlinedTextField(
+                                value = scriptTitle,
+                                onValueChange = { viewModel.onScriptTitleChanged(it) },
+                                label = { Text(stringResource(R.string.script_title)) },
                                 modifier = Modifier.fillMaxWidth(),
                             )
-                        }
-                    }
-                    1 -> {
-                        Column(modifier = Modifier.fillMaxSize()) {
+                            Spacer(modifier = Modifier.height(16.dp))
                             OutlinedTextField(
                                 value = scriptText,
                                 onValueChange = { viewModel.onScriptTextChanged(it) },
@@ -248,14 +215,50 @@ fun ScriptBuilderScreen(
                             )
                         }
                     }
+                    1 -> {
+                        Column(
+                            modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .padding(16.dp)
+                                .verticalScroll(rememberScrollState()),
+                            horizontalAlignment = Alignment.Start,
+                            verticalArrangement = Arrangement.Top,
+                        ) {
+                            OutlinedTextField(
+                                value = scriptDescription,
+                                onValueChange = { viewModel.onScriptDescriptionChanged(it) },
+                                label = { Text(stringResource(R.string.script_description)) },
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                        }
+                    }
                     2 -> {
-                        LazyColumn(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-                            items(caseScripts) { script ->
-                                ScriptItem(script = script, onClick = {
-                                    viewModel.loadScript(script)
-                                    tabIndex = 1
-                                })
-                                Spacer(modifier = Modifier.height(8.dp))
+                        val activeScriptObjects = activeScripts.mapNotNull { scriptId -> allScripts.find { it.id == scriptId } }
+                        val reorderableState = rememberReorderableLazyColumnState(onMove = { from, to ->
+                            viewModel.reorderActiveScripts(from.index, to.index)
+                        })
+                        LazyColumn(
+                            state = reorderableState.listState,
+                            modifier = Modifier.fillMaxSize().padding(16.dp).reorderable(reorderableState)
+                        ) {
+                            items(activeScriptObjects, key = { it.id }) { script ->
+                                ReorderableItem(reorderableState, key = script.id) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable { viewModel.toggleActiveScript(script.id) }
+                                            .padding(vertical = 8.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        androidx.compose.material3.Checkbox(
+                                            checked = activeScripts.contains(script.id),
+                                            onCheckedChange = { viewModel.toggleActiveScript(script.id) }
+                                        )
+                                        Spacer(modifier = Modifier.size(16.dp))
+                                        Text(text = script.name)
+                                    }
+                                }
                             }
                         }
                     }
@@ -268,23 +271,24 @@ fun ScriptBuilderScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
             ) {
-                LexorcistOutlinedButton(
-                    onClick = { showRequestDialog = true },
-                    content = { Text("Request") }
+                AzButton(
+                    onClick = { viewModel.newScript() },
+                    text = "New"
                 )
-                LexorcistOutlinedButton(
-                    onClick = { showShareDialog = true },
-                    content = { Text(stringResource(R.string.share)) }
+                AzButton(
+                    onClick = { showLoadDialog = true },
+                    text = "Load"
                 )
-                LexorcistOutlinedButton(
+                AzButton(
+                    onClick = {
+                        val allEvidence = caseViewModel.selectedCaseEvidenceList.value
+                        viewModel.runScripts(allEvidence, caseViewModel)
+                    },
+                    text = "Run"
+                )
+                AzButton(
                     onClick = { viewModel.saveScript() },
-                    content = {
-                        if (saveState is SaveState.Saving) {
-                            com.hereliesaz.lexorcist.ui.components.NewLexorcistLoadingIndicator(modifier = Modifier.size(24.dp))
-                        } else {
-                            Text(stringResource(R.string.save_script))
-                        }
-                    }
+                    text = stringResource(R.string.save_script)
                 )
             }
         }
