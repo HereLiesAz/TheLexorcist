@@ -108,6 +108,7 @@ constructor(
         caseId: Int,
         spreadsheetId: String,
         parentVideoId: String?,
+        allegationElementName: String?,
     ): Evidence? {
         logService.addLog("Processing video frame: $uri")
         val ocrText =
@@ -140,7 +141,7 @@ constructor(
                 sourceDocument = uri.toString(),
                 documentDate = documentDate,
                 allegationId = null,
-                allegationElementName = "",
+                allegationElementName = allegationElementName,
                 category = "Video Frame OCR",
                 tags = listOf("ocr", "video_frame"),
                 commentary = null,
@@ -156,8 +157,8 @@ constructor(
             logService.addLog("Frame evidence saved with ID: ${evidence.id}. Applying scripts...")
             val allScripts = scriptRepository.getScripts()
             val activeScriptIds = activeScriptRepository.activeScriptIds.value
-            val activeScripts = allScripts.filter { activeScriptIds.contains(it.id) }
-            val sortedActiveScripts = activeScripts.sortedBy { script -> activeScriptIds.indexOf(script.id) }
+            val activeScripts = allScripts.filter { activeScriptIds.contains(it.id.toString()) }
+            val sortedActiveScripts = activeScripts.sortedBy { script -> activeScriptIds.indexOf(script.id.toString()) }
 
             var evidenceToUpdate = evidence
             sortedActiveScripts.forEach { script ->
@@ -204,6 +205,7 @@ constructor(
         context: Context,
         caseId: Long,
         spreadsheetId: String,
+        activeScriptIds: List<String>,
         onProgress: (ProcessingState) -> Unit
     ): Pair<Evidence?, String?> {
         var statusMessage: String
@@ -279,7 +281,7 @@ constructor(
                         sourceDocument = newUri.toString(),
                         documentDate = documentDate,
                         allegationId = null,
-                        allegationElementName = "",
+                        allegationElementName = null,
                         category = "Image OCR",
                         tags = listOf("ocr", "image"),
                         commentary = null,
@@ -297,9 +299,8 @@ constructor(
                     onProgress(ProcessingState.InProgress(0.8f))
 
                     val allScripts = scriptRepository.getScripts()
-                    val activeScriptIds = activeScriptRepository.activeScriptIds.value
-                    val activeScripts = allScripts.filter { activeScriptIds.contains(it.id) }
-                    val sortedActiveScripts = activeScripts.sortedBy { script -> activeScriptIds.indexOf(script.id) }
+                    val activeScripts = allScripts.filter { activeScriptIds.contains(it.id.toString()) }
+                    val sortedActiveScripts = activeScripts.sortedBy { script -> activeScriptIds.indexOf(script.id.toString()) }
 
                     var evidenceToUpdate = evidence
                     sortedActiveScripts.forEach { script ->

@@ -26,7 +26,7 @@ class OcrViewModel @Inject constructor(
 
     fun performOcrOnUri(uri: Uri, context: Context, caseId: Long, spreadsheetId: String) {
         viewModelScope.launch {
-            val activeScriptIds = activeScriptRepository.getActiveScriptIds()
+            val activeScriptIds = activeScriptRepository.activeScriptIds.value
             // The ocrProcessingService.processImage will set the initial state via the callback
             ocrProcessingService.processImage(uri, context, caseId, spreadsheetId, activeScriptIds) { state ->
                 _processingState.value = state
