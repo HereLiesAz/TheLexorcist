@@ -448,8 +448,13 @@ class LocalFileStorageService @Inject constructor(
         (1..sheet.lastRowNum).mapNotNull { i ->
             val row = sheet.getRow(i) ?: return@mapNotNull null
             if (row.getCell(1)?.stringCellValue != caseSpreadsheetId) return@mapNotNull null
-            Allegation(
-                id = getIntCellValueSafe(row.getCell(0)) ?: 0,
+            val allegationId = getIntCellValueSafe(row.getCell(0)) ?: 0
+            val masterAllegation = AllegationProvider.getAllegationById(allegationId)
+            masterAllegation?.copy(
+                spreadsheetId = caseSpreadsheetId,
+                text = row.getCell(2)?.stringCellValue ?: masterAllegation.text
+            ) ?: Allegation(
+                id = allegationId,
                 spreadsheetId = caseSpreadsheetId,
                 text = row.getCell(2)?.stringCellValue ?: ""
             )
@@ -483,8 +488,8 @@ class LocalFileStorageService @Inject constructor(
         val editsSheet = workbook.getSheet(TRANSCRIPT_EDITS_SHEET_NAME) ?: workbook.createSheet(TRANSCRIPT_EDITS_SHEET_NAME).also {
             it.createRow(0).apply { TRANSCRIPT_EDITS_HEADER.forEachIndexed { index, s -> createCell(index).setCellValue(s) } }
         }
-        editsSheet.createRow(editsSheet.physicalNumberOfRows).apply {
-            createCell(0).setCellValue((editsSheet.physicalNumberOfRows).toDouble()) // EditID
+        editsSheet.createRow(editsheet.physicalNumberOfRows).apply {
+            createCell(0).setCellValue((editsheet.physicalNumberOfRows).toDouble()) // EditID
             createCell(1).setCellValue(evidence.id.toDouble()) // EvidenceID
             createCell(2).setCellValue(System.currentTimeMillis().toDouble()) // Timestamp
             createCell(3).setCellValue(reason) // Reason
