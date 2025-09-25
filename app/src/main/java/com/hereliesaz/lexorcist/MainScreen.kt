@@ -85,6 +85,7 @@ fun MainScreen(
     val scriptBuilderViewModel: ScriptBuilderViewModel = hiltViewModel()
     // caseViewModel.setScriptBuilderViewModel(scriptBuilderViewModel) // Removed this line
     val isLoading by mainViewModel.isLoading.collectAsState()
+    val allegationsViewModel: AllegationsViewModel = hiltViewModel()
 
     LaunchedEffect(caseSpecificErrorMessage) {
         caseSpecificErrorMessage?.let {
@@ -190,7 +191,7 @@ fun MainScreen(
                                         }
                                     }
                                     composable("exhibits") {
-                                        ExhibitsScreen(caseViewModel = caseViewModel, allegationsViewModel = hiltViewModel(), navController = navController)
+                                        ExhibitsScreen(caseViewModel = caseViewModel, allegationsViewModel = allegationsViewModel, navController = navController)
                                     }
                                     composable("cases") { CasesScreen(caseViewModel = caseViewModel, navController = navController, mainViewModel = mainViewModel) }
                                     composable("evidence") {
@@ -221,7 +222,7 @@ fun MainScreen(
                                         PhotoGroupScreen(navController = navController, mainViewModel = mainViewModel)
                                     }
                                     composable("data_review") {
-                                        ReviewScreen(caseViewModel = caseViewModel, allegationsViewModel = hiltViewModel()) // Updated
+                                        ReviewScreen(caseViewModel = caseViewModel, allegationsViewModel = allegationsViewModel) // Updated
                                     }
                                     composable("settings") { SettingsScreen(caseViewModel = caseViewModel, mainViewModel = mainViewModel) }
                                     composable("evidence_details/{evidenceId}") { backStackEntry ->
