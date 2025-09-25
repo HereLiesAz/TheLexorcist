@@ -60,6 +60,7 @@ fun ExhibitsScreen(
     val allegations by allegationsViewModel.allegations.collectAsState()
     val selectedAllegation by allegationsViewModel.selectedAllegation.collectAsState()
     val selectedEvidence by caseViewModel.selectedEvidence.collectAsState()
+    val exhibits by caseViewModel.exhibits.collectAsState()
     var showEditDialog by remember { mutableStateOf(false) }
     var evidenceToEdit by remember { mutableStateOf<Evidence?>(null) }
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
@@ -112,16 +113,16 @@ fun ExhibitsScreen(
                         isSelected = selectedEvidence.any { it.id == evidence.id },
                         allegationText = allegations.find { it.id.toString() == evidence.allegationId }?.text,
                         allegationElementName = evidence.allegationElementName,
-                        exhibitNames = caseViewModel.exhibits.value.filter { it.evidenceIds.contains(evidence.id) }.joinToString { it.name },
+                        exhibitNames = exhibits.filter { it.evidenceIds.contains(evidence.id) }.joinToString { it.name },
                         onClick = { caseViewModel.toggleEvidenceSelection(evidence.id) },
-                        onEditClick = { 
+                        onEditClick = {
                             evidenceToEdit = it
                             showEditDialog = true
-                         },
-                        onDeleteClick = { 
+                        },
+                        onDeleteClick = {
                             evidenceToDelete = it
                             showDeleteConfirmDialog = true
-                         }
+                        }
                     )
                 }
             }
@@ -205,142 +206,6 @@ fun AllegationElementItem(
             Text(element.description, style = MaterialTheme.typography.bodyMedium)
             Button(onClick = onAssignEvidence) {
                 Text("Assign Selected Evidence")
-            }
-        }
-    }
-}
-
-@Composable
-fun AllegationItem(
-    allegation: Allegation,
-    isSelected: Boolean,
-    onClick: (Allegation) -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .padding(vertical = 4.dp)
-            .fillMaxWidth()
-            .pointerInput(allegation) {
-                detectTapGestures(onTap = { onClick(allegation) })
-            },
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.cardColors(containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant)
-    ) {
-        Row(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = allegation.text,
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.weight(1f)
-            )
-        }
-    }
-}
-
-@Composable
-fun EvidenceItem(
-    evidence: Evidence,
-    isSelected: Boolean,
-    allegationText: String?,
-    allegationElementName: String?,
-    exhibitNames: String,
-    onClick: (Int) -> Unit,
-    onEditClick: (Evidence) -> Unit,
-    onDeleteClick: (Evidence) -> Unit,
-) {
-    Card(
-        modifier =
-        Modifier
-            .padding(vertical = 4.dp)
-            .fillMaxWidth()
-            .pointerInput(evidence) {
-                detectTapGestures(onTap = { onClick(evidence.id) })
-            },
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.cardColors(containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant)
-    ) {
-        Row(
-            modifier =
-            Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(
-                modifier = Modifier.weight(1f),
-                horizontalAlignment = Alignment.Start,
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                Text(
-                    text = evidence.sourceDocument,
-                    style = MaterialTheme.typography.titleMedium,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                if (evidence.category.isNotBlank()) {
-                    Text(
-                        text = "Category: ${evidence.category}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-                if (allegationText != null) {
-                    Text(
-                        text = "Allegation: $allegationText",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.secondary,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    if (allegationElementName != null) {
-                        Text(
-                            text = "Element: $allegationElementName",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.secondary,
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                    }
-                }
-                if (exhibitNames.isNotEmpty()) {
-                    Text(
-                        text = "Exhibits: $exhibitNames",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.tertiary,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-                if (evidence.tags.isNotEmpty()) {
-                    Text(
-                        text = "Tags: ${evidence.tags.joinToString()}",
-                        style = MaterialTheme.typography.bodySmall,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-                Text(
-                    text = evidence.content,
-                    style = MaterialTheme.typography.bodySmall,
-                    maxLines = 3,
-                    overflow = TextOverflow.Ellipsis,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-            Column(horizontalAlignment = Alignment.End) {
-                IconButton(onClick = { onEditClick(evidence) }) {
-                    Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.edit))
-                }
-                IconButton(onClick = { onDeleteClick(evidence) }) {
-                    Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.delete))
-                }
             }
         }
     }

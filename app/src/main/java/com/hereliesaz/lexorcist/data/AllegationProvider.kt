@@ -19,7 +19,4 @@ object AllegationProvider {
     }
 }
 
-data class AllegationElement(
-    val name: String,
-    val description: String
-)
+

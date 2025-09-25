@@ -140,7 +140,9 @@ dependencies {
     implementation(libs.google.firebase.ai) {
         exclude(group = "org.tensorflow")
     }
-    implementation(libs.material3) // Explicitly use KTX version and direct coordinate
+    implementation(libs.material3)
+    implementation(libs.androidx.leanback)
+    implementation(libs.androidx.compose.foundation.layout) // Explicitly use KTX version and direct coordinate
 
     // Core testing dependencies
     testImplementation(libs.junit) // JUnit 4
