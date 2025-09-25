@@ -17,6 +17,8 @@ package com.hereliesaz.lexorcist.data
  * @property plaintiffs The names of the plaintiffs in the case (optional).
  * @property defendants The names of the defendants in the case (optional).
  * @property court The court where the case is filed (optional).
+ * @property caseNumber The case number (optional).
+ * @property caseSection The case section (optional).
  * @property isArchived Indicates if the case is archived.
  * @property lastModifiedTime The timestamp of when the case was last modified (optional).
  */
@@ -32,6 +34,8 @@ data class Case(
     val plaintiffs: String? = null,
     val defendants: String? = null,
     val court: String? = null,
+    val caseNumber: String? = null,
+    val caseSection: String? = null,
     val isArchived: Boolean = false,
     val lastModifiedTime: Long? = null,
 )

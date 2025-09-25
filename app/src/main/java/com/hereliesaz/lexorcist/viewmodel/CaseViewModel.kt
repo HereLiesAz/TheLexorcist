@@ -62,6 +62,10 @@ class CaseViewModel @Inject constructor(
         _searchQuery.value = query
     }
 
+    fun showError(message: String) {
+        _error.value = message
+    }
+
     fun clearError() {
         _error.value = null
     }
@@ -216,7 +220,7 @@ class CaseViewModel @Inject constructor(
         }
     }
 
-    fun createCase(caseName: String) {
+    fun createCase(caseName: String, exhibitSheetName: String, caseNumber: String?, caseSection: String?, caseJudge: String?) {
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
@@ -228,12 +232,18 @@ class CaseViewModel @Inject constructor(
                     if (spreadsheetIdResult is Result.Success) {
                         val spreadsheetId = spreadsheetIdResult.data
                         if (spreadsheetId != null) {
+                            googleApiService.addSheet(spreadsheetId, exhibitSheetName)
+                            googleApiService.addSheet(spreadsheetId, "Allegations")
+                            googleApiService.addSheet(spreadsheetId, "Evidence")
                             val newCase = Case(
                                 id = (System.currentTimeMillis() / 1000).toInt(),
                                 name = caseName,
                                 spreadsheetId = spreadsheetId,
                                 folderId = folderId,
-                                lastModifiedTime = System.currentTimeMillis()
+                                lastModifiedTime = System.currentTimeMillis(),
+                                caseNumber = caseNumber,
+                                caseSection = caseSection,
+                                court = caseJudge
                             )
                             val registryId = googleApiService.getOrCreateCaseRegistrySpreadsheetId(folderId)
                             val success = googleApiService.addCaseToRegistry(registryId, newCase)
