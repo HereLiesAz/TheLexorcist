@@ -59,10 +59,10 @@ import com.hereliesaz.aznavrail.AzButton
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import com.hereliesaz.lexorcist.viewmodel.ScriptBuilderViewModel
 import com.hereliesaz.lexorcist.viewmodel.ExtrasViewModel // Added import
-import org.burnoutcrew.composereorderable.ItemPosition
-import org.burnoutcrew.composereorderable.ReorderableItem
-import org.burnoutcrew.composereorderable.rememberReorderableLazyListState
-import org.burnoutcrew.composereorderable.reorderable
+import org.burnoutcrew.reorderable.ItemPosition
+import org.burnoutcrew.reorderable.ReorderableItem
+import org.burnoutcrew.reorderable.rememberReorderableLazyListState
+import org.burnoutcrew.reorderable.reorderable
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
