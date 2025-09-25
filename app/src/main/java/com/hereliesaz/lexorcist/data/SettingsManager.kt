@@ -2,6 +2,7 @@ package com.hereliesaz.lexorcist.data
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.core.content.edit
 import com.hereliesaz.lexorcist.R
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -34,7 +35,7 @@ class SettingsManager
         private val keyAuthorEmail = "author_email" // Added key
 
         fun saveSelectedCloudProvider(provider: String) {
-            sharedPreferences.edit().putString(keyCloudProvider, provider).apply()
+            sharedPreferences.edit {putString(keyCloudProvider, provider)}
         }
 
         fun getSelectedCloudProvider(): String {
@@ -42,19 +43,19 @@ class SettingsManager
         }
 
         fun saveStorageLocation(uri: String) {
-            sharedPreferences.edit().putString(keyStorageLocation, uri).apply()
+            sharedPreferences.edit {putString(keyStorageLocation, uri)}
         }
 
         fun getStorageLocation(): String? = sharedPreferences.getString(keyStorageLocation, null)
 
         fun saveScript(script: String) {
-            sharedPreferences.edit().putString(keyUserScript, script).apply()
+            sharedPreferences.edit {putString(keyUserScript, script)}
         }
 
         fun getScript(): String = sharedPreferences.getString(keyUserScript, "") ?: ""
 
         fun saveTheme(theme: String) {
-            sharedPreferences.edit().putString(context.getString(R.string.settings_key_theme), theme).apply()
+            sharedPreferences.edit {putString(context.getString(R.string.settings_key_theme), theme)}
         }
 
         fun getTheme(): String {
@@ -63,7 +64,7 @@ class SettingsManager
         }
 
         fun saveExportFormat(format: String) {
-            sharedPreferences.edit().putString(context.getString(R.string.settings_key_export_format), format).apply()
+            sharedPreferences.edit {putString(context.getString(R.string.settings_key_export_format), format)}
         }
 
         fun getExportFormat(): String {
@@ -72,7 +73,7 @@ class SettingsManager
         }
 
         fun saveCaseFolderPath(path: String) {
-            sharedPreferences.edit().putString("case_folder_path", path).apply()
+            sharedPreferences.edit {putString("case_folder_path", path)}
         }
 
         fun getCaseFolderPath(): String? {
@@ -80,7 +81,7 @@ class SettingsManager
         }
 
         fun saveCloudSyncEnabled(enabled: Boolean) {
-            sharedPreferences.edit().putBoolean("cloud_sync_enabled", enabled).apply()
+            sharedPreferences.edit {putBoolean("cloud_sync_enabled", enabled)}
         }
 
         fun getCloudSyncEnabled(): Boolean {
@@ -88,7 +89,7 @@ class SettingsManager
         }
 
         fun saveLanguage(language: String) {
-            sharedPreferences.edit().putString("language", language).apply()
+            sharedPreferences.edit {putString("language", language)}
         }
 
         fun getLanguage(): String {
@@ -97,7 +98,7 @@ class SettingsManager
 
         // Added methods for transcription service
         fun saveTranscriptionService(service: String) {
-            sharedPreferences.edit().putString(keyTranscriptionService, service).apply()
+            sharedPreferences.edit {putString(keyTranscriptionService, service)}
         }
 
         fun getTranscriptionService(): String {
@@ -105,7 +106,7 @@ class SettingsManager
         }
 
         fun saveTranscriptionLanguage(languageCode: String) {
-            sharedPreferences.edit().putString(keyTranscriptionLanguage, languageCode).apply()
+            sharedPreferences.edit {putString(keyTranscriptionLanguage, languageCode)}
         }
 
         fun getTranscriptionLanguage(): String {
@@ -114,7 +115,7 @@ class SettingsManager
 
         // Methods for author details
         fun saveAuthorName(name: String) {
-            sharedPreferences.edit().putString(keyAuthorName, name).apply()
+            sharedPreferences.edit {putString(keyAuthorName, name)}
         }
 
         fun getAuthorName(): String {
@@ -122,7 +123,7 @@ class SettingsManager
         }
 
         fun saveAuthorEmail(email: String) {
-            sharedPreferences.edit().putString(keyAuthorEmail, email).apply()
+            sharedPreferences.edit {putString(keyAuthorEmail, email)}
         }
 
         fun getAuthorEmail(): String {

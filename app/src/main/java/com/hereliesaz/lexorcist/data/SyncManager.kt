@@ -2,6 +2,7 @@ package com.hereliesaz.lexorcist.data
 
 import android.content.Context
 import android.net.Uri
+import androidx.core.net.toUri
 import com.hereliesaz.lexorcist.utils.Result
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -19,7 +20,7 @@ class SyncManager @Inject constructor(
     private val storageDir: File by lazy {
         val customLocation = settingsManager.getStorageLocation()
         val dir = if (customLocation != null) {
-            File(Uri.parse(customLocation).path!!)
+            File(customLocation.toUri().path!!)
         } else {
             context.getExternalFilesDir(null) ?: context.filesDir
         }

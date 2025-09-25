@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import android.graphics.pdf.PdfDocument
 import android.provider.MediaStore
+import androidx.core.content.edit
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
@@ -53,6 +54,7 @@ constructor(
     private val ocrProcessingService: com.hereliesaz.lexorcist.service.OcrProcessingService,
     private val transcriptionService: com.hereliesaz.lexorcist.service.TranscriptionService,
     private val workManager: androidx.work.WorkManager,
+    private val activeScriptRepository: com.hereliesaz.lexorcist.data.ActiveScriptRepository,
     private val logService: com.hereliesaz.lexorcist.service.LogService,
     private val storageService: com.hereliesaz.lexorcist.data.StorageService,
     private val globalLoadingState: com.hereliesaz.lexorcist.service.GlobalLoadingState,
@@ -216,6 +218,17 @@ constructor(
                 }
             }
         }
+
+        viewModelScope.launch {
+            val lastSelectedCaseId = sharedPref.getString("last_selected_case_id", null)
+            if (lastSelectedCaseId != null) {
+                val allCases = caseRepository.cases.first()
+                val lastSelectedCase = allCases.find { it.spreadsheetId == lastSelectedCaseId }
+                if (lastSelectedCase != null) {
+                    selectCase(lastSelectedCase)
+                }
+            }
+        }
     }
 
     fun updateExhibit(exhibit: com.hereliesaz.lexorcist.data.Exhibit) {
@@ -289,7 +302,7 @@ constructor(
 
     fun setThemeMode(themeMode: ThemeMode) {
         _themeMode.value = themeMode
-        sharedPref.edit().putString("theme_mode", themeMode.name).apply()
+        sharedPref.edit {putString("theme_mode", themeMode.name)}
     }
 
     private fun loadThemeModePreference() {
@@ -444,6 +457,11 @@ constructor(
                 _logMessages.value = emptyList()
 
                 caseRepository.selectCase(case)
+                if (case != null) {
+                    sharedPref.edit { putString("last_selected_case_id", case.spreadsheetId) }
+                } else {
+                    sharedPref.edit { remove("last_selected_case_id") }
+                }
                 Log.d("CaseViewModel", "IMMEDIATELY AFTER caseRepository.selectCase, ViewModel's _vmSelectedCase.value is: ${_vmSelectedCase.value?.name ?: "null"}")
 
                 if (case != null) {
@@ -558,11 +576,11 @@ constructor(
 
     private fun saveCaseInfoToSharedPrefs() {
         sharedPref
-            .edit()
-            .putString("plaintiffs", _plaintiffs.value)
-            .putString("defendants", _defendants.value)
-            .putString("court", _court.value)
-            .apply()
+            .edit {
+                putString("plaintiffs", _plaintiffs.value)
+                .putString("defendants", _defendants.value)
+                .putString("court", _court.value)
+            }
     }
 
     fun archiveCaseWithRepository(case: Case) {
@@ -593,7 +611,7 @@ constructor(
             try {
                 caseRepository.clearCache()
                 clearCaseData()
-                sharedPref.edit().clear().apply()
+                sharedPref.edit {clear()}
                 loadThemeModePreference()
             } finally {
                 globalLoadingState.popLoading()
@@ -601,20 +619,25 @@ constructor(
         }
     }
 
-    fun updateEvidence(evidence: com.hereliesaz.lexorcist.data.Evidence) {
+    fun rerunScriptOnEvidence(evidence: com.hereliesaz.lexorcist.data.Evidence) {
         viewModelScope.launch {
             globalLoadingState.pushLoading()
             try {
-                evidenceRepository.updateEvidence(evidence)
-                val script = settingsManager.getScript()
-                val result = scriptRunner.runScript(script, evidence)
-                if (result is Result.Success) {
-                    val currentTagsInEvidence: List<String> = evidence.tags
-                    val newTagsFromScript: List<String> = result.data.tags // Corrected: result.data.tags
-                    val combinedTags: List<String> = currentTagsInEvidence + newTagsFromScript
-                    val updatedEvidence = evidence.copy(tags = combinedTags) // Corrected: combinedTags
-                    evidenceRepository.updateEvidence(updatedEvidence)
+                val activeScripts = activeScriptRepository.getActiveScripts()
+                val allScripts = scriptBuilderViewModel.allScripts.value
+                val scriptsToRun = allScripts.filter { activeScripts.contains(it.id) }
+
+                var updatedEvidence = evidence
+                scriptsToRun.forEach { script ->
+                    val result = scriptRunner.runScript(script.content, updatedEvidence)
+                    if (result is Result.Success) {
+                        val currentTagsInEvidence: List<String> = updatedEvidence.tags
+                        val newTagsFromScript: List<String> = result.data.tags
+                        val combinedTags: List<String> = currentTagsInEvidence + newTagsFromScript
+                        updatedEvidence = updatedEvidence.copy(tags = combinedTags)
+                    }
                 }
+                evidenceRepository.updateEvidence(updatedEvidence)
             } finally {
                 globalLoadingState.popLoading()
             }
@@ -722,6 +745,7 @@ constructor(
                     context = applicationContext,
                     caseId = caseToUse.id.toLong(),
                     spreadsheetId = caseToUse.spreadsheetId,
+                    activeScriptIds = activeScriptRepository.getActiveScripts(),
                 ) { state -> _processingState.value = state } // Pass the lambda to update ViewModel's state
 
                 message?.let {
@@ -1090,10 +1114,12 @@ constructor(
                     evidenceToHash.forEach { evidence ->
                         try {
                             // Parsing URI and getting hash can be slow, so it's good this is in a coroutine.
-                            val hash = com.hereliesaz.lexorcist.utils.HashingUtils.getHash(applicationContext, android.net.Uri.parse(evidence.mediaUri))
-                            if (hash != null) {
-                                // This update should trigger the flow to emit a new list.
-                                evidenceRepository.updateEvidence(evidence.copy(fileHash = hash))
+                            evidence.mediaUri?.toUri()?.let { uri ->
+                                val hash = com.hereliesaz.lexorcist.utils.HashingUtils.getHash(applicationContext, uri)
+                                if (hash != null) {
+                                    // This update should trigger the flow to emit a new list.
+                                    evidenceRepository.updateEvidence(evidence.copy(fileHash = hash))
+                                }
                             }
                         } catch (e: SecurityException) {
                             Log.e("Cleanup", "Permission error hashing ${evidence.mediaUri}, may need to re-grant access.", e)
@@ -1173,12 +1199,14 @@ constructor(
 
             try {
                 group.evidence.forEach { evidence ->
-                    val bitmap = MediaStore.Images.Media.getBitmap(applicationContext.contentResolver, android.net.Uri.parse(evidence.mediaUri))
-                    val pageInfo = PdfDocument.PageInfo.Builder(bitmap.width, bitmap.height, 1).create()
-                    val page = pdfDocument.startPage(pageInfo)
-                    page.canvas.drawBitmap(bitmap, 0f, 0f, null)
-                    pdfDocument.finishPage(page)
-                    bitmap.recycle()
+                    evidence.mediaUri?.toUri()?.let { uri ->
+                        val bitmap = MediaStore.Images.Media.getBitmap(applicationContext.contentResolver, uri)
+                        val pageInfo = PdfDocument.PageInfo.Builder(bitmap.width, bitmap.height, 1).create()
+                        val page = pdfDocument.startPage(pageInfo)
+                        page.canvas.drawBitmap(bitmap, 0f, 0f, null)
+                        pdfDocument.finishPage(page)
+                        bitmap.recycle()
+                    }
                 }
 
                 pdfDocument.writeTo(FileOutputStream(pdfFile))

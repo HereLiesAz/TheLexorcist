@@ -52,9 +52,11 @@ import com.hereliesaz.lexorcist.ui.SettingsScreen
 import com.hereliesaz.lexorcist.ui.TemplatesScreen
 import com.hereliesaz.lexorcist.ui.PhotoGroupScreen
 // import com.hereliesaz.lexorcist.ui.ShareAddonScreen // Removed import
+import com.hereliesaz.lexorcist.ui.ExhibitsScreen
 import com.hereliesaz.lexorcist.ui.TimelineScreen
 import com.hereliesaz.lexorcist.viewmodel.AddonsBrowserViewModel // Corrected import
 import com.hereliesaz.lexorcist.viewmodel.AuthViewModel
+import com.hereliesaz.lexorcist.viewmodel.ExhibitsViewModel
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 // import com.hereliesaz.lexorcist.viewmodel.ExtrasViewModel // ExtrasViewModel is used by hiltViewModel() directly
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
@@ -79,6 +81,8 @@ fun MainScreen(
     val caseSpecificErrorMessage by caseViewModel.errorMessage.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     var showCreateCaseDialog by remember { mutableStateOf(false) }
+    val scriptBuilderViewModel: ScriptBuilderViewModel = hiltViewModel()
+    caseViewModel.setScriptBuilderViewModel(scriptBuilderViewModel)
     val isLoading by mainViewModel.isLoading.collectAsState()
 
     LaunchedEffect(caseSpecificErrorMessage) {
@@ -219,6 +223,9 @@ fun MainScreen(
                                     }
                                     composable("data_review") {
                                         ReviewScreen(caseViewModel = caseViewModel) // Updated
+                                    }
+                                    composable("exhibits") {
+                                        ExhibitsScreen()
                                     }
                                     composable("settings") { SettingsScreen(caseViewModel = caseViewModel, mainViewModel = mainViewModel) }
                                     composable("evidence_details/{evidenceId}") { backStackEntry ->
