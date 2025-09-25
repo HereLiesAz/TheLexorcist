@@ -11,7 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items // Keep this for existing LazyColumn usages
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -25,7 +25,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenuAnchorType // Added import
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -35,7 +35,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
-import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.PrimaryTabRow // Changed from TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -55,18 +55,12 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.data.Allegation
-import com.hereliesaz.lexorcist.data.AllegationElement
-import com.hereliesaz.lexorcist.data.AllegationProvider
 import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.data.Exhibit
 import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
 import com.hereliesaz.lexorcist.viewmodel.AllegationsViewModel
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import java.util.Locale
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.width
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.sp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -86,7 +80,7 @@ fun ReviewScreen(
 
     LaunchedEffect(selectedCase) {
         selectedCase?.let {
-            allegationsViewModel.loadAllegations(it.id.toString()) // Assuming Allegation.id is Int and needs toString()
+            allegationsViewModel.loadAllegations(it.id.toString())
             caseViewModel.loadExhibits()
         }
     }
@@ -102,6 +96,8 @@ fun ReviewScreen(
     var exhibitToEdit by remember { mutableStateOf<Exhibit?>(null) }
     var showDeleteExhibitDialog by remember { mutableStateOf(false) }
     var exhibitToDelete by remember { mutableStateOf<Exhibit?>(null) }
+    var showReadinessReportDialog by remember { mutableStateOf(false) }
+    var readinessReport by remember { mutableStateOf("") }
 
     Scaffold(
         topBar = {
@@ -161,7 +157,7 @@ fun ReviewScreen(
                     Text(stringResource(R.string.no_evidence_for_case).uppercase(Locale.getDefault()))
                 }
             } else {
-                PrimaryTabRow(selectedTabIndex = selectedTab) {
+                PrimaryTabRow(selectedTabIndex = selectedTab) { // Changed from TabRow
                     Tab(
                         selected = selectedTab == 0,
                         onClick = { selectedTab = 0 },
@@ -225,40 +221,6 @@ fun ReviewScreen(
                         }
                     }
                     Spacer(modifier = Modifier.height(8.dp))
-                    val currentSelectedAllegation = selectedAllegation
-                    if (currentSelectedAllegation != null) {
-                        Column(modifier = Modifier.weight(1f).padding(start = 8.dp)) {
-                            Text("Elements for ${currentSelectedAllegation.text}", style = MaterialTheme.typography.titleMedium)
-                            // Assuming currentSelectedAllegation.elements is List<AllegationElement>
-                            /*
-                            currentSelectedAllegation.elements?.forEach { element: AllegationElement -> // Explicit type
-                                AllegationElementItem(
-                                    element = element,
-                                    onAssignEvidence = {
-                                        if (selectedEvidence.isNotEmpty()) {
-                                            caseViewModel.assignEvidenceToElement(
-                                                currentSelectedAllegation.id.toString(), // Ensure ID is string
-                                                element.name, // Assuming AllegationElement has .name
-                                                selectedEvidence.map { it.id } // Assuming Evidence has .id
-                                            )
-                                        }
-                                    }
-                                )
-                            }
-                            */
-                            Text("Suggested Evidence", style = MaterialTheme.typography.titleMedium)
-                            /*
-                            currentSelectedAllegation.evidenceSuggestions?.forEach { suggestion: String -> // Explicit type
-                                Text(suggestion)
-                            }
-                            */
-                            CaseStrengthMeter(
-                                evidenceList = evidenceList,
-                                allegation = currentSelectedAllegation
-                            )
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
                     LazyColumn(modifier = Modifier.weight(1f)) {
                         items(evidenceList) { evidence ->
                             EvidenceItem(
@@ -294,7 +256,7 @@ fun ReviewScreen(
                     if (selectedAllegation != null && selectedEvidence.isNotEmpty()) {
                         LexorcistOutlinedButton(
                             onClick = {
-                                caseViewModel.assignAllegationToSelectedEvidence(selectedAllegation!!.id.toString()) // Ensure ID is string
+                                caseViewModel.assignAllegationToSelectedEvidence(selectedAllegation!!.id)
                             },
                             text = stringResource(R.string.assign_to_allegation),
                             modifier = Modifier.padding(start = 8.dp)
@@ -320,13 +282,23 @@ fun ReviewScreen(
                         modifier = Modifier.padding(start = 8.dp)
                     )
                     LexorcistOutlinedButton(
-                        onClick = { caseViewModel.generateReadinessReport() },
+                        onClick = {
+                            readinessReport = caseViewModel.generateReadinessReport()
+                            showReadinessReportDialog = true
+                        },
                         text = "Readiness Report",
                         modifier = Modifier.padding(start = 8.dp)
                     )
                 }
             }
         }
+    }
+
+    if (showReadinessReportDialog) {
+        ReadinessReportDialog(
+            report = readinessReport,
+            onDismiss = { showReadinessReportDialog = false }
+        )
     }
 
     if (showPackageFilesDialog) {
@@ -355,7 +327,7 @@ fun ReviewScreen(
             evidence = evidenceToEdit!!,
             onDismiss = { showEditDialog = false },
             onSave = { updatedEvidence ->
-                caseViewModel.updateEvidenceInSheet(updatedEvidence) // Assuming this should be updateEvidenceInSheet
+                caseViewModel.updateEvidence(updatedEvidence)
                 showEditDialog = false
             },
         )
@@ -409,57 +381,6 @@ fun ReviewScreen(
                 }
             }
         )
-    }
-}
-
-@Composable
-fun CaseStrengthMeter(
-    evidenceList: List<Evidence>,
-    allegation: Allegation
-) {
-    Column {
-        Text("Case Strength", style = MaterialTheme.typography.titleMedium)
-        /*
-        allegation.elements?.forEach { element: AllegationElement -> // Explicit type
-            val evidenceCount = evidenceList.count { it.allegationElementName == element.name } // Assuming AllegationElement has .name
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(element.name, modifier = Modifier.weight(1f)) // Assuming AllegationElement has .name
-                Row(modifier = Modifier.weight(1f)) {
-                    repeat(evidenceCount) {
-                        Box(
-                            modifier = Modifier
-                                .height(20.dp)
-                                .width(20.dp)
-                                .background(Color.Green)
-                                .padding(2.dp)
-                        )
-                    }
-                }
-            }
-        }
-        */
-    }
-}
-
-@Composable
-fun AllegationElementItem(
-    element: AllegationElement,
-    onAssignEvidence: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .padding(vertical = 4.dp)
-            .fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        shape = MaterialTheme.shapes.medium
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(element.name, style = MaterialTheme.typography.titleMedium) // Assuming AllegationElement has .name
-            Text(element.description, style = MaterialTheme.typography.bodyMedium)
-            Button(onClick = onAssignEvidence) {
-                Text("Assign Selected Evidence")
-            }
-        }
     }
 }
 
@@ -621,7 +542,7 @@ fun EditEvidenceDialog(
                         trailingIcon = {
                             ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
                         },
-                        modifier = Modifier.menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = true).fillMaxWidth(),
+                        modifier = Modifier.menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = true).fillMaxWidth(), // This line was already correct
                         textStyle = MaterialTheme.typography.bodyLarge.copy(textAlign = TextAlign.End),
                     )
                     ExposedDropdownMenu(
@@ -809,12 +730,8 @@ fun PackageFilesDialog(
     val case by caseViewModel.selectedCase.collectAsState()
     val files = remember(case) {
         case?.let {
-            val caseDir = java.io.File(caseViewModel.storageLocation.value, it.spreadsheetId) // Assuming spreadsheetId as folder identifier
-            if (caseDir.exists() && caseDir.isDirectory) {
-                 caseDir.walk().filter { it.isFile }.toList()
-            } else {
-                emptyList()
-            }
+            val caseDir = java.io.File(caseViewModel.storageLocation.value, it.spreadsheetId)
+            caseDir.walk().filter { it.isFile }.toList()
         } ?: emptyList()
     }
     var selectedFiles by remember { mutableStateOf<List<String>>(emptyList()) }
@@ -883,6 +800,29 @@ fun PackageFilesDialog(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+fun ReadinessReportDialog(
+    report: String,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Readiness Report") },
+        text = {
+            LazyColumn {
+                item {
+                    Text(report)
+                }
+            }
+        },
+        confirmButton = {
+            Button(onClick = onDismiss) {
+                Text("Close")
+            }
+        }
+    )
+}
+
+@Composable
 fun GenerateDocumentDialog(
     caseViewModel: CaseViewModel,
     onDismiss: () -> Unit
@@ -908,7 +848,7 @@ fun GenerateDocumentDialog(
                         onValueChange = {},
                         readOnly = true,
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = exhibitExpanded) },
-                        modifier = Modifier.menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryEditable, enabled = true).fillMaxWidth() // Added fillMaxWidth
+                        modifier = Modifier.menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryEditable, enabled = true)
                     )
                     ExposedDropdownMenu(
                         expanded = exhibitExpanded,
@@ -937,7 +877,7 @@ fun GenerateDocumentDialog(
                         onValueChange = {},
                         readOnly = true,
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = templateExpanded) },
-                        modifier = Modifier.menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryEditable, enabled = true).fillMaxWidth() // Added fillMaxWidth
+                        modifier = Modifier.menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryEditable, enabled = true)
                     )
                     ExposedDropdownMenu(
                         expanded = templateExpanded,

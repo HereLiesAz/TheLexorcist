@@ -873,9 +873,11 @@ class GoogleApiService @Inject constructor(
                     values.mapNotNull { row ->
                         try {
                             com.hereliesaz.lexorcist.data.Allegation(
-                                id = row[0].toString().toInt(),
-                                spreadsheetId = spreadsheetId,
+                                id = row[0].toString(),
                                 text = row[2].toString(),
+                                description = "",
+                                elements = emptyList(),
+                                evidenceSuggestions = emptyList()
                             )
                         } catch (e: Exception) {
                             null // Skip row if parsing fails
@@ -917,7 +919,6 @@ class GoogleApiService @Inject constructor(
                                 sourceDocument = row[4].toString(),
                                 documentDate = row[5].toString().toLong(),
                                 allegationId = row.getOrNull(6)?.toString(),
-                                allegationElementName = null,
                                 category = row.getOrNull(7)?.toString() ?: "",
                                 tags = row.getOrNull(8)?.toString()?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() } ?: emptyList(),
                                 commentary = row.getOrNull(9)?.toString(),
@@ -956,7 +957,7 @@ class GoogleApiService @Inject constructor(
                             evidence.timestamp.toString(),
                             evidence.sourceDocument,
                             evidence.documentDate.toString(),
-                            evidence.allegationId?.toString() ?: "",
+                            evidence.allegationId ?: "",
                             evidence.category,
                             evidence.tags.joinToString(","),
                             evidence.commentary ?: "",
@@ -1034,7 +1035,7 @@ class GoogleApiService @Inject constructor(
                         evidence.timestamp.toString(),
                         evidence.sourceDocument,
                         evidence.documentDate.toString(),
-                        evidence.allegationId?.toString() ?: "",
+                        evidence.allegationId ?: "",
                         evidence.category,
                         evidence.tags.joinToString(","),
                         evidence.commentary ?: "",

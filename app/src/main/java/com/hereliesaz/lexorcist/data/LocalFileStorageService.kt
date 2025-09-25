@@ -121,9 +121,6 @@ class LocalFileStorageService @Inject constructor(
         }
     }
 
-    private fun getIntCellValueSafe(cell: Cell?): Int? {
-        return getNumericCellValueSafe(cell)?.toInt()
-    }
 
     private fun getLongCellValueSafe(cell: Cell?): Long? {
         return getNumericCellValueSafe(cell)?.toLong()
@@ -310,7 +307,7 @@ class LocalFileStorageService @Inject constructor(
             val documentDate = getLongCellValueSafe(documentDateCell) ?: 0L
 
             val allegationIdCell = row.getCell(9) // Corrected index for Evidence AllegationID
-            val allegationIdInt = getIntCellValueSafe(allegationIdCell)
+            val allegationId = allegationIdCell?.stringCellValue
 
             val tagsCell = row.getCell(11) // Corrected index for Evidence Tags
             val tags = (tagsCell?.stringCellValue ?: "").split(",").filter { it.isNotBlank() }
@@ -337,8 +334,7 @@ class LocalFileStorageService @Inject constructor(
                 timestamp = timestamp,
                 sourceDocument = row.getCell(7)?.stringCellValue ?: "", // Corrected index for Evidence SourceDocument
                 documentDate = documentDate,
-                allegationId = allegationIdInt?.toString(), // Changed to String?
-                allegationElementName = null, // Added parameter
+                allegationId = allegationId,
                 category = row.getCell(10)?.stringCellValue ?: "", // Corrected index for Evidence Category
                 tags = tags,
                 commentary = row.getCell(12)?.stringCellValue, // Corrected index for Evidence Commentary
@@ -368,22 +364,13 @@ class LocalFileStorageService @Inject constructor(
             createCell(6).setCellValue(newEvidence.timestamp.toDouble())
             createCell(7).setCellValue(newEvidence.sourceDocument)
             createCell(8).setCellValue(newEvidence.documentDate.toDouble())
-            newEvidence.allegationId?.let { 
-                // Ensure we write a string if it's an ID, or handle numeric if your sheet expects numbers
-                val allegationIdString = it // Assuming it's already a string from Evidence data class
-                try {
-                    createCell(9).setCellValue(allegationIdString.toDouble()) // If sheet stores numbers
-                } catch (e: NumberFormatException) {
-                    createCell(9).setCellValue(allegationIdString) // Fallback to string if not a number
-                }
-            } ?: createCell(9).setBlank()
+            createCell(9).setCellValue(newEvidence.allegationId ?: "")
             createCell(10).setCellValue(newEvidence.category)
             createCell(11).setCellValue(newEvidence.tags.joinToString(","))
             createCell(12).setCellValue(newEvidence.commentary ?: "")
             createCell(13).setCellValue(newEvidence.linkedEvidenceIds.joinToString(","))
             createCell(14).setCellValue(newEvidence.parentVideoId ?: "")
             createCell(15).setCellValue(gson.toJson(newEvidence.entities))
-            // Note: allegationElementName is not written to the sheet in this implementation
         }
         newEvidence
     }
@@ -398,22 +385,13 @@ class LocalFileStorageService @Inject constructor(
         (row.getCell(6) ?: row.createCell(6)).setCellValue(evidence.timestamp.toDouble())
         (row.getCell(7) ?: row.createCell(7)).setCellValue(evidence.sourceDocument)
         (row.getCell(8) ?: row.createCell(8)).setCellValue(evidence.documentDate.toDouble())
-        val allegationCell = row.getCell(9) ?: row.createCell(9)
-        evidence.allegationId?.let { 
-            val allegationIdString = it // Assuming it's already a string
-            try {
-                 allegationCell.setCellValue(allegationIdString.toDouble()) // If sheet stores numbers
-            } catch (e: NumberFormatException) {
-                allegationCell.setCellValue(allegationIdString) // Fallback to string
-            }
-        } ?: allegationCell.setBlank()
+        (row.getCell(9) ?: row.createCell(9)).setCellValue(evidence.allegationId ?: "")
         (row.getCell(10) ?: row.createCell(10)).setCellValue(evidence.category)
         (row.getCell(11) ?: row.createCell(11)).setCellValue(evidence.tags.joinToString(","))
         (row.getCell(12) ?: row.createCell(12)).setCellValue(evidence.commentary ?: "")
         (row.getCell(13) ?: row.createCell(13)).setCellValue(evidence.linkedEvidenceIds.joinToString(","))
         (row.getCell(14) ?: row.createCell(14)).setCellValue(evidence.parentVideoId ?: "")
         (row.getCell(15) ?: row.createCell(15)).setCellValue(gson.toJson(evidence.entities))
-        // Note: allegationElementName is not written to the sheet in this implementation
     }
 
     override suspend fun deleteEvidence(caseSpreadsheetId: String, evidence: Evidence): Result<Unit> = execute { workbook ->
@@ -448,13 +426,8 @@ class LocalFileStorageService @Inject constructor(
         (1..sheet.lastRowNum).mapNotNull { i ->
             val row = sheet.getRow(i) ?: return@mapNotNull null
             if (row.getCell(1)?.stringCellValue != caseSpreadsheetId) return@mapNotNull null
-            val allegationId = getIntCellValueSafe(row.getCell(0)) ?: 0
-            val masterAllegation = AllegationProvider.getAllegationById(allegationId)
-            masterAllegation?.copy(
-                spreadsheetId = caseSpreadsheetId,
-                text = row.getCell(2)?.stringCellValue ?: masterAllegation.text
-            ) ?: Allegation(
-                id = allegationId,
+            Allegation(
+                id = getIntCellValueSafe(row.getCell(0)) ?: 0,
                 spreadsheetId = caseSpreadsheetId,
                 text = row.getCell(2)?.stringCellValue ?: ""
             )

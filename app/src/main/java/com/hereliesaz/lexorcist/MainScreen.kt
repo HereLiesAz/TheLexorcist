@@ -189,7 +189,7 @@ fun MainScreen(
                                         }
                                     }
                                     composable("exhibits") {
-                                        com.hereliesaz.lexorcist.ui.ExhibitsScreen()
+                                        ExhibitsScreen()
                                     }
                                     composable("cases") { CasesScreen(caseViewModel = caseViewModel, navController = navController, mainViewModel = mainViewModel) }
                                     composable("evidence") {
