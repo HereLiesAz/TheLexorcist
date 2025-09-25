@@ -42,7 +42,7 @@ class VideoProcessingWorker @AssistedInject constructor(
                 caseId = caseId,
                 caseName = caseName,
                 spreadsheetId = spreadsheetId,
-                // Removed googleApiService from the call
+                activeScriptIds = emptyList(), // Added this line
             ) { percent, message ->
                 val progressData = Data.Builder()
                     .putFloat(PROGRESS_PERCENT, percent)

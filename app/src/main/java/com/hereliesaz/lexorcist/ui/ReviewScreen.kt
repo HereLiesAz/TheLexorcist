@@ -230,6 +230,7 @@ fun ReviewScreen(
                         Column(modifier = Modifier.weight(1f).padding(start = 8.dp)) {
                             Text("Elements for ${currentSelectedAllegation.text}", style = MaterialTheme.typography.titleMedium)
                             // Assuming currentSelectedAllegation.elements is List<AllegationElement>
+                            /*
                             currentSelectedAllegation.elements?.forEach { element: AllegationElement -> // Explicit type
                                 AllegationElementItem(
                                     element = element,
@@ -244,10 +245,13 @@ fun ReviewScreen(
                                     }
                                 )
                             }
+                            */
                             Text("Suggested Evidence", style = MaterialTheme.typography.titleMedium)
+                            /*
                             currentSelectedAllegation.evidenceSuggestions?.forEach { suggestion: String -> // Explicit type
                                 Text(suggestion)
                             }
+                            */
                             CaseStrengthMeter(
                                 evidenceList = evidenceList,
                                 allegation = currentSelectedAllegation
@@ -415,6 +419,7 @@ fun CaseStrengthMeter(
 ) {
     Column {
         Text("Case Strength", style = MaterialTheme.typography.titleMedium)
+        /*
         allegation.elements?.forEach { element: AllegationElement -> // Explicit type
             val evidenceCount = evidenceList.count { it.allegationElementName == element.name } // Assuming AllegationElement has .name
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -432,6 +437,7 @@ fun CaseStrengthMeter(
                 }
             }
         }
+        */
     }
 }
 
