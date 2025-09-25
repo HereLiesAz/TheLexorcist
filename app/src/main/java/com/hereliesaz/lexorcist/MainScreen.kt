@@ -82,7 +82,7 @@ fun MainScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     var showCreateCaseDialog by remember { mutableStateOf(false) }
     val scriptBuilderViewModel: ScriptBuilderViewModel = hiltViewModel()
-    caseViewModel.setScriptBuilderViewModel(scriptBuilderViewModel)
+    // caseViewModel.setScriptBuilderViewModel(scriptBuilderViewModel) // Removed this line
     val isLoading by mainViewModel.isLoading.collectAsState()
 
     LaunchedEffect(caseSpecificErrorMessage) {

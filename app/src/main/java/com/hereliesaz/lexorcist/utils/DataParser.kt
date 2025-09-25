@@ -156,7 +156,8 @@ object DataParser {
                     spreadsheetId = spreadsheetId,
                     // Convert Int to Long as per Evidence data class
                     caseId = caseId.toLong(),
-                    allegationId = linkedAllegation?.id,
+                    allegationId = linkedAllegation?.spreadsheetId, // Changed from linkedAllegation?.id
+                    allegationElementName = null, // Added missing parameter
                     content = sentence,
                     formattedContent = null,
                     mediaUri = null,
@@ -165,8 +166,7 @@ object DataParser {
                     documentDate = date,
                     category = category,
                     tags = emptyList(),
-                    // Added missing 'type' parameter
-                    type = "",
+                    type = "", // This was previously marked as Added missing 'type' parameter
                 ),
             )
         }
