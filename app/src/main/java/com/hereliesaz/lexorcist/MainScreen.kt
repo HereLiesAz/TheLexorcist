@@ -55,6 +55,7 @@ import com.hereliesaz.lexorcist.ui.PhotoGroupScreen
 import com.hereliesaz.lexorcist.ui.ExhibitsScreen
 import com.hereliesaz.lexorcist.ui.TimelineScreen
 import com.hereliesaz.lexorcist.viewmodel.AddonsBrowserViewModel // Corrected import
+import com.hereliesaz.lexorcist.viewmodel.AllegationsViewModel
 import com.hereliesaz.lexorcist.viewmodel.AuthViewModel
 import com.hereliesaz.lexorcist.viewmodel.ExhibitsViewModel
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
@@ -189,7 +190,7 @@ fun MainScreen(
                                         }
                                     }
                                     composable("exhibits") {
-                                        ExhibitsScreen()
+                                        ExhibitsScreen(caseViewModel = caseViewModel, allegationsViewModel = hiltViewModel(), navController = navController)
                                     }
                                     composable("cases") { CasesScreen(caseViewModel = caseViewModel, navController = navController, mainViewModel = mainViewModel) }
                                     composable("evidence") {
@@ -214,16 +215,13 @@ fun MainScreen(
                                         TemplatesScreen(hiltViewModel<AddonsBrowserViewModel>())
                                     }
                                     composable("timeline") {
-                                        TimelineScreen()
+                                        TimelineScreen(caseViewModel = caseViewModel, navController = navController)
                                     }
                                     composable("photo_group") {
                                         PhotoGroupScreen(navController = navController, mainViewModel = mainViewModel)
                                     }
                                     composable("data_review") {
-                                        ReviewScreen(caseViewModel = caseViewModel) // Updated
-                                    }
-                                    composable("exhibits") {
-                                        ExhibitsScreen()
+                                        ReviewScreen(caseViewModel = caseViewModel, allegationsViewModel = hiltViewModel()) // Updated
                                     }
                                     composable("settings") { SettingsScreen(caseViewModel = caseViewModel, mainViewModel = mainViewModel) }
                                     composable("evidence_details/{evidenceId}") { backStackEntry ->

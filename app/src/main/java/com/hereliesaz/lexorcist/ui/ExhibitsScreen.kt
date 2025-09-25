@@ -41,6 +41,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.data.Allegation
 import com.hereliesaz.lexorcist.data.AllegationElement
@@ -52,13 +53,13 @@ import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 @Composable
 fun ExhibitsScreen(
     caseViewModel: CaseViewModel = hiltViewModel(),
-    allegationsViewModel: AllegationsViewModel = hiltViewModel()
+    allegationsViewModel: AllegationsViewModel = hiltViewModel(),
+    navController: NavController
 ) {
     val evidenceList by caseViewModel.selectedCaseEvidenceList.collectAsState()
     val allegations by allegationsViewModel.allegations.collectAsState()
     val selectedAllegation by allegationsViewModel.selectedAllegation.collectAsState()
     val selectedEvidence by caseViewModel.selectedEvidence.collectAsState()
-    val exhibits by caseViewModel.exhibits.collectAsState()
     var showEditDialog by remember { mutableStateOf(false) }
     var evidenceToEdit by remember { mutableStateOf<Evidence?>(null) }
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
@@ -93,14 +94,10 @@ fun ExhibitsScreen(
                             element = element,
                             onAssignEvidence = {
                                 if (selectedEvidence.isNotEmpty()) {
-                                    caseViewModel.assignEvidenceToElement(selectedAllegation!!.id, element.name, selectedEvidence.map { it.id })
+                                    caseViewModel.assignEvidenceToElement(selectedAllegation!!.id.toString(), element.name, selectedEvidence.map { it.id })
                                 }
                             }
                         )
-                    }
-                    Text("Suggested Evidence", style = MaterialTheme.typography.titleMedium)
-                    selectedAllegation!!.evidenceSuggestions.forEach { suggestion ->
-                        Text(suggestion)
                     }
                     CaseStrengthMeter(
                         evidenceList = evidenceList,
@@ -113,9 +110,9 @@ fun ExhibitsScreen(
                     EvidenceItem(
                         evidence = evidence,
                         isSelected = selectedEvidence.any { it.id == evidence.id },
-                        allegationText = allegations.find { it.id == evidence.allegationId }?.text,
+                        allegationText = allegations.find { it.id.toString() == evidence.allegationId }?.text,
                         allegationElementName = evidence.allegationElementName,
-                        exhibitNames = exhibits.filter { it.evidenceIds.contains(evidence.id) }.joinToString { it.name },
+                        exhibitNames = caseViewModel.exhibits.value.filter { it.evidenceIds.contains(evidence.id) }.joinToString { it.name },
                         onClick = { caseViewModel.toggleEvidenceSelection(evidence.id) },
                         onEditClick = { 
                             evidenceToEdit = it

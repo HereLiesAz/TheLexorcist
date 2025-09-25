@@ -38,11 +38,10 @@ class AllegationsRepositoryImpl @Inject constructor(
         val mappedAllegations = allegationsSheet.mapIndexedNotNull { index, row ->
             if (row.size >= 3) {
                 Allegation(
-                    id = "sheet_${spreadsheetId}_${index}",
+                    id = index,
+                    spreadsheetId = spreadsheetId,
                     text = row[2].toString(),
-                    description = "",
-                    elements = emptyList(),
-                    evidenceSuggestions = emptyList()
+                    elements = emptyList()
                 )
             } else {
                 Log.w("AllegationsRepository", "Skipping row due to insufficient columns: $row")
