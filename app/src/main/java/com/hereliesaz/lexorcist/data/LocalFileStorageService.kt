@@ -56,7 +56,7 @@ class LocalFileStorageService @Inject constructor(
         private const val EXHIBITS_SHEET_NAME = "Exhibits"
 
         private val CASES_HEADER = listOf("ID", "Name", "Plaintiffs", "Defendants", "Court", "FolderID", "LastModified", "IsArchived")
-        private val EVIDENCE_HEADER = listOf("EvidenceID", "CaseID", "Type", "Content", "FormattedContent", "MediaUri", "Timestamp", "SourceDocument", "DocumentDate", "AllegationID", "Category", "Tags", "Commentary", "LinkedEvidenceIDs", "ParentVideoID", "Entities")
+        private val EVIDENCE_HEADER = listOf("EvidenceID", "CaseID", "Type", "Content", "FormattedContent", "MediaUri", "Timestamp", "SourceDocument", "DocumentDate", "AllegationID", "AllegationElementName", "Category", "Tags", "Commentary", "LinkedEvidenceIDs", "ParentVideoID", "Entities")
         private val ALLEGATIONS_HEADER = listOf("AllegationID", "CaseID", "Text")
         private val TRANSCRIPT_EDITS_HEADER = listOf("EditID", "EvidenceID", "Timestamp", "Reason", "NewContent")
         private val EXHIBITS_HEADER = listOf("ExhibitID", "CaseID", "Name", "Description", "EvidenceIDs")
@@ -121,6 +121,9 @@ class LocalFileStorageService @Inject constructor(
         }
     }
 
+    private fun getIntCellValueSafe(cell: Cell?): Int? {
+        return getNumericCellValueSafe(cell)?.toInt()
+    }
 
     private fun getLongCellValueSafe(cell: Cell?): Long? {
         return getNumericCellValueSafe(cell)?.toLong()
@@ -300,22 +303,24 @@ class LocalFileStorageService @Inject constructor(
             val idCell = row.getCell(0)
             val evidenceId = getIntCellValueSafe(idCell) ?: 0
 
-            val timestampCell = row.getCell(6) // Corrected index for Evidence Timestamp
+            val timestampCell = row.getCell(6)
             val timestamp = getLongCellValueSafe(timestampCell) ?: 0L
 
-            val documentDateCell = row.getCell(8) // Corrected index for Evidence DocumentDate
+            val documentDateCell = row.getCell(8)
             val documentDate = getLongCellValueSafe(documentDateCell) ?: 0L
 
-            val allegationIdCell = row.getCell(9) // Corrected index for Evidence AllegationID
+            val allegationIdCell = row.getCell(9)
             val allegationId = allegationIdCell?.stringCellValue
 
-            val tagsCell = row.getCell(11) // Corrected index for Evidence Tags
+            val allegationElementName = row.getCell(10)?.stringCellValue
+
+            val tagsCell = row.getCell(12)
             val tags = (tagsCell?.stringCellValue ?: "").split(",").filter { it.isNotBlank() }
 
-            val linkedIdsCell = row.getCell(13) // Corrected index for Evidence LinkedEvidenceIDs
+            val linkedIdsCell = row.getCell(14)
             val linkedIds = (linkedIdsCell?.stringCellValue ?: "").split(",").filter { it.isNotBlank() }.mapNotNull { it.toIntOrNull() }
 
-            val entitiesCell = row.getCell(15) // Corrected index for Evidence Entities
+            val entitiesCell = row.getCell(16)
             val entities: Map<String, List<String>> = gson.fromJson(
                 entitiesCell?.stringCellValue ?: "{}",
                 object : TypeToken<Map<String, List<String>>>() {}.type
@@ -325,21 +330,22 @@ class LocalFileStorageService @Inject constructor(
 
             Evidence(
                 id = evidenceId,
-                caseId = caseSpreadsheetId.hashCode().toLong(), // This seems to be a placeholder, consider if it should be from sheet
+                caseId = caseSpreadsheetId.hashCode().toLong(),
                 spreadsheetId = caseSpreadsheetId,
                 type = row.getCell(2)?.stringCellValue ?: "",
                 content = row.getCell(3)?.stringCellValue ?: "",
                 formattedContent = row.getCell(4)?.stringCellValue,
                 mediaUri = row.getCell(5)?.stringCellValue,
                 timestamp = timestamp,
-                sourceDocument = row.getCell(7)?.stringCellValue ?: "", // Corrected index for Evidence SourceDocument
+                sourceDocument = row.getCell(7)?.stringCellValue ?: "",
                 documentDate = documentDate,
                 allegationId = allegationId,
-                category = row.getCell(10)?.stringCellValue ?: "", // Corrected index for Evidence Category
+                allegationElementName = allegationElementName,
+                category = row.getCell(11)?.stringCellValue ?: "",
                 tags = tags,
-                commentary = row.getCell(12)?.stringCellValue, // Corrected index for Evidence Commentary
+                commentary = row.getCell(13)?.stringCellValue,
                 linkedEvidenceIds = linkedIds,
-                parentVideoId = row.getCell(14)?.stringCellValue, // Corrected index for Evidence ParentVideoID
+                parentVideoId = row.getCell(15)?.stringCellValue,
                 entities = entities,
                 transcriptEdits = transcriptEdits
             )
@@ -365,12 +371,13 @@ class LocalFileStorageService @Inject constructor(
             createCell(7).setCellValue(newEvidence.sourceDocument)
             createCell(8).setCellValue(newEvidence.documentDate.toDouble())
             createCell(9).setCellValue(newEvidence.allegationId ?: "")
-            createCell(10).setCellValue(newEvidence.category)
-            createCell(11).setCellValue(newEvidence.tags.joinToString(","))
-            createCell(12).setCellValue(newEvidence.commentary ?: "")
-            createCell(13).setCellValue(newEvidence.linkedEvidenceIds.joinToString(","))
-            createCell(14).setCellValue(newEvidence.parentVideoId ?: "")
-            createCell(15).setCellValue(gson.toJson(newEvidence.entities))
+            createCell(10).setCellValue(newEvidence.allegationElementName ?: "")
+            createCell(11).setCellValue(newEvidence.category)
+            createCell(12).setCellValue(newEvidence.tags.joinToString(","))
+            createCell(13).setCellValue(newEvidence.commentary ?: "")
+            createCell(14).setCellValue(newEvidence.linkedEvidenceIds.joinToString(","))
+            createCell(15).setCellValue(newEvidence.parentVideoId ?: "")
+            createCell(16).setCellValue(gson.toJson(newEvidence.entities))
         }
         newEvidence
     }
@@ -386,12 +393,13 @@ class LocalFileStorageService @Inject constructor(
         (row.getCell(7) ?: row.createCell(7)).setCellValue(evidence.sourceDocument)
         (row.getCell(8) ?: row.createCell(8)).setCellValue(evidence.documentDate.toDouble())
         (row.getCell(9) ?: row.createCell(9)).setCellValue(evidence.allegationId ?: "")
-        (row.getCell(10) ?: row.createCell(10)).setCellValue(evidence.category)
-        (row.getCell(11) ?: row.createCell(11)).setCellValue(evidence.tags.joinToString(","))
-        (row.getCell(12) ?: row.createCell(12)).setCellValue(evidence.commentary ?: "")
-        (row.getCell(13) ?: row.createCell(13)).setCellValue(evidence.linkedEvidenceIds.joinToString(","))
-        (row.getCell(14) ?: row.createCell(14)).setCellValue(evidence.parentVideoId ?: "")
-        (row.getCell(15) ?: row.createCell(15)).setCellValue(gson.toJson(evidence.entities))
+        (row.getCell(10) ?: row.createCell(10)).setCellValue(evidence.allegationElementName ?: "")
+        (row.getCell(11) ?: row.createCell(11)).setCellValue(evidence.category)
+        (row.getCell(12) ?: row.createCell(12)).setCellValue(evidence.tags.joinToString(","))
+        (row.getCell(13) ?: row.createCell(13)).setCellValue(evidence.commentary ?: "")
+        (row.getCell(14) ?: row.createCell(14)).setCellValue(evidence.linkedEvidenceIds.joinToString(","))
+        (row.getCell(15) ?: row.createCell(15)).setCellValue(evidence.parentVideoId ?: "")
+        (row.getCell(16) ?: row.createCell(16)).setCellValue(gson.toJson(evidence.entities))
     }
 
     override suspend fun deleteEvidence(caseSpreadsheetId: String, evidence: Evidence): Result<Unit> = execute { workbook ->
@@ -429,7 +437,8 @@ class LocalFileStorageService @Inject constructor(
             Allegation(
                 id = getIntCellValueSafe(row.getCell(0)) ?: 0,
                 spreadsheetId = caseSpreadsheetId,
-                text = row.getCell(2)?.stringCellValue ?: ""
+                text = row.getCell(2)?.stringCellValue ?: "",
+                elements = emptyList() // Assuming elements are loaded separately or not stored here
             )
         }
     }

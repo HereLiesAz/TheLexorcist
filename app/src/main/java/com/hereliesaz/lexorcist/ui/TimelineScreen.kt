@@ -172,7 +172,7 @@ fun TimelineScreen(
     }
 
     showEvidenceDetailsDialog?.let { evidence ->
-        EvidenceDetailsDialog(
+        TimelineEvidenceDetailsDialog(
             evidence = evidence,
             onDismiss = { showEvidenceDetailsDialog = null },
             onRemove = {
@@ -280,7 +280,7 @@ fun TimelineSortDropdown(
 }
 
 @Composable
-fun EvidenceDetailsDialog(
+fun TimelineEvidenceDetailsDialog(
     evidence: Evidence,
     onDismiss: () -> Unit,
     onRemove: () -> Unit,

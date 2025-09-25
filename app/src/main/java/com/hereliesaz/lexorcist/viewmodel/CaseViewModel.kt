@@ -44,6 +44,11 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 
+enum class TimelineSortType {
+    TIMESTAMP_ASC,
+    TIMESTAMP_DESC
+}
+
 @HiltViewModel
 class CaseViewModel
 @Inject
@@ -74,6 +79,9 @@ constructor(
 
     private val _sortOrder = MutableStateFlow(SortOrder.DATE_DESC)
     val sortOrder: StateFlow<SortOrder> = _sortOrder.asStateFlow()
+
+    private val _timelineSortType = MutableStateFlow(TimelineSortType.TIMESTAMP_DESC)
+    val timelineSortType: StateFlow<TimelineSortType> = _timelineSortType.asStateFlow()
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
@@ -149,6 +157,12 @@ constructor(
 
     val selectedCaseEvidenceList: StateFlow<List<com.hereliesaz.lexorcist.data.Evidence>> =
         _selectedCaseEvidenceListInternal
+            .combine(_timelineSortType) { list, sortType ->
+                when (sortType) {
+                    TimelineSortType.TIMESTAMP_ASC -> list.sortedBy { it.timestamp }
+                    TimelineSortType.TIMESTAMP_DESC -> list.sortedByDescending { it.timestamp }
+                }
+            }
             .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     val selectedEvidence: StateFlow<List<com.hereliesaz.lexorcist.data.Evidence>> =
@@ -217,6 +231,10 @@ constructor(
                 }
             }
         }
+    }
+
+    fun onTimelineSortOrderChanged(sortType: TimelineSortType) {
+        _timelineSortType.value = sortType
     }
 
     fun assignEvidenceToElement(allegationId: String, elementName: String, evidenceIds: List<Int>) {
@@ -668,7 +686,7 @@ constructor(
             try {
                 evidenceRepository.deleteEvidence(evidence)
             } finally {
-                globalLoadingation.popLoading()
+                globalLoadingState.popLoading()
             }
         }
     }
