@@ -145,7 +145,7 @@ constructor(
             activeScriptRepository.getActiveScripts().forEach { scriptId ->
                 val script = _allScripts.value.find { it.id == scriptId }
                 if (script != null) {
-                    scriptStateRepository.clearScriptState(script.id) // Changed from script.id.hashCode()
+                    scriptStateRepository.clearScriptState(script.id.hashCode()) // Reverted to hashCode()
                 }
             }
         }
