@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyColumnState
+import sh.calvin.reorderable.reorderable // Added import
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -117,9 +118,10 @@ fun ScriptBuilderScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                AzButton(onClick = { viewModel.insertText("some snippet") }) {
-                    Text("Snippets")
-                }
+                AzButton(
+                    onClick = { viewModel.insertText("some snippet") }, 
+                    text = "Snippets" // Corrected AzButton usage
+                )
                 AzButton(
                     onClick = { viewModel.openScriptSelectionDialog() },
                     text = "Import"

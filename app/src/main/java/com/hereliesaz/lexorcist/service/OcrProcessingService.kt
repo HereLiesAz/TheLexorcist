@@ -26,6 +26,7 @@ import javax.inject.Singleton
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import androidx.core.net.toUri
+import kotlinx.coroutines.flow.first // Added import
 
 @Singleton
 class OcrProcessingService

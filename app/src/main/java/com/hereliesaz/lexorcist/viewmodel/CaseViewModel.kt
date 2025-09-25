@@ -2,24 +2,53 @@ package com.hereliesaz.lexorcist.viewmodel
 
 import android.content.Context
 import android.content.Intent
-import android.util.Log // Added import for Log
+import android.graphics.pdf.PdfDocument
+import android.provider.MediaStore
+import android.util.Log
+import androidx.core.content.edit
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asFlow
 import androidx.lifecycle.viewModelScope
+import androidx.work.Data
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
 import com.google.api.services.drive.model.File as DriveFile
+import com.hereliesaz.lexorcist.data.ActiveScriptRepository
 import com.hereliesaz.lexorcist.data.Allegation
 import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.data.CaseRepository
+import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.data.EvidenceRepository
+import com.hereliesaz.lexorcist.data.Exhibit
 import com.hereliesaz.lexorcist.data.LocalFileStorageService
 import com.hereliesaz.lexorcist.data.SettingsManager
 import com.hereliesaz.lexorcist.data.SortOrder
+import com.hereliesaz.lexorcist.data.StorageService
+import com.hereliesaz.lexorcist.model.CleanupSuggestion
+import com.hereliesaz.lexorcist.model.LogEntry
+import com.hereliesaz.lexorcist.model.LogLevel
 import com.hereliesaz.lexorcist.model.ProcessingState
 import com.hereliesaz.lexorcist.model.SheetFilter
+import com.hereliesaz.lexorcist.service.GlobalLoadingState
+import com.hereliesaz.lexorcist.service.GoogleApiService
+import com.hereliesaz.lexorcist.service.LogService
+import com.hereliesaz.lexorcist.service.OcrProcessingService
+import com.hereliesaz.lexorcist.service.ScriptRunner
+import com.hereliesaz.lexorcist.service.TranscriptionService
+import com.hereliesaz.lexorcist.service.VideoProcessingWorker
 import com.hereliesaz.lexorcist.ui.theme.ThemeMode
+import com.hereliesaz.lexorcist.utils.DataParser
+import com.hereliesaz.lexorcist.utils.HashingUtils
 import com.hereliesaz.lexorcist.utils.Result
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -27,19 +56,15 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import android.graphics.pdf.PdfDocument
-import android.provider.MediaStore
-import androidx.core.content.edit
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map // Ensured import
+import kotlinx.coroutines.flow.first // Added import
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import androidx.core.net.toUri
 import kotlinx.coroutines.withContext
-import java.io.File
-import java.io.FileOutputStream
+import com.hereliesaz.lexorcist.viewmodel.ScriptBuilderViewModel // Added import
 
 @HiltViewModel
 class CaseViewModel
@@ -50,22 +75,28 @@ constructor(
     private val evidenceRepository: EvidenceRepository,
     private val settingsManager: SettingsManager,
     private val localFileStorageService: LocalFileStorageService,
-    private val scriptRunner: com.hereliesaz.lexorcist.service.ScriptRunner,
-    private val ocrProcessingService: com.hereliesaz.lexorcist.service.OcrProcessingService,
-    private val transcriptionService: com.hereliesaz.lexorcist.service.TranscriptionService,
-    private val workManager: androidx.work.WorkManager,
-    private val activeScriptRepository: com.hereliesaz.lexorcist.data.ActiveScriptRepository,
-    private val logService: com.hereliesaz.lexorcist.service.LogService,
-    private val storageService: com.hereliesaz.lexorcist.data.StorageService,
-    private val globalLoadingState: com.hereliesaz.lexorcist.service.GlobalLoadingState,
-    private val googleApiService: com.hereliesaz.lexorcist.service.GoogleApiService
+    private val scriptRunner: ScriptRunner,
+    private val ocrProcessingService: OcrProcessingService,
+    private val transcriptionService: TranscriptionService,
+    private val workManager: WorkManager,
+    private val activeScriptRepository: ActiveScriptRepository,
+    private val logService: LogService,
+    private val storageService: StorageService,
+    private val globalLoadingState: GlobalLoadingState,
+    private val googleApiService: GoogleApiService
 ) : ViewModel() {
     private val sharedPref =
         applicationContext.getSharedPreferences("CaseInfoPrefs", Context.MODE_PRIVATE)
 
     val isLoading: StateFlow<Boolean> = globalLoadingState.isLoading
 
-    private val _processingStatus = MutableStateFlow<String?>(null) // Consider removing if _processingState covers this
+    private var scriptBuilderViewModel: ScriptBuilderViewModel? = null
+
+    fun setScriptBuilderViewModel(viewModel: ScriptBuilderViewModel) {
+        this.scriptBuilderViewModel = viewModel
+    }
+
+    private val _processingStatus = MutableStateFlow<String?>(null)
     val processingStatus: StateFlow<String?> = _processingStatus.asStateFlow()
 
     private val _sortOrder = MutableStateFlow(SortOrder.DATE_DESC)
@@ -103,8 +134,8 @@ constructor(
         caseRepository.selectedCaseAllegations
             .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
-    private val _exhibits = MutableStateFlow<List<com.hereliesaz.lexorcist.data.Exhibit>>(emptyList())
-    val exhibits: StateFlow<List<com.hereliesaz.lexorcist.data.Exhibit>> = _exhibits.asStateFlow()
+    private val _exhibits = MutableStateFlow<List<Exhibit>>(emptyList())
+    val exhibits: StateFlow<List<Exhibit>> = _exhibits.asStateFlow()
 
     private val _htmlTemplates = MutableStateFlow<List<DriveFile>>(emptyList())
     val htmlTemplates: StateFlow<List<DriveFile>> = _htmlTemplates.asStateFlow()
@@ -131,11 +162,11 @@ constructor(
     private val _videoProcessingProgress = MutableStateFlow<String?>(null)
     val videoProcessingProgress: StateFlow<String?> = _videoProcessingProgress.asStateFlow()
 
-    private val _processingState = MutableStateFlow<ProcessingState?>(null) // Used for general media processing UI
+    private val _processingState = MutableStateFlow<ProcessingState?>(null)
     val processingState: StateFlow<ProcessingState?> = _processingState.asStateFlow()
 
-    private val _logMessages = MutableStateFlow<List<com.hereliesaz.lexorcist.model.LogEntry>>(emptyList())
-    val logMessages: StateFlow<List<com.hereliesaz.lexorcist.model.LogEntry>> = _logMessages.asStateFlow()
+    private val _logMessages = MutableStateFlow<List<LogEntry>>(emptyList())
+    val logMessages: StateFlow<List<LogEntry>> = _logMessages.asStateFlow()
 
     private val _navigateToTranscriptionScreen = MutableSharedFlow<Int>()
     val navigateToTranscriptionScreen = _navigateToTranscriptionScreen.asSharedFlow()
@@ -144,9 +175,9 @@ constructor(
     val timelineSortType: StateFlow<TimelineSortType> = _timelineSortType.asStateFlow()
 
     private val _selectedCaseEvidenceListInternal =
-        MutableStateFlow<List<com.hereliesaz.lexorcist.data.Evidence>>(emptyList())
+        MutableStateFlow<List<Evidence>>(emptyList())
 
-    val selectedCaseEvidenceList: StateFlow<List<com.hereliesaz.lexorcist.data.Evidence>> =
+    val selectedCaseEvidenceList: StateFlow<List<Evidence>> =
         _selectedCaseEvidenceListInternal
             .combine(timelineSortType) { evidence, sortType ->
                 when (sortType) {
@@ -159,7 +190,7 @@ constructor(
             }
             .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
-    val selectedEvidence: StateFlow<List<com.hereliesaz.lexorcist.data.Evidence>> =
+    val selectedEvidence: StateFlow<List<Evidence>> =
         selectedCaseEvidenceList
             .map { list -> list.filter { it.isSelected } }
             .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
@@ -183,7 +214,7 @@ constructor(
 
         viewModelScope.launch {
             logService.logEventFlow.collect { newLog ->
-                _logMessages.value = listOf(newLog) + _logMessages.value.take(199) // Keep last 200 logs
+                _logMessages.value = listOf(newLog) + _logMessages.value.take(199)
             }
         }
 
@@ -197,9 +228,6 @@ constructor(
 
         viewModelScope.launch {
             caseRepository.selectedCaseEvidence.collect { result ->
-                // This collects general evidence list for the selected case, not specific to an ongoing processing operation.
-                // _isLoading might be too broad here if only evidence list is updating.
-                // Consider a specific loading state for the evidence list if needed.
                 when (result) {
                     is Result.Success -> {
                         _selectedCaseEvidenceListInternal.value = result.data
@@ -212,9 +240,7 @@ constructor(
                         _userRecoverableAuthIntent.value = result.exception.intent
                         _selectedCaseEvidenceListInternal.value = emptyList()
                     }
-                    is Result.Loading -> { // Handle loading state from repository if provided
-                        // You might want a specific isLoadingEvidenceList StateFlow
-                    }
+                    is Result.Loading -> { /* Handle loading state */ }
                 }
             }
         }
@@ -222,8 +248,8 @@ constructor(
         viewModelScope.launch {
             val lastSelectedCaseId = sharedPref.getString("last_selected_case_id", null)
             if (lastSelectedCaseId != null) {
-                val allCases = caseRepository.cases.first()
-                val lastSelectedCase = allCases.find { it.spreadsheetId == lastSelectedCaseId }
+                val allCases = caseRepository.cases.first() // Uses import kotlinx.coroutines.flow.first
+                val lastSelectedCase = allCases.find { case -> case.spreadsheetId == lastSelectedCaseId } // Explicit lambda parameter
                 if (lastSelectedCase != null) {
                     selectCase(lastSelectedCase)
                 }
@@ -231,7 +257,7 @@ constructor(
         }
     }
 
-    fun updateExhibit(exhibit: com.hereliesaz.lexorcist.data.Exhibit) {
+    fun updateExhibit(exhibit: Exhibit) {
         viewModelScope.launch {
             selectedCase.value?.let {
                 evidenceRepository.updateExhibit(it.spreadsheetId, exhibit)
@@ -240,7 +266,7 @@ constructor(
         }
     }
 
-    fun deleteExhibit(exhibit: com.hereliesaz.lexorcist.data.Exhibit) {
+    fun deleteExhibit(exhibit: Exhibit) {
         viewModelScope.launch {
             selectedCase.value?.let {
                 evidenceRepository.deleteExhibit(it.spreadsheetId, exhibit)
@@ -302,7 +328,7 @@ constructor(
 
     fun setThemeMode(themeMode: ThemeMode) {
         _themeMode.value = themeMode
-        sharedPref.edit {putString("theme_mode", themeMode.name)}
+        sharedPref.edit { putString("theme_mode", themeMode.name) }
     }
 
     private fun loadThemeModePreference() {
@@ -332,7 +358,7 @@ constructor(
             _userMessage.value = "Loading cases..."
             try {
                 caseRepository.refreshCases()
-                _userMessage.value = "Cases loaded successfully." // User message updated on success
+                _userMessage.value = "Cases loaded successfully."
                 _processingState.value = ProcessingState.Completed("Cases loaded successfully.")
             } catch (e: Exception) {
                 Log.e("CaseViewModel", "Error loading cases: ${e.message}", e)
@@ -340,9 +366,8 @@ constructor(
                 _processingState.value = ProcessingState.Failure("Error loading cases: ${e.message}")
             } finally {
                 globalLoadingState.popLoading()
-                // If the process is still InProgress, it implies an unexpected exit or that the try block didn't set a final state.
                 if (_processingState.value is ProcessingState.InProgress) {
-                    _processingState.value = ProcessingState.Idle // Reset to a neutral state
+                    _processingState.value = ProcessingState.Idle
                 }
             }
         }
@@ -364,11 +389,10 @@ constructor(
                 val errorMsg = "Error loading HTML templates: ${e.message}"
                 Log.e("CaseViewModel", "Error loading HTML templates: $errorMsg", e)
                 _errorMessage.value = errorMsg
-                _userMessage.value = errorMsg // Set user message to the error
+                _userMessage.value = errorMsg
                 _processingState.value = ProcessingState.Failure(errorMsg)
             } finally {
                 globalLoadingState.popLoading()
-                // Ensure a terminal state if still InProgress (e.g., due to cancellation or unexpected error path)
                 if (_processingState.value is ProcessingState.InProgress) {
                     _processingState.value = ProcessingState.Idle
                 }
@@ -382,19 +406,14 @@ constructor(
             _processingState.value = ProcessingState.InProgress(0f)
             _userMessage.value = "Importing spreadsheet..."
             try {
-                // Assuming importSpreadsheet is a suspend function that might throw an exception
-                // and potentially return a Result wrapper or similar for more detailed success/failure.
-                // For now, we'll assume a successful call means it completed without exceptions.
                 caseRepository.importSpreadsheet(spreadsheetId)
                 _userMessage.value = "Spreadsheet imported successfully."
                 _processingState.value = ProcessingState.Completed("Spreadsheet imported successfully.")
-                // Potentially refresh cases or other data if an import changes the state
-                // loadCasesFromRepository() // Example: if import affects the list of cases
             } catch (e: Exception) {
                 val errorMsg = "Error importing spreadsheet: ${e.message}"
                 Log.e("CaseViewModel", errorMsg, e)
                 _errorMessage.value = errorMsg
-                _userMessage.value = errorMsg // Update user message with error
+                _userMessage.value = errorMsg
                 _processingState.value = ProcessingState.Failure(errorMsg)
             } finally {
                 globalLoadingState.popLoading()
@@ -438,7 +457,8 @@ constructor(
                     is Result.UserRecoverableError -> {
                         _userRecoverableAuthIntent.value = result.exception.intent
                     }
-                    is Result.Loading -> { /* Handle Loading if necessary */ }
+                    is Result.Loading -> { /* Handle Loading if necessary */
+                    }
                 }
             } finally {
                 globalLoadingState.popLoading()
@@ -452,7 +472,6 @@ constructor(
             Log.d("CaseViewModel", "viewModelScope.launch in selectCase for case: ${case?.name ?: "null"}")
             globalLoadingState.pushLoading()
             try {
-                // Reset processing state when a new case is selected or deselected
                 _processingState.value = ProcessingState.Idle
                 _logMessages.value = emptyList()
 
@@ -578,8 +597,8 @@ constructor(
         sharedPref
             .edit {
                 putString("plaintiffs", _plaintiffs.value)
-                .putString("defendants", _defendants.value)
-                .putString("court", _court.value)
+                putString("defendants", _defendants.value)
+                putString("court", _court.value)
             }
     }
 
@@ -611,7 +630,7 @@ constructor(
             try {
                 caseRepository.clearCache()
                 clearCaseData()
-                sharedPref.edit {clear()}
+                sharedPref.edit { clear() }
                 loadThemeModePreference()
             } finally {
                 globalLoadingState.popLoading()
@@ -619,32 +638,37 @@ constructor(
         }
     }
 
-    fun rerunScriptOnEvidence(evidence: com.hereliesaz.lexorcist.data.Evidence) {
+    fun rerunScriptOnEvidence(evidence: Evidence) {
         viewModelScope.launch {
             globalLoadingState.pushLoading()
             try {
-                val activeScripts = activeScriptRepository.getActiveScripts()
-                val allScripts = scriptBuilderViewModel.allScripts.value
-                val scriptsToRun = allScripts.filter { activeScripts.contains(it.id) }
+                scriptBuilderViewModel?.let { sbViewModel ->
+                    val activeScriptIds = activeScriptRepository.getActiveScripts() // Assumed List<String>
+                    val allScripts = sbViewModel.allScripts.value // Assumed List<ScriptData>
+                    val scriptsToRun = allScripts.filter { script -> activeScriptIds.contains(script.id) }
 
-                var updatedEvidence = evidence
-                scriptsToRun.forEach { script ->
-                    val result = scriptRunner.runScript(script.content, updatedEvidence)
-                    if (result is Result.Success) {
-                        val currentTagsInEvidence: List<String> = updatedEvidence.tags
-                        val newTagsFromScript: List<String> = result.data.tags
-                        val combinedTags: List<String> = currentTagsInEvidence + newTagsFromScript
-                        updatedEvidence = updatedEvidence.copy(tags = combinedTags)
+                    var updatedEvidence = evidence
+                    scriptsToRun.forEach { script ->
+                        val result = scriptRunner.runScript(script.content, updatedEvidence)
+                        if (result is Result.Success) {
+                            val currentTagsInEvidence: List<String> = updatedEvidence.tags ?: emptyList()
+                            val newTagsFromScript: List<String> = result.data.tags ?: emptyList()
+                            val combinedTags: List<String> = (currentTagsInEvidence + newTagsFromScript).distinct()
+                            updatedEvidence = updatedEvidence.copy(tags = combinedTags)
+                        }
                     }
+                    evidenceRepository.updateEvidence(updatedEvidence)
+                } ?: run {
+                    Log.e("CaseViewModel", "rerunScriptOnEvidence: scriptBuilderViewModel is null")
+                    _userMessage.value = "Error: Script processing module not available."
                 }
-                evidenceRepository.updateEvidence(updatedEvidence)
             } finally {
                 globalLoadingState.popLoading()
             }
         }
     }
 
-    fun deleteEvidence(evidence: com.hereliesaz.lexorcist.data.Evidence) {
+    fun deleteEvidence(evidence: Evidence) {
         viewModelScope.launch {
             globalLoadingState.pushLoading()
             try {
@@ -672,7 +696,7 @@ constructor(
 
     fun clearLogs() {
         _logMessages.value = emptyList()
-        _processingState.value = ProcessingState.Idle // Reset processing state when logs are cleared
+        _processingState.value = ProcessingState.Idle
     }
 
     fun addTextEvidence(text: String) {
@@ -687,9 +711,9 @@ constructor(
                     globalLoadingState.popLoading()
                     return@launch
                 }
-                val entities = com.hereliesaz.lexorcist.DataParser.tagData(text)
+                val entities = DataParser.tagData(text)
                 val newEvidence =
-                    com.hereliesaz.lexorcist.data.Evidence(
+                    Evidence(
                         caseId = caseToUse.id.toLong(),
                         spreadsheetId = caseToUse.spreadsheetId,
                         type = "text",
@@ -728,7 +752,7 @@ constructor(
             val currentCaseFromState = _vmSelectedCase.value
             Log.d("CaseViewModel", "processImageEvidence: _vmSelectedCase.value AT START is: ${currentCaseFromState?.name ?: "null"}")
             globalLoadingState.pushLoading()
-            clearLogs() // Clears logs and sets processingState to Idle
+            clearLogs()
             val caseToUse = currentCaseFromState ?: run {
                 Log.w("CaseViewModel", "processImageEvidence: No case selected from StateFlow, aborting.")
                 _userMessage.value = "Please select a case first to add image evidence."
@@ -738,15 +762,13 @@ constructor(
             }
             try {
                 Log.d("CaseViewModel", "Processing image for case: ${caseToUse.name}")
-                // OcrProcessingService.processImage now has a callback for ProcessingState updates
-                // So, _processingState will be updated directly from there.
                 val (newEvidence, message) = ocrProcessingService.processImage(
                     uri = uri,
                     context = applicationContext,
                     caseId = caseToUse.id.toLong(),
                     spreadsheetId = caseToUse.spreadsheetId,
-                    activeScriptIds = activeScriptRepository.getActiveScripts(),
-                ) { state -> _processingState.value = state } // Pass the lambda to update ViewModel's state
+                    activeScriptIds = activeScriptRepository.getActiveScripts().toSet(), // Changed to Set
+                ) { state -> _processingState.value = state }
 
                 message?.let {
                     Log.i("CaseViewModel", "Message from ocrProcessingService: $it")
@@ -763,7 +785,6 @@ constructor(
                 _userMessage.value = errorMsg
                 _processingState.value = ProcessingState.Failure(errorMsg)
             } finally {
-                // _processingState should now reflect the final state from the service
                 globalLoadingState.popLoading()
                 Log.d("CaseViewModel", "processImageEvidence finally block. isLoading set to false. Final ProcessingState: ${_processingState.value}")
             }
@@ -771,12 +792,12 @@ constructor(
     }
 
     fun processAudioEvidence(uri: android.net.Uri) {
-        viewModelScope.launch(Dispatchers.Main) { // Ensure UI updates are on Main
+        viewModelScope.launch(Dispatchers.Main) {
             val currentCaseFromState = _vmSelectedCase.value
             Log.d("CaseViewModel", "processAudioEvidence: _vmSelectedCase.value AT START is: ${currentCaseFromState?.name ?: "null"}")
             globalLoadingState.pushLoading()
-            clearLogs() // Clears logs and sets processingState to Idle, then we set InProgress
-            _processingState.value = ProcessingState.InProgress(0.0f) // Initial progress
+            clearLogs()
+            _processingState.value = ProcessingState.InProgress(0.0f)
 
             val caseToUse = currentCaseFromState ?: run {
                 val errorMsg = "Please select a case first to add audio evidence."
@@ -789,9 +810,8 @@ constructor(
 
             try {
                 Log.i("CaseViewModel", "Processing audio for case: ${caseToUse.name}, URI: $uri")
-                _processingState.value = ProcessingState.InProgress(0.1f) // After initial checks, before upload
+                _processingState.value = ProcessingState.InProgress(0.1f)
 
-                // 1. Upload file
                 val uploadResult = withContext(Dispatchers.IO) {
                     evidenceRepository.uploadFile(uri, caseToUse.name, caseToUse.spreadsheetId)
                 }
@@ -801,36 +821,34 @@ constructor(
                         val uploadedFileUriString = uploadResult.data
                         Log.i("CaseViewModel", "Audio file uploaded: $uploadedFileUriString")
                         _userMessage.value = "Raw audio file saved. Starting transcription."
-                        _processingState.value = ProcessingState.InProgress(0.25f) // After upload, before transcription
+                        _processingState.value = ProcessingState.InProgress(0.25f)
 
-                        // 2. Transcribe audio
-                        // The URI passed to transcribeAudio should be the original content URI for Vosk to access
                         val transcriptionResult = transcriptionService.transcribeAudio(uri)
 
                         when (transcriptionResult) {
                             is Result.Success -> {
                                 val transcribedText = transcriptionResult.data
                                 Log.i("CaseViewModel", "Audio transcribed: $transcribedText")
-                                _processingState.value = ProcessingState.InProgress(0.75f) // After transcription, before saving evidence
+                                _processingState.value = ProcessingState.InProgress(0.75f)
 
-                                val fileHash = com.hereliesaz.lexorcist.utils.HashingUtils.getHash(applicationContext, uri)
+                                val fileHash = HashingUtils.getHash(applicationContext, uri)
                                 val newEvidence =
-                                    com.hereliesaz.lexorcist.data.Evidence(
+                                    Evidence(
                                         caseId = caseToUse.id.toLong(),
                                         spreadsheetId = caseToUse.spreadsheetId,
                                         type = "audio",
                                         content = transcribedText,
                                         formattedContent = "```\n$transcribedText\n```",
-                                        mediaUri = uploadedFileUriString, // Use the uploaded file URI/path
+                                        mediaUri = uploadedFileUriString,
                                         timestamp = System.currentTimeMillis(),
-                                        sourceDocument = uploadedFileUriString, // Or original file name if preferred
-                                        documentDate = System.currentTimeMillis(), // Consider Exif or other means for original date
+                                        sourceDocument = uploadedFileUriString,
+                                        documentDate = System.currentTimeMillis(),
                                         allegationId = null,
                                         category = "Audio Transcription",
                                         tags = listOf("audio", "transcription"),
                                         commentary = null,
                                         parentVideoId = null,
-                                        entities = com.hereliesaz.lexorcist.DataParser.tagData(transcribedText),
+                                        entities = DataParser.tagData(transcribedText),
                                         fileHash = fileHash
                                     )
                                 val savedEvidence = withContext(Dispatchers.IO) {
@@ -864,11 +882,8 @@ constructor(
                                 _processingState.value = ProcessingState.Failure(errorMsg)
                             }
                             is Result.Loading -> {
-                                // This case should ideally not be returned directly from transcribeAudio if it's a one-shot call.
-                                // If it can, we need to decide how to handle it, perhaps by observing TranscriptionService's own state.
-                                // For now, treat as unexpected if it gets here from a direct suspend call.
                                 Log.w("CaseViewModel", "Transcription returned Loading state, which is unexpected for a direct call.")
-                                _processingState.value = ProcessingState.InProgress(0.5f) // Or some other intermediate state
+                                _processingState.value = ProcessingState.InProgress(0.5f)
                             }
                         }
                     }
@@ -886,13 +901,8 @@ constructor(
                         _processingState.value = ProcessingState.Failure(errorMsg)
                     }
                     is Result.Loading -> {
-                        // This might occur if evidenceRepository.uploadFile itself can emit Loading.
-                        // If so, the UI should reflect this. For now, we are awaiting its completion.
                         Log.i("CaseViewModel", "Audio upload is loading...")
-                        _processingState.value = ProcessingState.InProgress(0.15f) // Indicate upload in progress
-                        // This path will exit and the try-catch won't see a final Result.Success/Error from upload
-                        // for this specific call. Consider how to handle if upload truly is async and emits loading.
-                        // For a suspend function, we typically expect it to suspend until a final result.
+                        _processingState.value = ProcessingState.InProgress(0.15f)
                     }
                 }
             } catch (e: Exception) {
@@ -902,21 +912,19 @@ constructor(
                 _processingState.value = ProcessingState.Failure(errorMsg)
             } finally {
                 globalLoadingState.popLoading()
-                // _processingState is set to its final value (Completed or Failure) within the try block.
-                // We don't reset it to null here, so the UI can show the final status.
                 Log.d("CaseViewModel", "processAudioEvidence finally block. isLoading set to false. Final ProcessingState: ${_processingState.value}")
             }
         }
     }
 
-    fun updateTranscript(evidence: com.hereliesaz.lexorcist.data.Evidence, newTranscript: String, reason: String) {
+    fun updateTranscript(evidence: Evidence, newTranscript: String, reason: String) {
         viewModelScope.launch {
             globalLoadingState.pushLoading()
             try {
                 logService.addLog("Updating transcript for evidence ${evidence.id}")
                 val result = evidenceRepository.updateTranscript(evidence, newTranscript, reason)
                 if (result is Result.Error) {
-                    logService.addLog("Error updating transcript: ${result.exception.message}", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
+                    logService.addLog("Error updating transcript: ${result.exception.message}", LogLevel.ERROR)
                 } else {
                     logService.addLog("Transcript updated successfully")
                 }
@@ -932,7 +940,7 @@ constructor(
             Log.d("CaseViewModel", "processVideoEvidence: _vmSelectedCase.value AT START is: ${currentCaseFromState?.name ?: "null"}")
             globalLoadingState.pushLoading()
             clearLogs()
-            _processingState.value = ProcessingState.InProgress(0.0f) // Initial progress for video processing
+            _processingState.value = ProcessingState.InProgress(0.0f)
 
             val caseToUse = currentCaseFromState ?: run {
                 val errorMsg = "Please select a case first to add video evidence."
@@ -944,55 +952,52 @@ constructor(
             }
             Log.d("CaseViewModel", "Processing video for case: ${caseToUse.name}")
             val workRequest =
-                androidx.work.OneTimeWorkRequestBuilder<com.hereliesaz.lexorcist.service.VideoProcessingWorker>()
+                OneTimeWorkRequestBuilder<VideoProcessingWorker>()
                     .setInputData(
-                        androidx.work.Data
+                        Data
                             .Builder()
-                            .putString(com.hereliesaz.lexorcist.service.VideoProcessingWorker.KEY_VIDEO_URI, uri.toString())
-                            .putInt(com.hereliesaz.lexorcist.service.VideoProcessingWorker.KEY_CASE_ID, caseToUse.id)
-                            .putString(com.hereliesaz.lexorcist.service.VideoProcessingWorker.KEY_CASE_NAME, caseToUse.name)
-                            .putString(com.hereliesaz.lexorcist.service.VideoProcessingWorker.KEY_SPREADSHEET_ID, caseToUse.spreadsheetId)
+                            .putString(VideoProcessingWorker.KEY_VIDEO_URI, uri.toString())
+                            .putInt(VideoProcessingWorker.KEY_CASE_ID, caseToUse.id)
+                            .putString(VideoProcessingWorker.KEY_CASE_NAME, caseToUse.name)
+                            .putString(VideoProcessingWorker.KEY_SPREADSHEET_ID, caseToUse.spreadsheetId)
                             .build(),
                     ).build()
             workManager.enqueue(workRequest)
-            // isLoading will be set to false once the work request's LiveData indicates completion or failure.
-            // For now, _isLoading remains true to indicate background work has started.
-            // _processingState will be updated by observing the WorkInfo.
             Log.i("CaseViewModel", "Video processing work enqueued for URI: $uri. ID: ${workRequest.id}")
 
-            workManager.getWorkInfoByIdLiveData(workRequest.id).asFlow().collectLatest { workInfo: androidx.work.WorkInfo? ->
+            workManager.getWorkInfoByIdLiveData(workRequest.id).asFlow().collectLatest { workInfo: WorkInfo? ->
                 if (workInfo != null) {
-                    val progressPercent = workInfo.progress.getFloat(com.hereliesaz.lexorcist.service.VideoProcessingWorker.PROGRESS_PERCENT, 0f)
-                    val progressMessage = workInfo.progress.getString(com.hereliesaz.lexorcist.service.VideoProcessingWorker.PROGRESS_MESSAGE) ?: "Processing video..."
+                    val progressPercent = workInfo.progress.getFloat(VideoProcessingWorker.PROGRESS_PERCENT, 0f)
+                    val progressMessage = workInfo.progress.getString(VideoProcessingWorker.PROGRESS_MESSAGE) ?: "Processing video..."
 
-                    _processingState.value = ProcessingState.InProgress(progressPercent) // Update with percentage
-                    _videoProcessingProgress.value = "$progressMessage (${(progressPercent * 100).toInt()}%)." // For the separate String progress if still used
+                    _processingState.value = ProcessingState.InProgress(progressPercent)
+                    _videoProcessingProgress.value = "$progressMessage (${(progressPercent * 100).toInt()}%)."
 
                     Log.d("CaseViewModel", "Video processing progress for $uri: $progressMessage ($progressPercent), State: ${workInfo.state}")
 
                     if (workInfo.state.isFinished) {
-                        globalLoadingState.popLoading() // Work is finished, set loading to false
-                        _videoProcessingProgress.value = null // Clear the specific string progress
+                        globalLoadingState.popLoading()
+                        _videoProcessingProgress.value = null
                         when (workInfo.state) {
-                            androidx.work.WorkInfo.State.SUCCEEDED -> {
-                                val successMessage = workInfo.outputData.getString(com.hereliesaz.lexorcist.service.VideoProcessingWorker.RESULT_SUCCESS) ?: "Video processed successfully."
+                            WorkInfo.State.SUCCEEDED -> {
+                                val successMessage = workInfo.outputData.getString(VideoProcessingWorker.RESULT_SUCCESS) ?: "Video processed successfully."
                                 _userMessage.value = successMessage
                                 _processingState.value = ProcessingState.Completed(successMessage)
                                 Log.i("CaseViewModel", "Video processing SUCCEEDED for URI: $uri. Message: $successMessage")
                             }
-                            androidx.work.WorkInfo.State.FAILED -> {
-                                val failureMessage = workInfo.outputData.getString(com.hereliesaz.lexorcist.service.VideoProcessingWorker.RESULT_FAILURE) ?: "Video processing failed."
+                            WorkInfo.State.FAILED -> {
+                                val failureMessage = workInfo.outputData.getString(VideoProcessingWorker.RESULT_FAILURE) ?: "Video processing failed."
                                 _userMessage.value = failureMessage
                                 _processingState.value = ProcessingState.Failure(failureMessage)
                                 Log.e("CaseViewModel", "Video processing FAILED for URI: $uri. Message: $failureMessage")
                             }
-                            androidx.work.WorkInfo.State.CANCELLED -> {
+                            WorkInfo.State.CANCELLED -> {
                                 val cancelMessage = "Video processing was cancelled."
                                 _userMessage.value = cancelMessage
                                 _processingState.value = ProcessingState.Failure(cancelMessage)
                                 Log.w("CaseViewModel", "Video processing CANCELLED for URI: $uri.")
                             }
-                            else -> { /* Other states like ENQUEUED, RUNNING, BLOCKED are handled by InProgress */ }
+                            else -> { /* Other states */ }
                         }
                     }
                 }
@@ -1036,7 +1041,7 @@ constructor(
                             _userMessage.value = errorMsg
                             _processingState.value = ProcessingState.Failure(errorMsg)
                             globalLoadingState.popLoading()
-                            return@launch // Stop processing further photos on error
+                            return@launch
                         }
                         is Result.UserRecoverableError -> {
                             val errorMsg = "User error saving photo ${index + 1}: ${result.exception.message}"
@@ -1044,11 +1049,9 @@ constructor(
                             _userRecoverableAuthIntent.value = result.exception.intent
                             _processingState.value = ProcessingState.Failure(errorMsg)
                             globalLoadingState.popLoading()
-                            return@launch // Stop processing further photos on error
+                            return@launch
                         }
                         is Result.Loading -> {
-                            // If uploadFile can emit Loading, this needs more robust handling, 
-                            // for now, we assume it completes or errors.
                             _userMessage.value = "Photo ${index + 1} is uploading..."
                         }
                     }
@@ -1057,7 +1060,7 @@ constructor(
                 if (savedPhotoPaths.isNotEmpty() && savedPhotoPaths.size == photoUris.size) {
                     val mediaUriJson = com.google.gson.Gson().toJson(savedPhotoPaths)
                     val newEvidence =
-                        com.hereliesaz.lexorcist.data.Evidence(
+                        Evidence(
                             caseId = caseToUse.id.toLong(),
                             spreadsheetId = caseToUse.spreadsheetId,
                             type = "photo_group",
@@ -1077,7 +1080,6 @@ constructor(
                     _userMessage.value = "Photo group evidence saved successfully."
                     _processingState.value = ProcessingState.Completed("Photo group saved.")
                 } else if (savedPhotoPaths.isEmpty() && photoUris.isNotEmpty()) {
-                    // This case might be hit if all uploads failed and returned before this check
                     if (_processingState.value !is ProcessingState.Failure) {
                         _userMessage.value = "No photos were saved."
                         _processingState.value = ProcessingState.Failure("No photos saved.")
@@ -1087,16 +1089,14 @@ constructor(
             } finally {
                 globalLoadingState.popLoading()
                 if (_processingState.value is ProcessingState.InProgress) {
-                    // If loop finished due to error, state would be Failure. If success, Completed.
-                    // This is a fallback if somehow it's still InProgress.
                     _processingState.value = ProcessingState.Idle
                 }
             }
         }
     }
 
-    private val _cleanupSuggestions = MutableStateFlow<List<com.hereliesaz.lexorcist.model.CleanupSuggestion>>(emptyList())
-    val cleanupSuggestions: StateFlow<List<com.hereliesaz.lexorcist.model.CleanupSuggestion>> = _cleanupSuggestions.asStateFlow()
+    private val _cleanupSuggestions = MutableStateFlow<List<CleanupSuggestion>>(emptyList())
+    val cleanupSuggestions: StateFlow<List<CleanupSuggestion>> = _cleanupSuggestions.asStateFlow()
 
     fun generateCleanupSuggestions() {
         viewModelScope.launch {
@@ -1105,19 +1105,14 @@ constructor(
                 _userMessage.value = "Scanning for duplicates and image series..."
                 val currentEvidence = _selectedCaseEvidenceListInternal.value
 
-                // Phase 1: Ensure all evidence has hashes. This is a one-by-one update.
-                // The flow should update automatically after each evidenceRepository.updateEvidence call.
-                // This might be inefficient but will work.
                 val evidenceToHash = currentEvidence.filter { it.mediaUri != null && it.fileHash.isNullOrEmpty() }
                 if (evidenceToHash.isNotEmpty()) {
                     _userMessage.value = "Calculating hashes for ${evidenceToHash.size} items..."
                     evidenceToHash.forEach { evidence ->
                         try {
-                            // Parsing URI and getting hash can be slow, so it's good this is in a coroutine.
                             evidence.mediaUri?.toUri()?.let { uri ->
-                                val hash = com.hereliesaz.lexorcist.utils.HashingUtils.getHash(applicationContext, uri)
+                                val hash = HashingUtils.getHash(applicationContext, uri)
                                 if (hash != null) {
-                                    // This update should trigger the flow to emit a new list.
                                     evidenceRepository.updateEvidence(evidence.copy(fileHash = hash))
                                 }
                             }
@@ -1126,40 +1121,34 @@ constructor(
                             _errorMessage.value = "Permission error accessing a file. Please check storage permissions."
                         } catch (e: Exception) {
                             Log.e("Cleanup", "Failed to hash ${evidence.mediaUri}", e)
-                            // We can continue to the next item even if one fails.
                         }
                     }
                 }
 
-                // After hashing, the `selectedCaseEvidenceList` flow will have emitted the latest data.
-                val updatedEvidence = selectedCaseEvidenceList.value
-                val suggestions = mutableListOf<com.hereliesaz.lexorcist.model.CleanupSuggestion>()
+                val updatedEvidence = selectedCaseEvidenceList.value // Re-fetch after hashing
+                val suggestions = mutableListOf<CleanupSuggestion>()
 
-                // Phase 2: Find duplicates using hashes
                 val evidenceWithHashes = updatedEvidence.filterNot { it.fileHash.isNullOrEmpty() }
                 val duplicateGroups = evidenceWithHashes
                     .groupBy { it.fileHash!! }
                     .filter { it.value.size > 1 }
-                    .map { com.hereliesaz.lexorcist.model.CleanupSuggestion.DuplicateGroup(it.value) }
+                    .map { CleanupSuggestion.DuplicateGroup(it.value) }
 
                 suggestions.addAll(duplicateGroups)
 
-                // Mark items as duplicates in the database for persistence.
                 duplicateGroups.flatMap { it.evidence }.forEach { evidence ->
                     if (!evidence.isDuplicate) {
                         evidenceRepository.updateEvidence(evidence.copy(isDuplicate = true))
                     }
                 }
 
-                // Phase 3: Find image series (ensure we don't process duplicates here)
                 val nonDuplicateImageEvidence = updatedEvidence.filter { it.type == "image" && !it.isDuplicate }
                 val seriesCandidates = nonDuplicateImageEvidence.groupBy {
-                    // A more robust regex to handle names like "IMG_20230101_123456.jpg"
                     it.sourceDocument.replace(Regex("[_\\d]"), "")
                 }.filter { it.value.size > 1 }
 
                 seriesCandidates.forEach { (_, series) ->
-                    suggestions.add(com.hereliesaz.lexorcist.model.CleanupSuggestion.ImageSeriesGroup(series))
+                    suggestions.add(CleanupSuggestion.ImageSeriesGroup(series))
                 }
 
                 _cleanupSuggestions.value = suggestions
@@ -1178,17 +1167,17 @@ constructor(
         }
     }
 
-    fun deleteDuplicates(group: com.hereliesaz.lexorcist.model.CleanupSuggestion.DuplicateGroup) {
+    fun deleteDuplicates(group: CleanupSuggestion.DuplicateGroup) {
         viewModelScope.launch {
             val evidenceToDelete = group.evidence.drop(1)
             evidenceToDelete.forEach { evidence ->
                 deleteEvidence(evidence)
             }
-            generateCleanupSuggestions() // Refresh suggestions
+            generateCleanupSuggestions()
         }
     }
 
-    fun mergeImageSeries(group: com.hereliesaz.lexorcist.model.CleanupSuggestion.ImageSeriesGroup) {
+    fun mergeImageSeries(group: CleanupSuggestion.ImageSeriesGroup) {
         viewModelScope.launch {
             val case = selectedCase.value ?: return@launch
             val caseDir = storageLocation.value?.let { File(it, case.spreadsheetId) } ?: return@launch
@@ -1208,18 +1197,19 @@ constructor(
                         bitmap.recycle()
                     }
                 }
-
                 pdfDocument.writeTo(FileOutputStream(pdfFile))
             } catch (e: Exception) {
-                // Handle exception
                 e.printStackTrace()
+                _errorMessage.value = "Error merging image series: ${e.message}"
+                pdfDocument.close() // Ensure close even on error before this point
+                return@launch
             } finally {
                 pdfDocument.close()
             }
 
             val combinedContent = group.evidence.joinToString("\n\n") { it.content }
 
-            val newEvidence = com.hereliesaz.lexorcist.data.Evidence(
+            val newEvidence = Evidence(
                 caseId = case.id.toLong(),
                 spreadsheetId = case.spreadsheetId,
                 type = "pdf",
@@ -1235,7 +1225,7 @@ constructor(
                 commentary = null,
                 parentVideoId = null,
                 entities = emptyMap(),
-                fileHash = com.hereliesaz.lexorcist.utils.HashingUtils.getHash(applicationContext, pdfFile.toUri())
+                fileHash = HashingUtils.getHash(applicationContext, pdfFile.toUri())
             )
 
             evidenceRepository.addEvidence(newEvidence)
@@ -1261,7 +1251,7 @@ constructor(
     fun addExhibit(name: String, description: String) {
         viewModelScope.launch {
             selectedCase.value?.let {
-                val newExhibit = com.hereliesaz.lexorcist.data.Exhibit(
+                val newExhibit = Exhibit(
                     caseId = it.id.toLong(),
                     name = name,
                     description = description,
@@ -1287,7 +1277,7 @@ constructor(
         }
     }
 
-    fun generateDocument(exhibit: com.hereliesaz.lexorcist.data.Exhibit, template: com.google.api.services.drive.model.File) {
+    fun generateDocument(exhibit: Exhibit, template: DriveFile) {
         viewModelScope.launch {
             val scriptId = selectedCase.value?.scriptId ?: return@launch
             val caseId = selectedCase.value?.id ?: return@launch
@@ -1306,14 +1296,14 @@ constructor(
                     logService.addLog("Document generated successfully: ${result.data}")
                 }
                 is Result.Error -> {
-                    logService.addLog("Error generating document: ${result.exception.message}", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
+                    logService.addLog("Error generating document: ${result.exception.message}", LogLevel.ERROR)
                 }
                 is Result.UserRecoverableError -> {
-                    logService.addLog("User recoverable error generating document: ${result.exception.message}", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
+                    logService.addLog("User recoverable error generating document: ${result.exception.message}", LogLevel.ERROR)
                     _userRecoverableAuthIntent.value = result.exception.intent
                 }
-                else -> {
-                    logService.addLog("Unknown error generating document", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
+                else -> { // Should be Result.Loading or handle any other states if runGenericScript is updated
+                    logService.addLog("Unknown state or loading while generating document", LogLevel.WARNING)
                 }
             }
         }
@@ -1321,19 +1311,21 @@ constructor(
 
     fun packageFiles(files: List<java.io.File>, packageName: String, extension: String) {
         viewModelScope.launch {
-            val zipFile = java.io.File(storageLocation.value, "$packageName.$extension")
+            val zipFile = java.io.File(storageLocation.value ?: applicationContext.cacheDir.path, "$packageName.$extension")
             try {
-                java.util.zip.ZipOutputStream(java.io.FileOutputStream(zipFile)).use { zos ->
+                ZipOutputStream(FileOutputStream(zipFile)).use { zos ->
                     files.forEach { file ->
-                        zos.putNextEntry(java.util.zip.ZipEntry(file.name))
-                        java.io.FileInputStream(file).use { fis ->
+                        zos.putNextEntry(ZipEntry(file.name))
+                        FileInputStream(file).use { fis ->
                             fis.copyTo(zos)
                         }
                         zos.closeEntry()
                     }
                 }
+                _userMessage.value = "Files packaged successfully: ${zipFile.absolutePath}"
             } catch (e: Exception) {
                 e.printStackTrace()
+                _errorMessage.value = "Error packaging files: ${e.message}"
             }
         }
     }
