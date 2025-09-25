@@ -127,7 +127,7 @@ object DataParser {
         return allegationRegex
             .findAll(text)
             .map {
-                Allegation(id = currentId++, spreadsheetId = spreadsheetId, text = it.value)
+                Allegation(id = currentId++.toString(), spreadsheetId = spreadsheetId, text = it.value, description = "", elements = emptyList(), evidenceSuggestions = emptyList())
             }.toList()
     }
 
@@ -156,7 +156,8 @@ object DataParser {
                     spreadsheetId = spreadsheetId,
                     // Convert Int to Long as per Evidence data class
                     caseId = caseId.toLong(),
-                    allegationId = linkedAllegation?.id?.toString(),
+                    allegationId = linkedAllegation?.id,
+                    allegationElementName = null,
                     content = sentence,
                     formattedContent = null,
                     mediaUri = null,
@@ -165,8 +166,7 @@ object DataParser {
                     documentDate = date,
                     category = category,
                     tags = emptyList(),
-                    // Added missing 'type' parameter
-                    type = "",
+                    type = "", // This was previously marked as Added missing 'type' parameter
                 ),
             )
         }

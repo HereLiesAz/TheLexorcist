@@ -157,7 +157,7 @@ dependencies {
     implementation("org.tensorflow:tensorflow-lite-api:${libs.versions.tensorflowLite.get()}")
     // REMOVED: implementation("com.google.android.gms:play-services-tflite-java:16.4.0")
     // REMOVED: implementation("com.google.android.gms:play-services-tflite-support:16.4.0")
-    implementation(libs.reorderable)
+    // implementation(libs.reorderable)
 
     testImplementation(libs.androidx.arch.core.testing) // For InstantTaskExecutorRule
     testImplementation(libs.kotlinx.coroutines.test) // For coroutines testing (runTest, TestDispatchers)

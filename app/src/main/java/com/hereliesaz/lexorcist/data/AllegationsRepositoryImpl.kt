@@ -1,21 +1,21 @@
 package com.hereliesaz.lexorcist.data
 
+import android.content.Context
 import android.util.Log
-import com.hereliesaz.lexorcist.service.GoogleApiService // Added import
+import com.hereliesaz.lexorcist.service.GoogleApiService
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
-// Removed: import com.hereliesaz.lexorcist.auth.CredentialHolder
 
-class AllegationsRepositoryImpl
-@Inject
-constructor(
+class AllegationsRepositoryImpl @Inject constructor(
     private val googleApiService: GoogleApiService,
-    private val allegationProvider: AllegationProvider
+    private val allegationProvider: AllegationProvider,
+    @ApplicationContext private val context: Context
 ) : AllegationsRepository {
     override suspend fun getAllegations(caseId: String): List<Allegation> {
-        val staticAllegations = allegationProvider.getAllAllegations()
+        val staticAllegations = allegationProvider.getAllAllegations(context)
         val dynamicAllegations = mutableListOf<Allegation>()
 
-        val spreadsheetId = "1TN9MLnzpCJjcO9bwEhTeOjon3mRunYs5_tSxII6LizA"
+        val spreadsheetId = caseId
         Log.d("AllegationsRepository", "Fetching allegations from spreadsheet: $spreadsheetId for case: $caseId")
 
         val sheetData = googleApiService.readSpreadsheet(spreadsheetId, isPublic = true)

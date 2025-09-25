@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -29,6 +30,9 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -55,6 +59,10 @@ fun ExhibitsScreen(
     val selectedAllegation by allegationsViewModel.selectedAllegation.collectAsState()
     val selectedEvidence by caseViewModel.selectedEvidence.collectAsState()
     val exhibits by caseViewModel.exhibits.collectAsState()
+    var showEditDialog by remember { mutableStateOf(false) }
+    var evidenceToEdit by remember { mutableStateOf<Evidence?>(null) }
+    var showDeleteConfirmDialog by remember { mutableStateOf(false) }
+    var evidenceToDelete by remember { mutableStateOf<Evidence?>(null) }
 
     Scaffold(
         topBar = {
@@ -109,12 +117,50 @@ fun ExhibitsScreen(
                         allegationElementName = evidence.allegationElementName,
                         exhibitNames = exhibits.filter { it.evidenceIds.contains(evidence.id) }.joinToString { it.name },
                         onClick = { caseViewModel.toggleEvidenceSelection(evidence.id) },
-                        onEditClick = { /*TODO*/ },
-                        onDeleteClick = { /*TODO*/ }
+                        onEditClick = { 
+                            evidenceToEdit = it
+                            showEditDialog = true
+                         },
+                        onDeleteClick = { 
+                            evidenceToDelete = it
+                            showDeleteConfirmDialog = true
+                         }
                     )
                 }
             }
         }
+    }
+
+    if (showEditDialog && evidenceToEdit != null) {
+        EditEvidenceDialog(
+            evidence = evidenceToEdit!!,
+            onDismiss = { showEditDialog = false },
+            onSave = { updatedEvidence ->
+                caseViewModel.updateEvidence(updatedEvidence)
+                showEditDialog = false
+            },
+        )
+    }
+
+    if (showDeleteConfirmDialog && evidenceToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirmDialog = false },
+            title = { Text(stringResource(R.string.delete_evidence)) },
+            text = { Text(stringResource(R.string.delete_evidence_confirmation)) },
+            confirmButton = {
+                Button(onClick = {
+                    caseViewModel.deleteEvidence(evidenceToDelete!!)
+                    showDeleteConfirmDialog = false
+                }) {
+                    Text(stringResource(R.string.delete))
+                }
+            },
+            dismissButton = {
+                Button(onClick = { showDeleteConfirmDialog = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            },
+        )
     }
 }
 

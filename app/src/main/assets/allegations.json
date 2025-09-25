@@ -1,0 +1,197 @@
+
+[
+  {
+    "id": "personal_injury_negligence",
+    "text": "Personal Injury (based on Negligence)",
+    "description": "A legal action filed by a person who has suffered physical, emotional, or financial harm due to the carelessness or wrongful act of another.",
+    "elements": [
+      {
+        "name": "Duty of Care",
+        "description": "The defendant owed the plaintiff a legal duty to act with a certain level of care."
+      },
+      {
+        "name": "Breach of Duty",
+        "description": "The defendant failed to meet the standard of care required by their duty."
+      },
+      {
+        "name": "Causation",
+        "description": "The defendant's breach of duty was the actual and proximate cause of the plaintiff's injuries."
+      },
+      {
+        "name": "Damages",
+        "description": "The plaintiff suffered actual, legally compensable harm as a result of the injury."
+      }
+    ],
+    "evidenceSuggestions": [
+      "Police or Accident Report",
+      "Medical Records and Bills",
+      "Photographs and Videos of scene/injuries",
+      "Witness Statements",
+      "Proof of Lost Wages",
+      "Expert Testimony (e.g., accident reconstructionist)"
+    ]
+  },
+  {
+    "id": "breach_of_contract",
+    "text": "Breach of Contract",
+    "description": "A civil claim filed when one party to a legally binding agreement fails to honor its promises, causing financial harm to the other party.",
+    "elements": [
+      {
+        "name": "Existence of a Valid Contract",
+        "description": "A legally enforceable contract was formed (offer, acceptance, consideration)."
+      },
+      {
+        "name": "Plaintiff's Performance",
+        "description": "The plaintiff fulfilled their obligations under the contract."
+      },
+      {
+        "name": "Defendant's Breach",
+        "description": "The defendant failed to perform their contractual duties."
+      },
+      {
+        "name": "Resulting Damages",
+        "description": "The defendant's breach caused the plaintiff to suffer quantifiable financial losses."
+      }
+    ],
+    "evidenceSuggestions": [
+      "The Written Contract",
+      "Correspondence (Emails, Texts, Letters)",
+      "Invoices, Receipts, and Proof of Payment",
+      "Photographs or Videos of work/goods",
+      "Witness Testimony"
+    ]
+  },
+  {
+    "id": "small_claims",
+    "text": "Small Claims",
+    "description": "A simplified, informal, and inexpensive process for resolving civil disputes where the amount of money at stake is $5,000 or less.",
+    "elements": [
+      {
+        "name": "Jurisdictional Amount",
+        "description": "The amount in dispute must not exceed $5,000."
+      },
+      {
+        "name": "Valid Civil Claim",
+        "description": "The underlying allegation must be a recognizable civil cause of action."
+      },
+      {
+        "name": "Territorial Jurisdiction",
+        "description": "The defendant must be located on, or the incident must have occurred on, the Eastbank of Orleans Parish."
+      }
+    ],
+    "evidenceSuggestions": [
+      "Written Agreements",
+      "Financial Records (Receipts, Invoices)",
+      "Correspondence (Emails, Texts)",
+      "Photographs of damaged property",
+      "Witnesses"
+    ]
+  },
+  {
+    "id": "eviction",
+    "text": "Eviction (Rule for Possession)",
+    "description": "A legal process through which a landlord can reclaim possession of a rental property from a tenant.",
+    "elements": [
+      {
+        "name": "Landlord-Tenant Relationship",
+        "description": "A valid lease or rental agreement exists."
+      },
+      {
+        "name": "Grounds for Eviction",
+        "description": "A lawful reason to evict (e.g., non-payment of rent)."
+      },
+      {
+        "name": "Proper Notice to Vacate",
+        "description": "The landlord delivered a written 'Notice to Vacate' to the tenant."
+      }
+    ],
+    "evidenceSuggestions": [
+      "The Lease Agreement",
+      "Copy of the Notice to Vacate",
+      "Proof of Delivery of Notice",
+      "Rent Payment Records",
+      "Photographs or Videos of property damage",
+      "Correspondence with tenant"
+    ]
+  },
+  {
+    "id": "theft",
+    "text": "Theft",
+    "description": "The taking or misappropriation of anything of value that belongs to another person, without consent or by fraudulent means, with the intent to permanently deprive the owner of their property.",
+    "elements": [
+      {
+        "name": "A Misappropriation or Taking",
+        "description": "The offender exercised wrongful control over the property."
+      },
+      {
+        "name": "A Thing of Value",
+        "description": "The object of the theft must have some value."
+      },
+      {
+        "name": "Belonging to Another",
+        "description": "The property was owned by someone other than the offender."
+      },
+      {
+        "name": "Without Consent or by Fraudulent Means",
+        "description": "The taking was done without permission or through deceit."
+      },
+      {
+        "name": "Intent to Permanently Deprive",
+        "description": "The offender meant to keep the item from the owner for good."
+      }
+    ],
+    "evidenceSuggestions": [
+      "Physical Evidence (stolen property)",
+      "Surveillance Footage",
+      "Witness Testimony",
+      "Documentary Evidence (receipts, appraisals)",
+      "Confession or Admission",
+      "Circumstantial Evidence (e.g., possession of stolen goods)"
+    ]
+  },
+  {
+    "id": "assault",
+    "text": "Assault (Simple & Aggravated)",
+    "description": "The threat or attempt to cause physical harm. Aggravated assault involves the use of a dangerous weapon.",
+    "elements": [
+      {
+        "name": "Attempted Battery OR Intentional Apprehension",
+        "description": "The offender either attempted to cause harm or intentionally placed the victim in reasonable fear of harm."
+      },
+      {
+        "name": "With a Dangerous Weapon (for Aggravated Assault)",
+        "description": "The assault was committed using a dangerous weapon."
+      }
+    ],
+    "evidenceSuggestions": [
+      "Victim and Witness Testimony",
+      "The Weapon (for Aggravated Assault)",
+      "Photographs or Videos of the incident",
+      "Threatening Communications (voicemails, texts)",
+      "911 Recordings"
+    ]
+  },
+  {
+    "id": "civil_rights_1983",
+    "text": "Federal Civil Rights Violation (42 U.S.C. § 1983)",
+    "description": "A lawsuit against a state or local government official who, while acting in their official capacity, violated a citizen's rights as secured by the U.S. Constitution or federal law.",
+    "elements": [
+      {
+        "name": "Acting Under Color of State Law",
+        "description": "The defendant was a government employee performing their job-related duties."
+      },
+      {
+        "name": "Deprivation of Federal Rights",
+        "description": "The defendant's actions violated a right guaranteed by the U.S. Constitution or a federal statute."
+      }
+    ],
+    "evidenceSuggestions": [
+      "Police Reports and Internal Affairs Files",
+      "Body Camera or Dashboard Camera Footage",
+      "Medical Records",
+      "Witness Testimony",
+      "Photographs and Videos of injuries/scene",
+      "Expert Testimony (on police practices)"
+    ]
+  }
+]
