@@ -128,8 +128,8 @@ fun MainScreen(
 
                     Row(
                         modifier =
-                        Modifier
-                            .fillMaxSize(),
+                            Modifier
+                                .fillMaxSize(),
                     ) {
                         ScriptableAzNavRail(
                             navController = navController,
@@ -143,9 +143,9 @@ fun MainScreen(
 
                             Column(
                                 modifier =
-                                Modifier
-                                    .fillMaxSize()
-                                    .verticalScroll(rememberScrollState()),
+                                    Modifier
+                                        .fillMaxSize()
+                                        .verticalScroll(rememberScrollState()),
                             ) {
                                 if (currentRoute == "home") {
                                     Spacer(Modifier.height(halfContentAreaHeight))
@@ -159,10 +159,10 @@ fun MainScreen(
                                     composable("home") {
                                         Column(
                                             modifier =
-                                            Modifier
-                                                .fillMaxSize()
-                                                .verticalScroll(rememberScrollState())
-                                                .padding(16.dp),
+                                                Modifier
+                                                    .fillMaxSize()
+                                                    .verticalScroll(rememberScrollState())
+                                                    .padding(16.dp),
                                             horizontalAlignment = Alignment.End,
                                             verticalArrangement = Arrangement.Top, // Content aligns to its top
                                         ) {
@@ -286,10 +286,10 @@ fun MainScreen(
                         val halfScreenHeight = this@BoxWithConstraints.maxHeight / 2
                         Column(
                             modifier =
-                            Modifier
-                                .fillMaxSize()
-                                .verticalScroll(rememberScrollState())
-                                .padding(horizontal = 16.dp),
+                                Modifier
+                                    .fillMaxSize()
+                                    .verticalScroll(rememberScrollState())
+                                    .padding(horizontal = 16.dp),
                             horizontalAlignment = Alignment.End,
                             verticalArrangement = Arrangement.Top,
                         ) {

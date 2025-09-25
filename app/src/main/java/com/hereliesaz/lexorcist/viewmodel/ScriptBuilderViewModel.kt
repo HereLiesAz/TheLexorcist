@@ -9,9 +9,13 @@ import com.hereliesaz.lexorcist.data.ActiveScriptRepository
 import com.hereliesaz.lexorcist.data.ScriptRepository
 import com.hereliesaz.lexorcist.data.ScriptStateRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.Flow // Added import
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map 
+import kotlinx.coroutines.flow.stateIn 
+import kotlinx.coroutines.flow.SharingStarted 
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import com.hereliesaz.lexorcist.model.Script
@@ -38,7 +42,9 @@ constructor(
     private val _allScripts = MutableStateFlow<List<Script>>(emptyList())
     val allScripts: StateFlow<List<Script>> = _allScripts.asStateFlow()
 
-    val activeScripts: StateFlow<Set<String>> = activeScriptRepository.activeScripts
+    val activeScripts: StateFlow<Set<String>> = (activeScriptRepository.activeScripts as Flow<List<String>>)
+        .map { list -> list.toSet() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptySet())
 
     private val _saveState = MutableStateFlow<SaveState>(SaveState.Idle)
     val saveState: StateFlow<SaveState> = _saveState.asStateFlow()
@@ -139,7 +145,7 @@ constructor(
             activeScriptRepository.getActiveScripts().forEach { scriptId ->
                 val script = _allScripts.value.find { it.id == scriptId }
                 if (script != null) {
-                    scriptStateRepository.clearScriptState(script.hashCode())
+                    scriptStateRepository.clearScriptState(script.id) // Changed from script.id.hashCode()
                 }
             }
         }
@@ -149,4 +155,3 @@ constructor(
         activeScriptRepository.reorderActiveScripts(from, to)
     }
 }
-// Removed local SaveState definition from here

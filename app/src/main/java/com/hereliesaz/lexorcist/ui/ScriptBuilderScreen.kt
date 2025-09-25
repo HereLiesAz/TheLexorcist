@@ -1,7 +1,7 @@
 package com.hereliesaz.lexorcist.ui
 
 import android.widget.Toast
-import androidx.activity.ComponentActivity
+// import androidx.activity.ComponentActivity // Not used
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -14,22 +14,24 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.LazyColumn // Correct import
+import androidx.compose.foundation.lazy.items // Correct import
+import androidx.compose.foundation.lazy.rememberLazyListState // Correct import
 import androidx.compose.foundation.rememberScrollState
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyColumnState
-import sh.calvin.reorderable.ReorderableLazyColumn // Added import
+import sh.calvin.reorderable.reorderable // Correct import for the modifier
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.AlertDialog
+// import androidx.compose.material.icons.Icons // Not used
+// import androidx.compose.material.icons.filled.Add // Not used
+// import androidx.compose.material3.AlertDialog // Not used
 import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
+// import androidx.compose.material3.CircularProgressIndicator // Not used
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
+// import androidx.compose.material3.FloatingActionButton // Not used
+// import androidx.compose.material3.Icon // Not used
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
+// import androidx.compose.material3.OutlinedButton // Not used
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SecondaryTabRow
@@ -38,12 +40,13 @@ import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.Checkbox // Explicit import
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
+// import androidx.compose.runtime.mutableStateOf // Not used
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -58,8 +61,8 @@ import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.common.state.SaveState
 import com.hereliesaz.lexorcist.model.Script
 import com.hereliesaz.aznavrail.AzButton
-import com.hereliesaz.lexorcist.ui.components.RequestDialog
-import com.hereliesaz.lexorcist.utils.sendEmail
+// import com.hereliesaz.lexorcist.ui.components.RequestDialog // Not used
+// import com.hereliesaz.lexorcist.utils.sendEmail // Not used
 import com.hereliesaz.lexorcist.viewmodel.ScriptBuilderViewModel
 import java.util.Locale
 
@@ -133,6 +136,9 @@ fun ScriptBuilderScreen(
                 "Active Scripts"
             )
 
+            // This Row seems redundant with the FlowRow above and the Row below.
+            // Consider removing if it's a duplicate of functionality.
+            // For now, I'll leave it as it was in the provided code.
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
@@ -182,7 +188,7 @@ fun ScriptBuilderScreen(
                                 Modifier
                                     .fillMaxWidth()
                                     .weight(1f)
-                                    .padding(horizontal = 16.dp),
+                                    .padding(horizontal = 16.dp), // Consider if horizontal padding is needed here or on the Column
                             )
                         }
                     }
@@ -206,19 +212,28 @@ fun ScriptBuilderScreen(
                     }
                     2 -> {
                         val activeScriptObjects = activeScripts.mapNotNull { scriptId -> allScripts.find { it.id == scriptId } }
-                        val reorderableState = rememberReorderableLazyColumnState(onMove = { from, to ->
-                            viewModel.reorderActiveScripts(from.index, to.index)
-                        })
-                        ReorderableLazyColumn( // Changed from LazyColumn
-                            state = reorderableState, // Pass the whole state
-                            modifier = Modifier.fillMaxSize().padding(16.dp) // Removed .reorderable()
+                        
+                        val lazyListState = rememberLazyListState()
+                        val reorderableState = rememberReorderableLazyColumnState(
+                            lazyListState = lazyListState,
+                            onMove = { from, to ->
+                                viewModel.reorderActiveScripts(from.index, to.index)
+                            }
+                        )
+
+                        LazyColumn(
+                            state = lazyListState,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(16.dp)
+                                .reorderable(reorderableState) // Apply the reorderable modifier
                         ) {
                             items(activeScriptObjects, key = { it.id }) { script ->
                                 ReorderableItem(
-                                    reorderableState = reorderableState, // Pass the main state
+                                    reorderableState = reorderableState,
                                     key = script.id,
-                                    lazyListState = reorderableState.lazyListState // Added based on error
-                                ) {
+                                    lazyListState = lazyListState // Pass lazyListState here
+                                ) { isDragging -> // isDragging can be used for visual feedback
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
@@ -226,7 +241,7 @@ fun ScriptBuilderScreen(
                                             .padding(vertical = 8.dp),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        androidx.compose.material3.Checkbox(
+                                        Checkbox( // Using androidx.compose.material3.Checkbox
                                             checked = activeScripts.contains(script.id),
                                             onCheckedChange = { viewModel.toggleActiveScript(script.id) }
                                         )

@@ -16,7 +16,8 @@ class ActiveScriptRepository @Inject constructor(@ApplicationContext private val
     val activeScripts: StateFlow<List<String>> = _activeScripts.asStateFlow()
 
     init {
-        _activeScripts.value = sharedPref.getStringSet("active_scripts", emptySet())?.toList() ?: emptyList()
+        val savedScripts = sharedPref.getString("active_scripts", "") ?: ""
+        _activeScripts.value = if (savedScripts.isNotBlank()) savedScripts.split(",") else emptyList()
     }
 
     fun toggleActiveScript(scriptId: String) {
@@ -27,7 +28,7 @@ class ActiveScriptRepository @Inject constructor(@ApplicationContext private val
             currentActive.add(scriptId)
         }
         _activeScripts.value = currentActive
-        sharedPref.edit { putStringSet("active_scripts", currentActive.toSet()) }
+        sharedPref.edit { putString("active_scripts", currentActive.joinToString(",")) }
     }
 
     fun getActiveScripts(): List<String> {
@@ -39,6 +40,6 @@ class ActiveScriptRepository @Inject constructor(@ApplicationContext private val
         val item = currentActive.removeAt(from)
         currentActive.add(to, item)
         _activeScripts.value = currentActive
-        sharedPref.edit { putStringSet("active_scripts", currentActive.toSet()) }
+        sharedPref.edit { putString("active_scripts", currentActive.joinToString(",")) }
     }
 }

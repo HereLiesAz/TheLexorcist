@@ -43,7 +43,7 @@ android {
         minSdk = 26
         targetSdk = 36
 
-        versionCode = 5
+        versionCode = 4
         versionName = "0.9.2"
 
         testInstrumentationRunner = "com.hereliesaz.lexorcist.HiltTestRunner"
@@ -150,7 +150,7 @@ dependencies {
 
     // WorkManager Testing (version 2.10.4 matches your work-runtime-ktx)
     testImplementation(libs.androidx.work.testing)
-    
+
     // TensorFlow Lite / AI Edge Runtime
     implementation(libs.litert) // com.google.ai.edge.litert:litert:2.0.2 (for runtime mgmt)
     implementation("org.tensorflow:tensorflow-lite:${libs.versions.tensorflowLite.get()}")

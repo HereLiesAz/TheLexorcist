@@ -767,7 +767,7 @@ constructor(
                     context = applicationContext,
                     caseId = caseToUse.id.toLong(),
                     spreadsheetId = caseToUse.spreadsheetId,
-                    activeScriptIds = activeScriptRepository.getActiveScripts().toSet(), // Changed to Set
+                    activeScriptIds = activeScriptRepository.getActiveScripts().toSet(), // Re-corrected line
                 ) { state -> _processingState.value = state }
 
                 message?.let {
