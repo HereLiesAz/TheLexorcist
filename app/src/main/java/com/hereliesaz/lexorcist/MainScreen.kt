@@ -214,12 +214,7 @@ fun MainScreen(
                                         TemplatesScreen(hiltViewModel<AddonsBrowserViewModel>())
                                     }
                                     composable("timeline") {
-                                        selectedCase?.let {
-                                            TimelineScreen(
-                                                caseViewModel = caseViewModel,
-                                                navController = navController
-                                            )
-                                        }
+                                        TimelineScreen()
                                     }
                                     composable("photo_group") {
                                         PhotoGroupScreen(navController = navController, mainViewModel = mainViewModel)
