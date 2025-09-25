@@ -271,7 +271,6 @@ dependencies {
     implementation(libs.grpc.context)
 
     implementation(libs.aznavrail)
-    implementation("sh.calvin.reorderable:reorderable:0.9.6")
 }
 
 kotlin {

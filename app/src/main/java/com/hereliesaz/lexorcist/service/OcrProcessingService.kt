@@ -7,7 +7,6 @@ import android.util.Log
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
-import com.hereliesaz.lexorcist.DataParser
 import com.hereliesaz.lexorcist.data.ActiveScriptRepository
 import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.data.EvidenceRepository
@@ -15,6 +14,7 @@ import com.hereliesaz.lexorcist.data.ScriptRepository
 import com.hereliesaz.lexorcist.data.ScriptStateRepository
 import com.hereliesaz.lexorcist.model.LogLevel
 import com.hereliesaz.lexorcist.model.ProcessingState
+import com.hereliesaz.lexorcist.utils.DataParser
 import com.hereliesaz.lexorcist.utils.ExifUtils
 import com.hereliesaz.lexorcist.utils.Result
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -120,7 +120,7 @@ constructor(
             }
         logService.addLog("Frame recognition complete. Found ${ocrText.length} characters.")
 
-        val entities = DataParser.tagData(ocrText)
+        val entities = DataParser.tagData(ocrText, "")
         val documentDate =
             ExifUtils.getExifDate(context, uri)
                 ?: DataParser.parseDates(ocrText).firstOrNull()
@@ -140,6 +140,7 @@ constructor(
                 sourceDocument = uri.toString(),
                 documentDate = documentDate,
                 allegationId = null,
+                allegationElementName = "",
                 category = "Video Frame OCR",
                 tags = listOf("ocr", "video_frame"),
                 commentary = null,
@@ -255,7 +256,7 @@ constructor(
                 logService.addLog("Text recognition complete. Found ${ocrText.length} characters.")
                 onProgress(ProcessingState.InProgress(0.5f))
 
-                val entities = DataParser.tagData(ocrText)
+                val entities = DataParser.tagData(ocrText, "")
                 val documentDate = ExifUtils.getExifDate(context, newUri)
                     ?: DataParser.parseDates(ocrText).firstOrNull()
                     ?: System.currentTimeMillis()
@@ -278,6 +279,7 @@ constructor(
                         sourceDocument = newUri.toString(),
                         documentDate = documentDate,
                         allegationId = null,
+                        allegationElementName = "",
                         category = "Image OCR",
                         tags = listOf("ocr", "image"),
                         commentary = null,
@@ -295,7 +297,7 @@ constructor(
                     onProgress(ProcessingState.InProgress(0.8f))
 
                     val allScripts = scriptRepository.getScripts()
-                    val activeScriptIds = activeScriptRepository.getActiveScriptIds()
+                    val activeScriptIds = activeScriptRepository.activeScriptIds.value
                     val activeScripts = allScripts.filter { activeScriptIds.contains(it.id) }
                     val sortedActiveScripts = activeScripts.sortedBy { script -> activeScriptIds.indexOf(script.id) }
 

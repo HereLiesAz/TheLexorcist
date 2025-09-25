@@ -31,6 +31,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import android.graphics.pdf.PdfDocument
 import android.provider.MediaStore
+import com.hereliesaz.lexorcist.utils.DataParser
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
@@ -539,7 +540,7 @@ constructor(
 
     fun assignAllegationToEvidence(
         evidenceId: Int,
-        allegationId: Int,
+        allegationId: String?,
     ) {
         viewModelScope.launch {
             globalLoadingState.pushLoading()
@@ -672,7 +673,7 @@ constructor(
         }
     }
 
-    fun assignAllegationToSelectedEvidence(allegationId: Int) {
+    fun assignAllegationToSelectedEvidence(allegationId: String?) {
         viewModelScope.launch {
             globalLoadingState.pushLoading()
             try {
@@ -692,7 +693,7 @@ constructor(
         _processingState.value = ProcessingState.Idle // Reset processing state when logs are cleared
     }
 
-    fun addTextEvidence(text: String) {
+    fun addTextEvidence(text: String, allegationElementName: String) {
         viewModelScope.launch {
             globalLoadingState.pushLoading()
             try {
@@ -704,7 +705,7 @@ constructor(
                     globalLoadingState.popLoading()
                     return@launch
                 }
-                val entities = com.hereliesaz.lexorcist.DataParser.tagData(text)
+                val entities = DataParser.tagData(text, allegationElementName)
                 val newEvidence =
                     com.hereliesaz.lexorcist.data.Evidence(
                         caseId = caseToUse.id.toLong(),
@@ -717,6 +718,7 @@ constructor(
                         sourceDocument = "Manual text entry",
                         documentDate = System.currentTimeMillis(),
                         allegationId = null,
+                        allegationElementName = allegationElementName,
                         category = "",
                         tags = emptyList(),
                         commentary = null,
@@ -786,7 +788,7 @@ constructor(
         }
     }
 
-    fun processAudioEvidence(uri: android.net.Uri) {
+    fun processAudioEvidence(uri: android.net.Uri, allegationElementName: String) {
         viewModelScope.launch(Dispatchers.Main) { // Ensure UI updates are on Main
             val currentCaseFromState = _vmSelectedCase.value
             Log.d("CaseViewModel", "processAudioEvidence: _vmSelectedCase.value AT START is: ${currentCaseFromState?.name ?: "null"}")
@@ -842,11 +844,12 @@ constructor(
                                         sourceDocument = uploadedFileUriString, // Or original file name if preferred
                                         documentDate = System.currentTimeMillis(), // Consider Exif or other means for original date
                                         allegationId = null,
+                                        allegationElementName = allegationElementName,
                                         category = "Audio Transcription",
                                         tags = listOf("audio", "transcription"),
                                         commentary = null,
                                         parentVideoId = null,
-                                        entities = com.hereliesaz.lexorcist.DataParser.tagData(transcribedText),
+                                        entities = DataParser.tagData(transcribedText, allegationElementName),
                                         fileHash = fileHash
                                     )
                                 val savedEvidence = withContext(Dispatchers.IO) {
@@ -965,7 +968,7 @@ constructor(
                         androidx.work.Data
                             .Builder()
                             .putString(com.hereliesaz.lexorcist.service.VideoProcessingWorker.KEY_VIDEO_URI, uri.toString())
-                            .putInt(com.hereliesaz.lexorcist.service.VideoProcessingWorker.KEY_CASE_ID, caseToUse.id)
+                            .putString(com.hereliesaz.lexorcist.service.VideoProcessingWorker.KEY_CASE_ID, caseToUse.id.toString())
                             .putString(com.hereliesaz.lexorcist.service.VideoProcessingWorker.KEY_CASE_NAME, caseToUse.name)
                             .putString(com.hereliesaz.lexorcist.service.VideoProcessingWorker.KEY_SPREADSHEET_ID, caseToUse.spreadsheetId)
                             .build(),
@@ -1016,7 +1019,7 @@ constructor(
         }
     }
 
-    fun addPhotoGroupEvidence(photoUris: List<android.net.Uri>, description: String) {
+    fun addPhotoGroupEvidence(photoUris: List<android.net.Uri>, description: String, allegationElementName: String) {
         viewModelScope.launch {
             globalLoadingState.pushLoading()
             clearLogs()
@@ -1084,10 +1087,11 @@ constructor(
                             sourceDocument = "Photo Group",
                             documentDate = System.currentTimeMillis(),
                             allegationId = null,
+                            allegationElementName = allegationElementName,
                             category = "Photo",
                             tags = listOf("photo", "group"),
                             commentary = null,
-                            entities = emptyMap(),
+                            entities = DataParser.tagData(description, allegationElementName),
                         )
                     evidenceRepository.addEvidence(newEvidence)
                     _userMessage.value = "Photo group evidence saved successfully."
@@ -1202,7 +1206,7 @@ constructor(
         }
     }
 
-    fun mergeImageSeries(group: com.hereliesaz.lexorcist.model.CleanupSuggestion.ImageSeriesGroup) {
+    fun mergeImageSeries(group: com.hereliesaz.lexorcist.model.CleanupSuggestion.ImageSeriesGroup, allegationElementName: String) {
         viewModelScope.launch {
             val case = selectedCase.value ?: return@launch
             val caseDir = storageLocation.value?.let { File(it, case.spreadsheetId) } ?: return@launch
@@ -1242,11 +1246,12 @@ constructor(
                 sourceDocument = "Merged from image series",
                 documentDate = System.currentTimeMillis(),
                 allegationId = null,
+                allegationElementName = allegationElementName,
                 category = "Document",
                 tags = listOf("pdf", "merged"),
                 commentary = null,
                 parentVideoId = null,
-                entities = emptyMap(),
+                entities = DataParser.tagData(combinedContent, allegationElementName),
                 fileHash = com.hereliesaz.lexorcist.utils.HashingUtils.getHash(applicationContext, pdfFile.toUri())
             )
 
