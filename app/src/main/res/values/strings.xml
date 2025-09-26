@@ -9,16 +9,16 @@
     <string name="case_name_column">Case Name</string>
     <string name="imported_case_default_name">Imported Case %1$d</string>
     <string name="parse_store_determined_case_name">parseAndStore: Determined case name from import data: %1$s</string>
-    <string name="parse_store_case_exists">parseAndStore: Case with name \'%1$s\' already exists in the registry. Import aborted. Spreadsheet ID: %2$s</string>
-    <string name="parse_store_no_existing_case">parseAndStore: No existing case found with name \'%1$s'. Proceeding to create new case structure.</string>
+    <string name="parse_store_case_exists">parseAndStore: Case with name '%1$s' already exists in the registry. Import aborted. Spreadsheet ID: %2$s</string>
+    <string name="parse_store_no_existing_case">parseAndStore: No existing case found with name '%1$s'. Proceeding to create new case structure.</string>
     <string name="parse_store_failed_create_folder">parseAndStore: Failed to create folder for new case: %1$s</string>
     <string name="parse_store_failed_create_spreadsheet">parseAndStore: Failed to create spreadsheet for new case: %1$s</string>
     <string name="default_imported_case_script">// Default script for imported case
 function onOpen() {}</string>
     <string name="parse_store_created_new_case">parseAndStore: Created new case structure: Folder ID %1$s, Spreadsheet ID %2$s</string>
-    <string name="parse_store_failed_add_case_to_registry">parseAndStore: Failed to add new case \'%1$s\' to registry. Proceeding with data import to its sheet, but it won't be listed until registry issue is fixed.</string>
+    <string name="parse_store_failed_add_case_to_registry">parseAndStore: Failed to add new case '%1$s' to registry. Proceeding with data import to its sheet, but it won't be listed until registry issue is fixed.</string>
     <string name="exhibit_matrix_allegations_sheet_name">Exhibit Matrix - Allegations</string>
-    <string name="parse_store_failed_add_allegation">parseAndStore: Failed to add allegation: \'%1$s' to %2$s</string>
+    <string name="parse_store_failed_add_allegation">parseAndStore: Failed to add allegation: '%1$s' to %2$s</string>
     <string name="evidence_sheet_name">Evidence</string>
     <string name="imported_evidence_sheet_source">Imported - Evidence Sheet</string>
     <string name="comma_separator">,</string>
@@ -93,7 +93,7 @@ function onOpen() {}</string>
     <string name="unnamed_template">Unnamed Template (ID: %1$s…)</string>
     <string name="create">Create</string>
     <string name="cancel">Cancel</string>
-    <string name="no_cases_found">No cases found. Click the \'+\' button to create a new case.</string>
+    <string name="no_cases_found">No cases found. Click the '+' button to create a new case.</string>
     <string name="no_cases_match_search">No cases match your search.</string>
     <string name="no_cases_found_line1">No cases found.</string>
     <string name="no_cases_found_line2">Create a new case or open an existing one.</string>
@@ -145,7 +145,7 @@ function onOpen() {}</string>
     <string name="sort_alphabetical">Sort Alphabetical</string>
     <string name="sort_category">Sort by Category</string>
     <string name="request">Request</string>
-    <string name="no_allegations_found_for_search">No allegations found for \"%1$s\"</string>
+    <string name="no_allegations_found_for_search">No allegations found for "%1$s"</string>
     <string name="no_allegations_available">No allegations available.</string>
     <string name="request_new_allegation">Request New Allegation</string>
     <string name="allegation_name">Allegation Name</string>
@@ -229,13 +229,13 @@ function onOpen() {}</string>
     <string name="create_case_error_no_api">createCase: No API service.</string>
     <string name="create_case_error_app_root">createCase: Failed to get app root folder.</string>
     <string name="create_case_error_case_registry">createCase: Failed to get case registry.</string>
-    <string name="create_case_error_case_folder">createCase: Failed to create case folder for \'%1$s'.</string>
+    <string name="create_case_error_case_folder">createCase: Failed to create case folder for '%1$s'.</string>
     <string name="create_case_error_download_template">createCase: Failed to download HTML template (ID: %1$s).</string>
-    <string name="create_case_error_upload_snapshot">createCase: Failed to upload HTML snapshot for case \'%1$s'. Proceeding without it.</string>
+    <string name="create_case_error_upload_snapshot">createCase: Failed to upload HTML snapshot for case '%1$s'. Proceeding without it.</string>
     <string name="create_case_error_generate_pdf">createCase: Failed to generate local PDF from HTML.</string>
     <string name="create_case_error_upload_pdf">createCase: Failed to upload generated PDF to Drive folder %1$s.</string>
-    <string name="create_case_error_create_spreadsheet">createCase: Failed to create case spreadsheet for \'%1$s'.</string>
-    <string name="create_case_error_add_to_registry">Failed to add case \'%1$s' to registry.</string>
+    <string name="create_case_error_create_spreadsheet">createCase: Failed to create case spreadsheet for '%1$s'.</string>
+    <string name="create_case_error_add_to_registry">Failed to add case '%1$s' to registry.</string>
     <string name="load_cases_error_no_api">loadCasesFromRegistry: No API service.</string>
     <string name="load_templates_error_no_api">loadHtmlTemplates: No API service.</string>
     <string name="load_sheet_filters_error_no_api">loadSelectedCaseSheetFilters: No API service.</string>
