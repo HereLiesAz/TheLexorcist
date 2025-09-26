@@ -61,7 +61,6 @@ interface CaseRepository {
 
     suspend fun addAllegation(
         spreadsheetId: String,
-        allegationElementName: String,
         allegationText: String,
     )
 
