@@ -26,6 +26,8 @@ fun ScriptableAzNavRail(
             onClick = { navController.navigate("case_allegations_route") },
         )
         azRailItem(id = "exhibits", text = "Exhibits", onClick = { navController.navigate("exhibits") })
+        azRailItem(id = "script_builder", text = "Script", onClick = { navController.navigate("script_builder") })
+        azRailItem(id = "templates", text = "Templates", onClick = { navController.navigate("templates") })
         azRailItem(id = "timeline", text = "Timeline", onClick = { navController.navigate("timeline") })
         azRailItem(id = "data_review", text = "Review", onClick = { navController.navigate("data_review") })
 
@@ -35,8 +37,6 @@ fun ScriptableAzNavRail(
             }
         }
 
-        azRailItem(id = "templates", text = "Templates", onClick = { navController.navigate("templates") })
-        azRailItem(id = "script_builder", text = "Script", onClick = { navController.navigate("script_builder") })
         azRailItem(id = "extras", text = "Extras", onClick = { navController.navigate("extras") })
         azRailItem(id = "settings", text = "Settings", onClick = { navController.navigate("settings") })
     }
