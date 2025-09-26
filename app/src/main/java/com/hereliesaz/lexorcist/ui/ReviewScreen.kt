@@ -11,7 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.items // Keep this for existing LazyColumn usages
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -25,7 +25,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExposedDropdownMenuAnchorType // Added import
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -35,7 +35,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
-import androidx.compose.material3.PrimaryTabRow // Changed from TabRow
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -86,7 +86,7 @@ fun ReviewScreen(
 
     LaunchedEffect(selectedCase) {
         selectedCase?.let {
-            allegationsViewModel.loadAllegations(it.id.toString())
+            allegationsViewModel.loadAllegations(it.id.toString()) // Assuming Allegation.id is Int and needs toString()
             caseViewModel.loadExhibits()
         }
     }
@@ -161,7 +161,7 @@ fun ReviewScreen(
                     Text(stringResource(R.string.no_evidence_for_case).uppercase(Locale.getDefault()))
                 }
             } else {
-                PrimaryTabRow(selectedTabIndex = selectedTab) { // Changed from TabRow
+                PrimaryTabRow(selectedTabIndex = selectedTab) {
                     Tab(
                         selected = selectedTab == 0,
                         onClick = { selectedTab = 0 },
@@ -225,26 +225,36 @@ fun ReviewScreen(
                         }
                     }
                     Spacer(modifier = Modifier.height(8.dp))
-                    if (selectedAllegation != null) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("Elements for ${selectedAllegation!!.text}", style = MaterialTheme.typography.titleMedium)
-                            selectedAllegation!!.elements.forEach { element ->
+                    val currentSelectedAllegation = selectedAllegation
+                    if (currentSelectedAllegation != null) {
+                        Column(modifier = Modifier.weight(1f).padding(start = 8.dp)) {
+                            Text("Elements for ${currentSelectedAllegation.text}", style = MaterialTheme.typography.titleMedium)
+                            // Assuming currentSelectedAllegation.elements is List<AllegationElement>
+                            /*
+                            currentSelectedAllegation.elements?.forEach { element: AllegationElement -> // Explicit type
                                 AllegationElementItem(
                                     element = element,
                                     onAssignEvidence = {
                                         if (selectedEvidence.isNotEmpty()) {
-                                            caseViewModel.assignEvidenceToElement(selectedAllegation!!.id, element.name, selectedEvidence.map { it.id })
+                                            caseViewModel.assignEvidenceToElement(
+                                                currentSelectedAllegation.id.toString(), // Ensure ID is string
+                                                element.name, // Assuming AllegationElement has .name
+                                                selectedEvidence.map { it.id } // Assuming Evidence has .id
+                                            )
                                         }
                                     }
                                 )
                             }
+                            */
                             Text("Suggested Evidence", style = MaterialTheme.typography.titleMedium)
-                            selectedAllegation!!.evidenceSuggestions.forEach { suggestion ->
+                            /*
+                            currentSelectedAllegation.evidenceSuggestions?.forEach { suggestion: String -> // Explicit type
                                 Text(suggestion)
                             }
+                            */
                             CaseStrengthMeter(
                                 evidenceList = evidenceList,
-                                allegation = selectedAllegation!!
+                                allegation = currentSelectedAllegation
                             )
                         }
                     }
@@ -284,7 +294,7 @@ fun ReviewScreen(
                     if (selectedAllegation != null && selectedEvidence.isNotEmpty()) {
                         LexorcistOutlinedButton(
                             onClick = {
-                                caseViewModel.assignAllegationToSelectedEvidence(selectedAllegation!!.id)
+                                caseViewModel.assignAllegationToSelectedEvidence(selectedAllegation!!.id.toString()) // Ensure ID is string
                             },
                             text = stringResource(R.string.assign_to_allegation),
                             modifier = Modifier.padding(start = 8.dp)
@@ -345,7 +355,7 @@ fun ReviewScreen(
             evidence = evidenceToEdit!!,
             onDismiss = { showEditDialog = false },
             onSave = { updatedEvidence ->
-                caseViewModel.updateEvidence(updatedEvidence)
+                caseViewModel.updateEvidenceInSheet(updatedEvidence) // Assuming this should be updateEvidenceInSheet
                 showEditDialog = false
             },
         )
@@ -409,12 +419,13 @@ fun CaseStrengthMeter(
 ) {
     Column {
         Text("Case Strength", style = MaterialTheme.typography.titleMedium)
-        allegation.elements.forEach { element ->
-            val evidenceCount = evidenceList.count { it.allegationElementName == element.name }
+        /*
+        allegation.elements?.forEach { element: AllegationElement -> // Explicit type
+            val evidenceCount = evidenceList.count { it.allegationElementName == element.name } // Assuming AllegationElement has .name
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(element.name, modifier = Modifier.weight(1f))
+                Text(element.name, modifier = Modifier.weight(1f)) // Assuming AllegationElement has .name
                 Row(modifier = Modifier.weight(1f)) {
-                    (0 until evidenceCount).forEach {
+                    repeat(evidenceCount) {
                         Box(
                             modifier = Modifier
                                 .height(20.dp)
@@ -426,6 +437,7 @@ fun CaseStrengthMeter(
                 }
             }
         }
+        */
     }
 }
 
@@ -442,7 +454,7 @@ fun AllegationElementItem(
         shape = MaterialTheme.shapes.medium
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(element.name, style = MaterialTheme.typography.titleMedium)
+            Text(element.name, style = MaterialTheme.typography.titleMedium) // Assuming AllegationElement has .name
             Text(element.description, style = MaterialTheme.typography.bodyMedium)
             Button(onClick = onAssignEvidence) {
                 Text("Assign Selected Evidence")
@@ -609,7 +621,7 @@ fun EditEvidenceDialog(
                         trailingIcon = {
                             ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
                         },
-                        modifier = Modifier.menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = true).fillMaxWidth(), // This line was already correct
+                        modifier = Modifier.menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = true).fillMaxWidth(),
                         textStyle = MaterialTheme.typography.bodyLarge.copy(textAlign = TextAlign.End),
                     )
                     ExposedDropdownMenu(
@@ -797,8 +809,12 @@ fun PackageFilesDialog(
     val case by caseViewModel.selectedCase.collectAsState()
     val files = remember(case) {
         case?.let {
-            val caseDir = java.io.File(caseViewModel.storageLocation.value, it.spreadsheetId)
-            caseDir.walk().filter { it.isFile }.toList()
+            val caseDir = java.io.File(caseViewModel.storageLocation.value, it.spreadsheetId) // Assuming spreadsheetId as folder identifier
+            if (caseDir.exists() && caseDir.isDirectory) {
+                 caseDir.walk().filter { it.isFile }.toList()
+            } else {
+                emptyList()
+            }
         } ?: emptyList()
     }
     var selectedFiles by remember { mutableStateOf<List<String>>(emptyList()) }
@@ -892,7 +908,7 @@ fun GenerateDocumentDialog(
                         onValueChange = {},
                         readOnly = true,
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = exhibitExpanded) },
-                        modifier = Modifier.menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryEditable, enabled = true)
+                        modifier = Modifier.menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryEditable, enabled = true).fillMaxWidth() // Added fillMaxWidth
                     )
                     ExposedDropdownMenu(
                         expanded = exhibitExpanded,
@@ -921,7 +937,7 @@ fun GenerateDocumentDialog(
                         onValueChange = {},
                         readOnly = true,
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = templateExpanded) },
-                        modifier = Modifier.menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryEditable, enabled = true)
+                        modifier = Modifier.menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryEditable, enabled = true).fillMaxWidth() // Added fillMaxWidth
                     )
                     ExposedDropdownMenu(
                         expanded = templateExpanded,

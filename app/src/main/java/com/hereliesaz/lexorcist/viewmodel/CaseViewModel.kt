@@ -7,11 +7,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asFlow
 import androidx.lifecycle.viewModelScope
 import com.google.api.services.drive.model.File as DriveFile
+import com.hereliesaz.lexorcist.data.ActiveScriptRepository
 import com.hereliesaz.lexorcist.data.Allegation
 import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.data.CaseRepository
 import com.hereliesaz.lexorcist.data.EvidenceRepository
 import com.hereliesaz.lexorcist.data.LocalFileStorageService
+import com.hereliesaz.lexorcist.data.ScriptRepository
 import com.hereliesaz.lexorcist.data.SettingsManager
 import com.hereliesaz.lexorcist.data.SortOrder
 import com.hereliesaz.lexorcist.model.ProcessingState
@@ -29,9 +31,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import android.graphics.pdf.PdfDocument
 import android.provider.MediaStore
+import com.hereliesaz.lexorcist.utils.DataParser
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map // Ensured import
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -47,17 +51,18 @@ constructor(
     @param:ApplicationContext private val applicationContext: Context,
     private val caseRepository: CaseRepository,
     private val evidenceRepository: EvidenceRepository,
-    private val settingsManager: SettingsManager,
     private val localFileStorageService: LocalFileStorageService,
     private val scriptRunner: com.hereliesaz.lexorcist.service.ScriptRunner,
     private val ocrProcessingService: com.hereliesaz.lexorcist.service.OcrProcessingService,
     private val transcriptionService: com.hereliesaz.lexorcist.service.TranscriptionService,
     private val workManager: androidx.work.WorkManager,
-    private val activeScriptRepository: com.hereliesaz.lexorcist.data.ActiveScriptRepository,
+    private val scriptRepository: ScriptRepository,
+    private val activeScriptRepository: ActiveScriptRepository,
     private val logService: com.hereliesaz.lexorcist.service.LogService,
     private val storageService: com.hereliesaz.lexorcist.data.StorageService,
     private val globalLoadingState: com.hereliesaz.lexorcist.service.GlobalLoadingState,
-    private val googleApiService: com.hereliesaz.lexorcist.service.GoogleApiService
+    private val googleApiService: com.hereliesaz.lexorcist.service.GoogleApiService,
+    private val settingsManager: SettingsManager
 ) : ViewModel() {
     private val sharedPref =
         applicationContext.getSharedPreferences("CaseInfoPrefs", Context.MODE_PRIVATE)
@@ -178,7 +183,6 @@ constructor(
     init {
         Log.d("CaseViewModel", "--- CaseViewModel INIT --- instancia: $this")
         loadThemeModePreference()
-        _storageLocation.value = settingsManager.getStorageLocation()
 
         viewModelScope.launch {
             logService.logEventFlow.collect { newLog ->
@@ -230,27 +234,6 @@ constructor(
         }
     }
 
-    fun assignEvidenceToElement(allegationId: String, elementName: String, evidenceIds: List<Int>) {
-        viewModelScope.launch {
-            globalLoadingState.pushLoading()
-            try {
-                evidenceIds.forEach { evidenceId ->
-                    val evidence = _selectedCaseEvidenceListInternal.value.find { it.id == evidenceId }
-                    if (evidence != null) {
-                        val updatedEvidence = evidence.copy(
-                            allegationId = allegationId,
-                            allegationElementName = elementName
-                        )
-                        evidenceRepository.updateEvidence(updatedEvidence)
-                    }
-                }
-                clearEvidenceSelection()
-            } finally {
-                globalLoadingState.popLoading()
-            }
-        }
-    }
-
     fun updateExhibit(exhibit: com.hereliesaz.lexorcist.data.Exhibit) {
         viewModelScope.launch {
             selectedCase.value?.let {
@@ -273,14 +256,8 @@ constructor(
         viewModelScope.launch {
             globalLoadingState.pushLoading()
             try {
-                val oldLocation = settingsManager.getStorageLocation()
                 settingsManager.saveStorageLocation(uri.toString())
                 _storageLocation.value = uri.toString()
-                if (oldLocation != null) {
-                    viewModelScope.launch { _userMessage.emit("Moving files to new location...") }
-                    localFileStorageService.moveFilesToNewLocation(oldLocation, uri.toString())
-                    viewModelScope.launch { _userMessage.emit("Files moved successfully.") }
-                }
             } finally {
                 globalLoadingState.popLoading()
             }
@@ -563,7 +540,7 @@ constructor(
 
     fun assignAllegationToEvidence(
         evidenceId: Int,
-        allegationId: Int,
+        allegationId: String?,
     ) {
         viewModelScope.launch {
             globalLoadingState.pushLoading()
@@ -592,6 +569,17 @@ constructor(
     fun onCourtChanged(name: String) {
         _court.value = name
         saveCaseInfoToSharedPrefs()
+    }
+
+    fun updateEvidence(evidence: com.hereliesaz.lexorcist.data.Evidence) {
+        viewModelScope.launch {
+            globalLoadingState.pushLoading()
+            try {
+                evidenceRepository.updateEvidence(evidence)
+            } finally {
+                globalLoadingState.popLoading()
+            }
+        }
     }
 
     private fun saveCaseInfoToSharedPrefs() {
@@ -639,27 +627,36 @@ constructor(
         }
     }
 
-    fun rerunScriptOnEvidence(evidence: com.hereliesaz.lexorcist.data.Evidence) {
+    fun rerunAllScriptsOnAllEvidence() {
         viewModelScope.launch {
             globalLoadingState.pushLoading()
+            _userMessage.value = "Rerunning all active scripts on all evidence..."
             try {
-                val activeScriptIds = activeScriptRepository.getActiveScriptIds()
+                val allEvidence = _selectedCaseEvidenceListInternal.value
+                val activeScriptIds = activeScriptRepository.activeScriptIds.value
                 val allScripts = scriptRepository.getScripts()
                 val scriptsToRun = allScripts.filter { activeScriptIds.contains(it.id) }
                 val sortedScriptsToRun = scriptsToRun.sortedBy { script -> activeScriptIds.indexOf(script.id) }
 
-                var updatedEvidence = evidence
-                sortedScriptsToRun.forEach { script ->
-                    val result = scriptRunner.runScript(script.content, updatedEvidence)
-                    if (result is Result.Success) {
-                        val currentTagsInEvidence: List<String> = updatedEvidence.tags
-                        val newTagsFromScript: List<String> = result.data.tags
-                        val combinedTags: List<String> = (currentTagsInEvidence + newTagsFromScript).distinct()
-                        updatedEvidence = updatedEvidence.copy(tags = combinedTags)
+                allEvidence.forEach { evidence ->
+                    var updatedEvidence = evidence
+                    sortedScriptsToRun.forEach { script ->
+                        val result = scriptRunner.runScript(script.content, updatedEvidence)
+                        if (result is Result.Success) {
+                            val currentTagsInEvidence: List<String> = updatedEvidence.tags
+                            val newTagsFromScript: List<String> = result.data.tags
+                            val combinedTags: List<String> = (currentTagsInEvidence + newTagsFromScript).distinct()
+                            updatedEvidence = updatedEvidence.copy(tags = combinedTags)
+                        }
                     }
+                    evidenceRepository.updateEvidence(updatedEvidence)
                 }
-                evidenceRepository.updateEvidence(updatedEvidence)
-            } finally {
+                _userMessage.value = "Finished rerunning scripts."
+                caseRepository.refreshSelectedCaseDetails()
+            } catch (e: Exception) {
+                _errorMessage.value = "Failed to rerun scripts: ${e.message}"
+            }
+            finally {
                 globalLoadingState.popLoading()
             }
         }
@@ -676,7 +673,7 @@ constructor(
         }
     }
 
-    fun assignAllegationToSelectedEvidence(allegationId: String) {
+    fun assignAllegationToSelectedEvidence(allegationId: String?) {
         viewModelScope.launch {
             globalLoadingState.pushLoading()
             try {
@@ -696,7 +693,7 @@ constructor(
         _processingState.value = ProcessingState.Idle // Reset processing state when logs are cleared
     }
 
-    fun addTextEvidence(text: String) {
+    fun addTextEvidence(text: String, allegationElementName: String) {
         viewModelScope.launch {
             globalLoadingState.pushLoading()
             try {
@@ -708,7 +705,7 @@ constructor(
                     globalLoadingState.popLoading()
                     return@launch
                 }
-                val entities = com.hereliesaz.lexorcist.DataParser.tagData(text)
+                val entities = DataParser.tagData(text)
                 val newEvidence =
                     com.hereliesaz.lexorcist.data.Evidence(
                         caseId = caseToUse.id.toLong(),
@@ -721,6 +718,7 @@ constructor(
                         sourceDocument = "Manual text entry",
                         documentDate = System.currentTimeMillis(),
                         allegationId = null,
+                        allegationElementName = allegationElementName,
                         category = "",
                         tags = emptyList(),
                         commentary = null,
@@ -765,8 +763,7 @@ constructor(
                     uri = uri,
                     context = applicationContext,
                     caseId = caseToUse.id.toLong(),
-                    spreadsheetId = caseToUse.spreadsheetId,
-                    activeScriptIds = activeScriptRepository.getActiveScriptIds(),
+                    spreadsheetId = caseToUse.spreadsheetId
                 ) { state -> _processingState.value = state } // Pass the lambda to update ViewModel's state
 
                 message?.let {
@@ -791,7 +788,7 @@ constructor(
         }
     }
 
-    fun processAudioEvidence(uri: android.net.Uri) {
+    fun processAudioEvidence(uri: android.net.Uri, allegationElementName: String) {
         viewModelScope.launch(Dispatchers.Main) { // Ensure UI updates are on Main
             val currentCaseFromState = _vmSelectedCase.value
             Log.d("CaseViewModel", "processAudioEvidence: _vmSelectedCase.value AT START is: ${currentCaseFromState?.name ?: "null"}")
@@ -847,11 +844,12 @@ constructor(
                                         sourceDocument = uploadedFileUriString, // Or original file name if preferred
                                         documentDate = System.currentTimeMillis(), // Consider Exif or other means for original date
                                         allegationId = null,
+                                        allegationElementName = allegationElementName,
                                         category = "Audio Transcription",
                                         tags = listOf("audio", "transcription"),
                                         commentary = null,
                                         parentVideoId = null,
-                                        entities = com.hereliesaz.lexorcist.DataParser.tagData(transcribedText),
+                                        entities = DataParser.tagData(transcribedText),
                                         fileHash = fileHash
                                     )
                                 val savedEvidence = withContext(Dispatchers.IO) {
@@ -970,7 +968,7 @@ constructor(
                         androidx.work.Data
                             .Builder()
                             .putString(com.hereliesaz.lexorcist.service.VideoProcessingWorker.KEY_VIDEO_URI, uri.toString())
-                            .putInt(com.hereliesaz.lexorcist.service.VideoProcessingWorker.KEY_CASE_ID, caseToUse.id)
+                            .putString(com.hereliesaz.lexorcist.service.VideoProcessingWorker.KEY_CASE_ID, caseToUse.id.toString())
                             .putString(com.hereliesaz.lexorcist.service.VideoProcessingWorker.KEY_CASE_NAME, caseToUse.name)
                             .putString(com.hereliesaz.lexorcist.service.VideoProcessingWorker.KEY_SPREADSHEET_ID, caseToUse.spreadsheetId)
                             .build(),
@@ -1021,7 +1019,7 @@ constructor(
         }
     }
 
-    fun addPhotoGroupEvidence(photoUris: List<android.net.Uri>, description: String) {
+    fun addPhotoGroupEvidence(photoUris: List<android.net.Uri>, description: String, allegationElementName: String) {
         viewModelScope.launch {
             globalLoadingState.pushLoading()
             clearLogs()
@@ -1089,10 +1087,11 @@ constructor(
                             sourceDocument = "Photo Group",
                             documentDate = System.currentTimeMillis(),
                             allegationId = null,
+                            allegationElementName = allegationElementName,
                             category = "Photo",
                             tags = listOf("photo", "group"),
                             commentary = null,
-                            entities = emptyMap(),
+                            entities = DataParser.tagData(description),
                         )
                     evidenceRepository.addEvidence(newEvidence)
                     _userMessage.value = "Photo group evidence saved successfully."
@@ -1207,7 +1206,7 @@ constructor(
         }
     }
 
-    fun mergeImageSeries(group: com.hereliesaz.lexorcist.model.CleanupSuggestion.ImageSeriesGroup) {
+    fun mergeImageSeries(group: com.hereliesaz.lexorcist.model.CleanupSuggestion.ImageSeriesGroup, allegationElementName: String) {
         viewModelScope.launch {
             val case = selectedCase.value ?: return@launch
             val caseDir = storageLocation.value?.let { File(it, case.spreadsheetId) } ?: return@launch
@@ -1247,11 +1246,12 @@ constructor(
                 sourceDocument = "Merged from image series",
                 documentDate = System.currentTimeMillis(),
                 allegationId = null,
+                allegationElementName = allegationElementName,
                 category = "Document",
                 tags = listOf("pdf", "merged"),
                 commentary = null,
                 parentVideoId = null,
-                entities = emptyMap(),
+                entities = DataParser.tagData(combinedContent),
                 fileHash = com.hereliesaz.lexorcist.utils.HashingUtils.getHash(applicationContext, pdfFile.toUri())
             )
 
@@ -1352,50 +1352,6 @@ constructor(
             } catch (e: Exception) {
                 e.printStackTrace()
             }
-        }
-    }
-
-    fun generateReadinessReport() {
-        viewModelScope.launch {
-            val case = selectedCase.value ?: return@launch
-            val evidence = selectedCaseEvidenceList.value
-            val exhibits = exhibits.value
-            val allegations = allegations.value
-
-            val report = StringBuilder()
-            report.append("Readiness Report for ${case.name}\n\n")
-
-            report.append("Allegations:\n")
-            allegations.forEach { allegation ->
-                report.append("- ${allegation.text}\n")
-                allegation.elements.forEach { element ->
-                    val elementEvidence = evidence.filter { it.allegationId == allegation.id && it.allegationElementName == element.name }
-                    report.append("  - ${element.name} (${elementEvidence.size} evidence)\n")
-                }
-            }
-            report.append("\n")
-
-            report.append("Exhibits:\n")
-            exhibits.forEach { exhibit ->
-                report.append("- ${exhibit.name}\n")
-                exhibit.evidenceIds.forEach { evidenceId ->
-                    val evidenceItem = evidence.find { it.id == evidenceId }
-                    if (evidenceItem != null) {
-                        report.append("  - ${evidenceItem.content}\n")
-                    }
-                }
-            }
-            report.append("\n")
-
-            report.append("Timeline:\n")
-            evidence.sortedBy { it.documentDate }.forEach { evidence ->
-                val date = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(evidence.documentDate)
-                report.append("- $date: ${evidence.content}\n")
-            }
-
-            // In a real app, you would save this report to a file or display it in a dialog.
-            // For now, we'll just log it.
-            println(report.toString())
         }
     }
 }

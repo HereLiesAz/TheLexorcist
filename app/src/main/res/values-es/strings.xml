@@ -282,7 +282,4 @@
     <string name="share_addon_type_label">Tipo: %1$s</string>
     <string name="share_addon_share_button">Compartir complemento</string>
     <string name="take_photo">Tomar foto</string>
-    <string name="allegations_slash">\\Allegations\\</string>
-    <string name="add_to_exhibit">\\Add to Exhibit\\</string>
-    <string name="exhibits">Exhibits</string>
 </resources>

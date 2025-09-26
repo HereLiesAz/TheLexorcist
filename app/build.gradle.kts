@@ -140,10 +140,7 @@ dependencies {
     implementation(libs.google.firebase.ai) {
         exclude(group = "org.tensorflow")
     }
-    implementation(libs.material3)
-    implementation(libs.androidx.leanback)
-    implementation(libs.androidx.compose.foundation.layout)
-    implementation(libs.androidx.room.ktx) // Explicitly use KTX version and direct coordinate
+    implementation(libs.material3) // Explicitly use KTX version and direct coordinate
 
     // Core testing dependencies
     testImplementation(libs.junit) // JUnit 4
@@ -160,7 +157,7 @@ dependencies {
     implementation("org.tensorflow:tensorflow-lite-api:${libs.versions.tensorflowLite.get()}")
     // REMOVED: implementation("com.google.android.gms:play-services-tflite-java:16.4.0")
     // REMOVED: implementation("com.google.android.gms:play-services-tflite-support:16.4.0")
-    // implementation("sh.calvin.reorderable:reorderable:0.9.6")
+    implementation(libs.reorderable)
 
     testImplementation(libs.androidx.arch.core.testing) // For InstantTaskExecutorRule
     testImplementation(libs.kotlinx.coroutines.test) // For coroutines testing (runTest, TestDispatchers)

@@ -83,9 +83,6 @@ tensorflowLite = "2.17.0"
 tensorflowLiteSupport = "0.5.0"
 litert = "2.0.2"
 litertApi = "1.4.0"
-leanback = "1.2.0"
-foundationLayout = "1.9.2"
-roomKtx = "2.8.1"
 
 [libraries]
 litert = { group = "com.google.ai.edge.litert", name = "litert", version.ref = "litert" }
@@ -199,9 +196,6 @@ google-id = { group = "com.google.android.libraries.identity.googleid", name = "
 material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
 vosk-android = { module = "com.alphacephei:vosk-android", version.ref = "voskAndroid" }
 litert-api = { group = "com.google.ai.edge.litert", name = "litert-api", version.ref = "litertApi" }
-androidx-leanback = { group = "androidx.leanback", name = "leanback", version.ref = "leanback" }
-androidx-compose-foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "foundationLayout" }
-androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "roomKtx" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "androidApplication" }

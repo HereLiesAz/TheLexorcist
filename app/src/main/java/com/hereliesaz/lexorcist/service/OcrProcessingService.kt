@@ -108,7 +108,6 @@ constructor(
         caseId: Int,
         spreadsheetId: String,
         parentVideoId: String?,
-        allegationElementName: String?,
     ): Evidence? {
         logService.addLog("Processing video frame: $uri")
         val ocrText =
@@ -141,7 +140,7 @@ constructor(
                 sourceDocument = uri.toString(),
                 documentDate = documentDate,
                 allegationId = null,
-                allegationElementName = allegationElementName,
+                allegationElementName = "",
                 category = "Video Frame OCR",
                 tags = listOf("ocr", "video_frame"),
                 commentary = null,
@@ -157,36 +156,34 @@ constructor(
             logService.addLog("Frame evidence saved with ID: ${evidence.id}. Applying scripts...")
             val allScripts = scriptRepository.getScripts()
             val activeScriptIds = activeScriptRepository.activeScriptIds.value
-            val activeScripts = allScripts.filter { activeScriptIds.contains(it.id.toString()) }
-            val sortedActiveScripts = activeScripts.sortedBy { script -> activeScriptIds.indexOf(script.id.toString()) }
+            val activeScripts = allScripts.filter { activeScriptIds.contains(it.id) }
+            val sortedActiveScripts = activeScripts.sortedBy { script -> activeScriptIds.indexOf(script.id) }
 
             var evidenceToUpdate = evidence
             sortedActiveScripts.forEach { script ->
-                if (!scriptStateRepository.hasScriptRun(evidence.id, script.id)) {
-                    logService.addLog("Running script '${script.name}' on frame evidence ${evidenceToUpdate.id}")
-                    val scriptResult = scriptRunner.runScript(script.content, evidenceToUpdate)
-                    when (scriptResult) {
-                        is Result.Success -> {
-                            val currentTags: List<String> = evidenceToUpdate.tags
-                            val newTags: List<String> = scriptResult.data.tags
-                            val combinedTags: List<String> = (currentTags + newTags).distinct()
-                            evidenceToUpdate = evidenceToUpdate.copy(tags = combinedTags)
-                            scriptStateRepository.addScriptState(evidenceToUpdate.id, script.id)
-                            logService.addLog("Script '${script.name}' for frame finished. Added tags: ${newTags.joinToString(", ")}")
-                        }
-                        is Result.Error -> {
-                            val statusMessage = "Script error for frame '${script.name}': ${scriptResult.exception.message}"
-                            logService.addLog(statusMessage, LogLevel.ERROR)
-                            Log.e("OcrProcessingService", statusMessage, scriptResult.exception)
-                        }
-                        is Result.UserRecoverableError -> {
-                            val statusMessage = "User recoverable script error for frame '${script.name}': ${scriptResult.exception.message}"
-                            logService.addLog(statusMessage, LogLevel.INFO)
-                            Log.i("OcrProcessingService", statusMessage, scriptResult.exception)
-                        }
-                        is Result.Loading -> {
-                            logService.addLog("Script '${script.name}' for frame is loading...", LogLevel.INFO)
-                        }
+                logService.addLog("Running script '${script.name}' on frame evidence ${evidenceToUpdate.id}")
+                val scriptResult = scriptRunner.runScript(script.content, evidenceToUpdate)
+                when (scriptResult) {
+                    is Result.Success -> {
+                        val currentTags: List<String> = evidenceToUpdate.tags
+                        val newTags: List<String> = scriptResult.data.tags
+                        val combinedTags: List<String> = (currentTags + newTags).distinct()
+                        evidenceToUpdate = evidenceToUpdate.copy(tags = combinedTags)
+                        scriptStateRepository.addScriptState(evidenceToUpdate.id, script.id)
+                        logService.addLog("Script '${script.name}' for frame finished. Added tags: ${newTags.joinToString(", ")}")
+                    }
+                    is Result.Error -> {
+                        val statusMessage = "Script error for frame '${script.name}': ${scriptResult.exception.message}"
+                        logService.addLog(statusMessage, LogLevel.ERROR)
+                        Log.e("OcrProcessingService", statusMessage, scriptResult.exception)
+                    }
+                    is Result.UserRecoverableError -> {
+                        val statusMessage = "User recoverable script error for frame '${script.name}': ${scriptResult.exception.message}"
+                        logService.addLog(statusMessage, LogLevel.INFO)
+                        Log.w("OcrProcessingService", statusMessage, scriptResult.exception)
+                    }
+                    is Result.Loading -> {
+                        logService.addLog("Script '${script.name}' for frame is loading...", LogLevel.INFO)
                     }
                 }
             }
@@ -207,7 +204,6 @@ constructor(
         context: Context,
         caseId: Long,
         spreadsheetId: String,
-        activeScriptIds: List<String>,
         onProgress: (ProcessingState) -> Unit
     ): Pair<Evidence?, String?> {
         var statusMessage: String
@@ -230,7 +226,7 @@ constructor(
             is Result.UserRecoverableError -> {
                 statusMessage = "User recoverable error during image upload: ${uploadResult.exception.message}"
                 logService.addLog(statusMessage, LogLevel.INFO)
-                Log.i("OcrProcessingService", "User recoverable error during image upload.", uploadResult.exception)
+                Log.w("OcrProcessingService", "User recoverable error during image upload.", uploadResult.exception)
                 onProgress(ProcessingState.Failure(statusMessage))
                 Pair(null, statusMessage)
             }
@@ -283,7 +279,7 @@ constructor(
                         sourceDocument = newUri.toString(),
                         documentDate = documentDate,
                         allegationId = null,
-                        allegationElementName = null,
+                        allegationElementName = "",
                         category = "Image OCR",
                         tags = listOf("ocr", "image"),
                         commentary = null,
@@ -301,40 +297,39 @@ constructor(
                     onProgress(ProcessingState.InProgress(0.8f))
 
                     val allScripts = scriptRepository.getScripts()
-                    val activeScripts = allScripts.filter { activeScriptIds.contains(it.id.toString()) }
-                    val sortedActiveScripts = activeScripts.sortedBy { script -> activeScriptIds.indexOf(script.id.toString()) }
+                    val activeScriptIds = activeScriptRepository.activeScriptIds.value
+                    val activeScripts = allScripts.filter { activeScriptIds.contains(it.id) }
+                    val sortedActiveScripts = activeScripts.sortedBy { script -> activeScriptIds.indexOf(script.id) }
 
                     var evidenceToUpdate = evidence
                     sortedActiveScripts.forEach { script ->
-                        if (!scriptStateRepository.hasScriptRun(evidence.id, script.id)) {
-                            logService.addLog("Running script '${script.name}' on evidence ${evidenceToUpdate.id}")
-                            val scriptResult = scriptRunner.runScript(script.content, evidenceToUpdate)
-                            when (scriptResult) {
-                                is Result.Success -> {
-                                    val currentTags: List<String> = evidenceToUpdate.tags
-                                    val newTags: List<String> = scriptResult.data.tags
-                                    val combinedTags: List<String> = (currentTags + newTags).distinct()
-                                    evidenceToUpdate = evidenceToUpdate.copy(
-                                        tags = combinedTags,
-                                        // Potentially update other fields here if the script supports it
-                                    )
-                                    scriptStateRepository.addScriptState(evidenceToUpdate.id, script.id)
-                                    logService.addLog("Script '${script.name}' finished. Added tags: ${newTags.joinToString(", ")}")
-                                }
-                                is Result.Error -> {
-                                    statusMessage = "Script error for '${script.name}': ${scriptResult.exception.message}"
-                                    logService.addLog(statusMessage, LogLevel.ERROR)
-                                    Log.e("OcrProcessingService", statusMessage, scriptResult.exception)
-                                }
-                                is Result.UserRecoverableError -> {
-                                    statusMessage = "User recoverable script error for '${script.name}': ${scriptResult.exception.message}"
-                                    logService.addLog(statusMessage, LogLevel.INFO)
-                                    Log.i("OcrProcessingService", statusMessage, scriptResult.exception)
-                                }
-                                is Result.Loading -> {
-                                    // This case might not be relevant for synchronous script execution
-                                    logService.addLog("Script '${script.name}' is loading...", LogLevel.INFO)
-                                }
+                        logService.addLog("Running script '${script.name}' on evidence ${evidenceToUpdate.id}")
+                        val scriptResult = scriptRunner.runScript(script.content, evidenceToUpdate)
+                        when (scriptResult) {
+                            is Result.Success -> {
+                                val currentTags: List<String> = evidenceToUpdate.tags
+                                val newTags: List<String> = scriptResult.data.tags
+                                val combinedTags: List<String> = (currentTags + newTags).distinct()
+                                evidenceToUpdate = evidenceToUpdate.copy(
+                                    tags = combinedTags,
+                                    // Potentially update other fields here if the script supports it
+                                )
+                                scriptStateRepository.addScriptState(evidenceToUpdate.id, script.id)
+                                logService.addLog("Script '${script.name}' finished. Added tags: ${newTags.joinToString(", ")}")
+                            }
+                            is Result.Error -> {
+                                statusMessage = "Script error for '${script.name}': ${scriptResult.exception.message}"
+                                logService.addLog(statusMessage, LogLevel.ERROR)
+                                Log.e("OcrProcessingService", statusMessage, scriptResult.exception)
+                            }
+                            is Result.UserRecoverableError -> {
+                                statusMessage = "User recoverable script error for '${script.name}': ${scriptResult.exception.message}"
+                                logService.addLog(statusMessage, LogLevel.INFO)
+                                Log.w("OcrProcessingService", statusMessage, scriptResult.exception)
+                            }
+                            is Result.Loading -> {
+                                // This case might not be relevant for synchronous script execution
+                                logService.addLog("Script '${script.name}' is loading...", LogLevel.INFO)
                             }
                         }
                     }

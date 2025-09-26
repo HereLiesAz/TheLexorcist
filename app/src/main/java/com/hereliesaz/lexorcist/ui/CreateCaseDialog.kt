@@ -5,7 +5,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxWidth // Added import
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import com.hereliesaz.aznavrail.AzButton
@@ -20,7 +20,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
+import androidx.compose.ui.Alignment // Added import
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
+// import com.hereliesaz.lexorcist.viewmodel.MainViewModel // Removed import
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,6 +38,7 @@ fun CreateCaseDialog(
     caseViewModel: CaseViewModel,
     navController: NavController,
     onDismiss: () -> Unit,
+    // mainViewModel: MainViewModel, // Removed parameter
 ) {
     val context = LocalContext.current
     var caseName by remember { mutableStateOf("") }
@@ -54,10 +56,13 @@ fun CreateCaseDialog(
         ) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
                 // Retry the operation or inform the user of success
+                // For now, we assume the operation might need to be retried by the user if it didn't auto-proceed.
+                // Optionally, call createCase again or a specific retry logic in ViewModel.
             } else {
+                // Handle the case where the user did not complete the auth flow
                 caseViewModel.showError("Authorization was not completed.")
             }
-            caseViewModel.clearUserRecoverableAuthIntent()
+            caseViewModel.clearUserRecoverableAuthIntent() // Clear the intent after handling
         }
 
     LaunchedEffect(userRecoverableAuthIntent) {
@@ -75,15 +80,16 @@ fun CreateCaseDialog(
                     Modifier
                         .verticalScroll(rememberScrollState())
                         .fillMaxWidth(),
+                // Ensure Column itself takes full width for alignment reference
                 verticalArrangement = Arrangement.spacedBy(8.dp),
-                horizontalAlignment = Alignment.End,
+                horizontalAlignment = Alignment.End, // Right-align children (TextFields)
             ) {
                 OutlinedTextField(
                     value = caseName,
                     onValueChange = { caseName = it },
                     label = { Text(stringResource(R.string.case_name_required)) },
                     isError = caseName.isBlank(),
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth(), // TextField takes full width
                     textStyle = TextStyle(textAlign = TextAlign.End)
                 )
                 OutlinedTextField(

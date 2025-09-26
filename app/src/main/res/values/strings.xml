@@ -120,7 +120,7 @@
     <string name="script_editor_placeholder">
         // Your script goes here. Use the available variables to process evidence.\n\n        // Example: if (evidence.content.includes(\"threat\")) { parser.tags.push(\"Threat\"); }\n\n        // Available variables:\n\n        // - evidence: The evidence object being processed.\n\n        // - parser: An object with a `tags` array to add new tags to the evidence.
     </string>
-    <string name="save_script">Save</string>
+    <string name="save_script">Save Script</string>
     <string name="script_title">Script Title</string>
     <string name="script_description">Script Description</string>
     <string name="script_snippet_text_includes">evidence.text.includes(\"\")</string>
@@ -338,9 +338,4 @@
     <string name="model_downloaded_description">Downloaded</string>
     <string name="delete_model_description">Delete</string>
     <string name="retry_download_description">Retry Download</string>
-    <string name="allegations_slash">\\Allegations\\</string>
-    <string name="exhibits_slash">\\Exhibits\\</string>
-    <string name="create_exhibit_slash">\\Create Exhibit\\</string>
-    <string name="add_to_exhibit">\\Add to Exhibit\\</string>
-    <string name="exhibits">Exhibits</string>
 </resources>
