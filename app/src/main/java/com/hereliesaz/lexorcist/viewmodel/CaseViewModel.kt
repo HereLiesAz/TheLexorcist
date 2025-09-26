@@ -11,15 +11,21 @@ import com.hereliesaz.lexorcist.data.Allegation
 import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.data.CaseSheetParser
 import com.hereliesaz.lexorcist.data.Evidence
+import com.hereliesaz.lexorcist.model.CleanupSuggestion
+import com.hereliesaz.lexorcist.model.LogEntry
+import com.hereliesaz.lexorcist.model.LogLevel
+import com.hereliesaz.lexorcist.model.ProcessingState
 import com.hereliesaz.lexorcist.model.TimelineEvent
 import com.hereliesaz.lexorcist.service.GoogleApiService
 import com.hereliesaz.lexorcist.ui.theme.ThemeMode
 import com.hereliesaz.lexorcist.utils.Result
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
@@ -58,6 +64,24 @@ class CaseViewModel @Inject constructor(
     val userRecoverableAuthIntent: StateFlow<Intent?> = isUserRecoverableError.map { it?.intent }
         .stateIn(viewModelScope, SharingStarted.Lazily, null)
 
+    private val _cleanupSuggestions = MutableStateFlow<List<CleanupSuggestion>>(emptyList())
+    val cleanupSuggestions: StateFlow<List<CleanupSuggestion>> = _cleanupSuggestions.asStateFlow()
+
+    private val _videoProcessingProgress = MutableStateFlow<String?>(null)
+    val videoProcessingProgress: StateFlow<String?> = _videoProcessingProgress.asStateFlow()
+
+    private val _userMessage = MutableStateFlow<String?>(null)
+    val userMessage: StateFlow<String?> = _userMessage.asStateFlow()
+
+    private val _processingState = MutableStateFlow<ProcessingState>(ProcessingState.Idle)
+    val processingState: StateFlow<ProcessingState> = _processingState.asStateFlow()
+
+    private val _logMessages = MutableStateFlow<List<LogEntry>>(emptyList())
+    val logMessages: StateFlow<List<LogEntry>> = _logMessages.asStateFlow()
+
+    private val _navigateToTranscriptionScreen = MutableSharedFlow<Int>()
+    val navigateToTranscriptionScreen = _navigateToTranscriptionScreen.asSharedFlow()
+
     fun onSearchQueryChanged(query: String) {
         _searchQuery.value = query
     }
@@ -68,6 +92,10 @@ class CaseViewModel @Inject constructor(
 
     fun clearError() {
         _error.value = null
+    }
+
+    fun clearUserMessage() {
+        _userMessage.value = null
     }
 
     fun clearCache() {
@@ -160,6 +188,69 @@ class CaseViewModel @Inject constructor(
     val exhibits: StateFlow<List<Evidence>> = _exhibits.asStateFlow()
 
     val selectedCaseEvidenceList: StateFlow<List<Evidence>> = evidence
+
+    fun findCleanupSuggestions() {
+        viewModelScope.launch {
+            val suggestions = mutableListOf<CleanupSuggestion>()
+            val allEvidence = evidence.value
+
+            // Find duplicates
+            val duplicates = allEvidence
+                .groupBy { it.sourceDocument }
+                .filter { it.value.size > 1 && !it.key.isNullOrBlank() }
+                .map { CleanupSuggestion.DuplicateGroup(it.value) }
+            suggestions.addAll(duplicates)
+
+            // Find image series
+            val imageSeries = allEvidence
+                .filter { it.sourceDocument?.matches(Regex(".*\\d+\\.jpg")) == true }
+                .groupBy { it.sourceDocument?.replace(Regex("\\d+\\.jpg"), "") }
+                .filter { it.value.size > 1 }
+                .map { CleanupSuggestion.ImageSeriesGroup(it.value) }
+            suggestions.addAll(imageSeries)
+
+            _cleanupSuggestions.value = suggestions
+        }
+    }
+
+    fun deleteDuplicates(suggestion: CleanupSuggestion.DuplicateGroup) {
+        viewModelScope.launch {
+            // Keep the first one, delete the rest
+            val toDelete = suggestion.evidence.drop(1)
+            toDelete.forEach { evidence ->
+                deleteEvidence(evidence)
+            }
+            // Refresh suggestions
+            findCleanupSuggestions()
+        }
+    }
+
+    fun mergeImageSeries(suggestion: CleanupSuggestion.ImageSeriesGroup) {
+        viewModelScope.launch {
+            // Placeholder for merging images into a PDF
+            _error.value = "Merging image series is not yet implemented."
+        }
+    }
+
+    fun processImageEvidence(uri: Uri) {
+        // Placeholder
+        _userMessage.value = "Processing image..."
+    }
+
+    fun processAudioEvidence(uri: Uri) {
+        // Placeholder
+        _userMessage.value = "Processing audio..."
+    }
+
+    fun processVideoEvidence(uri: Uri) {
+        // Placeholder
+        _userMessage.value = "Processing video..."
+    }
+
+    fun addTextEvidence(text: String) {
+        // Placeholder
+        _userMessage.value = "Adding text evidence..."
+    }
 
     fun toggleEvidenceSelection(evidenceId: String) {
         val evidenceToToggle = _evidence.value.find { it.id == evidenceId }

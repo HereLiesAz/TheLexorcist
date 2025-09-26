@@ -875,7 +875,7 @@ class GoogleApiService @Inject constructor(
                         try {
                             Allegation(
                                 id = row[0].toString().toInt(),
-                                spreadsheetId = row[1].toString(),
+                                spreadsheetId = spreadsheetId,
                                 text = row[2].toString(),
                                 allegationElementName = row[3].toString()
                             )
@@ -910,7 +910,7 @@ class GoogleApiService @Inject constructor(
                     values.mapNotNull { row ->
                         try {
                             com.hereliesaz.lexorcist.data.Evidence(
-                                id = row[0].toString().toInt(),
+                                id = row[0].toString(),
                                 caseId = caseId,
                                 spreadsheetId = spreadsheetId,
                                 type = row[1].toString(),
@@ -919,20 +919,21 @@ class GoogleApiService @Inject constructor(
                                 sourceDocument = row[4].toString(),
                                 documentDate = row[5].toString().toLong(),
                                 allegationId = row.getOrNull(6)?.toString(),
-                                category = row.getOrNull(7)?.toString() ?: "",
-                                tags = row.getOrNull(8)?.toString()?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() } ?: emptyList(),
-                                commentary = row.getOrNull(9)?.toString(),
-                                linkedEvidenceIds = row.getOrNull(10)?.toString()?.split(",")?.mapNotNull { it.trim().toIntOrNull() } ?: emptyList(),
-                                parentVideoId = row.getOrNull(11)?.toString(),
+                                allegationElementName = row.getOrNull(7)?.toString(),
+                                category = row.getOrNull(8)?.toString() ?: "",
+                                tags = row.getOrNull(9)?.toString()?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() } ?: emptyList(),
+                                commentary = row.getOrNull(10)?.toString(),
+                                linkedEvidenceIds = row.getOrNull(11)?.toString()?.split(",")?.mapNotNull { it.trim().toIntOrNull() } ?: emptyList(),
+                                parentVideoId = row.getOrNull(12)?.toString(),
                                 entities =
                                     row
-                                        .getOrNull(12)
+                                        .getOrNull(13)
                                         ?.toString()
                                         ?.let { Gson().fromJson(it, object : TypeToken<Map<String, List<String>>>() {}.type) }
                                         ?: emptyMap(),
-                                isSelected = row.getOrNull(13)?.toString()?.toBoolean() ?: false,
-                                formattedContent = row.getOrNull(14)?.toString(),
-                                mediaUri = row.getOrNull(15)?.toString(),
+                                isSelected = row.getOrNull(14)?.toString()?.toBoolean() ?: false,
+                                formattedContent = row.getOrNull(15)?.toString(),
+                                mediaUri = row.getOrNull(16)?.toString(),
                             )
                         } catch (e: Exception) {
                             null // Skip row if parsing fails
@@ -951,13 +952,14 @@ class GoogleApiService @Inject constructor(
                 val values =
                     listOf(
                         listOf(
-                            evidence.id.toString(),
+                            evidence.id,
                             evidence.type,
                             evidence.content,
                             evidence.timestamp.toString(),
                             evidence.sourceDocument,
                             evidence.documentDate.toString(),
                             evidence.allegationId ?: "",
+                            evidence.allegationElementName ?: "",
                             evidence.category,
                             evidence.tags.joinToString(","),
                             evidence.commentary ?: "",
@@ -1031,13 +1033,14 @@ class GoogleApiService @Inject constructor(
 
                 val rowData =
                     listOf(
-                        evidence.id.toString(),
+                        evidence.id,
                         evidence.type,
                         evidence.content,
                         evidence.timestamp.toString(),
                         evidence.sourceDocument,
                         evidence.documentDate.toString(),
                         evidence.allegationId ?: "",
+                        evidence.allegationElementName ?: "",
                         evidence.category,
                         evidence.tags.joinToString(","),
                         evidence.commentary ?: "",
