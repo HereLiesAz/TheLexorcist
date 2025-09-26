@@ -58,7 +58,6 @@ import com.hereliesaz.lexorcist.data.Allegation
 import com.hereliesaz.lexorcist.data.AllegationElement
 import com.hereliesaz.lexorcist.data.AllegationProvider
 import com.hereliesaz.lexorcist.data.Evidence
-import com.hereliesaz.lexorcist.data.Exhibit
 import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
 import com.hereliesaz.lexorcist.viewmodel.AllegationsViewModel
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
@@ -80,28 +79,19 @@ fun ReviewScreen(
     val allegations by allegationsViewModel.allegations.collectAsState()
     val selectedAllegation by allegationsViewModel.selectedAllegation.collectAsState()
     val selectedEvidence by caseViewModel.selectedEvidence.collectAsState()
-    val exhibits by caseViewModel.exhibits.collectAsState()
-    var selectedTab by remember { mutableStateOf(0) }
-    var selectedExhibit by remember { mutableStateOf<Exhibit?>(null) }
 
     LaunchedEffect(selectedCase) {
         selectedCase?.let {
-            allegationsViewModel.loadAllegations(it.id.toString()) // Assuming Allegation.id is Int and needs toString()
-            caseViewModel.loadExhibits()
+            allegationsViewModel.loadAllegations(it.id.toString())
         }
     }
 
     var showEditDialog by remember { mutableStateOf(false) }
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
-    var showCleanupDialog by remember { mutableStateOf(false) }
     var showGenerateDocumentDialog by remember { mutableStateOf(false) }
     var showPackageFilesDialog by remember { mutableStateOf(false) }
     var evidenceToEdit by remember { mutableStateOf<Evidence?>(null) }
     var evidenceToDelete by remember { mutableStateOf<Evidence?>(null) }
-    var showEditExhibitDialog by remember { mutableStateOf(false) }
-    var exhibitToEdit by remember { mutableStateOf<Exhibit?>(null) }
-    var showDeleteExhibitDialog by remember { mutableStateOf(false) }
-    var exhibitToDelete by remember { mutableStateOf<Exhibit?>(null) }
 
     Scaffold(
         topBar = {
@@ -161,66 +151,17 @@ fun ReviewScreen(
                     Text(stringResource(R.string.no_evidence_for_case).uppercase(Locale.getDefault()))
                 }
             } else {
-                PrimaryTabRow(selectedTabIndex = selectedTab) {
-                    Tab(
-                        selected = selectedTab == 0,
-                        onClick = { selectedTab = 0 },
-                        text = { Text("Allegations") }
-                    )
-                    Tab(
-                        selected = selectedTab == 1,
-                        onClick = { selectedTab = 1 },
-                        text = { Text("Exhibits") }
-                    )
-                }
                 Row(
                     Modifier
                         .weight(1f)
                         .padding(horizontal = 8.dp)
                 ) {
-                    if (selectedTab == 0) {
-                        LazyColumn(modifier = Modifier.weight(1f)) {
-                            items(allegations) { allegation ->
-                                AllegationItem(
-                                    allegation = allegation,
-                                    isSelected = selectedAllegation?.id == allegation.id,
-                                    onClick = { allegationsViewModel.onAllegationSelected(allegation) }
-                                )
-                            }
-                        }
-                    } else {
-                        var showCreateExhibitDialog by remember { mutableStateOf(false) }
-
-                        Column(modifier = Modifier.weight(1f)) {
-                            Button(onClick = { showCreateExhibitDialog = true }) {
-                                Text("Create Exhibit")
-                            }
-                            LazyColumn {
-                                items(exhibits) { exhibit ->
-                                    ExhibitItem(
-                                        exhibit = exhibit,
-                                        isSelected = selectedExhibit?.id == exhibit.id,
-                                        onClick = { selectedExhibit = it },
-                                        onEditClick = {
-                                            exhibitToEdit = it
-                                            showEditExhibitDialog = true
-                                        },
-                                        onDeleteClick = {
-                                            exhibitToDelete = it
-                                            showDeleteExhibitDialog = true
-                                        }
-                                    )
-                                }
-                            }
-                        }
-
-                        if (showCreateExhibitDialog) {
-                            CreateExhibitDialog(
-                                onDismiss = { showCreateExhibitDialog = false },
-                                onConfirm = { name, description ->
-                                    caseViewModel.addExhibit(name, description)
-                                    showCreateExhibitDialog = false
-                                }
+                    LazyColumn(modifier = Modifier.weight(1f)) {
+                        items(allegations) { allegation ->
+                            AllegationItem(
+                                allegation = allegation,
+                                isSelected = selectedAllegation?.id == allegation.id,
+                                onClick = { allegationsViewModel.onAllegationSelected(allegation) }
                             )
                         }
                     }
@@ -284,28 +225,12 @@ fun ReviewScreen(
                         .padding(16.dp),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    LexorcistOutlinedButton(
-                        onClick = {
-                            caseViewModel.generateCleanupSuggestions()
-                            showCleanupDialog = true
-                        },
-                        text = "Clean Up"
-                    )
                     if (selectedAllegation != null && selectedEvidence.isNotEmpty()) {
                         LexorcistOutlinedButton(
                             onClick = {
                                 caseViewModel.assignAllegationToSelectedEvidence(selectedAllegation!!.id.toString()) // Ensure ID is string
                             },
                             text = stringResource(R.string.assign_to_allegation),
-                            modifier = Modifier.padding(start = 8.dp)
-                        )
-                    }
-                    if (selectedExhibit != null && selectedEvidence.isNotEmpty()) {
-                        LexorcistOutlinedButton(
-                            onClick = {
-                                caseViewModel.addEvidenceToExhibit(selectedExhibit!!.id, selectedEvidence.map { it.id })
-                            },
-                            text = "Add to Exhibit",
                             modifier = Modifier.padding(start = 8.dp)
                         )
                     }
@@ -343,13 +268,6 @@ fun ReviewScreen(
         )
     }
 
-    if (showCleanupDialog) {
-        CleanupDialog(
-            caseViewModel = caseViewModel,
-            onDismiss = { showCleanupDialog = false }
-        )
-    }
-
     if (showEditDialog && evidenceToEdit != null) {
         EditEvidenceDialog(
             evidence = evidenceToEdit!!,
@@ -375,39 +293,6 @@ fun ReviewScreen(
             dismissButton = {
                 LexorcistOutlinedButton(onClick = { showDeleteConfirmDialog = false }, text = stringResource(R.string.cancel).uppercase(Locale.getDefault()))
             },
-        )
-    }
-
-    if (showEditExhibitDialog && exhibitToEdit != null) {
-        EditExhibitDialog(
-            exhibit = exhibitToEdit!!,
-            onDismiss = { showEditExhibitDialog = false },
-            onConfirm = { name, description ->
-                val updatedExhibit = exhibitToEdit!!.copy(name = name, description = description)
-                caseViewModel.updateExhibit(updatedExhibit)
-                showEditExhibitDialog = false
-            }
-        )
-    }
-
-    if (showDeleteExhibitDialog && exhibitToDelete != null) {
-        AlertDialog(
-            onDismissRequest = { showDeleteExhibitDialog = false },
-            title = { Text("Delete Exhibit") },
-            text = { Text("Are you sure you want to delete this exhibit?") },
-            confirmButton = {
-                Button(onClick = {
-                    caseViewModel.deleteExhibit(exhibitToDelete!!)
-                    showDeleteExhibitDialog = false
-                }) {
-                    Text("Delete")
-                }
-            },
-            dismissButton = {
-                Button(onClick = { showDeleteExhibitDialog = false }) {
-                    Text("Cancel")
-                }
-            }
         )
     }
 }
@@ -662,142 +547,6 @@ fun EditEvidenceDialog(
         dismissButton = {
             LexorcistOutlinedButton(onClick = onDismiss, text = stringResource(R.string.cancel).uppercase(Locale.getDefault()))
         },
-    )
-}
-
-@Composable
-fun ExhibitItem(
-    exhibit: Exhibit,
-    isSelected: Boolean,
-    onClick: (Exhibit) -> Unit,
-    onEditClick: (Exhibit) -> Unit,
-    onDeleteClick: (Exhibit) -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .padding(vertical = 4.dp)
-            .fillMaxWidth()
-            .pointerInput(exhibit) {
-                detectTapGestures(onTap = { onClick(exhibit) })
-            },
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.cardColors(containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant)
-    ) {
-        Row(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-                Text(
-                    text = exhibit.name,
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Text(
-                    text = exhibit.description,
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-            Column {
-                IconButton(onClick = { onEditClick(exhibit) }) {
-                    Icon(Icons.Default.Edit, contentDescription = "Edit Exhibit")
-                }
-                IconButton(onClick = { onDeleteClick(exhibit) }) {
-                    Icon(Icons.Default.Delete, contentDescription = "Delete Exhibit")
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun CreateExhibitDialog(
-    onDismiss: () -> Unit,
-    onConfirm: (name: String, description: String) -> Unit
-) {
-    var name by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Create Exhibit") },
-        text = {
-            Column {
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Exhibit Name") }
-                )
-                OutlinedTextField(
-                    value = description,
-                    onValueChange = { description = it },
-                    label = { Text("Description") }
-                )
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    onConfirm(name, description)
-                    onDismiss()
-                }
-            ) {
-                Text("Create")
-            }
-        },
-        dismissButton = {
-            Button(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        }
-    )
-}
-
-@Composable
-fun EditExhibitDialog(
-    exhibit: Exhibit,
-    onDismiss: () -> Unit,
-    onConfirm: (name: String, description: String) -> Unit
-) {
-    var name by remember { mutableStateOf(exhibit.name) }
-    var description by remember { mutableStateOf(exhibit.description) }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Edit Exhibit") },
-        text = {
-            Column {
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Exhibit Name") }
-                )
-                OutlinedTextField(
-                    value = description,
-                    onValueChange = { description = it },
-                    label = { Text("Description") }
-                )
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    onConfirm(name, description)
-                    onDismiss()
-                }
-            ) {
-                Text("Save")
-            }
-        },
-        dismissButton = {
-            Button(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        }
     )
 }
 
