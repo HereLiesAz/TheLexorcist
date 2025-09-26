@@ -1,21 +1,21 @@
 package com.hereliesaz.lexorcist.data
 
+import android.content.Context
 import android.util.Log
-import com.hereliesaz.lexorcist.service.GoogleApiService // Added import
+import com.hereliesaz.lexorcist.service.GoogleApiService
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
-// Removed: import com.hereliesaz.lexorcist.auth.CredentialHolder
 
-class AllegationsRepositoryImpl
-@Inject
-constructor(
+class AllegationsRepositoryImpl @Inject constructor(
     private val googleApiService: GoogleApiService,
-    private val allegationProvider: AllegationProvider
+    private val allegationProvider: AllegationProvider,
+    @ApplicationContext private val context: Context
 ) : AllegationsRepository {
     override suspend fun getAllegations(caseId: String): List<Allegation> {
-        val staticAllegations = allegationProvider.getAllAllegations()
+        val staticAllegations = allegationProvider.getAllAllegations(context)
         val dynamicAllegations = mutableListOf<Allegation>()
 
-        val spreadsheetId = "1TN9MLnzpCJjcO9bwEhTeOjon3mRunYs5_tSxII6LizA"
+        val spreadsheetId = caseId
         Log.d("AllegationsRepository", "Fetching allegations from spreadsheet: $spreadsheetId for case: $caseId")
 
         val sheetData = googleApiService.readSpreadsheet(spreadsheetId, isPublic = true)
@@ -26,8 +26,8 @@ constructor(
 
         var allegationsSheet = sheetData["Allegations"]
         if (allegationsSheet.isNullOrEmpty()) {
-            Log.w("AllegationsRepository", "'Allegations' sheet is null or empty, or not found in spreadsheet: $spreadsheetId. Trying first sheet.")
-            allegationsSheet = sheetData.values.firstOrNull()
+             Log.w("AllegationsRepository", "'Allegations' sheet is null or empty, or not found in spreadsheet: $spreadsheetId. Trying first sheet.")
+             allegationsSheet = sheetData.values.firstOrNull()
         }
 
         if (allegationsSheet.isNullOrEmpty()) {
@@ -37,14 +37,12 @@ constructor(
 
         val mappedAllegations = allegationsSheet.mapIndexedNotNull { index, row ->
             if (row.size >= 3) {
-                val allegationText = row[2].toString()
                 Allegation(
-                    id = "sheet_${spreadsheetId}_${index}",
-                    text = allegationText,
-                    allegationElementName = allegationText, // Using text as a fallback
-                    description = "",
-                    elements = emptyList(),
-                    evidenceSuggestions = emptyList()
+                    id = index,
+                    spreadsheetId = spreadsheetId,
+                    text = row[2].toString(),
+                    allegationElementName = row[1].toString(),
+                    elements = emptyList()
                 )
             } else {
                 Log.w("AllegationsRepository", "Skipping row due to insufficient columns: $row")

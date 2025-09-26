@@ -1,6 +1,6 @@
 package com.hereliesaz.lexorcist.data
 
-fun Evidence.toSheetRow(): List<String> =
+fun Evidence.toSheetRow(): List<Any> =
     listOf(
         id,
         caseId.toString(),
@@ -8,8 +8,8 @@ fun Evidence.toSheetRow(): List<String> =
         content,
         timestamp.toString(),
         sourceDocument ?: "",
-        documentDate.toString(),
-        allegationId ?: "",
+        documentDate?.toString() ?: "",
+        allegationId?.toString() ?: "",
         category,
         tags.joinToString(","),
         commentary ?: "",
