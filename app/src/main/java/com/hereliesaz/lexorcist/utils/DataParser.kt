@@ -6,7 +6,6 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
-import kotlin.collections.iterator
 
 object DataParser {
     private val datePatterns =
@@ -15,16 +14,16 @@ object DataParser {
             """"\b\d{2}[-/]\d{2}[-/]\d{4}\b"""" .toRegex() to SimpleDateFormat("MM-dd-yyyy", Locale.US),
             """"\b\d{2}[-/]\d{2}[-/]\d{2}\b"""" .toRegex() to SimpleDateFormat("MM-dd-yy", Locale.US),
             """"\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s\d{1,2},?\s\d{4}\b"""" .toRegex() to
-                SimpleDateFormat("MMM d, yyyy", Locale.US),
+                    SimpleDateFormat("MMM d, yyyy", Locale.US),
             """"\b\d{1,2}\s(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s\d{4}\b"""" .toRegex() to
-                SimpleDateFormat("dd MMM yyyy", Locale.US),
+                    SimpleDateFormat("dd MMM yyyy", Locale.US),
             (
-                """"\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\\s\\d{1,2},?\\s\\d{4}\\b"""" 
-            ).toRegex() to SimpleDateFormat("MMMM d, yyyy", Locale.US),
+                    """"\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\\s\\d{1,2},?\\s\\d{4}\\b""""
+                    ).toRegex() to SimpleDateFormat("MMMM d, yyyy", Locale.US),
             (
-                "\"\\b\\d{1,2}\\s(?:January|February|March|April|May|June|July|August|" +
-                    "September|October|November|December)\\s\\d{4}\\b\""
-            ).toRegex() to SimpleDateFormat("dd MMMM yyyy", Locale.US),
+                    "\"\\b\\d{1,2}\\s(?:January|February|March|April|May|June|July|August|" +
+                            "September|October|November|December)\\s\\d{4}\\b\""
+                    ).toRegex() to SimpleDateFormat("dd MMMM yyyy", Locale.US),
             """"\b\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z\b"""" .toRegex() to SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US),
         )
 
@@ -157,8 +156,7 @@ object DataParser {
                     spreadsheetId = spreadsheetId,
                     // Convert Int to Long as per Evidence data class
                     caseId = caseId.toLong(),
-                    allegationId = linkedAllegation?.spreadsheetId, // Changed from linkedAllegation?.id
-                    allegationElementName = null, // Added missing parameter
+                    allegationId = linkedAllegation?.id?.toString(),
                     content = sentence,
                     formattedContent = null,
                     mediaUri = null,
@@ -167,7 +165,8 @@ object DataParser {
                     documentDate = date,
                     category = category,
                     tags = emptyList(),
-                    type = "", // This was previously marked as Added missing 'type' parameter
+                    // Added missing 'type' parameter
+                    type = "",
                 ),
             )
         }
