@@ -211,17 +211,18 @@ class CaseRepositoryImpl @Inject constructor(
         }
         val parsedData = caseSheetParser.parseCaseFromData(spreadsheetId, sheetData)
         if (parsedData != null) {
-            val newCase = parsedData.first
-            val evidenceList = parsedData.second
+            val (newCase, evidenceList) = parsedData
             when (val createResult = storageService.createCase(newCase)) {
                 is Result.Loading -> {
                     Log.d(tag, "Import spreadsheet $spreadsheetId: Case creation is loading.")
-                    return null 
+                    return null
                 }
                 is Result.Success -> {
                     val createdCase = createResult.data
-                    for (evidence in evidenceList) {
-                        evidenceRepository.addEvidence(evidence.copy(spreadsheetId = createdCase.spreadsheetId))
+                    repositoryScope.launch {
+                        evidenceList.forEach { evidence ->
+                            evidenceRepository.addEvidence(evidence.copy(spreadsheetId = createdCase.spreadsheetId, caseId = createdCase.id.toLong()))
+                        }
                     }
                     _cases.update {
                         (it + createdCase).sortedByDescending { c -> c.lastModifiedTime ?: 0L }
@@ -231,14 +232,17 @@ class CaseRepositoryImpl @Inject constructor(
                 is Result.Error -> {
                     errorReporter.reportError(createResult.exception)
                     Log.e(tag, "Import spreadsheet $spreadsheetId: Error creating case.", createResult.exception)
+                    return null
                 }
                 is Result.UserRecoverableError -> {
                     errorReporter.reportError(createResult.exception)
                     Log.w(tag, "Import spreadsheet $spreadsheetId: User recoverable error creating case.", createResult.exception)
+                    return null
                 }
             }
         } else {
             Log.w(tag, "Import spreadsheet $spreadsheetId: Failed to parse case data.")
+            return null
         }
         return null
     }
@@ -263,13 +267,13 @@ class CaseRepositoryImpl @Inject constructor(
     override fun getHtmlTemplates(): Flow<List<DriveFile>> = emptyFlow()
     override suspend fun refreshHtmlTemplates() { /* TODO */ }
 
-    override suspend fun addAllegation(spreadsheetId: String, allegationText: String) {
+    override suspend fun addAllegation(spreadsheetId: String, allegationElementName: String, allegationText: String) {
         val currentSelectedCaseId = _selectedCase.value?.spreadsheetId
         if (spreadsheetId == currentSelectedCaseId) {
             // Assuming Allegation constructor takes (id, spreadsheetId, text)
             // and id is auto-generated or handled by storageService.
             // Passing 0 or a placeholder that storageService can interpret.
-            val allegationDetails = Allegation(id = 0, spreadsheetId = spreadsheetId, text = allegationText, allegationElementName = allegationText)
+            val allegationDetails = Allegation(id = 0, spreadsheetId = spreadsheetId, allegationElementName = allegationElementName, text = allegationText)
             when (val result = storageService.addAllegation(spreadsheetId, allegationDetails)) {
                 is Result.Loading -> {
                     Log.d(tag, "Adding allegation to $spreadsheetId: Loading...")
