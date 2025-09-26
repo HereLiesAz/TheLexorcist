@@ -31,6 +31,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import android.graphics.pdf.PdfDocument
 import android.provider.MediaStore
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import com.hereliesaz.lexorcist.data.Script
+import com.hereliesaz.lexorcist.model.Template
 import com.hereliesaz.lexorcist.utils.DataParser
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -43,6 +47,7 @@ import androidx.core.net.toUri
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
+import java.io.InputStreamReader
 
 @HiltViewModel
 class CaseViewModel
@@ -112,6 +117,12 @@ constructor(
 
     private val _htmlTemplates = MutableStateFlow<List<DriveFile>>(emptyList())
     val htmlTemplates: StateFlow<List<DriveFile>> = _htmlTemplates.asStateFlow()
+
+    private val _scripts = MutableStateFlow<List<Script>>(emptyList())
+    val scripts: StateFlow<List<Script>> = _scripts.asStateFlow()
+
+    private val _templates = MutableStateFlow<List<Template>>(emptyList())
+    val templates: StateFlow<List<Template>> = _templates.asStateFlow()
 
     private val _plaintiffs = MutableStateFlow(sharedPref.getString("plaintiffs", "") ?: "")
     val plaintiffs: StateFlow<String> = _plaintiffs.asStateFlow()
@@ -183,6 +194,7 @@ constructor(
     init {
         Log.d("CaseViewModel", "--- CaseViewModel INIT --- instancia: $this")
         loadThemeModePreference()
+        loadExtrasFromJson()
 
         viewModelScope.launch {
             logService.logEventFlow.collect { newLog ->
@@ -230,6 +242,31 @@ constructor(
                 if (lastSelectedCase != null) {
                     selectCase(lastSelectedCase)
                 }
+            }
+        }
+    }
+
+    private fun loadExtrasFromJson() {
+        viewModelScope.launch {
+            try {
+                applicationContext.assets.open("default_extras.json").use { inputStream ->
+                    InputStreamReader(inputStream).use { reader ->
+                        val gson = Gson()
+                        val extrasType = object : TypeToken<Map<String, List<Any>>>() {}.type
+                        val extrasMap: Map<String, List<Any>> = gson.fromJson(reader, extrasType)
+
+                        val scriptsJson = gson.toJson(extrasMap["scripts"])
+                        val scriptType = object : TypeToken<List<Script>>() {}.type
+                        _scripts.value = gson.fromJson(scriptsJson, scriptType)
+
+                        val templatesJson = gson.toJson(extrasMap["templates"])
+                        val templateType = object : TypeToken<List<Template>>() {}.type
+                        _templates.value = gson.fromJson(templatesJson, templateType)
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("CaseViewModel", "Error loading extras from JSON", e)
+                _errorMessage.value = "Error loading scripts and templates."
             }
         }
     }

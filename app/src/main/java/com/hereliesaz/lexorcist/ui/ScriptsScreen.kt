@@ -1,9 +1,7 @@
 package com.hereliesaz.lexorcist.ui
 
-import android.webkit.WebView
-import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement // Added import
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -31,38 +29,23 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.hereliesaz.lexorcist.R
-import com.hereliesaz.lexorcist.model.Template
+import com.hereliesaz.lexorcist.data.Script
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import java.util.Locale
 
-@VisibleForTesting
-internal fun filterTemplates(templates: List<Template>, court: String): List<Template> {
-    return if (court.isNotBlank()) {
-        templates.filter {
-            it.court?.equals(court, ignoreCase = true) == true || it.court?.equals("Generic", ignoreCase = true) == true
-        }
-    } else {
-        templates
-    }
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TemplatesScreen(
-    caseViewModel: CaseViewModel = hiltViewModel()
-) {
-    val templates by caseViewModel.templates.collectAsState()
-    val court by caseViewModel.court.collectAsState()
+fun ScriptsScreen(caseViewModel: CaseViewModel = hiltViewModel()) {
+    val scripts by caseViewModel.scripts.collectAsState()
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        stringResource(R.string.templates).uppercase(Locale.getDefault()),
+                        stringResource(R.string.scripts).uppercase(Locale.getDefault()),
                         modifier = Modifier.fillMaxWidth(),
                         color = MaterialTheme.colorScheme.primary,
                         textAlign = TextAlign.End
@@ -77,7 +60,7 @@ fun TemplatesScreen(
     ) { padding ->
         Column(modifier = Modifier.padding(padding).padding(16.dp), horizontalAlignment = Alignment.End) {
             Text(
-                "Here you can manage your document templates. You can create new templates, edit existing ones, and share them with the community.",
+                "Here you can manage your scripts. You can create new scripts, edit existing ones, and share them with the community.",
                 textAlign = TextAlign.End, modifier = Modifier.fillMaxWidth()
             )
             Spacer(modifier = Modifier.height(8.dp))
@@ -90,11 +73,9 @@ fun TemplatesScreen(
             }
             Spacer(modifier = Modifier.height(16.dp))
             LazyColumn {
-                val filteredTemplates = filterTemplates(templates, court)
-
-                items(filteredTemplates) { template ->
-                    TemplateItem(
-                        template = template,
+                items(scripts) { script ->
+                    ScriptItem(
+                        script = script,
                         onEdit = { /* TODO */ },
                         onShare = { /* TODO */ },
                     )
@@ -105,8 +86,8 @@ fun TemplatesScreen(
 }
 
 @Composable
-fun TemplateItem(
-    template: Template,
+fun ScriptItem(
+    script: Script,
     onEdit: () -> Unit,
     onShare: () -> Unit,
 ) {
@@ -119,34 +100,21 @@ fun TemplateItem(
     ) {
         Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.End) {
             Text(
-                text = template.name,
+                text = script.name,
                 style = MaterialTheme.typography.headlineSmall,
                 textAlign = TextAlign.End,
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(modifier = Modifier.height(8.dp))
-            AndroidView(
-                factory = { context ->
-                    WebView(context).apply {
-                        settings.userAgentString = settings.userAgentString + " Lexorcist-Agent"
-                        loadDataWithBaseURL(null, template.content, "text/html", "UTF-8", null)
-                    }
-                },
-                modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .height(100.dp),
+            Text(
+                text = script.description,
+                modifier = Modifier.fillMaxWidth(),
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.End
             )
             Spacer(modifier = Modifier.height(8.dp))
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    text = template.description,
-                    modifier = Modifier.weight(1f),
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    textAlign = TextAlign.End
-                )
-                Spacer(modifier = Modifier.width(8.dp))
                 AzButton(onClick = onShare, text = "Share")
             }
         }
