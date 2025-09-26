@@ -121,7 +121,7 @@ fun ExhibitItem(
             .padding(vertical = 4.dp)
             .fillMaxWidth()
             .pointerInput(exhibit) {
-                detectTapGestures(onTap = { onClick(exhibit.id) })
+                detectTapGestures(onTap = { onClick(exhibit.id.toString()) })
             },
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         shape = MaterialTheme.shapes.medium,

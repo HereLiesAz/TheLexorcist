@@ -184,7 +184,7 @@ fun MainScreen(
                                 ReviewScreen(caseViewModel = caseViewModel)
                             }
                             composable("exhibits") {
-                                ExhibitsScreen(caseViewModel = caseViewModel)
+                                ExhibitsScreen()
                             }
                             composable("settings") { SettingsScreen(caseViewModel = caseViewModel, mainViewModel = mainViewModel) }
                             composable("evidence_details/{evidenceId}") { backStackEntry ->

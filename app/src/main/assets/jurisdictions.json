@@ -1,8 +1,9 @@
 {
-  "description": "A comprehensive list of courts of the United States, based on publicly available information.",
+  "description": "A comprehensive list of courts of the United States, with applicable allegation IDs for each court.",
   "federal_courts": {
     "courts_with_geographic_jurisdiction": {
       "court_of_last_resort": {
+        "id": "001",
         "courtName": "Supreme Court of the United States"
       },
       "appellate_courts":,
@@ -13,30 +14,39 @@
       "appellate_jurisdiction":
     },
 {
+  "id": "129",
   "courtName": "United States Court of Appeals for Veterans Claims"
 },
 {
+"id": "130",
 "courtName": "United States Foreign Intelligence Surveillance Court of Review"
 },
 {
+"id": "131",
 "courtName": "United States Court of Military Commission Review"
 },
 {
+"id": "132",
 "courtName": "Civilian Board of Contract Appeals"
 },
 {
+"id": "133",
 "courtName": "Armed Services Board of Contract Appeals"
 },
 {
+"id": "134",
 "courtName": "Postal Service Board of Contract Appeals"
 },
 {
+"id": "135",
 "courtName": "Office of Dispute Resolution for Acquisition"
 },
 {
+"id": "136",
 "courtName": "Board of Immigration Appeals"
 },
 {
+"id": "137",
 "courtName": "Board of Veterans' Appeals"
 }
 ]
@@ -47,6 +57,7 @@
 ]
 },
 {
+"id": "150",
 "courtName": "Alabama Court of Criminal Appeals",
 "courtsOfAppeal":
 }
@@ -56,6 +67,7 @@
 },
 "other_courts": [
 {
+"id": "155",
 "courtName": "Alabama Court of the Judiciary"
 }
 ]
@@ -67,6 +79,7 @@
 "stateName": "Alaska",
 "hierarchy": {
 "court_of_last_resort": {
+"id": "160",
 "courtName": "Alaska Supreme Court",
 "courtsOfAppeal":
 }
@@ -77,13 +90,13 @@
 ]
 }
 },
-"federal_district_courts":,
-"former_federal_courts":
+"federal_district_courts":
 },
 {
 "stateName": "Arizona",
 "hierarchy": {
 "court_of_last_resort": {
+"id": "166",
 "courtName": "Supreme Court of Arizona",
 "courtsOfAppeal":
 }
@@ -99,6 +112,7 @@
 "stateName": "Arkansas",
 "hierarchy": {
 "court_of_last_resort": {
+"id": "173",
 "courtName": "Supreme Court of Arkansas",
 "courtsOfAppeal":
 }
@@ -114,19 +128,20 @@
 "stateName": "California",
 "hierarchy": {
 "court_of_last_resort": {
+"id": "180",
 "courtName": "Supreme Court of California",
 "courtsOfAppeal":
 }
 ]
 }
 },
-"federal_district_courts":,
-"former_federal_courts":
+"federal_district_courts":
 },
 {
 "stateName": "Colorado",
 "hierarchy": {
 "court_of_last_resort": {
+"id": "187",
 "courtName": "Colorado Supreme Court",
 "courtsOfAppeal":
 }
@@ -144,6 +159,7 @@
 "stateName": "Connecticut",
 "hierarchy": {
 "court_of_last_resort": {
+"id": "195",
 "courtName": "Connecticut Supreme Court",
 "courtsOfAppeal":
 }
@@ -159,6 +175,7 @@
 "stateName": "Delaware",
 "hierarchy": {
 "court_of_last_resort": {
+"id": "201",
 "courtName": "Supreme Court of Delaware",
 "courtsOfAppeal":
 }
@@ -174,6 +191,7 @@
 "stateName": "Florida",
 "hierarchy": {
 "court_of_last_resort": {
+"id": "210",
 "courtName": "Supreme Court of Florida",
 "courtsOfAppeal":
 }
@@ -189,6 +207,7 @@
 "stateName": "Georgia",
 "hierarchy": {
 "court_of_last_resort": {
+"id": "216",
 "courtName": "Supreme Court of Georgia",
 "courtsOfAppeal":
 }
@@ -204,6 +223,7 @@
 "stateName": "Hawaii",
 "hierarchy": {
 "court_of_last_resort": {
+"id": "227",
 "courtName": "Supreme Court of Hawaii",
 "courtsOfAppeal":
 }
@@ -217,6 +237,7 @@
 "stateName": "Idaho",
 "hierarchy": {
 "court_of_last_resort": {
+"id": "236",
 "courtName": "Idaho Supreme Court",
 "courtsOfAppeal":
 }
@@ -230,13 +251,17 @@
 "stateName": "Illinois",
 "hierarchy": {
 "court_of_last_resort": {
+"id": "241",
 "courtName": "Supreme Court of Illinois",
 "courtsOfAppeal": [
 {
+"id": "242",
 "courtName": "Illinois Appellate Court",
 "courtsOfAppeal": [
 {
-"courtName": "Illinois Circuit Courts"
+"id": "243",
+"courtName": "Illinois Circuit Courts",
+"applicable_allegation_ids": ["001", "002", "003", "004", "005", "006", "007", "008", "009", "010", "011", "012", "013", "014", "015", "016", "017", "018", "019", "020", "026", "027", "028", "029", "030", "031", "032", "033", "034", "035", "036", "037", "038", "039", "040", "041", "042", "043", "044", "045", "046", "047", "048", "049", "050", "051", "052", "053", "054", "055", "056", "057", "058", "059", "060", "061", "062", "063", "064", "065", "066", "067", "068", "069", "070", "071", "072", "073", "074", "075", "076", "077", "078", "079", "080", "081", "082", "083", "084", "085", "086", "087", "088", "089", "090", "091", "092", "093", "094", "095", "096", "097", "098", "099", "100", "101", "102", "103", "104", "105", "106", "107", "108", "109", "110", "111", "112", "113", "114", "115", "116", "117", "118", "119", "120", "121", "122", "123", "124", "125", "126", "127", "128", "129", "130", "131", "132", "133", "134", "135", "136", "137", "138", "139", "140", "141"]
 }
 ]
 }
@@ -250,6 +275,7 @@
 "stateName": "Indiana",
 "hierarchy": {
 "court_of_last_resort": {
+"id": "249",
 "courtName": "Indiana Supreme Court",
 "courtsOfAppeal":
 }
@@ -265,6 +291,7 @@
 "stateName": "Iowa",
 "hierarchy": {
 "court_of_last_resort": {
+"id": "258",
 "courtName": "Iowa Supreme Court",
 "courtsOfAppeal":
 }
@@ -278,6 +305,7 @@
 "stateName": "Kansas",
 "hierarchy": {
 "court_of_last_resort": {
+"id": "264",
 "courtName": "Kansas Supreme Court",
 "courtsOfAppeal":
 }
@@ -293,6 +321,7 @@
 "stateName": "Kentucky",
 "hierarchy": {
 "court_of_last_resort": {
+"id": "270",
 "courtName": "Supreme Court of Kentucky",
 "courtsOfAppeal":
 }
@@ -308,6 +337,7 @@
 "stateName": "Louisiana",
 "hierarchy": {
 "court_of_last_resort": {
+"id": "277",
 "courtName": "Supreme Court of Louisiana",
 "courtsOfAppeal":
 }
@@ -323,6 +353,7 @@
 "stateName": "Maine",
 "hierarchy": {
 "court_of_last_resort": {
+"id": "288",
 "courtName": "Maine Supreme Judicial Court",
 "courtsOfAppeal":
 }
@@ -336,6 +367,7 @@
 "stateName": "Maryland",
 "hierarchy": {
 "court_of_last_resort": {
+"id": "295",
 "courtName": "Supreme Court of Maryland",
 "courtsOfAppeal":
 }
@@ -351,6 +383,7 @@
 "stateName": "Massachusetts",
 "hierarchy": {
 "court_of_last_resort": {
+"id": "301",
 "courtName": "Supreme Judicial Court of Massachusetts",
 "courtsOfAppeal":
 }
@@ -366,6 +399,7 @@
 "stateName": "Michigan",
 "hierarchy": {
 "court_of_last_resort": {
+"id": "306",
 "courtName": "Michigan Supreme Court",
 "courtsOfAppeal":
 }
@@ -383,6 +417,7 @@
 "stateName": "Minnesota",
 "hierarchy": {
 "court_of_last_resort": {
+"id": "314",
 "courtName": "Minnesota Supreme Court",
 "courtsOfAppeal":
 }
@@ -398,25 +433,37 @@
 "stateName": "Mississippi",
 "hierarchy": {
 "court_of_last_resort": {
+"id": "320",
 "courtName": "Supreme Court of Mississippi",
 "courtsOfAppeal": [
 {
+"id": "321",
 "courtName": "Mississippi Court of Appeals",
 "courtsOfAppeal": [
 {
-"courtName": "Mississippi Circuit Courts"
+"id": "322",
+"courtName": "Mississippi Circuit Courts",
+"applicable_allegation_ids": ["001", "002", "003", "004", "005", "006", "007", "008", "009", "010", "011", "012", "013", "014", "015", "016", "017", "018", "019", "020", "026", "027", "028", "029", "030", "031", "032", "033", "034", "035", "036", "037", "038", "039", "040", "041", "042", "043", "044", "045", "046", "047", "048", "049", "050", "051", "052", "053", "054", "055", "056", "057", "058", "059", "060", "061", "062", "063", "064", "065", "066", "067", "068", "069", "070", "071", "072", "073", "074", "075", "076", "077", "078", "079", "080", "081", "082", "083", "084", "085", "086", "087", "088", "089", "090", "091", "092", "093", "094", "095", "096", "097", "098", "099", "100", "101", "102", "103", "104", "105", "106", "107", "108", "109", "110", "111", "112", "113", "114", "115", "116", "117", "118", "119", "120", "121", "122", "123", "124", "125", "126", "127", "128", "129", "130", "131", "132", "133", "134", "135", "136", "137", "138", "139", "140", "141"]
 },
 {
+"id": "323",
 "courtName": "Mississippi Chancery Courts",
+"applicable_allegation_ids": ["001", "002", "003", "004", "005", "006", "007", "008", "009", "010", "011", "012", "013", "014", "015", "016", "017", "018", "019", "020", "026", "027", "028", "029", "030", "031", "032", "033", "034", "035", "036", "037", "038", "039", "040", "041", "042", "043", "044", "045", "046", "047", "048", "049", "050", "051", "052", "053", "054", "055", "056", "057", "058", "059", "060", "061", "062", "063", "064", "065", "066", "067", "068", "069", "070", "071", "072", "073", "074", "075", "076", "077", "078", "079", "080", "081", "082", "083", "084", "085", "086", "087", "088", "089", "090", "091", "092", "093", "094", "095", "096", "097", "098", "099", "100", "101", "102", "103", "104", "105", "106", "107", "108", "109", "110", "111", "112", "113", "114", "115", "116", "117", "118", "119", "120", "121", "122", "123", "124", "125", "126", "127", "128", "129", "130", "131", "132", "133", "134", "135", "136", "137", "138", "139", "140", "141"],
 "courtsOfAppeal": [
 {
-"courtName": "Mississippi County Courts"
+"id": "324",
+"courtName": "Mississippi County Courts",
+"applicable_allegation_ids": ["001", "002", "003", "004", "005", "006", "007", "008", "009", "010", "011", "012", "013", "014", "015", "016", "017", "018", "019", "020", "026", "027", "028", "029", "030", "031", "032", "033", "034", "035", "036", "037", "038", "039", "040", "041", "042", "043", "044", "045", "046", "047", "048", "049", "050", "051", "052", "053", "054", "055", "056", "057", "058", "059", "060", "061", "062", "063", "064", "065", "066", "067", "068", "069", "070", "071", "072", "073", "074", "075", "076", "077", "078", "079", "080", "081", "082", "083", "084", "085", "086", "087", "088", "089", "090", "091", "092", "093", "094", "095", "096", "097", "098", "099", "100", "101", "102", "103", "104", "105", "106", "107", "108", "109", "110", "111", "112", "113", "114", "115", "116", "117", "118", "119", "120", "121", "122", "123", "124", "125", "126", "127", "128", "129", "130", "131", "132", "133", "134", "135", "136", "137", "138", "139", "140", "141"]
 },
 {
-"courtName": "Mississippi Justice Court"
+"id": "325",
+"courtName": "Mississippi Justice Court",
+"applicable_allegation_ids": ["001", "002", "003", "004", "005", "006", "007", "008", "009", "010", "011", "012", "013", "014", "015", "016", "017", "018", "019", "020", "026", "027", "028", "029", "030", "031", "032", "033", "034", "035", "036", "037", "038", "039", "040", "041", "042", "043", "044", "045", "046", "047", "048", "049", "050", "051", "052", "053", "054", "055", "056", "057", "058", "059", "060", "061", "062", "063", "064", "065", "066", "067", "068", "069", "070", "071", "072", "073", "074", "075", "076", "077", "078", "079", "080", "081", "082", "083", "084", "085", "086", "087", "088", "089", "090", "091", "092", "093", "094", "095", "096", "097", "098", "099", "100", "101", "102", "103", "104", "105", "106", "107", "108", "109", "110", "111", "112", "113", "114", "115", "116", "117", "118", "119", "120", "121", "122", "123", "124", "125", "126", "127", "128", "129", "130", "131", "132", "133", "134", "135", "136", "137", "138", "139", "140", "141"]
 },
 {
-"courtName": "Mississippi Municipal Courts"
+"id": "326",
+"courtName": "Mississippi Municipal Courts",
+"applicable_allegation_ids": ["001", "002", "003", "004", "005", "006", "007", "008", "009", "010", "011", "012", "013", "014", "015", "016", "017", "018", "019", "020", "026", "027", "028", "029", "030", "031", "032", "033", "034", "035", "036", "037", "038", "039", "040", "041", "042", "043", "044", "045", "046", "047", "048", "049", "050", "051", "052", "053", "054", "055", "056", "057", "058", "059", "060", "061", "062", "063", "064", "065", "066", "067", "068", "069", "070", "071", "072", "073", "074", "075", "076", "077", "078", "079", "080", "081", "082", "083", "084", "085", "086", "087", "088", "089", "090", "091", "092", "093", "094", "095", "096", "097", "098", "099", "100", "101", "102", "103", "104", "105", "106", "107", "108", "109", "110", "111", "112", "113", "114", "115", "116", "117", "118", "119", "120", "121", "122", "123", "124", "125", "126", "127", "128", "129", "130", "131", "132", "133", "134", "135", "136", "137", "138", "139", "140", "141"]
 }
 ]
 }
@@ -432,13 +479,17 @@
 "stateName": "Missouri",
 "hierarchy": {
 "court_of_last_resort": {
+"id": "331",
 "courtName": "Supreme Court of Missouri",
 "courtsOfAppeal": [
 {
+"id": "332",
 "courtName": "Missouri Court of Appeals",
 "courtsOfAppeal": [
 {
-"courtName": "Missouri Circuit Courts"
+"id": "333",
+"courtName": "Missouri Circuit Courts",
+"applicable_allegation_ids": ["001", "002", "003", "004", "005", "006", "007", "008", "009", "010", "011", "012", "013", "014", "015", "016", "017", "018", "019", "020", "026", "027", "028", "029", "030", "031", "032", "033", "034", "035", "036", "037", "038", "039", "040", "041", "042", "043", "044", "045", "046", "047", "048", "049", "050", "051", "052", "053", "054", "055", "056", "057", "058", "059", "060", "061", "062", "063", "064", "065", "066", "067", "068", "069", "070", "071", "072", "073", "074", "075", "076", "077", "078", "079", "080", "081", "082", "083", "084", "085", "086", "087", "088", "089", "090", "091", "092", "093", "094", "095", "096", "097", "098", "099", "100", "101", "102", "103", "104", "105", "106", "107", "108", "109", "110", "111", "112", "113", "114", "115", "116", "117", "118", "119", "120", "121", "122", "123", "124", "125", "126", "127", "128", "129", "130", "131", "132", "133", "134", "135", "136", "137", "138", "139", "140", "141"]
 }
 ]
 }
@@ -452,6 +503,7 @@
 "stateName": "Montana",
 "hierarchy": {
 "court_of_last_resort": {
+"id": "338",
 "courtName": "Montana Supreme Court",
 "courtsOfAppeal":
 }
@@ -469,6 +521,7 @@
 "stateName": "Nebraska",
 "hierarchy": {
 "court_of_last_resort": {
+"id": "347",
 "courtName": "Nebraska Supreme Court",
 "courtsOfAppeal":
 }
@@ -484,6 +537,7 @@
 "stateName": "Nevada",
 "hierarchy": {
 "court_of_last_resort": {
+"id": "356",
 "courtName": "Supreme Court of Nevada",
 "courtsOfAppeal":
 }
@@ -499,6 +553,7 @@
 "stateName": "New Hampshire",
 "hierarchy": {
 "court_of_last_resort": {
+"id": "362",
 "courtName": "New Hampshire Supreme Court",
 "courtsOfAppeal":
 }
@@ -512,6 +567,7 @@
 "stateName": "New Jersey",
 "hierarchy": {
 "court_of_last_resort": {
+"id": "367",
 "courtName": "Supreme Court of New Jersey",
 "courtsOfAppeal":
 }
@@ -527,6 +583,7 @@
 "stateName": "New Mexico",
 "hierarchy": {
 "court_of_last_resort": {
+"id": "373",
 "courtName": "New Mexico Supreme Court",
 "courtsOfAppeal":
 }
@@ -542,6 +599,7 @@
 "stateName": "New York",
 "hierarchy": {
 "court_of_last_resort": {
+"id": "381",
 "courtName": "New York Court of Appeals",
 "courtsOfAppeal":
 }
@@ -557,6 +615,7 @@
 "stateName": "North Carolina",
 "hierarchy": {
 "court_of_last_resort": {
+"id": "393",
 "courtName": "Supreme Court of North Carolina",
 "courtsOfAppeal":
 }
@@ -572,6 +631,7 @@
 "stateName": "North Dakota",
 "hierarchy": {
 "court_of_last_resort": {
+"id": "400",
 "courtName": "Supreme Court of North Dakota",
 "courtsOfAppeal":
 }
@@ -585,22 +645,32 @@
 "stateName": "Ohio",
 "hierarchy": {
 "court_of_last_resort": {
+"id": "405",
 "courtName": "Supreme Court of Ohio",
 "courtsOfAppeal": [
 {
+"id": "406",
 "courtName": "Ohio Courts of Appeals",
 "courtsOfAppeal": [
 {
+"id": "407",
 "courtName": "Ohio Courts of Common Pleas",
+"applicable_allegation_ids": ["001", "002", "003", "004", "005", "006", "007", "008", "009", "010", "011", "012", "013", "014", "015", "016", "017", "018", "019", "020", "026", "027", "028", "029", "030", "031", "032", "033", "034", "035", "036", "037", "038", "039", "040", "041", "042", "043", "044", "045", "046", "047", "048", "049", "050", "051", "052", "053", "054", "055", "056", "057", "058", "059", "060", "061", "062", "063", "064", "065", "066", "067", "068", "069", "070", "071", "072", "073", "074", "075", "076", "077", "078", "079", "080", "081", "082", "083", "084", "085", "086", "087", "088", "089", "090", "091", "092", "093", "094", "095", "096", "097", "098", "099", "100", "101", "102", "103", "104", "105", "106", "107", "108", "109", "110", "111", "112", "113", "114", "115", "116", "117", "118", "119", "120", "121", "122", "123", "124", "125", "126", "127", "128", "129", "130", "131", "132", "133", "134", "135", "136", "137", "138", "139", "140", "141"],
 "courtsOfAppeal": [
 {
-"courtName": "Ohio Municipal Courts"
+"id": "408",
+"courtName": "Ohio Municipal Courts",
+"applicable_allegation_ids": ["001", "002", "003", "004", "005", "006", "007", "008", "009", "010", "011", "012", "013", "014", "015", "016", "017", "018", "019", "020", "026", "027", "028", "029", "030", "031", "032", "033", "034", "035", "036", "037", "038", "039", "040", "041", "042", "043", "044", "045", "046", "047", "048", "049", "050", "051", "052", "053", "054", "055", "056", "057", "058", "059", "060", "061", "062", "063", "064", "065", "066", "067", "068", "069", "070", "071", "072", "073", "074", "075", "076", "077", "078", "079", "080", "081", "082", "083", "084", "085", "086", "087", "088", "089", "090", "091", "092", "093", "094", "095", "096", "097", "098", "099", "100", "101", "102", "103", "104", "105", "106", "107", "108", "109", "110", "111", "112", "113", "114", "115", "116", "117", "118", "119", "120", "121", "122", "123", "124", "125", "126", "127", "128", "129", "130", "131", "132", "133", "134", "135", "136", "137", "138", "139", "140", "141"]
 },
 {
-"courtName": "Ohio County Courts"
+"id": "409",
+"courtName": "Ohio County Courts",
+"applicable_allegation_ids": ["001", "002", "003", "004", "005", "006", "007", "008", "009", "010", "011", "012", "013", "014", "015", "016", "017", "018", "019", "020", "026", "027", "028", "029", "030", "031", "032", "033", "034", "035", "036", "037", "038", "039", "040", "041", "042", "043", "044", "045", "046", "047", "048", "049", "050", "051", "052", "053", "054", "055", "056", "057", "058", "059", "060", "061", "062", "063", "064", "065", "066", "067", "068", "069", "070", "071", "072", "073", "074", "075", "076", "077", "078", "079", "080", "081", "082", "083", "084", "085", "086", "087", "088", "089", "090", "091", "092", "093", "094", "095", "096", "097", "098", "099", "100", "101", "102", "103", "104", "105", "106", "107", "108", "109", "110", "111", "112", "113", "114", "115", "116", "117", "118", "119", "120", "121", "122", "123", "124", "125", "126", "127", "128", "129", "130", "131", "132", "133", "134", "135", "136", "137", "138", "139", "140", "141"]
 },
 {
-"courtName": "Ohio Court of Claims"
+"id": "410",
+"courtName": "Ohio Court of Claims",
+"applicable_allegation_ids": ["001", "002", "003", "004", "005", "006", "007", "008", "009", "010", "011", "012", "013", "014", "015", "016", "017", "018", "019", "020", "026", "027", "028", "029", "030", "031", "032", "033", "034", "035", "036", "037", "038", "039", "040", "041", "042", "043", "044", "045", "046", "047", "048", "049", "050", "051", "052", "053", "054", "055", "056", "057", "058", "059", "060", "061", "062", "063", "064", "065", "066", "067", "068", "069", "070", "071", "072", "073", "074", "075", "076", "077", "078", "079", "080", "081", "082", "083", "084", "085", "086", "087", "088", "089", "090", "091", "092", "093", "094", "095", "096", "097", "098", "099", "100", "101", "102", "103", "104", "105", "106", "107", "108", "109", "110", "111", "112", "113", "114", "115", "116", "117", "118", "119", "120", "121", "122", "123", "124", "125", "126", "127", "128", "129", "130", "131", "132", "133", "134", "135", "136", "137", "138", "139", "140", "141"]
 }
 ]
 }
@@ -620,6 +690,7 @@
 ]
 },
 {
+"id": "416",
 "courtName": "Oklahoma Court of Criminal Appeals",
 "jurisdiction": "criminal",
 "courtsOfAppeal":
@@ -634,6 +705,7 @@
 "stateName": "Oregon",
 "hierarchy": {
 "court_of_last_resort": {
+"id": "423",
 "courtName": "Oregon Supreme Court",
 "courtsOfAppeal":
 }
@@ -651,6 +723,7 @@
 "stateName": "Pennsylvania",
 "hierarchy": {
 "court_of_last_resort": {
+"id": "431",
 "courtName": "Supreme Court of Pennsylvania",
 "courtsOfAppeal":
 }
@@ -666,6 +739,7 @@
 "stateName": "Rhode Island",
 "hierarchy": {
 "court_of_last_resort": {
+"id": "440",
 "courtName": "Rhode Island Supreme Court",
 "courtsOfAppeal":
 }
@@ -679,6 +753,7 @@
 "stateName": "South Carolina",
 "hierarchy": {
 "court_of_last_resort": {
+"id": "449",
 "courtName": "South Carolina Supreme Court",
 "courtsOfAppeal":
 }
@@ -694,6 +769,7 @@
 "stateName": "South Dakota",
 "hierarchy": {
 "court_of_last_resort": {
+"id": "458",
 "courtName": "South Dakota Supreme Court",
 "courtsOfAppeal":
 }
@@ -707,6 +783,7 @@
 "stateName": "Tennessee",
 "hierarchy": {
 "court_of_last_resort": {
+"id": "463",
 "courtName": "Supreme Court of Tennessee",
 "courtsOfAppeal":
 }
@@ -733,6 +810,7 @@
 "stateName": "Utah",
 "hierarchy": {
 "court_of_last_resort": {
+"id": "486",
 "courtName": "Utah Supreme Court",
 "courtsOfAppeal":
 }
@@ -748,6 +826,7 @@
 "stateName": "Vermont",
 "hierarchy": {
 "court_of_last_resort": {
+"id": "493",
 "courtName": "Vermont Supreme Court",
 "courtsOfAppeal":
 }
@@ -761,6 +840,7 @@
 "stateName": "Virginia",
 "hierarchy": {
 "court_of_last_resort": {
+"id": "498",
 "courtName": "Supreme Court of Virginia",
 "courtsOfAppeal":
 }
@@ -776,6 +856,7 @@
 "stateName": "Washington",
 "hierarchy": {
 "court_of_last_resort": {
+"id": "505",
 "courtName": "Washington Supreme Court",
 "courtsOfAppeal":
 }
@@ -791,6 +872,7 @@
 "stateName": "West Virginia",
 "hierarchy": {
 "court_of_last_resort": {
+"id": "512",
 "courtName": "Supreme Court of Appeals of West Virginia",
 "courtsOfAppeal":
 }
@@ -806,6 +888,7 @@
 "stateName": "Wisconsin",
 "hierarchy": {
 "court_of_last_resort": {
+"id": "520",
 "courtName": "Wisconsin Supreme Court",
 "courtsOfAppeal":
 }
@@ -821,19 +904,20 @@
 "stateName": "Wyoming",
 "hierarchy": {
 "court_of_last_resort": {
+"id": "526",
 "courtName": "Wyoming Supreme Court",
 "courtsOfAppeal":
 }
 ]
 }
 },
-"federal_district_courts":,
-"former_federal_courts":
+"federal_district_courts":
 }
 ],
 "district_of_columbia_courts": {
 "local_courts": {
 "court_of_last_resort": {
+"id": "531",
 "courtName": "District of Columbia Court of Appeals",
 "courtsOfAppeal":
 }
@@ -841,13 +925,16 @@
 "federal_courts":
 },
 {
+"id": "535",
 "courtName": "United States Court of Appeals for the Federal Circuit",
 "courtsOfAppeal":
 },
 {
+"id": "538",
 "courtName": "United States Court of Appeals for the Armed Forces"
 },
 {
+"id": "539",
 "courtName": "United States Foreign Intelligence Surveillance Court of Review",
 "courtsOfAppeal":
 }
@@ -863,7 +950,9 @@
 "territoryName": "Northern Mariana Islands",
 "hierarchy": {
 "federal_territorial_court": {
+"id": "548",
 "courtName": "United States District Court for the Northern Mariana Islands",
+"applicable_allegation_ids": ["001", "002", "003", "004", "005", "006", "007", "008", "009", "010", "011", "012", "013", "014", "015", "016", "017", "018", "019", "020", "026", "027", "028", "029", "030", "031", "032", "033", "034", "035", "036", "037", "038", "039", "040", "041", "042", "043", "044", "045", "046", "047", "048", "049", "050", "051", "052", "053", "054", "055", "056", "057", "058", "059", "060", "061", "062", "063", "064", "065", "066", "067", "068", "069", "070", "071", "072", "073", "074", "075", "076", "077", "078", "079", "080", "081", "082", "083", "084", "085", "086", "087", "088", "089", "090", "091", "092", "093", "094", "095", "096", "097", "098", "099", "100", "101", "102", "103", "104", "105", "106", "107", "108", "109", "110", "111", "112", "113", "114", "115", "116", "117", "118", "119", "120", "121", "122", "123", "124", "125", "126", "127", "128", "129", "130", "131", "132", "133", "134", "135", "136", "137", "138", "139", "140", "141"],
 "courtsOfAppeal":
 }
 ]
@@ -874,6 +963,7 @@
 "territoryName": "Puerto Rico",
 "hierarchy": {
 "court_of_last_resort": {
+"id": "552",
 "courtName": "Supreme Court of Puerto Rico",
 "courtsOfAppeal":
 }
@@ -887,7 +977,9 @@
 "territoryName": "United States Virgin Islands",
 "hierarchy": {
 "federal_territorial_court": {
+"id": "558",
 "courtName": "United States District Court of the Virgin Islands",
+"applicable_allegation_ids": ["001", "002", "003", "004", "005", "006", "007", "008", "009", "010", "011", "012", "013", "014", "015", "016", "017", "018", "019", "020", "026", "027", "028", "029", "030", "031", "032", "033", "034", "035", "036", "037", "038", "039", "040", "041", "042", "043", "044", "045", "046", "047", "048", "049", "050", "051", "052", "053", "054", "055", "056", "057", "058", "059", "060", "061", "062", "063", "064", "065", "066", "067", "068", "069", "070", "071", "072", "073", "074", "075", "076", "077", "078", "079", "080", "081", "082", "083", "084", "085", "086", "087", "088", "089", "090", "091", "092", "093", "094", "095", "096", "097", "098", "099", "100", "101", "102", "103", "104", "105", "106", "107", "108", "109", "110", "111", "112", "113", "114", "115", "116", "117", "118", "119", "120", "121", "122", "123", "124", "125", "126", "127", "128", "129", "130", "131", "132", "133", "134", "135", "136", "137", "138", "139", "140", "141"],
 "courtsOfAppeal":
 }
 ]

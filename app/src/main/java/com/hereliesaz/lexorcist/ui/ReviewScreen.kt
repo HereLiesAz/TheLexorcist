@@ -58,6 +58,7 @@ import com.hereliesaz.lexorcist.data.Allegation
 import com.hereliesaz.lexorcist.data.AllegationElement
 import com.hereliesaz.lexorcist.data.AllegationProvider
 import com.hereliesaz.lexorcist.data.Evidence
+import com.hereliesaz.lexorcist.data.Exhibit
 import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
 import com.hereliesaz.lexorcist.viewmodel.AllegationsViewModel
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel

@@ -1,0 +1,866 @@
+{
+  "description": "A detailed catalog of specific evidence types logically associated with civil and criminal allegations.",
+  "allegation_evidence_catalog": {
+    "civil_allegations":[],
+    "testimonial":[],
+    "digital":[]
+  }
+},
+{
+"id": "002",
+"allegationName": "Breach of Contract",
+"relevant_evidence": {
+"documentary":,
+"testimonial": [],
+"digital": [],
+"demonstrative": []
+}
+},
+{
+"id": "003",
+"allegationName": "Conversion",
+"relevant_evidence": {
+"physical":,
+"documentary": [],
+"testimonial": [],
+"digital": []
+}
+},
+{
+"id": "004",
+"allegationName": "Defamation",
+"relevant_evidence": {
+"documentary":,
+"testimonial": [],
+"digital": [],
+"demonstrative": []
+}
+},
+{
+"id": "005",
+"allegationName": "Fraudulent Misrepresentation",
+"relevant_evidence": {
+"documentary":,
+"testimonial": [],
+"digital": []
+}
+},
+{
+"id": "006",
+"allegationName": "Injurious Falsehood, Product Disparagement, and Trade Libel",
+"relevant_evidence": {
+"documentary":,
+"testimonial": [],
+"digital": []
+}
+},
+{
+"id": "007",
+"allegationName": "Malicious Prosecution",
+"relevant_evidence": {
+"documentary":,
+"testimonial": [],
+"digital": []
+}
+},
+{
+"id": "008",
+"allegationName": "Negligence",
+"relevant_evidence": {
+"physical":,
+"documentary": [],
+"testimonial": [],
+"digital": [],
+"demonstrative": []
+}
+},
+{
+"id": "009",
+"allegationName": "Personal Injury",
+"relevant_evidence": {
+"physical":,
+"documentary": [],
+"testimonial": [],
+"digital": [],
+"demonstrative": []
+}
+},
+{
+"id": "010",
+"allegationName": "Medical Malpractice",
+"relevant_evidence": {
+"documentary":,
+"testimonial": [],
+"digital": [],
+"demonstrative": [
+"Anatomical Models",
+"Medical Illustrations Explaining the Procedure or Injury"
+]
+}
+},
+{
+"id": "011",
+"allegationName": "Wrongful Arrest",
+"relevant_evidence": {
+"physical":,
+"documentary": [],
+"testimonial": [],
+"digital": []
+}
+},
+{
+"id": "012",
+"allegationName": "Landlord/Tenant Dispute",
+"relevant_evidence": {
+"physical": [
+"Photographs of Property Condition (damage, lack of repairs)"
+],
+"documentary": [],
+"testimonial": [],
+"digital": []
+}
+}
+],
+"criminal_allegations": [],
+"testimonial": [],
+"documentary": [],
+"digital": []
+}
+},
+{
+"id": "027",
+"allegationName": "Advocating Overthrow of Government",
+"relevant_evidence": {
+"documentary":,
+"testimonial": [],
+"digital": []
+}
+},
+{
+"id": "028",
+"allegationName": "Aggravated Assault/Battery",
+"relevant_evidence": {
+"physical":,
+"testimonial": [],
+"documentary": [],
+"digital": []
+}
+},
+{
+"id": "029",
+"allegationName": "Aggravated Identity Theft",
+"relevant_evidence": {
+"documentary":,
+"testimonial": [],
+"digital": []
+}
+},
+{
+"id": "030",
+"allegationName": "Aggravated Sexual Abuse",
+"relevant_evidence": {
+"physical":,
+"testimonial": [],
+"documentary": [],
+"digital": []
+}
+},
+{
+"id": "031",
+"allegationName": "Aiming a Laser Pointer at an Aircraft",
+"relevant_evidence": {
+"physical":,
+"testimonial": [],
+"digital": []
+}
+},
+{
+"id": "032",
+"allegationName": "Airplane Hijacking",
+"relevant_evidence": {
+"physical":,
+"testimonial": [],
+"digital": []
+}
+},
+{
+"id": "033",
+"allegationName": "Anti-racketeering (RICO)",
+"relevant_evidence": {
+"documentary":,
+"testimonial": [],
+"digital": []
+}
+},
+{
+"id": "034",
+"allegationName": "Antitrust",
+"relevant_evidence": {
+"documentary":,
+"testimonial": [],
+"digital": []
+}
+},
+{
+"id": "035",
+"allegationName": "Armed Robbery",
+"relevant_evidence": {
+"physical":,
+"testimonial": [],
+"documentary": [],
+"digital": []
+}
+},
+{
+"id": "036",
+"allegationName": "Arson",
+"relevant_evidence": {
+"physical":,
+"testimonial": [],
+"documentary": [],
+"digital": [],
+"demonstrative": []
+}
+},
+{
+"id": "037",
+"allegationName": "Assassination",
+"relevant_evidence": {
+"physical":,
+"testimonial": [],
+"documentary": [],
+"digital": []
+}
+},
+{
+"id": "038",
+"allegationName": "Assault with a Deadly Weapon",
+"relevant_evidence": {
+"physical":,
+"testimonial": [],
+"documentary": [],
+"digital": []
+}
+},
+{
+"id": "039",
+"allegationName": "Assaulting or Killing Federal Officer",
+"relevant_evidence": {
+"physical":,
+"testimonial": [],
+"documentary": [],
+"digital": []
+}
+},
+{
+"id": "040",
+"allegationName": "Assisting or Instigating Escape",
+"relevant_evidence": {
+"physical":,
+"testimonial": [],
+"documentary": [],
+"digital": []
+}
+},
+{
+"id": "041",
+"allegationName": "Attempt to commit Murder/Manslaughter",
+"relevant_evidence": {
+"physical":,
+"testimonial": [],
+"documentary": [],
+"digital": []
+}
+},
+{
+"id": "042",
+"allegationName": "Bank Burglary",
+"relevant_evidence": {
+"physical":,
+"testimonial": [],
+"documentary": [],
+"digital": []
+}
+},
+{
+"id": "043",
+"allegationName": "Bankruptcy Fraud/Embezzlement",
+"relevant_evidence": {
+"documentary":,
+"testimonial": [],
+"digital": []
+}
+},
+{
+"id": "044",
+"allegationName": "Bank Larceny",
+"relevant_evidence": {
+"physical":,
+"testimonial": [],
+"documentary": [],
+"digital": []
+}
+},
+{
+"id": "045",
+"allegationName": "Bank Robbery",
+"relevant_evidence": {
+"physical":,
+"testimonial": [],
+"documentary": [],
+"digital": []
+}
+},
+{
+"id": "046",
+"allegationName": "Blackmail",
+"relevant_evidence": {
+"documentary": [
+"Extortion Letters or Notes"
+],
+"testimonial": [],
+"digital": []
+}
+},
+{
+"id": "047",
+"allegationName": "Bombing Matters",
+"relevant_evidence": {
+"physical":,
+"testimonial": [],
+"documentary": [],
+"digital": []
+}
+},
+{
+"id": "048",
+"allegationName": "Bond Default",
+"relevant_evidence": {
+"documentary":,
+"testimonial": [],
+"digital": []
+}
+},
+{
+"id": "049",
+"allegationName": "Breaking and/or Entering Carrier Facilities",
+"relevant_evidence": {
+"physical":,
+"testimonial": [],
+"documentary": [],
+"digital": []
+}
+},
+{
+"id": "050",
+"allegationName": "Bribery Crimes",
+"relevant_evidence": {
+"documentary":,
+"testimonial": [],
+"digital": []
+}
+},
+{
+"id": "051",
+"allegationName": "Certification of Checks (Fraud)",
+"relevant_evidence": {
+"documentary":,
+"testimonial": [],
+"digital": []
+}
+},
+{
+"id": "052",
+"allegationName": "Child Abuse",
+"relevant_evidence": {
+"physical": [
+"Photographs of Injuries",
+"Objects Used to Inflict Harm"
+],
+"testimonial": [],
+"documentary": [],
+"digital": []
+}
+},
+{
+"id": "053",
+"allegationName": "Child Exploitation",
+"relevant_evidence": {
+"testimonial":,
+"documentary": [],
+"digital": []
+}
+},
+{
+"id": "054",
+"allegationName": "Child Pornography",
+"relevant_evidence": {
+"physical":,
+"testimonial": [],
+"documentary": [],
+"digital": []
+}
+},
+{
+"id": "055",
+"allegationName": "Continuing Criminal Enterprise",
+"relevant_evidence": {
+"documentary":,
+"testimonial": [],
+"digital": []
+}
+},
+{
+"id": "056",
+"allegationName": "Conveying False Information",
+"relevant_evidence": {
+"documentary":,
+"testimonial": [],
+"digital": []
+}
+},
+{
+"id": "057",
+"allegationName": "Copyright Matters",
+"relevant_evidence": {
+"physical":,
+"testimonial": [],
+"documentary": [],
+"digital": []
+}
+},
+{
+"id": "058",
+"allegationName": "Counterfeiting",
+"relevant_evidence": {
+"physical":,
+"testimonial": [],
+"documentary": [],
+"digital": []
+}
+},
+{
+"id": "059",
+"allegationName": "Counterintelligence Crimes",
+"relevant_evidence": {
+"documentary":,
+"testimonial": [],
+"digital": []
+}
+},
+{
+"id": "060",
+"allegationName": "Credit/Debit Card Fraud",
+"relevant_evidence": {
+"physical":,
+"documentary": [],
+"testimonial": [],
+"digital": []
+}
+},
+{
+"id": "061",
+"allegationName": "Crime Aboard Aircraft",
+"relevant_evidence": {
+"physical":,
+"testimonial": [],
+"digital": []
+}
+},
+{
+"id": "062",
+"allegationName": "Crimes on Government Reservations",
+"relevant_evidence": {
+"physical":,
+"testimonial": [],
+"documentary": [],
+"digital": []
+}
+},
+{
+"id": "063",
+"allegationName": "Crimes on Indian Reservations",
+"relevant_evidence": {
+"physical":,
+"testimonial": [],
+"documentary": []
+}
+},
+{
+"id": "064",
+"allegationName": "Criminal Contempt of Court",
+"relevant_evidence": {
+"documentary":,
+"testimonial": [],
+"digital": []
+}
+},
+{
+"id": "065",
+"allegationName": "Criminal Forfeiture",
+"relevant_evidence": {
+"documentary":,
+"testimonial": [],
+"digital": []
+}
+},
+{
+"id": "066",
+"allegationName": "Cyberbullying",
+"relevant_evidence": {
+"testimonial":,
+"digital": []
+}
+},
+{
+"id": "067",
+"allegationName": "Computer Crime",
+"relevant_evidence": {
+"testimonial":,
+"digital": []
+}
+},
+{
+"id": "068",
+"allegationName": "Conspiracy",
+"relevant_evidence": {
+"testimonial":,
+"documentary": [],
+"digital": []
+}
+},
+{
+"id": "069",
+"allegationName": "Copyright Infringement",
+"relevant_evidence": {
+"physical":,
+"documentary": [],
+"testimonial": [],
+"digital": []
+}
+},
+{
+"id": "070",
+"allegationName": "Counterfeiting",
+"relevant_evidence": {
+"physical":,
+"testimonial": [],
+"digital": []
+}
+},
+{
+"id": "071",
+"allegationName": "Credit Card Fraud",
+"relevant_evidence": {
+"physical":,
+"documentary": [],
+"testimonial": [],
+"digital": []
+}
+},
+{
+"id": "072",
+"allegationName": "Disorderly Conduct",
+"relevant_evidence": {
+"testimonial":,
+"digital": []
+}
+},
+{
+"id": "073",
+"allegationName": "Disturbing the Peace",
+"relevant_evidence": {
+"testimonial":,
+"digital": []
+}
+},
+{
+"id": "074",
+"allegationName": "Domestic Violence",
+"relevant_evidence": {
+"physical":,
+"testimonial": [],
+"documentary": [],
+"digital": []
+}
+},
+{
+"id": "075",
+"allegationName": "Drug Cultivation and Manufacturing",
+"relevant_evidence": {
+"physical":,
+"testimonial": [],
+"documentary": [],
+"digital": []
+}
+},
+{
+"id": "076",
+"allegationName": "Drug Possession",
+"relevant_evidence": {
+"physical":,
+"testimonial": [],
+"documentary": [],
+"digital": []
+}
+},
+{
+"id": "077",
+"allegationName": "Drug Trafficking and Drug Distribution",
+"relevant_evidence": {
+"physical":,
+"testimonial": [],
+"documentary": [],
+"digital": []
+}
+},
+{
+"id": "078",
+"allegationName": "DUI/DWI",
+"relevant_evidence": {
+"physical":,
+"testimonial": [],
+"documentary": [],
+"digital": []
+}
+},
+{
+"id": "079",
+"allegationName": "Embezzlement",
+"relevant_evidence": {
+"documentary":,
+"testimonial": [],
+"digital": []
+}
+},
+{
+"id": "080",
+"allegationName": "Espionage",
+"relevant_evidence": {
+"documentary":,
+"testimonial": [],
+"digital": []
+}
+},
+{
+"id": "081",
+"allegationName": "Extortion",
+"relevant_evidence": {
+"testimonial":,
+"documentary": [
+"Extortion Note or Letter"
+],
+"digital": []
+}
+},
+{
+"id": "082",
+"allegationName": "Failure to Report a Crime",
+"relevant_evidence": {
+"testimonial":,
+"digital": []
+}
+},
+{
+"id": "083",
+"allegationName": "False Imprisonment",
+"relevant_evidence": {
+"physical":,
+"testimonial": [],
+"digital": []
+}
+},
+{
+"id": "084",
+"allegationName": "Felony",
+"relevant_evidence": {
+"physical": [
+"Varies widely based on the specific felony (e.g., weapon in a robbery, drugs in a trafficking case)"
+],
+"testimonial": [
+"Varies widely (e.g., eyewitness, victim, expert)"
+],
+"documentary": [
+"Varies widely (e.g., medical records, financial documents)"
+],
+"digital": [
+"Varies widely (e.g., surveillance video, digital communications)"
+]
+}
+},
+{
+"id": "085",
+"allegationName": "First Degree Murder",
+"relevant_evidence": {
+"physical":,
+"testimonial": [],
+"documentary": [],
+"digital": []
+}
+},
+{
+"id": "086",
+"allegationName": "Forgery",
+"relevant_evidence": {
+"documentary":,
+"testimonial": [],
+"digital": []
+}
+},
+{
+"id": "087",
+"allegationName": "Fraud",
+"relevant_evidence": {
+"documentary":,
+"testimonial": [],
+"digital": []
+}
+},
+{
+"id": "088",
+"allegationName": "Genocide",
+"relevant_evidence": {
+"physical":,
+"testimonial": [],
+"documentary": [],
+"digital": []
+}
+},
+{
+"id": "089",
+"allegationName": "Gun Crimes",
+"relevant_evidence": {
+"physical":,
+"testimonial": [],
+"documentary": [],
+"digital": []
+}
+},
+{
+"id": "090",
+"allegationName": "Hate Crime",
+"relevant_evidence": {
+"physical":,
+"testimonial":,
+"documentary": [
+"Hate Group Literature or Manifestos"
+],
+"digital": []
+}
+},
+{
+"id": "091",
+"allegationName": "Homicide",
+"relevant_evidence": {
+"physical":,
+"testimonial": [],
+"documentary": [],
+"digital": []
+}
+},
+{
+"id": "092",
+"allegationName": "Hostage Taking",
+"relevant_evidence": {
+"physical":,
+"testimonial": [],
+"documentary": [],
+"digital": []
+}
+},
+{
+"id": "093",
+"allegationName": "Identity Theft",
+"relevant_evidence": {
+"documentary":,
+"testimonial": [],
+"digital": []
+}
+},
+{
+"id": "094",
+"allegationName": "Illegal Possession of Firearms",
+"relevant_evidence": {
+"physical":,
+"testimonial": [],
+"documentary": [],
+"digital": []
+}
+},
+{
+"id": "095",
+"allegationName": "Immigration Offenses",
+"relevant_evidence": {
+"documentary":,
+"testimonial": [],
+"digital": []
+}
+},
+{
+"id": "096",
+"allegationName": "Insider Trading",
+"relevant_evidence": {
+"documentary":,
+"testimonial": [],
+"digital": []
+}
+},
+{
+"id": "097",
+"allegationName": "Insurance Fraud",
+"relevant_evidence": {
+"physical":,
+"documentary": [],
+"testimonial": [],
+"digital": []
+}
+},
+{
+"id": "098",
+"allegationName": "Kidnapping",
+"relevant_evidence": {
+"physical":,
+"testimonial": [],
+"documentary": [],
+"digital": []
+}
+},
+{
+"id": "099",
+"allegationName": "Larceny",
+"relevant_evidence": {
+"physical":,
+"testimonial": [],
+"documentary": [],
+"digital": []
+}
+},
+{
+"id": "100",
+"allegationName": "Manslaughter",
+"relevant_evidence": {
+"physical":,
+"testimonial": [],
+"documentary": [],
+"digital": []
+}
+},
+{
+"id": "101",
+"allegationName": "Misdemeanor",
+"relevant_evidence": {
+"physical": [
+"Varies by offense (e.g., stolen item in petty theft)"
+],
+"testimonial": [],
+"documentary": [],
+"digital": []
+}
+},
+{
+"id": "102",
+"allegationName": "Money Laundering",
+"relevant_evidence": {
+"documentary":,
+"testimonial": []
+}

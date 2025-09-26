@@ -9,15 +9,16 @@
     <string name="case_name_column">Nombre del caso</string>
     <string name="imported_case_default_name">Caso importado %1$d</string>
     <string name="parse_store_determined_case_name">parseAndStore: Se determinó el nombre del caso a partir de los datos de importación: %1$s</string>
-    <string name="parse_store_case_exists">parseAndStore: Ya existe un caso con el nombre \'%1$s\' en el registro. Importación cancelada. ID de la hoja de cálculo: %2$s</string>
-    <string name="parse_store_no_existing_case">parseAndStore: No se encontró ningún caso existente con el nombre \'%1$s\'. Se procederá a crear una nueva estructura de caso.</string>
+    <string name="parse_store_case_exists">parseAndStore: Ya existe un caso con el nombre '%1$s' en el registro. Importación cancelada. ID de la hoja de cálculo: %2$s</string>
+    <string name="parse_store_no_existing_case">parseAndStore: No se encontró ningún caso existente con el nombre '%1$s'. Se procederá a crear una nueva estructura de caso.</string>
     <string name="parse_store_failed_create_folder">parseAndStore: No se pudo crear la carpeta para el nuevo caso: %1$s</string>
     <string name="parse_store_failed_create_spreadsheet">parseAndStore: No se pudo crear la hoja de cálculo para el nuevo caso: %1$s</string>
-    <string name="default_imported_case_script">// Script predeterminado para caso importado\nfunction onOpen() {}</string>
+    <string name="default_imported_case_script">// Script predeterminado para caso importado
+function onOpen() {}</string>
     <string name="parse_store_created_new_case">parseAndStore: Se creó una nueva estructura de caso: ID de carpeta %1$s, ID de hoja de cálculo %2$s</string>
-    <string name="parse_store_failed_add_case_to_registry">parseAndStore: No se pudo agregar el nuevo caso \'%1$s\' al registro. Se procederá con la importación de datos a su hoja, pero no se mostrará en la lista hasta que se solucione el problema del registro.</string>
+    <string name="parse_store_failed_add_case_to_registry">parseAndStore: No se pudo agregar el nuevo caso '%1$s' al registro. Se procederá con la importación de datos a su hoja, pero no se mostrará en la lista hasta que se solucione el problema del registro.</string>
     <string name="exhibit_matrix_allegations_sheet_name">Matriz de pruebas - Alegaciones</string>
-    <string name="parse_store_failed_add_allegation">parseAndStore: No se pudo agregar la alegación: \'%1$s\' a %2$s</string>
+    <string name="parse_store_failed_add_allegation">parseAndStore: No se pudo agregar la alegación: '%1$s' a %2$s</string>
     <string name="evidence_sheet_name">Prueba</string>
     <string name="imported_evidence_sheet_source">Importado - Hoja de pruebas</string>
     <string name="comma_separator">,</string>
@@ -90,7 +91,7 @@
     <string name="unnamed_template">Plantilla sin nombre (ID: %1$s…)</string>
     <string name="create">Crear</string>
     <string name="cancel">Cancelar</string>
-    <string name="no_cases_found">No se encontraron casos. Haz clic en el botón \'+\' para crear un nuevo caso.</string>
+    <string name="no_cases_found">No se encontraron casos. Haz clic en el botón '+' para crear un nuevo caso.</string>
     <string name="no_cases_match_search">Ningún caso coincide con tu búsqueda.</string>
     <string name="no_cases_found_line1">No se encontraron casos.</string>
     <string name="no_cases_found_line2">Crea un nuevo caso o abre uno existente.</string>
@@ -116,17 +117,17 @@
     <string name="script_saved_successfully">Script guardado correctamente</string>
     <string name="enter_your_script">Introduce tu script</string>
     <string name="script_editor_placeholder">
-        // Tu script va aquí. Usa las variables disponibles para procesar la prueba.\n\n        // Ejemplo: if (evidence.content.includes(\"amenaza\")) { parser.tags.push(\"Amenaza\"); }\n\n        // Variables disponibles:\n\n        // - evidence: El objeto de prueba que se está procesando.\n\n        // - parser: Un objeto con un array `tags` para agregar nuevas etiquetas a la prueba.
+        // Tu script va aquí. Usa las variables disponibles para procesar la prueba.\n\n        // Ejemplo: if (evidence.content.includes("amenaza")) { parser.tags.push("Amenaza"); }\n\n        // Variables disponibles:\n\n        // - evidence: El objeto de prueba que se está procesando.\n\n        // - parser: Un objeto con un array `tags` para agregar nuevas etiquetas a la prueba.
     </string>
     <string name="save_script">Guardar script</string>
     <string name="script_title">Título del script</string>
-    <string name="script_snippet_text_includes">evidence.text.includes(\"\")</string>
+    <string name="script_snippet_text_includes">evidence.text.includes("")</string>
     <string name="script_snippet_text_includes_label">text.includes(…)</string>
-    <string name="script_snippet_tags_includes">evidence.tags.includes(\"\")</string>
+    <string name="script_snippet_tags_includes">evidence.tags.includes("")</string>
     <string name="script_snippet_tags_includes_label">tags.includes(…)</string>
-    <string name="script_snippet_date_greater">evidence.documentDate &gt; new Date(\"YYYY-MM-DD\").getTime()</string>
+    <string name="script_snippet_date_greater">evidence.documentDate &gt; new Date("YYYY-MM-DD").getTime()</string>
     <string name="script_snippet_date_greater_label">fecha &gt; …</string>
-    <string name="script_snippet_date_less">evidence.documentDate &lt; new Date(\"YYYY-MM-DD\").getTime()</string>
+    <string name="script_snippet_date_less">evidence.documentDate &lt; new Date("YYYY-MM-DD").getTime()</string>
     <string name="script_snippet_date_less_label">fecha &lt; …</string>
     <string name="evidence_by_category">Prueba por categoría</string>
     <string name="evidence_by_month">Prueba por mes</string>
@@ -142,24 +143,23 @@
     <string name="script_editor_explanation">
         Los scripts en The Lexorcist son herramientas poderosas para automatizar el etiquetado y la categorización de tus pruebas. Escritos en JavaScript, te permiten definir reglas que aplican etiquetas automáticamente según el contenido, la fecha o las etiquetas existentes de tus pruebas.\n\n        \n\n<b>Variables disponibles:</b>
         \n- <b>evidence:</b> El objeto de prueba que se está procesando. Contiene propiedades como `content`, `documentDate` y `tags`.
-        \n- <b>parser:</b> Un objeto con un array `tags`. Puedes agregar nuevas etiquetas a tu prueba empujándolas a este array (p. ej., `parser.tags.push(\"Nueva etiqueta\");`).\n
-        \n\n<b>Ejemplos:</b>
-        \n- Etiquetado basado en palabras clave: `if (evidence.content.includes(\"palabra clave\")) { parser.tags.push(\"Etiqueta relevante\"); }`
-        \n- Categorización por fecha: `if (evidence.documentDate > new Date(\"2023-01-01\").getTime()) { parser.tags.push(\"Después de 2023\"); }`
+        \n- <b>parser:</b> Un objeto con un array `tags`. Puedes agregar nuevas etiquetas a tu prueba empujándolas a este array (p. ej., `parser.tags.push("Nueva etiqueta");`).\n\n        \n\n<b>Ejemplos:</b>
+        \n- Etiquetado basado en palabras clave: `if (evidence.content.includes("palabra clave")) { parser.tags.push("Etiqueta relevante"); }`
+        \n- Categorización por fecha: `if (evidence.documentDate &gt; new Date("2023-01-01").getTime()) { parser.tags.push("Después de 2023"); }`
     </string>
     <string name="script_editor_instructions">Usa los botones de arriba para insertar fragmentos o escribe tu propio código Javascript a continuación. El objeto `evidence` y un objeto `parser` están disponibles para ti.</string>
 
     <string-array name="sample_scripts">
-        <item>// Ejemplo 1: Etiquetar amenazas\nif (evidence.content.includes(\"amenazar\")) {\n    parser.tags.push(\"Amenaza\");\n}</item>
-        <item>// Ejemplo 2: Etiquetar documentos financieros\nif (evidence.content.includes(\"factura\") || evidence.content.includes(\"recibo\")) {\n    parser.tags.push(\"Financiero\");\n}</item>
-        <item>// Ejemplo 3: Etiquetar pruebas de una persona específica\nif (evidence.content.includes(\"John Doe\")) {\n    parser.tags.push(\"De John Doe\");\n}</item>
-        <item>// Ejemplo 4: Categorizar pruebas antiguas\nif (evidence.documentDate &lt; new Date(\"2020-01-01\").getTime()) {\n    parser.tags.push(\"Prueba antigua\");\n}</item>
-        <item>// Ejemplo 5: Etiquetar pruebas que ya están etiquetadas como \"importante\"\nif (evidence.tags.includes(\"importante\")) {\n    parser.tags.push(\"Alta prioridad\");\n}</item>
-        <item>// Ejemplo 6: Identificar posible acoso\nif (evidence.content.match(/acosar/i)) {\n    parser.tags.push(\"Acoso\");\n}</item>
-        <item>// Ejemplo 7: Etiquetar imágenes\nif (evidence.type === \"image\") {\n    parser.tags.push(\"Imagen\");\n}</item>
-        <item>// Ejemplo 8: Etiquetar archivos de audio\nif (evidence.type === \"audio\") {\n    parser.tags.push(\"Grabación de audio\");\n}</item>
-        <item>// Ejemplo 9: Etiquetar pruebas relacionadas con un proyecto específico\nif (evidence.content.includes(\"Proyecto X\")) {\n    parser.tags.push(\"Proyecto X\");\n}</item>
-        <item>// Ejemplo 10: Encontrar pruebas con palabras clave específicas y después de una fecha determinada\nif (evidence.content.includes(\"contrato\") &amp;&amp; evidence.documentDate > new Date(\"2022-06-01\").getTime()) {\n    parser.tags.push(\"Contrato 2022\");\n}</item>
+        <item>// Ejemplo 1: Etiquetar amenazas\nif (evidence.content.includes("amenazar")) {\n    parser.tags.push("Amenaza");\n}</item>
+        <item>// Ejemplo 2: Etiquetar documentos financieros\nif (evidence.content.includes("factura") || evidence.content.includes("recibo")) {\n    parser.tags.push("Financiero");\n}</item>
+        <item>// Ejemplo 3: Etiquetar pruebas de una persona específica\nif (evidence.content.includes("John Doe")) {\n    parser.tags.push("De John Doe");\n}</item>
+        <item>// Ejemplo 4: Categorizar pruebas antiguas\nif (evidence.documentDate &lt; new Date("2020-01-01").getTime()) {\n    parser.tags.push("Prueba antigua");\n}</item>
+        <item>// Ejemplo 5: Etiquetar pruebas que ya están etiquetadas como "importante"\nif (evidence.tags.includes("importante")) {\n    parser.tags.push("Alta prioridad");\n}</item>
+        <item>// Ejemplo 6: Identificar posible acoso\nif (evidence.content.match(/acosar/i)) {\n    parser.tags.push("Acoso");\n}</item>
+        <item>// Ejemplo 7: Etiquetar imágenes\nif (evidence.type === "image") {\n    parser.tags.push("Imagen");\n}</item>
+        <item>// Ejemplo 8: Etiquetar archivos de audio\nif (evidence.type === "audio") {\n    parser.tags.push("Grabación de audio");\n}</item>
+        <item>// Ejemplo 9: Etiquetar pruebas relacionadas con un proyecto específico\nif (evidence.content.includes("Proyecto X")) {\n    parser.tags.push("Proyecto X");\n}</item>
+        <item>// Ejemplo 10: Encontrar pruebas con palabras clave específicas y después de una fecha determinada\nif (evidence.content.includes("contrato") &amp;&amp; evidence.documentDate &gt; new Date("2022-06-01").getTime()) {\n    parser.tags.push("Contrato 2022");\n}</item>
     </string-array>
 
     <string name="share_script_title">Compartir script</string>
@@ -225,13 +225,13 @@
     <string name="create_case_error_no_api">createCase: Sin servicio de API.</string>
     <string name="create_case_error_app_root">createCase: No se pudo obtener la carpeta raíz de la aplicación.</string>
     <string name="create_case_error_case_registry">createCase: No se pudo obtener el registro de casos.</string>
-    <string name="create_case_error_case_folder">createCase: No se pudo crear la carpeta del caso para \'%1$s\'.</string>
+    <string name="create_case_error_case_folder">createCase: No se pudo crear la carpeta del caso para '%1$s'.</string>
     <string name="create_case_error_download_template">createCase: No se pudo descargar la plantilla HTML (ID: %1$s).</string>
-    <string name="create_case_error_upload_snapshot">createCase: No se pudo subir la instantánea HTML para el caso \'%1$s\'. Se procederá sin ella.</string>
+    <string name="create_case_error_upload_snapshot">createCase: No se pudo subir la instantánea HTML para el caso '%1$s'. Se procederá sin ella.</string>
     <string name="create_case_error_generate_pdf">createCase: No se pudo generar el PDF local a partir del HTML.</string>
     <string name="create_case_error_upload_pdf">createCase: No se pudo subir el PDF generado a la carpeta de Drive %1$s.</string>
-    <string name="create_case_error_create_spreadsheet">createCase: No se pudo crear la hoja de cálculo del caso para \'%1$s\'.</string>
-    <string name="create_case_error_add_to_registry">No se pudo agregar el caso \'%1$s\' al registro.</string>
+    <string name="create_case_error_create_spreadsheet">createCase: No se pudo crear la hoja de cálculo del caso para '%1$s'.</string>
+    <string name="create_case_error_add_to_registry">No se pudo agregar el caso '%1$s' al registro.</string>
     <string name="load_cases_error_no_api">loadCasesFromRegistry: Sin servicio de API.</string>
     <string name="load_templates_error_no_api">loadHtmlTemplates: Sin servicio de API.</string>
     <string name="load_sheet_filters_error_no_api">loadSelectedCaseSheetFilters: Sin servicio de API.</string>
