@@ -1,0 +1,184 @@
+{
+  "model_description": "A statistical weighting system for estimating plaintiff success probability in civil litigation trials, based on empirical data and legal analysis. This model uses a Bayesian-inspired framework where a baseline win probability is modified by the multiplicative weight of evidence. Weights are analogous to Likelihood Ratios.",
+  "allegations": {
+    "Breach_of_Contract": {
+      "baseline_plaintiff_win_probability": 0.66,
+      "sources": "[1]",
+      "evidence_weights": {
+        "Documentary_Evidence": {
+          "Written_Contract_Clear_Terms_Favor_Plaintiff": {
+            "weight": 20.0,
+            "description": "A clear, unambiguous written contract with terms that directly support the plaintiff's position."
+          },
+          "Written_Contract_Ambiguous_Terms": {
+            "weight": 0.8,
+            "description": "The contract contains vague or 'fuzzy' terms, creating conflicting expectations and weakening the plaintiff's case for a clear breach."
+          },
+          "Proof_of_Performance_Plaintiff": {
+            "weight": 5.0,
+            "description": "Invoices, receipts, and delivery confirmations showing the plaintiff fulfilled their obligations."
+          },
+          "Proof_of_Material_Breach_Defendant": {
+            "weight": 10.0,
+            "description": "Evidence demonstrating a serious violation by the defendant that undermines the core of the agreement."
+          },
+          "Proof_of_Minor_Breach_Defendant": {
+            "weight": 2.5,
+            "description": "Evidence of a less significant failure to perform that does not defeat the purpose of the contract."
+          },
+          "Correspondence_Supporting_Breach": {
+            "weight": 4.0,
+            "description": "Emails, letters, or memos that document the defendant's failure to perform or acknowledge the breach."
+          }
+        },
+        "Testimonial_Evidence": {
+          "Witness_Testimony_Corroborating_Breach": {
+            "weight": 3.0,
+            "description": "Testimony from a non-party witness that supports the plaintiff's account of the breach."
+          }
+        }
+      }
+    },
+    "Medical_Malpractice": {
+      "baseline_plaintiff_win_probability": 0.23,
+      "sources": "[1]",
+      "evidence_weights": {
+        "Testimonial_Evidence": {
+          "Expert_Witness": {
+            "Medical_Expert_Testimony_Plaintiff_Strong": {
+              "weight": 15.0,
+              "description": "Strong, credible expert testimony for the plaintiff establishing a breach of the standard of care and causation. Essential for a plaintiff's case."
+            },
+            "Medical_Expert_Testimony_Defendant_Strong": {
+              "weight": 0.1,
+              "description": "Strong, credible expert testimony for the defendant refuting negligence, creating a 'battle of the experts' that is difficult for the plaintiff to overcome."
+            }
+          }
+        },
+        "Documentary_Evidence": {
+          "Medical_Records_Indicating_Negligence": {
+            "weight": 8.0,
+            "description": "Medical records that clearly document a deviation from the standard of care, such as a failure to order a necessary test or a clear misdiagnosis."
+          },
+          "Medical_Records_Ambiguous": {
+            "weight": 0.5,
+            "description": "Medical records are unclear or do not definitively support the plaintiff's claim of negligence."
+          }
+        }
+      }
+    },
+    "Motor_Vehicle_Accident": {
+      "baseline_plaintiff_win_probability": 0.64,
+      "sources": "[1]",
+      "evidence_weights": {
+        "Documentary_Evidence": {
+          "Police_Report_Faulting_Defendant": {
+            "weight": 7.0,
+            "description": "An official police accident report that assigns fault to the defendant."
+          }
+        },
+        "Digital_Evidence": {
+          "Traffic_Camera_Footage_Showing_Fault": {
+            "weight": 25.0,
+            "description": "Direct, objective video evidence showing the defendant was at fault (e.g., running a red light)."
+          }
+        },
+        "Testimonial_Evidence": {
+          "Eyewitness_Testimony_Corroborating_Plaintiff": {
+            "weight": 4.0,
+            "description": "Testimony from a neutral eyewitness that supports the plaintiff's version of events."
+          },
+          "Expert_Witness": {
+            "Accident_Reconstruction_Expert_Favorable_Plaintiff": {
+              "weight": 12.0,
+              "description": "Expert analysis of physical evidence that concludes the defendant was at fault."
+            }
+          }
+        },
+        "Real_Evidence": {
+          "Vehicle_Damage_Consistent_With_Plaintiff_Account": {
+            "weight": 2.0,
+            "description": "Physical damage to the vehicles that is consistent with the plaintiff's narrative of the accident."
+          }
+        }
+      }
+    },
+    "Product_Liability": {
+      "baseline_plaintiff_win_probability": 0.20,
+      "sources": "[1]",
+      "evidence_weights": {
+        "Real_Evidence": {
+          "Defective_Product_Itself": {
+            "weight": 10.0,
+            "description": "The actual product, preserved, which can be examined to demonstrate the defect."
+          }
+        },
+        "Testimonial_Evidence": {
+          "Expert_Witness": {
+            "Engineering_Expert_Testimony_Proving_Defect": {
+              "weight": 18.0,
+              "description": "Expert testimony from an engineer or other specialist that a design or manufacturing defect exists and caused the injury."
+            }
+          }
+        },
+        "Documentary_Evidence": {
+          "Internal_Company_Documents_Showing_Knowledge_of_Defect": {
+            "weight": 30.0,
+            "description": "Internal memos, emails, or test results showing the company was aware of the product's danger before the plaintiff's injury."
+          }
+        }
+      }
+    },
+    "Premises_Liability": {
+      "baseline_plaintiff_win_probability": 0.40,
+      "sources": "Estimated based on BJS data showing torts other than auto/malpractice/product liability have win rates between 52% and 75%. Premises liability is a major component of this category. [1]",
+      "evidence_weights": {
+        "Digital_Evidence": {
+          "Surveillance_Footage_of_Incident": {
+            "weight": 15.0,
+            "description": "Video evidence capturing the incident and the hazardous condition that caused it."
+          }
+        },
+        "Documentary_Evidence": {
+          "Prior_Complaints_of_Hazard": {
+            "weight": 8.0,
+            "description": "Records of previous complaints about the same hazardous condition, proving the property owner had notice."
+          },
+          "Incident_Report_Filed_at_Time_of_Injury": {
+            "weight": 3.0,
+            "description": "An official report of the injury made with the property owner or manager immediately after the event."
+          }
+        },
+        "Testimonial_Evidence": {
+          "Witness_Testimony_to_Hazard_Duration": {
+            "weight": 5.0,
+            "description": "Testimony from a witness establishing that the hazardous condition existed for a long period of time, making it more likely the owner should have known about it."
+          }
+        }
+      }
+    }
+  },
+  "combination_multipliers": {
+    "corroboration":,
+    "multiplier": 1.5,
+    "description": "Expert testimony is strongly corroborated by clear documentary evidence (e.g., a medical expert's opinion is confirmed by notes in the medical record)."
+  },
+{
+  "pairing":,
+  "multiplier": 1.8,
+  "description": "An eyewitness's account is confirmed by objective video evidence."
+}
+],
+"antagonism":,
+"multiplier": 0.5,
+"description": "Two eyewitnesses for the same party provide significantly contradictory accounts of the event, reducing the credibility of both."
+}
+]
+},
+"contextual_modifiers":,
+"target": "Final_Plaintiff_Odds",
+"multiplier": 0.7,
+"description": "Applies a negative multiplier to the plaintiff's final odds in malpractice cases to account for documented juror bias giving medical professionals the 'benefit of the doubt'."
+}
+]
+}
