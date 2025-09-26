@@ -45,12 +45,12 @@ import com.hereliesaz.lexorcist.ui.ExtrasScreen
 import com.hereliesaz.lexorcist.ui.PhotoGroupScreen
 import com.hereliesaz.lexorcist.ui.ReviewScreen
 import com.hereliesaz.lexorcist.ui.ScriptBuilderScreen
+import com.hereliesaz.lexorcist.ui.ScriptsScreen
 import com.hereliesaz.lexorcist.ui.SettingsScreen
 import com.hereliesaz.lexorcist.ui.TemplatesScreen
 import com.hereliesaz.lexorcist.ui.TimelineScreen
 import com.hereliesaz.lexorcist.ui.components.CoinTossLoadingIndicator
 import com.hereliesaz.lexorcist.ui.components.ScriptableAzNavRail
-import com.hereliesaz.lexorcist.viewmodel.AddonsBrowserViewModel
 import com.hereliesaz.lexorcist.viewmodel.AuthViewModel
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
@@ -166,7 +166,7 @@ fun MainScreen(
                                     mainViewModel = mainViewModel
                                 )
                             }
-                            composable("extras") { ExtrasScreen() }
+                            composable("extras") { ExtrasScreen(caseViewModel = caseViewModel) }
                             composable("script_builder") {
                                 ScriptBuilderScreen(navController = navController, caseViewModel = caseViewModel)
                             }
@@ -174,7 +174,7 @@ fun MainScreen(
                                 AllegationsScreen(hiltViewModel<MasterAllegationsViewModel>())
                             }
                             composable("templates") {
-                                TemplatesScreen(hiltViewModel<AddonsBrowserViewModel>())
+                                TemplatesScreen(caseViewModel = caseViewModel)
                             }
                             composable("timeline") { TimelineScreen() }
                             composable("photo_group") {
