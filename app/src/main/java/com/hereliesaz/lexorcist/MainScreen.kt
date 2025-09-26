@@ -55,7 +55,6 @@ import com.hereliesaz.lexorcist.ui.PhotoGroupScreen
 import com.hereliesaz.lexorcist.ui.ExhibitsScreen
 import com.hereliesaz.lexorcist.ui.TimelineScreen
 import com.hereliesaz.lexorcist.viewmodel.AddonsBrowserViewModel // Corrected import
-import com.hereliesaz.lexorcist.viewmodel.AllegationsViewModel
 import com.hereliesaz.lexorcist.viewmodel.AuthViewModel
 import com.hereliesaz.lexorcist.viewmodel.ExhibitsViewModel
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
@@ -78,14 +77,13 @@ fun MainScreen(
     onSignOutClick: () -> Unit,
 ) {
     val signInState by authViewModel.signInState.collectAsState()
-    val selectedCase by caseViewModel.currentCase.collectAsState()
-    val caseSpecificErrorMessage by caseViewModel.error.collectAsState()
+    val selectedCase by caseViewModel.selectedCase.collectAsState()
+    val caseSpecificErrorMessage by caseViewModel.errorMessage.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     var showCreateCaseDialog by remember { mutableStateOf(false) }
     val scriptBuilderViewModel: ScriptBuilderViewModel = hiltViewModel()
-    // caseViewModel.setScriptBuilderViewModel(scriptBuilderViewModel) // Removed this line
+    caseViewModel.setScriptBuilderViewModel(scriptBuilderViewModel)
     val isLoading by mainViewModel.isLoading.collectAsState()
-    val allegationsViewModel: AllegationsViewModel = hiltViewModel()
 
     LaunchedEffect(caseSpecificErrorMessage) {
         caseSpecificErrorMessage?.let {
@@ -191,7 +189,7 @@ fun MainScreen(
                                         }
                                     }
                                     composable("exhibits") {
-                                        ExhibitsScreen(caseViewModel = caseViewModel, allegationsViewModel = allegationsViewModel, navController = navController)
+                                        com.hereliesaz.lexorcist.ui.ExhibitsScreen()
                                     }
                                     composable("cases") { CasesScreen(caseViewModel = caseViewModel, navController = navController, mainViewModel = mainViewModel) }
                                     composable("evidence") {
@@ -216,19 +214,22 @@ fun MainScreen(
                                         TemplatesScreen(hiltViewModel<AddonsBrowserViewModel>())
                                     }
                                     composable("timeline") {
-                                        TimelineScreen(caseViewModel = caseViewModel, navController = navController)
+                                        TimelineScreen()
                                     }
                                     composable("photo_group") {
                                         PhotoGroupScreen(navController = navController, mainViewModel = mainViewModel)
                                     }
                                     composable("data_review") {
-                                        ReviewScreen(caseViewModel = caseViewModel, allegationsViewModel = allegationsViewModel) // Updated
+                                        ReviewScreen(caseViewModel = caseViewModel) // Updated
+                                    }
+                                    composable("exhibits") {
+                                        ExhibitsScreen()
                                     }
                                     composable("settings") { SettingsScreen(caseViewModel = caseViewModel, mainViewModel = mainViewModel) }
                                     composable("evidence_details/{evidenceId}") { backStackEntry ->
                                         val evidenceIdString = backStackEntry.arguments?.getString("evidenceId")
                                         val evidenceId = remember(evidenceIdString) { evidenceIdString?.toIntOrNull() }
-                                        val evidence = caseViewModel.selectedCaseEvidenceList.collectAsState().value.find { it.id == evidenceId?.toString() }
+                                        val evidence = caseViewModel.selectedCaseEvidenceList.collectAsState().value.find { it.id == evidenceId }
 
                                         if (evidence != null) {
                                             EvidenceDetailsScreen(
@@ -244,7 +245,7 @@ fun MainScreen(
                                     composable("transcription/{evidenceId}") { backStackEntry ->
                                         val evidenceIdString = backStackEntry.arguments?.getString("evidenceId")
                                         val evidenceId = remember(evidenceIdString) { evidenceIdString?.toIntOrNull() }
-                                        val evidence = caseViewModel.selectedCaseEvidenceList.collectAsState().value.find { it.id == evidenceId?.toString() }
+                                        val evidence = caseViewModel.selectedCaseEvidenceList.collectAsState().value.find { it.id == evidenceId }
 
                                         if (evidence != null) {
                                             com.hereliesaz.lexorcist.ui.TranscriptionScreen(

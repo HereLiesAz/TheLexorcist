@@ -23,7 +23,6 @@ import com.google.api.services.sheets.v4.model.ValueRange
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.hereliesaz.lexorcist.auth.CredentialHolder
-import com.hereliesaz.lexorcist.data.Allegation
 import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.model.Script
 import com.hereliesaz.lexorcist.model.Template
@@ -860,7 +859,7 @@ class GoogleApiService @Inject constructor(
         withContext(Dispatchers.IO) {
             val sheets = getSheetsService() ?: return@withContext emptyList()
             try {
-                val range = "Allegations!A:D" // Assuming allegations are in a sheet named "Allegations"
+                val range = "Allegations!A:C" // Assuming allegations are in a sheet named "Allegations"
                 val response =
                     sheets
                         .spreadsheets()
@@ -873,11 +872,10 @@ class GoogleApiService @Inject constructor(
                 } else {
                     values.mapNotNull { row ->
                         try {
-                            Allegation(
+                            com.hereliesaz.lexorcist.data.Allegation(
                                 id = row[0].toString().toInt(),
                                 spreadsheetId = spreadsheetId,
                                 text = row[2].toString(),
-                                allegationElementName = row[3].toString()
                             )
                         } catch (e: Exception) {
                             null // Skip row if parsing fails
@@ -910,7 +908,7 @@ class GoogleApiService @Inject constructor(
                     values.mapNotNull { row ->
                         try {
                             com.hereliesaz.lexorcist.data.Evidence(
-                                id = row[0].toString(),
+                                id = row[0].toString().toInt(),
                                 caseId = caseId,
                                 spreadsheetId = spreadsheetId,
                                 type = row[1].toString(),
@@ -918,22 +916,21 @@ class GoogleApiService @Inject constructor(
                                 timestamp = row[3].toString().toLong(),
                                 sourceDocument = row[4].toString(),
                                 documentDate = row[5].toString().toLong(),
-                                allegationId = row.getOrNull(6)?.toString(),
-                                allegationElementName = row.getOrNull(7)?.toString(),
-                                category = row.getOrNull(8)?.toString() ?: "",
-                                tags = row.getOrNull(9)?.toString()?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() } ?: emptyList(),
-                                commentary = row.getOrNull(10)?.toString(),
-                                linkedEvidenceIds = row.getOrNull(11)?.toString()?.split(",")?.mapNotNull { it.trim().toIntOrNull() } ?: emptyList(),
-                                parentVideoId = row.getOrNull(12)?.toString(),
+                                allegationId = row.getOrNull(6)?.toString()?.toIntOrNull(),
+                                category = row.getOrNull(7)?.toString() ?: "",
+                                tags = row.getOrNull(8)?.toString()?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() } ?: emptyList(),
+                                commentary = row.getOrNull(9)?.toString(),
+                                linkedEvidenceIds = row.getOrNull(10)?.toString()?.split(",")?.mapNotNull { it.trim().toIntOrNull() } ?: emptyList(),
+                                parentVideoId = row.getOrNull(11)?.toString(),
                                 entities =
                                     row
-                                        .getOrNull(13)
+                                        .getOrNull(12)
                                         ?.toString()
                                         ?.let { Gson().fromJson(it, object : TypeToken<Map<String, List<String>>>() {}.type) }
                                         ?: emptyMap(),
-                                isSelected = row.getOrNull(14)?.toString()?.toBoolean() ?: false,
-                                formattedContent = row.getOrNull(15)?.toString(),
-                                mediaUri = row.getOrNull(16)?.toString(),
+                                isSelected = row.getOrNull(13)?.toString()?.toBoolean() ?: false,
+                                formattedContent = row.getOrNull(14)?.toString(),
+                                mediaUri = row.getOrNull(15)?.toString(),
                             )
                         } catch (e: Exception) {
                             null // Skip row if parsing fails
@@ -952,14 +949,13 @@ class GoogleApiService @Inject constructor(
                 val values =
                     listOf(
                         listOf(
-                            evidence.id,
+                            evidence.id.toString(),
                             evidence.type,
                             evidence.content,
                             evidence.timestamp.toString(),
                             evidence.sourceDocument,
                             evidence.documentDate.toString(),
-                            evidence.allegationId ?: "",
-                            evidence.allegationElementName ?: "",
+                            evidence.allegationId?.toString() ?: "",
                             evidence.category,
                             evidence.tags.joinToString(","),
                             evidence.commentary ?: "",
@@ -986,7 +982,6 @@ class GoogleApiService @Inject constructor(
     suspend fun addAllegationToCase(
         spreadsheetId: String,
         allegationText: String,
-        allegationElementName: String
     ): Boolean =
         withContext(Dispatchers.IO) {
             val sheets = getSheetsService() ?: return@withContext false
@@ -998,7 +993,6 @@ class GoogleApiService @Inject constructor(
                             (System.currentTimeMillis() / 1000).toInt(),
                             spreadsheetId,
                             allegationText,
-                            allegationElementName
                         ),
                     )
                 val body = ValueRange().setValues(values)
@@ -1033,14 +1027,13 @@ class GoogleApiService @Inject constructor(
 
                 val rowData =
                     listOf(
-                        evidence.id,
+                        evidence.id.toString(),
                         evidence.type,
                         evidence.content,
                         evidence.timestamp.toString(),
                         evidence.sourceDocument,
                         evidence.documentDate.toString(),
-                        evidence.allegationId ?: "",
-                        evidence.allegationElementName ?: "",
+                        evidence.allegationId?.toString() ?: "",
                         evidence.category,
                         evidence.tags.joinToString(","),
                         evidence.commentary ?: "",
