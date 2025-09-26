@@ -145,7 +145,7 @@ function onOpen() {}</string>
     <string name="sort_alphabetical">Sort Alphabetical</string>
     <string name="sort_category">Sort by Category</string>
     <string name="request">Request</string>
-    <string name="no_allegations_found_for_search">No allegations found for "%1$s"</string>
+    <string name="no_allegations_found_for_search">No allegations found for \"%1$s\"</string>
     <string name="no_allegations_available">No allegations available.</string>
     <string name="request_new_allegation">Request New Allegation</string>
     <string name="allegation_name">Allegation Name</string>
