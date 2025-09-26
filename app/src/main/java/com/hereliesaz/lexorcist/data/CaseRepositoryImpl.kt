@@ -209,42 +209,36 @@ class CaseRepositoryImpl @Inject constructor(
             Log.w(tag, "Import spreadsheet $spreadsheetId: No sheet data found.")
             return null
         }
-        val parsedData = caseSheetParser.parseCaseFromData(spreadsheetId, sheetData)
-        if (parsedData != null) {
-            val (newCase, evidenceList) = parsedData
-            when (val createResult = storageService.createCase(newCase)) {
-                is Result.Loading -> {
-                    Log.d(tag, "Import spreadsheet $spreadsheetId: Case creation is loading.")
-                    return null
-                }
-                is Result.Success -> {
-                    val createdCase = createResult.data
-                    repositoryScope.launch {
-                        evidenceList.forEach { evidence ->
-                            evidenceRepository.addEvidence(evidence.copy(spreadsheetId = createdCase.spreadsheetId, caseId = createdCase.id.toLong()))
-                        }
-                    }
-                    _cases.update {
-                        (it + createdCase).sortedByDescending { c -> c.lastModifiedTime ?: 0L }
-                    }
-                    return createdCase
-                }
-                is Result.Error -> {
-                    errorReporter.reportError(createResult.exception)
-                    Log.e(tag, "Import spreadsheet $spreadsheetId: Error creating case.", createResult.exception)
-                    return null
-                }
-                is Result.UserRecoverableError -> {
-                    errorReporter.reportError(createResult.exception)
-                    Log.w(tag, "Import spreadsheet $spreadsheetId: User recoverable error creating case.", createResult.exception)
-                    return null
-                }
+
+        val parsedData = caseSheetParser.parseCaseFromData(spreadsheetId, sheetData) ?: return null
+        val (newCase, evidenceList) = parsedData
+
+        when (val createResult = storageService.createCase(newCase)) {
+            is Result.Loading -> {
+                Log.d(tag, "Import spreadsheet $spreadsheetId: Case creation is loading.")
+                return null
             }
-        } else {
-            Log.w(tag, "Import spreadsheet $spreadsheetId: Failed to parse case data.")
-            return null
+            is Result.Success -> {
+                val createdCase = createResult.data
+                for (evidence in evidenceList) {
+                    evidenceRepository.addEvidence(evidence.copy(spreadsheetId = createdCase.spreadsheetId))
+                }
+                _cases.update {
+                    (it + createdCase).sortedByDescending { c -> c.lastModifiedTime ?: 0L }
+                }
+                return createdCase
+            }
+            is Result.Error -> {
+                errorReporter.reportError(createResult.exception)
+                Log.e(tag, "Import spreadsheet $spreadsheetId: Error creating case.", createResult.exception)
+                return null
+            }
+            is Result.UserRecoverableError -> {
+                errorReporter.reportError(createResult.exception)
+                Log.w(tag, "Import spreadsheet $spreadsheetId: User recoverable error creating case.", createResult.exception)
+                return null
+            }
         }
-        return null
     }
 
     override suspend fun synchronize() {
@@ -267,13 +261,13 @@ class CaseRepositoryImpl @Inject constructor(
     override fun getHtmlTemplates(): Flow<List<DriveFile>> = emptyFlow()
     override suspend fun refreshHtmlTemplates() { /* TODO */ }
 
-    override suspend fun addAllegation(spreadsheetId: String, allegationElementName: String, allegationText: String) {
+    override suspend fun addAllegation(spreadsheetId: String, allegationText: String) {
         val currentSelectedCaseId = _selectedCase.value?.spreadsheetId
         if (spreadsheetId == currentSelectedCaseId) {
             // Assuming Allegation constructor takes (id, spreadsheetId, text)
             // and id is auto-generated or handled by storageService.
             // Passing 0 or a placeholder that storageService can interpret.
-            val allegationDetails = Allegation(id = 0, spreadsheetId = spreadsheetId, allegationElementName = allegationElementName, text = allegationText)
+            val allegationDetails = Allegation(id = 0, spreadsheetId = spreadsheetId, text = allegationText, allegationElementName = "")
             when (val result = storageService.addAllegation(spreadsheetId, allegationDetails)) {
                 is Result.Loading -> {
                     Log.d(tag, "Adding allegation to $spreadsheetId: Loading...")

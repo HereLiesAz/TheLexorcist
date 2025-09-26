@@ -2,15 +2,15 @@ package com.hereliesaz.lexorcist.data
 
 fun Evidence.toSheetRow(): List<Any> =
     listOf(
-        id,
+        id.toString(),
         caseId.toString(),
-        type,
+        type ?: "",
         content,
         timestamp.toString(),
         sourceDocument ?: "",
-        documentDate?.toString() ?: "",
+        documentDate.toString(),
         allegationId?.toString() ?: "",
-        category,
+        category ?: "",
         tags.joinToString(","),
         commentary ?: "",
         linkedEvidenceIds.joinToString(","),
