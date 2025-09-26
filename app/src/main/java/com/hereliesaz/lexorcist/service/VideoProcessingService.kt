@@ -46,7 +46,6 @@ class VideoProcessingService @Inject constructor(
         caseId: Int,
         caseName: String,
         spreadsheetId: String,
-        activeScriptIds: List<String>, // Added
         onProgress: (percent: Float, message: String) -> Unit
     ): Evidence? { 
         onProgress(0.0f, "Starting video processing...")
@@ -100,8 +99,7 @@ class VideoProcessingService @Inject constructor(
                     uri = frameUri,
                     context = context,
                     caseId = caseId.toLong(),
-                    spreadsheetId = spreadsheetId,
-                    activeScriptIds = activeScriptIds, // Added
+                    spreadsheetId = spreadsheetId
                 ) { state ->
                     // We can't easily update the progress here, as this is a callback
                 }

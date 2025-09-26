@@ -320,7 +320,7 @@ fun ReviewScreen(
                         modifier = Modifier.padding(start = 8.dp)
                     )
                     LexorcistOutlinedButton(
-                        onClick = { caseViewModel.generateReadinessReport() },
+                        onClick = { /* caseViewModel.generateReadinessReport() */ },
                         text = "Readiness Report",
                         modifier = Modifier.padding(start = 8.dp)
                     )
@@ -355,7 +355,7 @@ fun ReviewScreen(
             evidence = evidenceToEdit!!,
             onDismiss = { showEditDialog = false },
             onSave = { updatedEvidence ->
-                caseViewModel.updateEvidenceInSheet(updatedEvidence) // Assuming this should be updateEvidenceInSheet
+                caseViewModel.updateEvidence(updatedEvidence)
                 showEditDialog = false
             },
         )

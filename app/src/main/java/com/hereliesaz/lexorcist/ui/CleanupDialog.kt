@@ -44,7 +44,7 @@ fun CleanupDialog(
                                 suggestion.evidence.forEach { evidence ->
                                     Text("- ${evidence.sourceDocument}")
                                 }
-                                Button(onClick = { caseViewModel.mergeImageSeries(suggestion) }) {
+                                Button(onClick = { caseViewModel.mergeImageSeries(suggestion, "") }) {
                                     Text("Merge into PDF")
                                 }
                             }

@@ -5,7 +5,6 @@ import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.hereliesaz.lexorcist.data.ActiveScriptRepository
 import com.hereliesaz.lexorcist.model.ProcessingState
 import com.hereliesaz.lexorcist.service.OcrProcessingService
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -17,8 +16,7 @@ import javax.inject.Inject
 @HiltViewModel
 class OcrViewModel @Inject constructor(
     application: Application,
-    private val ocrProcessingService: OcrProcessingService,
-    private val activeScriptRepository: ActiveScriptRepository
+    private val ocrProcessingService: OcrProcessingService
 ) : AndroidViewModel(application) {
 
     private val _processingState = MutableStateFlow<ProcessingState?>(null)
@@ -26,9 +24,7 @@ class OcrViewModel @Inject constructor(
 
     fun performOcrOnUri(uri: Uri, context: Context, caseId: Long, spreadsheetId: String) {
         viewModelScope.launch {
-            val activeScriptIds = activeScriptRepository.getActiveScriptIds()
-            // The ocrProcessingService.processImage will set the initial state via the callback
-            ocrProcessingService.processImage(uri, context, caseId, spreadsheetId, activeScriptIds) { state ->
+            ocrProcessingService.processImage(uri, context, caseId, spreadsheetId) { state ->
                 _processingState.value = state
             }
             _processingState.value = null // Reset state when done

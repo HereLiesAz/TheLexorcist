@@ -76,7 +76,7 @@ fun PhotoGroupScreen(
         },
         floatingActionButton = {
             FloatingActionButton(onClick = {
-                caseViewModel.addPhotoGroupEvidence(photoUris, description)
+                caseViewModel.addPhotoGroupEvidence(photoUris, description, "")
                 navController.popBackStack()
             }) {
                 Icon(Icons.Default.Save, contentDescription = "Save")
