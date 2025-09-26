@@ -211,7 +211,8 @@ class CaseRepositoryImpl @Inject constructor(
         }
         val parsedData = caseSheetParser.parseCaseFromData(spreadsheetId, sheetData)
         if (parsedData != null) {
-            val (newCase, evidenceList) = parsedData
+            val newCase = parsedData.first
+            val evidenceList = parsedData.second
             when (val createResult = storageService.createCase(newCase)) {
                 is Result.Loading -> {
                     Log.d(tag, "Import spreadsheet $spreadsheetId: Case creation is loading.")
@@ -219,7 +220,7 @@ class CaseRepositoryImpl @Inject constructor(
                 }
                 is Result.Success -> {
                     val createdCase = createResult.data
-                    evidenceList.forEach { evidence ->
+                    for (evidence in evidenceList) {
                         evidenceRepository.addEvidence(evidence.copy(spreadsheetId = createdCase.spreadsheetId))
                     }
                     _cases.update {
@@ -268,7 +269,7 @@ class CaseRepositoryImpl @Inject constructor(
             // Assuming Allegation constructor takes (id, spreadsheetId, text)
             // and id is auto-generated or handled by storageService.
             // Passing 0 or a placeholder that storageService can interpret.
-            val allegationDetails = Allegation(id = 0, spreadsheetId = spreadsheetId, text = allegationText)
+            val allegationDetails = Allegation(id = 0, spreadsheetId = spreadsheetId, text = allegationText, allegationElementName = allegationText)
             when (val result = storageService.addAllegation(spreadsheetId, allegationDetails)) {
                 is Result.Loading -> {
                     Log.d(tag, "Adding allegation to $spreadsheetId: Loading...")

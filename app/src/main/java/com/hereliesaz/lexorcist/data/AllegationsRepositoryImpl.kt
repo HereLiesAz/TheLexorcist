@@ -37,10 +37,12 @@ class AllegationsRepositoryImpl @Inject constructor(
 
         val mappedAllegations = allegationsSheet.mapIndexedNotNull { index, row ->
             if (row.size >= 3) {
+                val allegationText = row[2].toString()
                 Allegation(
                     id = index,
                     spreadsheetId = spreadsheetId,
-                    text = row[2].toString(),
+                    text = allegationText,
+                    allegationElementName = allegationText, // Using text as a fallback
                     elements = emptyList()
                 )
             } else {

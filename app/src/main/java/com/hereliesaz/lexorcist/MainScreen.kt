@@ -264,7 +264,7 @@ fun MainScreen(
                                             com.hereliesaz.lexorcist.ui.VideoEvidenceScreen(
                                                 navController = navController,
                                                 caseViewModel = caseViewModel,
-                                                evidenceId = evidenceId.toString()
+                                                evidenceId = evidenceId
                                             )
                                         } else {
                                             Text("Error: Invalid evidence ID.")
