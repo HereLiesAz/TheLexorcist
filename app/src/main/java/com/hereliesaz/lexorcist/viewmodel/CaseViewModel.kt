@@ -36,7 +36,9 @@ import android.provider.MediaStore
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.hereliesaz.lexorcist.utils.DataParser
+import com.hereliesaz.lexorcist.model.OutlookSignInState
 import com.hereliesaz.lexorcist.service.GmailService
+import com.hereliesaz.lexorcist.service.OutlookService
 import com.hereliesaz.lexorcist.utils.ChatHistoryParser
 import com.hereliesaz.lexorcist.utils.EvidenceImporter
 import kotlinx.coroutines.flow.asStateFlow
@@ -73,7 +75,9 @@ constructor(
     private val settingsManager: SettingsManager,
     private val evidenceImporter: EvidenceImporter,
     private val chatHistoryParser: ChatHistoryParser,
-    private val gmailService: GmailService
+    private val gmailService: GmailService,
+    private val outlookService: OutlookService,
+    private val authViewModel: AuthViewModel
 ) : ViewModel() {
     private val sharedPref =
         applicationContext.getSharedPreferences("CaseInfoPrefs", Context.MODE_PRIVATE)
@@ -1488,6 +1492,35 @@ constructor(
                 _userMessage.value = "Imported ${emailEvidence.size} emails."
             } catch (e: Exception) {
                 _errorMessage.value = "Failed to import emails: ${e.message}"
+            } finally {
+                globalLoadingState.popLoading()
+            }
+        }
+    }
+
+    fun importOutlookEmails(from: String, subject: String, before: String, after: String) {
+        viewModelScope.launch {
+            globalLoadingState.pushLoading()
+            try {
+                val outlookState = authViewModel.outlookSignInState.value
+                if (outlookState is OutlookSignInState.Success) {
+                    val messages = outlookService.searchEmails(outlookState.accessToken, from, subject, before, after)
+                    val emailEvidence = messages?.map { message ->
+                        Evidence(
+                            content = "From: ${message.from?.emailAddress?.address}\nSubject: ${message.subject}\n\n${message.bodyPreview}",
+                            type = "Email",
+                            timestamp = message.receivedDateTime?.toInstant()?.toEpochMilli() ?: System.currentTimeMillis()
+                        )
+                    }
+                    emailEvidence?.forEach { evidence ->
+                        evidenceRepository.addEvidence(evidence.copy(caseId = selectedCase.value?.id?.toLong() ?: 0, spreadsheetId = selectedCase.value?.spreadsheetId ?: ""))
+                    }
+                    _userMessage.value = "Imported ${emailEvidence?.size ?: 0} emails from Outlook."
+                } else {
+                    _userMessage.value = "Not signed in to Outlook."
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = "Failed to import emails from Outlook: ${e.message}"
             } finally {
                 globalLoadingState.popLoading()
             }

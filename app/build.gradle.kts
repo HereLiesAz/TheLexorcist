@@ -244,6 +244,7 @@ dependencies {
     // Microsoft Graph SDK for OneDrive
     implementation(libs.microsoft.graph.core)
     implementation(libs.microsoft.graph)
+    implementation(libs.microsoft.identity.client)
 
     // Hilt
     implementation(libs.google.dagger.hilt.android)

@@ -27,7 +27,9 @@ import com.google.firebase.auth.GoogleAuthProvider
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.auth.CredentialHolder
 import com.hereliesaz.lexorcist.auth.DropboxAuthManager
+import com.hereliesaz.lexorcist.auth.OutlookAuthManager
 import com.hereliesaz.lexorcist.di.IODispatcher
+import com.hereliesaz.lexorcist.model.OutlookSignInState
 import com.hereliesaz.lexorcist.model.SignInState
 import com.hereliesaz.lexorcist.model.UserInfo
 import com.hereliesaz.lexorcist.service.GlobalLoadingState
@@ -53,11 +55,15 @@ class AuthViewModel
         private val credentialHolder: CredentialHolder,
         private val firebaseAuth: FirebaseAuth, // Injected FirebaseAuth
         private val dropboxAuthManager: DropboxAuthManager,
+        private val outlookAuthManager: OutlookAuthManager,
         @param:IODispatcher private val ioDispatcher: CoroutineDispatcher,
         private val globalLoadingState: GlobalLoadingState,
     ) : AndroidViewModel(application) {
         private val _signInState = MutableStateFlow<SignInState>(SignInState.Idle)
         val signInState: StateFlow<SignInState> = _signInState.asStateFlow()
+
+        private val _outlookSignInState = MutableStateFlow<OutlookSignInState>(OutlookSignInState.Idle)
+        val outlookSignInState: StateFlow<OutlookSignInState> = _outlookSignInState.asStateFlow()
 
         companion object {
             private const val TAG = "AuthViewModel"
@@ -257,5 +263,32 @@ class AuthViewModel
 
         fun storeDropboxAccessToken(accessToken: String) {
             dropboxAuthManager.setAccessToken(accessToken)
+        }
+
+        fun signInWithOutlook(activity: Activity) {
+            viewModelScope.launch {
+                _outlookSignInState.value = OutlookSignInState.InProgress
+                try {
+                    val result = outlookAuthManager.acquireToken(activity)
+                    if (result != null) {
+                        _outlookSignInState.value = OutlookSignInState.Success(result.account.username, result.accessToken)
+                    } else {
+                        _outlookSignInState.value = OutlookSignInState.Error("Authentication failed or was cancelled.")
+                    }
+                } catch (e: Exception) {
+                    _outlookSignInState.value = OutlookSignInState.Error("An error occurred during sign-in.", e)
+                }
+            }
+        }
+
+        fun signOutFromOutlook() {
+            viewModelScope.launch {
+                val success = outlookAuthManager.signOut()
+                if (success) {
+                    _outlookSignInState.value = OutlookSignInState.Idle
+                } else {
+                    // Optionally handle sign-out error
+                }
+            }
         }
     }
