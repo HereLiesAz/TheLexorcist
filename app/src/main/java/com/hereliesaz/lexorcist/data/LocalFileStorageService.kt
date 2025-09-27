@@ -2,6 +2,7 @@ package com.hereliesaz.lexorcist.data
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import androidx.core.net.toUri
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -21,18 +22,18 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.util.UUID
 import javax.inject.Inject
-import javax.inject.Named // Added this import
+import javax.inject.Named
 import javax.inject.Singleton
 
 @Singleton
 class LocalFileStorageService @Inject constructor(
-    @param:ApplicationContext private val context: Context,
+    @ApplicationContext private val context: Context,
     private val gson: Gson,
     private val settingsManager: SettingsManager,
     private val syncManager: SyncManager,
-    @param:Named("googleDrive") private val googleDriveProvider: CloudStorageProvider,
-    @param:Named("dropbox") private val dropboxProvider: CloudStorageProvider,
-    @param:Named("oneDrive") private val oneDriveProvider: CloudStorageProvider
+    @Named("googleDrive") private val googleDriveProvider: CloudStorageProvider,
+    @Named("dropbox") private val dropboxProvider: CloudStorageProvider,
+    @Named("oneDrive") private val oneDriveProvider: CloudStorageProvider
 ) : StorageService {
 
     private val storageDir: File by lazy {
@@ -61,7 +62,6 @@ class LocalFileStorageService @Inject constructor(
                     createSheetWithHeader(workbook, ALLEGATIONS_SHEET_NAME, ALLEGATIONS_HEADER)
                     createSheetWithHeader(workbook, TRANSCRIPT_EDITS_SHEET_NAME, TRANSCRIPT_EDITS_HEADER)
                     createSheetWithHeader(workbook, EXHIBITS_SHEET_NAME, EXHIBITS_HEADER)
-
                     FileOutputStream(spreadsheetFile).use { fos -> workbook.write(fos) }
                 }
             } else {
@@ -167,7 +167,6 @@ class LocalFileStorageService @Inject constructor(
     private fun findRowById(sheet: XSSFSheet, id: Int, idColumn: Int): Row? {
         for (i in 1..sheet.lastRowNum) {
             val row = sheet.getRow(i) ?: continue
-            // Use safe numeric cell value retrieval
             if (getIntCellValueSafe(row.getCell(idColumn)) == id) {
                 return row
             }
@@ -175,7 +174,6 @@ class LocalFileStorageService @Inject constructor(
         return null
     }
 
-    // Helper functions to safely get cell values
     private fun getNumericCellValueSafe(cell: Cell?): Double? {
         if (cell == null) return null
         return when (cell.cellType) {
@@ -191,7 +189,7 @@ class LocalFileStorageService @Inject constructor(
                         null
                     }
                 } catch (e: IllegalStateException) {
-                    null // Error during formula evaluation or unsupported cached type
+                    null
                 }
             }
             else -> null
@@ -233,8 +231,6 @@ class LocalFileStorageService @Inject constructor(
             }
         }
     }
-
-    // --- Case Implementations ---
 
     override suspend fun getAllCases(): Result<List<Case>> = readFromSpreadsheet { workbook ->
         val sheet = workbook.getSheet(CASES_SHEET_NAME) ?: return@readFromSpreadsheet emptyList()
@@ -351,8 +347,6 @@ class LocalFileStorageService @Inject constructor(
         }
     }
 
-    // --- Evidence Implementations ---
-
     override suspend fun getEvidenceForCase(caseSpreadsheetId: String): Result<List<Evidence>> = readFromSpreadsheet { workbook ->
         val sheet = workbook.getSheet(EVIDENCE_SHEET_NAME) ?: return@readFromSpreadsheet emptyList()
         val editsSheet = workbook.getSheet(TRANSCRIPT_EDITS_SHEET_NAME)
@@ -380,22 +374,22 @@ class LocalFileStorageService @Inject constructor(
             val idCell = row.getCell(0)
             val evidenceId = getIntCellValueSafe(idCell) ?: 0
 
-            val timestampCell = row.getCell(6) // Corrected index for Evidence Timestamp
+            val timestampCell = row.getCell(6)
             val timestamp = getLongCellValueSafe(timestampCell) ?: 0L
 
-            val documentDateCell = row.getCell(8) // Corrected index for Evidence DocumentDate
+            val documentDateCell = row.getCell(8)
             val documentDate = getLongCellValueSafe(documentDateCell) ?: 0L
 
-            val allegationIdCell = row.getCell(9) // Corrected index for Evidence AllegationID
+            val allegationIdCell = row.getCell(9)
             val allegationIdInt = getIntCellValueSafe(allegationIdCell)
 
-            val tagsCell = row.getCell(11) // Corrected index for Evidence Tags
+            val tagsCell = row.getCell(11)
             val tags = (tagsCell?.stringCellValue ?: "").split(",").filter { it.isNotBlank() }
 
-            val linkedIdsCell = row.getCell(13) // Corrected index for Evidence LinkedEvidenceIDs
+            val linkedIdsCell = row.getCell(13)
             val linkedIds = (linkedIdsCell?.stringCellValue ?: "").split(",").filter { it.isNotBlank() }.mapNotNull { it.toIntOrNull() }
 
-            val entitiesCell = row.getCell(15) // Corrected index for Evidence Entities
+            val entitiesCell = row.getCell(15)
             val entities: Map<String, List<String>> = gson.fromJson(
                 entitiesCell?.stringCellValue ?: "{}",
                 object : TypeToken<Map<String, List<String>>>() {}.type
@@ -405,22 +399,22 @@ class LocalFileStorageService @Inject constructor(
 
             Evidence(
                 id = evidenceId,
-                caseId = caseSpreadsheetId.hashCode().toLong(), // This seems to be a placeholder, consider if it should be from sheet
+                caseId = caseSpreadsheetId.hashCode().toLong(),
                 spreadsheetId = caseSpreadsheetId,
                 type = row.getCell(2)?.stringCellValue ?: "",
                 content = row.getCell(3)?.stringCellValue ?: "",
                 formattedContent = row.getCell(4)?.stringCellValue,
                 mediaUri = row.getCell(5)?.stringCellValue,
                 timestamp = timestamp,
-                sourceDocument = row.getCell(7)?.stringCellValue ?: "", // Corrected index for Evidence SourceDocument
+                sourceDocument = row.getCell(7)?.stringCellValue ?: "",
                 documentDate = documentDate,
-                allegationId = allegationIdInt?.toString(), // Changed to String?
-                allegationElementName = null, // Added parameter
-                category = row.getCell(10)?.stringCellValue ?: "", // Corrected index for Evidence Category
+                allegationId = allegationIdInt?.toString(),
+                allegationElementName = null,
+                category = row.getCell(10)?.stringCellValue ?: "",
                 tags = tags,
-                commentary = row.getCell(12)?.stringCellValue, // Corrected index for Evidence Commentary
+                commentary = row.getCell(12)?.stringCellValue,
                 linkedEvidenceIds = linkedIds,
-                parentVideoId = row.getCell(14)?.stringCellValue, // Corrected index for Evidence ParentVideoID
+                parentVideoId = row.getCell(14)?.stringCellValue,
                 entities = entities,
                 transcriptEdits = transcriptEdits
             )
@@ -445,13 +439,11 @@ class LocalFileStorageService @Inject constructor(
             createCell(6).setCellValue(newEvidence.timestamp.toDouble())
             createCell(7).setCellValue(newEvidence.sourceDocument)
             createCell(8).setCellValue(newEvidence.documentDate.toDouble())
-            newEvidence.allegationId?.let { 
-                // Ensure we write a string if it's an ID, or handle numeric if your sheet expects numbers
-                val allegationIdString = it // Assuming it's already a string from Evidence data class
+            newEvidence.allegationId?.let {
                 try {
-                    createCell(9).setCellValue(allegationIdString.toDouble()) // If sheet stores numbers
+                    createCell(9).setCellValue(it.toDouble())
                 } catch (e: NumberFormatException) {
-                    createCell(9).setCellValue(allegationIdString) // Fallback to string if not a number
+                    createCell(9).setCellValue(it)
                 }
             } ?: createCell(9).setBlank()
             createCell(10).setCellValue(newEvidence.category)
@@ -460,7 +452,6 @@ class LocalFileStorageService @Inject constructor(
             createCell(13).setCellValue(newEvidence.linkedEvidenceIds.joinToString(","))
             createCell(14).setCellValue(newEvidence.parentVideoId ?: "")
             createCell(15).setCellValue(gson.toJson(newEvidence.entities))
-            // Note: allegationElementName is not written to the sheet in this implementation
         }
         newEvidence
     }
@@ -476,12 +467,11 @@ class LocalFileStorageService @Inject constructor(
         (row.getCell(7) ?: row.createCell(7)).setCellValue(evidence.sourceDocument)
         (row.getCell(8) ?: row.createCell(8)).setCellValue(evidence.documentDate.toDouble())
         val allegationCell = row.getCell(9) ?: row.createCell(9)
-        evidence.allegationId?.let { 
-            val allegationIdString = it // Assuming it's already a string
+        evidence.allegationId?.let {
             try {
-                 allegationCell.setCellValue(allegationIdString.toDouble()) // If sheet stores numbers
+                 allegationCell.setCellValue(it.toDouble())
             } catch (e: NumberFormatException) {
-                allegationCell.setCellValue(allegationIdString) // Fallback to string
+                allegationCell.setCellValue(it)
             }
         } ?: allegationCell.setBlank()
         (row.getCell(10) ?: row.createCell(10)).setCellValue(evidence.category)
@@ -490,7 +480,6 @@ class LocalFileStorageService @Inject constructor(
         (row.getCell(13) ?: row.createCell(13)).setCellValue(evidence.linkedEvidenceIds.joinToString(","))
         (row.getCell(14) ?: row.createCell(14)).setCellValue(evidence.parentVideoId ?: "")
         (row.getCell(15) ?: row.createCell(15)).setCellValue(gson.toJson(evidence.entities))
-        // Note: allegationElementName is not written to the sheet in this implementation
     }
 
     override suspend fun deleteEvidence(caseSpreadsheetId: String, evidence: Evidence): Result<Unit> = writeToSpreadsheet { workbook ->
@@ -517,8 +506,6 @@ class LocalFileStorageService @Inject constructor(
             Result.Error(e)
         }
     }
-
-    // --- Allegation Implementations ---
 
     override suspend fun getAllegationsForCase(caseSpreadsheetId: String): Result<List<Allegation>> = readFromSpreadsheet { workbook ->
         val sheet = workbook.getSheet(ALLEGATIONS_SHEET_NAME) ?: return@readFromSpreadsheet emptyList()
@@ -554,8 +541,6 @@ class LocalFileStorageService @Inject constructor(
         newAllegation
     }
 
-    // --- Transcript Implementations ---
-
     override suspend fun updateTranscript(evidence: Evidence, newTranscript: String, reason: String): Result<Unit> = writeToSpreadsheet { workbook ->
         val evidenceSheet = workbook.getSheet(EVIDENCE_SHEET_NAME) ?: throw IOException("Evidence sheet not found.")
         val evidenceRow = findRowById(evidenceSheet, evidence.id, 0) ?: throw IOException("Evidence with id ${evidence.id} not found.")
@@ -566,11 +551,11 @@ class LocalFileStorageService @Inject constructor(
             it.createRow(0).apply { TRANSCRIPT_EDITS_HEADER.forEachIndexed { index, s -> createCell(index).setCellValue(s) } }
         }
         editsSheet.createRow(editsSheet.physicalNumberOfRows).apply {
-            createCell(0).setCellValue((editsSheet.physicalNumberOfRows).toDouble()) // EditID
-            createCell(1).setCellValue(evidence.id.toDouble()) // EvidenceID
-            createCell(2).setCellValue(System.currentTimeMillis().toDouble()) // Timestamp
-            createCell(3).setCellValue(reason) // Reason
-            createCell(4).setCellValue(newTranscript) // NewContent
+            createCell(0).setCellValue((editsSheet.physicalNumberOfRows).toDouble())
+            createCell(1).setCellValue(evidence.id.toDouble())
+            createCell(2).setCellValue(System.currentTimeMillis().toDouble())
+            createCell(3).setCellValue(reason)
+            createCell(4).setCellValue(newTranscript)
         }
     }
 
@@ -586,7 +571,7 @@ class LocalFileStorageService @Inject constructor(
         return if (cloudStorageProvider != null) {
             syncManager.synchronize(cloudStorageProvider, this)
         } else {
-            Result.Success(Unit) // No provider selected, so nothing to sync
+            Result.Success(Unit)
         }
     }
 }
