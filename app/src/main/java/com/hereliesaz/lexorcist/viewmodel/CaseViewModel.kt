@@ -50,6 +50,7 @@ import kotlinx.coroutines.flow.map // Ensured import
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import androidx.core.net.toUri
+import com.hereliesaz.lexorcist.data.Evidence
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
@@ -1510,7 +1511,8 @@ constructor(
                         Evidence(
                             content = "From: ${message.from?.emailAddress?.address}\nSubject: ${message.subject}\n\n${message.bodyPreview}",
                             type = "Email",
-                            timestamp = message.receivedDateTime?.toInstant()?.toEpochMilli() ?: System.currentTimeMillis()
+                            timestamp = message.receivedDateTime?.toInstant()?.toEpochMilli()
+                                ?: System.currentTimeMillis()
                         )
                     }
                     emailEvidence?.forEach { evidence ->
