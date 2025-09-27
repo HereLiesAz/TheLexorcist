@@ -13,6 +13,7 @@ grpcCore = "1.75.0"
 grpcOkhttp = "1.75.0"
 grpcProtobufLite = "1.75.0"
 hiltAndroidCompiler = "2.57.1" # Reverted
+jakartaMail = "2.0.2"
 kotlinAndroid = "2.2.20" # Reverted
 hilt = "2.57.1" # Reverted
 # composeCompiler = "2.2.20" # REMOVED - will use kotlinAndroid version for compose-compiler plugin
@@ -28,6 +29,7 @@ mockitoInline = "5.2.0"
 mockitoKotlinVersion = "6.0.0"
 mockwebserver = "5.1.0"
 msal = "7.1.0"
+msal4j = "1.30.0-beta"
 navigationRuntimeKtx = "2.9.5"
 junit = "4.13.2"
 junitJupiterApi = "5.13.4"
@@ -63,6 +65,7 @@ poi = "5.4.1"
 playServicesAuth = "21.4.0"
 googleApiClient = "2.8.1"
 googleApiServicesDrive = "v3-rev20250819-2.0.0"
+googleApiServicesGmail = "v1-rev20250630-2.0.0" # ADDED
 googleApiServicesSheets = "v4-rev20250616-2.0.0"
 googleApiServicesScript = "v1-rev20250623-2.0.0"
 googleApiServicesDocs = "v1-rev20250325-2.0.0"
@@ -88,6 +91,7 @@ playServicesLocation = "21.3.0"
 
 [libraries]
 androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastorePreferences" }
+jakarta-mail = { module = "com.sun.mail:jakarta.mail", version.ref = "jakartaMail" }
 litert = { group = "com.google.ai.edge.litert", name = "litert", version.ref = "litert" }
 
 androidx-browser = { module = "androidx.browser:browser", version.ref = "browser" }
@@ -121,7 +125,7 @@ grpc-protobuf-lite = { module = "io.grpc:grpc-protobuf-lite", version.ref = "grp
 hilt-android-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "hiltAndroidCompiler" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 junit-jupiter-api = { group = "org.junit.jupiter", name = "junit-jupiter-api", version.ref = "junitJupiterApi" }
-junit-jupiter-engine = { group = "org.junit.jupiter", name = "junit-jupiter-engine", version.ref = "junitJupiterEngine" }
+junit-jupiter-engine = { group = "org.junit.jupiter", name = "junit-jupiter-engine", version.ref = "junitJupiterApi" }
 library-base = { module = "io.realm.kotlin:library-base", version.ref = "libraryBase" }
 microsoft-graph = { module = "com.microsoft.graph:microsoft-graph", version.ref = "microsoftGraph" }
 microsoft-graph-core = { module = "com.microsoft.graph:microsoft-graph-core", version.ref = "microsoftGraphCore" }
@@ -132,6 +136,7 @@ androidx-arch-core-testing = { group = "androidx.arch.core", name = "core-testin
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinxCoroutinesTest" }
 mockwebserver = { module = "com.squareup.okhttp3:mockwebserver", version.ref = "mockwebserver" }
 msal = { module = "com.microsoft.identity.client:msal", version.ref = "msal" }
+msal4j = { module = "com.microsoft.azure:msal4j", version.ref = "msal4j" }
 protobuf-javalite = { module = "com.google.protobuf:protobuf-javalite", version.ref = "protobufJavalite" }
 reorderable = { module = "org.burnoutcrew.composereorderable:reorderable", version.ref = "reorderable" }
 turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
@@ -169,6 +174,7 @@ play-services-auth = { group = "com.google.android.gms", name = "play-services-a
 google-api-client = { group = "com.google.api-client", name = "google-api-client", version.ref = "googleApiClient" }
 google-api-client-android = { group = "com.google.api-client", name = "google-api-client-android", version.ref = "googleApiClient" }
 google-api-services-drive = { group = "com.google.apis", name = "google-api-services-drive", version.ref = "googleApiServicesDrive" }
+google-api-services-gmail = { group = "com.google.apis", name = "google-api-services-gmail", version.ref = "googleApiServicesGmail" } # ADDED
 google-api-services-sheets = { group = "com.google.apis", name = "google-api-services-sheets", version.ref = "googleApiServicesSheets" }
 google-api-services-script = { group = "com.google.apis", name = "google-api-services-script", version.ref = "googleApiServicesScript" }
 google-api-services-docs = { group = "com.google.apis", name = "google-api-services-docs", version.ref = "googleApiServicesDocs" }
@@ -200,6 +206,9 @@ material3 = { group = "androidx.compose.material3", name = "material3", version.
 vosk-android = { module = "com.alphacephei:vosk-android", version.ref = "voskAndroid" }
 litert-api = { group = "com.google.ai.edge.litert", name = "litert-api", version.ref = "litertApi" }
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
+microsoft-azure = {group = "com.microsoft.azure", name = "microsoft-aad-msal4j", version = "1.23.1"}
+
+
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "androidApplication" }

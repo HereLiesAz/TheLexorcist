@@ -218,6 +218,7 @@ dependencies {
     implementation(libs.google.api.client)
     implementation(libs.google.api.client.android)
     implementation(libs.google.api.services.drive)
+    implementation(libs.google.api.services.gmail) // ADDED
     implementation(libs.google.api.services.sheets)
     implementation(libs.google.api.services.script)
     implementation(libs.google.api.services.docs)
@@ -242,13 +243,12 @@ dependencies {
     implementation(libs.dropbox.core.sdk)
     implementation(libs.dropbox.android.sdk)
 
-    // Microsoft Graph SDK for OneDrive
+    // Microsoft Graph SDK for OneDrive & MSAL for Authentication
     implementation(libs.microsoft.graph.core)
     implementation(libs.microsoft.graph)
-    implementation(libs.microsoft.identity.client)
-
+    implementation(libs.msal)    // CORRECTED from msal4j
     // Jakarta Mail for IMAP
-    implementation("com.sun.mail:jakarta.mail:2.0.2")
+    implementation(libs.jakarta.mail)
 
     // Hilt
     implementation(libs.google.dagger.hilt.android)

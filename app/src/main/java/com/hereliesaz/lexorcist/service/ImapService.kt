@@ -19,6 +19,7 @@ class ImapService @Inject constructor() {
         pass: String,
         from: String,
         subject: String
+        // Consider adding caseId and spreadsheetId as parameters here
     ): List<Evidence> {
         val properties = Properties()
         properties["mail.store.protocol"] = "imaps"
@@ -46,11 +47,22 @@ class ImapService @Inject constructor() {
 
         val evidenceList = mutableListOf<Evidence>()
         for (message in messages) {
+            val emailContent = "From: ${message.from.joinToString()}\nSubject: ${message.subject}\n\n${getTextFromMessage(message)}"
             evidenceList.add(
                 Evidence(
-                    content = "From: ${message.from.joinToString()}\nSubject: ${message.subject}\n\n${getTextFromMessage(message)}",
+                    caseId = 0L, // Placeholder - consider passing as a parameter
+                    spreadsheetId = "", // Placeholder - consider passing as a parameter
                     type = "Email",
-                    timestamp = message.receivedDate.time
+                    content = emailContent,
+                    formattedContent = emailContent, // Placeholder
+                    mediaUri = null,
+                    timestamp = message.receivedDate.time,
+                    sourceDocument = "IMAP Email - Subject: ${message.subject}", // Placeholder
+                    documentDate = message.receivedDate.time, // Using receivedDate, adjust if specific logic needed
+                    allegationId = null,
+                    allegationElementName = null,
+                    category = "Email", // Placeholder
+                    tags = listOf("email", "imap") // Placeholder
                 )
             )
         }
