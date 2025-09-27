@@ -193,7 +193,7 @@ class WhisperTranscriptionService @Inject constructor(
         }
     }
 
-    suspend fun transcribeVideo(uri: Uri): Result<String> {
+    override suspend fun transcribeVideo(uri: Uri): Result<String> {
         return withContext(Dispatchers.IO) {
             try {
                 val audioFilePath = VideoUtils.extractAudio(context, uri)

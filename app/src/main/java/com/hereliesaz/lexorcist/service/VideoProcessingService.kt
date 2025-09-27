@@ -60,27 +60,21 @@ class VideoProcessingService @Inject constructor(
         val audioUri = extractAudio(videoUri)
         onProgress(0.15f, "Audio extraction attempt complete.")
 
-        var audioTranscript: String? = null
-        if (transcriptionService is WhisperTranscriptionService) {
-            when (val transcriptionResult = transcriptionService.transcribeVideo(videoUri)) {
-                is Result.Success -> {
-                    audioTranscript = transcriptionResult.data
-                    logService.addLog("Transcription successful: ${audioTranscript?.take(100)}...")
-                    onProgress(0.40f, "Audio transcription complete.")
-                }
-                is Result.Error -> {
-                    val transcriptionError = transcriptionResult.exception.message ?: "Unknown transcription error"
-                    logService.addLog("Transcription failed: $transcriptionError", LogLevel.ERROR)
-                    onProgress(0.40f, "Audio transcription failed.")
-                }
-                else -> {
-                    // Handle other cases if necessary
-                }
+        var audioTranscript: String? = "No audio processed."
+        when (val transcriptionResult = transcriptionService.transcribeAudio(videoUri)) {
+            is Result.Success -> {
+                audioTranscript = transcriptionResult.data
+                logService.addLog("Transcription successful: ${audioTranscript?.take(100)}...")
+                onProgress(0.40f, "Audio transcription complete.")
             }
-        }
-        
-        if (audioTranscript == null) {
-            audioTranscript = "No audio processed."
+            is Result.Error -> {
+                val transcriptionError = transcriptionResult.exception.message ?: "Unknown transcription error"
+                logService.addLog("Transcription failed: $transcriptionError", LogLevel.ERROR)
+                onProgress(0.40f, "Audio transcription failed.")
+            }
+            else -> {
+                // Handle other cases like UserRecoverableError or Loading if the sealed class supports them
+            }
         }
 
         onProgress(0.45f, "Extracting frames for OCR...")
@@ -95,14 +89,13 @@ class VideoProcessingService @Inject constructor(
                 val progressMessage = "Processing frame ${index + 1} of $totalFrames for OCR..."
                 onProgress(frameProgress, progressMessage)
                 logService.addLog(progressMessage)
-                val (ocrResult, _) = ocrProcessingService.processImage(
+                val ocrResult = ocrProcessingService.processImageFrame(
                     uri = frameUri,
                     context = context,
-                    caseId = caseId.toLong(),
-                    spreadsheetId = spreadsheetId
-                ) { state ->
-                    // We can't easily update the progress here, as this is a callback
-                }
+                    caseId = caseId,
+                    spreadsheetId = spreadsheetId,
+                    parentVideoId = null // This will be set later when the main evidence is created
+                )
                 if (ocrResult != null && ocrResult.content.isNotBlank()) {
                     logService.addLog("OCR for frame ${index + 1} found ${ocrResult.content.length} characters.")
                     ocrTextBuilder.append(ocrResult.content).append("\n\n")
@@ -145,32 +138,38 @@ class VideoProcessingService @Inject constructor(
                 fileHash = fileHash
             )
         val script = settingsManager.getScript()
+        var evidenceToSave = videoEvidence
         if (script.isNotBlank()) {
             logService.addLog("Running script on video evidence...")
             onProgress(0.92f, "Running script...")
-            val scriptResult = scriptRunner.runScript(script, videoEvidence)
+            val scriptResult = scriptRunner.runScript(script, evidenceToSave)
             if (scriptResult is Result.Success) {
-                val currentTagsVideo: List<String> = videoEvidence.tags
-                val newTagsFromScriptVideo: List<String> = scriptResult.data.tags // Corrected: scriptResult.data.tags
-                logService.addLog("Script finished. Added tags: ${newTagsFromScriptVideo.joinToString(", ")}") // Corrected: newTagsFromScriptVideo
-                val combinedTagsVideo: List<String> = currentTagsVideo + newTagsFromScriptVideo
-                videoEvidence = videoEvidence.copy(tags = combinedTagsVideo) // Corrected: combinedTagsVideo
+                val currentTagsVideo: List<String> = evidenceToSave.tags
+                val newTagsFromScriptVideo: List<String> = scriptResult.data.tags
+                logService.addLog("Script finished. Added tags: ${newTagsFromScriptVideo.joinToString(", ")}")
+                val combinedTagsVideo: List<String> = (currentTagsVideo + newTagsFromScriptVideo).distinct()
+                evidenceToSave = evidenceToSave.copy(tags = combinedTagsVideo)
             } else if (scriptResult is Result.Error) {
                 logService.addLog("Script error: ${scriptResult.exception.message}", LogLevel.ERROR)
             }
         }
 
         onProgress(0.95f, "Saving video evidence...")
-        val savedEvidence = evidenceRepository.addEvidence(videoEvidence)
+        val savedEvidence = evidenceRepository.addEvidence(evidenceToSave)
         if (savedEvidence == null) {
             logService.addLog("Failed to save main video evidence for $videoUri", LogLevel.ERROR)
             onProgress(1.0f, "Failed to save video evidence.")
             return null
         }
 
-        logService.addLog("Video processing complete for $videoUri. Evidence ID: ${savedEvidence.id}")
+        // Now that the main evidence is saved and has an ID, update the parentVideoId of the frame evidences
+        val finalEvidence = savedEvidence.copy(parentVideoId = savedEvidence.id.toString())
+        evidenceRepository.updateEvidence(finalEvidence)
+
+
+        logService.addLog("Video processing complete for $videoUri. Evidence ID: ${finalEvidence.id}")
         onProgress(1.0f, "Video processing complete.")
-        return savedEvidence
+        return finalEvidence
     }
 
     private suspend fun extractVideoMetadata(uri: Uri): ExtractedMetadata? {
@@ -298,52 +297,4 @@ class VideoProcessingService @Inject constructor(
         return -1
     }
 
-    private suspend fun extractKeyframes(videoUri: Uri, intervalUs: Long = 5 * 1000 * 1000L ): List<Uri> =
-        withContext(Dispatchers.IO) {
-            val retriever = MediaMetadataRetriever()
-            val frameUris = mutableListOf<Uri>()
-            try {
-                retriever.setDataSource(context, videoUri)
-                val durationString = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
-                val durationMs = durationString?.toLongOrNull()
-                if (durationMs == null || durationMs <= 0) {
-                    logService.addLog("Could not get valid video duration for $videoUri. Cannot extract frames.", LogLevel.INFO) // Changed to INFO
-                    return@withContext emptyList()
-                }
-
-                logService.addLog("Extracting keyframes from $videoUri (Duration: $durationMs ms) every $intervalUs us")
-                var frameCount = 0
-                for (timeUs in 0L until durationMs * 1000L step intervalUs) {
-                    val bitmap = retriever.getFrameAtTime(timeUs, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
-                    if (bitmap != null) {
-                        val outputFile = File(context.cacheDir, "frame_${System.nanoTime()}.jpg")
-                        try {
-                            outputFile.outputStream().use { out ->
-                                bitmap.compress(Bitmap.CompressFormat.JPEG, 85, out)
-                            }
-                            frameUris.add(Uri.fromFile(outputFile))
-                            frameCount++
-                            logService.addLog("Saved frame ${frameUris.size} at ${timeUs / 1000}ms from $videoUri to ${outputFile.name}", LogLevel.DEBUG)
-                        } catch (e: IOException) {
-                            logService.addLog("Error saving frame at ${timeUs / 1000}ms from $videoUri: ${e.message}", LogLevel.ERROR)
-                        } finally {
-                            bitmap.recycle()
-                        }
-                    } else {
-                        logService.addLog("Failed to retrieve frame at ${timeUs / 1000}ms from $videoUri", LogLevel.DEBUG)
-                    }
-                }
-                 logService.addLog("Extracted $frameCount frames in total from $videoUri")
-            } catch (e: Exception) {
-                logService.addLog("Error extracting keyframes from $videoUri: ${e.message}", LogLevel.ERROR)
-                Log.e("VideoProcessingService", "Error extracting keyframes from $videoUri", e)
-            } finally {
-                try {
-                    retriever.release()
-                } catch (re: RuntimeException) { 
-                     Log.e("VideoProcessingService", "Error releasing MediaMetadataRetriever for $videoUri", re)
-                }
-            }
-            frameUris
-        }
 }

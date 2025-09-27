@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
 import com.hereliesaz.lexorcist.auth.CredentialHolder
 import com.hereliesaz.lexorcist.service.TranscriptionService
+import com.hereliesaz.lexorcist.service.VideoProcessingService
 import com.hereliesaz.lexorcist.utils.Result // Import Result
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow

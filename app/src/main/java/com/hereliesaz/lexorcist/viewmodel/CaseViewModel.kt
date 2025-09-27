@@ -67,6 +67,7 @@ constructor(
     private val scriptRunner: com.hereliesaz.lexorcist.service.ScriptRunner,
     private val ocrProcessingService: com.hereliesaz.lexorcist.service.OcrProcessingService,
     private val transcriptionService: com.hereliesaz.lexorcist.service.TranscriptionService,
+    private val videoProcessingService: com.hereliesaz.lexorcist.service.VideoProcessingService,
     private val workManager: androidx.work.WorkManager,
     private val scriptRepository: ScriptRepository,
     private val activeScriptRepository: ActiveScriptRepository,
@@ -997,74 +998,39 @@ constructor(
 
     fun processVideoEvidence(uri: android.net.Uri) {
         viewModelScope.launch {
-            val currentCaseFromState = _vmSelectedCase.value
-            Log.d("CaseViewModel", "processVideoEvidence: _vmSelectedCase.value AT START is: ${currentCaseFromState?.name ?: "null"}")
-            globalLoadingState.pushLoading()
-            clearLogs()
-            _processingState.value = ProcessingState.InProgress(0.0f) // Initial progress for video processing
-
-            val caseToUse = currentCaseFromState ?: run {
-                val errorMsg = "Please select a case first to add video evidence."
-                Log.w("CaseViewModel", "processVideoEvidence: No case selected. Message: $errorMsg")
-                _userMessage.value = errorMsg
-                _processingState.value = ProcessingState.Failure("No case selected")
-                globalLoadingState.popLoading()
+            val currentCase = selectedCase.value
+            if (currentCase == null) {
+                _userMessage.value = "Please select a case first."
                 return@launch
             }
-            Log.d("CaseViewModel", "Processing video for case: ${caseToUse.name}")
-            val workRequest =
-                androidx.work.OneTimeWorkRequestBuilder<com.hereliesaz.lexorcist.service.VideoProcessingWorker>()
-                    .setInputData(
-                        androidx.work.Data
-                            .Builder()
-                            .putString(com.hereliesaz.lexorcist.service.VideoProcessingWorker.KEY_VIDEO_URI, uri.toString())
-                            .putString(com.hereliesaz.lexorcist.service.VideoProcessingWorker.KEY_CASE_ID, caseToUse.id.toString())
-                            .putString(com.hereliesaz.lexorcist.service.VideoProcessingWorker.KEY_CASE_NAME, caseToUse.name)
-                            .putString(com.hereliesaz.lexorcist.service.VideoProcessingWorker.KEY_SPREADSHEET_ID, caseToUse.spreadsheetId)
-                            .build(),
-                    ).build()
-            workManager.enqueue(workRequest)
-            // isLoading will be set to false once the work request's LiveData indicates completion or failure.
-            // For now, _isLoading remains true to indicate background work has started.
-            // _processingState will be updated by observing the WorkInfo.
-            Log.i("CaseViewModel", "Video processing work enqueued for URI: $uri. ID: ${workRequest.id}")
-
-            workManager.getWorkInfoByIdLiveData(workRequest.id).asFlow().collectLatest { workInfo: androidx.work.WorkInfo? ->
-                if (workInfo != null) {
-                    val progressPercent = workInfo.progress.getFloat(com.hereliesaz.lexorcist.service.VideoProcessingWorker.PROGRESS_PERCENT, 0f)
-                    val progressMessage = workInfo.progress.getString(com.hereliesaz.lexorcist.service.VideoProcessingWorker.PROGRESS_MESSAGE) ?: "Processing video..."
-
-                    _processingState.value = ProcessingState.InProgress(progressPercent) // Update with percentage
-                    _videoProcessingProgress.value = "$progressMessage (${(progressPercent * 100).toInt()}%)." // For the separate String progress if still used
-
-                    Log.d("CaseViewModel", "Video processing progress for $uri: $progressMessage ($progressPercent), State: ${workInfo.state}")
-
-                    if (workInfo.state.isFinished) {
-                        globalLoadingState.popLoading() // Work is finished, set loading to false
-                        _videoProcessingProgress.value = null // Clear the specific string progress
-                        when (workInfo.state) {
-                            androidx.work.WorkInfo.State.SUCCEEDED -> {
-                                val successMessage = workInfo.outputData.getString(com.hereliesaz.lexorcist.service.VideoProcessingWorker.RESULT_SUCCESS) ?: "Video processed successfully."
-                                _userMessage.value = successMessage
-                                _processingState.value = ProcessingState.Completed(successMessage)
-                                Log.i("CaseViewModel", "Video processing SUCCEEDED for URI: $uri. Message: $successMessage")
-                            }
-                            androidx.work.WorkInfo.State.FAILED -> {
-                                val failureMessage = workInfo.outputData.getString(com.hereliesaz.lexorcist.service.VideoProcessingWorker.RESULT_FAILURE) ?: "Video processing failed."
-                                _userMessage.value = failureMessage
-                                _processingState.value = ProcessingState.Failure(failureMessage)
-                                Log.e("CaseViewModel", "Video processing FAILED for URI: $uri. Message: $failureMessage")
-                            }
-                            androidx.work.WorkInfo.State.CANCELLED -> {
-                                val cancelMessage = "Video processing was cancelled."
-                                _userMessage.value = cancelMessage
-                                _processingState.value = ProcessingState.Failure(cancelMessage)
-                                Log.w("CaseViewModel", "Video processing CANCELLED for URI: $uri.")
-                            }
-                            else -> { /* Other states like ENQUEUED, RUNNING, BLOCKED are handled by InProgress */ }
-                        }
+            globalLoadingState.pushLoading()
+            clearLogs()
+            try {
+                val result =
+                    videoProcessingService.processVideo(
+                        videoUri = uri,
+                        caseId = currentCase.id,
+                        caseName = currentCase.name,
+                        spreadsheetId = currentCase.spreadsheetId
+                    ) { progress, message ->
+                        _processingState.value = ProcessingState.InProgress(progress)
+                        _videoProcessingProgress.value = "$message (${(progress * 100).toInt()}%)."
                     }
+
+                if (result != null) {
+                    _userMessage.value = "Video processed successfully."
+                    _processingState.value = ProcessingState.Completed("Video processed successfully.")
+                } else {
+                    _userMessage.value = "Video processing failed."
+                    _processingState.value = ProcessingState.Failure("Video processing failed.")
                 }
+            } catch (e: Exception) {
+                _userMessage.value = "An error occurred during video processing: ${e.message}"
+                _processingState.value = ProcessingState.Failure(e.message ?: "Unknown error")
+                Log.e("CaseViewModel", "Video processing exception", e)
+            } finally {
+                globalLoadingState.popLoading()
+                _videoProcessingProgress.value = null
             }
         }
     }
