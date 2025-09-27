@@ -19,6 +19,7 @@ import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
 import com.google.api.services.drive.DriveScopes
+import com.google.api.services.gmail.GmailScopes
 import com.google.api.services.sheets.v4.SheetsScopes
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
@@ -197,7 +198,7 @@ class AuthViewModel
             sharedPreferences.edit { putString(PREF_USER_EMAIL_KEY, nonNullUserEmail) } // Safe
             Log.d(TAG, "User email saved to SharedPreferences: '$nonNullUserEmail'")
 
-            val scopes = listOf(DriveScopes.DRIVE, SheetsScopes.SPREADSHEETS, "profile", "email")
+            val scopes = listOf(DriveScopes.DRIVE, SheetsScopes.SPREADSHEETS, GmailScopes.GMAIL_READONLY, "profile", "email")
             val accountCredential = GoogleAccountCredential.usingOAuth2(application, scopes)
 
             // Create an Account object explicitly using the non-null email

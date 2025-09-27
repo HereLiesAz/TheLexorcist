@@ -36,6 +36,7 @@ import android.provider.MediaStore
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.hereliesaz.lexorcist.utils.DataParser
+import com.hereliesaz.lexorcist.service.GmailService
 import com.hereliesaz.lexorcist.utils.ChatHistoryParser
 import com.hereliesaz.lexorcist.utils.EvidenceImporter
 import kotlinx.coroutines.flow.asStateFlow
@@ -71,7 +72,8 @@ constructor(
     private val googleApiService: com.hereliesaz.lexorcist.service.GoogleApiService,
     private val settingsManager: SettingsManager,
     private val evidenceImporter: EvidenceImporter,
-    private val chatHistoryParser: ChatHistoryParser
+    private val chatHistoryParser: ChatHistoryParser,
+    private val gmailService: GmailService
 ) : ViewModel() {
     private val sharedPref =
         applicationContext.getSharedPreferences("CaseInfoPrefs", Context.MODE_PRIVATE)
@@ -1460,6 +1462,32 @@ constructor(
                 _userMessage.value = "Imported ${chatEvidence.size} chat messages."
             } catch (e: Exception) {
                 _errorMessage.value = "Failed to import chat history: ${e.message}"
+            } finally {
+                globalLoadingState.popLoading()
+            }
+        }
+    }
+
+    fun importEmails(from: String, subject: String, before: String, after: String) {
+        viewModelScope.launch {
+            globalLoadingState.pushLoading()
+            try {
+                val messages = gmailService.searchEmails(from, subject, before, after)
+                val emailEvidence = messages.map { message ->
+                    val subjectHeader = message.payload.headers.find { it.name == "Subject" }?.value ?: "No Subject"
+                    val fromHeader = message.payload.headers.find { it.name == "From" }?.value ?: "Unknown Sender"
+                    Evidence(
+                        content = "From: $fromHeader\nSubject: $subjectHeader\n\n${message.snippet}",
+                        type = "Email",
+                        timestamp = message.internalDate
+                    )
+                }
+                emailEvidence.forEach { evidence ->
+                    evidenceRepository.addEvidence(evidence.copy(caseId = selectedCase.value?.id?.toLong() ?: 0, spreadsheetId = selectedCase.value?.spreadsheetId ?: ""))
+                }
+                _userMessage.value = "Imported ${emailEvidence.size} emails."
+            } catch (e: Exception) {
+                _errorMessage.value = "Failed to import emails: ${e.message}"
             } finally {
                 globalLoadingState.popLoading()
             }

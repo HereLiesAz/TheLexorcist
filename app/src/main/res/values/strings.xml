@@ -290,6 +290,7 @@ function onOpen() {}</string>
     <string name="import_call_log">Import Call Log</string>
     <string name="import_location">Import Location</string>
     <string name="import_chat_history">Import Chat History</string>
+    <string name="import_from_gmail">Import from Gmail</string>
 
     <string name="language">Language</string>
     <string name="transcription_service">Transcription Service</string>

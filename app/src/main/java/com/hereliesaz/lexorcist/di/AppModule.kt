@@ -16,6 +16,7 @@ import com.hereliesaz.lexorcist.service.ScriptRunner
 // import com.hereliesaz.lexorcist.service.nlp.LegalBertService 
 import com.google.android.gms.location.LocationServices
 import com.hereliesaz.lexorcist.utils.CacheManager
+import com.hereliesaz.lexorcist.service.GmailService
 import com.hereliesaz.lexorcist.utils.ChatHistoryParser
 import com.hereliesaz.lexorcist.utils.EvidenceImporter
 import dagger.Module
@@ -116,5 +117,11 @@ class AppModule {
     @Singleton
     fun provideChatHistoryParser(@ApplicationContext context: Context): ChatHistoryParser {
         return ChatHistoryParser(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideGmailService(credentialHolder: com.hereliesaz.lexorcist.auth.CredentialHolder): GmailService {
+        return GmailService(credentialHolder)
     }
 }

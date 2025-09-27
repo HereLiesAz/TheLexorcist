@@ -37,6 +37,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.hereliesaz.lexorcist.ui.components.ChatHistoryImportDialog
+import com.hereliesaz.lexorcist.ui.components.GmailImportDialog
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -64,6 +65,7 @@ fun EvidenceScreen(
 ) {
     var showAddTextEvidence by remember { mutableStateOf(false) }
     var showChatImportDialog by remember { mutableStateOf(false) }
+    var showGmailImportDialog by remember { mutableStateOf(false) }
     var text by remember { mutableStateOf("") }
     val evidenceList by caseViewModel.selectedCaseEvidenceList.collectAsState()
     val videoProcessingProgress by caseViewModel.videoProcessingProgress.collectAsState()
@@ -220,6 +222,7 @@ fun EvidenceScreen(
                     LexorcistOutlinedButton(onClick = { requestCallLogPermissionLauncher.launch(Manifest.permission.READ_CALL_LOG) }, text = stringResource(R.string.import_call_log).uppercase(Locale.getDefault()))
                     LexorcistOutlinedButton(onClick = { requestLocationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION) }, text = stringResource(R.string.import_location).uppercase(Locale.getDefault()))
                     LexorcistOutlinedButton(onClick = { showChatImportDialog = true }, text = stringResource(R.string.import_chat_history).uppercase(Locale.getDefault()))
+                    LexorcistOutlinedButton(onClick = { showGmailImportDialog = true }, text = stringResource(R.string.import_from_gmail).uppercase(Locale.getDefault()))
                 }
             }
 
@@ -229,6 +232,21 @@ fun EvidenceScreen(
                     onImport = { uri ->
                         showChatImportDialog = false
                         caseViewModel.importChatHistory(uri)
+                    }
+                )
+            }
+
+            if (showGmailImportDialog) {
+                GmailImportDialog(
+                    onDismiss = { showGmailImportDialog = false },
+                    onImport = { from, subject, before, after ->
+                        showGmailImportDialog = false
+                        caseViewModel.importEmails(
+                            from = from,
+                            subject = subject,
+                            before = before,
+                            after = after
+                        )
                     }
                 )
             }
