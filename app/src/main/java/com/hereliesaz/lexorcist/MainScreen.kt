@@ -115,7 +115,6 @@ fun MainScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(paddingValues)
                     ) {
                         ScriptableAzNavRail(
                             navController = navController,
@@ -126,7 +125,7 @@ fun MainScreen(
                         NavHost(
                             navController = navController,
                             startDestination = "home",
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f).padding(paddingValues)
                         ) {
                             composable("home") {
                                 Column(
