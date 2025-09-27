@@ -166,7 +166,7 @@ fun MainScreen(
                                     mainViewModel = mainViewModel
                                 )
                             }
-                            composable("extras") { ExtrasScreen(caseViewModel = caseViewModel) }
+                            composable("extras") { ExtrasScreen() }
                             composable("script_builder") {
                                 ScriptBuilderScreen(navController = navController, caseViewModel = caseViewModel)
                             }

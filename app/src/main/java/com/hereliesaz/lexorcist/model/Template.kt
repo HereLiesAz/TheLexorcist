@@ -8,4 +8,6 @@ data class Template(
     val authorName: String,
     val authorEmail: String,
     val court: String?,
+    val rating: Double = 0.0,
+    val numRatings: Int = 0
 )
