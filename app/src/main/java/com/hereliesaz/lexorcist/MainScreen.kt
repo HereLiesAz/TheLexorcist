@@ -91,7 +91,6 @@ fun MainScreen(
     LaunchedEffect(signInState) {
         when (signInState) {
             is SignInState.Success -> {
-                caseViewModel.loadCasesFromRepository()
                 mainViewModel.hideLoading()
             }
             is SignInState.Idle -> {

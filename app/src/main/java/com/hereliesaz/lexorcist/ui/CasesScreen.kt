@@ -81,6 +81,10 @@ fun CasesScreen(
             }
         }
 
+    LaunchedEffect(Unit) {
+        caseViewModel.loadCasesFromRepository()
+    }
+
     LaunchedEffect(currentSortOrderState) {
         caseViewModel.onSortOrderChange(currentSortOrderState)
     }
