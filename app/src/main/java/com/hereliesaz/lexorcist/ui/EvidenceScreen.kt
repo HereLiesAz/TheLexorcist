@@ -117,6 +117,16 @@ fun EvidenceScreen(
         }
     }
 
+    val requestLocationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            caseViewModel.importLocationHistoryEvidence()
+        } else {
+            // Handle permission denial
+        }
+    }
+
     LaunchedEffect(Unit) {
         caseViewModel.navigateToTranscriptionScreen.collectLatest { evidenceId ->
             navController.navigate("transcription/$evidenceId")
@@ -206,6 +216,7 @@ fun EvidenceScreen(
                     LexorcistOutlinedButton(onClick = { navController.navigate("photo_group") }, text = stringResource(R.string.take_photo).uppercase(Locale.getDefault()))
                     LexorcistOutlinedButton(onClick = { requestSmsPermissionLauncher.launch(Manifest.permission.READ_SMS) }, text = stringResource(R.string.import_sms).uppercase(Locale.getDefault()))
                     LexorcistOutlinedButton(onClick = { requestCallLogPermissionLauncher.launch(Manifest.permission.READ_CALL_LOG) }, text = stringResource(R.string.import_call_log).uppercase(Locale.getDefault()))
+                    LexorcistOutlinedButton(onClick = { requestLocationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION) }, text = stringResource(R.string.import_location).uppercase(Locale.getDefault()))
                 }
             }
 

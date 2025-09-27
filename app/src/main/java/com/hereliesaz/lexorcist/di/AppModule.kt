@@ -14,6 +14,7 @@ import com.hereliesaz.lexorcist.service.GoogleApiService
 import com.hereliesaz.lexorcist.service.ScriptRunner
 // Ensure LegalBertService is here if needed by ScriptRunner, otherwise remove import
 // import com.hereliesaz.lexorcist.service.nlp.LegalBertService 
+import com.google.android.gms.location.LocationServices
 import com.hereliesaz.lexorcist.utils.CacheManager
 import com.hereliesaz.lexorcist.utils.EvidenceImporter
 import dagger.Module
@@ -98,7 +99,15 @@ class AppModule {
 
     @Provides
     @Singleton
-    fun provideEvidenceImporter(@ApplicationContext context: Context): EvidenceImporter {
-        return EvidenceImporter(context.contentResolver)
+    fun provideFusedLocationProviderClient(@ApplicationContext context: Context) =
+        LocationServices.getFusedLocationProviderClient(context)
+
+    @Provides
+    @Singleton
+    fun provideEvidenceImporter(
+        @ApplicationContext context: Context,
+        fusedLocationProviderClient: com.google.android.gms.location.FusedLocationProviderClient
+    ): EvidenceImporter {
+        return EvidenceImporter(context.contentResolver, fusedLocationProviderClient)
     }
 }

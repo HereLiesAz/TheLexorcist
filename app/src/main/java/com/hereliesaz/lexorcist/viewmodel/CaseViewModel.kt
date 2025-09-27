@@ -1427,4 +1427,23 @@ constructor(
             }
         }
     }
+
+    fun importLocationHistoryEvidence() {
+        viewModelScope.launch {
+            globalLoadingState.pushLoading()
+            try {
+                val locationEvidence = evidenceImporter.importLocationHistory()
+                if (locationEvidence != null) {
+                    evidenceRepository.addEvidence(locationEvidence.copy(caseId = selectedCase.value?.id?.toLong() ?: 0, spreadsheetId = selectedCase.value?.spreadsheetId ?: ""))
+                    _userMessage.value = "Imported last known location."
+                } else {
+                    _userMessage.value = "Could not retrieve location."
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = "Failed to import location: ${e.message}"
+            } finally {
+                globalLoadingState.popLoading()
+            }
+        }
+    }
 }

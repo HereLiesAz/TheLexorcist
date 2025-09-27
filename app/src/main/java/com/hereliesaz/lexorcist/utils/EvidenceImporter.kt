@@ -1,12 +1,19 @@
 package com.hereliesaz.lexorcist.utils
 
+import android.annotation.SuppressLint
 import android.content.ContentResolver
 import android.provider.CallLog
 import android.provider.Telephony
+import com.google.android.gms.location.FusedLocationProviderClient
 import com.hereliesaz.lexorcist.data.Evidence
 import java.util.Date
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
-class EvidenceImporter(private val contentResolver: ContentResolver) {
+class EvidenceImporter(
+    private val contentResolver: ContentResolver,
+    private val fusedLocationClient: FusedLocationProviderClient
+) {
 
     fun importSms(): List<Evidence> {
         val smsList = mutableListOf<Evidence>()
@@ -69,5 +76,25 @@ class EvidenceImporter(private val contentResolver: ContentResolver) {
             }
         }
         return callLogList
+    }
+
+    @SuppressLint("MissingPermission")
+    suspend fun importLocationHistory(): Evidence? = suspendCoroutine { continuation ->
+        fusedLocationClient.lastLocation
+            .addOnSuccessListener { location ->
+                if (location != null) {
+                    val evidence = Evidence(
+                        content = "Latitude: ${location.latitude}\nLongitude: ${location.longitude}",
+                        type = "Location",
+                        timestamp = location.time
+                    )
+                    continuation.resume(evidence)
+                } else {
+                    continuation.resume(null)
+                }
+            }
+            .addOnFailureListener {
+                continuation.resume(null)
+            }
     }
 }
