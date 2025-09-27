@@ -219,16 +219,16 @@ fun EvidenceScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    LexorcistOutlinedButton(onClick = { showAddTextEvidence = true }, text = stringResource(R.string.add_text_evidence).uppercase(Locale.getDefault()))
-                    LexorcistOutlinedButton(onClick = { imagePickerLauncher.launch("image/*") }, text = stringResource(R.string.add_image_evidence).uppercase(Locale.getDefault()))
-                    LexorcistOutlinedButton(onClick = { audioPickerLauncher.launch("audio/*") }, text = stringResource(R.string.add_audio_evidence).uppercase(Locale.getDefault()))
-                    LexorcistOutlinedButton(onClick = { videoPickerLauncher.launch("video/*") }, text = stringResource(R.string.add_video_evidence).uppercase(Locale.getDefault()))
-                    LexorcistOutlinedButton(onClick = { navController.navigate("photo_group") }, text = stringResource(R.string.take_photo).uppercase(Locale.getDefault()))
-                    LexorcistOutlinedButton(onClick = { requestSmsPermissionLauncher.launch(Manifest.permission.READ_SMS) }, text = stringResource(R.string.import_sms).uppercase(Locale.getDefault()))
-                    LexorcistOutlinedButton(onClick = { requestCallLogPermissionLauncher.launch(Manifest.permission.READ_CALL_LOG) }, text = stringResource(R.string.import_call_log).uppercase(Locale.getDefault()))
-                    LexorcistOutlinedButton(onClick = { requestLocationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION) }, text = stringResource(R.string.import_location).uppercase(Locale.getDefault()))
-                    LexorcistOutlinedButton(onClick = { showChatImportDialog = true }, text = stringResource(R.string.import_chat_history).uppercase(Locale.getDefault()))
-                    LexorcistOutlinedButton(onClick = { showGmailImportDialog = true }, text = stringResource(R.string.import_from_gmail).uppercase(Locale.getDefault()))
+                    LexorcistOutlinedButton(onClick = { showAddTextEvidence = true }, text = "Text".uppercase(Locale.getDefault()))
+                    LexorcistOutlinedButton(onClick = { imagePickerLauncher.launch("image/*") }, text = "Image".uppercase(Locale.getDefault()))
+                    LexorcistOutlinedButton(onClick = { audioPickerLauncher.launch("audio/*") }, text = "Audio".uppercase(Locale.getDefault()))
+                    LexorcistOutlinedButton(onClick = { videoPickerLauncher.launch("video/*") }, text = "Video".uppercase(Locale.getDefault()))
+                    LexorcistOutlinedButton(onClick = { navController.navigate("photo_group") }, text = "Photo".uppercase(Locale.getDefault()))
+                    LexorcistOutlinedButton(onClick = { requestSmsPermissionLauncher.launch(Manifest.permission.READ_SMS) }, text = "SMS".uppercase(Locale.getDefault()))
+                    LexorcistOutlinedButton(onClick = { requestCallLogPermissionLauncher.launch(Manifest.permission.READ_CALL_LOG) }, text = "Calls".uppercase(Locale.getDefault()))
+                    LexorcistOutlinedButton(onClick = { requestLocationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION) }, text = "Location".uppercase(Locale.getDefault()))
+                    LexorcistOutlinedButton(onClick = { showChatImportDialog = true }, text = "Messages".uppercase(Locale.getDefault()))
+                    LexorcistOutlinedButton(onClick = { showGmailImportDialog = true }, text = "Gmail".uppercase(Locale.getDefault()))
                     val outlookSignInState by authViewModel.outlookSignInState.collectAsState()
                     LexorcistOutlinedButton(
                         onClick = {
@@ -238,12 +238,12 @@ fun EvidenceScreen(
                                 // Optionally, show a snackbar or message to the user
                             }
                         },
-                        text = stringResource(R.string.import_from_outlook).uppercase(Locale.getDefault()),
+                        text = "Outlook".uppercase(Locale.getDefault()),
                         enabled = outlookSignInState is OutlookSignInState.Success
                     )
                     LexorcistOutlinedButton(
                         onClick = { showImapImportDialog = true },
-                        text = stringResource(R.string.import_from_other_email).uppercase(Locale.getDefault())
+                        text = "Email".uppercase(Locale.getDefault())
                     )
                 }
             }

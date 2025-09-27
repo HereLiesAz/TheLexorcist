@@ -166,7 +166,7 @@ fun AllegationsScreen(
                 )
             }
             LazyColumn(modifier = Modifier.fillMaxWidth()) {
-                itemsIndexed(allegations, key = { _, item -> item.name }) { _, allegation ->
+                itemsIndexed(allegations, key = { index, item -> "${item.name}-$index" }) { index, allegation ->
                     Text(
                         text = allegation.name,
                         modifier = Modifier
@@ -179,8 +179,8 @@ fun AllegationsScreen(
                         color = if (allegation.isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
                         textAlign = TextAlign.End
                     )
-                    if (allegations.last() != allegation) {
-                         HorizontalDivider()
+                    if (index < allegations.size - 1) {
+                        HorizontalDivider()
                     }
                 }
             }
