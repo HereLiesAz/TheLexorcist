@@ -18,6 +18,7 @@ import com.google.android.gms.location.LocationServices
 import com.hereliesaz.lexorcist.utils.CacheManager
 import com.hereliesaz.lexorcist.auth.OutlookAuthManager
 import com.hereliesaz.lexorcist.service.GmailService
+import com.hereliesaz.lexorcist.service.ImapService
 import com.hereliesaz.lexorcist.utils.ChatHistoryParser
 import com.hereliesaz.lexorcist.utils.EvidenceImporter
 import dagger.Module
@@ -130,5 +131,11 @@ class AppModule {
     @Singleton
     fun provideOutlookAuthManager(@ApplicationContext context: Context): OutlookAuthManager {
         return OutlookAuthManager(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideImapService(): ImapService {
+        return ImapService()
     }
 }

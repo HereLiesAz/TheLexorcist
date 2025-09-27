@@ -37,7 +37,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.hereliesaz.lexorcist.ui.components.ChatHistoryImportDialog
-import com.hereliesaz.lexorcist.ui.components.GmailImportDialog
+import com.hereliesaz.lexorcist.ui.components.EmailImportDialog
+import com.hereliesaz.lexorcist.ui.components.ImapImportDialog
 import androidx.compose.ui.Alignment
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.hereliesaz.lexorcist.model.OutlookSignInState
@@ -70,6 +71,7 @@ fun EvidenceScreen(
     var showChatImportDialog by remember { mutableStateOf(false) }
     var showGmailImportDialog by remember { mutableStateOf(false) }
     var showOutlookImportDialog by remember { mutableStateOf(false) }
+    var showImapImportDialog by remember { mutableStateOf(false) }
     var text by remember { mutableStateOf("") }
     val evidenceList by caseViewModel.selectedCaseEvidenceList.collectAsState()
     val videoProcessingProgress by caseViewModel.videoProcessingProgress.collectAsState()
@@ -239,6 +241,10 @@ fun EvidenceScreen(
                         text = stringResource(R.string.import_from_outlook).uppercase(Locale.getDefault()),
                         enabled = outlookSignInState is OutlookSignInState.Success
                     )
+                    LexorcistOutlinedButton(
+                        onClick = { showImapImportDialog = true },
+                        text = stringResource(R.string.import_from_other_email).uppercase(Locale.getDefault())
+                    )
                 }
             }
 
@@ -253,7 +259,8 @@ fun EvidenceScreen(
             }
 
             if (showGmailImportDialog) {
-                GmailImportDialog(
+                EmailImportDialog(
+                    title = "Import from Gmail",
                     onDismiss = { showGmailImportDialog = false },
                     onImport = { from, subject, before, after ->
                         showGmailImportDialog = false
@@ -268,16 +275,31 @@ fun EvidenceScreen(
             }
 
             if (showOutlookImportDialog) {
-                GmailImportDialog(
+                EmailImportDialog(
+                    title = "Import from Outlook",
                     onDismiss = { showOutlookImportDialog = false },
                     onImport = { from, subject, before, after ->
                         showOutlookImportDialog = false
-                        caseViewModel.importOutlookEmails(
-                            from = from,
-                            subject = subject,
-                            before = before,
-                            after = after
-                        )
+                        val outlookState = authViewModel.outlookSignInState.value
+                        if (outlookState is com.hereliesaz.lexorcist.model.OutlookSignInState.Success) {
+                            caseViewModel.importOutlookEmails(
+                                accessToken = outlookState.accessToken,
+                                from = from,
+                                subject = subject,
+                                before = before,
+                                after = after
+                            )
+                        }
+                    }
+                )
+            }
+
+            if (showImapImportDialog) {
+                ImapImportDialog(
+                    onDismiss = { showImapImportDialog = false },
+                    onImport = { host, user, pass, from, subject ->
+                        showImapImportDialog = false
+                        caseViewModel.importImapEmails(host, user, pass, from, subject)
                     }
                 )
             }

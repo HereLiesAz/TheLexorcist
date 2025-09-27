@@ -38,6 +38,7 @@ import com.google.gson.reflect.TypeToken
 import com.hereliesaz.lexorcist.utils.DataParser
 import com.hereliesaz.lexorcist.model.OutlookSignInState
 import com.hereliesaz.lexorcist.service.GmailService
+import com.hereliesaz.lexorcist.service.ImapService
 import com.hereliesaz.lexorcist.service.OutlookService
 import com.hereliesaz.lexorcist.utils.ChatHistoryParser
 import com.hereliesaz.lexorcist.utils.EvidenceImporter
@@ -77,7 +78,7 @@ constructor(
     private val chatHistoryParser: ChatHistoryParser,
     private val gmailService: GmailService,
     private val outlookService: OutlookService,
-    private val authViewModel: AuthViewModel
+    private val imapService: ImapService
 ) : ViewModel() {
     private val sharedPref =
         applicationContext.getSharedPreferences("CaseInfoPrefs", Context.MODE_PRIVATE)
@@ -1521,6 +1522,23 @@ constructor(
                 }
             } catch (e: Exception) {
                 _errorMessage.value = "Failed to import emails from Outlook: ${e.message}"
+            } finally {
+                globalLoadingState.popLoading()
+            }
+        }
+    }
+
+    fun importImapEmails(host: String, user: String, pass: String, from: String, subject: String) {
+        viewModelScope.launch {
+            globalLoadingState.pushLoading()
+            try {
+                val emailEvidence = imapService.fetchEmails(host, user, pass, from, subject)
+                emailEvidence.forEach { evidence ->
+                    evidenceRepository.addEvidence(evidence.copy(caseId = selectedCase.value?.id?.toLong() ?: 0, spreadsheetId = selectedCase.value?.spreadsheetId ?: ""))
+                }
+                _userMessage.value = "Imported ${emailEvidence.size} emails."
+            } catch (e: Exception) {
+                _errorMessage.value = "Failed to import emails via IMAP: ${e.message}"
             } finally {
                 globalLoadingState.popLoading()
             }

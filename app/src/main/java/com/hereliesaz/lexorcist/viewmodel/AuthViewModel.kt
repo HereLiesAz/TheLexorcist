@@ -270,24 +270,23 @@ class AuthViewModel
                 _outlookSignInState.value = OutlookSignInState.InProgress
                 try {
                     val result = outlookAuthManager.acquireToken(activity)
-                    if (result != null) {
-                        _outlookSignInState.value = OutlookSignInState.Success(result.account.username, result.accessToken)
-                    } else {
-                        _outlookSignInState.value = OutlookSignInState.Error("Authentication failed or was cancelled.")
-                    }
+                    _outlookSignInState.value = OutlookSignInState.Success(result.account.username, result.accessToken)
+                } catch (e: com.microsoft.identity.client.exception.MsalException) {
+                    _outlookSignInState.value = OutlookSignInState.Error("Authentication failed: ${e.message}", e)
                 } catch (e: Exception) {
-                    _outlookSignInState.value = OutlookSignInState.Error("An error occurred during sign-in.", e)
+                    _outlookSignInState.value = OutlookSignInState.Error("An unexpected error occurred during sign-in.", e)
                 }
             }
         }
 
         fun signOutFromOutlook() {
             viewModelScope.launch {
-                val success = outlookAuthManager.signOut()
-                if (success) {
+                try {
+                    outlookAuthManager.signOut()
                     _outlookSignInState.value = OutlookSignInState.Idle
-                } else {
-                    // Optionally handle sign-out error
+                } catch (e: com.microsoft.identity.client.exception.MsalException) {
+                    Log.e(TAG, "Error signing out from Outlook", e)
+                    _outlookSignInState.value = OutlookSignInState.Error("Error during sign out.", e)
                 }
             }
         }
