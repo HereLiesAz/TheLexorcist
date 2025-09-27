@@ -40,7 +40,7 @@ import com.hereliesaz.lexorcist.ui.components.ChatHistoryImportDialog
 import com.hereliesaz.lexorcist.ui.components.EmailImportDialog
 import com.hereliesaz.lexorcist.ui.components.ImapImportDialog
 import androidx.compose.ui.Alignment
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel // Updated import
 import com.hereliesaz.lexorcist.model.OutlookSignInState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource

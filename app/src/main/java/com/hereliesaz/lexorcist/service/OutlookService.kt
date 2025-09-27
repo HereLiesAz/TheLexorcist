@@ -4,7 +4,7 @@ import android.util.Log
 import com.hereliesaz.lexorcist.auth.OutlookAuthManager // Keep for now, though accessToken is passed directly
 import com.microsoft.graph.models.Message
 import com.microsoft.graph.models.MessageCollectionResponse
-import com.microsoft.graph.serviceclient.GraphServiceClient 
+import com.microsoft.graph.serviceclient.GraphServiceClient
 // Correct Kiota imports
 import com.microsoft.kiota.authentication.AccessTokenProvider
 import com.microsoft.kiota.authentication.AllowedHostsValidator
@@ -28,14 +28,14 @@ class OutlookService @Inject constructor(
     private class OutlookAccessTokenProvider(private val currentAccessToken: String) : AccessTokenProvider {
         // Implement the synchronous getAuthorizationToken method
         override fun getAuthorizationToken(
-            uri: URI?,
+            uri: URI, // Changed URI? to URI
             additionalAuthenticationContext: MutableMap<String, Any>?
         ): String {
             return currentAccessToken
         }
 
         override fun getAllowedHostsValidator(): AllowedHostsValidator {
-            val validHosts = arrayOf("graph.microsoft.com") 
+            val validHosts = arrayOf("graph.microsoft.com")
             return AllowedHostsValidator(*validHosts) // Used spread operator
         }
     }
@@ -76,13 +76,13 @@ class OutlookService @Inject constructor(
             // The get() call itself returns the MessageCollectionResponse or null
             val messagesPage: MessageCollectionResponse? = client.me().messages().get { requestConfig ->
                 if (filterQuery.isNotBlank()) {
-                    requestConfig.queryParameters.filter = filterQuery
+                    requestConfig.queryParameters?.filter = filterQuery // Safe call
                 }
-                requestConfig.queryParameters.select = arrayOf(
+                requestConfig.queryParameters?.select = arrayOf( // Safe call
                     "id", "receivedDateTime", "subject", "from", "bodyPreview", "sender", "toListRecipients", "body"
                 )
-                requestConfig.queryParameters.orderby = arrayOf("receivedDateTime desc")
-                requestConfig.queryParameters.top = 50
+                requestConfig.queryParameters?.orderby = arrayOf("receivedDateTime desc") // Safe call
+                requestConfig.queryParameters?.top = 50 // Safe call
             }
             messagesPage?.value // This is the value returned by the try block
         } catch (e: Exception) {
