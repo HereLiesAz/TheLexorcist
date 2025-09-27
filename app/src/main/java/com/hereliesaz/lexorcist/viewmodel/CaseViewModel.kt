@@ -11,6 +11,7 @@ import com.hereliesaz.lexorcist.data.ActiveScriptRepository
 import com.hereliesaz.lexorcist.data.Allegation
 import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.data.CaseRepository
+import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.data.EvidenceRepository
 import com.hereliesaz.lexorcist.data.LocalFileStorageService
 import com.hereliesaz.lexorcist.data.Script
@@ -78,7 +79,8 @@ constructor(
     private val chatHistoryParser: ChatHistoryParser,
     private val gmailService: GmailService,
     private val outlookService: OutlookService,
-    private val imapService: ImapService
+    private val imapService: ImapService,
+    private val outlookAuthManager: com.hereliesaz.lexorcist.auth.OutlookAuthManager
 ) : ViewModel() {
     private val sharedPref =
         applicationContext.getSharedPreferences("CaseInfoPrefs", Context.MODE_PRIVATE)
@@ -1478,17 +1480,27 @@ constructor(
             globalLoadingState.pushLoading()
             try {
                 val messages = gmailService.searchEmails(from, subject, before, after)
-                val emailEvidence = messages.map { message ->
+                val emailEvidence = messages.map<com.google.api.services.gmail.model.Message, Evidence> { message ->
                     val subjectHeader = message.payload.headers.find { it.name == "Subject" }?.value ?: "No Subject"
                     val fromHeader = message.payload.headers.find { it.name == "From" }?.value ?: "Unknown Sender"
                     Evidence(
                         content = "From: $fromHeader\nSubject: $subjectHeader\n\n${message.snippet}",
                         type = "Email",
-                        timestamp = message.internalDate
+                        timestamp = message.internalDate,
+                        caseId = selectedCase.value?.id?.toLong() ?: 0,
+                        spreadsheetId = selectedCase.value?.spreadsheetId ?: "",
+                        formattedContent = null,
+                        mediaUri = null,
+                        sourceDocument = "Imported Email",
+                        documentDate = message.internalDate,
+                        allegationId = null,
+                        allegationElementName = null,
+                        category = "Email",
+                        tags = listOf("email")
                     )
                 }
                 emailEvidence.forEach { evidence ->
-                    evidenceRepository.addEvidence(evidence.copy(caseId = selectedCase.value?.id?.toLong() ?: 0, spreadsheetId = selectedCase.value?.spreadsheetId ?: ""))
+                    evidenceRepository.addEvidence(evidence)
                 }
                 _userMessage.value = "Imported ${emailEvidence.size} emails."
             } catch (e: Exception) {
@@ -1503,18 +1515,29 @@ constructor(
         viewModelScope.launch {
             globalLoadingState.pushLoading()
             try {
-                val outlookState = authViewModel.outlookSignInState.value
+                val outlookState = outlookAuthManager.outlookSignInState.value
                 if (outlookState is OutlookSignInState.Success) {
                     val messages = outlookService.searchEmails(outlookState.accessToken, from, subject, before, after)
-                    val emailEvidence = messages?.map { message ->
+                    val emailEvidence = messages?.map<com.microsoft.graph.models.Message, Evidence> { message ->
+                        val receivedDateTime = message.receivedDateTime?.toInstant()?.toEpochMilli() ?: System.currentTimeMillis()
                         Evidence(
                             content = "From: ${message.from?.emailAddress?.address}\nSubject: ${message.subject}\n\n${message.bodyPreview}",
                             type = "Email",
-                            timestamp = message.receivedDateTime?.toInstant()?.toEpochMilli() ?: System.currentTimeMillis()
+                            timestamp = receivedDateTime,
+                            caseId = selectedCase.value?.id?.toLong() ?: 0,
+                            spreadsheetId = selectedCase.value?.spreadsheetId ?: "",
+                            formattedContent = null,
+                            mediaUri = null,
+                            sourceDocument = "Imported Email",
+                            documentDate = receivedDateTime,
+                            allegationId = null,
+                            allegationElementName = null,
+                            category = "Email",
+                            tags = listOf("email")
                         )
                     }
                     emailEvidence?.forEach { evidence ->
-                        evidenceRepository.addEvidence(evidence.copy(caseId = selectedCase.value?.id?.toLong() ?: 0, spreadsheetId = selectedCase.value?.spreadsheetId ?: ""))
+                        evidenceRepository.addEvidence(evidence)
                     }
                     _userMessage.value = "Imported ${emailEvidence?.size ?: 0} emails from Outlook."
                 } else {
