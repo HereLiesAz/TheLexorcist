@@ -46,7 +46,74 @@ class LocalFileStorageService @Inject constructor(
         dir
     }
 
-    private val spreadsheetFile: File by lazy { File(storageDir, "lexorcist_data.xlsx") }
+    private val spreadsheetFile: File by lazy {
+        File(storageDir, "lexorcist_data.xlsx").also {
+            if (!it.exists()) {
+                initializeSpreadsheet()
+            }
+        }
+    }
+
+    init {
+        // Ensure the spreadsheet is initialized when the service is created.
+        initializeSpreadsheet()
+    }
+
+    private fun initializeSpreadsheet() {
+        try {
+            val workbook = if (spreadsheetFile.exists() && spreadsheetFile.length() > 0) {
+                FileInputStream(spreadsheetFile).use { XSSFWorkbook(it) }
+            } else {
+                XSSFWorkbook()
+            }
+
+            var modified = false
+
+            if (workbook.getSheet(CASES_SHEET_NAME) == null) {
+                workbook.createSheet(CASES_SHEET_NAME).createRow(0).apply {
+                    CASES_HEADER.forEachIndexed { index, header -> createCell(index).setCellValue(header) }
+                }
+                modified = true
+            }
+
+            if (workbook.getSheet(EVIDENCE_SHEET_NAME) == null) {
+                workbook.createSheet(EVIDENCE_SHEET_NAME).createRow(0).apply {
+                    EVIDENCE_HEADER.forEachIndexed { index, header -> createCell(index).setCellValue(header) }
+                }
+                modified = true
+            }
+
+            if (workbook.getSheet(ALLEGATIONS_SHEET_NAME) == null) {
+                workbook.createSheet(ALLEGATIONS_SHEET_NAME).createRow(0).apply {
+                    ALLEGATIONS_HEADER.forEachIndexed { index, header -> createCell(index).setCellValue(header) }
+                }
+                modified = true
+            }
+
+            if (workbook.getSheet(TRANSCRIPT_EDITS_SHEET_NAME) == null) {
+                workbook.createSheet(TRANSCRIPT_EDITS_SHEET_NAME).createRow(0).apply {
+                    TRANSCRIPT_EDITS_HEADER.forEachIndexed { index, header -> createCell(index).setCellValue(header) }
+                }
+                modified = true
+            }
+
+            if (workbook.getSheet(EXHIBITS_SHEET_NAME) == null) {
+                workbook.createSheet(EXHIBITS_SHEET_NAME).createRow(0).apply {
+                    EXHIBITS_HEADER.forEachIndexed { index, header -> createCell(index).setCellValue(header) }
+                }
+                modified = true
+            }
+
+            if (modified) {
+                FileOutputStream(spreadsheetFile).use { workbook.write(it) }
+            }
+            workbook.close()
+        } catch (e: Exception) {
+            // Log this exception, as it's critical for debugging file system issues.
+            // Consider using a more robust logging framework if available.
+            e.printStackTrace()
+        }
+    }
 
     companion object {
         private const val CASES_SHEET_NAME = "Cases"
