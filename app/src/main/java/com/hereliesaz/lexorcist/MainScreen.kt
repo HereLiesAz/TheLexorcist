@@ -49,7 +49,7 @@ import com.hereliesaz.lexorcist.ui.ScriptsScreen
 import com.hereliesaz.lexorcist.ui.SettingsScreen
 import com.hereliesaz.lexorcist.ui.TemplatesScreen
 import com.hereliesaz.lexorcist.ui.TimelineScreen
-import com.hereliesaz.lexorcist.ui.components.CoinTossLoadingIndicator
+import com.hereliesaz.cointoss.CoinTossLoadingIndicator
 import com.hereliesaz.lexorcist.ui.components.ScriptableAzNavRail
 import com.hereliesaz.lexorcist.viewmodel.AuthViewModel
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel

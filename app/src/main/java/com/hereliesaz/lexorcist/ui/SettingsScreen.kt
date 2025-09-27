@@ -355,7 +355,7 @@ fun SettingsScreen(
                     )
                 }
                 is com.hereliesaz.lexorcist.model.OneDriveSignInState.InProgress -> {
-                    com.hereliesaz.lexorcist.ui.components.NewLexorcistLoadingIndicator()
+                    com.hereliesaz.cointoss.CoinTossLoadingIndicator()
                 }
                 is com.hereliesaz.lexorcist.model.OneDriveSignInState.Success -> {
                     Text(stringResource(R.string.connected_to_onedrive_as_placeholder, stateVal.accountName ?: stringResource(R.string.unknown_account)))
@@ -404,7 +404,7 @@ fun SettingsScreen(
                     )
                 }
                 is OutlookSignInState.InProgress -> {
-                    com.hereliesaz.lexorcist.ui.components.NewLexorcistLoadingIndicator()
+                    com.hereliesaz.cointoss.CoinTossLoadingIndicator()
                 }
                 is OutlookSignInState.Success -> {
                     Text("Connected as: ${stateVal.accountName ?: "Unknown"}")
@@ -500,7 +500,7 @@ fun LanguageModelDownloader(
                     style = MaterialTheme.typography.bodySmall
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                com.hereliesaz.lexorcist.ui.components.NewLexorcistLoadingIndicator(modifier = Modifier.size(24.dp))
+                com.hereliesaz.cointoss.CoinTossLoadingIndicator(modifier = Modifier.size(24.dp))
             }
             Spacer(modifier = Modifier.height(8.dp))
             LinearProgressIndicator(
@@ -524,7 +524,7 @@ fun ModelStatusIcon(
             }
         }
         is DownloadState.Downloading -> {
-            com.hereliesaz.lexorcist.ui.components.NewLexorcistLoadingIndicator(modifier = Modifier.size(24.dp).padding(8.dp))
+            com.hereliesaz.cointoss.CoinTossLoadingIndicator(modifier = Modifier.size(24.dp).padding(8.dp))
         }
         is DownloadState.Downloaded -> {
             Row(verticalAlignment = Alignment.CenterVertically) {

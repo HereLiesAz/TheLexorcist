@@ -1,4 +1,4 @@
-package com.hereliesaz.lexorcist.ui.components
+package com.hereliesaz.cointoss
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.border

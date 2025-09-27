@@ -142,7 +142,7 @@ fun CasesScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    com.hereliesaz.lexorcist.ui.components.NewLexorcistLoadingIndicator()
+                    com.hereliesaz.cointoss.CoinTossLoadingIndicator()
                 }
             } else if (unarchivedCases.isEmpty()) {
                 Column(
