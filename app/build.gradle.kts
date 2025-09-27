@@ -248,7 +248,7 @@ dependencies {
     implementation(libs.microsoft.identity.client)
 
     // Jakarta Mail for IMAP
-    implementation("com.sun.mail:jakarta.mail:2.0.1")
+    implementation("com.sun.mail:jakarta.mail:2.0.2")
 
     // Hilt
     implementation(libs.google.dagger.hilt.android)
@@ -262,7 +262,7 @@ dependencies {
     kspAndroidTest(libs.google.dagger.hilt.compiler) // Corrected alias
 
     // Jetpack DataStore
-    implementation("androidx.datastore:datastore-preferences:1.1.7")
+    implementation(libs.androidx.datastore.preferences)
     // Room IS NOT ALLOWED IN THIS PROJECT!!!!!
 
     // Vosk for on-device speech-to-text

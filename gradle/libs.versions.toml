@@ -4,6 +4,7 @@ androidApplication = "8.13.0" # Assuming a common version, adjust if needed from
 aznavrail = "3.6"
 browser = "1.9.0"
 # compiler = "1.5.15" # REMOVED as per new setup
+datastorePreferences = "1.1.7"
 dropboxCoreSdk = "7.0.0"
 errorProneAnnotations = "2.42.0"
 firebaseAuthKtx = "23.2.1"
@@ -86,6 +87,7 @@ litertApi = "1.4.0"
 playServicesLocation = "21.3.0"
 
 [libraries]
+androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastorePreferences" }
 litert = { group = "com.google.ai.edge.litert", name = "litert", version.ref = "litert" }
 
 androidx-browser = { module = "androidx.browser:browser", version.ref = "browser" }
