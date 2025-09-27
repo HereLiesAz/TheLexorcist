@@ -374,6 +374,7 @@ constructor(
     }
 
     fun loadCasesFromRepository() {
+        Log.d("CaseViewModel", "loadCasesFromRepository called.")
         viewModelScope.launch {
             globalLoadingState.pushLoading()
             _processingState.value = ProcessingState.InProgress(0f)
@@ -464,6 +465,7 @@ constructor(
         viewModelScope.launch {
             globalLoadingState.pushLoading()
             try {
+                Log.d("CaseViewModel", "Calling caseRepository.createCase from within createCase")
                 val result =
                     caseRepository.createCase(
                         caseName,
