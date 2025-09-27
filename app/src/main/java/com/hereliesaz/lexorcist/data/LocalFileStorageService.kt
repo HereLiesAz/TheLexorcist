@@ -61,67 +61,6 @@ class LocalFileStorageService @Inject constructor(
 
     private fun initializeSpreadsheet() {
         try {
-            val workbook = if (spreadsheetFile.exists() && spreadsheetFile.length() > 0) {
-                FileInputStream(spreadsheetFile).use { XSSFWorkbook(it) }
-            } else {
-                XSSFWorkbook()
-            }
-
-            var modified = false
-
-            if (workbook.getSheet(CASES_SHEET_NAME) == null) {
-                workbook.createSheet(CASES_SHEET_NAME).createRow(0).apply {
-                    CASES_HEADER.forEachIndexed { index, header -> createCell(index).setCellValue(header) }
-                }
-                modified = true
-            }
-
-            if (workbook.getSheet(EVIDENCE_SHEET_NAME) == null) {
-                workbook.createSheet(EVIDENCE_SHEET_NAME).createRow(0).apply {
-                    EVIDENCE_HEADER.forEachIndexed { index, header -> createCell(index).setCellValue(header) }
-                }
-                modified = true
-            }
-
-            if (workbook.getSheet(ALLEGATIONS_SHEET_NAME) == null) {
-                workbook.createSheet(ALLEGATIONS_SHEET_NAME).createRow(0).apply {
-                    ALLEGATIONS_HEADER.forEachIndexed { index, header -> createCell(index).setCellValue(header) }
-                }
-                modified = true
-            }
-
-            if (workbook.getSheet(TRANSCRIPT_EDITS_SHEET_NAME) == null) {
-                workbook.createSheet(TRANSCRIPT_EDITS_SHEET_NAME).createRow(0).apply {
-                    TRANSCRIPT_EDITS_HEADER.forEachIndexed { index, header -> createCell(index).setCellValue(header) }
-                }
-                modified = true
-            }
-
-            if (workbook.getSheet(EXHIBITS_SHEET_NAME) == null) {
-                workbook.createSheet(EXHIBITS_SHEET_NAME).createRow(0).apply {
-                    EXHIBITS_HEADER.forEachIndexed { index, header -> createCell(index).setCellValue(header) }
-                }
-                modified = true
-            }
-
-            if (modified) {
-                FileOutputStream(spreadsheetFile).use { workbook.write(it) }
-            }
-            workbook.close()
-        } catch (e: Exception) {
-            // Log this exception, as it's critical for debugging file system issues.
-            // Consider using a more robust logging framework if available.
-            e.printStackTrace()
-        }
-    }
-
-    init {
-        // Ensure the spreadsheet is initialized when the service is created.
-        initializeSpreadsheet()
-    }
-
-    private fun initializeSpreadsheet() {
-        try {
             if (!spreadsheetFile.exists() || spreadsheetFile.length() == 0L) {
                 // If file doesn't exist or is empty, create a new one with all sheets.
                 XSSFWorkbook().use { workbook ->
@@ -167,250 +106,6 @@ class LocalFileStorageService @Inject constructor(
             }
         } catch (e: Exception) {
             // Log this exception, as it's critical for debugging file system issues.
-            e.printStackTrace()
-        }
-    }
-
-    private fun createSheetWithHeader(workbook: XSSFWorkbook, sheetName: String, headers: List<String>) {
-        val sheet = workbook.createSheet(sheetName)
-        val headerRow = sheet.createRow(0)
-        headers.forEachIndexed { index, header ->
-            headerRow.createCell(index).setCellValue(header)
-        }
-    }
-
-    init {
-        // Ensure the spreadsheet is initialized when the service is created.
-        initializeSpreadsheet()
-    }
-
-    private fun initializeSpreadsheet() {
-        try {
-            if (!spreadsheetFile.exists() || spreadsheetFile.length() == 0L) {
-                // If file doesn't exist or is empty, create a new one with all sheets.
-                XSSFWorkbook().use { workbook ->
-                    createSheetWithHeader(workbook, CASES_SHEET_NAME, CASES_HEADER)
-                    createSheetWithHeader(workbook, EVIDENCE_SHEET_NAME, EVIDENCE_HEADER)
-                    createSheetWithHeader(workbook, ALLEGATIONS_SHEET_NAME, ALLEGATIONS_HEADER)
-                    createSheetWithHeader(workbook, TRANSCRIPT_EDITS_SHEET_NAME, TRANSCRIPT_EDITS_HEADER)
-                    createSheetWithHeader(workbook, EXHIBITS_SHEET_NAME, EXHIBITS_HEADER)
-
-                    FileOutputStream(spreadsheetFile).use { fos -> workbook.write(fos) }
-                }
-            } else {
-                // If file exists, open it and check for missing sheets.
-                FileInputStream(spreadsheetFile).use { fis ->
-                    XSSFWorkbook(fis).use { workbook ->
-                        var modified = false
-                        if (workbook.getSheet(CASES_SHEET_NAME) == null) {
-                            createSheetWithHeader(workbook, CASES_SHEET_NAME, CASES_HEADER)
-                            modified = true
-                        }
-                        if (workbook.getSheet(EVIDENCE_SHEET_NAME) == null) {
-                            createSheetWithHeader(workbook, EVIDENCE_SHEET_NAME, EVIDENCE_HEADER)
-                            modified = true
-                        }
-                        if (workbook.getSheet(ALLEGATIONS_SHEET_NAME) == null) {
-                            createSheetWithHeader(workbook, ALLEGATIONS_SHEET_NAME, ALLEGATIONS_HEADER)
-                            modified = true
-                        }
-                        if (workbook.getSheet(TRANSCRIPT_EDITS_SHEET_NAME) == null) {
-                            createSheetWithHeader(workbook, TRANSCRIPT_EDITS_SHEET_NAME, TRANSCRIPT_EDITS_HEADER)
-                            modified = true
-                        }
-                        if (workbook.getSheet(EXHIBITS_SHEET_NAME) == null) {
-                            createSheetWithHeader(workbook, EXHIBITS_SHEET_NAME, EXHIBITS_HEADER)
-                            modified = true
-                        }
-
-                        if (modified) {
-                            FileOutputStream(spreadsheetFile).use { fos -> workbook.write(fos) }
-                        }
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            // Log this exception, as it's critical for debugging file system issues.
-            e.printStackTrace()
-        }
-    }
-
-    private fun createSheetWithHeader(workbook: XSSFWorkbook, sheetName: String, headers: List<String>) {
-        val sheet = workbook.createSheet(sheetName)
-        val headerRow = sheet.createRow(0)
-        headers.forEachIndexed { index, header ->
-            headerRow.createCell(index).setCellValue(header)
-        }
-    }
-
-    init {
-        initializeSpreadsheet()
-    }
-
-    private fun initializeSpreadsheet() {
-        try {
-            if (!spreadsheetFile.exists() || spreadsheetFile.length() == 0L) {
-                XSSFWorkbook().use { workbook ->
-                    createSheetWithHeader(workbook, CASES_SHEET_NAME, CASES_HEADER)
-                    createSheetWithHeader(workbook, EVIDENCE_SHEET_NAME, EVIDENCE_HEADER)
-                    createSheetWithHeader(workbook, ALLEGATIONS_SHEET_NAME, ALLEGATIONS_HEADER)
-                    createSheetWithHeader(workbook, TRANSCRIPT_EDITS_SHEET_NAME, TRANSCRIPT_EDITS_HEADER)
-                    createSheetWithHeader(workbook, EXHIBITS_SHEET_NAME, EXHIBITS_HEADER)
-
-                    FileOutputStream(spreadsheetFile).use { fos -> workbook.write(fos) }
-                }
-            } else {
-                FileInputStream(spreadsheetFile).use { fis ->
-                    XSSFWorkbook(fis).use { workbook ->
-                        var modified = false
-                        if (workbook.getSheet(CASES_SHEET_NAME) == null) {
-                            createSheetWithHeader(workbook, CASES_SHEET_NAME, CASES_HEADER)
-                            modified = true
-                        }
-                        if (workbook.getSheet(EVIDENCE_SHEET_NAME) == null) {
-                            createSheetWithHeader(workbook, EVIDENCE_SHEET_NAME, EVIDENCE_HEADER)
-                            modified = true
-                        }
-                        if (workbook.getSheet(ALLEGATIONS_SHEET_NAME) == null) {
-                            createSheetWithHeader(workbook, ALLEGATIONS_SHEET_NAME, ALLEGATIONS_HEADER)
-                            modified = true
-                        }
-                        if (workbook.getSheet(TRANSCRIPT_EDITS_SHEET_NAME) == null) {
-                            createSheetWithHeader(workbook, TRANSCRIPT_EDITS_SHEET_NAME, TRANSCRIPT_EDITS_HEADER)
-                            modified = true
-                        }
-                        if (workbook.getSheet(EXHIBITS_SHEET_NAME) == null) {
-                            createSheetWithHeader(workbook, EXHIBITS_SHEET_NAME, EXHIBITS_HEADER)
-                            modified = true
-                        }
-
-                        if (modified) {
-                            FileOutputStream(spreadsheetFile).use { fos -> workbook.write(fos) }
-                        }
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
-
-    private fun createSheetWithHeader(workbook: XSSFWorkbook, sheetName: String, headers: List<String>) {
-        val sheet = workbook.createSheet(sheetName)
-        val headerRow = sheet.createRow(0)
-        headers.forEachIndexed { index, header ->
-            headerRow.createCell(index).setCellValue(header)
-        }
-    }
-
-    init {
-        initializeSpreadsheet()
-    }
-
-    private fun initializeSpreadsheet() {
-        try {
-            if (!spreadsheetFile.exists() || spreadsheetFile.length() == 0L) {
-                XSSFWorkbook().use { workbook ->
-                    createSheetWithHeader(workbook, CASES_SHEET_NAME, CASES_HEADER)
-                    createSheetWithHeader(workbook, EVIDENCE_SHEET_NAME, EVIDENCE_HEADER)
-                    createSheetWithHeader(workbook, ALLEGATIONS_SHEET_NAME, ALLEGATIONS_HEADER)
-                    createSheetWithHeader(workbook, TRANSCRIPT_EDITS_SHEET_NAME, TRANSCRIPT_EDITS_HEADER)
-                    createSheetWithHeader(workbook, EXHIBITS_SHEET_NAME, EXHIBITS_HEADER)
-
-                    FileOutputStream(spreadsheetFile).use { fos -> workbook.write(fos) }
-                }
-            } else {
-                FileInputStream(spreadsheetFile).use { fis ->
-                    XSSFWorkbook(fis).use { workbook ->
-                        var modified = false
-                        if (workbook.getSheet(CASES_SHEET_NAME) == null) {
-                            createSheetWithHeader(workbook, CASES_SHEET_NAME, CASES_HEADER)
-                            modified = true
-                        }
-                        if (workbook.getSheet(EVIDENCE_SHEET_NAME) == null) {
-                            createSheetWithHeader(workbook, EVIDENCE_SHEET_NAME, EVIDENCE_HEADER)
-                            modified = true
-                        }
-                        if (workbook.getSheet(ALLEGATIONS_SHEET_NAME) == null) {
-                            createSheetWithHeader(workbook, ALLEGATIONS_SHEET_NAME, ALLEGATIONS_HEADER)
-                            modified = true
-                        }
-                        if (workbook.getSheet(TRANSCRIPT_EDITS_SHEET_NAME) == null) {
-                            createSheetWithHeader(workbook, TRANSCRIPT_EDITS_SHEET_NAME, TRANSCRIPT_EDITS_HEADER)
-                            modified = true
-                        }
-                        if (workbook.getSheet(EXHIBITS_SHEET_NAME) == null) {
-                            createSheetWithHeader(workbook, EXHIBITS_SHEET_NAME, EXHIBITS_HEADER)
-                            modified = true
-                        }
-
-                        if (modified) {
-                            FileOutputStream(spreadsheetFile).use { fos -> workbook.write(fos) }
-                        }
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
-
-    private fun createSheetWithHeader(workbook: XSSFWorkbook, sheetName: String, headers: List<String>) {
-        val sheet = workbook.createSheet(sheetName)
-        val headerRow = sheet.createRow(0)
-        headers.forEachIndexed { index, header ->
-            headerRow.createCell(index).setCellValue(header)
-        }
-    }
-
-    init {
-        initializeSpreadsheet()
-    }
-
-    private fun initializeSpreadsheet() {
-        try {
-            if (!spreadsheetFile.exists() || spreadsheetFile.length() == 0L) {
-                XSSFWorkbook().use { workbook ->
-                    createSheetWithHeader(workbook, CASES_SHEET_NAME, CASES_HEADER)
-                    createSheetWithHeader(workbook, EVIDENCE_SHEET_NAME, EVIDENCE_HEADER)
-                    createSheetWithHeader(workbook, ALLEGATIONS_SHEET_NAME, ALLEGATIONS_HEADER)
-                    createSheetWithHeader(workbook, TRANSCRIPT_EDITS_SHEET_NAME, TRANSCRIPT_EDITS_HEADER)
-                    createSheetWithHeader(workbook, EXHIBITS_SHEET_NAME, EXHIBITS_HEADER)
-
-                    FileOutputStream(spreadsheetFile).use { fos -> workbook.write(fos) }
-                }
-            } else {
-                FileInputStream(spreadsheetFile).use { fis ->
-                    XSSFWorkbook(fis).use { workbook ->
-                        var modified = false
-                        if (workbook.getSheet(CASES_SHEET_NAME) == null) {
-                            createSheetWithHeader(workbook, CASES_SHEET_NAME, CASES_HEADER)
-                            modified = true
-                        }
-                        if (workbook.getSheet(EVIDENCE_SHEET_NAME) == null) {
-                            createSheetWithHeader(workbook, EVIDENCE_SHEET_NAME, EVIDENCE_HEADER)
-                            modified = true
-                        }
-                        if (workbook.getSheet(ALLEGATIONS_SHEET_NAME) == null) {
-                            createSheetWithHeader(workbook, ALLEGATIONS_SHEET_NAME, ALLEGATIONS_HEADER)
-                            modified = true
-                        }
-                        if (workbook.getSheet(TRANSCRIPT_EDITS_SHEET_NAME) == null) {
-                            createSheetWithHeader(workbook, TRANSCRIPT_EDITS_SHEET_NAME, TRANSCRIPT_EDITS_HEADER)
-                            modified = true
-                        }
-                        if (workbook.getSheet(EXHIBITS_SHEET_NAME) == null) {
-                            createSheetWithHeader(workbook, EXHIBITS_SHEET_NAME, EXHIBITS_HEADER)
-                            modified = true
-                        }
-
-                        if (modified) {
-                            FileOutputStream(spreadsheetFile).use { fos -> workbook.write(fos) }
-                        }
-                    }
-                }
-            }
-        } catch (e: Exception) {
             e.printStackTrace()
         }
     }
@@ -445,7 +140,8 @@ class LocalFileStorageService @Inject constructor(
                 XSSFWorkbook()
             }
             val result = block(workbook)
-            FileOutputStream(spreadsheetFile).use { workbook.write(it) }
+            FileOutputStream(spreadsheetFile).use { workbook.write(it) } // Ensure workbook is saved after modification
+            workbook.close() // Close workbook after use
             Result.Success(result)
         } catch (e: Exception) {
             Result.Error(e)
@@ -849,7 +545,7 @@ class LocalFileStorageService @Inject constructor(
             it.createRow(0).apply { TRANSCRIPT_EDITS_HEADER.forEachIndexed { index, s -> createCell(index).setCellValue(s) } }
         }
         editsSheet.createRow(editsSheet.physicalNumberOfRows).apply {
-            createCell(0).setCellValue((editsSheet.physicalNumberOfRows).toDouble())
+            createCell(0).setCellValue((editsSheet.physicalNumberOfRows).toDouble()) // Assuming EditID is just row number for simplicity
             createCell(1).setCellValue(evidence.id.toDouble())
             createCell(2).setCellValue(System.currentTimeMillis().toDouble())
             createCell(3).setCellValue(reason)
@@ -869,7 +565,7 @@ class LocalFileStorageService @Inject constructor(
         return if (cloudStorageProvider != null) {
             syncManager.synchronize(cloudStorageProvider, this)
         } else {
-            Result.Success(Unit)
+            Result.Success(Unit) // Return Success if no provider is selected
         }
     }
 }
