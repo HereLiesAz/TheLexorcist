@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.hereliesaz.lexorcist.data.CaseAllegationSelectionRepository
 import com.hereliesaz.lexorcist.data.CaseRepository
 import com.hereliesaz.lexorcist.data.MasterAllegation
-import com.hereliesaz.lexorcist.data.MasterAllegationRepository
+import com.hereliesaz.lexorcist.data.repository.LegalRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -22,7 +22,7 @@ enum class AllegationSortType {
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class MasterAllegationsViewModel @Inject constructor(
-    private val masterAllegationRepository: MasterAllegationRepository,
+    private val legalRepository: LegalRepository,
     private val caseAllegationSelectionRepository: CaseAllegationSelectionRepository,
     private val caseRepository: CaseRepository,
 ) : ViewModel() {
@@ -75,10 +75,11 @@ class MasterAllegationsViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            // Load master allegations once
-            _masterAllegations.value = masterAllegationRepository.getMasterAllegations().firstOrNull() ?: emptyList()
-
-            // Observe the selected case and load its allegations
+            legalRepository.getMasterAllegations().collect {
+                _masterAllegations.value = it
+            }
+        }
+        viewModelScope.launch {
             caseRepository.selectedCase.collectLatest { case ->
                 if (case != null) {
                     val selected = caseAllegationSelectionRepository.getSelectedAllegations(case.spreadsheetId).firstOrNull() ?: emptyList()
