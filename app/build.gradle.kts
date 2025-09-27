@@ -244,7 +244,7 @@ dependencies {
     implementation(libs.dropbox.android.sdk)
 
     // Microsoft Graph SDK for OneDrive & MSAL for Authentication
-    implementation(libs.microsoft.graph.core)
+    // implementation(libs.microsoft.graph.core) // REMOVED
     implementation(libs.microsoft.graph)
     implementation(libs.msal)    // CORRECTED from msal4j
     // Jakarta Mail for IMAP

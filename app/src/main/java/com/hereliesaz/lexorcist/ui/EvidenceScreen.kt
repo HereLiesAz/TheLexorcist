@@ -280,16 +280,16 @@ fun EvidenceScreen(
                     onDismiss = { showOutlookImportDialog = false },
                     onImport = { from, subject, before, after ->
                         showOutlookImportDialog = false
-                        val outlookState = authViewModel.outlookSignInState.value
-                        if (outlookState is com.hereliesaz.lexorcist.model.OutlookSignInState.Success) {
+                        // val outlookState = authViewModel.outlookSignInState.value // No longer needed here
+                        // if (outlookState is com.hereliesaz.lexorcist.model.OutlookSignInState.Success) { // Check is inside ViewModel
                             caseViewModel.importOutlookEmails(
-                                accessToken = outlookState.accessToken,
+                                // accessToken = outlookState.accessToken, // REMOVED - ViewModel handles token access
                                 from = from,
                                 subject = subject,
                                 before = before,
                                 after = after
                             )
-                        }
+                        // }
                     }
                 )
             }
