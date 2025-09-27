@@ -8,6 +8,7 @@ import androidx.activity.viewModels
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.core.view.WindowCompat // Added import
 import androidx.navigation.compose.rememberNavController
 import com.dropbox.core.android.Auth
 import com.hereliesaz.lexorcist.data.SettingsManager
@@ -41,6 +42,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        WindowCompat.setDecorFitsSystemWindows(window, false) // Added for edge-to-edge
         super.onCreate(savedInstanceState)
         currentLanguage = settingsManager.getLanguage()
 
