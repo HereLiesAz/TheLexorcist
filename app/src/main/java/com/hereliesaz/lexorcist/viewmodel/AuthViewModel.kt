@@ -62,8 +62,7 @@ class AuthViewModel
         private val _signInState = MutableStateFlow<SignInState>(SignInState.Idle)
         val signInState: StateFlow<SignInState> = _signInState.asStateFlow()
 
-        private val _outlookSignInState = MutableStateFlow<OutlookSignInState>(OutlookSignInState.Idle)
-        val outlookSignInState: StateFlow<OutlookSignInState> = _outlookSignInState.asStateFlow()
+        val outlookSignInState: StateFlow<OutlookSignInState> = outlookAuthManager.outlookSignInState
 
         companion object {
             private const val TAG = "AuthViewModel"
@@ -267,14 +266,11 @@ class AuthViewModel
 
         fun signInWithOutlook(activity: Activity) {
             viewModelScope.launch {
-                _outlookSignInState.value = OutlookSignInState.InProgress
                 try {
-                    val result = outlookAuthManager.acquireToken(activity)
-                    _outlookSignInState.value = OutlookSignInState.Success(result.account.username, result.accessToken)
-                } catch (e: com.microsoft.identity.client.exception.MsalException) {
-                    _outlookSignInState.value = OutlookSignInState.Error("Authentication failed: ${e.message}", e)
+                    outlookAuthManager.acquireToken(activity)
                 } catch (e: Exception) {
-                    _outlookSignInState.value = OutlookSignInState.Error("An unexpected error occurred during sign-in.", e)
+                    Log.e(TAG, "Error during Outlook sign-in", e)
+                    // The state is already updated in the manager, just log here.
                 }
             }
         }
@@ -283,10 +279,9 @@ class AuthViewModel
             viewModelScope.launch {
                 try {
                     outlookAuthManager.signOut()
-                    _outlookSignInState.value = OutlookSignInState.Idle
-                } catch (e: com.microsoft.identity.client.exception.MsalException) {
+                } catch (e: Exception) {
                     Log.e(TAG, "Error signing out from Outlook", e)
-                    _outlookSignInState.value = OutlookSignInState.Error("Error during sign out.", e)
+                    // The state is already updated in the manager, just log here.
                 }
             }
         }
