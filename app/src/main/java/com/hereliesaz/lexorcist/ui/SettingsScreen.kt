@@ -60,6 +60,7 @@ import com.hereliesaz.aznavrail.AzCycler
 import com.hereliesaz.lexorcist.ui.components.AzAlertDialog
 import com.hereliesaz.lexorcist.ui.theme.ThemeMode
 import com.hereliesaz.lexorcist.viewmodel.AuthViewModel
+import com.hereliesaz.lexorcist.model.OutlookSignInState
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 import com.hereliesaz.lexorcist.viewmodel.OneDriveViewModel
@@ -371,6 +372,55 @@ fun SettingsScreen(
                         onClick = {
                             if (activity != null) {
                                 oneDriveViewModel.connectToOneDrive(activity)
+                            }
+                        },
+                        text = stringResource(R.string.retry).uppercase(Locale.getDefault())
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+            HorizontalDivider()
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Outlook
+            Text(
+                text = "Outlook",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            val outlookSignInState by authViewModel.outlookSignInState.collectAsState()
+
+            when (val stateVal = outlookSignInState) {
+                is OutlookSignInState.Idle -> {
+                    AzButton(
+                        onClick = {
+                            if (activity != null) {
+                                authViewModel.signInWithOutlook(activity)
+                            }
+                        },
+                        text = "Connect to Outlook".uppercase(Locale.getDefault())
+                    )
+                }
+                is OutlookSignInState.InProgress -> {
+                    com.hereliesaz.lexorcist.ui.components.NewLexorcistLoadingIndicator()
+                }
+                is OutlookSignInState.Success -> {
+                    Text("Connected as: ${stateVal.accountName ?: "Unknown"}")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    AzButton(
+                        onClick = { authViewModel.signOutFromOutlook() },
+                        text = "Disconnect from Outlook".uppercase(Locale.getDefault())
+                    )
+                }
+                is OutlookSignInState.Error -> {
+                    Text("Error: ${stateVal.message ?: "Unknown error"}")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    AzButton(
+                        onClick = {
+                            if (activity != null) {
+                                authViewModel.signInWithOutlook(activity)
                             }
                         },
                         text = stringResource(R.string.retry).uppercase(Locale.getDefault())

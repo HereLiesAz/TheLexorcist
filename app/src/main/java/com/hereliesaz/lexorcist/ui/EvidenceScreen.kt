@@ -37,7 +37,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.hereliesaz.lexorcist.ui.components.ChatHistoryImportDialog
+import com.hereliesaz.lexorcist.ui.components.GmailImportDialog
 import androidx.compose.ui.Alignment
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.hereliesaz.lexorcist.model.OutlookSignInState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -61,9 +64,12 @@ fun EvidenceScreen(
     navController: NavController,
     caseViewModel: CaseViewModel,
     mainViewModel: MainViewModel,
+    authViewModel: com.hereliesaz.lexorcist.viewmodel.AuthViewModel = hiltViewModel()
 ) {
     var showAddTextEvidence by remember { mutableStateOf(false) }
     var showChatImportDialog by remember { mutableStateOf(false) }
+    var showGmailImportDialog by remember { mutableStateOf(false) }
+    var showOutlookImportDialog by remember { mutableStateOf(false) }
     var text by remember { mutableStateOf("") }
     val evidenceList by caseViewModel.selectedCaseEvidenceList.collectAsState()
     val videoProcessingProgress by caseViewModel.videoProcessingProgress.collectAsState()
@@ -220,6 +226,19 @@ fun EvidenceScreen(
                     LexorcistOutlinedButton(onClick = { requestCallLogPermissionLauncher.launch(Manifest.permission.READ_CALL_LOG) }, text = stringResource(R.string.import_call_log).uppercase(Locale.getDefault()))
                     LexorcistOutlinedButton(onClick = { requestLocationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION) }, text = stringResource(R.string.import_location).uppercase(Locale.getDefault()))
                     LexorcistOutlinedButton(onClick = { showChatImportDialog = true }, text = stringResource(R.string.import_chat_history).uppercase(Locale.getDefault()))
+                    LexorcistOutlinedButton(onClick = { showGmailImportDialog = true }, text = stringResource(R.string.import_from_gmail).uppercase(Locale.getDefault()))
+                    val outlookSignInState by authViewModel.outlookSignInState.collectAsState()
+                    LexorcistOutlinedButton(
+                        onClick = {
+                            if (outlookSignInState is OutlookSignInState.Success) {
+                                showOutlookImportDialog = true
+                            } else {
+                                // Optionally, show a snackbar or message to the user
+                            }
+                        },
+                        text = stringResource(R.string.import_from_outlook).uppercase(Locale.getDefault()),
+                        enabled = outlookSignInState is OutlookSignInState.Success
+                    )
                 }
             }
 
@@ -229,6 +248,36 @@ fun EvidenceScreen(
                     onImport = { uri ->
                         showChatImportDialog = false
                         caseViewModel.importChatHistory(uri)
+                    }
+                )
+            }
+
+            if (showGmailImportDialog) {
+                GmailImportDialog(
+                    onDismiss = { showGmailImportDialog = false },
+                    onImport = { from, subject, before, after ->
+                        showGmailImportDialog = false
+                        caseViewModel.importEmails(
+                            from = from,
+                            subject = subject,
+                            before = before,
+                            after = after
+                        )
+                    }
+                )
+            }
+
+            if (showOutlookImportDialog) {
+                GmailImportDialog(
+                    onDismiss = { showOutlookImportDialog = false },
+                    onImport = { from, subject, before, after ->
+                        showOutlookImportDialog = false
+                        caseViewModel.importOutlookEmails(
+                            from = from,
+                            subject = subject,
+                            before = before,
+                            after = after
+                        )
                     }
                 )
             }
