@@ -115,6 +115,70 @@ class LocalFileStorageService @Inject constructor(
         }
     }
 
+    init {
+        // Ensure the spreadsheet is initialized when the service is created.
+        initializeSpreadsheet()
+    }
+
+    private fun initializeSpreadsheet() {
+        try {
+            if (!spreadsheetFile.exists() || spreadsheetFile.length() == 0L) {
+                // If file doesn't exist or is empty, create a new one with all sheets.
+                XSSFWorkbook().use { workbook ->
+                    createSheetWithHeader(workbook, CASES_SHEET_NAME, CASES_HEADER)
+                    createSheetWithHeader(workbook, EVIDENCE_SHEET_NAME, EVIDENCE_HEADER)
+                    createSheetWithHeader(workbook, ALLEGATIONS_SHEET_NAME, ALLEGATIONS_HEADER)
+                    createSheetWithHeader(workbook, TRANSCRIPT_EDITS_SHEET_NAME, TRANSCRIPT_EDITS_HEADER)
+                    createSheetWithHeader(workbook, EXHIBITS_SHEET_NAME, EXHIBITS_HEADER)
+
+                    FileOutputStream(spreadsheetFile).use { fos -> workbook.write(fos) }
+                }
+            } else {
+                // If file exists, open it and check for missing sheets.
+                FileInputStream(spreadsheetFile).use { fis ->
+                    XSSFWorkbook(fis).use { workbook ->
+                        var modified = false
+                        if (workbook.getSheet(CASES_SHEET_NAME) == null) {
+                            createSheetWithHeader(workbook, CASES_SHEET_NAME, CASES_HEADER)
+                            modified = true
+                        }
+                        if (workbook.getSheet(EVIDENCE_SHEET_NAME) == null) {
+                            createSheetWithHeader(workbook, EVIDENCE_SHEET_NAME, EVIDENCE_HEADER)
+                            modified = true
+                        }
+                        if (workbook.getSheet(ALLEGATIONS_SHEET_NAME) == null) {
+                            createSheetWithHeader(workbook, ALLEGATIONS_SHEET_NAME, ALLEGATIONS_HEADER)
+                            modified = true
+                        }
+                        if (workbook.getSheet(TRANSCRIPT_EDITS_SHEET_NAME) == null) {
+                            createSheetWithHeader(workbook, TRANSCRIPT_EDITS_SHEET_NAME, TRANSCRIPT_EDITS_HEADER)
+                            modified = true
+                        }
+                        if (workbook.getSheet(EXHIBITS_SHEET_NAME) == null) {
+                            createSheetWithHeader(workbook, EXHIBITS_SHEET_NAME, EXHIBITS_HEADER)
+                            modified = true
+                        }
+
+                        if (modified) {
+                            FileOutputStream(spreadsheetFile).use { fos -> workbook.write(fos) }
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            // Log this exception, as it's critical for debugging file system issues.
+            e.printStackTrace()
+        }
+    }
+
+    private fun createSheetWithHeader(workbook: XSSFWorkbook, sheetName: String, headers: List<String>) {
+        val sheet = workbook.createSheet(sheetName)
+        val headerRow = sheet.createRow(0)
+        headers.forEachIndexed { index, header ->
+            headerRow.createCell(index).setCellValue(header)
+        }
+    }
+
     companion object {
         private const val CASES_SHEET_NAME = "Cases"
         private const val EVIDENCE_SHEET_NAME = "Evidence"
