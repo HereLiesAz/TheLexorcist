@@ -9,16 +9,16 @@
     <string name="case_name_column">Nombre del caso</string>
     <string name="imported_case_default_name">Caso importado %1$d</string>
     <string name="parse_store_determined_case_name">parseAndStore: Se determinó el nombre del caso a partir de los datos de importación: %1$s</string>
-    <string name="parse_store_case_exists">parseAndStore: Ya existe un caso con el nombre '%1$s' en el registro. Importación cancelada. ID de la hoja de cálculo: %2$s</string>
-    <string name="parse_store_no_existing_case">parseAndStore: No se encontró ningún caso existente con el nombre '%1$s'. Se procederá a crear una nueva estructura de caso.</string>
+    <string name="parse_store_case_exists">parseAndStore: Ya existe un caso con el nombre \'%1$s\' en el registro. Importación cancelada. ID de la hoja de cálculo: %2$s</string>
+    <string name="parse_store_no_existing_case">parseAndStore: No se encontró ningún caso existente con el nombre \'%1$s\'. Se procederá a crear una nueva estructura de caso.</string>
     <string name="parse_store_failed_create_folder">parseAndStore: No se pudo crear la carpeta para el nuevo caso: %1$s</string>
     <string name="parse_store_failed_create_spreadsheet">parseAndStore: No se pudo crear la hoja de cálculo para el nuevo caso: %1$s</string>
     <string name="default_imported_case_script">// Script predeterminado para caso importado
 function onOpen() {}</string>
     <string name="parse_store_created_new_case">parseAndStore: Se creó una nueva estructura de caso: ID de carpeta %1$s, ID de hoja de cálculo %2$s</string>
-    <string name="parse_store_failed_add_case_to_registry">parseAndStore: No se pudo agregar el nuevo caso '%1$s' al registro. Se procederá con la importación de datos a su hoja, pero no se mostrará en la lista hasta que se solucione el problema del registro.</string>
+    <string name="parse_store_failed_add_case_to_registry">parseAndStore: No se pudo agregar el nuevo caso \'%1$s\' al registro. Se procederá con la importación de datos a su hoja, pero no se mostrará en la lista hasta que se solucione el problema del registro.</string>
     <string name="exhibit_matrix_allegations_sheet_name">Matriz de pruebas - Alegaciones</string>
-    <string name="parse_store_failed_add_allegation">parseAndStore: No se pudo agregar la alegación: '%1$s' a %2$s</string>
+    <string name="parse_store_failed_add_allegation">parseAndStore: No se pudo agregar la alegación: \'%1$s\' a %2$s</string>
     <string name="evidence_sheet_name">Prueba</string>
     <string name="imported_evidence_sheet_source">Importado - Hoja de pruebas</string>
     <string name="comma_separator">,</string>
@@ -91,7 +91,7 @@ function onOpen() {}</string>
     <string name="unnamed_template">Plantilla sin nombre (ID: %1$s…)</string>
     <string name="create">Crear</string>
     <string name="cancel">Cancelar</string>
-    <string name="no_cases_found">No se encontraron casos. Haz clic en el botón '+' para crear un nuevo caso.</string>
+    <string name="no_cases_found">No se encontraron casos. Haz clic en el botón \'+\' para crear un nuevo caso.</string>
     <string name="no_cases_match_search">Ningún caso coincide con tu búsqueda.</string>
     <string name="no_cases_found_line1">No se encontraron casos.</string>
     <string name="no_cases_found_line2">Crea un nuevo caso o abre uno existente.</string>
@@ -225,13 +225,13 @@ function onOpen() {}</string>
     <string name="create_case_error_no_api">createCase: Sin servicio de API.</string>
     <string name="create_case_error_app_root">createCase: No se pudo obtener la carpeta raíz de la aplicación.</string>
     <string name="create_case_error_case_registry">createCase: No se pudo obtener el registro de casos.</string>
-    <string name="create_case_error_case_folder">createCase: No se pudo crear la carpeta del caso para '%1$s'.</string>
+    <string name="create_case_error_case_folder">createCase: No se pudo crear la carpeta del caso para \'%1$s\'.</string>
     <string name="create_case_error_download_template">createCase: No se pudo descargar la plantilla HTML (ID: %1$s).</string>
-    <string name="create_case_error_upload_snapshot">createCase: No se pudo subir la instantánea HTML para el caso '%1$s'. Se procederá sin ella.</string>
+    <string name="create_case_error_upload_snapshot">createCase: No se pudo subir la instantánea HTML para el caso \'%1$s\'. Se procederá sin ella.</string>
     <string name="create_case_error_generate_pdf">createCase: No se pudo generar el PDF local a partir del HTML.</string>
     <string name="create_case_error_upload_pdf">createCase: No se pudo subir el PDF generado a la carpeta de Drive %1$s.</string>
-    <string name="create_case_error_create_spreadsheet">createCase: No se pudo crear la hoja de cálculo del caso para '%1$s'.</string>
-    <string name="create_case_error_add_to_registry">No se pudo agregar el caso '%1$s' al registro.</string>
+    <string name="create_case_error_create_spreadsheet">createCase: No se pudo crear la hoja de cálculo del caso para \'%1$s\'.</string>
+    <string name="create_case_error_add_to_registry">No se pudo agregar el caso \'%1$s\' al registro.</string>
     <string name="load_cases_error_no_api">loadCasesFromRegistry: Sin servicio de API.</string>
     <string name="load_templates_error_no_api">loadHtmlTemplates: Sin servicio de API.</string>
     <string name="load_sheet_filters_error_no_api">loadSelectedCaseSheetFilters: Sin servicio de API.</string>

@@ -1,5 +1,5 @@
 {
-  "description": "A deconstructed statistical weighting system, mapping precise evidence combinations from the allegation catalog to outcome probabilities. This model acknowledges the inherent absurdity of predicting legal outcomes by quantifying the narrative power of evidence collections.",
+  "description": "A deconstructed statistical weighting system. This definitive version merges a comprehensive rule set with concrete evidence examples, grounding the absurd project of predictive justice in the tangible details that constitute legal narratives.",
   "weighting_rules": {
     "civil": {
       "002": [
@@ -8,42 +8,36 @@
           "description": "The 'slam dunk': an unambiguous written contract, documented breach, and quantifiable damages.",
           "conditions": {
             "evidence_requirements": [
-              { "subtype": "The contract itself", "count": 1 },
-              { "subtype": "Correspondence about the breach", "count": 1 },
-              { "subtype": "Invoices and payment records", "count": 1 },
-              { "subtype": "Graphs illustrating financial losses", "count": 1 }
+              { "subtype": "The contract itself", "count": 1, "example": "A 20-page, signed, and notarized 'Master Services Agreement' dated January 15, 2024, between Acme Corp. and Widget Inc." },
+              { "subtype": "Correspondence about the breach", "count": 1, "example": "A certified letter dated June 5, 2024, from Acme's counsel to Widget Inc. detailing the breach and demanding cure." },
+              { "subtype": "Invoices and payment records", "count": 1, "example": "A QuickBooks ledger showing Widget Inc.'s payment history, with the last three invoices marked 'overdue by 90 days'." },
+              { "subtype": "Graphs illustrating financial losses", "count": 1, "example": "A bar chart prepared by a forensic accountant showing Acme Corp.'s declining revenue directly correlated with the date of the breach." }
             ]
           },
-          "outcome_probability": {
-            "plaintiff_win": 0.95
-          }
+          "outcome_probability": { "plaintiff_win": 0.95 }
         },
         {
           "rule_id": "BOC_002_ORAL",
           "description": "He-said-she-said elevated by a third party and digital whispers.",
           "conditions": {
             "evidence_requirements": [
-              { "subtype": "Testimony from parties involved", "count": 2 },
-              { "subtype": "Third-party witness testimony", "count": 1 },
-              { "subtype": "Emails or text messages discussing the contract terms or breach", "count": 1 }
+              { "subtype": "Testimony from parties involved", "count": 2, "example": "Deposition transcripts of both CEOs offering conflicting accounts of a verbal agreement allegedly made during a golf game." },
+              { "subtype": "Third-party witness testimony", "count": 1, "example": "Sworn affidavit from the golf caddy who overheard one CEO say, 'It's a deal then.'" },
+              { "subtype": "Emails or text messages discussing the contract terms or breach", "count": 1, "example": "A text message from one CEO to the other reading, 'Looking forward to getting started on that thing we talked about on the 9th hole.'" }
             ]
           },
-          "outcome_probability": {
-            "plaintiff_win": 0.65
-          }
+          "outcome_probability": { "plaintiff_win": 0.65 }
         },
         {
           "rule_id": "BOC_003_AMBIGUOUS",
           "description": "A battle of well-paid experts interpreting contractual tea leaves.",
           "conditions": {
             "evidence_requirements": [
-              { "subtype": "The contract itself", "count": 1 },
-              { "subtype": "Expert testimony on industry standards", "count": 2 }
+              { "subtype": "The contract itself", "count": 1, "example": "A 'Collaboration Agreement' where a key term like 'net profits' is never explicitly defined." },
+              { "subtype": "Expert testimony on industry standards", "count": 2, "example": "Dueling reports from a CPA and a venture capitalist offering conflicting interpretations of standard industry profit-sharing models for such agreements." }
             ]
           },
-          "outcome_probability": {
-            "plaintiff_win": 0.50
-          }
+          "outcome_probability": { "plaintiff_win": 0.50 }
         }
       ],
       "013": [
@@ -52,42 +46,36 @@
           "description": "A clear, demonstrable error supported by a chorus of agreeing experts.",
           "conditions": {
             "evidence_requirements": [
-              { "subtype": "Expert medical testimony for the plaintiff", "count": 2 },
-              { "subtype": "Medical records showing the procedure and outcome", "count": 1 },
-              { "subtype": "Medical illustrations or models showing the injury", "count": 1 }
+              { "subtype": "Expert medical testimony for the plaintiff", "count": 2, "example": "Video depositions from two board-certified surgeons from unaffiliated hospitals stating the defendant's technique deviated from the accepted standard of care." },
+              { "subtype": "Medical records showing the procedure and outcome", "count": 1, "example": "The complete patient chart, including the surgeon's operative notes which describe an 'unanticipated complication'." },
+              { "subtype": "Medical illustrations or models showing the injury", "count": 1, "example": "A 3D animated video demonstrating the correct surgical procedure versus the procedure performed on the plaintiff." }
             ]
           },
-          "outcome_probability": {
-            "plaintiff_win": 0.85
-          }
+          "outcome_probability": { "plaintiff_win": 0.85 }
         },
         {
           "rule_id": "MEDMAL_002_DISPUTED",
           "description": "The 'two schools of thought' defense, where professional disagreement muddies the waters.",
           "conditions": {
             "evidence_requirements": [
-              { "subtype": "Expert medical testimony for the plaintiff", "count": 1 },
-              { "subtype": "Expert medical testimony for the defendant", "count": 1 },
-              { "subtype": "Medical literature supporting both sides", "count": 1 }
+              { "subtype": "Expert medical testimony for the plaintiff", "count": 1, "example": "Testimony from a renowned professor of surgery at a top medical school." },
+              { "subtype": "Expert medical testimony for the defendant", "count": 1, "example": "Conflicting testimony from an equally renowned head of surgery at a competing medical school." },
+              { "subtype": "Medical literature supporting both sides", "count": 1, "example": "Copies of peer-reviewed articles from 'The New England Journal of Medicine' that are presented by each side to support their expert's opinion." }
             ]
           },
-          "outcome_probability": {
-            "plaintiff_win": 0.40
-          }
+          "outcome_probability": { "plaintiff_win": 0.40 }
         },
         {
           "rule_id": "MEDMAL_003_CAUSATION",
           "description": "A recognized breach of care, but a weak link to the plaintiff's ultimate injury.",
           "conditions": {
             "evidence_requirements": [
-              { "subtype": "Expert medical testimony for the plaintiff", "count": 1 },
-              { "subtype": "Medical records showing the procedure and outcome", "count": 1 },
-              { "subtype": "Plaintiff's pre-existing medical records", "count": 1 }
+              { "subtype": "Expert medical testimony for the plaintiff", "count": 1, "example": "An expert report confirming the surgeon nicked a nerve, which is a breach of standard care." },
+              { "subtype": "Medical records showing the procedure and outcome", "count": 1, "example": "Post-operative notes detailing the nerve damage." },
+              { "subtype": "Plaintiff's pre-existing medical records", "count": 1, "example": "Records showing the plaintiff had a history of degenerative disc disease and neuropathy prior to the surgery, which the defense will argue is the true cause of the pain." }
             ]
           },
-          "outcome_probability": {
-            "plaintiff_win": 0.30
-          }
+          "outcome_probability": { "plaintiff_win": 0.30 }
         }
       ],
       "015": [
@@ -96,30 +84,26 @@
           "description": "Negligence captured on camera; a narrative that writes itself.",
           "conditions": {
             "evidence_requirements": [
-              { "subtype": "Video footage of the incident", "count": 1 },
-              { "subtype": "Eyewitness testimony", "count": 1 },
-              { "subtype": "Medical bills and records of injury", "count": 1 },
-              { "subtype": "Accident reports", "count": 1 }
+              { "subtype": "Video footage of the incident", "count": 1, "example": "A bystander's cell phone video showing the defendant's delivery truck running a red light and causing the collision." },
+              { "subtype": "Eyewitness testimony", "count": 1, "example": "Live testimony from the person who filmed the video, confirming its authenticity." },
+              { "subtype": "Medical bills and records of injury", "count": 1, "example": "A binder containing $85,000 in itemized hospital bills and the plaintiff's physical therapy records." },
+              { "subtype": "Accident reports", "count": 1, "example": "The official police report where the responding officer notes the defendant was cited for failure to obey a traffic signal." }
             ]
           },
-          "outcome_probability": {
-            "plaintiff_win": 0.92
-          }
+          "outcome_probability": { "plaintiff_win": 0.92 }
         },
         {
           "rule_id": "NEGL_002_RECON",
           "description": "A case built from the wreckage by an accident reconstructionist.",
           "conditions": {
             "evidence_requirements": [
-              { "subtype": "Plaintiff's testimony", "count": 1 },
-              { "subtype": "Medical bills and records of injury", "count": 1 },
-              { "subtype": "Accident reconstruction expert testimony", "count": 1 },
-              { "subtype": "Photos of the accident scene and property damage", "count": 1 }
+              { "subtype": "Plaintiff's testimony", "count": 1, "example": "Plaintiff's tearful account of the moments leading up to the crash." },
+              { "subtype": "Medical bills and records of injury", "count": 1, "example": "Documentation for two surgeries and ongoing care." },
+              { "subtype": "Accident reconstruction expert testimony", "count": 1, "example": "A report using vehicle crush measurements and physics calculations to estimate the defendant's speed was over 90 mph in a 45 mph zone." },
+              { "subtype": "Photos of the accident scene and property damage", "count": 1, "example": "A series of 50 high-resolution photos showing the mangled vehicles and skid marks on the pavement." }
             ]
           },
-          "outcome_probability": {
-            "plaintiff_win": 0.60
-          }
+          "outcome_probability": { "plaintiff_win": 0.60 }
         }
       ]
     },
@@ -130,30 +114,26 @@
           "description": "The defendant, the accelerant, and the fire, all tied together.",
           "conditions": {
             "evidence_requirements": [
-              { "subtype": "Presence of accelerants at the scene", "count": 1 },
-              { "subtype": "Eyewitness testimony placing defendant at the scene", "count": 1 },
-              { "subtype": "Security camera footage", "count": 1 },
-              { "subtype": "Defendant's fingerprints or DNA on accelerant container", "count": 1 }
+              { "subtype": "Presence of accelerants at the scene", "count": 1, "example": "The fire marshal's report confirming the presence of gasoline residue on samples of carpet from the point of origin." },
+              { "subtype": "Eyewitness testimony placing defendant at the scene", "count": 1, "example": "A neighbor's testimony that they saw the defendant carrying a red gas can into the building 10 minutes before the alarm." },
+              { "subtype": "Security camera footage", "count": 1, "example": "Video from a nearby ATM showing a person matching the defendant's description fleeing the area as smoke begins to appear." },
+              { "subtype": "Defendant's fingerprints or DNA on accelerant container", "count": 1, "example": "A forensic lab report matching the defendant's fingerprints to those found on a discarded lighter fluid can behind the building." }
             ]
           },
-          "outcome_probability": {
-            "prosecution_win": 0.95
-          }
+          "outcome_probability": { "prosecution_win": 0.95 }
         },
         {
           "rule_id": "ARSON_002_FINANCIAL_MOTIVE",
           "description": "Circumstantial case built on financial distress and a timely insurance policy.",
           "conditions": {
             "evidence_requirements": [
-              { "subtype": "Expert testimony from fire investigators ruling out accidental cause", "count": 1 },
-              { "subtype": "Financial records showing defendant's debt", "count": 1 },
-              { "subtype": "Insurance policy on the property", "count": 1 },
-              { "subtype": "Testimony regarding defendant's recent financial statements", "count": 1 }
+              { "subtype": "Expert testimony from fire investigators ruling out accidental cause", "count": 1, "example": "Fire marshal's testimony stating the burn patterns are inconsistent with an electrical fire and point to a liquid accelerant." },
+              { "subtype": "Financial records showing defendant's debt", "count": 1, "example": "Bank statements and dunning letters showing the defendant's business was three months from bankruptcy." },
+              { "subtype": "Insurance policy on the property", "count": 1, "example": "A Lloyd's of London policy showing the defendant doubled the fire coverage one month before the incident." },
+              { "subtype": "Testimony regarding defendant's recent financial statements", "count": 1, "example": "An accountant's testimony that the defendant's personal and business accounts were nearly depleted." }
             ]
           },
-          "outcome_probability": {
-            "prosecution_win": 0.70
-          }
+          "outcome_probability": { "prosecution_win": 0.70 }
         }
       ],
       "077": [
@@ -162,43 +142,37 @@
           "description": "The trifecta: physical evidence, eyewitnesses, and a confession.",
           "conditions": {
             "evidence_requirements": [
-              { "subtype": "Weapon with defendant's fingerprints or DNA", "count": 1 },
-              { "subtype": "Multiple eyewitnesses to the act", "count": 2 },
-              { "subtype": "Defendant's confession to law enforcement", "count": 1 },
-              { "subtype": "Autopsy report confirming cause of death", "count": 1 }
+              { "subtype": "Weapon with defendant's fingerprints or DNA", "count": 1, "example": "The murder weapon, a knife, recovered from the defendant's apartment, with the victim's DNA on the blade and the defendant's fingerprints on the hilt." },
+              { "subtype": "Multiple eyewitnesses to the act", "count": 2, "example": "Testimony from two separate witnesses who saw the defendant arguing with the victim immediately prior to the murder." },
+              { "subtype": "Defendant's confession to law enforcement", "count": 1, "example": "A video-recorded interrogation in which the defendant, after being read his Miranda rights, admits to the crime." },
+              { "subtype": "Autopsy report confirming cause of death", "count": 1, "example": "The medical examiner's report concluding the cause of death was a single stab wound from a blade consistent with the recovered knife." }
             ]
           },
-          "outcome_probability": {
-            "prosecution_win": 0.99
-          }
+          "outcome_probability": { "prosecution_win": 0.99 }
         },
         {
           "rule_id": "HOM_002_CIRCUMSTANTIAL",
           "description": "A narrative of motive, means, and opportunity woven from digital footprints and testimony.",
           "conditions": {
             "evidence_requirements": [
-              { "subtype": "Threatening emails or texts from defendant", "count": 1 },
-              { "subtype": "Cell phone location data placing defendant at the scene", "count": 1 },
-              { "subtype": "Testimony establishing strong motive (e.g., financial gain, jealousy)", "count": 1 },
-              { "subtype": "Ballistics report matching defendant's gun", "count": 1 }
+              { "subtype": "Threatening emails or texts from defendant", "count": 1, "example": "A printout of a text message from the defendant to the victim reading 'You'll regret this.'" },
+              { "subtype": "Cell phone location data placing defendant at the scene", "count": 1, "example": "Cell tower data from Verizon showing the defendant's phone pinged a tower half a mile from the crime scene at the time of death." },
+              { "subtype": "Testimony establishing strong motive (e.g., financial gain, jealousy)", "count": 1, "example": "Testimony from the victim's business partner that the defendant was about to be fired for embezzlement." },
+              { "subtype": "Ballistics report matching defendant's gun", "count": 1, "example": "A state crime lab report showing that the bullet recovered from the body was fired from the defendant's registered handgun." }
             ]
           },
-          "outcome_probability": {
-            "prosecution_win": 0.75
-          }
+          "outcome_probability": { "prosecution_win": 0.75 }
         },
         {
           "rule_id": "HOM_003_SNITCH",
           "description": "A case precariously balanced on the testimony of a compromised informant.",
           "conditions": {
             "evidence_requirements": [
-              { "subtype": "Testimony from a cooperating witness in exchange for a deal", "count": 1 },
-              { "subtype": "Autopsy report confirming cause of death", "count": 1 }
+              { "subtype": "Testimony from a cooperating witness in exchange for a deal", "count": 1, "example": "Testimony from the defendant's cellmate, who is serving time for fraud, claiming the defendant confessed. The cellmate's sentence was reduced in exchange for this testimony." },
+              { "subtype": "Autopsy report confirming cause of death", "count": 1, "example": "The medical examiner's report, which provides no direct link to the defendant." }
             ]
           },
-          "outcome_probability": {
-            "prosecution_win": 0.35
-          }
+          "outcome_probability": { "prosecution_win": 0.35 }
         }
       ],
       "096": [
@@ -207,89 +181,37 @@
           "description": "A clear, documented path from information to trade.",
           "conditions": {
             "evidence_requirements": [
-              { "subtype": "Emails, text messages, or voicemails conveying inside information", "count": 1 },
-              { "subtype": "Brokerage records showing trades made shortly after receiving information", "count": 1 },
-              { "subtype": "Testimony from the source of the inside information", "count": 1 }
+              { "subtype": "Emails, text messages, or voicemails conveying inside information", "count": 1, "example": "An email from a corporate insider to the defendant with the subject 'BIG NEWS!' and the body 'We're getting acquired tomorrow. Mum's the word.'" },
+              { "subtype": "Brokerage records showing trades made shortly after receiving information", "count": 1, "example": "An E-Trade statement showing the defendant purchased 10,000 shares of the company one hour after receiving the email." },
+              { "subtype": "Testimony from the source of the inside information", "count": 1, "example": "Live testimony from the corporate insider, who has received immunity, confirming he sent the email." }
             ]
           },
-          "outcome_probability": {
-            "prosecution_win": 0.90
-          }
+          "outcome_probability": { "prosecution_win": 0.90 }
         },
         {
           "rule_id": "INSTRD_002_PATTERN",
           "description": "A case built on inference, where suspicious patterns must tell the story.",
           "conditions": {
             "evidence_requirements": [
-              { "subtype": "Brokerage records showing unusually timed or sized trades", "count": 1 },
-              { "subtype": "Expert testimony on statistical improbability of the trades", "count": 1 },
-              { "subtype": "Computer logs showing access to confidential files", "count": 1 }
+              { "subtype": "Brokerage records showing unusually timed or sized trades", "count": 1, "example": "Records showing the defendant, for the first time ever, invested their entire portfolio in call options for a single company two days before a surprise merger announcement." },
+              { "subtype": "Expert testimony on statistical improbability of the trades", "count": 1, "example": "A finance professor testifies that the probability of making such a successful and speculative trade without inside knowledge is one in a million." },
+              { "subtype": "Computer logs showing access to confidential files", "count": 1, "example": "IT logs showing the defendant's brother, a VP at the acquired company, accessed the confidential 'Project Phoenix' merger folder 37 times the night before the defendant's trades." }
             ]
           },
-          "outcome_probability": {
-            "prosecution_win": 0.60
-          }
+          "outcome_probability": { "prosecution_win": 0.60 }
         }
       ]
     }
   },
   "modifiers": [
-    {
-      "modifier_id": "MOD_CRIM_NEG_001",
-      "description": "Evidence obtained via illegal search and seizure (Fruit of the Poisonous Tree).",
-      "impact": -0.80,
-      "scope": "evidence_specific",
-      "notes": "Renders a specific piece of evidence worthless and can collapse a case if that evidence was foundational."
-    },
-    {
-      "modifier_id": "MOD_CRIM_POS_001",
-      "description": "Defendant's voluntary, Mirandized, and recorded confession.",
-      "impact": 0.40,
-      "scope": "case_level",
-      "notes": "A powerful modifier, though its impact is lessened by credible claims of coercion or mental incompetence."
-    },
-    {
-      "modifier_id": "MOD_CRIM_NEG_002",
-      "description": "Key prosecution witness has prior perjury conviction.",
-      "impact": -0.25,
-      "scope": "testimonial",
-      "notes": "A gift to the defense. The 'falsus in uno, falsus in omnibus' argument becomes devastatingly effective."
-    },
-    {
-      "modifier_id": "MOD_CRIM_POS_002",
-      "description": "Overwhelming, unrelated 'bad character' evidence admitted against defendant.",
-      "impact": 0.15,
-      "scope": "case_level",
-      "notes": "Despite instructions to the contrary, juries often struggle to separate prior bad acts from the question of guilt in the current case."
-    },
-    {
-      "modifier_id": "MOD_CIVIL_POS_001",
-      "description": "Defendant's documented spoliation of evidence.",
-      "impact": 0.20,
-      "scope": "case_level",
-      "notes": "The adverse inference instruction tells the jury to assume the worst about what was destroyed."
-    },
-    {
-      "modifier_id": "MOD_CIVIL_NEG_001",
-      "description": "Plaintiff's status as a 'vexatious litigant'.",
-      "impact": -0.15,
-      "scope": "case_level",
-      "notes": "Paints the plaintiff as someone who uses the courts as a weapon, undermining their credibility."
-    },
-    {
-      "modifier_id": "MOD_GEN_POS_001",
-      "description": "Key witness for opposing party impeached with prior inconsistent statement.",
-      "impact": 0.15,
-      "scope": "testimonial",
-      "notes": "A classic 'gotcha' moment that can destroy a witness's credibility and the narrative they support."
-    },
-    {
-      "modifier_id": "MOD_GEN_NEG_001",
-      "description": "Binding, on-point, negative precedent from a higher court in the jurisdiction.",
-      "impact": -0.30,
-      "scope": "case_level",
-      "notes": "The legal argument is effectively dead on arrival unless a compelling distinction can be made."
-    }
+    { "modifier_id": "MOD_CRIM_NEG_001", "description": "Evidence obtained via illegal search and seizure (Fruit of the Poisonous Tree).", "impact": -0.80, "scope": "evidence_specific" },
+    { "modifier_id": "MOD_CRIM_POS_001", "description": "Defendant's voluntary, Mirandized, and recorded confession.", "impact": 0.40, "scope": "case_level" },
+    { "modifier_id": "MOD_CRIM_NEG_002", "description": "Key prosecution witness has prior perjury conviction.", "impact": -0.25, "scope": "testimonial" },
+    { "modifier_id": "MOD_CRIM_POS_002", "description": "Overwhelming, unrelated 'bad character' evidence admitted against defendant.", "impact": 0.15, "scope": "case_level" },
+    { "modifier_id": "MOD_CIVIL_POS_001", "description": "Defendant's documented spoliation of evidence.", "impact": 0.20, "scope": "case_level" },
+    { "modifier_id": "MOD_CIVIL_NEG_001", "description": "Plaintiff's status as a 'vexatious litigant'.", "impact": -0.15, "scope": "case_level" },
+    { "modifier_id": "MOD_GEN_POS_001", "description": "Key witness for opposing party impeached with prior inconsistent statement.", "impact": 0.15, "scope": "testimonial" },
+    { "modifier_id": "MOD_GEN_NEG_001", "description": "Binding, on-point, negative precedent from a higher court in the jurisdiction.", "impact": -0.30, "scope": "case_level" }
   ]
 }
 
