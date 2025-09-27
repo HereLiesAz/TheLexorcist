@@ -36,6 +36,7 @@ import android.provider.MediaStore
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.hereliesaz.lexorcist.utils.DataParser
+import com.hereliesaz.lexorcist.utils.EvidenceImporter
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
@@ -67,7 +68,8 @@ constructor(
     private val storageService: com.hereliesaz.lexorcist.data.StorageService,
     private val globalLoadingState: com.hereliesaz.lexorcist.service.GlobalLoadingState,
     private val googleApiService: com.hereliesaz.lexorcist.service.GoogleApiService,
-    private val settingsManager: SettingsManager
+    private val settingsManager: SettingsManager,
+    private val evidenceImporter: EvidenceImporter
 ) : ViewModel() {
     private val sharedPref =
         applicationContext.getSharedPreferences("CaseInfoPrefs", Context.MODE_PRIVATE)
@@ -1388,6 +1390,40 @@ constructor(
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
+            }
+        }
+    }
+
+    fun importSmsEvidence() {
+        viewModelScope.launch {
+            globalLoadingState.pushLoading()
+            try {
+                val smsEvidence = evidenceImporter.importSms()
+                smsEvidence.forEach { evidence ->
+                    evidenceRepository.addEvidence(evidence.copy(caseId = selectedCase.value?.id?.toLong() ?: 0, spreadsheetId = selectedCase.value?.spreadsheetId ?: ""))
+                }
+                _userMessage.value = "Imported ${smsEvidence.size} SMS messages."
+            } catch (e: Exception) {
+                _errorMessage.value = "Failed to import SMS messages: ${e.message}"
+            } finally {
+                globalLoadingState.popLoading()
+            }
+        }
+    }
+
+    fun importCallLogEvidence() {
+        viewModelScope.launch {
+            globalLoadingState.pushLoading()
+            try {
+                val callLogEvidence = evidenceImporter.importCallLog()
+                callLogEvidence.forEach { evidence ->
+                    evidenceRepository.addEvidence(evidence.copy(caseId = selectedCase.value?.id?.toLong() ?: 0, spreadsheetId = selectedCase.value?.spreadsheetId ?: ""))
+                }
+                _userMessage.value = "Imported ${callLogEvidence.size} call log entries."
+            } catch (e: Exception) {
+                _errorMessage.value = "Failed to import call logs: ${e.message}"
+            } finally {
+                globalLoadingState.popLoading()
             }
         }
     }

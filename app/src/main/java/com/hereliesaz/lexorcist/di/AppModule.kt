@@ -15,6 +15,7 @@ import com.hereliesaz.lexorcist.service.ScriptRunner
 // Ensure LegalBertService is here if needed by ScriptRunner, otherwise remove import
 // import com.hereliesaz.lexorcist.service.nlp.LegalBertService 
 import com.hereliesaz.lexorcist.utils.CacheManager
+import com.hereliesaz.lexorcist.utils.EvidenceImporter
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -93,5 +94,11 @@ class AppModule {
         application: Application
     ): GoogleApiService { // com.hereliesaz.lexorcist.service.GoogleApiService
         return GoogleApiService(credentialHolder, application)
+    }
+
+    @Provides
+    @Singleton
+    fun provideEvidenceImporter(@ApplicationContext context: Context): EvidenceImporter {
+        return EvidenceImporter(context.contentResolver)
     }
 }
