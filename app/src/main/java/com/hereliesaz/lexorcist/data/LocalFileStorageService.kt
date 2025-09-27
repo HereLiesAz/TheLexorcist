@@ -48,6 +48,66 @@ class LocalFileStorageService @Inject constructor(
 
     private val spreadsheetFile: File by lazy { File(storageDir, "lexorcist_data.xlsx") }
 
+    init {
+        initializeSpreadsheet()
+    }
+
+    private fun initializeSpreadsheet() {
+        try {
+            if (!spreadsheetFile.exists() || spreadsheetFile.length() == 0L) {
+                XSSFWorkbook().use { workbook ->
+                    createSheetWithHeader(workbook, CASES_SHEET_NAME, CASES_HEADER)
+                    createSheetWithHeader(workbook, EVIDENCE_SHEET_NAME, EVIDENCE_HEADER)
+                    createSheetWithHeader(workbook, ALLEGATIONS_SHEET_NAME, ALLEGATIONS_HEADER)
+                    createSheetWithHeader(workbook, TRANSCRIPT_EDITS_SHEET_NAME, TRANSCRIPT_EDITS_HEADER)
+                    createSheetWithHeader(workbook, EXHIBITS_SHEET_NAME, EXHIBITS_HEADER)
+
+                    FileOutputStream(spreadsheetFile).use { fos -> workbook.write(fos) }
+                }
+            } else {
+                FileInputStream(spreadsheetFile).use { fis ->
+                    XSSFWorkbook(fis).use { workbook ->
+                        var modified = false
+                        if (workbook.getSheet(CASES_SHEET_NAME) == null) {
+                            createSheetWithHeader(workbook, CASES_SHEET_NAME, CASES_HEADER)
+                            modified = true
+                        }
+                        if (workbook.getSheet(EVIDENCE_SHEET_NAME) == null) {
+                            createSheetWithHeader(workbook, EVIDENCE_SHEET_NAME, EVIDENCE_HEADER)
+                            modified = true
+                        }
+                        if (workbook.getSheet(ALLEGATIONS_SHEET_NAME) == null) {
+                            createSheetWithHeader(workbook, ALLEGATIONS_SHEET_NAME, ALLEGATIONS_HEADER)
+                            modified = true
+                        }
+                        if (workbook.getSheet(TRANSCRIPT_EDITS_SHEET_NAME) == null) {
+                            createSheetWithHeader(workbook, TRANSCRIPT_EDITS_SHEET_NAME, TRANSCRIPT_EDITS_HEADER)
+                            modified = true
+                        }
+                        if (workbook.getSheet(EXHIBITS_SHEET_NAME) == null) {
+                            createSheetWithHeader(workbook, EXHIBITS_SHEET_NAME, EXHIBITS_HEADER)
+                            modified = true
+                        }
+
+                        if (modified) {
+                            FileOutputStream(spreadsheetFile).use { fos -> workbook.write(fos) }
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun createSheetWithHeader(workbook: XSSFWorkbook, sheetName: String, headers: List<String>) {
+        val sheet = workbook.createSheet(sheetName)
+        val headerRow = sheet.createRow(0)
+        headers.forEachIndexed { index, header ->
+            headerRow.createCell(index).setCellValue(header)
+        }
+    }
+
     companion object {
         private const val CASES_SHEET_NAME = "Cases"
         private const val EVIDENCE_SHEET_NAME = "Evidence"
@@ -62,7 +122,23 @@ class LocalFileStorageService @Inject constructor(
         private val EXHIBITS_HEADER = listOf("ExhibitID", "CaseID", "Name", "Description", "EvidenceIDs")
     }
 
-    private suspend fun <T> execute(block: (XSSFWorkbook) -> T): Result<T> = withContext(Dispatchers.IO) {
+    private suspend fun <T> readFromSpreadsheet(block: (XSSFWorkbook) -> T): Result<T> = withContext(Dispatchers.IO) {
+        try {
+            if (!spreadsheetFile.exists() || spreadsheetFile.length() == 0L) {
+                return@withContext Result.Success(block(XSSFWorkbook()))
+            }
+            FileInputStream(spreadsheetFile).use { fis ->
+                val workbook = XSSFWorkbook(fis)
+                val result = block(workbook)
+                workbook.close()
+                Result.Success(result)
+            }
+        } catch (e: Exception) {
+            Result.Error(e)
+        }
+    }
+
+    private suspend fun <T> writeToSpreadsheet(block: (XSSFWorkbook) -> T): Result<T> = withContext(Dispatchers.IO) {
         try {
             val workbook = if (spreadsheetFile.exists() && spreadsheetFile.length() > 0) {
                 FileInputStream(spreadsheetFile).use { XSSFWorkbook(it) }
@@ -70,7 +146,8 @@ class LocalFileStorageService @Inject constructor(
                 XSSFWorkbook()
             }
             val result = block(workbook)
-            FileOutputStream(spreadsheetFile).use { workbook.write(it) }
+            FileOutputStream(spreadsheetFile).use { fos -> workbook.write(fos) }
+            workbook.close()
             Result.Success(result)
         } catch (e: Exception) {
             Result.Error(e)
@@ -159,8 +236,8 @@ class LocalFileStorageService @Inject constructor(
 
     // --- Case Implementations ---
 
-    override suspend fun getAllCases(): Result<List<Case>> = execute { workbook ->
-        val sheet = workbook.getSheet(CASES_SHEET_NAME) ?: return@execute emptyList()
+    override suspend fun getAllCases(): Result<List<Case>> = readFromSpreadsheet { workbook ->
+        val sheet = workbook.getSheet(CASES_SHEET_NAME) ?: return@readFromSpreadsheet emptyList()
         (1..sheet.lastRowNum).mapNotNull { i ->
             val row = sheet.getRow(i) ?: return@mapNotNull null
             val spreadsheetId = row.getCell(0)?.stringCellValue ?: ""
@@ -178,8 +255,8 @@ class LocalFileStorageService @Inject constructor(
         }
     }
 
-    override suspend fun getExhibitsForCase(caseSpreadsheetId: String): Result<List<Exhibit>> = execute { workbook ->
-        val sheet = workbook.getSheet(EXHIBITS_SHEET_NAME) ?: return@execute emptyList()
+    override suspend fun getExhibitsForCase(caseSpreadsheetId: String): Result<List<Exhibit>> = readFromSpreadsheet { workbook ->
+        val sheet = workbook.getSheet(EXHIBITS_SHEET_NAME) ?: return@readFromSpreadsheet emptyList()
         (1..sheet.lastRowNum).mapNotNull { i ->
             val row = sheet.getRow(i) ?: return@mapNotNull null
             if (row.getCell(1)?.stringCellValue != caseSpreadsheetId) return@mapNotNull null
@@ -199,7 +276,7 @@ class LocalFileStorageService @Inject constructor(
         }
     }
 
-    override suspend fun addExhibit(caseSpreadsheetId: String, exhibit: Exhibit): Result<Exhibit> = execute { workbook ->
+    override suspend fun addExhibit(caseSpreadsheetId: String, exhibit: Exhibit): Result<Exhibit> = writeToSpreadsheet { workbook ->
         val sheet = workbook.getSheet(EXHIBITS_SHEET_NAME) ?: workbook.createSheet(EXHIBITS_SHEET_NAME).also {
             it.createRow(0).apply { EXHIBITS_HEADER.forEachIndexed { index, s -> createCell(index).setCellValue(s) } }
         }
@@ -217,7 +294,7 @@ class LocalFileStorageService @Inject constructor(
         newExhibit
     }
 
-    override suspend fun updateExhibit(caseSpreadsheetId: String, exhibit: Exhibit): Result<Unit> = execute { workbook ->
+    override suspend fun updateExhibit(caseSpreadsheetId: String, exhibit: Exhibit): Result<Unit> = writeToSpreadsheet { workbook ->
         val sheet = workbook.getSheet(EXHIBITS_SHEET_NAME) ?: throw IOException("Exhibits sheet not found.")
         val row = findRowById(sheet, exhibit.id, 0) ?: throw IOException("Exhibit with id ${exhibit.id} not found.")
         (row.getCell(2) ?: row.createCell(2)).setCellValue(exhibit.name)
@@ -225,7 +302,7 @@ class LocalFileStorageService @Inject constructor(
         (row.getCell(4) ?: row.createCell(4)).setCellValue(exhibit.evidenceIds.joinToString(","))
     }
 
-    override suspend fun deleteExhibit(caseSpreadsheetId: String, exhibit: Exhibit): Result<Unit> = execute { workbook ->
+    override suspend fun deleteExhibit(caseSpreadsheetId: String, exhibit: Exhibit): Result<Unit> = writeToSpreadsheet { workbook ->
         val sheet = workbook.getSheet(EXHIBITS_SHEET_NAME) ?: throw IOException("Exhibits sheet not found.")
         val row = findRowById(sheet, exhibit.id, 0) ?: throw IOException("Exhibit with id ${exhibit.id} not found.")
         sheet.removeRow(row)
@@ -234,7 +311,7 @@ class LocalFileStorageService @Inject constructor(
         }
     }
 
-    override suspend fun createCase(case: Case): Result<Case> = execute { workbook ->
+    override suspend fun createCase(case: Case): Result<Case> = writeToSpreadsheet { workbook ->
         val sheet = workbook.getSheet(CASES_SHEET_NAME) ?: workbook.createSheet(CASES_SHEET_NAME).also {
             it.createRow(0).apply { CASES_HEADER.forEachIndexed { index, s -> createCell(index).setCellValue(s) } }
         }
@@ -253,7 +330,7 @@ class LocalFileStorageService @Inject constructor(
         newCase
     }
 
-    override suspend fun updateCase(case: Case): Result<Unit> = execute { workbook ->
+    override suspend fun updateCase(case: Case): Result<Unit> = writeToSpreadsheet { workbook ->
         val sheet = workbook.getSheet(CASES_SHEET_NAME) ?: throw IOException("Cases sheet not found.")
         val row = findRowById(sheet, case.spreadsheetId, 0) ?: throw IOException("Case with id ${case.spreadsheetId} not found.")
         (row.getCell(1) ?: row.createCell(1)).setCellValue(case.name)
@@ -265,7 +342,7 @@ class LocalFileStorageService @Inject constructor(
         (row.getCell(7) ?: row.createCell(7)).setCellValue(case.isArchived)
     }
 
-    override suspend fun deleteCase(case: Case): Result<Unit> = execute { workbook ->
+    override suspend fun deleteCase(case: Case): Result<Unit> = writeToSpreadsheet { workbook ->
         val sheet = workbook.getSheet(CASES_SHEET_NAME) ?: throw IOException("Cases sheet not found.")
         val row = findRowById(sheet, case.spreadsheetId, 0) ?: throw IOException("Case with id ${case.spreadsheetId} not found.")
         sheet.removeRow(row)
@@ -276,8 +353,8 @@ class LocalFileStorageService @Inject constructor(
 
     // --- Evidence Implementations ---
 
-    override suspend fun getEvidenceForCase(caseSpreadsheetId: String): Result<List<Evidence>> = execute { workbook ->
-        val sheet = workbook.getSheet(EVIDENCE_SHEET_NAME) ?: return@execute emptyList()
+    override suspend fun getEvidenceForCase(caseSpreadsheetId: String): Result<List<Evidence>> = readFromSpreadsheet { workbook ->
+        val sheet = workbook.getSheet(EVIDENCE_SHEET_NAME) ?: return@readFromSpreadsheet emptyList()
         val editsSheet = workbook.getSheet(TRANSCRIPT_EDITS_SHEET_NAME)
 
         val allEdits = editsSheet?.let {
@@ -350,7 +427,7 @@ class LocalFileStorageService @Inject constructor(
         }
     }
 
-    override suspend fun addEvidence(caseSpreadsheetId: String, evidence: Evidence): Result<Evidence> = execute { workbook ->
+    override suspend fun addEvidence(caseSpreadsheetId: String, evidence: Evidence): Result<Evidence> = writeToSpreadsheet { workbook ->
         val sheet = workbook.getSheet(EVIDENCE_SHEET_NAME) ?: workbook.createSheet(EVIDENCE_SHEET_NAME).also {
             it.createRow(0).apply { EVIDENCE_HEADER.forEachIndexed { index, s -> createCell(index).setCellValue(s) } }
         }
@@ -388,7 +465,7 @@ class LocalFileStorageService @Inject constructor(
         newEvidence
     }
 
-    override suspend fun updateEvidence(caseSpreadsheetId: String, evidence: Evidence): Result<Unit> = execute { workbook ->
+    override suspend fun updateEvidence(caseSpreadsheetId: String, evidence: Evidence): Result<Unit> = writeToSpreadsheet { workbook ->
         val sheet = workbook.getSheet(EVIDENCE_SHEET_NAME) ?: throw IOException("Evidence sheet not found.")
         val row = findRowById(sheet, evidence.id, 0) ?: throw IOException("Evidence with id ${evidence.id} not found.")
         (row.getCell(2) ?: row.createCell(2)).setCellValue(evidence.type)
@@ -416,7 +493,7 @@ class LocalFileStorageService @Inject constructor(
         // Note: allegationElementName is not written to the sheet in this implementation
     }
 
-    override suspend fun deleteEvidence(caseSpreadsheetId: String, evidence: Evidence): Result<Unit> = execute { workbook ->
+    override suspend fun deleteEvidence(caseSpreadsheetId: String, evidence: Evidence): Result<Unit> = writeToSpreadsheet { workbook ->
         val sheet = workbook.getSheet(EVIDENCE_SHEET_NAME) ?: throw IOException("Evidence sheet not found.")
         val row = findRowById(sheet, evidence.id, 0) ?: throw IOException("Evidence with id ${evidence.id} not found.")
         sheet.removeRow(row)
@@ -443,8 +520,8 @@ class LocalFileStorageService @Inject constructor(
 
     // --- Allegation Implementations ---
 
-    override suspend fun getAllegationsForCase(caseSpreadsheetId: String): Result<List<Allegation>> = execute { workbook ->
-        val sheet = workbook.getSheet(ALLEGATIONS_SHEET_NAME) ?: return@execute emptyList()
+    override suspend fun getAllegationsForCase(caseSpreadsheetId: String): Result<List<Allegation>> = readFromSpreadsheet { workbook ->
+        val sheet = workbook.getSheet(ALLEGATIONS_SHEET_NAME) ?: return@readFromSpreadsheet emptyList()
         (1..sheet.lastRowNum).mapNotNull { i ->
             val row = sheet.getRow(i) ?: return@mapNotNull null
             if (row.getCell(1)?.stringCellValue != caseSpreadsheetId) return@mapNotNull null
@@ -461,7 +538,7 @@ class LocalFileStorageService @Inject constructor(
         }
     }
 
-    override suspend fun addAllegation(caseSpreadsheetId: String, allegation: Allegation): Result<Allegation> = execute { workbook ->
+    override suspend fun addAllegation(caseSpreadsheetId: String, allegation: Allegation): Result<Allegation> = writeToSpreadsheet { workbook ->
         val sheet = workbook.getSheet(ALLEGATIONS_SHEET_NAME) ?: workbook.createSheet(ALLEGATIONS_SHEET_NAME).also {
             it.createRow(0).apply { ALLEGATIONS_HEADER.forEachIndexed { index, s -> createCell(index).setCellValue(s) } }
         }
@@ -479,7 +556,7 @@ class LocalFileStorageService @Inject constructor(
 
     // --- Transcript Implementations ---
 
-    override suspend fun updateTranscript(evidence: Evidence, newTranscript: String, reason: String): Result<Unit> = execute { workbook ->
+    override suspend fun updateTranscript(evidence: Evidence, newTranscript: String, reason: String): Result<Unit> = writeToSpreadsheet { workbook ->
         val evidenceSheet = workbook.getSheet(EVIDENCE_SHEET_NAME) ?: throw IOException("Evidence sheet not found.")
         val evidenceRow = findRowById(evidenceSheet, evidence.id, 0) ?: throw IOException("Evidence with id ${evidence.id} not found.")
 

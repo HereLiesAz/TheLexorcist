@@ -52,11 +52,8 @@ class MainActivity : ComponentActivity() {
             val themeMode by caseViewModel.themeMode.collectAsState()
             val signInState by authViewModel.signInState.collectAsState()
 
-            LaunchedEffect(signInState) {
-                if (signInState is com.hereliesaz.lexorcist.model.SignInState.Success) {
-                    caseViewModel.loadCasesFromRepository() // Removed mainViewModel
-                }
-            }
+            // The case loading logic has been moved to CasesScreen.kt to ensure it's
+            // loaded every time the screen is displayed and is not dependent on sign-in state.
 
             // Collect the user recoverable auth intent from CaseViewModel
             val userRecoverableIntent by caseViewModel.userRecoverableAuthIntent.collectAsState()
