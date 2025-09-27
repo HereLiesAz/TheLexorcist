@@ -78,6 +78,11 @@ class EvidenceImporter(
         return callLogList
     }
 
+    /**
+     * Fetches the last known location of the device.
+     * Note: This provides a single point-in-time location, not a historical track.
+     * A full location history would require a different approach, such as Google Takeout.
+     */
     @SuppressLint("MissingPermission")
     suspend fun importLocationHistory(): Evidence? = suspendCoroutine { continuation ->
         fusedLocationClient.lastLocation

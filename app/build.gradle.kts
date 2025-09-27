@@ -247,6 +247,9 @@ dependencies {
     implementation(libs.microsoft.graph)
     implementation(libs.microsoft.identity.client)
 
+    // Jakarta Mail for IMAP
+    implementation("com.sun.mail:jakarta.mail:2.0.1")
+
     // Hilt
     implementation(libs.google.dagger.hilt.android)
     ksp(libs.google.dagger.hilt.compiler)

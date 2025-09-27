@@ -8,7 +8,8 @@ import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GmailImportDialog(
+fun EmailImportDialog(
+    title: String,
     onDismiss: () -> Unit,
     onImport: (from: String, subject: String, before: String, after: String) -> Unit
 ) {
@@ -19,7 +20,7 @@ fun GmailImportDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Import from Gmail") },
+        title = { Text(title) },
         text = {
             Column {
                 Text("Enter search criteria to find the emails you want to import.")
