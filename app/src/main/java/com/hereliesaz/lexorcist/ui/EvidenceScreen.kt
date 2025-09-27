@@ -36,6 +36,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import com.hereliesaz.lexorcist.ui.components.ChatHistoryImportDialog
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -62,6 +63,7 @@ fun EvidenceScreen(
     mainViewModel: MainViewModel,
 ) {
     var showAddTextEvidence by remember { mutableStateOf(false) }
+    var showChatImportDialog by remember { mutableStateOf(false) }
     var text by remember { mutableStateOf("") }
     val evidenceList by caseViewModel.selectedCaseEvidenceList.collectAsState()
     val videoProcessingProgress by caseViewModel.videoProcessingProgress.collectAsState()
@@ -217,7 +219,18 @@ fun EvidenceScreen(
                     LexorcistOutlinedButton(onClick = { requestSmsPermissionLauncher.launch(Manifest.permission.READ_SMS) }, text = stringResource(R.string.import_sms).uppercase(Locale.getDefault()))
                     LexorcistOutlinedButton(onClick = { requestCallLogPermissionLauncher.launch(Manifest.permission.READ_CALL_LOG) }, text = stringResource(R.string.import_call_log).uppercase(Locale.getDefault()))
                     LexorcistOutlinedButton(onClick = { requestLocationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION) }, text = stringResource(R.string.import_location).uppercase(Locale.getDefault()))
+                    LexorcistOutlinedButton(onClick = { showChatImportDialog = true }, text = stringResource(R.string.import_chat_history).uppercase(Locale.getDefault()))
                 }
+            }
+
+            if (showChatImportDialog) {
+                ChatHistoryImportDialog(
+                    onDismiss = { showChatImportDialog = false },
+                    onImport = { uri ->
+                        showChatImportDialog = false
+                        caseViewModel.importChatHistory(uri)
+                    }
+                )
             }
 
             Spacer(modifier = Modifier.height(16.dp))

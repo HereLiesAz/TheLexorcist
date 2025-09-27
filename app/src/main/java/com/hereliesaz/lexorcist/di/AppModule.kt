@@ -16,6 +16,7 @@ import com.hereliesaz.lexorcist.service.ScriptRunner
 // import com.hereliesaz.lexorcist.service.nlp.LegalBertService 
 import com.google.android.gms.location.LocationServices
 import com.hereliesaz.lexorcist.utils.CacheManager
+import com.hereliesaz.lexorcist.utils.ChatHistoryParser
 import com.hereliesaz.lexorcist.utils.EvidenceImporter
 import dagger.Module
 import dagger.Provides
@@ -109,5 +110,11 @@ class AppModule {
         fusedLocationProviderClient: com.google.android.gms.location.FusedLocationProviderClient
     ): EvidenceImporter {
         return EvidenceImporter(context.contentResolver, fusedLocationProviderClient)
+    }
+
+    @Provides
+    @Singleton
+    fun provideChatHistoryParser(@ApplicationContext context: Context): ChatHistoryParser {
+        return ChatHistoryParser(context)
     }
 }

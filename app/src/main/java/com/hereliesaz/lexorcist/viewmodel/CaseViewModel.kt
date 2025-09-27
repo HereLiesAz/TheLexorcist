@@ -36,6 +36,7 @@ import android.provider.MediaStore
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.hereliesaz.lexorcist.utils.DataParser
+import com.hereliesaz.lexorcist.utils.ChatHistoryParser
 import com.hereliesaz.lexorcist.utils.EvidenceImporter
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -69,7 +70,8 @@ constructor(
     private val globalLoadingState: com.hereliesaz.lexorcist.service.GlobalLoadingState,
     private val googleApiService: com.hereliesaz.lexorcist.service.GoogleApiService,
     private val settingsManager: SettingsManager,
-    private val evidenceImporter: EvidenceImporter
+    private val evidenceImporter: EvidenceImporter,
+    private val chatHistoryParser: ChatHistoryParser
 ) : ViewModel() {
     private val sharedPref =
         applicationContext.getSharedPreferences("CaseInfoPrefs", Context.MODE_PRIVATE)
@@ -1441,6 +1443,23 @@ constructor(
                 }
             } catch (e: Exception) {
                 _errorMessage.value = "Failed to import location: ${e.message}"
+            } finally {
+                globalLoadingState.popLoading()
+            }
+        }
+    }
+
+    fun importChatHistory(uri: android.net.Uri) {
+        viewModelScope.launch {
+            globalLoadingState.pushLoading()
+            try {
+                val chatEvidence = chatHistoryParser.parse(uri)
+                chatEvidence.forEach { evidence ->
+                    evidenceRepository.addEvidence(evidence.copy(caseId = selectedCase.value?.id?.toLong() ?: 0, spreadsheetId = selectedCase.value?.spreadsheetId ?: ""))
+                }
+                _userMessage.value = "Imported ${chatEvidence.size} chat messages."
+            } catch (e: Exception) {
+                _errorMessage.value = "Failed to import chat history: ${e.message}"
             } finally {
                 globalLoadingState.popLoading()
             }
