@@ -23,6 +23,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.hereliesaz.aznavrail.AzLoad
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.common.state.SaveState
 import com.hereliesaz.lexorcist.model.Script
@@ -143,7 +144,7 @@ fun ExtrasScreen(
             .padding(paddingValues)) {
             if (isLoading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    com.hereliesaz.azload.CoinTossLoadingIndicator()
+                    AzLoad()
                 }
             } else {
                 val pagerState = rememberPagerState { 2 }

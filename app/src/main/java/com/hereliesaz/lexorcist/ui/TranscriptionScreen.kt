@@ -30,6 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.hereliesaz.aznavrail.AzLoad
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.model.TranscriptEdit
@@ -77,7 +78,7 @@ fun TranscriptionScreen(
         ) {
             when (val state = processingState) {
                 is ProcessingState.InProgress -> {
-                    com.hereliesaz.azload.CoinTossLoadingIndicator()
+                    AzLoad()
                 }
                 is ProcessingState.Failure -> {
                     Text(

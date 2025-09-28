@@ -33,6 +33,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.hereliesaz.aznavrail.AzButton
+import com.hereliesaz.aznavrail.AzLoad
 import com.hereliesaz.lexorcist.model.SignInState
 import com.hereliesaz.lexorcist.ui.AllegationsScreen
 import com.hereliesaz.lexorcist.ui.CasesScreen
@@ -265,7 +266,7 @@ fun MainScreen(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    CoinTossLoadingIndicator()
+                    AzLoad()
                 }
             }
 

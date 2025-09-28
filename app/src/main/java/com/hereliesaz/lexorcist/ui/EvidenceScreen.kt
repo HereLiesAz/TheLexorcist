@@ -58,6 +58,7 @@ import kotlinx.coroutines.flow.collectLatest
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.hereliesaz.aznavrail.AzLoad
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -374,7 +375,7 @@ fun ProcessingProgressView(
                         textAlign = TextAlign.End
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    com.hereliesaz.azload.CoinTossLoadingIndicator(modifier = Modifier.size(24.dp))
+                    AzLoad(modifier = Modifier.size(24.dp))
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 LinearProgressIndicator(

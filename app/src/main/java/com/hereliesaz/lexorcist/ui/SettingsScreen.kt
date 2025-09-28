@@ -56,6 +56,7 @@ import com.hereliesaz.lexorcist.model.LanguageModel
 import com.hereliesaz.lexorcist.model.SignInState
 import com.hereliesaz.aznavrail.AzButton
 import com.hereliesaz.aznavrail.AzCycler
+import com.hereliesaz.aznavrail.AzLoad
 import com.hereliesaz.lexorcist.ui.components.AzAlertDialog
 import com.hereliesaz.lexorcist.ui.theme.ThemeMode
 import com.hereliesaz.lexorcist.viewmodel.AuthViewModel
@@ -403,7 +404,7 @@ fun SettingsScreen(
                     )
                 }
                 is OutlookSignInState.InProgress -> {
-                    com.hereliesaz.azload.CoinTossLoadingIndicator()
+                    AzLoad()
                 }
                 is OutlookSignInState.Success -> {
                     Text("Connected as: ${stateVal.accountName ?: "Unknown"}")
@@ -499,7 +500,7 @@ fun LanguageModelDownloader(
                     style = MaterialTheme.typography.bodySmall
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                com.hereliesaz.azload.CoinTossLoadingIndicator(modifier = Modifier.size(24.dp))
+                AzLoad()
             }
             Spacer(modifier = Modifier.height(8.dp))
             LinearProgressIndicator(
@@ -523,7 +524,7 @@ fun ModelStatusIcon(
             }
         }
         is DownloadState.Downloading -> {
-            com.hereliesaz.azload.CoinTossLoadingIndicator(modifier = Modifier.size(24.dp).padding(8.dp))
+            AzLoad(modifier = Modifier.size(24.dp).padding(8.dp))
         }
         is DownloadState.Downloaded -> {
             Row(verticalAlignment = Alignment.CenterVertically) {

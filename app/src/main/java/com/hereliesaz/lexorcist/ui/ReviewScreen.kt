@@ -50,6 +50,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.hereliesaz.aznavrail.AzLoad
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.data.Allegation
 import com.hereliesaz.lexorcist.data.AllegationElement
@@ -117,7 +118,7 @@ fun ReviewScreen(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center,
                 ) {
-                    com.hereliesaz.azload.CoinTossLoadingIndicator()
+                    AzLoad()
                 }
             } else if (selectedCase == null) {
                 Column(

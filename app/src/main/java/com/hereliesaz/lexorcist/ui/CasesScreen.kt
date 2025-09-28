@@ -50,6 +50,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.hereliesaz.aznavrail.AzLoad
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.data.Case
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
@@ -142,7 +143,7 @@ fun CasesScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    com.hereliesaz.azload.CoinTossLoadingIndicator()
+                    AzLoad()
                 }
             } else if (unarchivedCases.isEmpty()) {
                 Column(
