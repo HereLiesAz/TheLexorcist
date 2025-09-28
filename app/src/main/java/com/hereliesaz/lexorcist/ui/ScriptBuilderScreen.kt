@@ -84,6 +84,18 @@ fun ScriptBuilderScreen(
         }
     }
 
+    LaunchedEffect(Unit) {
+        viewModel.shareScriptEvent.collect { event ->
+            val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(android.content.Intent.EXTRA_EMAIL, arrayOf(event.recipientEmail))
+                putExtra(android.content.Intent.EXTRA_SUBJECT, event.subject)
+                putExtra(android.content.Intent.EXTRA_TEXT, event.body)
+            }
+            context.startActivity(android.content.Intent.createChooser(intent, "Share Script"))
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -114,6 +126,7 @@ fun ScriptBuilderScreen(
             )
             var showLoadDialog by remember { mutableStateOf(false) }
             var showSnippetsDialog by remember { mutableStateOf(false) }
+            var showShareDialog by remember { mutableStateOf(false) }
 
             if (showLoadDialog) {
                 AlertDialog(
@@ -168,6 +181,47 @@ fun ScriptBuilderScreen(
                         AzButton(
                             onClick = { showSnippetsDialog = false },
                             text = "Cancel"
+                        )
+                    }
+                )
+            }
+
+            if (showShareDialog) {
+                var authorName by remember { mutableStateOf("") }
+                var authorEmail by remember { mutableStateOf("") }
+                AlertDialog(
+                    onDismissRequest = { showShareDialog = false },
+                    title = { Text(stringResource(R.string.share_script)) },
+                    text = {
+                        Column {
+                            OutlinedTextField(
+                                value = authorName,
+                                onValueChange = { authorName = it },
+                                label = { Text(stringResource(R.string.your_name)) },
+                                singleLine = true
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            OutlinedTextField(
+                                value = authorEmail,
+                                onValueChange = { authorEmail = it },
+                                label = { Text(stringResource(R.string.your_email)) },
+                                singleLine = true
+                            )
+                        }
+                    },
+                    confirmButton = {
+                        AzButton(
+                            onClick = {
+                                viewModel.shareScript(authorName, authorEmail)
+                                showShareDialog = false
+                            },
+                            text = stringResource(R.string.submit)
+                        )
+                    },
+                    dismissButton = {
+                        AzButton(
+                            onClick = { showShareDialog = false },
+                            text = stringResource(R.string.cancel)
                         )
                     }
                 )
@@ -283,6 +337,10 @@ fun ScriptBuilderScreen(
                 AzButton(
                     onClick = { caseViewModel.rerunAllScriptsOnAllEvidence() },
                     text = "Run"
+                )
+                AzButton(
+                    onClick = { showShareDialog = true },
+                    text = "Share"
                 )
             }
         }

@@ -347,4 +347,8 @@ function onOpen() {}</string>
     <string name="timeline_placeholder_icon_desc">Add Photo</string>
     <string name="timeline_placeholder_tag1">example-tag</string>
     <string name="timeline_placeholder_tag2">another-tag</string>
+    <string name="share_script">Share Script</string>
+    <string name="your_name">Your Name</string>
+    <string name="your_email">Your Email</string>
+    <string name="failed_to_share_script">Failed to share script</string>
 </resources>

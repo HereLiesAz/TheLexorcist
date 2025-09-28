@@ -2,13 +2,14 @@ package com.hereliesaz.lexorcist.auth
 
 import android.app.Application
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
-// import com.hereliesaz.lexorcist.service.GoogleApiService // Removed this import
+import com.hereliesaz.lexorcist.model.UserInfo
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class CredentialHolder @Inject constructor(private val application: Application) {
     var credential: GoogleAccountCredential? = null
+    var userInfo: UserInfo? = null
 
     // Removed the googleApiService getter property
     // val googleApiService: GoogleApiService?

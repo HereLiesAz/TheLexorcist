@@ -19,22 +19,16 @@ class GoogleDriveCloudStorageProvider @Inject constructor(
     @ApplicationContext private val context: Context,
 ) : CloudStorageProvider {
     override suspend fun getCurrentUser(): Result<CloudUser> {
-        // selectedAccount is of type android.accounts.Account?
-        val selectedAccount: android.accounts.Account? = credentialHolder.credential?.selectedAccount
-        return if (selectedAccount != null) {
+        val userInfo = credentialHolder.userInfo
+        return if (userInfo?.email != null) {
             Result.Success(
                 CloudUser(
-                    // android.accounts.Account only has 'name', typically the email.
-                    // Using 'name' for id and displayName as placeholders.
-                    // photoUrl is not available from android.accounts.Account.
-                    id = selectedAccount.name ?: "unknown_id",
-                    email = selectedAccount.name ?: "unknown_email",
-                    displayName = selectedAccount.name ?: "Unknown User (from email)",
-                    photoUrl = null, // Not available from android.accounts.Account
+                    email = userInfo.email,
+                    displayName = userInfo.displayName ?: "Unknown User",
                 ),
             )
         } else {
-            Result.Error(Exception("No signed-in user found."))
+            Result.Error(Exception("No signed-in user found or email is missing."))
         }
     }
 
