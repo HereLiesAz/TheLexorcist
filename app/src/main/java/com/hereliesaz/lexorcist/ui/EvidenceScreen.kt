@@ -37,9 +37,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.hereliesaz.lexorcist.ui.components.ChatHistoryImportDialog
+import com.hereliesaz.lexorcist.ui.components.DateRangePickerDialog
 import com.hereliesaz.lexorcist.ui.components.EmailImportDialog
 import com.hereliesaz.lexorcist.ui.components.ImapImportDialog
 import com.hereliesaz.lexorcist.ui.components.ImportFilterDialog
+import com.hereliesaz.lexorcist.ui.components.LocationHistoryInstructionsDialog
 import androidx.compose.ui.Alignment
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.hereliesaz.lexorcist.model.OutlookSignInState
@@ -75,6 +77,8 @@ fun EvidenceScreen(
     var showOutlookImportDialog by remember { mutableStateOf(false) }
     var showImapImportDialog by remember { mutableStateOf(false) }
     var showImportFilterDialog by remember { mutableStateOf(false) }
+    var showLocationInstructionsDialog by remember { mutableStateOf(false) }
+    var showLocationDateRangeDialog by remember { mutableStateOf(false) }
     var text by remember { mutableStateOf("") }
     val evidenceList by caseViewModel.selectedCaseEvidenceList.collectAsState()
     val videoProcessingProgress by caseViewModel.videoProcessingProgress.collectAsState()
@@ -136,13 +140,15 @@ fun EvidenceScreen(
         }
     }
 
-    val requestLocationPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted: Boolean ->
-        if (isGranted) {
-            caseViewModel.importLocationHistoryEvidence()
-        } else {
-            // Handle permission denial
+    var locationDateRange by remember { mutableStateOf<Pair<Long, Long>?>(null) }
+
+    val locationFilePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let {
+            locationDateRange?.let { (start, end) ->
+                caseViewModel.importLocationHistoryFromFile(it, start, end)
+            }
         }
     }
 
@@ -228,15 +234,16 @@ fun EvidenceScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    LexorcistOutlinedButton(onClick = { showAddTextEvidence = true }, text = "Text".uppercase(Locale.getDefault()))
-                    LexorcistOutlinedButton(onClick = { imagePickerLauncher.launch("image/*") }, text = "Image".uppercase(Locale.getDefault()))
-                    LexorcistOutlinedButton(onClick = { audioPickerLauncher.launch("audio/*") }, text = "Audio".uppercase(Locale.getDefault()))
-                    LexorcistOutlinedButton(onClick = { videoPickerLauncher.launch("video/*") }, text = "Video".uppercase(Locale.getDefault()))
-                    LexorcistOutlinedButton(onClick = { navController.navigate("photo_group") }, text = "Photo".uppercase(Locale.getDefault()))
-                    LexorcistOutlinedButton(onClick = { showImportFilterDialog = true }, text = "Device Records".uppercase(Locale.getDefault()))
-                    LexorcistOutlinedButton(onClick = { requestLocationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION) }, text = "Location".uppercase(Locale.getDefault()))
-                    LexorcistOutlinedButton(onClick = { showChatImportDialog = true }, text = "Messages".uppercase(Locale.getDefault()))
-                    LexorcistOutlinedButton(onClick = { showGmailImportDialog = true }, text = "Gmail".uppercase(Locale.getDefault()))
+                    AzButton(onClick = { showAddTextEvidence = true }, text = "Text".uppercase(Locale.getDefault()))
+                    AzButton(onClick = { imagePickerLauncher.launch("image/*") }, text = "Image".uppercase(Locale.getDefault()))
+                    AzButton(onClick = { audioPickerLauncher.launch("audio/*") }, text = "Audio".uppercase(Locale.getDefault()))
+                    AzButton(onClick = { videoPickerLauncher.launch("video/*") }, text = "Video".uppercase(Locale.getDefault()))
+                    AzButton(onClick = { navController.navigate("photo_group") }, text = "Photo".uppercase(Locale.getDefault()))
+                    AzButton(onClick = { requestSmsPermissionLauncher.launch(Manifest.permission.READ_SMS) }, text = "SMS".uppercase(Locale.getDefault()))
+                    AzButton(onClick = { requestCallLogPermissionLauncher.launch(Manifest.permission.READ_CALL_LOG) }, text = "Calls".uppercase(Locale.getDefault()))
+                    AzButton(onClick = { showLocationInstructionsDialog = true }, text = "Location".uppercase(Locale.getDefault()))
+                    AzButton(onClick = { showChatImportDialog = true }, text = "Messages".uppercase(Locale.getDefault()))
+                    AzButton(onClick = { showGmailImportDialog = true }, text = "Gmail".uppercase(Locale.getDefault()))
                     val outlookSignInState by authViewModel.outlookSignInState.collectAsState()
                     LexorcistOutlinedButton(
                         onClick = {
@@ -270,6 +277,27 @@ fun EvidenceScreen(
                         // The actual import will be triggered by the permission result callbacks,
                         // we need to update the viewmodel to hold these filter values.
                         mainViewModel.setImportFilters(contact, startDate, endDate, importSms, importCalls)
+                    }
+                )
+            }
+
+            if (showLocationInstructionsDialog) {
+                LocationHistoryInstructionsDialog(
+                    onDismiss = { showLocationInstructionsDialog = false },
+                    onImport = {
+                        showLocationInstructionsDialog = false
+                        showLocationDateRangeDialog = true
+                    }
+                )
+            }
+
+            if (showLocationDateRangeDialog) {
+                DateRangePickerDialog(
+                    onDismiss = { showLocationDateRangeDialog = false },
+                    onConfirm = { startDate, endDate ->
+                        showLocationDateRangeDialog = false
+                        locationDateRange = startDate to endDate
+                        locationFilePickerLauncher.launch("application/json")
                     }
                 )
             }
