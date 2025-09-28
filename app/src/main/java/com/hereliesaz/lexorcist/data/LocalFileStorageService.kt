@@ -10,6 +10,7 @@ import com.hereliesaz.lexorcist.utils.Result
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.apache.poi.openxml4j.exceptions.NotOfficeXmlFileException
 import org.apache.poi.ss.usermodel.Cell
 import org.apache.poi.ss.usermodel.CellType
 import org.apache.poi.ss.usermodel.Row
@@ -112,7 +113,7 @@ class LocalFileStorageService @Inject constructor(
                         }
                     }
                 } catch (zipEx: ZipException) {
-                    Log.w("LocalFileStorageService", "Spreadsheet file '${spreadsheetFile.absolutePath}' is corrupted. Deleting and creating a new one.", zipEx)
+                    Log.w("LocalFileStorageService", "Spreadsheet file '${spreadsheetFile.absolutePath}' is corrupted (ZipException). Deleting and creating a new one.", zipEx)
                     try {
                         if (spreadsheetFile.exists()) {
                             spreadsheetFile.delete()
@@ -120,7 +121,18 @@ class LocalFileStorageService @Inject constructor(
                         createNewSpreadsheet()
                     } catch (delEx: Exception) {
                         Log.e("LocalFileStorageService", "Failed to delete corrupted spreadsheet file '${spreadsheetFile.absolutePath}' or create a new one.", delEx)
-                        throw RuntimeException("Corrupted spreadsheet encountered, failed to delete it and/or create a new one.", delEx)
+                        throw RuntimeException("Corrupted spreadsheet (ZipException) encountered, failed to delete it and/or create a new one.", delEx)
+                    }
+                } catch (noxmlEx: NotOfficeXmlFileException) {
+                    Log.w("LocalFileStorageService", "Spreadsheet file '${spreadsheetFile.absolutePath}' is not a valid OOXML file (NotOfficeXmlFileException). Deleting and creating a new one.", noxmlEx)
+                    try {
+                        if (spreadsheetFile.exists()) {
+                            spreadsheetFile.delete()
+                        }
+                        createNewSpreadsheet()
+                    } catch (delEx: Exception) {
+                        Log.e("LocalFileStorageService", "Failed to delete invalid OOXML spreadsheet file '${spreadsheetFile.absolutePath}' or create a new one.", delEx)
+                        throw RuntimeException("Invalid OOXML spreadsheet encountered, failed to delete it and/or create a new one.", delEx)
                     }
                 }
             }
@@ -538,57 +550,40 @@ class LocalFileStorageService @Inject constructor(
         }
     }
 
-    override suspend fun addEvidence(caseSpreadsheetId: String, evidence: Evidence): Result<Evidence> {
-        val result = addEvidenceList(caseSpreadsheetId, listOf(evidence))
-        return when (result) {
-            is Result.Success -> Result.Success(result.data.first())
-            is Result.Error -> Result.Error(result.exception)
-            is Result.UserRecoverableError -> Result.UserRecoverableError(result.exception)
-            is Result.Loading -> Result.Loading
-        }
-    }
-
-    suspend fun addEvidenceList(caseSpreadsheetId: String, evidenceList: List<Evidence>): Result<List<Evidence>> = writeToSpreadsheet { workbook ->
+    override suspend fun addEvidence(caseSpreadsheetId: String, evidence: Evidence): Result<Evidence> = writeToSpreadsheet { workbook ->
         val sheet = workbook.getSheet(EVIDENCE_SHEET_NAME) ?: workbook.createSheet(EVIDENCE_SHEET_NAME).also {
             it.createRow(0).apply { EVIDENCE_HEADER.forEachIndexed { index, s -> createCell(index).setCellValue(s) } }
         }
-        var lastId = (1..sheet.lastRowNum)
+        val lastId = (1..sheet.lastRowNum)
             .mapNotNull { i -> getIntCellValueSafe(sheet.getRow(i)?.getCell(EVIDENCE_HEADER.indexOf("EvidenceID"))) }
             .maxOrNull() ?: 0
+        val newEvidence = evidence.copy(id = lastId + 1)
         
-        val addedEvidence = mutableListOf<Evidence>()
-
-        evidenceList.forEach { evidence ->
-            lastId++
-            val newEvidence = evidence.copy(id = lastId)
-
-            sheet.createRow(sheet.physicalNumberOfRows).apply {
-                createCell(EVIDENCE_HEADER.indexOf("EvidenceID")).setCellValue(newEvidence.id.toDouble())
-                createCell(EVIDENCE_HEADER.indexOf("CaseID")).setCellValue(caseSpreadsheetId)
-                createCell(EVIDENCE_HEADER.indexOf("Type")).setCellValue(newEvidence.type)
-                createCell(EVIDENCE_HEADER.indexOf("Content")).setCellValue(newEvidence.content)
-                createCell(EVIDENCE_HEADER.indexOf("FormattedContent")).setCellValue(newEvidence.formattedContent)
-                createCell(EVIDENCE_HEADER.indexOf("MediaUri")).setCellValue(newEvidence.mediaUri)
-                createCell(EVIDENCE_HEADER.indexOf("Timestamp")).setCellValue(newEvidence.timestamp.toDouble())
-                createCell(EVIDENCE_HEADER.indexOf("SourceDocument")).setCellValue(newEvidence.sourceDocument)
-                createCell(EVIDENCE_HEADER.indexOf("DocumentDate")).setCellValue(newEvidence.documentDate.toDouble())
-                val allegationCell = createCell(EVIDENCE_HEADER.indexOf("AllegationID"))
-                newEvidence.allegationId?.let {
-                    allegationCell.setCellValue(it)
-                } ?: allegationCell.setBlank()
-                createCell(EVIDENCE_HEADER.indexOf("Category")).setCellValue(newEvidence.category)
-                createCell(EVIDENCE_HEADER.indexOf("Tags")).setCellValue(newEvidence.tags.joinToString(","))
-                createCell(EVIDENCE_HEADER.indexOf("Commentary")).setCellValue(newEvidence.commentary ?: "")
-                createCell(EVIDENCE_HEADER.indexOf("LinkedEvidenceIDs")).setCellValue(newEvidence.linkedEvidenceIds.joinToString(","))
-                createCell(EVIDENCE_HEADER.indexOf("ParentVideoID")).setCellValue(newEvidence.parentVideoId ?: "")
-                createCell(EVIDENCE_HEADER.indexOf("Entities")).setCellValue(gson.toJson(newEvidence.entities))
-                createCell(EVIDENCE_HEADER.indexOf("FileSize")).setCellValue(newEvidence.fileSize.toDouble())
-                createCell(EVIDENCE_HEADER.indexOf("FileHash")).setCellValue(newEvidence.fileHash ?: "")
-                createCell(EVIDENCE_HEADER.indexOf("IsDuplicate")).setCellValue(newEvidence.isDuplicate)
-            }
-            addedEvidence.add(newEvidence)
+        sheet.createRow(sheet.physicalNumberOfRows).apply {
+            createCell(EVIDENCE_HEADER.indexOf("EvidenceID")).setCellValue(newEvidence.id.toDouble())
+            createCell(EVIDENCE_HEADER.indexOf("CaseID")).setCellValue(caseSpreadsheetId)
+            createCell(EVIDENCE_HEADER.indexOf("Type")).setCellValue(newEvidence.type)
+            createCell(EVIDENCE_HEADER.indexOf("Content")).setCellValue(newEvidence.content)
+            createCell(EVIDENCE_HEADER.indexOf("FormattedContent")).setCellValue(newEvidence.formattedContent)
+            createCell(EVIDENCE_HEADER.indexOf("MediaUri")).setCellValue(newEvidence.mediaUri)
+            createCell(EVIDENCE_HEADER.indexOf("Timestamp")).setCellValue(newEvidence.timestamp.toDouble())
+            createCell(EVIDENCE_HEADER.indexOf("SourceDocument")).setCellValue(newEvidence.sourceDocument)
+            createCell(EVIDENCE_HEADER.indexOf("DocumentDate")).setCellValue(newEvidence.documentDate.toDouble())
+            val allegationCell = createCell(EVIDENCE_HEADER.indexOf("AllegationID"))
+            newEvidence.allegationId?.let {
+                allegationCell.setCellValue(it) 
+            } ?: allegationCell.setBlank()
+            createCell(EVIDENCE_HEADER.indexOf("Category")).setCellValue(newEvidence.category)
+            createCell(EVIDENCE_HEADER.indexOf("Tags")).setCellValue(newEvidence.tags.joinToString(","))
+            createCell(EVIDENCE_HEADER.indexOf("Commentary")).setCellValue(newEvidence.commentary ?: "")
+            createCell(EVIDENCE_HEADER.indexOf("LinkedEvidenceIDs")).setCellValue(newEvidence.linkedEvidenceIds.joinToString(","))
+            createCell(EVIDENCE_HEADER.indexOf("ParentVideoID")).setCellValue(newEvidence.parentVideoId ?: "")
+            createCell(EVIDENCE_HEADER.indexOf("Entities")).setCellValue(gson.toJson(newEvidence.entities))
+            createCell(EVIDENCE_HEADER.indexOf("FileSize")).setCellValue(newEvidence.fileSize.toDouble())
+            createCell(EVIDENCE_HEADER.indexOf("FileHash")).setCellValue(newEvidence.fileHash ?: "")
+            createCell(EVIDENCE_HEADER.indexOf("IsDuplicate")).setCellValue(newEvidence.isDuplicate)
         }
-        addedEvidence
+        newEvidence
     }
 
     override suspend fun updateEvidence(caseSpreadsheetId: String, evidence: Evidence): Result<Unit> = writeToSpreadsheet { workbook ->
