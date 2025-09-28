@@ -144,7 +144,7 @@ class LocalFileStorageService @Inject constructor(
         private const val EXHIBITS_SHEET_NAME = "Exhibits"
 
         private val CASES_HEADER = listOf("ID", "Name", "Plaintiffs", "Defendants", "Court", "FolderID", "LastModified", "IsArchived")
-        private val EVIDENCE_HEADER = listOf("EvidenceID", "CaseID", "Type", "Content", "FormattedContent", "MediaUri", "Timestamp", "SourceDocument", "DocumentDate", "AllegationID", "Category", "Tags", "Commentary", "LinkedEvidenceIDs", "ParentVideoID", "Entities")
+        private val EVIDENCE_HEADER = listOf("EvidenceID", "CaseID", "Type", "Content", "FormattedContent", "MediaUri", "Timestamp", "SourceDocument", "DocumentDate", "AllegationID", "Category", "Tags", "Commentary", "LinkedEvidenceIDs", "ParentVideoID", "Entities", "FileSize", "FileHash", "IsDuplicate")
         private val ALLEGATIONS_HEADER = listOf("AllegationID", "CaseID", "Text")
         private val TRANSCRIPT_EDITS_HEADER = listOf("EditID", "EvidenceID", "Timestamp", "Reason", "NewContent")
         private val EXHIBITS_HEADER = listOf("ExhibitID", "CaseID", "Name", "Description", "EvidenceIDs")
@@ -505,14 +505,17 @@ class LocalFileStorageService @Inject constructor(
                 sourceDocument = row.getCell(EVIDENCE_HEADER.indexOf("SourceDocument"))?.stringCellValue ?: "",
                 documentDate = documentDate,
                 allegationId = allegationIdString,
-                allegationElementName = null, 
+                allegationElementName = null,
                 category = row.getCell(EVIDENCE_HEADER.indexOf("Category"))?.stringCellValue ?: "",
                 tags = tags,
                 commentary = row.getCell(EVIDENCE_HEADER.indexOf("Commentary"))?.stringCellValue,
                 linkedEvidenceIds = linkedIds,
                 parentVideoId = row.getCell(EVIDENCE_HEADER.indexOf("ParentVideoID"))?.stringCellValue,
                 entities = entities,
-                transcriptEdits = transcriptEdits
+                transcriptEdits = transcriptEdits,
+                fileSize = getLongCellValueSafe(row.getCell(EVIDENCE_HEADER.indexOf("FileSize"))) ?: 0L,
+                fileHash = row.getCell(EVIDENCE_HEADER.indexOf("FileHash"))?.stringCellValue,
+                isDuplicate = getBooleanCellValueSafe(row.getCell(EVIDENCE_HEADER.indexOf("IsDuplicate"))) ?: false
             )
         }
     }
@@ -546,6 +549,9 @@ class LocalFileStorageService @Inject constructor(
             createCell(EVIDENCE_HEADER.indexOf("LinkedEvidenceIDs")).setCellValue(newEvidence.linkedEvidenceIds.joinToString(","))
             createCell(EVIDENCE_HEADER.indexOf("ParentVideoID")).setCellValue(newEvidence.parentVideoId ?: "")
             createCell(EVIDENCE_HEADER.indexOf("Entities")).setCellValue(gson.toJson(newEvidence.entities))
+            createCell(EVIDENCE_HEADER.indexOf("FileSize")).setCellValue(newEvidence.fileSize.toDouble())
+            createCell(EVIDENCE_HEADER.indexOf("FileHash")).setCellValue(newEvidence.fileHash ?: "")
+            createCell(EVIDENCE_HEADER.indexOf("IsDuplicate")).setCellValue(newEvidence.isDuplicate)
         }
         newEvidence
     }
@@ -575,6 +581,9 @@ class LocalFileStorageService @Inject constructor(
         (row.getCell(EVIDENCE_HEADER.indexOf("LinkedEvidenceIDs")) ?: row.createCell(EVIDENCE_HEADER.indexOf("LinkedEvidenceIDs"))).setCellValue(evidence.linkedEvidenceIds.joinToString(","))
         (row.getCell(EVIDENCE_HEADER.indexOf("ParentVideoID")) ?: row.createCell(EVIDENCE_HEADER.indexOf("ParentVideoID"))).setCellValue(evidence.parentVideoId ?: "")
         (row.getCell(EVIDENCE_HEADER.indexOf("Entities")) ?: row.createCell(EVIDENCE_HEADER.indexOf("Entities"))).setCellValue(gson.toJson(evidence.entities))
+        (row.getCell(EVIDENCE_HEADER.indexOf("FileSize")) ?: row.createCell(EVIDENCE_HEADER.indexOf("FileSize"))).setCellValue(evidence.fileSize.toDouble())
+        (row.getCell(EVIDENCE_HEADER.indexOf("FileHash")) ?: row.createCell(EVIDENCE_HEADER.indexOf("FileHash"))).setCellValue(evidence.fileHash ?: "")
+        (row.getCell(EVIDENCE_HEADER.indexOf("IsDuplicate")) ?: row.createCell(EVIDENCE_HEADER.indexOf("IsDuplicate"))).setCellValue(evidence.isDuplicate)
         Unit
     }
 

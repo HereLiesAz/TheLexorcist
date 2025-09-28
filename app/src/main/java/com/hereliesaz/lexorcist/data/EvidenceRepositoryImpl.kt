@@ -15,7 +15,8 @@ import javax.inject.Singleton
 class EvidenceRepositoryImpl
 @Inject
 constructor(
-    private val storageService: StorageService, // Injected StorageService
+    private val storageService: StorageService,
+    private val localFileStorageService: LocalFileStorageService,
     private val evidenceCacheManager: EvidenceCacheManager,
     private val application: Application,
 ) : EvidenceRepository {
@@ -42,7 +43,7 @@ constructor(
         spreadsheetId: String,
         caseId: Long,
     ) {
-        when (val result = storageService.getEvidenceForCase(spreadsheetId)) {
+        when (val result = localFileStorageService.getEvidenceForCase(spreadsheetId)) {
             is Result.Loading -> { /* Handle loading state, perhaps log or emit a specific UI state */ }
             is Result.Success -> {
                 evidenceCacheManager.saveEvidence(caseId, result.data)
@@ -59,7 +60,7 @@ constructor(
     override fun getEvidence(id: Int): Flow<Evidence> = emptyFlow()
 
     override suspend fun addEvidence(evidence: Evidence): Evidence? {
-        val existingEvidenceResult = storageService.getEvidenceForCase(evidence.spreadsheetId)
+        val existingEvidenceResult = localFileStorageService.getEvidenceForCase(evidence.spreadsheetId)
         val existingEvidence = if (existingEvidenceResult is Result.Success) {
             existingEvidenceResult.data
         } else {
@@ -73,7 +74,7 @@ constructor(
             evidence
         }
 
-        return when (val result = storageService.addEvidence(evidenceToAdd.spreadsheetId, evidenceToAdd)) {
+        return when (val result = localFileStorageService.addEvidence(evidenceToAdd.spreadsheetId, evidenceToAdd)) {
             is Result.Success -> {
                 refreshEvidence(evidenceToAdd.spreadsheetId, evidenceToAdd.caseId)
                 result.data
@@ -83,14 +84,14 @@ constructor(
     }
 
     override suspend fun updateEvidence(evidence: Evidence) {
-        when (storageService.updateEvidence(evidence.spreadsheetId, evidence)) {
+        when (localFileStorageService.updateEvidence(evidence.spreadsheetId, evidence)) {
             is Result.Success -> refreshEvidence(evidence.spreadsheetId, evidence.caseId)
             else -> { /* Handle error */ }
         }
     }
 
     override suspend fun deleteEvidence(evidence: Evidence) {
-        when (storageService.deleteEvidence(evidence.spreadsheetId, evidence)) {
+        when (localFileStorageService.deleteEvidence(evidence.spreadsheetId, evidence)) {
             is Result.Success -> refreshEvidence(evidence.spreadsheetId, evidence.caseId)
             else -> { /* Handle error */ }
         }
@@ -113,7 +114,7 @@ constructor(
         caseSpreadsheetId: String
     ): Result<String> {
         val mimeType = application.contentResolver.getType(uri) ?: "application/octet-stream"
-        return storageService.uploadFile(caseSpreadsheetId, uri, mimeType)
+        return localFileStorageService.uploadFile(caseSpreadsheetId, uri, mimeType)
     }
 
     override suspend fun updateTranscript(
@@ -121,7 +122,7 @@ constructor(
         newTranscript: String,
         reason: String,
     ): Result<Unit> {
-        val result: Result<Unit> = storageService.updateTranscript(evidence, newTranscript, reason)
+        val result: Result<Unit> = localFileStorageService.updateTranscript(evidence, newTranscript, reason)
         if (result is Result.Success) {
             refreshEvidence(evidence.spreadsheetId, evidence.caseId)
         }
@@ -131,24 +132,24 @@ constructor(
     override suspend fun getExhibitsForCase(caseSpreadsheetId: String): Flow<List<Exhibit>> {
         // This is a simple implementation that doesn't cache exhibits.
         // A more robust implementation would cache the exhibits similar to how evidence is cached.
-        return when (val result = storageService.getExhibitsForCase(caseSpreadsheetId)) {
+        return when (val result = localFileStorageService.getExhibitsForCase(caseSpreadsheetId)) {
             is Result.Success -> kotlinx.coroutines.flow.flowOf(result.data)
             else -> emptyFlow()
         }
     }
 
     override suspend fun addExhibit(caseSpreadsheetId: String, exhibit: Exhibit): Exhibit? {
-        return when (val result = storageService.addExhibit(caseSpreadsheetId, exhibit)) {
+        return when (val result = localFileStorageService.addExhibit(caseSpreadsheetId, exhibit)) {
             is Result.Success -> result.data
             else -> null
         }
     }
 
     override suspend fun updateExhibit(caseSpreadsheetId: String, exhibit: Exhibit) {
-        storageService.updateExhibit(caseSpreadsheetId, exhibit)
+        localFileStorageService.updateExhibit(caseSpreadsheetId, exhibit)
     }
 
     override suspend fun deleteExhibit(caseSpreadsheetId: String, exhibit: Exhibit) {
-        storageService.deleteExhibit(caseSpreadsheetId, exhibit)
+        localFileStorageService.deleteExhibit(caseSpreadsheetId, exhibit)
     }
 }
