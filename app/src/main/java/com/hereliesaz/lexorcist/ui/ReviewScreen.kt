@@ -465,13 +465,9 @@ fun EvidenceItem(
                     textAlign = TextAlign.End
                 )
             }
-            Column(horizontalAlignment = Alignment.End) {
-                IconButton(onClick = { onEditClick(evidence) }) {
-                    Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.edit).uppercase(Locale.getDefault()))
-                }
-                IconButton(onClick = { onDeleteClick(evidence) }) {
-                    Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.delete).uppercase(Locale.getDefault()))
-                }
+            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                AzButton(onClick = { onEditClick(evidence) }, text = stringResource(R.string.edit))
+                AzButton(onClick = { onDeleteClick(evidence) }, text = stringResource(R.string.delete))
             }
         }
     }

@@ -33,8 +33,8 @@ import androidx.navigation.NavController
 import com.hereliesaz.aznavrail.AzLoad
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.data.Evidence
+import com.hereliesaz.aznavrail.AzButton
 import com.hereliesaz.lexorcist.model.TranscriptEdit
-import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 import java.text.SimpleDateFormat
@@ -119,17 +119,18 @@ fun TranscriptionScreen(
                             Spacer(modifier = Modifier.height(16.dp))
                         }
 
-                        LexorcistOutlinedButton(
-                            onClick = {
-                                if (isTranscriptChanged) {
-                                    caseViewModel.updateTranscript(evidence, transcript, reason)
-                                }
-                                navController.popBackStack()
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            enabled = !isTranscriptChanged || reason.isNotBlank(),
-                            text = stringResource(if (isTranscriptChanged) R.string.save_edit else R.string.done).uppercase(Locale.getDefault())
-                        )
+                        if (!isTranscriptChanged || reason.isNotBlank()) {
+                            AzButton(
+                                onClick = {
+                                    if (isTranscriptChanged) {
+                                        caseViewModel.updateTranscript(evidence, transcript, reason)
+                                    }
+                                    navController.popBackStack()
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                text = stringResource(if (isTranscriptChanged) R.string.save_edit else R.string.done).uppercase(Locale.getDefault())
+                            )
+                        }
 
                         Spacer(modifier = Modifier.height(16.dp))
 
@@ -178,17 +179,18 @@ fun TranscriptionScreen(
                             Spacer(modifier = Modifier.height(16.dp))
                         }
 
-                        LexorcistOutlinedButton(
-                            onClick = {
-                                if (isTranscriptChanged) {
-                                    caseViewModel.updateTranscript(evidence, transcript, reason)
-                                }
-                                navController.popBackStack()
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            enabled = !isTranscriptChanged || reason.isNotBlank(),
-                            text = stringResource(if (isTranscriptChanged) R.string.save_edit else R.string.done).uppercase(Locale.getDefault())
-                        )
+                        if (!isTranscriptChanged || reason.isNotBlank()) {
+                            AzButton(
+                                onClick = {
+                                    if (isTranscriptChanged) {
+                                        caseViewModel.updateTranscript(evidence, transcript, reason)
+                                    }
+                                    navController.popBackStack()
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                text = stringResource(if (isTranscriptChanged) R.string.save_edit else R.string.done).uppercase(Locale.getDefault())
+                            )
+                        }
 
                         Spacer(modifier = Modifier.height(16.dp))
 
