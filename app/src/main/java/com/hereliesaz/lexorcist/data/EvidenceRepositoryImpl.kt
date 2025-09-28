@@ -60,26 +60,32 @@ constructor(
     override fun getEvidence(id: Int): Flow<Evidence> = emptyFlow()
 
     override suspend fun addEvidence(evidence: Evidence): Evidence? {
-        val existingEvidenceResult = localFileStorageService.getEvidenceForCase(evidence.spreadsheetId)
-        val existingEvidence = if (existingEvidenceResult is Result.Success) {
-            existingEvidenceResult.data
-        } else {
-            emptyList()
-        }
-        val isDuplicate = evidence.fileHash != null && existingEvidence.any { it.fileHash == evidence.fileHash }
-
-        val evidenceToAdd = if (isDuplicate) {
-            evidence.copy(isDuplicate = true)
-        } else {
-            evidence
-        }
-
-        return when (val result = localFileStorageService.addEvidence(evidenceToAdd.spreadsheetId, evidenceToAdd)) {
-            is Result.Success -> {
-                refreshEvidence(evidenceToAdd.spreadsheetId, evidenceToAdd.caseId)
-                result.data
-            }
+        val result = addEvidenceList(listOf(evidence))
+        return when (result) {
+            is Result.Success -> result.data.firstOrNull()
             else -> null
+        }
+    }
+
+    override suspend fun addEvidenceList(evidenceList: List<Evidence>): Result<List<Evidence>> {
+        if (evidenceList.isEmpty()) {
+            return Result.Success(emptyList())
+        }
+        val spreadsheetId = evidenceList.first().spreadsheetId
+        val caseId = evidenceList.first().caseId
+
+        // It's better to cast here to avoid changing the DI graph for a quick fix.
+        val localService = storageService as? LocalFileStorageService
+            ?: return Result.Error(Exception("StorageService is not a LocalFileStorageService, cannot perform batch add."))
+
+        return when (val result = localService.addEvidenceList(spreadsheetId, evidenceList)) {
+            is Result.Success -> {
+                refreshEvidence(spreadsheetId, caseId)
+                Result.Success(result.data)
+            }
+            is Result.Error -> result
+            is Result.UserRecoverableError -> result
+            is Result.Loading -> result
         }
     }
 

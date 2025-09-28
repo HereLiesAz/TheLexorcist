@@ -4,6 +4,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -44,14 +45,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.foundation.layout.width
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import com.hereliesaz.aznavrail.AzButton
 import com.hereliesaz.aznavrail.AzLoad
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.data.Allegation
@@ -128,14 +127,10 @@ fun ReviewScreen(
                         .fillMaxSize()
                         .verticalScroll(rememberScrollState())
                         .padding(horizontal = 16.dp),
-                    horizontalAlignment = Alignment.End,
+                    horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                 ) {
-                    Text(
-                        stringResource(R.string.please_select_case_for_evidence).uppercase(Locale.getDefault()),
-                        textAlign = TextAlign.End,
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    Text(stringResource(R.string.please_select_case_for_evidence).uppercase(Locale.getDefault()))
                 }
             } else if (evidenceList.isEmpty()) {
                 Column(
@@ -144,14 +139,10 @@ fun ReviewScreen(
                         .fillMaxSize()
                         .verticalScroll(rememberScrollState())
                         .padding(horizontal = 16.dp),
-                    horizontalAlignment = Alignment.End,
+                    horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                 ) {
-                    Text(
-                        stringResource(R.string.no_evidence_for_case).uppercase(Locale.getDefault()),
-                        textAlign = TextAlign.End,
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    Text(stringResource(R.string.no_evidence_for_case).uppercase(Locale.getDefault()))
                 }
             } else {
                 Row(
@@ -222,31 +213,35 @@ fun ReviewScreen(
                     }
                 }
 
-                Row(
+                FlowRow(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
+                    horizontalArrangement = Arrangement.End
                 ) {
                     if (selectedAllegation != null && selectedEvidence.isNotEmpty()) {
                         AzButton(
                             onClick = {
                                 caseViewModel.assignAllegationToSelectedEvidence(selectedAllegation!!.id.toString()) // Ensure ID is string
                             },
-                            text = stringResource(R.string.assign_to_allegation)
+                            text = stringResource(R.string.assign_to_allegation),
+                            modifier = Modifier.padding(start = 8.dp)
                         )
                     }
                     AzButton(
                         onClick = { showGenerateDocumentDialog = true },
-                        text = "Generate Document"
+                        text = "Generate",
+                        modifier = Modifier.padding(start = 8.dp)
                     )
                     AzButton(
                         onClick = { showPackageFilesDialog = true },
-                        text = "Package Files"
+                        text = "Package",
+                        modifier = Modifier.padding(start = 8.dp)
                     )
                     AzButton(
                         onClick = { /* caseViewModel.generateReadinessReport() */ },
-                        text = "Readiness Report"
+                        text = "Report",
+                        modifier = Modifier.padding(start = 8.dp)
                     )
                 }
             }
@@ -279,22 +274,10 @@ fun ReviewScreen(
     }
 
     if (showDeleteConfirmDialog && evidenceToDelete != null) {
-        com.hereliesaz.lexorcist.ui.components.AzAlertDialog(
+        AlertDialog(
             onDismissRequest = { showDeleteConfirmDialog = false },
-            title = {
-                Text(
-                    stringResource(R.string.delete_evidence).uppercase(Locale.getDefault()),
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.End
-                )
-            },
-            text = {
-                Text(
-                    stringResource(R.string.delete_evidence_confirmation),
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.End
-                )
-            },
+            title = { Text(stringResource(R.string.delete_evidence).uppercase(Locale.getDefault())) },
+            text = { Text(stringResource(R.string.delete_evidence_confirmation)) },
             confirmButton = {
                 AzButton(onClick = {
                     caseViewModel.deleteEvidence(evidenceToDelete!!)
@@ -349,13 +332,9 @@ fun AllegationElementItem(
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         shape = MaterialTheme.shapes.medium
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp).fillMaxWidth(),
-            horizontalAlignment = Alignment.End
-        ) {
-            Text(element.name, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.End, modifier = Modifier.fillMaxWidth())
-            Text(element.description, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.End, modifier = Modifier.fillMaxWidth())
-            Spacer(modifier = Modifier.height(8.dp))
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(element.name, style = MaterialTheme.typography.titleMedium) // Assuming AllegationElement has .name
+            Text(element.description, style = MaterialTheme.typography.bodyMedium)
             AzButton(onClick = onAssignEvidence, text = "Assign Selected Evidence")
         }
     }
@@ -382,14 +361,12 @@ fun AllegationItem(
             modifier = Modifier
                 .padding(16.dp)
                 .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.End
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = allegation.text,
                 style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.End
+                modifier = Modifier.weight(1f)
             )
         }
     }
@@ -421,11 +398,10 @@ fun EvidenceItem(
                 .padding(16.dp)
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.End
         ) {
             Column(
                 modifier = Modifier.weight(1f),
-                horizontalAlignment = Alignment.End,
+                horizontalAlignment = Alignment.Start,
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Text(
@@ -434,7 +410,6 @@ fun EvidenceItem(
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.End
                 )
                 if (evidence.category.isNotBlank()) {
                     Text(
@@ -442,7 +417,6 @@ fun EvidenceItem(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.End
                     )
                 }
                 if (evidence.tags.isNotEmpty()) {
@@ -452,7 +426,6 @@ fun EvidenceItem(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.End
                     )
                 }
                 Text(
@@ -462,7 +435,6 @@ fun EvidenceItem(
                     overflow = TextOverflow.Ellipsis,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.End
                 )
             }
             Column(horizontalAlignment = Alignment.End) {
@@ -491,15 +463,9 @@ fun EditEvidenceDialog(
     val categories = listOf("Financial", "Communication", "Legal", "Personal", "Other")
     var expanded by remember { mutableStateOf(false) }
 
-    com.hereliesaz.lexorcist.ui.components.AzAlertDialog(
+    AlertDialog(
         onDismissRequest = onDismiss,
-        title = {
-            Text(
-                stringResource(R.string.edit_evidence).uppercase(Locale.getDefault()),
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.End
-            )
-        },
+        title = { Text(stringResource(R.string.edit_evidence).uppercase(Locale.getDefault())) },
         text = {
             Column(
                 modifier = Modifier.verticalScroll(rememberScrollState()),
@@ -512,14 +478,12 @@ fun EditEvidenceDialog(
                     label = { Text(stringResource(R.string.content)) },
                     modifier = Modifier.fillMaxWidth(),
                     maxLines = 5,
-                    textStyle = MaterialTheme.typography.bodyLarge.copy(textAlign = TextAlign.End),
                 )
                 OutlinedTextField(
                     value = sourceDocument,
                     onValueChange = { sourceDocument = it },
                     label = { Text(stringResource(R.string.source_document)) },
                     modifier = Modifier.fillMaxWidth(),
-                    textStyle = MaterialTheme.typography.bodyLarge.copy(textAlign = TextAlign.End),
                 )
                 ExposedDropdownMenuBox(
                     expanded = expanded,
@@ -540,11 +504,10 @@ fun EditEvidenceDialog(
                     ExposedDropdownMenu(
                         expanded = expanded,
                         onDismissRequest = { expanded = false },
-                        modifier = Modifier.fillMaxWidth()
                     ) {
                         categories.forEach { selectionOption ->
                             DropdownMenuItem(
-                                text = { Text(selectionOption, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.End) },
+                                text = { Text(selectionOption) },
                                 onClick = {
                                     category = selectionOption
                                     expanded = false
@@ -558,7 +521,6 @@ fun EditEvidenceDialog(
                     onValueChange = { tags = it },
                     label = { Text(stringResource(R.string.tags_comma_separated)) },
                     modifier = Modifier.fillMaxWidth(),
-                    textStyle = MaterialTheme.typography.bodyLarge.copy(textAlign = TextAlign.End),
                 )
             }
         },
@@ -583,14 +545,14 @@ fun EditEvidenceDialog(
 @Composable
 fun PackageFilesDialog(
     caseViewModel: CaseViewModel,
-    onDismiss: () -> Unit,
+    onDismiss: () -> Unit
 ) {
     val case by caseViewModel.selectedCase.collectAsState()
     val files = remember(case) {
         case?.let {
             val caseDir = java.io.File(caseViewModel.storageLocation.value, it.spreadsheetId) // Assuming spreadsheetId as folder identifier
             if (caseDir.exists() && caseDir.isDirectory) {
-                caseDir.walk().filter { it.isFile }.toList()
+                 caseDir.walk().filter { it.isFile }.toList()
             } else {
                 emptyList()
             }
@@ -600,49 +562,31 @@ fun PackageFilesDialog(
     var packageName by remember { mutableStateOf("") }
     var extension by remember { mutableStateOf("zip") }
 
-    com.hereliesaz.lexorcist.ui.components.AzAlertDialog(
+    AlertDialog(
         onDismissRequest = onDismiss,
-        title = {
-            Text(
-                "Package Files",
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.End
-            )
-        },
+        title = { Text("Package Files") },
         text = {
-            Column(horizontalAlignment = Alignment.End) {
+            Column {
                 OutlinedTextField(
                     value = packageName,
                     onValueChange = { packageName = it },
-                    label = { Text("Package Name") },
-                    modifier = Modifier.fillMaxWidth(),
-                    textStyle = MaterialTheme.typography.bodyLarge.copy(textAlign = TextAlign.End),
+                    label = { Text("Package Name") }
                 )
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.End,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("LEX")
-                    RadioButton(
-                        selected = extension == "lex",
-                        onClick = { extension = "lex" }
-                    )
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Text("ZIP")
+                Row {
                     RadioButton(
                         selected = extension == "zip",
                         onClick = { extension = "zip" }
                     )
+                    Text("ZIP")
+                    RadioButton(
+                        selected = extension == "lex",
+                        onClick = { extension = "lex" }
+                    )
+                    Text("LEX")
                 }
-                LazyColumn(horizontalAlignment = Alignment.End) {
+                LazyColumn {
                     items(files) { file ->
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.End,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text(file.name, textAlign = TextAlign.End)
+                        Row {
                             Checkbox(
                                 checked = selectedFiles.contains(file.absolutePath),
                                 onCheckedChange = {
@@ -653,6 +597,7 @@ fun PackageFilesDialog(
                                     }
                                 }
                             )
+                            Text(file.name)
                         }
                     }
                 }
@@ -679,7 +624,7 @@ fun PackageFilesDialog(
 @Composable
 fun GenerateDocumentDialog(
     caseViewModel: CaseViewModel,
-    onDismiss: () -> Unit,
+    onDismiss: () -> Unit
 ) {
     val exhibits by caseViewModel.exhibits.collectAsState()
     val templates by caseViewModel.htmlTemplates.collectAsState()
@@ -688,17 +633,11 @@ fun GenerateDocumentDialog(
     var exhibitExpanded by remember { mutableStateOf(false) }
     var templateExpanded by remember { mutableStateOf(false) }
 
-    com.hereliesaz.lexorcist.ui.components.AzAlertDialog(
+    AlertDialog(
         onDismissRequest = onDismiss,
-        title = {
-            Text(
-                "Generate Document",
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.End
-            )
-        },
+        title = { Text("Generate Document") },
         text = {
-            Column(horizontalAlignment = Alignment.End) {
+            Column {
                 ExposedDropdownMenuBox(
                     expanded = exhibitExpanded,
                     onExpandedChange = { exhibitExpanded = !exhibitExpanded }
@@ -708,8 +647,7 @@ fun GenerateDocumentDialog(
                         onValueChange = {},
                         readOnly = true,
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = exhibitExpanded) },
-                        modifier = Modifier.menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryEditable, enabled = true).fillMaxWidth(),
-                        textStyle = MaterialTheme.typography.bodyLarge.copy(textAlign = TextAlign.End),
+                        modifier = Modifier.menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryEditable, enabled = true).fillMaxWidth() // Added fillMaxWidth
                     )
                     ExposedDropdownMenu(
                         expanded = exhibitExpanded,
@@ -717,7 +655,7 @@ fun GenerateDocumentDialog(
                     ) {
                         exhibits.forEach { exhibit ->
                             DropdownMenuItem(
-                                text = { Text(exhibit.name, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.End) },
+                                text = { Text(exhibit.name) },
                                 onClick = {
                                     selectedExhibit = exhibit
                                     exhibitExpanded = false
@@ -738,8 +676,7 @@ fun GenerateDocumentDialog(
                         onValueChange = {},
                         readOnly = true,
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = templateExpanded) },
-                        modifier = Modifier.menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryEditable, enabled = true).fillMaxWidth(),
-                        textStyle = MaterialTheme.typography.bodyLarge.copy(textAlign = TextAlign.End),
+                        modifier = Modifier.menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryEditable, enabled = true).fillMaxWidth() // Added fillMaxWidth
                     )
                     ExposedDropdownMenu(
                         expanded = templateExpanded,
@@ -747,7 +684,7 @@ fun GenerateDocumentDialog(
                     ) {
                         templates.forEach { template ->
                             DropdownMenuItem(
-                                text = { Text(template.name, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.End) },
+                                text = { Text(template.name) },
                                 onClick = {
                                     selectedTemplate = template
                                     templateExpanded = false
@@ -759,19 +696,19 @@ fun GenerateDocumentDialog(
             }
         },
         confirmButton = {
-            if (selectedExhibit != null && selectedTemplate != null) {
-                AzButton(
-                    onClick = {
+            AzButton(
+                onClick = {
+                    if (selectedExhibit != null && selectedTemplate != null) {
                         selectedExhibit?.let { exhibit ->
                             selectedTemplate?.let { template ->
                                 caseViewModel.generateDocument(exhibit, template)
                             }
                         }
                         onDismiss()
-                    },
-                    text = "Generate"
-                )
-            }
+                    }
+                },
+                text = "Generate"
+            )
         },
         dismissButton = {
             AzButton(onClick = onDismiss, text = "Cancel")

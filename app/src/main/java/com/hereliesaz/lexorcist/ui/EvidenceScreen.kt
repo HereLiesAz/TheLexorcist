@@ -39,8 +39,9 @@ import androidx.compose.runtime.setValue
 import com.hereliesaz.lexorcist.ui.components.ChatHistoryImportDialog
 import com.hereliesaz.lexorcist.ui.components.EmailImportDialog
 import com.hereliesaz.lexorcist.ui.components.ImapImportDialog
+import com.hereliesaz.lexorcist.ui.components.ImportFilterDialog
 import androidx.compose.ui.Alignment
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel // Updated import
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.hereliesaz.lexorcist.model.OutlookSignInState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -51,7 +52,7 @@ import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.model.LogEntry
 import com.hereliesaz.lexorcist.model.LogLevel // Added import for clarity
 import com.hereliesaz.lexorcist.model.ProcessingState
-import com.hereliesaz.aznavrail.AzButton
+import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 import kotlinx.coroutines.flow.collectLatest
@@ -73,6 +74,7 @@ fun EvidenceScreen(
     var showGmailImportDialog by remember { mutableStateOf(false) }
     var showOutlookImportDialog by remember { mutableStateOf(false) }
     var showImapImportDialog by remember { mutableStateOf(false) }
+    var showImportFilterDialog by remember { mutableStateOf(false) }
     var text by remember { mutableStateOf("") }
     val evidenceList by caseViewModel.selectedCaseEvidenceList.collectAsState()
     val videoProcessingProgress by caseViewModel.videoProcessingProgress.collectAsState()
@@ -112,7 +114,10 @@ fun EvidenceScreen(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
         if (isGranted) {
-            caseViewModel.importSmsEvidence()
+            val contact = mainViewModel.importContact.value
+            val startDate = mainViewModel.importStartDate.value
+            val endDate = mainViewModel.importEndDate.value
+            caseViewModel.importSmsEvidence(contact, startDate, endDate)
         } else {
             // Handle permission denial
         }
@@ -122,7 +127,10 @@ fun EvidenceScreen(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
         if (isGranted) {
-            caseViewModel.importCallLogEvidence()
+            val contact = mainViewModel.importContact.value
+            val startDate = mainViewModel.importStartDate.value
+            val endDate = mainViewModel.importEndDate.value
+            caseViewModel.importCallLogEvidence(contact, startDate, endDate)
         } else {
             // Handle permission denial
         }
@@ -200,7 +208,7 @@ fun EvidenceScreen(
                     textStyle = MaterialTheme.typography.bodyLarge.copy(textAlign = TextAlign.End),
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                AzButton(
+                LexorcistOutlinedButton(
                     onClick = {
                         caseViewModel.addTextEvidence(text, "")
                         text = ""
@@ -209,7 +217,7 @@ fun EvidenceScreen(
                     text = stringResource(R.string.save).uppercase(Locale.getDefault())
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                AzButton(
+                LexorcistOutlinedButton(
                     onClick = { showAddTextEvidence = false },
                     text = stringResource(R.string.cancel).uppercase(Locale.getDefault())
                 )
@@ -220,28 +228,50 @@ fun EvidenceScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    AzButton(onClick = { showAddTextEvidence = true }, text = "Text".uppercase(Locale.getDefault()))
-                    AzButton(onClick = { imagePickerLauncher.launch("image/*") }, text = "Image".uppercase(Locale.getDefault()))
-                    AzButton(onClick = { audioPickerLauncher.launch("audio/*") }, text = "Audio".uppercase(Locale.getDefault()))
-                    AzButton(onClick = { videoPickerLauncher.launch("video/*") }, text = "Video".uppercase(Locale.getDefault()))
-                    AzButton(onClick = { navController.navigate("photo_group") }, text = "Photo".uppercase(Locale.getDefault()))
-                    AzButton(onClick = { requestSmsPermissionLauncher.launch(Manifest.permission.READ_SMS) }, text = "SMS".uppercase(Locale.getDefault()))
-                    AzButton(onClick = { requestCallLogPermissionLauncher.launch(Manifest.permission.READ_CALL_LOG) }, text = "Calls".uppercase(Locale.getDefault()))
-                    AzButton(onClick = { requestLocationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION) }, text = "Location".uppercase(Locale.getDefault()))
-                    AzButton(onClick = { showChatImportDialog = true }, text = "Messages".uppercase(Locale.getDefault()))
-                    AzButton(onClick = { showGmailImportDialog = true }, text = "Gmail".uppercase(Locale.getDefault()))
+                    LexorcistOutlinedButton(onClick = { showAddTextEvidence = true }, text = "Text".uppercase(Locale.getDefault()))
+                    LexorcistOutlinedButton(onClick = { imagePickerLauncher.launch("image/*") }, text = "Image".uppercase(Locale.getDefault()))
+                    LexorcistOutlinedButton(onClick = { audioPickerLauncher.launch("audio/*") }, text = "Audio".uppercase(Locale.getDefault()))
+                    LexorcistOutlinedButton(onClick = { videoPickerLauncher.launch("video/*") }, text = "Video".uppercase(Locale.getDefault()))
+                    LexorcistOutlinedButton(onClick = { navController.navigate("photo_group") }, text = "Photo".uppercase(Locale.getDefault()))
+                    LexorcistOutlinedButton(onClick = { showImportFilterDialog = true }, text = "Device Records".uppercase(Locale.getDefault()))
+                    LexorcistOutlinedButton(onClick = { requestLocationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION) }, text = "Location".uppercase(Locale.getDefault()))
+                    LexorcistOutlinedButton(onClick = { showChatImportDialog = true }, text = "Messages".uppercase(Locale.getDefault()))
+                    LexorcistOutlinedButton(onClick = { showGmailImportDialog = true }, text = "Gmail".uppercase(Locale.getDefault()))
                     val outlookSignInState by authViewModel.outlookSignInState.collectAsState()
-                    if (outlookSignInState is OutlookSignInState.Success) {
-                        AzButton(
-                            onClick = { showOutlookImportDialog = true },
-                            text = "Outlook".uppercase(Locale.getDefault())
-                        )
-                    }
-                    AzButton(
+                    LexorcistOutlinedButton(
+                        onClick = {
+                            if (outlookSignInState is OutlookSignInState.Success) {
+                                showOutlookImportDialog = true
+                            } else {
+                                // Optionally, show a snackbar or message to the user
+                            }
+                        },
+                        text = "Outlook".uppercase(Locale.getDefault()),
+                        enabled = outlookSignInState is OutlookSignInState.Success
+                    )
+                    LexorcistOutlinedButton(
                         onClick = { showImapImportDialog = true },
                         text = "Email".uppercase(Locale.getDefault())
                     )
                 }
+            }
+
+            if (showImportFilterDialog) {
+                ImportFilterDialog(
+                    onDismiss = { showImportFilterDialog = false },
+                    onImport = { contact, startDate, endDate, importSms, importCalls ->
+                        showImportFilterDialog = false
+                        if (importSms) {
+                            requestSmsPermissionLauncher.launch(Manifest.permission.READ_SMS)
+                        }
+                        if (importCalls) {
+                            requestCallLogPermissionLauncher.launch(Manifest.permission.READ_CALL_LOG)
+                        }
+                        // The actual import will be triggered by the permission result callbacks,
+                        // we need to update the viewmodel to hold these filter values.
+                        mainViewModel.setImportFilters(contact, startDate, endDate, importSms, importCalls)
+                    }
+                )
             }
 
             if (showChatImportDialog) {
