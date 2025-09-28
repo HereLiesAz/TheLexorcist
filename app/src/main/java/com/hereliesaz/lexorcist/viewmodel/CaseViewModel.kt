@@ -378,7 +378,6 @@ constructor(
                 _plaintiffs.value = ""
                 _defendants.value = ""
                 _court.value = ""
-                saveCaseInfoToSharedPrefs()
             } finally {
                 globalLoadingState.popLoading()
             }
@@ -656,17 +655,32 @@ constructor(
 
     fun onPlaintiffsChanged(name: String) {
         _plaintiffs.value = name
-        saveCaseInfoToSharedPrefs()
+        viewModelScope.launch {
+            selectedCase.value?.let {
+                val updatedCase = it.copy(plaintiffs = name)
+                caseRepository.updateCase(updatedCase)
+            }
+        }
     }
 
     fun onDefendantsChanged(name: String) {
         _defendants.value = name
-        saveCaseInfoToSharedPrefs()
+        viewModelScope.launch {
+            selectedCase.value?.let {
+                val updatedCase = it.copy(defendants = name)
+                caseRepository.updateCase(updatedCase)
+            }
+        }
     }
 
     fun onCourtSelected(courtName: String) {
         _court.value = courtName
-        saveCaseInfoToSharedPrefs()
+        viewModelScope.launch {
+            selectedCase.value?.let {
+                val updatedCase = it.copy(court = courtName)
+                caseRepository.updateCase(updatedCase)
+            }
+        }
     }
 
     private fun loadJurisdictions() {
@@ -689,15 +703,6 @@ constructor(
                 globalLoadingState.popLoading()
             }
         }
-    }
-
-    private fun saveCaseInfoToSharedPrefs() {
-        sharedPref
-            .edit()
-            .putString("plaintiffs", _plaintiffs.value)
-            .putString("defendants", _defendants.value)
-            .putString("court", _court.value)
-            .apply()
     }
 
     fun archiveCaseWithRepository(case: Case) {

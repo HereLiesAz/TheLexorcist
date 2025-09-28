@@ -62,9 +62,6 @@ This document outlines the features, fixes, and enhancements required to complet
 
 ### **III. Core Functionality & Workflow**
 
-13. **Automatic Saving:**
-    *   Implement a mechanism to automatically save any changes made to a case (e.g., adding evidence, editing a transcript) to the local `lexorcist_data.xlsx` file immediately.
-
 14. **Evidence Processing Pipeline:**
     *   Ensure that text extracted from any evidence source (image, audio, video) is formatted with Markdown code blocks before being saved.
     *   Verify that all raw evidence files are copied into a dedicated "raw" folder within the case directory.

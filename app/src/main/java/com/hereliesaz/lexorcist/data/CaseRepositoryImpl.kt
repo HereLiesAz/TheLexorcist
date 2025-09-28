@@ -198,6 +198,23 @@ class CaseRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun updateCase(case: Case): Result<Unit> {
+        return when (val result = storageService.updateCase(case)) {
+            is Result.Success -> {
+                _cases.update { currentCases ->
+                    currentCases.map { if (it.id == case.id) case else it }
+                }
+                if (_selectedCase.value?.id == case.id) {
+                    _selectedCase.value = case
+                }
+                Result.Success(Unit)
+            }
+            is Result.Error -> Result.Error(result.exception)
+            is Result.UserRecoverableError -> Result.UserRecoverableError(result.exception)
+            is Result.Loading -> Result.Loading
+        }
+    }
+
     override suspend fun importSpreadsheet(spreadsheetId: String): Case? {
         val sheetData = googleApiService.readSpreadsheet(spreadsheetId, isPublic = false)
         if (sheetData.isNullOrEmpty()) {

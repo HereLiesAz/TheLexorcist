@@ -108,14 +108,6 @@ This section involves a systematic audit and update of all UI screens located in
 
 #### **III. Core Functionality & Workflow**
 
-1.  **Automatic Saving:**
-    *   **Goal:** Persist all data changes to the local spreadsheet immediately.
-    *   **Analysis:** The `LocalFileStorageService` is the single source of truth for file I/O. The main issue is that some ViewModels use `SharedPreferences` instead of the `CaseRepository` for persistence.
-    *   **Steps:**
-        1.  Refactor `CaseViewModel`'s `onPlaintiffsChanged`, `onDefendantsChanged`, and `onCourtSelected` methods to update the `Case` object and call `caseRepository.updateCase()`.
-        2.  Remove the now-redundant `saveCaseInfoToSharedPrefs` method.
-        3.  Audit other ViewModels to ensure all data-mutating actions call the appropriate repository method.
-
 2.  **Evidence & Scripting Engine:**
     *   **Evidence Pipeline:** This involves ensuring all text extraction services wrap their output in Markdown and that raw files are copied to a "raw" folder. This logic should be centralized in the evidence import process.
     *   **Scripting Engine:** The `ScriptRunner` needs to be extended to support calls to `GoogleApiService`, and a change-detection mechanism (likely using file/content hashes) must be implemented to avoid redundant script executions.

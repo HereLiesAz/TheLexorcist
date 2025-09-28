@@ -70,6 +70,8 @@ interface CaseRepository {
 
     suspend fun importSpreadsheet(spreadsheetId: String): Case?
 
+    suspend fun updateCase(case: Case): Result<Unit>
+
     suspend fun clearCache()
 
     suspend fun synchronize()
