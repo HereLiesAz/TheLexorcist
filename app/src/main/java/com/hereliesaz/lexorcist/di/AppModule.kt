@@ -26,6 +26,8 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import com.hereliesaz.lexorcist.utils.DispatcherProvider
+import com.hereliesaz.lexorcist.utils.StandardDispatchers
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -34,6 +36,9 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 class AppModule {
+    @Provides
+    @Singleton
+    fun provideDispatcherProvider(): DispatcherProvider = StandardDispatchers()
     @Provides
     @Singleton
     fun provideAllegationProvider(): com.hereliesaz.lexorcist.data.AllegationProvider {
