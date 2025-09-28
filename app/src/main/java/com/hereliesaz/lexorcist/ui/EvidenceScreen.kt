@@ -50,6 +50,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.hereliesaz.aznavrail.AzButton
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.model.LogEntry
 import com.hereliesaz.lexorcist.model.LogLevel // Added import for clarity
