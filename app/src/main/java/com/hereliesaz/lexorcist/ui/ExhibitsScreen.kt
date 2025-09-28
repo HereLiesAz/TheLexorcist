@@ -56,7 +56,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
-
+import com.hereliesaz.lexorcist.data.Evidence
+import com.hereliesaz.lexorcist.model.CleanupSuggestion
+import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
+import androidx.compose.material3.CardDefaults
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import com.hereliesaz.lexorcist.ui.components.DragAndDropContainer
+import com.hereliesaz.lexorcist.ui.components.DraggableItem
+import com.hereliesaz.lexorcist.ui.components.DropTarget
 
 private class DragInfo {
     var isDragging: Boolean by mutableStateOf(false)
@@ -336,16 +345,7 @@ fun AssignTab(caseViewModel: CaseViewModel) {
     }
 }
 
-import com.hereliesaz.lexorcist.data.Evidence
-import com.hereliesaz.lexorcist.model.CleanupSuggestion
-import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
-import androidx.compose.material3.CardDefaults
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
-import com.hereliesaz.lexorcist.ui.components.DragAndDropContainer
-import com.hereliesaz.lexorcist.ui.components.DraggableItem
-import com.hereliesaz.lexorcist.ui.components.DropTarget
+
 
 @Composable
 fun Draggable(

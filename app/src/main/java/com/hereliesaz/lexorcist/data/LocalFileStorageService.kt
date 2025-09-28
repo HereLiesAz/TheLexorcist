@@ -174,10 +174,8 @@ class LocalFileStorageService @Inject constructor(
         try {
             if (!spreadsheetFile.exists() || spreadsheetFile.length() == 0L) {
                 Log.w("LocalFileStorageService", "Spreadsheet file does not exist or is empty for read. Initializing with a new workbook.")
-                // It's possible initializeSpreadsheet failed to create it, or it got deleted.
-                // Providing a new workbook to the block. For reads, this usually means empty data.
                  try {
-                    initializeSpreadsheet() // Attempt to re-initialize if not present
+                    initializeSpreadsheet() 
                 } catch (e: Exception) {
                     Log.e("LocalFileStorageService", "Critical failure to re-initialize spreadsheet during read attempt.", e)
                     return@withContext Result.Error(IOException("Spreadsheet not available and re-initialization failed.", e))
@@ -195,7 +193,7 @@ class LocalFileStorageService @Inject constructor(
             }
         } catch (zipEx: ZipException) {
             Log.e("LocalFileStorageService", "Corrupted spreadsheet file encountered during read.", zipEx)
-            Result.Error(zipEx) // Propagate error for UI/caller to handle
+            Result.Error(zipEx) 
         } catch (e: Exception) {
             Log.e("LocalFileStorageService", "Error reading from spreadsheet", e)
             Result.Error(e)
@@ -207,7 +205,7 @@ class LocalFileStorageService @Inject constructor(
             if (!spreadsheetFile.exists() || spreadsheetFile.length() == 0L) {
                 Log.w("LocalFileStorageService", "Spreadsheet file does not exist or is empty for write. Initializing with a new workbook.")
                  try {
-                    initializeSpreadsheet() // Attempt to re-initialize if not present
+                    initializeSpreadsheet() 
                 } catch (e: Exception) {
                     Log.e("LocalFileStorageService", "Critical failure to re-initialize spreadsheet during write attempt.", e)
                     return@withContext Result.Error(IOException("Spreadsheet not available and re-initialization failed.", e))
@@ -224,7 +222,7 @@ class LocalFileStorageService @Inject constructor(
             Result.Success(result)
         } catch (zipEx: ZipException) {
             Log.e("LocalFileStorageService", "Corrupted spreadsheet file encountered during write.", zipEx)
-            Result.Error(zipEx) // Propagate error for UI/caller to handle
+            Result.Error(zipEx) 
         } catch (e: Exception) {
             Log.e("LocalFileStorageService", "Error writing to spreadsheet", e)
             Result.Error(e)
@@ -232,7 +230,7 @@ class LocalFileStorageService @Inject constructor(
     }
 
     private fun findRowById(sheet: XSSFSheet, id: String, idColumn: Int): Row? {
-        for (i in 1..sheet.lastRowNum) { // Start from 1 to skip header
+        for (i in 1..sheet.lastRowNum) { 
             val row = sheet.getRow(i) ?: continue
             if (row.getCell(idColumn)?.stringCellValue == id) {
                 return row
@@ -242,7 +240,7 @@ class LocalFileStorageService @Inject constructor(
     }
 
     private fun findRowById(sheet: XSSFSheet, id: Int, idColumn: Int): Row? {
-        for (i in 1..sheet.lastRowNum) { // Start from 1 to skip header
+        for (i in 1..sheet.lastRowNum) { 
             val row = sheet.getRow(i) ?: continue
             val cell = row.getCell(idColumn)
             if (cell != null && cell.cellType == CellType.NUMERIC && cell.numericCellValue.toInt() == id) {
@@ -662,7 +660,7 @@ class LocalFileStorageService @Inject constructor(
             Allegation( 
                 id = allegationId,
                 spreadsheetId = caseSpreadsheetId,
-                text = textFromSheet ?: masterAllegation?.text ?: "" 
+                text = textFromSheet ?: masterAllegation?.name ?: "" // Changed from .text to .name
             )
         }
     }
