@@ -195,9 +195,7 @@ fun SearchBar(query: String, onQueryChange: (String) -> Unit) {
         leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
         trailingIcon = {
             if (query.isNotEmpty()) {
-                IconButton(onClick = { onQueryChange("") }) {
-                    Icon(Icons.Default.Clear, contentDescription = stringResource(R.string.clear_search))
-                }
+                AzButton(onClick = { onQueryChange("") }, text = "X")
             }
         },
         singleLine = true

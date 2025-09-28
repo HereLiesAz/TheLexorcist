@@ -28,7 +28,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 // import androidx.compose.material3.ExposedDropdownMenuDefaults // Not used directly
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 // import androidx.compose.material3.RadioButton // Not used directly
@@ -523,9 +522,7 @@ fun ModelStatusIcon(
 ) {
     when (downloadState) {
         is DownloadState.NotDownloaded -> {
-            IconButton(onClick = onDownload) {
-                Icon(Icons.Default.Download, contentDescription = stringResource(id = R.string.download_model_description))
-            }
+            AzButton(onClick = onDownload, text = stringResource(id = R.string.download_model_description))
         }
         is DownloadState.Downloading -> {
             AzLoad(modifier = Modifier.size(24.dp).padding(8.dp))
@@ -537,15 +534,11 @@ fun ModelStatusIcon(
                     contentDescription = stringResource(id = R.string.model_downloaded_description),
                     tint = MaterialTheme.colorScheme.primary
                 )
-                IconButton(onClick = onDelete) {
-                    Icon(Icons.Default.Delete, contentDescription = stringResource(id = R.string.delete_model_description))
-                }
+                AzButton(onClick = onDelete, text = stringResource(id = R.string.delete_model_description))
             }
         }
         is DownloadState.Error -> {
-            IconButton(onClick = onDownload) { // Retry
-                Icon(Icons.Default.Download, contentDescription = stringResource(id = R.string.retry_download_description))
-            }
+            AzButton(onClick = onDownload, text = stringResource(id = R.string.retry_download_description))
         }
     }
 }

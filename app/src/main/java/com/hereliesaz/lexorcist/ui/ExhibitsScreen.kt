@@ -193,9 +193,7 @@ fun ExhibitItem(
                     textAlign = TextAlign.End
                 )
             }
-            IconButton(onClick = { onDeleteClick(exhibit) }) {
-                Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.delete).uppercase(Locale.getDefault()))
-            }
+            AzButton(onClick = { onDeleteClick(exhibit) }, text = "Del")
         }
     }
 }

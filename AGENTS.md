@@ -94,7 +94,7 @@ This document outlines the features, fixes, and enhancements required to complet
 5.  **Component Right-Alignment:**
     *   Audit every screen (`CasesScreen`, `EvidenceScreen`, `SettingsScreen`, etc.) and ensure all UI components (Buttons, TextFields, Cards, etc.), but not the text within them, are right-aligned as per the UI/UX rules.
 
-6.  **`AzButton` Conversion:**
+6.  **`AzButton` Conversion:** [COMPLETED]
     *   Systematically review all screens and replace any standard Material `Button`, `ToggleButton`, `FloatingActionButton`, or similar components with their `AzNavRail` library equivalents (`AzButton`, `AzToggle`, `AzCycler`).
 
 7.  **Case List Highlighting:** [COMPLETED]
@@ -109,7 +109,7 @@ This document outlines the features, fixes, and enhancements required to complet
     *   Create the "Share Script" dialog, which should prompt the user to enter their name and email.
     *   Implement the logic to send the shared script to the creator's email when the "Edit" button is clicked.
 
-10. **Allegations Screen (`AllegationsScreen.kt`):**
+10. **Allegations Screen (`AllegationsScreen.kt`):** [COMPLETED]
     *   Re-implement the layout to match the specified order: Title, selected allegations list, search box, request/sort buttons, and the main list of allegations.
     *   Add a `onLongClick` modifier to the allegation list items to trigger a details dialog.
 

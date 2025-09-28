@@ -130,7 +130,7 @@ fun ScriptBuilderScreen(
             var showShareDialog by remember { mutableStateOf(false) }
 
             if (showLoadDialog) {
-                AlertDialog(
+                com.hereliesaz.lexorcist.ui.components.AzAlertDialog(
                     onDismissRequest = { showLoadDialog = false },
                     title = { Text("Load Script") },
                     text = {
@@ -148,7 +148,8 @@ fun ScriptBuilderScreen(
                             onClick = { showLoadDialog = false },
                             text = "Cancel"
                         )
-                    }
+                    },
+                    dismissButton = {}
                 )
             }
 
@@ -159,7 +160,7 @@ fun ScriptBuilderScreen(
                     "lex.date.isAfter(\"YYYY-MM-DD\")",
                     "lex.date.isBefore(\"YYYY-MM-DD\")"
                 )
-                AlertDialog(
+                com.hereliesaz.lexorcist.ui.components.AzAlertDialog(
                     onDismissRequest = { showSnippetsDialog = false },
                     title = { Text("Snippets") },
                     text = {
@@ -183,14 +184,15 @@ fun ScriptBuilderScreen(
                             onClick = { showSnippetsDialog = false },
                             text = "Cancel"
                         )
-                    }
+                    },
+                    dismissButton = {}
                 )
             }
 
             if (showShareDialog) {
                 var authorName by remember { mutableStateOf("") }
                 var authorEmail by remember { mutableStateOf("") }
-                AlertDialog(
+                com.hereliesaz.lexorcist.ui.components.AzAlertDialog(
                     onDismissRequest = { showShareDialog = false },
                     title = { Text(stringResource(R.string.share_script)) },
                     text = {

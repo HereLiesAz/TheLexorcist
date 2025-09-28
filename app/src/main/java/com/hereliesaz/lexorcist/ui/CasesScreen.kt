@@ -305,15 +305,9 @@ fun CaseItem(
                 )
             }
             if (isLongPressed) {
-                IconButton(onClick = onDelete) {
-                    Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.delete_case))
-                }
-                IconButton(onClick = onArchive) {
-                    Icon(Icons.Filled.Archive, contentDescription = stringResource(R.string.archive))
-                }
-                IconButton(onClick = onCancel) {
-                    Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.cancel))
-                }
+                AzButton(onClick = onDelete, text = "Del")
+                AzButton(onClick = onArchive, text = "Arc")
+                AzButton(onClick = onCancel, text = "X")
             }
         }
     }
