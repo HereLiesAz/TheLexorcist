@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -15,8 +17,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.hereliesaz.lexorcist.R
+import java.util.Locale
 import com.hereliesaz.lexorcist.ui.components.ExtendedEvent
 import com.hereliesaz.lexorcist.ui.components.PlaceholderExtendedEvent
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
@@ -31,7 +35,14 @@ fun TimelineScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.timeline)) }
+                title = {
+                    Text(
+                        stringResource(R.string.timeline).uppercase(Locale.getDefault()),
+                        modifier = Modifier.fillMaxWidth(),
+                        color = MaterialTheme.colorScheme.primary,
+                        textAlign = TextAlign.End,
+                    )
+                },
             )
         }
     ) { padding ->
