@@ -15,15 +15,23 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import com.hereliesaz.aznavrail.AzButton
 import androidx.compose.material3.Card
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -56,6 +64,8 @@ fun TemplatesScreen(
 ) {
     val templates by caseViewModel.templates.collectAsState()
     val court by caseViewModel.court.collectAsState()
+    val jurisdictions by caseViewModel.jurisdictions.collectAsState()
+    var expanded by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -87,6 +97,40 @@ fun TemplatesScreen(
                 AzButton(onClick = { /* TODO */ }, text = "Import")
                 Spacer(modifier = Modifier.width(8.dp))
                 AzButton(onClick = { /* TODO */ }, text = "Request")
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+
+            ExposedDropdownMenuBox(
+                expanded = expanded,
+                onExpandedChange = { expanded = !expanded },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                TextField(
+                    readOnly = true,
+                    value = court.ifEmpty { "Select a Court" },
+                    onValueChange = {},
+                    label = { Text("Court") },
+                    trailingIcon = {
+                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                    },
+                    colors = ExposedDropdownMenuDefaults.textFieldColors(),
+                    modifier = Modifier.menuAnchor().fillMaxWidth()
+                )
+                DropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false },
+                    modifier = Modifier.exposedDropdownSize()
+                ) {
+                    jurisdictions.forEach { selectionOption ->
+                        DropdownMenuItem(
+                            text = { Text(selectionOption.courtName) },
+                            onClick = {
+                                caseViewModel.onCourtSelected(selectionOption.courtName)
+                                expanded = false
+                            }
+                        )
+                    }
+                }
             }
             Spacer(modifier = Modifier.height(16.dp))
             LazyColumn {

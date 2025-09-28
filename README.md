@@ -8,17 +8,47 @@ Whether you're dealing with harassment screenshots, recorded threats,  slanderou
 
 This project is in an advanced stage of development, with a robust architecture designed to realize a specific vision: to create a seamless pipeline where a user can take a photo of evidence, have the app's OCR extract the text, and then use a custom, user-defined rules engine to automatically tag and categorize that evidence. This categorized data is then organized in a Google Sheet, where a powerful backend script can be triggered to generate all necessary legal paperwork, such as cover sheets, metadata reports, and affidavits.
 
+## Getting Started
+
+To get a local copy up and running, follow these simple steps.
+
+### Prerequisites
+
+- Android Studio (latest stable version)
+- JDK 17
+
+### Installation
+
+1.  **Clone the repo**
+    ```sh
+    git clone https://github.com/HereLiesAz/The-Lexorcist.git
+    ```
+2.  **Set up Google Services**
+    -   Navigate to the `app/` directory.
+    -   Copy the `google-services.template.json` file and rename the copy to `google-services.json`.
+    -   Follow the instructions in `GMAIL_API_SETUP.md` to obtain your own Google API credentials and populate the `google-services.json` file.
+3.  **Build the Project**
+    -   Open the project in Android Studio.
+    -   Let Gradle sync and download the necessary dependencies.
+    -   Build the application using the command:
+        ```sh
+        ./gradlew :app:compileDebugKotlin
+        ```
+4.  **Run the App**
+    -   Run the app on an emulator or a physical device.
+
 ## Key Features
 
-- **Automated Evidence Pipeline:** Capture images or screenshots and let the app handle the rest. The Lexorcist uses OCR to extract text and then feeds it into a powerful, user-scriptable engine for analysis.
-- **Customizable Tagging Engine:** Define your own keywords, patterns, and "dorks" using JavaScript to automatically tag evidence. This allows you to create highly specific rules for identifying content relevant to your case, such as threats, hate speech, or contract violations.
-    - **AI-Powered Analysis:** Go beyond simple keywords. The scripting engine now includes a local, on-device AI for semantic analysis (understanding the *meaning* of text) and a cloud-based generative AI for creating new content, allowing for incredibly sophisticated and nuanced evidence processing.
-- **Google Suite Integration:** Each case gets its own Google Sheet, where all evidence and its metadata are neatly organized. This serves as a central hub for your case data.
-- **Automatic Document Generation:** The app leverages a powerful Google Apps Script backend. From your case's Google Sheet, you can instantly generate a variety of court-ready documents using customizable HTML templates.
-- **Timeline View:** Visualize the chronology of your evidence with an interactive timeline, making it easy to see the sequence of events.
-- **Secure and On-Device:** All OCR and data parsing happens on your device to ensure privacy and security.
-- **Transparent Progress:** See detailed, real-time logs of the evidence processing pipeline, so you know exactly what's happening with your data at all times.
-- **Configurable Storage:** Choose where your case folders are stored on your device and enable or disable cloud synchronization to fit your workflow.
+- **Multi-Source Evidence Pipeline:** Capture evidence from images (OCR), audio (transcription), and video (frame-by-frame OCR).
+- **Customizable Tagging Engine:** Define your own keywords, patterns, and "dorks" using JavaScript to automatically tag evidence.
+- **AI-Powered Analysis:** Go beyond simple keywords. The scripting engine includes a local, on-device AI for semantic analysis and a cloud-based generative AI for creating new content.
+- **Google Suite Integration:** Each case gets its own Google Sheet, where all evidence and its metadata are neatly organized.
+- **Automatic Document Generation:** The app leverages a powerful Google Apps Script backend to instantly generate court-ready documents from customizable HTML templates.
+- **Interactive Timeline:** Visualize the chronology of your evidence with an interactive timeline.
+- **Secure and On-Device:** Core processing like OCR and transcription happens on-device to ensure privacy and security.
+- **Transparent Progress Reporting:** See detailed, real-time logs of the evidence processing pipeline.
+- **Configurable Storage:** Choose where your case folders are stored on your device and enable or disable cloud synchronization with providers like Google Drive and Dropbox.
+- **Evidence Management:** Organize evidence into exhibits, clean up duplicates, and merge related items on the Review screen.
 
 ## Localization
 

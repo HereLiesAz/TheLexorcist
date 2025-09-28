@@ -379,5 +379,33 @@
       "content": "const tipPrompt = \"In one sentence, give me a useful and uncommon productivity tip for legal professionals.\";\n// Note: This uses the cloud-based generative AI, not the local one.\nconst aiGeneratedTip = lex.ai.generate.generateContent(tipPrompt);\nconst tutorialSchema = {\n  title: \"App Tutorial\",\n  elements: [\n    { type: \"text\", properties: { text: \"Welcome to The Lexorcist!\", size: 24 } },\n    { type: \"text\", properties: { text: \"This app helps you organize, analyze, and build your case narrative.\", size: 16 } },\n    { type: \"spacer\", properties: { height: 24 } },\n    { type: \"text\", properties: { text: \"AI Tip of the Day:\", size: 20 } },\n    { type: \"text\", properties: { text: aiGeneratedTip, size: 16 } },\n    { type: \"spacer\", properties: { height: 24 } },\n    { type: \"text\", properties: { text: \"Use the navigation rail on the left to manage Cases, Evidence, and more.\", size: 16 } }\n  ]\n};\nlex.ui.addOrUpdate(\"ai_tutorial_screen_button\", \"Tutorial & Tip\", true, \"scripted_screen/\" + JSON.stringify(tutorialSchema));"
     }
   ],
-  "templates": []
+  "templates": [
+    {
+      "id": "1",
+      "name": "Generic Affidavit",
+      "description": "A standard, general-purpose affidavit template.",
+      "content": "<html><body><h2>AFFIDAVIT</h2><p>I, [Name], being duly sworn, depose and say:</p><p>1. [Statement 1]</p><p>2. [Statement 2]</p></body></html>",
+      "authorName": "Az",
+      "authorEmail": "az@example.com",
+      "court": "Generic"
+    },
+    {
+      "id": "2",
+      "name": "Motion to Compel",
+      "description": "A template for a motion to compel discovery.",
+      "content": "<html><body><h2>MOTION TO COMPEL</h2><p>Plaintiff/Defendant, [Your Name], moves this court to compel discovery from [Opposing Party].</p></body></html>",
+      "authorName": "Az",
+      "authorEmail": "az@example.com",
+      "court": "Supreme Court of California"
+    },
+    {
+      "id": "3",
+      "name": "Notice of Deposition",
+      "description": "A template for a notice of deposition.",
+      "content": "<html><body><h2>NOTICE OF DEPOSITION</h2><p>PLEASE TAKE NOTICE that pursuant to [Rule], the deposition of [Deponent Name] will be taken at [Location] on [Date] at [Time].</p></body></html>",
+      "authorName": "Az",
+      "authorEmail": "az@example.com",
+      "court": "Supreme Court of Texas"
+    }
+  ]
 }
