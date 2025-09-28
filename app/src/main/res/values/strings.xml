@@ -342,4 +342,9 @@ function onOpen() {}</string>
     <string name="search_addons">Search addons…</string>
     <string name="clear_search">Clear search</string>
     <string name="no_search_results">No results found for your search.</string>
+    <string name="timeline_placeholder_title">Your Timeline is Empty</string>
+    <string name="timeline_placeholder_body">Add evidence to see a chronological view of your case.</string>
+    <string name="timeline_placeholder_icon_desc">Add Photo</string>
+    <string name="timeline_placeholder_tag1">example-tag</string>
+    <string name="timeline_placeholder_tag2">another-tag</string>
 </resources>
