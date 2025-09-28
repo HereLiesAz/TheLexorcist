@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState // Added import
 import androidx.compose.foundation.verticalScroll // Added import
-import androidx.compose.material3.Button
+import com.hereliesaz.aznavrail.AzButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -40,13 +40,9 @@ fun RecordAudioScreen(
             Spacer(modifier = Modifier.height(halfScreenHeight)) // Push content to start halfway down
 
             if (isRecording) {
-                Button(onClick = onStopRecording) {
-                    Text("Stop Recording")
-                }
+                AzButton(onClick = onStopRecording, text = "Stop Recording")
             } else {
-                Button(onClick = onStartRecording) {
-                    Text("Start Recording")
-                }
+                AzButton(onClick = onStartRecording, text = "Start Recording")
             }
         }
     }

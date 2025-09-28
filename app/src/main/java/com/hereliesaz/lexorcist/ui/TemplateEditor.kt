@@ -3,8 +3,8 @@ package com.hereliesaz.lexorcist.ui
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import com.hereliesaz.aznavrail.AzButton
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -52,7 +52,7 @@ fun TemplateEditor(
             }
         },
         confirmButton = {
-            Button(
+            AzButton(
                 onClick = {
                     val newTemplate =
                         template?.copy(
@@ -74,14 +74,11 @@ fun TemplateEditor(
                         )
                     onSave(newTemplate)
                 },
-            ) {
-                Text("Save")
-            }
+                text = "Save"
+            )
         },
         dismissButton = {
-            Button(onClick = onDismiss) {
-                Text("Cancel")
-            }
+            AzButton(onClick = onDismiss, text = "Cancel")
         },
     )
 }

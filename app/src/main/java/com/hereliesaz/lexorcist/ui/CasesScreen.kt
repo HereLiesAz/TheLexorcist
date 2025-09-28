@@ -27,7 +27,6 @@ import androidx.compose.material3.CardDefaults
 // import androidx.compose.material3.CircularProgressIndicator // Duplicate import removed
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -104,14 +103,10 @@ fun CasesScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
+            AzButton(
                 onClick = { showCreateCaseDialog = true },
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Add,
-                    contentDescription = stringResource(R.string.new_case_fab_text)
-                )
-            }
+                text = "New"
+            )
         },
         floatingActionButtonPosition = FabPosition.End,
     ) { innerPadding ->
