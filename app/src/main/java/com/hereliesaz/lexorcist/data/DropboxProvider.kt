@@ -15,13 +15,18 @@ class DropboxProvider @Inject constructor(
 
     override suspend fun getCurrentUser(): Result<CloudUser> = withContext(Dispatchers.IO) {
         val client = dropboxAuthManager.getClient()
-        if (client == null) {
-            return@withContext Result.Error(Exception("Dropbox client not initialized."))
-        }
+            ?: return@withContext Result.Error(Exception("Dropbox client not initialized."))
 
         try {
             val account = client.users().currentAccount
-            Result.Success(CloudUser(account.accountId, account.email, account.name.displayName, account.profilePhotoUrl))
+            Result.Success(
+                CloudUser(
+                    id = account.accountId ?: "unknown_dropbox_id",
+                    email = account.email ?: "unknown_email@dropbox.com",
+                    displayName = account.name.displayName ?: "Unknown Dropbox User",
+                    photoUrl = account.profilePhotoUrl
+                )
+            )
         } catch (e: Exception) {
             Result.Error(e)
         }
@@ -34,9 +39,7 @@ class DropboxProvider @Inject constructor(
 
     override suspend fun listFiles(folderId: String): Result<List<CloudFile>> = withContext(Dispatchers.IO) {
         val client = dropboxAuthManager.getClient()
-        if (client == null) {
-            return@withContext Result.Error(Exception("Dropbox client not initialized. Please connect to Dropbox first."))
-        }
+            ?: return@withContext Result.Error(Exception("Dropbox client not initialized. Please connect to Dropbox first."))
 
         try {
             val result = client.files().listFolder(folderId)
@@ -77,7 +80,7 @@ class DropboxProvider @Inject constructor(
                 .withMode(WriteMode.OVERWRITE)
                 .uploadAndFinish(inputStream)
 
-            Result.Success(CloudFile(path, uploadedFile.name ?: "", uploadedFile.clientModified.time)) // Added ?: "" for name
+            Result.Success(CloudFile(path, uploadedFile.name ?: "", uploadedFile.clientModified.time))
         } catch (e: Exception) {
             Result.Error(e)
         }
@@ -85,9 +88,7 @@ class DropboxProvider @Inject constructor(
 
     override suspend fun updateFile(fileId: String, mimeType: String, content: ByteArray): Result<CloudFile> = withContext(Dispatchers.IO) {
         val client = dropboxAuthManager.getClient()
-        if (client == null) {
-            return@withContext Result.Error(Exception("Dropbox client not initialized. Please connect to Dropbox first."))
-        }
+            ?: return@withContext Result.Error(Exception("Dropbox client not initialized. Please connect to Dropbox first."))
 
         try {
             val path = fileId // The fileId is the path
@@ -96,7 +97,7 @@ class DropboxProvider @Inject constructor(
                 .withMode(WriteMode.OVERWRITE)
                 .uploadAndFinish(inputStream)
 
-            Result.Success(CloudFile(path, uploadedFile.name ?: "", uploadedFile.clientModified.time)) // Added ?: "" for name
+            Result.Success(CloudFile(path, uploadedFile.name ?: "", uploadedFile.clientModified.time))
         } catch (e: Exception) {
             Result.Error(e)
         }

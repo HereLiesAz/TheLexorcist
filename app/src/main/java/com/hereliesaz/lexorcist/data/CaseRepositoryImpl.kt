@@ -7,6 +7,7 @@ import com.hereliesaz.lexorcist.model.SheetFilter
 import com.hereliesaz.lexorcist.service.GoogleApiService // Restored
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -47,6 +48,7 @@ class CaseRepositoryImpl @Inject constructor(
     private val _allegations = MutableStateFlow<List<Allegation>>(emptyList())
     override val selectedCaseAllegations: Flow<List<Allegation>> = _allegations.asStateFlow()
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     override val selectedCaseEvidence: Flow<Result<List<Evidence>>> =
         selectedCase.flatMapLatest { case ->
             if (case == null) {
