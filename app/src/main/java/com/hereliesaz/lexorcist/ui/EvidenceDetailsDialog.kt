@@ -9,16 +9,18 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.hereliesaz.aznavrail.AzButton
 import com.hereliesaz.lexorcist.data.Evidence
-import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
+import com.hereliesaz.lexorcist.ui.components.AzAlertDialog
 
 @Composable
 fun EvidenceDetailsDialog(
@@ -27,13 +29,20 @@ fun EvidenceDetailsDialog(
     onRemove: () -> Unit,
     onNavigateToEvidenceDetails: () -> Unit,
 ) {
-    AlertDialog(
+    AzAlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text(text = "Evidence Details")
+            Text(
+                text = "Evidence Details",
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.End
+            )
         },
         text = {
-            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.End
+            ) {
                 if (evidence.type == "image" || evidence.type == "ocr_image_from_video") {
                     AsyncImage(
                         model = evidence.sourceDocument,
@@ -46,24 +55,18 @@ fun EvidenceDetailsDialog(
                 Text(
                     text = evidence.content,
                     style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.End,
+                    modifier = Modifier.fillMaxWidth()
                 )
+                Spacer(modifier = Modifier.height(16.dp))
+                AzButton(onClick = onRemove, text = "Remove")
             }
         },
         confirmButton = {
-            Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
-                LexorcistOutlinedButton(onClick = onRemove) {
-                    Text("Remove")
-                }
-                Spacer(modifier = Modifier.weight(1f))
-                LexorcistOutlinedButton(onClick = onNavigateToEvidenceDetails) {
-                    Text("View Full Details")
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                LexorcistOutlinedButton(onClick = onDismiss) {
-                    Text("Close")
-                }
-            }
+            AzButton(onClick = onNavigateToEvidenceDetails, text = "View Full Details")
         },
-        modifier = Modifier.padding(16.dp),
+        dismissButton = {
+            AzButton(onClick = onDismiss, text = "Close")
+        }
     )
 }

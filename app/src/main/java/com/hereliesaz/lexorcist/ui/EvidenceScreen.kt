@@ -51,7 +51,7 @@ import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.model.LogEntry
 import com.hereliesaz.lexorcist.model.LogLevel // Added import for clarity
 import com.hereliesaz.lexorcist.model.ProcessingState
-import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
+import com.hereliesaz.aznavrail.AzButton
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 import kotlinx.coroutines.flow.collectLatest
@@ -200,7 +200,7 @@ fun EvidenceScreen(
                     textStyle = MaterialTheme.typography.bodyLarge.copy(textAlign = TextAlign.End),
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                LexorcistOutlinedButton(
+                AzButton(
                     onClick = {
                         caseViewModel.addTextEvidence(text, "")
                         text = ""
@@ -209,7 +209,7 @@ fun EvidenceScreen(
                     text = stringResource(R.string.save).uppercase(Locale.getDefault())
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                LexorcistOutlinedButton(
+                AzButton(
                     onClick = { showAddTextEvidence = false },
                     text = stringResource(R.string.cancel).uppercase(Locale.getDefault())
                 )
@@ -220,29 +220,24 @@ fun EvidenceScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    LexorcistOutlinedButton(onClick = { showAddTextEvidence = true }, text = "Text".uppercase(Locale.getDefault()))
-                    LexorcistOutlinedButton(onClick = { imagePickerLauncher.launch("image/*") }, text = "Image".uppercase(Locale.getDefault()))
-                    LexorcistOutlinedButton(onClick = { audioPickerLauncher.launch("audio/*") }, text = "Audio".uppercase(Locale.getDefault()))
-                    LexorcistOutlinedButton(onClick = { videoPickerLauncher.launch("video/*") }, text = "Video".uppercase(Locale.getDefault()))
-                    LexorcistOutlinedButton(onClick = { navController.navigate("photo_group") }, text = "Photo".uppercase(Locale.getDefault()))
-                    LexorcistOutlinedButton(onClick = { requestSmsPermissionLauncher.launch(Manifest.permission.READ_SMS) }, text = "SMS".uppercase(Locale.getDefault()))
-                    LexorcistOutlinedButton(onClick = { requestCallLogPermissionLauncher.launch(Manifest.permission.READ_CALL_LOG) }, text = "Calls".uppercase(Locale.getDefault()))
-                    LexorcistOutlinedButton(onClick = { requestLocationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION) }, text = "Location".uppercase(Locale.getDefault()))
-                    LexorcistOutlinedButton(onClick = { showChatImportDialog = true }, text = "Messages".uppercase(Locale.getDefault()))
-                    LexorcistOutlinedButton(onClick = { showGmailImportDialog = true }, text = "Gmail".uppercase(Locale.getDefault()))
+                    AzButton(onClick = { showAddTextEvidence = true }, text = "Text".uppercase(Locale.getDefault()))
+                    AzButton(onClick = { imagePickerLauncher.launch("image/*") }, text = "Image".uppercase(Locale.getDefault()))
+                    AzButton(onClick = { audioPickerLauncher.launch("audio/*") }, text = "Audio".uppercase(Locale.getDefault()))
+                    AzButton(onClick = { videoPickerLauncher.launch("video/*") }, text = "Video".uppercase(Locale.getDefault()))
+                    AzButton(onClick = { navController.navigate("photo_group") }, text = "Photo".uppercase(Locale.getDefault()))
+                    AzButton(onClick = { requestSmsPermissionLauncher.launch(Manifest.permission.READ_SMS) }, text = "SMS".uppercase(Locale.getDefault()))
+                    AzButton(onClick = { requestCallLogPermissionLauncher.launch(Manifest.permission.READ_CALL_LOG) }, text = "Calls".uppercase(Locale.getDefault()))
+                    AzButton(onClick = { requestLocationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION) }, text = "Location".uppercase(Locale.getDefault()))
+                    AzButton(onClick = { showChatImportDialog = true }, text = "Messages".uppercase(Locale.getDefault()))
+                    AzButton(onClick = { showGmailImportDialog = true }, text = "Gmail".uppercase(Locale.getDefault()))
                     val outlookSignInState by authViewModel.outlookSignInState.collectAsState()
-                    LexorcistOutlinedButton(
-                        onClick = {
-                            if (outlookSignInState is OutlookSignInState.Success) {
-                                showOutlookImportDialog = true
-                            } else {
-                                // Optionally, show a snackbar or message to the user
-                            }
-                        },
-                        text = "Outlook".uppercase(Locale.getDefault()),
-                        enabled = outlookSignInState is OutlookSignInState.Success
-                    )
-                    LexorcistOutlinedButton(
+                    if (outlookSignInState is OutlookSignInState.Success) {
+                        AzButton(
+                            onClick = { showOutlookImportDialog = true },
+                            text = "Outlook".uppercase(Locale.getDefault())
+                        )
+                    }
+                    AzButton(
                         onClick = { showImapImportDialog = true },
                         text = "Email".uppercase(Locale.getDefault())
                     )

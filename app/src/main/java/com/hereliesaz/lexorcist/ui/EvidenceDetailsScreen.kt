@@ -21,13 +21,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
+import com.hereliesaz.aznavrail.AzButton
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.data.Evidence
-import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 import java.util.Locale
@@ -43,17 +45,17 @@ fun EvidenceDetailsScreen(
 
     BoxWithConstraints(
         modifier =
-        Modifier
-            .fillMaxSize()
-            .padding(16.dp), // Apply padding to the outer Box
+            Modifier
+                .fillMaxSize()
+                .padding(16.dp), // Apply padding to the outer Box
     ) {
         val halfScreenHeight = this@BoxWithConstraints.maxHeight / 2
 
         Column(
             modifier =
-            Modifier
-                .fillMaxSize() // Column fills the BoxWithConstraints
-                .verticalScroll(rememberScrollState()),
+                Modifier
+                    .fillMaxSize() // Column fills the BoxWithConstraints
+                    .verticalScroll(rememberScrollState()),
             // Make content scrollable
             horizontalAlignment = Alignment.End, // Right-align children of this Column
         ) {
@@ -68,15 +70,15 @@ fun EvidenceDetailsScreen(
                 )
                 Spacer(modifier = Modifier.height(16.dp))
             }
-            Text("Source: ${evidence.sourceDocument}")
+            Text("Source: ${evidence.sourceDocument}", textAlign = TextAlign.End, modifier = Modifier.fillMaxWidth())
             Spacer(modifier = Modifier.height(8.dp))
-            Text("Category: ${evidence.category}")
+            Text("Category: ${evidence.category}", textAlign = TextAlign.End, modifier = Modifier.fillMaxWidth())
             Spacer(modifier = Modifier.height(8.dp))
-            Text("Tags: ${evidence.tags.joinToString()}")
+            Text("Tags: ${evidence.tags.joinToString()}", textAlign = TextAlign.End, modifier = Modifier.fillMaxWidth())
             Spacer(modifier = Modifier.height(16.dp))
             if (!evidence.formattedContent.isNullOrEmpty()) {
-                Text("Formatted Content:")
-                Text(evidence.formattedContent)
+                Text("Formatted Content:", textAlign = TextAlign.End, modifier = Modifier.fillMaxWidth())
+                Text(evidence.formattedContent, textAlign = TextAlign.End, modifier = Modifier.fillMaxWidth())
                 Spacer(modifier = Modifier.height(16.dp))
             }
             OutlinedTextField(
@@ -84,15 +86,16 @@ fun EvidenceDetailsScreen(
                 onValueChange = { commentary = it },
                 label = { Text("Commentary") },
                 modifier = Modifier.fillMaxWidth(), // TextField takes full width
+                textStyle = TextStyle(textAlign = TextAlign.End),
             )
             Spacer(modifier = Modifier.height(16.dp))
-            LexorcistOutlinedButton(onClick = { caseViewModel.updateCommentary(evidence.id, commentary) }, text = "Save Commentary")
+            AzButton(onClick = { caseViewModel.updateCommentary(evidence.id, commentary) }, text = "Save Commentary")
             if (evidence.type == "audio") {
                 Spacer(modifier = Modifier.height(16.dp))
-                LexorcistOutlinedButton(
+                AzButton(
                     onClick = { navController.navigate("transcription/${evidence.id}") },
                     text = stringResource(R.string.edit_transcript).uppercase(Locale.getDefault()),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
         }

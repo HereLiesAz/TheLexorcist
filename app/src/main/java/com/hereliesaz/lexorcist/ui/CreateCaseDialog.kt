@@ -73,7 +73,13 @@ fun CreateCaseDialog(
 
     AzAlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.create_new_case)) },
+        title = {
+            Text(
+                stringResource(R.string.create_new_case),
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.End
+            )
+        },
         text = {
             Column(
                 modifier =

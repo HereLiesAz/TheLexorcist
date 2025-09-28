@@ -68,7 +68,16 @@ fun AllegationsScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text(stringResource(id = R.string.allegations).uppercase(Locale.getDefault())) })
+            TopAppBar(
+                title = {
+                    Text(
+                        stringResource(id = R.string.allegations).uppercase(Locale.getDefault()),
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.End,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            )
         }
     ) { paddingValues ->
         Column(
@@ -83,6 +92,7 @@ fun AllegationsScreen(
                 Text(
                     text = stringResource(R.string.selected_allegations),
                     style = MaterialTheme.typography.titleMedium,
+                    textAlign = TextAlign.End,
                     modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
                 )
                 LazyColumn(
@@ -100,7 +110,7 @@ fun AllegationsScreen(
                                     onLongClick = { showDetailsDialog = allegation }
                                 )
                                 .padding(vertical = 4.dp),
-                             textAlign = TextAlign.End
+                            textAlign = TextAlign.End
                         )
                         if (selectedAllegations.last() != allegation) {
                             HorizontalDivider()
@@ -194,9 +204,15 @@ fun AllegationsScreen(
 
         AzAlertDialog(
             onDismissRequest = { showRequestDialog = false },
-            title = { Text(stringResource(id = R.string.request_new_allegation)) },
+            title = {
+                Text(
+                    stringResource(id = R.string.request_new_allegation),
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.End
+                )
+            },
             text = {
-                Column {
+                Column(horizontalAlignment = Alignment.End) {
                     TextField(
                         value = requestedName,
                         onValueChange = { requestedName = it },
@@ -244,8 +260,14 @@ fun AllegationsScreen(
     showDetailsDialog?.let { allegation ->
         AzAlertDialog(
             onDismissRequest = { showDetailsDialog = null },
-            title = { Text(allegation.name) },
-            text = { Text("${stringResource(id = R.string.category)}: ${allegation.category}\n\n${allegation.description}") },
+            title = {
+                Text(
+                    allegation.name,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.End
+                )
+            },
+            text = { Text("${stringResource(id = R.string.category)}: ${allegation.category}\n\n${allegation.description}", textAlign = TextAlign.End, modifier = Modifier.fillMaxWidth()) },
             confirmButton = {
                 AzButton(
                     onClick = { showDetailsDialog = null },
