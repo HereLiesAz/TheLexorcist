@@ -114,7 +114,7 @@ fun TemplatesScreen(
                         ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
                     },
                     colors = ExposedDropdownMenuDefaults.textFieldColors(),
-                    modifier = Modifier.menuAnchor().fillMaxWidth()
+                    modifier = Modifier.menuAnchor(ExposedDropdownMenuDefaults.AnchorType).fillMaxWidth()
                 )
                 DropdownMenu(
                     expanded = expanded,

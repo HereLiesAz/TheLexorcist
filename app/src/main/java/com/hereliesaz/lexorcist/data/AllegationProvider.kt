@@ -33,20 +33,43 @@ object AllegationProvider {
             val rawList: List<Map<String, Any>> = gson.fromJson(jsonArrayString, listType)
 
             val catalogEntries = rawList.mapNotNull { item ->
-                // Ensure we are using "allegationName" as per the definition in Allegation.kt
                 if (item.containsKey("id") && item.containsKey("allegationName")) {
                     try {
                         val id = item["id"] as String
-                        // Use "allegationName" here
-                        val allegationName = item["allegationName"] as String 
-                        val evidenceMap = item["relevant_evidence"] as? Map<String, List<String>> ?: emptyMap()
-                        // Construct AllegationCatalogEntry using "allegationName"
-                        AllegationCatalogEntry(id, allegationName, evidenceMap) 
+                        val allegationName = item["allegationName"] as String
+
+                        val rawEvidenceMap = item["relevant_evidence"]
+                        val evidenceMap: Map<String, List<String>> = if (rawEvidenceMap is Map<*, *>) {
+                            rawEvidenceMap.entries.mapNotNull { entry ->
+                                if (entry.key is String && entry.value is List<*>) {
+                                    val key = entry.key as String
+                                    val valueList = entry.value as List<*>
+                                    if (valueList.all { it is String }) {
+                                        @Suppress("UNCHECKED_CAST")
+                                        key to (valueList as List<String>)
+                                    } else {
+                                        Log.w("AllegationProvider", "Skipping invalid evidence list for key '$key' due to non-string elements: $valueList in item: $item")
+                                        null
+                                    }
+                                } else {
+                                    Log.w("AllegationProvider", "Skipping invalid evidence entry due to incorrect key/value types: $entry in item: $item")
+                                    null
+                                }
+                            }.toMap()
+                        } else {
+                            if (rawEvidenceMap != null) {
+                                Log.w("AllegationProvider", "Relevant_evidence is not a Map, found: $rawEvidenceMap in item: $item. Using empty map.")
+                            }
+                            emptyMap<String, List<String>>()
+                        }
+
+                        AllegationCatalogEntry(id, allegationName, evidenceMap)
                     } catch (e: Exception) {
                         Log.w("AllegationProvider", "Skipping invalid allegation entry: $item", e)
                         null
                     }
                 } else {
+                    Log.w("AllegationProvider", "Skipping item due to missing 'id' or 'allegationName': $item")
                     null
                 }
             }

@@ -2,8 +2,8 @@ package com.hereliesaz.lexorcist.ui.components
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Label
 import androidx.compose.material.icons.filled.AddAPhoto
-import androidx.compose.material.icons.filled.Label
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -54,7 +54,7 @@ fun PlaceholderExtendedEvent() {
             // Example Tags
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
-                    imageVector = Icons.Default.Label,
+                    imageVector = Icons.AutoMirrored.Filled.Label,
                     contentDescription = "Tags",
                     modifier = Modifier.size(16.dp)
                 )

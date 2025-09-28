@@ -92,6 +92,7 @@ fun <T> DraggableItem(
     dataToDrop: T,
     content: @Composable () -> Unit
 ) {
+    @Suppress("UNCHECKED_CAST")
     val state = LocalDragAndDropState.current as DragAndDropState<T>
     Box(
         modifier = modifier.pointerInput(Unit) {
@@ -128,6 +129,7 @@ fun <T> DropTarget(
     onDropped: (T) -> Unit,
     content: @Composable BoxScope.(isHovered: Boolean) -> Unit
 ) {
+    @Suppress("UNCHECKED_CAST")
     val state = LocalDragAndDropState.current as DragAndDropState<T>
     var isHovered by remember { mutableStateOf(false) }
     var bounds by remember { mutableStateOf<Rect?>(null) }

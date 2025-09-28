@@ -40,6 +40,10 @@ class CloudStorageService @Inject constructor(
         return localFileStorageService.addEvidence(caseSpreadsheetId, evidence)
     }
 
+    override suspend fun addEvidenceList(caseSpreadsheetId: String, evidenceList: List<Evidence>): Result<List<Evidence>> {
+        return localFileStorageService.addEvidenceList(caseSpreadsheetId, evidenceList)
+    }
+
     override suspend fun updateEvidence(caseSpreadsheetId: String, evidence: Evidence): Result<Unit> {
         return localFileStorageService.updateEvidence(caseSpreadsheetId, evidence)
     }

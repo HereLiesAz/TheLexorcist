@@ -3,6 +3,7 @@ package com.hereliesaz.lexorcist.ui.components
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -64,7 +65,7 @@ fun ExtendedEvent(evidence: Evidence) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Label,
+                        imageVector = Icons.AutoMirrored.Filled.Label,
                         contentDescription = "Tags",
                         modifier = Modifier.size(16.dp)
                     )
@@ -84,10 +85,10 @@ fun ExtendedEvent(evidence: Evidence) {
 
 private fun getIconForType(type: String): ImageVector {
     return when (type.lowercase()) {
-        "text" -> Icons.Default.Message
-        "image" -> Icons.Default.Image
-        "video" -> Icons.Default.Videocam
-        "audio" -> Icons.Default.Audiotrack
-        else -> Icons.Default.Article
+        "text" -> Icons.AutoMirrored.Filled.Message
+        "image" -> Icons.Default.Image // Assuming Icons.Filled.Image is not deprecated or has AutoMirrored version if needed
+        "video" -> Icons.Default.Videocam // Assuming Icons.Filled.Videocam is not deprecated or has AutoMirrored version if needed
+        "audio" -> Icons.Default.Audiotrack // Assuming Icons.Filled.Audiotrack is not deprecated or has AutoMirrored version if needed
+        else -> Icons.AutoMirrored.Filled.Article
     }
 }
