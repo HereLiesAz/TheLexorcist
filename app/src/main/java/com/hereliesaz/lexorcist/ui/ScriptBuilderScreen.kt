@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -315,7 +316,7 @@ fun ScriptBuilderScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
             ) {
                 AzButton(
@@ -332,7 +333,7 @@ fun ScriptBuilderScreen(
                 )
                 AzButton(
                     onClick = { viewModel.saveScript() },
-                    text = stringResource(R.string.save_script)
+                    text = "Save"
                 )
                 AzButton(
                     onClick = { caseViewModel.rerunAllScriptsOnAllEvidence() },

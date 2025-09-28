@@ -1398,13 +1398,23 @@ constructor(
         }
     }
 
-    fun importSmsEvidence() {
+    fun importSmsEvidence(contact: String?, startDate: Long?, endDate: Long?) {
         viewModelScope.launch {
             globalLoadingState.pushLoading()
             try {
-                val smsEvidence = evidenceImporter.importSms()
-                smsEvidence.forEach { evidence ->
-                    evidenceRepository.addEvidence(evidence.copy(caseId = selectedCase.value?.id?.toLong() ?: 0, spreadsheetId = selectedCase.value?.spreadsheetId ?: ""))
+                val caseId = selectedCase.value?.id?.toLong() ?: 0
+                val spreadsheetId = selectedCase.value?.spreadsheetId ?: ""
+                if (spreadsheetId.isEmpty()) {
+                    _errorMessage.value = "Please select a case first."
+                    return@launch
+                }
+
+                val smsEvidence = evidenceImporter.importSms(contact, startDate, endDate).map {
+                    it.copy(caseId = caseId, spreadsheetId = spreadsheetId)
+                }
+
+                if (smsEvidence.isNotEmpty()) {
+                    evidenceRepository.addEvidenceList(smsEvidence)
                 }
                 _userMessage.value = "Imported ${smsEvidence.size} SMS messages."
             } catch (e: Exception) {
@@ -1415,13 +1425,23 @@ constructor(
         }
     }
 
-    fun importCallLogEvidence() {
+    fun importCallLogEvidence(contact: String?, startDate: Long?, endDate: Long?) {
         viewModelScope.launch {
             globalLoadingState.pushLoading()
             try {
-                val callLogEvidence = evidenceImporter.importCallLog()
-                callLogEvidence.forEach { evidence ->
-                    evidenceRepository.addEvidence(evidence.copy(caseId = selectedCase.value?.id?.toLong() ?: 0, spreadsheetId = selectedCase.value?.spreadsheetId ?: ""))
+                val caseId = selectedCase.value?.id?.toLong() ?: 0
+                val spreadsheetId = selectedCase.value?.spreadsheetId ?: ""
+                if (spreadsheetId.isEmpty()) {
+                    _errorMessage.value = "Please select a case first."
+                    return@launch
+                }
+
+                val callLogEvidence = evidenceImporter.importCallLog(contact, startDate, endDate).map {
+                    it.copy(caseId = caseId, spreadsheetId = spreadsheetId)
+                }
+
+                if (callLogEvidence.isNotEmpty()) {
+                    evidenceRepository.addEvidenceList(callLogEvidence)
                 }
                 _userMessage.value = "Imported ${callLogEvidence.size} call log entries."
             } catch (e: Exception) {
@@ -1455,9 +1475,19 @@ constructor(
         viewModelScope.launch {
             globalLoadingState.pushLoading()
             try {
-                val chatEvidence = chatHistoryParser.parse(uri)
-                chatEvidence.forEach { evidence ->
-                    evidenceRepository.addEvidence(evidence.copy(caseId = selectedCase.value?.id?.toLong() ?: 0, spreadsheetId = selectedCase.value?.spreadsheetId ?: ""))
+                val caseId = selectedCase.value?.id?.toLong() ?: 0
+                val spreadsheetId = selectedCase.value?.spreadsheetId ?: ""
+                if (spreadsheetId.isEmpty()) {
+                    _errorMessage.value = "Please select a case first."
+                    return@launch
+                }
+
+                val chatEvidence = chatHistoryParser.parse(uri).map {
+                    it.copy(caseId = caseId, spreadsheetId = spreadsheetId)
+                }
+
+                if (chatEvidence.isNotEmpty()) {
+                    evidenceRepository.addEvidenceList(chatEvidence)
                 }
                 _userMessage.value = "Imported ${chatEvidence.size} chat messages."
             } catch (e: Exception) {
@@ -1472,6 +1502,13 @@ constructor(
         viewModelScope.launch {
             globalLoadingState.pushLoading()
             try {
+                val caseId = selectedCase.value?.id?.toLong() ?: 0
+                val spreadsheetId = selectedCase.value?.spreadsheetId ?: ""
+                if (spreadsheetId.isEmpty()) {
+                    _errorMessage.value = "Please select a case first."
+                    return@launch
+                }
+
                 val messages = gmailService.searchEmails(from, subject, before, after)
                 val emailEvidence = messages.map<com.google.api.services.gmail.model.Message, Evidence> { message ->
                     val subjectHeader = message.payload.headers.find { it.name == "Subject" }?.value ?: "No Subject"
@@ -1480,8 +1517,8 @@ constructor(
                         content = "From: $fromHeader\nSubject: $subjectHeader\n\n${message.snippet}",
                         type = "Email",
                         timestamp = message.internalDate,
-                        caseId = selectedCase.value?.id?.toLong() ?: 0,
-                        spreadsheetId = selectedCase.value?.spreadsheetId ?: "",
+                        caseId = caseId,
+                        spreadsheetId = spreadsheetId,
                         formattedContent = null,
                         mediaUri = null,
                         sourceDocument = "Imported Email",
@@ -1492,8 +1529,8 @@ constructor(
                         tags = listOf("email")
                     )
                 }
-                emailEvidence.forEach { evidence ->
-                    evidenceRepository.addEvidence(evidence)
+                if (emailEvidence.isNotEmpty()) {
+                    evidenceRepository.addEvidenceList(emailEvidence)
                 }
                 _userMessage.value = "Imported ${emailEvidence.size} emails."
             } catch (e: Exception) {
@@ -1508,6 +1545,13 @@ constructor(
         viewModelScope.launch {
             globalLoadingState.pushLoading()
             try {
+                val caseId = selectedCase.value?.id?.toLong() ?: 0
+                val spreadsheetId = selectedCase.value?.spreadsheetId ?: ""
+                if (spreadsheetId.isEmpty()) {
+                    _errorMessage.value = "Please select a case first."
+                    return@launch
+                }
+
                 val outlookState = outlookAuthManager.outlookSignInState.value
                 if (outlookState is OutlookSignInState.Success) {
                     val messages = outlookService.searchEmails(outlookState.accessToken, from, subject, before, after)
@@ -1517,8 +1561,8 @@ constructor(
                             content = "From: ${message.from?.emailAddress?.address}\nSubject: ${message.subject}\n\n${message.bodyPreview}",
                             type = "Email",
                             timestamp = receivedDateTime,
-                            caseId = selectedCase.value?.id?.toLong() ?: 0,
-                            spreadsheetId = selectedCase.value?.spreadsheetId ?: "",
+                            caseId = caseId,
+                            spreadsheetId = spreadsheetId,
                             formattedContent = null,
                             mediaUri = null,
                             sourceDocument = "Imported Email",
@@ -1529,8 +1573,8 @@ constructor(
                             tags = listOf("email")
                         )
                     }
-                    emailEvidence?.forEach { evidence ->
-                        evidenceRepository.addEvidence(evidence)
+                    if (emailEvidence?.isNotEmpty() == true) {
+                        evidenceRepository.addEvidenceList(emailEvidence)
                     }
                     _userMessage.value = "Imported ${emailEvidence?.size ?: 0} emails from Outlook."
                 } else {
@@ -1548,9 +1592,17 @@ constructor(
         viewModelScope.launch {
             globalLoadingState.pushLoading()
             try {
-                val emailEvidence = imapService.fetchEmails(host, user, pass, from, subject)
-                emailEvidence.forEach { evidence ->
-                    evidenceRepository.addEvidence(evidence.copy(caseId = selectedCase.value?.id?.toLong() ?: 0, spreadsheetId = selectedCase.value?.spreadsheetId ?: ""))
+                val caseId = selectedCase.value?.id?.toLong() ?: 0
+                val spreadsheetId = selectedCase.value?.spreadsheetId ?: ""
+                if (spreadsheetId.isEmpty()) {
+                    _errorMessage.value = "Please select a case first."
+                    return@launch
+                }
+                val emailEvidence = imapService.fetchEmails(host, user, pass, from, subject).map {
+                    it.copy(caseId = caseId, spreadsheetId = spreadsheetId)
+                }
+                if (emailEvidence.isNotEmpty()) {
+                    evidenceRepository.addEvidenceList(emailEvidence)
                 }
                 _userMessage.value = "Imported ${emailEvidence.size} emails."
             } catch (e: Exception) {

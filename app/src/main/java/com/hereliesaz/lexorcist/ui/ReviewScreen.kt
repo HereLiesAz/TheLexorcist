@@ -4,6 +4,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -212,7 +213,7 @@ fun ReviewScreen(
                     }
                 }
 
-                Row(
+                FlowRow(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp),
@@ -229,17 +230,17 @@ fun ReviewScreen(
                     }
                     AzButton(
                         onClick = { showGenerateDocumentDialog = true },
-                        text = "Generate Document",
+                        text = "Generate",
                         modifier = Modifier.padding(start = 8.dp)
                     )
                     AzButton(
                         onClick = { showPackageFilesDialog = true },
-                        text = "Package Files",
+                        text = "Package",
                         modifier = Modifier.padding(start = 8.dp)
                     )
                     AzButton(
                         onClick = { /* caseViewModel.generateReadinessReport() */ },
-                        text = "Readiness Report",
+                        text = "Report",
                         modifier = Modifier.padding(start = 8.dp)
                     )
                 }

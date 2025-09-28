@@ -15,6 +15,8 @@ interface EvidenceRepository {
 
     suspend fun addEvidence(evidence: Evidence): Evidence?
 
+    suspend fun addEvidenceList(evidenceList: List<Evidence>): Result<List<Evidence>>
+
     suspend fun updateEvidence(evidence: Evidence)
 
     suspend fun deleteEvidence(evidence: Evidence)

@@ -2,7 +2,7 @@ package com.hereliesaz.lexorcist.utils
 
 import android.annotation.SuppressLint
 import android.content.ContentResolver
-import android.location.Location // ADDED
+import android.location.Location
 import android.provider.CallLog
 import android.provider.Telephony
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -17,13 +17,33 @@ class EvidenceImporter(
     private val fusedLocationProviderClient: FusedLocationProviderClient
 ) {
 
-    fun importSms(): List<Evidence> {
+    fun importSms(contact: String?, startDate: Long?, endDate: Long?): List<Evidence> {
         val smsList = mutableListOf<Evidence>()
+        val selectionArgs = mutableListOf<String>()
+        val selection = StringBuilder()
+
+        contact?.let {
+            selection.append("${Telephony.Sms.ADDRESS} = ?")
+            selectionArgs.add(it)
+        }
+
+        startDate?.let {
+            if (selection.isNotEmpty()) selection.append(" AND ")
+            selection.append("${Telephony.Sms.DATE} >= ?")
+            selectionArgs.add(it.toString())
+        }
+
+        endDate?.let {
+            if (selection.isNotEmpty()) selection.append(" AND ")
+            selection.append("${Telephony.Sms.DATE} <= ?")
+            selectionArgs.add(it.toString())
+        }
+
         val cursor = contentResolver.query(
             Telephony.Sms.CONTENT_URI,
             null,
-            null,
-            null,
+            selection.toString().ifEmpty { null },
+            selectionArgs.toTypedArray().ifEmpty { null },
             "date DESC"
         )
         cursor?.use {
@@ -59,13 +79,33 @@ class EvidenceImporter(
         return smsList
     }
 
-    fun importCallLog(): List<Evidence> {
+    fun importCallLog(contact: String?, startDate: Long?, endDate: Long?): List<Evidence> {
         val callLogList = mutableListOf<Evidence>()
+        val selectionArgs = mutableListOf<String>()
+        val selection = StringBuilder()
+
+        contact?.let {
+            selection.append("${CallLog.Calls.NUMBER} = ?")
+            selectionArgs.add(it)
+        }
+
+        startDate?.let {
+            if (selection.isNotEmpty()) selection.append(" AND ")
+            selection.append("${CallLog.Calls.DATE} >= ?")
+            selectionArgs.add(it.toString())
+        }
+
+        endDate?.let {
+            if (selection.isNotEmpty()) selection.append(" AND ")
+            selection.append("${CallLog.Calls.DATE} <= ?")
+            selectionArgs.add(it.toString())
+        }
+
         val cursor = contentResolver.query(
             CallLog.Calls.CONTENT_URI,
             null,
-            null,
-            null,
+            selection.toString().ifEmpty { null },
+            selectionArgs.toTypedArray().ifEmpty { null },
             "date DESC"
         )
         cursor?.use {
@@ -112,8 +152,8 @@ class EvidenceImporter(
      */
     @SuppressLint("MissingPermission")
     suspend fun importLocationHistory(): Evidence? = suspendCoroutine { continuation ->
-        fusedLocationProviderClient.lastLocation // CORRECTED TYPO
-            .addOnSuccessListener { location: Location? -> // ADDED Location type
+        fusedLocationProviderClient.lastLocation
+            .addOnSuccessListener { location: Location? ->
                 if (location != null) {
                     val locationContent = "Latitude: ${location.latitude}\nLongitude: ${location.longitude}\nAccuracy: ${location.accuracy}m"
                     val evidence = Evidence(
