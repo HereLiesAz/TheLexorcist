@@ -22,7 +22,6 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -146,7 +145,7 @@ fun ExtrasScreen(
         Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             if (isLoading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    com.hereliesaz.cointoss.CoinTossLoadingIndicator()
+                    com.hereliesaz.azload.CoinTossLoadingIndicator()
                 }
             } else {
                 val pagerState = rememberPagerState { 2 } // 0 for Scripts, 1 for Templates

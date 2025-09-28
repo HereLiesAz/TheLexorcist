@@ -374,7 +374,7 @@ fun ProcessingProgressView(
                         textAlign = TextAlign.End
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    com.hereliesaz.cointoss.CoinTossLoadingIndicator(modifier = Modifier.size(24.dp))
+                    com.hereliesaz.azload.CoinTossLoadingIndicator(modifier = Modifier.size(24.dp))
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 LinearProgressIndicator(

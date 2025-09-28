@@ -1,4 +1,4 @@
-package com.hereliesaz.cointoss
+package com.hereliesaz.azload
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.border

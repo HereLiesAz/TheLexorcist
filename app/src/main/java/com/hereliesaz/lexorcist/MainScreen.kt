@@ -2,7 +2,6 @@ package com.hereliesaz.lexorcist
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -45,11 +44,10 @@ import com.hereliesaz.lexorcist.ui.ExtrasScreen
 import com.hereliesaz.lexorcist.ui.PhotoGroupScreen
 import com.hereliesaz.lexorcist.ui.ReviewScreen
 import com.hereliesaz.lexorcist.ui.ScriptBuilderScreen
-import com.hereliesaz.lexorcist.ui.ScriptsScreen
 import com.hereliesaz.lexorcist.ui.SettingsScreen
 import com.hereliesaz.lexorcist.ui.TemplatesScreen
 import com.hereliesaz.lexorcist.ui.TimelineScreen
-import com.hereliesaz.cointoss.CoinTossLoadingIndicator
+import com.hereliesaz.azload.CoinTossLoadingIndicator
 import com.hereliesaz.lexorcist.ui.components.ScriptableAzNavRail
 import com.hereliesaz.lexorcist.viewmodel.AuthViewModel
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel

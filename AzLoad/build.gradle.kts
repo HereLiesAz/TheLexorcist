@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.hereliesaz.cointoss"
+    namespace = "com.hereliesaz.azload"
     compileSdk = 36
 
     defaultConfig {

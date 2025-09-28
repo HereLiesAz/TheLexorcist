@@ -20,6 +20,7 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
 import java.util.UUID
+import java.util.zip.ZipException // Added import
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
@@ -55,47 +56,75 @@ class LocalFileStorageService @Inject constructor(
     private fun initializeSpreadsheet() {
         try {
             if (!spreadsheetFile.exists() || spreadsheetFile.length() == 0L) {
-                XSSFWorkbook().use { workbook ->
-                    createSheetWithHeader(workbook, CASES_SHEET_NAME, CASES_HEADER)
-                    createSheetWithHeader(workbook, EVIDENCE_SHEET_NAME, EVIDENCE_HEADER)
-                    createSheetWithHeader(workbook, ALLEGATIONS_SHEET_NAME, ALLEGATIONS_HEADER)
-                    createSheetWithHeader(workbook, TRANSCRIPT_EDITS_SHEET_NAME, TRANSCRIPT_EDITS_HEADER)
-                    createSheetWithHeader(workbook, EXHIBITS_SHEET_NAME, EXHIBITS_HEADER)
-                    FileOutputStream(spreadsheetFile).use { fos -> workbook.write(fos) }
-                }
+                Log.i("LocalFileStorageService", "Spreadsheet file does not exist or is empty. Creating a new one.")
+                createNewSpreadsheet()
             } else {
-                FileInputStream(spreadsheetFile).use { fis ->
-                    XSSFWorkbook(fis).use { workbook ->
-                        var modified = false
-                        if (workbook.getSheet(CASES_SHEET_NAME) == null) {
-                            createSheetWithHeader(workbook, CASES_SHEET_NAME, CASES_HEADER)
-                            modified = true
-                        }
-                        if (workbook.getSheet(EVIDENCE_SHEET_NAME) == null) {
-                            createSheetWithHeader(workbook, EVIDENCE_SHEET_NAME, EVIDENCE_HEADER)
-                            modified = true
-                        }
-                        if (workbook.getSheet(ALLEGATIONS_SHEET_NAME) == null) {
-                            createSheetWithHeader(workbook, ALLEGATIONS_SHEET_NAME, ALLEGATIONS_HEADER)
-                            modified = true
-                        }
-                        if (workbook.getSheet(TRANSCRIPT_EDITS_SHEET_NAME) == null) {
-                            createSheetWithHeader(workbook, TRANSCRIPT_EDITS_SHEET_NAME, TRANSCRIPT_EDITS_HEADER)
-                            modified = true
-                        }
-                        if (workbook.getSheet(EXHIBITS_SHEET_NAME) == null) {
-                            createSheetWithHeader(workbook, EXHIBITS_SHEET_NAME, EXHIBITS_HEADER)
-                            modified = true
-                        }
+                try {
+                    // Attempt to open and validate existing spreadsheet
+                    FileInputStream(spreadsheetFile).use { fis ->
+                        XSSFWorkbook(fis).use { workbook ->
+                            var modified = false
+                            if (workbook.getSheet(CASES_SHEET_NAME) == null) {
+                                createSheetWithHeader(workbook, CASES_SHEET_NAME, CASES_HEADER)
+                                modified = true
+                            }
+                            if (workbook.getSheet(EVIDENCE_SHEET_NAME) == null) {
+                                createSheetWithHeader(workbook, EVIDENCE_SHEET_NAME, EVIDENCE_HEADER)
+                                modified = true
+                            }
+                            if (workbook.getSheet(ALLEGATIONS_SHEET_NAME) == null) {
+                                createSheetWithHeader(workbook, ALLEGATIONS_SHEET_NAME, ALLEGATIONS_HEADER)
+                                modified = true
+                            }
+                            if (workbook.getSheet(TRANSCRIPT_EDITS_SHEET_NAME) == null) {
+                                createSheetWithHeader(workbook, TRANSCRIPT_EDITS_SHEET_NAME, TRANSCRIPT_EDITS_HEADER)
+                                modified = true
+                            }
+                            if (workbook.getSheet(EXHIBITS_SHEET_NAME) == null) {
+                                createSheetWithHeader(workbook, EXHIBITS_SHEET_NAME, EXHIBITS_HEADER)
+                                modified = true
+                            }
 
-                        if (modified) {
-                            FileOutputStream(spreadsheetFile).use { fos -> workbook.write(fos) }
+                            if (modified) {
+                                FileOutputStream(spreadsheetFile).use { fos -> workbook.write(fos) }
+                                Log.i("LocalFileStorageService", "Added missing sheets to existing spreadsheet.")
+                            }
                         }
+                    }
+                } catch (zipEx: ZipException) {
+                    Log.w("LocalFileStorageService", "Spreadsheet file '${spreadsheetFile.absolutePath}' is corrupted. Deleting and creating a new one.", zipEx)
+                    try {
+                        if (spreadsheetFile.exists()) {
+                            spreadsheetFile.delete()
+                        }
+                        createNewSpreadsheet()
+                    } catch (delEx: Exception) {
+                        Log.e("LocalFileStorageService", "Failed to delete corrupted spreadsheet file '${spreadsheetFile.absolutePath}' or create a new one.", delEx)
+                        throw RuntimeException("Corrupted spreadsheet encountered, failed to delete it and/or create a new one.", delEx)
                     }
                 }
             }
+        } catch (e: IOException) {
+            Log.e("LocalFileStorageService", "Failed to initialize spreadsheet due to IOException", e)
+            throw e // Rethrow critical IOExceptions
+        } catch (e: SecurityException) {
+            Log.e("LocalFileStorageService", "Failed to initialize spreadsheet due to SecurityException", e)
+            throw e // Rethrow critical SecurityExceptions
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e("LocalFileStorageService", "An unexpected error occurred during spreadsheet initialization", e)
+            throw RuntimeException("Failed to initialize spreadsheet due to an unexpected error", e)
+        }
+    }
+
+    private fun createNewSpreadsheet() {
+        XSSFWorkbook().use { workbook ->
+            createSheetWithHeader(workbook, CASES_SHEET_NAME, CASES_HEADER)
+            createSheetWithHeader(workbook, EVIDENCE_SHEET_NAME, EVIDENCE_HEADER)
+            createSheetWithHeader(workbook, ALLEGATIONS_SHEET_NAME, ALLEGATIONS_HEADER)
+            createSheetWithHeader(workbook, TRANSCRIPT_EDITS_SHEET_NAME, TRANSCRIPT_EDITS_HEADER)
+            createSheetWithHeader(workbook, EXHIBITS_SHEET_NAME, EXHIBITS_HEADER)
+            FileOutputStream(spreadsheetFile).use { fos -> workbook.write(fos) }
+            Log.i("LocalFileStorageService", "Successfully created a new spreadsheet file at '${spreadsheetFile.absolutePath}'.")
         }
     }
 
@@ -124,37 +153,66 @@ class LocalFileStorageService @Inject constructor(
     private suspend fun <T> readFromSpreadsheet(block: (XSSFWorkbook) -> T): Result<T> = withContext(Dispatchers.IO) {
         try {
             if (!spreadsheetFile.exists() || spreadsheetFile.length() == 0L) {
-                return@withContext Result.Success(block(XSSFWorkbook()))
+                Log.w("LocalFileStorageService", "Spreadsheet file does not exist or is empty for read. Initializing with a new workbook.")
+                // It's possible initializeSpreadsheet failed to create it, or it got deleted.
+                // Providing a new workbook to the block. For reads, this usually means empty data.
+                 try {
+                    initializeSpreadsheet() // Attempt to re-initialize if not present
+                } catch (e: Exception) {
+                    Log.e("LocalFileStorageService", "Critical failure to re-initialize spreadsheet during read attempt.", e)
+                    return@withContext Result.Error(IOException("Spreadsheet not available and re-initialization failed.", e))
+                }
+                if (!spreadsheetFile.exists() || spreadsheetFile.length() == 0L) {
+                     Log.e("LocalFileStorageService", "Spreadsheet still not available after re-initialization attempt during read.")
+                     return@withContext Result.Error(IOException("Spreadsheet not available after re-initialization."))
+                }
             }
             FileInputStream(spreadsheetFile).use { fis ->
                 val workbook = XSSFWorkbook(fis)
                 val result = block(workbook)
-                workbook.close()
+                workbook.close() 
                 Result.Success(result)
             }
+        } catch (zipEx: ZipException) {
+            Log.e("LocalFileStorageService", "Corrupted spreadsheet file encountered during read.", zipEx)
+            Result.Error(zipEx) // Propagate error for UI/caller to handle
         } catch (e: Exception) {
+            Log.e("LocalFileStorageService", "Error reading from spreadsheet", e)
             Result.Error(e)
         }
     }
 
     private suspend fun <T> writeToSpreadsheet(block: (XSSFWorkbook) -> T): Result<T> = withContext(Dispatchers.IO) {
         try {
-            val workbook = if (spreadsheetFile.exists() && spreadsheetFile.length() > 0) {
-                FileInputStream(spreadsheetFile).use { XSSFWorkbook(it) }
-            } else {
-                XSSFWorkbook()
+            if (!spreadsheetFile.exists() || spreadsheetFile.length() == 0L) {
+                Log.w("LocalFileStorageService", "Spreadsheet file does not exist or is empty for write. Initializing with a new workbook.")
+                 try {
+                    initializeSpreadsheet() // Attempt to re-initialize if not present
+                } catch (e: Exception) {
+                    Log.e("LocalFileStorageService", "Critical failure to re-initialize spreadsheet during write attempt.", e)
+                    return@withContext Result.Error(IOException("Spreadsheet not available and re-initialization failed.", e))
+                }
+                 if (!spreadsheetFile.exists() || spreadsheetFile.length() == 0L) {
+                     Log.e("LocalFileStorageService", "Spreadsheet still not available after re-initialization attempt during write.")
+                     return@withContext Result.Error(IOException("Spreadsheet not available after re-initialization."))
+                }
             }
+            val workbook = FileInputStream(spreadsheetFile).use { fis -> XSSFWorkbook(fis) }
             val result = block(workbook)
             FileOutputStream(spreadsheetFile).use { fos -> workbook.write(fos) }
             workbook.close()
             Result.Success(result)
+        } catch (zipEx: ZipException) {
+            Log.e("LocalFileStorageService", "Corrupted spreadsheet file encountered during write.", zipEx)
+            Result.Error(zipEx) // Propagate error for UI/caller to handle
         } catch (e: Exception) {
+            Log.e("LocalFileStorageService", "Error writing to spreadsheet", e)
             Result.Error(e)
         }
     }
 
     private fun findRowById(sheet: XSSFSheet, id: String, idColumn: Int): Row? {
-        for (i in 1..sheet.lastRowNum) {
+        for (i in 1..sheet.lastRowNum) { // Start from 1 to skip header
             val row = sheet.getRow(i) ?: continue
             if (row.getCell(idColumn)?.stringCellValue == id) {
                 return row
@@ -164,10 +222,13 @@ class LocalFileStorageService @Inject constructor(
     }
 
     private fun findRowById(sheet: XSSFSheet, id: Int, idColumn: Int): Row? {
-        for (i in 1..sheet.lastRowNum) {
+        for (i in 1..sheet.lastRowNum) { // Start from 1 to skip header
             val row = sheet.getRow(i) ?: continue
-            if (getIntCellValueSafe(row.getCell(idColumn)) == id) {
+            val cell = row.getCell(idColumn)
+            if (cell != null && cell.cellType == CellType.NUMERIC && cell.numericCellValue.toInt() == id) {
                 return row
+            } else if (cell != null && cell.cellType == CellType.STRING && cell.stringCellValue.toIntOrNull() == id) {
+                 return row 
             }
         }
         return null
@@ -185,9 +246,10 @@ class LocalFileStorageService @Inject constructor(
                     } else if (cell.cachedFormulaResultType == CellType.STRING) {
                         cell.stringCellValue.toDoubleOrNull()
                     } else {
-                        null
+                        null 
                     }
                 } catch (e: IllegalStateException) {
+                    Log.w("LocalFileStorageService", "Could not get numeric value from formula cell: ${e.message}")
                     null
                 }
             }
@@ -212,10 +274,10 @@ class LocalFileStorageService @Inject constructor(
                 when (sVal) {
                     "true" -> true
                     "false" -> false
-                    else -> null
+                    else -> null 
                 }
             }
-            CellType.NUMERIC -> cell.numericCellValue != 0.0
+            CellType.NUMERIC -> cell.numericCellValue != 0.0 
             else -> null
         }
     }
@@ -233,39 +295,48 @@ class LocalFileStorageService @Inject constructor(
 
     override suspend fun getAllCases(): Result<List<Case>> = readFromSpreadsheet { workbook ->
         val sheet = workbook.getSheet(CASES_SHEET_NAME) ?: return@readFromSpreadsheet emptyList()
-        (1..sheet.lastRowNum).mapNotNull { i ->
+        (1..sheet.lastRowNum).mapNotNull { i -> 
             val row = sheet.getRow(i) ?: return@mapNotNull null
-            val spreadsheetId = row.getCell(0)?.stringCellValue ?: ""
+            val spreadsheetId = row.getCell(CASES_HEADER.indexOf("ID"))?.stringCellValue ?: ""
+            if (spreadsheetId.isBlank()) return@mapNotNull null 
+
             Case(
-                id = spreadsheetId.hashCode(),
+                id = spreadsheetId.hashCode(), 
                 spreadsheetId = spreadsheetId,
-                name = row.getCell(1)?.stringCellValue ?: "",
-                plaintiffs = row.getCell(2)?.stringCellValue ?: "",
-                defendants = row.getCell(3)?.stringCellValue ?: "",
-                court = row.getCell(4)?.stringCellValue ?: "",
-                folderId = row.getCell(5)?.stringCellValue,
-                lastModifiedTime = getLongCellValueSafe(row.getCell(6)) ?: 0L,
-                isArchived = getBooleanCellValueSafe(row.getCell(7)) ?: false
+                name = row.getCell(CASES_HEADER.indexOf("Name"))?.stringCellValue ?: "",
+                plaintiffs = row.getCell(CASES_HEADER.indexOf("Plaintiffs"))?.stringCellValue ?: "",
+                defendants = row.getCell(CASES_HEADER.indexOf("Defendants"))?.stringCellValue ?: "",
+                court = row.getCell(CASES_HEADER.indexOf("Court"))?.stringCellValue ?: "",
+                folderId = row.getCell(CASES_HEADER.indexOf("FolderID"))?.stringCellValue,
+                lastModifiedTime = getLongCellValueSafe(row.getCell(CASES_HEADER.indexOf("LastModified"))) ?: 0L,
+                isArchived = getBooleanCellValueSafe(row.getCell(CASES_HEADER.indexOf("IsArchived"))) ?: false
             )
         }
     }
 
     override suspend fun getExhibitsForCase(caseSpreadsheetId: String): Result<List<Exhibit>> = readFromSpreadsheet { workbook ->
         val sheet = workbook.getSheet(EXHIBITS_SHEET_NAME) ?: return@readFromSpreadsheet emptyList()
-        (1..sheet.lastRowNum).mapNotNull { i ->
+        (1..sheet.lastRowNum).mapNotNull { i -> 
             val row = sheet.getRow(i) ?: return@mapNotNull null
-            if (row.getCell(1)?.stringCellValue != caseSpreadsheetId) return@mapNotNull null
+            if (row.getCell(EXHIBITS_HEADER.indexOf("CaseID"))?.stringCellValue != caseSpreadsheetId) return@mapNotNull null
 
-            val idCell = row.getCell(0)
-            val exhibitId = getIntCellValueSafe(idCell) ?: 0
-            val evidenceIdsCell = row.getCell(4)
-            val evidenceIds = (evidenceIdsCell?.stringCellValue ?: "").split(",").filter { it.isNotBlank() }.mapNotNull { it.toIntOrNull() }
+            val idCell = row.getCell(EXHIBITS_HEADER.indexOf("ExhibitID"))
+            val exhibitId = getIntCellValueSafe(idCell) ?: run {
+                Log.w("LocalFileStorageService", "Exhibit row ${row.rowNum} has invalid or missing ExhibitID.")
+                return@mapNotNull null 
+            }
+            
+            val evidenceIdsCell = row.getCell(EXHIBITS_HEADER.indexOf("EvidenceIDs"))
+            val evidenceIds = (evidenceIdsCell?.stringCellValue ?: "")
+                .split(",")
+                .filter { it.isNotBlank() }
+                .mapNotNull { it.toIntOrNull() }
 
             Exhibit(
                 id = exhibitId,
-                caseId = caseSpreadsheetId.hashCode().toLong(),
-                name = row.getCell(2)?.stringCellValue ?: "",
-                description = row.getCell(3)?.stringCellValue ?: "",
+                caseId = caseSpreadsheetId.hashCode().toLong(), 
+                name = row.getCell(EXHIBITS_HEADER.indexOf("Name"))?.stringCellValue ?: "",
+                description = row.getCell(EXHIBITS_HEADER.indexOf("Description"))?.stringCellValue ?: "",
                 evidenceIds = evidenceIds
             )
         }
@@ -275,75 +346,95 @@ class LocalFileStorageService @Inject constructor(
         val sheet = workbook.getSheet(EXHIBITS_SHEET_NAME) ?: workbook.createSheet(EXHIBITS_SHEET_NAME).also {
             it.createRow(0).apply { EXHIBITS_HEADER.forEachIndexed { index, s -> createCell(index).setCellValue(s) } }
         }
-        val lastId = (1..sheet.lastRowNum).mapNotNull { i ->
-            getIntCellValueSafe(sheet.getRow(i)?.getCell(0))
-        }.maxOrNull() ?: 0
+        val lastId = (1..sheet.lastRowNum)
+            .mapNotNull { i -> getIntCellValueSafe(sheet.getRow(i)?.getCell(EXHIBITS_HEADER.indexOf("ExhibitID"))) }
+            .maxOrNull() ?: 0
         val newExhibit = exhibit.copy(id = lastId + 1)
+        
         sheet.createRow(sheet.physicalNumberOfRows).apply {
-            createCell(0).setCellValue(newExhibit.id.toDouble())
-            createCell(1).setCellValue(caseSpreadsheetId)
-            createCell(2).setCellValue(newExhibit.name)
-            createCell(3).setCellValue(newExhibit.description)
-            createCell(4).setCellValue(newExhibit.evidenceIds.joinToString(","))
+            createCell(EXHIBITS_HEADER.indexOf("ExhibitID")).setCellValue(newExhibit.id.toDouble())
+            createCell(EXHIBITS_HEADER.indexOf("CaseID")).setCellValue(caseSpreadsheetId)
+            createCell(EXHIBITS_HEADER.indexOf("Name")).setCellValue(newExhibit.name)
+            createCell(EXHIBITS_HEADER.indexOf("Description")).setCellValue(newExhibit.description)
+            createCell(EXHIBITS_HEADER.indexOf("EvidenceIDs")).setCellValue(newExhibit.evidenceIds.joinToString(","))
         }
         newExhibit
     }
 
     override suspend fun updateExhibit(caseSpreadsheetId: String, exhibit: Exhibit): Result<Unit> = writeToSpreadsheet { workbook ->
         val sheet = workbook.getSheet(EXHIBITS_SHEET_NAME) ?: throw IOException("Exhibits sheet not found.")
-        val row = findRowById(sheet, exhibit.id, 0) ?: throw IOException("Exhibit with id ${exhibit.id} not found.")
-        (row.getCell(2) ?: row.createCell(2)).setCellValue(exhibit.name)
-        (row.getCell(3) ?: row.createCell(3)).setCellValue(exhibit.description)
-        (row.getCell(4) ?: row.createCell(4)).setCellValue(exhibit.evidenceIds.joinToString(","))
+        val row = findRowById(sheet, exhibit.id, EXHIBITS_HEADER.indexOf("ExhibitID")) ?: throw IOException("Exhibit with id ${exhibit.id} not found for case $caseSpreadsheetId.")
+        
+        if (row.getCell(EXHIBITS_HEADER.indexOf("CaseID"))?.stringCellValue != caseSpreadsheetId) {
+            throw IOException("Exhibit with id ${exhibit.id} does not belong to case $caseSpreadsheetId.")
+        }
+
+        (row.getCell(EXHIBITS_HEADER.indexOf("Name")) ?: row.createCell(EXHIBITS_HEADER.indexOf("Name"))).setCellValue(exhibit.name)
+        (row.getCell(EXHIBITS_HEADER.indexOf("Description")) ?: row.createCell(EXHIBITS_HEADER.indexOf("Description"))).setCellValue(exhibit.description)
+        (row.getCell(EXHIBITS_HEADER.indexOf("EvidenceIDs")) ?: row.createCell(EXHIBITS_HEADER.indexOf("EvidenceIDs"))).setCellValue(exhibit.evidenceIds.joinToString(","))
+        Unit 
     }
 
     override suspend fun deleteExhibit(caseSpreadsheetId: String, exhibit: Exhibit): Result<Unit> = writeToSpreadsheet { workbook ->
         val sheet = workbook.getSheet(EXHIBITS_SHEET_NAME) ?: throw IOException("Exhibits sheet not found.")
-        val row = findRowById(sheet, exhibit.id, 0) ?: throw IOException("Exhibit with id ${exhibit.id} not found.")
-        sheet.removeRow(row)
-        if (row.rowNum < sheet.lastRowNum) {
-            sheet.shiftRows(row.rowNum + 1, sheet.lastRowNum, -1)
+        val row = findRowById(sheet, exhibit.id, EXHIBITS_HEADER.indexOf("ExhibitID")) ?: throw IOException("Exhibit with id ${exhibit.id} not found for case $caseSpreadsheetId.")
+
+        if (row.getCell(EXHIBITS_HEADER.indexOf("CaseID"))?.stringCellValue != caseSpreadsheetId) {
+            throw IOException("Exhibit with id ${exhibit.id} does not belong to case $caseSpreadsheetId. Cannot delete.")
         }
+        
+        val rowIndex = row.rowNum
+        sheet.removeRow(row)
+        if (rowIndex < sheet.lastRowNum) { 
+            sheet.shiftRows(rowIndex + 1, sheet.lastRowNum, -1)
+        }
+        Unit 
     }
 
     override suspend fun createCase(case: Case): Result<Case> = writeToSpreadsheet { workbook ->
         val sheet = workbook.getSheet(CASES_SHEET_NAME) ?: workbook.createSheet(CASES_SHEET_NAME).also {
             it.createRow(0).apply { CASES_HEADER.forEachIndexed { index, s -> createCell(index).setCellValue(s) } }
         }
-        val newId = UUID.randomUUID().toString()
+        val newId = UUID.randomUUID().toString() 
         val newCase = case.copy(spreadsheetId = newId, lastModifiedTime = System.currentTimeMillis())
+        
         sheet.createRow(sheet.physicalNumberOfRows).apply {
-            createCell(0).setCellValue(newCase.spreadsheetId)
-            createCell(1).setCellValue(newCase.name)
-            createCell(2).setCellValue(newCase.plaintiffs)
-            createCell(3).setCellValue(newCase.defendants)
-            createCell(4).setCellValue(newCase.court)
-            createCell(5).setCellValue(newCase.folderId)
-            createCell(6).setCellValue(newCase.lastModifiedTime!!.toDouble())
-            createCell(7).setCellValue(newCase.isArchived)
+            createCell(CASES_HEADER.indexOf("ID")).setCellValue(newCase.spreadsheetId)
+            createCell(CASES_HEADER.indexOf("Name")).setCellValue(newCase.name)
+            createCell(CASES_HEADER.indexOf("Plaintiffs")).setCellValue(newCase.plaintiffs)
+            createCell(CASES_HEADER.indexOf("Defendants")).setCellValue(newCase.defendants)
+            createCell(CASES_HEADER.indexOf("Court")).setCellValue(newCase.court)
+            createCell(CASES_HEADER.indexOf("FolderID")).setCellValue(newCase.folderId ?: "") 
+            createCell(CASES_HEADER.indexOf("LastModified")).setCellValue(newCase.lastModifiedTime!!.toDouble()) 
+            createCell(CASES_HEADER.indexOf("IsArchived")).setCellValue(newCase.isArchived)
         }
         newCase
     }
 
     override suspend fun updateCase(case: Case): Result<Unit> = writeToSpreadsheet { workbook ->
         val sheet = workbook.getSheet(CASES_SHEET_NAME) ?: throw IOException("Cases sheet not found.")
-        val row = findRowById(sheet, case.spreadsheetId, 0) ?: throw IOException("Case with id ${case.spreadsheetId} not found.")
-        (row.getCell(1) ?: row.createCell(1)).setCellValue(case.name)
-        (row.getCell(2) ?: row.createCell(2)).setCellValue(case.plaintiffs)
-        (row.getCell(3) ?: row.createCell(3)).setCellValue(case.defendants)
-        (row.getCell(4) ?: row.createCell(4)).setCellValue(case.court)
-        (row.getCell(5) ?: row.createCell(5)).setCellValue(case.folderId)
-        (row.getCell(6) ?: row.createCell(6)).setCellValue(System.currentTimeMillis().toDouble())
-        (row.getCell(7) ?: row.createCell(7)).setCellValue(case.isArchived)
+        val row = findRowById(sheet, case.spreadsheetId, CASES_HEADER.indexOf("ID")) ?: throw IOException("Case with id ${case.spreadsheetId} not found.")
+        
+        (row.getCell(CASES_HEADER.indexOf("Name")) ?: row.createCell(CASES_HEADER.indexOf("Name"))).setCellValue(case.name)
+        (row.getCell(CASES_HEADER.indexOf("Plaintiffs")) ?: row.createCell(CASES_HEADER.indexOf("Plaintiffs"))).setCellValue(case.plaintiffs)
+        (row.getCell(CASES_HEADER.indexOf("Defendants")) ?: row.createCell(CASES_HEADER.indexOf("Defendants"))).setCellValue(case.defendants)
+        (row.getCell(CASES_HEADER.indexOf("Court")) ?: row.createCell(CASES_HEADER.indexOf("Court"))).setCellValue(case.court)
+        (row.getCell(CASES_HEADER.indexOf("FolderID")) ?: row.createCell(CASES_HEADER.indexOf("FolderID"))).setCellValue(case.folderId ?: "")
+        (row.getCell(CASES_HEADER.indexOf("LastModified")) ?: row.createCell(CASES_HEADER.indexOf("LastModified"))).setCellValue(System.currentTimeMillis().toDouble()) 
+        (row.getCell(CASES_HEADER.indexOf("IsArchived")) ?: row.createCell(CASES_HEADER.indexOf("IsArchived"))).setCellValue(case.isArchived)
+        Unit
     }
 
     override suspend fun deleteCase(case: Case): Result<Unit> = writeToSpreadsheet { workbook ->
         val sheet = workbook.getSheet(CASES_SHEET_NAME) ?: throw IOException("Cases sheet not found.")
-        val row = findRowById(sheet, case.spreadsheetId, 0) ?: throw IOException("Case with id ${case.spreadsheetId} not found.")
+        val row = findRowById(sheet, case.spreadsheetId, CASES_HEADER.indexOf("ID")) ?: throw IOException("Case with id ${case.spreadsheetId} not found.")
+        
+        val rowIndex = row.rowNum
         sheet.removeRow(row)
-        if (row.rowNum < sheet.lastRowNum) {
-            sheet.shiftRows(row.rowNum + 1, sheet.lastRowNum, -1)
+        if (rowIndex < sheet.lastRowNum) {
+            sheet.shiftRows(rowIndex + 1, sheet.lastRowNum, -1)
         }
+        Unit
     }
 
     override suspend fun getEvidenceForCase(caseSpreadsheetId: String): Result<List<Evidence>> = readFromSpreadsheet { workbook ->
@@ -351,14 +442,14 @@ class LocalFileStorageService @Inject constructor(
         val editsSheet = workbook.getSheet(TRANSCRIPT_EDITS_SHEET_NAME)
 
         val allEdits = editsSheet?.let {
-            (1..it.lastRowNum).mapNotNull { j ->
+            (1..it.lastRowNum).mapNotNull { j -> 
                 val editRow = it.getRow(j) ?: return@mapNotNull null
-                val evidenceId = getIntCellValueSafe(editRow.getCell(1))
+                val evidenceId = getIntCellValueSafe(editRow.getCell(TRANSCRIPT_EDITS_HEADER.indexOf("EvidenceID")))
                 if (evidenceId != null) {
                     evidenceId to com.hereliesaz.lexorcist.model.TranscriptEdit(
-                        timestamp = getLongCellValueSafe(editRow.getCell(2)) ?: 0L,
-                        reason = editRow.getCell(3)?.stringCellValue ?: "",
-                        content = editRow.getCell(4)?.stringCellValue ?: ""
+                        timestamp = getLongCellValueSafe(editRow.getCell(TRANSCRIPT_EDITS_HEADER.indexOf("Timestamp"))) ?: 0L,
+                        reason = editRow.getCell(TRANSCRIPT_EDITS_HEADER.indexOf("Reason"))?.stringCellValue ?: "",
+                        content = editRow.getCell(TRANSCRIPT_EDITS_HEADER.indexOf("NewContent"))?.stringCellValue ?: ""
                     )
                 } else {
                     null
@@ -366,54 +457,60 @@ class LocalFileStorageService @Inject constructor(
             }
         }?.groupBy({ it.first }, { it.second }) ?: emptyMap()
 
-        (1..sheet.lastRowNum).mapNotNull { i ->
+        (1..sheet.lastRowNum).mapNotNull { i -> 
             val row = sheet.getRow(i) ?: return@mapNotNull null
-            if (row.getCell(1)?.stringCellValue != caseSpreadsheetId) return@mapNotNull null
+            if (row.getCell(EVIDENCE_HEADER.indexOf("CaseID"))?.stringCellValue != caseSpreadsheetId) return@mapNotNull null
 
-            val idCell = row.getCell(0)
-            val evidenceId = getIntCellValueSafe(idCell) ?: 0
+            val idCell = row.getCell(EVIDENCE_HEADER.indexOf("EvidenceID"))
+            val evidenceId = getIntCellValueSafe(idCell) ?: run {
+                 Log.w("LocalFileStorageService", "Evidence row ${row.rowNum} has invalid or missing EvidenceID.")
+                 return@mapNotNull null
+            }
 
-            val timestampCell = row.getCell(6)
-            val timestamp = getLongCellValueSafe(timestampCell) ?: 0L
+            val timestamp = getLongCellValueSafe(row.getCell(EVIDENCE_HEADER.indexOf("Timestamp"))) ?: 0L
+            val documentDate = getLongCellValueSafe(row.getCell(EVIDENCE_HEADER.indexOf("DocumentDate"))) ?: 0L
+            
+            val allegationIdCell = row.getCell(EVIDENCE_HEADER.indexOf("AllegationID"))
+            val allegationIdString = when (allegationIdCell?.cellType) {
+                CellType.NUMERIC -> allegationIdCell.numericCellValue.toInt().toString()
+                CellType.STRING -> allegationIdCell.stringCellValue
+                else -> null
+            }
 
-            val documentDateCell = row.getCell(8)
-            val documentDate = getLongCellValueSafe(documentDateCell) ?: 0L
+            val tags = (row.getCell(EVIDENCE_HEADER.indexOf("Tags"))?.stringCellValue ?: "").split(",").filter { it.isNotBlank() }
+            val linkedIds = (row.getCell(EVIDENCE_HEADER.indexOf("LinkedEvidenceIDs"))?.stringCellValue ?: "")
+                .split(",")
+                .filter { it.isNotBlank() }
+                .mapNotNull { it.toIntOrNull() }
 
-            val allegationIdCell = row.getCell(9)
-            val allegationIdInt = getIntCellValueSafe(allegationIdCell)
-
-            val tagsCell = row.getCell(11)
-            val tags = (tagsCell?.stringCellValue ?: "").split(",").filter { it.isNotBlank() }
-
-            val linkedIdsCell = row.getCell(13)
-            val linkedIds = (linkedIdsCell?.stringCellValue ?: "").split(",").filter { it.isNotBlank() }.mapNotNull { it.toIntOrNull() }
-
-            val entitiesCell = row.getCell(15)
-            val entities: Map<String, List<String>> = gson.fromJson(
-                entitiesCell?.stringCellValue ?: "{}",
-                object : TypeToken<Map<String, List<String>>>() {}.type
-            )
-
+            val entitiesJson = row.getCell(EVIDENCE_HEADER.indexOf("Entities"))?.stringCellValue ?: "{}"
+            val entities: Map<String, List<String>> = try {
+                gson.fromJson(entitiesJson, object : TypeToken<Map<String, List<String>>>() {}.type)
+            } catch (e: Exception) {
+                Log.e("LocalFileStorageService", "Failed to parse entities JSON: $entitiesJson", e)
+                emptyMap()
+            }
+            
             val transcriptEdits = allEdits[evidenceId] ?: emptyList()
 
             Evidence(
                 id = evidenceId,
                 caseId = caseSpreadsheetId.hashCode().toLong(),
                 spreadsheetId = caseSpreadsheetId,
-                type = row.getCell(2)?.stringCellValue ?: "",
-                content = row.getCell(3)?.stringCellValue ?: "",
-                formattedContent = row.getCell(4)?.stringCellValue,
-                mediaUri = row.getCell(5)?.stringCellValue,
+                type = row.getCell(EVIDENCE_HEADER.indexOf("Type"))?.stringCellValue ?: "",
+                content = row.getCell(EVIDENCE_HEADER.indexOf("Content"))?.stringCellValue ?: "",
+                formattedContent = row.getCell(EVIDENCE_HEADER.indexOf("FormattedContent"))?.stringCellValue,
+                mediaUri = row.getCell(EVIDENCE_HEADER.indexOf("MediaUri"))?.stringCellValue,
                 timestamp = timestamp,
-                sourceDocument = row.getCell(7)?.stringCellValue ?: "",
+                sourceDocument = row.getCell(EVIDENCE_HEADER.indexOf("SourceDocument"))?.stringCellValue ?: "",
                 documentDate = documentDate,
-                allegationId = allegationIdInt?.toString(),
-                allegationElementName = null,
-                category = row.getCell(10)?.stringCellValue ?: "",
+                allegationId = allegationIdString,
+                allegationElementName = null, 
+                category = row.getCell(EVIDENCE_HEADER.indexOf("Category"))?.stringCellValue ?: "",
                 tags = tags,
-                commentary = row.getCell(12)?.stringCellValue,
+                commentary = row.getCell(EVIDENCE_HEADER.indexOf("Commentary"))?.stringCellValue,
                 linkedEvidenceIds = linkedIds,
-                parentVideoId = row.getCell(14)?.stringCellValue,
+                parentVideoId = row.getCell(EVIDENCE_HEADER.indexOf("ParentVideoID"))?.stringCellValue,
                 entities = entities,
                 transcriptEdits = transcriptEdits
             )
@@ -424,77 +521,88 @@ class LocalFileStorageService @Inject constructor(
         val sheet = workbook.getSheet(EVIDENCE_SHEET_NAME) ?: workbook.createSheet(EVIDENCE_SHEET_NAME).also {
             it.createRow(0).apply { EVIDENCE_HEADER.forEachIndexed { index, s -> createCell(index).setCellValue(s) } }
         }
-        val lastId = (1..sheet.lastRowNum).mapNotNull { i ->
-            getIntCellValueSafe(sheet.getRow(i)?.getCell(0))
-        }.maxOrNull() ?: 0
+        val lastId = (1..sheet.lastRowNum)
+            .mapNotNull { i -> getIntCellValueSafe(sheet.getRow(i)?.getCell(EVIDENCE_HEADER.indexOf("EvidenceID"))) }
+            .maxOrNull() ?: 0
         val newEvidence = evidence.copy(id = lastId + 1)
+        
         sheet.createRow(sheet.physicalNumberOfRows).apply {
-            createCell(0).setCellValue(newEvidence.id.toDouble())
-            createCell(1).setCellValue(caseSpreadsheetId)
-            createCell(2).setCellValue(newEvidence.type)
-            createCell(3).setCellValue(newEvidence.content)
-            createCell(4).setCellValue(newEvidence.formattedContent)
-            createCell(5).setCellValue(newEvidence.mediaUri)
-            createCell(6).setCellValue(newEvidence.timestamp.toDouble())
-            createCell(7).setCellValue(newEvidence.sourceDocument)
-            createCell(8).setCellValue(newEvidence.documentDate.toDouble())
+            createCell(EVIDENCE_HEADER.indexOf("EvidenceID")).setCellValue(newEvidence.id.toDouble())
+            createCell(EVIDENCE_HEADER.indexOf("CaseID")).setCellValue(caseSpreadsheetId)
+            createCell(EVIDENCE_HEADER.indexOf("Type")).setCellValue(newEvidence.type)
+            createCell(EVIDENCE_HEADER.indexOf("Content")).setCellValue(newEvidence.content)
+            createCell(EVIDENCE_HEADER.indexOf("FormattedContent")).setCellValue(newEvidence.formattedContent)
+            createCell(EVIDENCE_HEADER.indexOf("MediaUri")).setCellValue(newEvidence.mediaUri)
+            createCell(EVIDENCE_HEADER.indexOf("Timestamp")).setCellValue(newEvidence.timestamp.toDouble())
+            createCell(EVIDENCE_HEADER.indexOf("SourceDocument")).setCellValue(newEvidence.sourceDocument)
+            createCell(EVIDENCE_HEADER.indexOf("DocumentDate")).setCellValue(newEvidence.documentDate.toDouble())
+            val allegationCell = createCell(EVIDENCE_HEADER.indexOf("AllegationID"))
             newEvidence.allegationId?.let {
-                try {
-                    createCell(9).setCellValue(it.toDouble())
-                } catch (e: NumberFormatException) {
-                    createCell(9).setCellValue(it)
-                }
-            } ?: createCell(9).setBlank()
-            createCell(10).setCellValue(newEvidence.category)
-            createCell(11).setCellValue(newEvidence.tags.joinToString(","))
-            createCell(12).setCellValue(newEvidence.commentary ?: "")
-            createCell(13).setCellValue(newEvidence.linkedEvidenceIds.joinToString(","))
-            createCell(14).setCellValue(newEvidence.parentVideoId ?: "")
-            createCell(15).setCellValue(gson.toJson(newEvidence.entities))
+                allegationCell.setCellValue(it) 
+            } ?: allegationCell.setBlank()
+            createCell(EVIDENCE_HEADER.indexOf("Category")).setCellValue(newEvidence.category)
+            createCell(EVIDENCE_HEADER.indexOf("Tags")).setCellValue(newEvidence.tags.joinToString(","))
+            createCell(EVIDENCE_HEADER.indexOf("Commentary")).setCellValue(newEvidence.commentary ?: "")
+            createCell(EVIDENCE_HEADER.indexOf("LinkedEvidenceIDs")).setCellValue(newEvidence.linkedEvidenceIds.joinToString(","))
+            createCell(EVIDENCE_HEADER.indexOf("ParentVideoID")).setCellValue(newEvidence.parentVideoId ?: "")
+            createCell(EVIDENCE_HEADER.indexOf("Entities")).setCellValue(gson.toJson(newEvidence.entities))
         }
         newEvidence
     }
 
     override suspend fun updateEvidence(caseSpreadsheetId: String, evidence: Evidence): Result<Unit> = writeToSpreadsheet { workbook ->
         val sheet = workbook.getSheet(EVIDENCE_SHEET_NAME) ?: throw IOException("Evidence sheet not found.")
-        val row = findRowById(sheet, evidence.id, 0) ?: throw IOException("Evidence with id ${evidence.id} not found.")
-        (row.getCell(2) ?: row.createCell(2)).setCellValue(evidence.type)
-        (row.getCell(3) ?: row.createCell(3)).setCellValue(evidence.content)
-        (row.getCell(4) ?: row.createCell(4)).setCellValue(evidence.formattedContent)
-        (row.getCell(5) ?: row.createCell(5)).setCellValue(evidence.mediaUri)
-        (row.getCell(6) ?: row.createCell(6)).setCellValue(evidence.timestamp.toDouble())
-        (row.getCell(7) ?: row.createCell(7)).setCellValue(evidence.sourceDocument)
-        (row.getCell(8) ?: row.createCell(8)).setCellValue(evidence.documentDate.toDouble())
-        val allegationCell = row.getCell(9) ?: row.createCell(9)
+        val row = findRowById(sheet, evidence.id, EVIDENCE_HEADER.indexOf("EvidenceID")) ?: throw IOException("Evidence with id ${evidence.id} not found for case $caseSpreadsheetId.")
+
+        if (row.getCell(EVIDENCE_HEADER.indexOf("CaseID"))?.stringCellValue != caseSpreadsheetId) {
+             throw IOException("Evidence id ${evidence.id} does not belong to case $caseSpreadsheetId")
+        }
+
+        (row.getCell(EVIDENCE_HEADER.indexOf("Type")) ?: row.createCell(EVIDENCE_HEADER.indexOf("Type"))).setCellValue(evidence.type)
+        (row.getCell(EVIDENCE_HEADER.indexOf("Content")) ?: row.createCell(EVIDENCE_HEADER.indexOf("Content"))).setCellValue(evidence.content)
+        (row.getCell(EVIDENCE_HEADER.indexOf("FormattedContent")) ?: row.createCell(EVIDENCE_HEADER.indexOf("FormattedContent"))).setCellValue(evidence.formattedContent)
+        (row.getCell(EVIDENCE_HEADER.indexOf("MediaUri")) ?: row.createCell(EVIDENCE_HEADER.indexOf("MediaUri"))).setCellValue(evidence.mediaUri)
+        (row.getCell(EVIDENCE_HEADER.indexOf("Timestamp")) ?: row.createCell(EVIDENCE_HEADER.indexOf("Timestamp"))).setCellValue(evidence.timestamp.toDouble())
+        (row.getCell(EVIDENCE_HEADER.indexOf("SourceDocument")) ?: row.createCell(EVIDENCE_HEADER.indexOf("SourceDocument"))).setCellValue(evidence.sourceDocument)
+        (row.getCell(EVIDENCE_HEADER.indexOf("DocumentDate")) ?: row.createCell(EVIDENCE_HEADER.indexOf("DocumentDate"))).setCellValue(evidence.documentDate.toDouble())
+        val allegationCell = row.getCell(EVIDENCE_HEADER.indexOf("AllegationID")) ?: row.createCell(EVIDENCE_HEADER.indexOf("AllegationID"))
         evidence.allegationId?.let {
-            try {
-                 allegationCell.setCellValue(it.toDouble())
-            } catch (e: NumberFormatException) {
-                allegationCell.setCellValue(it)
-            }
+            allegationCell.setCellValue(it)
         } ?: allegationCell.setBlank()
-        (row.getCell(10) ?: row.createCell(10)).setCellValue(evidence.category)
-        (row.getCell(11) ?: row.createCell(11)).setCellValue(evidence.tags.joinToString(","))
-        (row.getCell(12) ?: row.createCell(12)).setCellValue(evidence.commentary ?: "")
-        (row.getCell(13) ?: row.createCell(13)).setCellValue(evidence.linkedEvidenceIds.joinToString(","))
-        (row.getCell(14) ?: row.createCell(14)).setCellValue(evidence.parentVideoId ?: "")
-        (row.getCell(15) ?: row.createCell(15)).setCellValue(gson.toJson(evidence.entities))
+        (row.getCell(EVIDENCE_HEADER.indexOf("Category")) ?: row.createCell(EVIDENCE_HEADER.indexOf("Category"))).setCellValue(evidence.category)
+        (row.getCell(EVIDENCE_HEADER.indexOf("Tags")) ?: row.createCell(EVIDENCE_HEADER.indexOf("Tags"))).setCellValue(evidence.tags.joinToString(","))
+        (row.getCell(EVIDENCE_HEADER.indexOf("Commentary")) ?: row.createCell(EVIDENCE_HEADER.indexOf("Commentary"))).setCellValue(evidence.commentary ?: "")
+        (row.getCell(EVIDENCE_HEADER.indexOf("LinkedEvidenceIDs")) ?: row.createCell(EVIDENCE_HEADER.indexOf("LinkedEvidenceIDs"))).setCellValue(evidence.linkedEvidenceIds.joinToString(","))
+        (row.getCell(EVIDENCE_HEADER.indexOf("ParentVideoID")) ?: row.createCell(EVIDENCE_HEADER.indexOf("ParentVideoID"))).setCellValue(evidence.parentVideoId ?: "")
+        (row.getCell(EVIDENCE_HEADER.indexOf("Entities")) ?: row.createCell(EVIDENCE_HEADER.indexOf("Entities"))).setCellValue(gson.toJson(evidence.entities))
+        Unit
     }
 
     override suspend fun deleteEvidence(caseSpreadsheetId: String, evidence: Evidence): Result<Unit> = writeToSpreadsheet { workbook ->
         val sheet = workbook.getSheet(EVIDENCE_SHEET_NAME) ?: throw IOException("Evidence sheet not found.")
-        val row = findRowById(sheet, evidence.id, 0) ?: throw IOException("Evidence with id ${evidence.id} not found.")
-        sheet.removeRow(row)
-        if (row.rowNum < sheet.lastRowNum) {
-            sheet.shiftRows(row.rowNum + 1, sheet.lastRowNum, -1)
+        val row = findRowById(sheet, evidence.id, EVIDENCE_HEADER.indexOf("EvidenceID")) ?: throw IOException("Evidence with id ${evidence.id} not found for case $caseSpreadsheetId.")
+        
+        if (row.getCell(EVIDENCE_HEADER.indexOf("CaseID"))?.stringCellValue != caseSpreadsheetId) {
+             throw IOException("Evidence id ${evidence.id} does not belong to case $caseSpreadsheetId. Cannot delete.")
         }
+
+        val rowIndex = row.rowNum
+        sheet.removeRow(row)
+        if (rowIndex < sheet.lastRowNum) {
+            sheet.shiftRows(rowIndex + 1, sheet.lastRowNum, -1)
+        }
+        Unit
     }
 
     override suspend fun uploadFile(caseSpreadsheetId: String, fileUri: Uri, mimeType: String): Result<String> = withContext(Dispatchers.IO) {
         try {
-            val caseDir = File(storageDir, caseSpreadsheetId)
+            val caseDir = File(storageDir, caseSpreadsheetId).apply { if (!exists()) mkdirs() }
             val rawDir = File(caseDir, "raw").apply { if (!exists()) mkdirs() }
-            val destinationFile = File(rawDir, "file_${System.currentTimeMillis()}.${mimeType.substringAfter('/')}")
+            
+            val fileName = fileUri.lastPathSegment ?: "file_${System.currentTimeMillis()}"
+            val extension = mimeType.substringAfter('/', "") 
+            val destinationFile = File(rawDir, if (extension.isNotEmpty()) "$fileName.$extension" else fileName)
+
             context.contentResolver.openInputStream(fileUri)?.use { input ->
                 FileOutputStream(destinationFile).use { output ->
                     input.copyTo(output)
@@ -502,24 +610,30 @@ class LocalFileStorageService @Inject constructor(
             }
             Result.Success(destinationFile.absolutePath)
         } catch (e: Exception) {
+            Log.e("LocalFileStorageService", "Error uploading file for case $caseSpreadsheetId", e)
             Result.Error(e)
         }
     }
 
     override suspend fun getAllegationsForCase(caseSpreadsheetId: String): Result<List<Allegation>> = readFromSpreadsheet { workbook ->
         val sheet = workbook.getSheet(ALLEGATIONS_SHEET_NAME) ?: return@readFromSpreadsheet emptyList()
-        (1..sheet.lastRowNum).mapNotNull { i ->
+        (1..sheet.lastRowNum).mapNotNull { i -> 
             val row = sheet.getRow(i) ?: return@mapNotNull null
-            if (row.getCell(1)?.stringCellValue != caseSpreadsheetId) return@mapNotNull null
-            val allegationId = getIntCellValueSafe(row.getCell(0)) ?: 0
+            if (row.getCell(ALLEGATIONS_HEADER.indexOf("CaseID"))?.stringCellValue != caseSpreadsheetId) return@mapNotNull null
+
+            val allegationIdCell = row.getCell(ALLEGATIONS_HEADER.indexOf("AllegationID"))
+            val allegationId = getIntCellValueSafe(allegationIdCell) ?: run {
+                Log.w("LocalFileStorageService", "Allegation row ${row.rowNum} has invalid or missing AllegationID.")
+                return@mapNotNull null
+            }
+            
+            val textFromSheet = row.getCell(ALLEGATIONS_HEADER.indexOf("Text"))?.stringCellValue
             val masterAllegation = AllegationProvider.getAllegationById(allegationId)
-            masterAllegation?.copy(
-                spreadsheetId = caseSpreadsheetId,
-                text = row.getCell(2)?.stringCellValue ?: masterAllegation.text
-            ) ?: Allegation(
+
+            Allegation( 
                 id = allegationId,
                 spreadsheetId = caseSpreadsheetId,
-                text = row.getCell(2)?.stringCellValue ?: ""
+                text = textFromSheet ?: masterAllegation?.text ?: "" 
             )
         }
     }
@@ -528,49 +642,66 @@ class LocalFileStorageService @Inject constructor(
         val sheet = workbook.getSheet(ALLEGATIONS_SHEET_NAME) ?: workbook.createSheet(ALLEGATIONS_SHEET_NAME).also {
             it.createRow(0).apply { ALLEGATIONS_HEADER.forEachIndexed { index, s -> createCell(index).setCellValue(s) } }
         }
-        val lastId = (1..sheet.lastRowNum).mapNotNull { i ->
-            getIntCellValueSafe(sheet.getRow(i)?.getCell(0))
-        }.maxOrNull() ?: 0
-        val newAllegation = allegation.copy(id = lastId + 1)
+        val newAllegationId = if (allegation.id != 0 && findRowById(sheet, allegation.id, ALLEGATIONS_HEADER.indexOf("AllegationID")) == null) {
+            allegation.id 
+        } else {
+             (1..sheet.lastRowNum)
+                .mapNotNull { i -> getIntCellValueSafe(sheet.getRow(i)?.getCell(ALLEGATIONS_HEADER.indexOf("AllegationID"))) }
+                .maxOrNull()?.plus(1) ?: 1 
+        }
+
+        val newAllegation = allegation.copy(id = newAllegationId)
+        
         sheet.createRow(sheet.physicalNumberOfRows).apply {
-            createCell(0).setCellValue(newAllegation.id.toDouble())
-            createCell(1).setCellValue(caseSpreadsheetId)
-            createCell(2).setCellValue(newAllegation.text)
+            createCell(ALLEGATIONS_HEADER.indexOf("AllegationID")).setCellValue(newAllegation.id.toDouble())
+            createCell(ALLEGATIONS_HEADER.indexOf("CaseID")).setCellValue(caseSpreadsheetId)
+            createCell(ALLEGATIONS_HEADER.indexOf("Text")).setCellValue(newAllegation.text) 
         }
         newAllegation
     }
 
     override suspend fun updateTranscript(evidence: Evidence, newTranscript: String, reason: String): Result<Unit> = writeToSpreadsheet { workbook ->
         val evidenceSheet = workbook.getSheet(EVIDENCE_SHEET_NAME) ?: throw IOException("Evidence sheet not found.")
-        val evidenceRow = findRowById(evidenceSheet, evidence.id, 0) ?: throw IOException("Evidence with id ${evidence.id} not found.")
+        val evidenceRow = findRowById(sheet = evidenceSheet, id = evidence.id, idColumn = EVIDENCE_HEADER.indexOf("EvidenceID")) ?: throw IOException("Evidence with id ${evidence.id} not found.")
 
-        evidenceRow.getCell(3)?.setCellValue(newTranscript)
+        (evidenceRow.getCell(EVIDENCE_HEADER.indexOf("Content")) ?: evidenceRow.createCell(EVIDENCE_HEADER.indexOf("Content"))).setCellValue(newTranscript)
+        (evidenceRow.getCell(EVIDENCE_HEADER.indexOf("FormattedContent")) ?: evidenceRow.createCell(EVIDENCE_HEADER.indexOf("FormattedContent"))).setCellValue("```\n$newTranscript\n```")
 
         val editsSheet = workbook.getSheet(TRANSCRIPT_EDITS_SHEET_NAME) ?: workbook.createSheet(TRANSCRIPT_EDITS_SHEET_NAME).also {
             it.createRow(0).apply { TRANSCRIPT_EDITS_HEADER.forEachIndexed { index, s -> createCell(index).setCellValue(s) } }
         }
+        val lastEditId = (1..editsSheet.lastRowNum)
+            .mapNotNull { i -> getIntCellValueSafe(editsSheet.getRow(i)?.getCell(TRANSCRIPT_EDITS_HEADER.indexOf("EditID"))) }
+            .maxOrNull() ?: 0
+        val newEditId = lastEditId + 1
+
         editsSheet.createRow(editsSheet.physicalNumberOfRows).apply {
-            createCell(0).setCellValue((editsSheet.physicalNumberOfRows).toDouble())
-            createCell(1).setCellValue(evidence.id.toDouble())
-            createCell(2).setCellValue(System.currentTimeMillis().toDouble())
-            createCell(3).setCellValue(reason)
-            createCell(4).setCellValue(newTranscript)
+            createCell(TRANSCRIPT_EDITS_HEADER.indexOf("EditID")).setCellValue(newEditId.toDouble())
+            createCell(TRANSCRIPT_EDITS_HEADER.indexOf("EvidenceID")).setCellValue(evidence.id.toDouble())
+            createCell(TRANSCRIPT_EDITS_HEADER.indexOf("Timestamp")).setCellValue(System.currentTimeMillis().toDouble())
+            createCell(TRANSCRIPT_EDITS_HEADER.indexOf("Reason")).setCellValue(reason)
+            createCell(TRANSCRIPT_EDITS_HEADER.indexOf("NewContent")).setCellValue(newTranscript)
         }
+        Unit
     }
 
     override suspend fun synchronize(): Result<Unit> {
-        val selectedProvider = settingsManager.getSelectedCloudProvider()
-        val cloudStorageProvider = when (selectedProvider) {
+        val selectedProviderName = settingsManager.getSelectedCloudProvider()
+        val cloudStorageProvider = when (selectedProviderName) {
             "GoogleDrive" -> googleDriveProvider
             "Dropbox" -> dropboxProvider
             "OneDrive" -> oneDriveProvider
-            else -> null
+            else -> {
+                Log.i("LocalFileStorageService", "No cloud provider selected for synchronization.")
+                null
+            }
         }
 
         return if (cloudStorageProvider != null) {
-            syncManager.synchronize(cloudStorageProvider, this)
+            Log.i("LocalFileStorageService", "Starting synchronization with $selectedProviderName.")
+            syncManager.synchronize(cloudStorageProvider, this) 
         } else {
-            Result.Success(Unit)
+            Result.Success(Unit) 
         }
     }
 }

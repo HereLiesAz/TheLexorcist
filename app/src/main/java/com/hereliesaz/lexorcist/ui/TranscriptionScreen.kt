@@ -16,7 +16,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.foundation.layout.Box
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -78,7 +77,7 @@ fun TranscriptionScreen(
         ) {
             when (val state = processingState) {
                 is ProcessingState.InProgress -> {
-                    com.hereliesaz.cointoss.CoinTossLoadingIndicator()
+                    com.hereliesaz.azload.CoinTossLoadingIndicator()
                 }
                 is ProcessingState.Failure -> {
                     Text(

@@ -2,7 +2,6 @@ package com.hereliesaz.lexorcist.ui
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -355,7 +354,7 @@ fun SettingsScreen(
                     )
                 }
                 is com.hereliesaz.lexorcist.model.OneDriveSignInState.InProgress -> {
-                    com.hereliesaz.cointoss.CoinTossLoadingIndicator()
+                    com.hereliesaz.azload.CoinTossLoadingIndicator()
                 }
                 is com.hereliesaz.lexorcist.model.OneDriveSignInState.Success -> {
                     Text(stringResource(R.string.connected_to_onedrive_as_placeholder, stateVal.accountName ?: stringResource(R.string.unknown_account)))
@@ -404,7 +403,7 @@ fun SettingsScreen(
                     )
                 }
                 is OutlookSignInState.InProgress -> {
-                    com.hereliesaz.cointoss.CoinTossLoadingIndicator()
+                    com.hereliesaz.azload.CoinTossLoadingIndicator()
                 }
                 is OutlookSignInState.Success -> {
                     Text("Connected as: ${stateVal.accountName ?: "Unknown"}")
@@ -500,7 +499,7 @@ fun LanguageModelDownloader(
                     style = MaterialTheme.typography.bodySmall
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                com.hereliesaz.cointoss.CoinTossLoadingIndicator(modifier = Modifier.size(24.dp))
+                com.hereliesaz.azload.CoinTossLoadingIndicator(modifier = Modifier.size(24.dp))
             }
             Spacer(modifier = Modifier.height(8.dp))
             LinearProgressIndicator(
@@ -524,7 +523,7 @@ fun ModelStatusIcon(
             }
         }
         is DownloadState.Downloading -> {
-            com.hereliesaz.cointoss.CoinTossLoadingIndicator(modifier = Modifier.size(24.dp).padding(8.dp))
+            com.hereliesaz.azload.CoinTossLoadingIndicator(modifier = Modifier.size(24.dp).padding(8.dp))
         }
         is DownloadState.Downloaded -> {
             Row(verticalAlignment = Alignment.CenterVertically) {
