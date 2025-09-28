@@ -20,15 +20,17 @@ class GoogleDriveCloudStorageProvider @Inject constructor(
 ) : CloudStorageProvider {
     override suspend fun getCurrentUser(): Result<CloudUser> {
         val userInfo = credentialHolder.userInfo
-        return if (userInfo?.email != null) {
+        return if (userInfo?.email != null && userInfo.id != null) {
             Result.Success(
                 CloudUser(
+                    id = userInfo.id,
                     email = userInfo.email,
                     displayName = userInfo.displayName ?: "Unknown User",
+                    photoUrl = userInfo.photoUrl,
                 ),
             )
         } else {
-            Result.Error(Exception("No signed-in user found or email is missing."))
+            Result.Error(Exception("No signed-in user found, or email or id is missing."))
         }
     }
 

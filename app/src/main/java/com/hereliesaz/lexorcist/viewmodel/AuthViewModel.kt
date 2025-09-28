@@ -194,6 +194,7 @@ class AuthViewModel
 
             val userInfo =
                 UserInfo(
+                    id = firebaseUser.uid,
                     displayName = firebaseUser.displayName,
                     email = nonNullUserEmail, // Use the non-null version
                     photoUrl = firebaseUser.photoUrl?.toString(),

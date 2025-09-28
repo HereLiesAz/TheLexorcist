@@ -2,6 +2,7 @@ package com.hereliesaz.lexorcist.model
 
 // Data class to hold basic user information
 data class UserInfo(
+    val id: String?,
     val displayName: String?,
     val email: String?,
     // Can be a String URL or Uri
