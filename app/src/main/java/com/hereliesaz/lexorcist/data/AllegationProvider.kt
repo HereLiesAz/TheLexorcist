@@ -1,1 +1,79 @@
-package com.hereliesaz.lexorcist.data\n\nimport android.content.Context\nimport android.util.Log\nimport com.google.gson.Gson\nimport com.google.gson.reflect.TypeToken\nimport java.io.InputStreamReader\n\ndata class AllegationCatalogEntry(\n    val id: String,\n    val name: String,\n    val relevant_evidence: Map<String, List<String>>\n)\n\nobject AllegationProvider {\n    private var allegations: List<AllegationCatalogEntry> = emptyList()\n\n    fun loadAllegations(context: Context) {\n        if (allegations.isNotEmpty()) return\n\n        try {\n            val jsonString = context.assets.open(\"allegations_catalog.json\").use {\n                InputStreamReader(it).readText()\n            }\n\n            // Clean the malformed JSON string\n            val cleanedJson = jsonString\n                // Replace invalid empty values like \"key\":, with \"key\":[]\n                .replace(Regex(\":\\\\s*,\"), \":[]\")\n                .replace(Regex(\":\\\\s*}\"), \":[]}\")\n                // Remove the corrupted segment between civil and criminal allegations\n                .replace(Regex(\"],\\\\s*\\\"criminal_allegations\\\":,\"), \",\")\n                .replace(Regex(\"],\\n\\\"criminal_allegations\\\":,\"), \",\")\n\n            // Wrap the stream of objects into a valid JSON array\n            val jsonArrayString = \"[$cleanedJson]\"\n                // Remove any trailing comma before the final closing bracket\n                .replace(Regex(\",\\\\s*]\"), \"]\")\n\n            val gson = Gson()\n            // Use a generic list of maps to avoid parsing errors due to the heterogeneous objects\n            val listType = object : TypeToken<List<Map<String, Any>>>() {}.type\n            val rawList: List<Map<String, Any>> = gson.fromJson(jsonArrayString, listType)\n\n            // Map the raw list to our data class, ignoring objects that don\'t match\n            val catalogEntries = rawList.mapNotNull { item ->\n                if (item.containsKey(\"id\") && item.containsKey(\"allegationName\")) {\n                    try {\n                        val id = item[\"id\"] as String\n                        val name = item[\"allegationName\"] as String\n                        val evidenceMap = item[\"relevant_evidence\"] as? Map<String, List<String>> ?: emptyMap()\n                        AllegationCatalogEntry(id, name, evidenceMap)\n                    } catch (e: Exception) {\n                        Log.w(\"AllegationProvider\", \"Skipping invalid allegation entry: $item\", e)\n                        null\n                    }\n                } else {\n                    null // Ignore the description object and any other malformed entries\n                }\n            }\n\n            allegations = catalogEntries\n            Log.i(\"AllegationProvider\", \"Successfully loaded ${\'\$\'}{allegations.size} allegation catalog entries.\")\n\n        } catch (e: Exception) {\n            Log.e(\"AllegationProvider\", \"Failed to load or parse allegations_catalog.json\", e)\n        }\n    }\n\n    fun getAllegationById(id: Int): AllegationCatalogEntry? {\n        // The ID in the JSON is a string, sometimes with leading zeros, so we\'ll compare it as a string.\n        val idString = id.toString().padStart(3, \'0\')\n        return allegations.find { it.id == idString || it.id == id.toString() }\n    }\n}
+package com.hereliesaz.lexorcist.data
+
+import android.content.Context
+import android.util.Log
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import java.io.InputStreamReader
+
+data class AllegationCatalogEntry(
+    val id: String,
+    val name: String,
+    val relevant_evidence: Map<String, List<String>>
+)
+
+object AllegationProvider {
+    private var allegations: List<AllegationCatalogEntry> = emptyList()
+
+    fun loadAllegations(context: Context) {
+        if (allegations.isNotEmpty()) return
+
+        try {
+            val jsonString = context.assets.open("allegations_catalog.json").use {
+                InputStreamReader(it).readText()
+            }
+
+            // Clean the malformed JSON string
+            val cleanedJson = jsonString
+                // Replace invalid empty values like "key":, with "key":[]
+                .replace(Regex(":\\s*,"), ":[]")
+                .replace(Regex(":\\s*}"), ":[]}")
+                // Remove the corrupted segment between civil and criminal allegations
+                .replace(Regex("],\\s*\"criminal_allegations\":,"), ",")
+                .replace(Regex("],\n\\\"criminal_allegations\":,"), ",")
+
+            // Wrap the stream of objects into a valid JSON array
+            val jsonArrayString = "[$cleanedJson]"
+                // Remove any trailing comma before the final closing bracket
+                .replace(Regex(",\\s*]"), "]")
+
+            val gson = Gson()
+            // Use a generic list of maps to avoid parsing errors due to the heterogeneous objects
+            val listType = object : TypeToken<List<Map<String, Any>>>() {}.type
+            val rawList: List<Map<String, Any>> = gson.fromJson(jsonArrayString, listType)
+
+            // Map the raw list to our data class, ignoring objects that don't match
+            val catalogEntries = rawList.mapNotNull { item ->
+                if (item.containsKey("id") && item.containsKey("allegationName")) {
+                    try {
+                        val id = item["id"] as String
+                        val name = item["allegationName"] as String
+                        val evidenceMap = item["relevant_evidence"] as? Map<String, List<String>> ?: emptyMap()
+                        AllegationCatalogEntry(id, name, evidenceMap)
+                    } catch (e: Exception) {
+                        Log.w("AllegationProvider", "Skipping invalid allegation entry: $item", e)
+                        null
+                    }
+                } else {
+                    null // Ignore the description object and any other malformed entries
+                }
+            }
+
+            allegations = catalogEntries
+            Log.i("AllegationProvider", "Successfully loaded ${allegations.size} allegation catalog entries.")
+
+        } catch (e: Exception) {
+            Log.e("AllegationProvider", "Failed to load or parse allegations_catalog.json", e)
+        }
+    }
+
+    fun getAllegationById(id: Int): AllegationCatalogEntry? {
+        // The ID in the JSON is a string, sometimes with leading zeros, so we'll compare it as a string.
+        val idString = id.toString().padStart(3, '0')
+        return allegations.find { it.id == idString || it.id == id.toString() }
+    }
+
+    fun getAllLoadedCatalogEntries(): List<AllegationCatalogEntry> {
+        return allegations
+    }
+}
