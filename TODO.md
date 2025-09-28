@@ -33,8 +33,9 @@ This document outlines the features, fixes, and enhancements required to complet
 5.  **Component Right-Alignment:**
     *   Audit every screen (`CasesScreen`, `EvidenceScreen`, `SettingsScreen`, etc.) and ensure all UI components (Buttons, TextFields, Cards, etc.), but not the text within them, are right-aligned as per the UI/UX rules.
 
-6.  **`AzButton` Conversion:**
+6.  **`AzButton` Conversion:** [COMPLETED]
     *   Systematically review all screens and replace any standard Material `Button`, `ToggleButton`, `FloatingActionButton`, or similar components with their `AzNavRail` library equivalents (`AzButton`, `AzToggle`, `AzCycler`).
+    *   **Note:** `CasesScreen`, `RecordAudioScreen`, `ReviewScreen`, and `TemplateEditor` converted.
 
 7.  **Case List Highlighting:** [COMPLETED]
     *   In `CasesScreen.kt`, implement a visual indicator (e.g., changing the background color) to highlight the currently selected case in the list.

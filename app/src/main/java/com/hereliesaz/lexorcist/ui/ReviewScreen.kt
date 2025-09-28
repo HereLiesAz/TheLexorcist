@@ -18,7 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
+import com.hereliesaz.aznavrail.AzButton
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
@@ -56,7 +56,6 @@ import com.hereliesaz.lexorcist.data.Allegation
 import com.hereliesaz.lexorcist.data.AllegationElement
 import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.data.Exhibit
-import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
 import com.hereliesaz.lexorcist.viewmodel.AllegationsViewModel
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import java.util.Locale
@@ -220,7 +219,7 @@ fun ReviewScreen(
                     horizontalArrangement = Arrangement.End
                 ) {
                     if (selectedAllegation != null && selectedEvidence.isNotEmpty()) {
-                        LexorcistOutlinedButton(
+                        AzButton(
                             onClick = {
                                 caseViewModel.assignAllegationToSelectedEvidence(selectedAllegation!!.id.toString()) // Ensure ID is string
                             },
@@ -228,17 +227,17 @@ fun ReviewScreen(
                             modifier = Modifier.padding(start = 8.dp)
                         )
                     }
-                    LexorcistOutlinedButton(
+                    AzButton(
                         onClick = { showGenerateDocumentDialog = true },
                         text = "Generate Document",
                         modifier = Modifier.padding(start = 8.dp)
                     )
-                    LexorcistOutlinedButton(
+                    AzButton(
                         onClick = { showPackageFilesDialog = true },
                         text = "Package Files",
                         modifier = Modifier.padding(start = 8.dp)
                     )
-                    LexorcistOutlinedButton(
+                    AzButton(
                         onClick = { /* caseViewModel.generateReadinessReport() */ },
                         text = "Readiness Report",
                         modifier = Modifier.padding(start = 8.dp)
@@ -279,13 +278,13 @@ fun ReviewScreen(
             title = { Text(stringResource(R.string.delete_evidence).uppercase(Locale.getDefault())) },
             text = { Text(stringResource(R.string.delete_evidence_confirmation)) },
             confirmButton = {
-                LexorcistOutlinedButton(onClick = {
+                AzButton(onClick = {
                     caseViewModel.deleteEvidence(evidenceToDelete!!)
                     showDeleteConfirmDialog = false
                 }, text = stringResource(R.string.delete).uppercase(Locale.getDefault()))
             },
             dismissButton = {
-                LexorcistOutlinedButton(onClick = { showDeleteConfirmDialog = false }, text = stringResource(R.string.cancel).uppercase(Locale.getDefault()))
+                AzButton(onClick = { showDeleteConfirmDialog = false }, text = stringResource(R.string.cancel).uppercase(Locale.getDefault()))
             },
         )
     }
@@ -335,9 +334,7 @@ fun AllegationElementItem(
         Column(modifier = Modifier.padding(16.dp)) {
             Text(element.name, style = MaterialTheme.typography.titleMedium) // Assuming AllegationElement has .name
             Text(element.description, style = MaterialTheme.typography.bodyMedium)
-            Button(onClick = onAssignEvidence) {
-                Text("Assign Selected Evidence")
-            }
+            AzButton(onClick = onAssignEvidence, text = "Assign Selected Evidence")
         }
     }
 }
@@ -527,7 +524,7 @@ fun EditEvidenceDialog(
             }
         },
         confirmButton = {
-            LexorcistOutlinedButton(onClick = {
+            AzButton(onClick = {
                 val updatedEvidence =
                     evidence.copy(
                         content = content,
@@ -539,7 +536,7 @@ fun EditEvidenceDialog(
             }, text = stringResource(R.string.save).uppercase(Locale.getDefault()))
         },
         dismissButton = {
-            LexorcistOutlinedButton(onClick = onDismiss, text = stringResource(R.string.cancel).uppercase(Locale.getDefault()))
+            AzButton(onClick = onDismiss, text = stringResource(R.string.cancel).uppercase(Locale.getDefault()))
         },
     )
 }
@@ -606,20 +603,18 @@ fun PackageFilesDialog(
             }
         },
         confirmButton = {
-            Button(
+            AzButton(
                 onClick = {
-                    caseViewModel.packageFiles(selectedFiles.map { java.io.File(it) }, packageName, extension)
-                    onDismiss()
+                    if (selectedFiles.isNotEmpty() && packageName.isNotBlank()) {
+                        caseViewModel.packageFiles(selectedFiles.map { java.io.File(it) }, packageName, extension)
+                        onDismiss()
+                    }
                 },
-                enabled = selectedFiles.isNotEmpty() && packageName.isNotBlank()
-            ) {
-                Text("Package")
-            }
+                text = "Package"
+            )
         },
         dismissButton = {
-            Button(onClick = onDismiss) {
-                Text("Cancel")
-            }
+            AzButton(onClick = onDismiss, text = "Cancel")
         }
     )
 }
@@ -700,24 +695,22 @@ fun GenerateDocumentDialog(
             }
         },
         confirmButton = {
-            Button(
+            AzButton(
                 onClick = {
-                    selectedExhibit?.let { exhibit ->
-                        selectedTemplate?.let { template ->
-                            caseViewModel.generateDocument(exhibit, template)
+                    if (selectedExhibit != null && selectedTemplate != null) {
+                        selectedExhibit?.let { exhibit ->
+                            selectedTemplate?.let { template ->
+                                caseViewModel.generateDocument(exhibit, template)
+                            }
                         }
+                        onDismiss()
                     }
-                    onDismiss()
                 },
-                enabled = selectedExhibit != null && selectedTemplate != null
-            ) {
-                Text("Generate")
-            }
+                text = "Generate"
+            )
         },
         dismissButton = {
-            Button(onClick = onDismiss) {
-                Text("Cancel")
-            }
+            AzButton(onClick = onDismiss, text = "Cancel")
         }
     )
 }
