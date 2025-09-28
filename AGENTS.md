@@ -61,12 +61,7 @@ The file google-services.template.json located at the root of the /app/ folder s
 
 ### Roadmap
 
-This section outlines the remaining tasks to be completed. Please address these in the order listed.
-
-1. **Complete Cloud Sync:** Implement robust cloud synchronization, especially on app close.
-2. **Complete Video Processing:** Implement text extraction from video frames (visual text).
-3. **Editable Transcripts:** Implement the UI and logic for editing audio transcripts with timestamps and reasons.
-4. **Full Progress Transparency:** Enhance the progress reporting to include a more detailed and structured log view.
+A detailed, granular, and up-to-date list of all pending tasks is maintained in the `TODO.md` file at the root of this project. Please refer to it for the current development priorities.
 
 ---
 

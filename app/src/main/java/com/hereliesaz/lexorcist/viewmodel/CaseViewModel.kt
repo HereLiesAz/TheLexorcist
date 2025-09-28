@@ -42,7 +42,6 @@ import com.hereliesaz.lexorcist.service.GmailService
 import com.hereliesaz.lexorcist.service.ImapService
 import com.hereliesaz.lexorcist.data.JurisdictionRepository
 import com.hereliesaz.lexorcist.data.AllegationProvider
-import com.hereliesaz.lexorcist.data.AllegationProvider
 import com.hereliesaz.lexorcist.service.OutlookService
 import com.hereliesaz.lexorcist.utils.ChatHistoryParser
 import com.hereliesaz.lexorcist.utils.EvidenceImporter
