@@ -2,43 +2,17 @@ package com.hereliesaz.lexorcist.ui
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width // ADDED IMPORT
-import androidx.compose.foundation.layout.size // ADDED IMPORT
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.PrimaryTabRow
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Tab
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -50,10 +24,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.hereliesaz.lexorcist.R
+import com.hereliesaz.lexorcist.common.state.SaveState
 import com.hereliesaz.lexorcist.model.Script
 import com.hereliesaz.lexorcist.model.SignInState
 import com.hereliesaz.lexorcist.model.Template
-import com.hereliesaz.lexorcist.model.UserInfo // Assuming UserInfo is the type for signInState.userInfo
+import com.hereliesaz.lexorcist.model.UserInfo
 import com.hereliesaz.lexorcist.utils.shareText
 import com.hereliesaz.lexorcist.viewmodel.AddonsBrowserViewModel
 import com.hereliesaz.lexorcist.viewmodel.AuthViewModel
@@ -68,11 +43,33 @@ fun ExtrasScreen(
     settingsViewModel: SettingsViewModel = hiltViewModel()
 ) {
     val isLoading by addonsBrowserViewModel.isLoading.collectAsState()
-    val scripts by addonsBrowserViewModel.scripts.collectAsState()
-    val templates by addonsBrowserViewModel.templates.collectAsState()
-    // val signInState by authViewModel.signInState.collectAsState() // Moved to ScriptsPage/TemplatesPage
-    // val authorNameFromSettings by settingsViewModel.authorName.collectAsState() // Not directly used here anymore
-    // val authorEmailFromSettings by settingsViewModel.authorEmail.collectAsState() // Not directly used here anymore
+    val scripts by addonsBrowserViewModel.filteredScripts.collectAsState()
+    val templates by addonsBrowserViewModel.filteredTemplates.collectAsState()
+    val searchQuery by addonsBrowserViewModel.searchQuery.collectAsState()
+    val shareState by addonsBrowserViewModel.shareOperationState.collectAsState()
+
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+
+    LaunchedEffect(shareState) {
+        when (shareState) {
+            is SaveState.Success -> {
+                scope.launch {
+                    snackbarHostState.showSnackbar(context.getString(R.string.addon_shared_successfully))
+                }
+            }
+            is SaveState.Error -> {
+                val errorMessage = (shareState as SaveState.Error).message
+                scope.launch {
+                    snackbarHostState.showSnackbar(context.getString(R.string.error_sharing_addon, errorMessage),
+                        withDismissAction = true)
+                }
+            }
+            else -> {}
+        }
+    }
+
 
     var showDetailsDialog by remember { mutableStateOf<Any?>(null) } // Can be Script or Template
 
@@ -117,17 +114,16 @@ fun ExtrasScreen(
             type = dialogType,
             onDismiss = { showDetailsDialog = null },
             onDelete = {
-                // Implement delete functionality if needed, potentially in AddonsBrowserViewModel
                 showDetailsDialog = null
             },
             onEdit = {
-                // Implement edit functionality if needed
                 showDetailsDialog = null
             }
         )
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {
@@ -142,21 +138,28 @@ fun ExtrasScreen(
             )
         }
     ) { paddingValues ->
-        Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+        Column(modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues)) {
             if (isLoading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     com.hereliesaz.azload.CoinTossLoadingIndicator()
                 }
             } else {
-                val pagerState = rememberPagerState { 2 } // 0 for Scripts, 1 for Templates
-                val scope = rememberCoroutineScope()
+                val pagerState = rememberPagerState { 2 }
+                val coroutineScope = rememberCoroutineScope()
                 val tabTitles = listOf(stringResource(R.string.scripts), stringResource(R.string.templates))
+
+                SearchBar(
+                    query = searchQuery,
+                    onQueryChange = { addonsBrowserViewModel.onSearchQueryChanged(it) }
+                )
 
                 PrimaryTabRow(selectedTabIndex = pagerState.currentPage) {
                     tabTitles.forEachIndexed { index, title ->
                         Tab(
                             selected = pagerState.currentPage == index,
-                            onClick = { scope.launch { pagerState.animateScrollToPage(index) } },
+                            onClick = { coroutineScope.launch { pagerState.animateScrollToPage(index) } },
                             text = { Text(title, maxLines = 1, overflow = TextOverflow.Ellipsis) }
                         )
                     }
@@ -164,9 +167,10 @@ fun ExtrasScreen(
 
                 HorizontalPager(
                     state = pagerState,
-                    modifier = Modifier.fillMaxSize().weight(1f)
-                ) {
-                    page ->
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .weight(1f)
+                ) { page ->
                     when (page) {
                         0 -> ScriptsPage(scripts, addonsBrowserViewModel, authViewModel, settingsViewModel) { script -> showDetailsDialog = script }
                         1 -> TemplatesPage(templates, addonsBrowserViewModel, authViewModel, settingsViewModel) { template -> showDetailsDialog = template }
@@ -178,6 +182,28 @@ fun ExtrasScreen(
 }
 
 @Composable
+fun SearchBar(query: String, onQueryChange: (String) -> Unit) {
+    TextField(
+        value = query,
+        onValueChange = onQueryChange,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        label = { Text(stringResource(R.string.search_addons)) },
+        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+        trailingIcon = {
+            if (query.isNotEmpty()) {
+                IconButton(onClick = { onQueryChange("") }) {
+                    Icon(Icons.Default.Clear, contentDescription = stringResource(R.string.clear_search))
+                }
+            }
+        },
+        singleLine = true
+    )
+}
+
+
+@Composable
 fun ScriptsPage(
     scripts: List<Script>,
     viewModel: AddonsBrowserViewModel,
@@ -186,14 +212,23 @@ fun ScriptsPage(
     onItemClick: (Script) -> Unit
 ) {
     val currentSignInState by authViewModel.signInState.collectAsState()
+    val searchQuery by viewModel.searchQuery.collectAsState()
 
     if (scripts.isEmpty()) {
-        Box(modifier = Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
-            Text(stringResource(R.string.no_scripts_available), textAlign = TextAlign.Center)
+        Box(modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp), contentAlignment = Alignment.Center) {
+            Text(
+                if (searchQuery.isNotBlank()) stringResource(R.string.no_search_results)
+                else stringResource(R.string.no_scripts_available),
+                textAlign = TextAlign.Center
+            )
         }
         return
     }
-    LazyColumn(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+    LazyColumn(modifier = Modifier
+        .fillMaxSize()
+        .padding(horizontal = 16.dp)) {
         items(scripts, key = { it.id }) { script ->
             AddonListItem(
                 item = script,
@@ -225,14 +260,23 @@ fun TemplatesPage(
     onItemClick: (Template) -> Unit
 ) {
     val currentSignInState by authViewModel.signInState.collectAsState()
+    val searchQuery by viewModel.searchQuery.collectAsState()
 
     if (templates.isEmpty()) {
-        Box(modifier = Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
-            Text(stringResource(R.string.no_templates_available), textAlign = TextAlign.Center)
+        Box(modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp), contentAlignment = Alignment.Center) {
+            Text(
+                if (searchQuery.isNotBlank()) stringResource(R.string.no_search_results)
+                else stringResource(R.string.no_templates_available),
+                textAlign = TextAlign.Center
+            )
         }
         return
     }
-    LazyColumn(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+    LazyColumn(modifier = Modifier
+        .fillMaxSize()
+        .padding(horizontal = 16.dp)) {
         items(templates, key = { it.id }) { template ->
             AddonListItem(
                 item = template,
@@ -304,7 +348,9 @@ fun AddonListItem(
             .clickable(onClick = onItemClick)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp).fillMaxWidth(),
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
             horizontalAlignment = Alignment.End
         ) {
             Text(text = name, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.End)
@@ -342,7 +388,9 @@ fun ItemDetailsDialog(
     Dialog(onDismissRequest = onDismiss) {
         Card {
             Column(
-                modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth(),
                 horizontalAlignment = Alignment.End
             ) {
                 Text(text = name, style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.End)
@@ -388,7 +436,7 @@ fun RatingBar(
                     Icons.Default.Star,
                     contentDescription = "Rate $index",
                     tint = if (index <= rating) MaterialTheme.colorScheme.primary else Color.Gray,
-                    modifier = Modifier.size(24.dp) 
+                    modifier = Modifier.size(24.dp)
                 )
             }
         }
