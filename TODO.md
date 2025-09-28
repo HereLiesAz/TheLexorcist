@@ -52,7 +52,7 @@ This document outlines the features, fixes, and enhancements required to complet
     *   Re-implement the layout to match the specified order: Title, selected allegations list, search box, request/sort buttons, and the main list of allegations.
     *   Add a `onLongClick` modifier to the allegation list items to trigger a details dialog.
 
-11. **Timeline Screen (`TimelineScreen.kt`):**
+11. **Timeline Screen (`TimelineScreen.kt`):** [COMPLETED]
     *   Add logic to display a placeholder `ExtendedEvent` component when the timeline is empty to show users what to expect.
 
 12. **Exhibits Screen (`ExhibitsScreen.kt`):**
@@ -122,7 +122,7 @@ This document outlines the features, fixes, and enhancements required to complet
     *   Add a "Getting Started" section with instructions for setting up the development environment.
     *   Update the "Key Features" list to reflect the current state of the application.
 
-22. **Update `AGENTS.md`:**
+22. **Update `AGENTS.md`:** [COMPLETED]
     *   Replace the "Roadmap" section with this new, more granular TODO list.
     *   Review and update the UI/UX rules to be more specific where necessary.
 
