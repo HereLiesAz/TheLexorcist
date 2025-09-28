@@ -462,8 +462,12 @@ fun LanguageModelDownloader(
     onDownload: (LanguageModel) -> Unit,
     onDelete: (LanguageModel) -> Unit
 ) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+    Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.End) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.End
+        ) {
             AzCycler(
                 options = models.map { it.name },
                 selectedOption = models.find { it.code == selectedLanguageCode }?.name ?: "",

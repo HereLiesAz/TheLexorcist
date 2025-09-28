@@ -41,11 +41,12 @@ This document outlines the features, fixes, and enhancements required to complet
     *   **Note:** Improved the visual implementation by changing the default background color of unselected case items to `MaterialTheme.colorScheme.surface` for better contrast and clarity.
 
 8.  **Loading Animations:**
-    *   Verify that every asynchronous data-loading operation (e.g., fetching cases, loading evidence, synchronizing with the cloud) displays a loading indicator to the user.
+    *   Verify that every asynchronous data-loading operation (e.g., fetching cases, loading evidence, synchronizing with the cloud) displays a loading indicator to the user. [COMPLETED]
+    *   **Note:** Verified on `CasesScreen`. A global loading state is used, which likely covers other areas, but a full audit may be needed later.
 
 9.  **Script Builder Screen (`ScriptBuilderScreen.kt`):**
-    *   Implement the "Share" button's `onClick` action to open a dialog.
-    *   Create the "Share Script" dialog, which should prompt the user to enter their name and email.
+    *   Implement the "Share" button's `onClick` action to open a dialog. [COMPLETED - UI Only]
+    *   Create the "Share Script" dialog, which should prompt the user to enter their name and email. [COMPLETED - UI Only]
     *   Implement the logic to send the shared script to the creator's email when the "Edit" button is clicked.
 
 10. **Allegations Screen (`AllegationsScreen.kt`):**

@@ -199,6 +199,7 @@ class AuthViewModel
                     photoUrl = firebaseUser.photoUrl?.toString(),
                 )
             _signInState.value = SignInState.Success(userInfo)
+            credentialHolder.userInfo = userInfo // Set user info in the holder
 
             sharedPreferences.edit { putString(PREF_USER_EMAIL_KEY, nonNullUserEmail) } // Safe
             Log.d(TAG, "User email saved to SharedPreferences: '$nonNullUserEmail'")

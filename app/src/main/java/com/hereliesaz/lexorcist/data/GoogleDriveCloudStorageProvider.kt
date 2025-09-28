@@ -19,18 +19,16 @@ class GoogleDriveCloudStorageProvider @Inject constructor(
     @ApplicationContext private val context: Context,
 ) : CloudStorageProvider {
     override suspend fun getCurrentUser(): Result<CloudUser> {
-        val account = credentialHolder.googleSignInAccount
-        return if (account != null) {
+        val userInfo = credentialHolder.userInfo
+        return if (userInfo?.email != null) {
             Result.Success(
                 CloudUser(
-                    id = account.id ?: "unknown",
-                    email = account.email ?: "unknown",
-                    displayName = account.displayName ?: "Unknown User",
-                    photoUrl = account.photoUrl?.toString(),
+                    email = userInfo.email,
+                    displayName = userInfo.displayName ?: "Unknown User",
                 ),
             )
         } else {
-            Result.Error(Exception("No signed-in user found."))
+            Result.Error(Exception("No signed-in user found or email is missing."))
         }
     }
 
@@ -53,6 +51,7 @@ class GoogleDriveCloudStorageProvider @Inject constructor(
             }
             is Result.Error -> result
             is Result.UserRecoverableError -> result
+            is Result.Loading -> result
         }
     }
 
@@ -95,6 +94,7 @@ class GoogleDriveCloudStorageProvider @Inject constructor(
                             is Result.Success -> Result.Success(metadataResult.data)
                             is Result.Error -> Result.Error(metadataResult.exception) // Propagate error
                             is Result.UserRecoverableError -> metadataResult
+                            is Result.Loading -> metadataResult
                         }
                     } else {
                         Result.Error(Exception("Upload returned a null file."))
@@ -102,6 +102,7 @@ class GoogleDriveCloudStorageProvider @Inject constructor(
                 }
                 is Result.Error -> result
                 is Result.UserRecoverableError -> result
+                is Result.Loading -> result
             }
         }
     }
@@ -122,6 +123,7 @@ class GoogleDriveCloudStorageProvider @Inject constructor(
                             is Result.Success -> Result.Success(metadataResult.data)
                             is Result.Error -> Result.Error(metadataResult.exception)
                             is Result.UserRecoverableError -> metadataResult
+                            is Result.Loading -> metadataResult
                         }
                     } else {
                         Result.Error(Exception("Update returned a null file."))
@@ -129,6 +131,7 @@ class GoogleDriveCloudStorageProvider @Inject constructor(
                 }
                 is Result.Error -> result
                 is Result.UserRecoverableError -> result
+                is Result.Loading -> result
             }
         }
     }
@@ -147,6 +150,7 @@ class GoogleDriveCloudStorageProvider @Inject constructor(
             }
             is Result.Error -> result
             is Result.UserRecoverableError -> result
+            is Result.Loading -> result
         }
     }
 
