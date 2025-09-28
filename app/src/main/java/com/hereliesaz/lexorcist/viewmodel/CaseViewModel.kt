@@ -40,6 +40,8 @@ import com.hereliesaz.lexorcist.utils.DataParser
 import com.hereliesaz.lexorcist.model.OutlookSignInState
 import com.hereliesaz.lexorcist.service.GmailService
 import com.hereliesaz.lexorcist.service.ImapService
+import com.hereliesaz.lexorcist.data.AllegationProvider
+import com.hereliesaz.lexorcist.data.AllegationProvider
 import com.hereliesaz.lexorcist.service.OutlookService
 import com.hereliesaz.lexorcist.utils.ChatHistoryParser
 import com.hereliesaz.lexorcist.utils.EvidenceImporter
@@ -55,6 +57,7 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStreamReader
+import java.util.Locale
 
 @HiltViewModel
 class CaseViewModel
@@ -128,6 +131,9 @@ constructor(
 
     private val _exhibits = MutableStateFlow<List<com.hereliesaz.lexorcist.data.Exhibit>>(emptyList())
     val exhibits: StateFlow<List<com.hereliesaz.lexorcist.data.Exhibit>> = _exhibits.asStateFlow()
+
+    private val _pertinentExhibitTypes = MutableStateFlow<List<String>>(emptyList())
+    val pertinentExhibitTypes: StateFlow<List<String>> = _pertinentExhibitTypes.asStateFlow()
 
     private val _htmlTemplates = MutableStateFlow<List<DriveFile>>(emptyList())
     val htmlTemplates: StateFlow<List<DriveFile>> = _htmlTemplates.asStateFlow()
@@ -209,6 +215,21 @@ constructor(
         Log.d("CaseViewModel", "--- CaseViewModel INIT --- instancia: $this")
         loadThemeModePreference()
         loadExtrasFromJson()
+        AllegationProvider.loadAllegations(applicationContext)
+
+        viewModelScope.launch {
+            allegations.collect { currentAllegations ->
+                val exhibitTypes = mutableSetOf<String>()
+                currentAllegations.forEach { allegation ->
+                    AllegationProvider.getAllegationById(allegation.id)?.let { catalogEntry ->
+                        catalogEntry.relevant_evidence.keys.forEach { evidenceType ->
+                            exhibitTypes.add(evidenceType.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() })
+                        }
+                    }
+                }
+                _pertinentExhibitTypes.value = exhibitTypes.toList()
+            }
+        }
 
         viewModelScope.launch {
             logService.logEventFlow.collect { newLog ->
@@ -257,6 +278,35 @@ constructor(
                     selectCase(lastSelectedCase)
                 }
             }
+        }
+    }
+
+    fun assignEvidenceToDynamicExhibit(evidenceId: Int, exhibitType: String) {
+        viewModelScope.launch {
+            val case = selectedCase.value ?: return@launch
+            val existingExhibit = _exhibits.value.find { it.name.equals(exhibitType, ignoreCase = true) }
+
+            if (existingExhibit != null) {
+                // Exhibit exists, add evidence to it
+                val updatedEvidenceIds = existingExhibit.evidenceIds.toMutableList().apply {
+                    if (!contains(evidenceId)) {
+                        add(evidenceId)
+                    }
+                }
+                val updatedExhibit = existingExhibit.copy(evidenceIds = updatedEvidenceIds)
+                evidenceRepository.updateExhibit(case.spreadsheetId, updatedExhibit)
+            } else {
+                // Exhibit does not exist, create a new one
+                val newExhibit = com.hereliesaz.lexorcist.data.Exhibit(
+                    caseId = case.id.toLong(),
+                    name = exhibitType,
+                    description = "Evidence related to $exhibitType",
+                    evidenceIds = listOf(evidenceId)
+                )
+                evidenceRepository.addExhibit(case.spreadsheetId, newExhibit)
+            }
+            // Refresh the exhibits list to reflect the change
+            loadExhibits()
         }
     }
 

@@ -10,8 +10,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -41,11 +47,18 @@ class CaseRepositoryImpl @Inject constructor(
     private val _allegations = MutableStateFlow<List<Allegation>>(emptyList())
     override val selectedCaseAllegations: Flow<List<Allegation>> = _allegations.asStateFlow()
 
-    private val _selectedCaseEvidence = MutableStateFlow<Result<List<Evidence>>>(Result.Success(emptyList()))
-    override val selectedCaseEvidence: Flow<Result<List<Evidence>>> = _selectedCaseEvidence.asStateFlow()
+    override val selectedCaseEvidence: Flow<Result<List<Evidence>>> =
+        selectedCase.flatMapLatest { case ->
+            if (case == null) {
+                flowOf(Result.Success(emptyList()))
+            } else {
+                evidenceRepository.getEvidenceForCase(case.spreadsheetId, case.id.toLong())
+                    .map<List<Evidence>, Result<List<Evidence>>> { Result.Success(it) }
+                    .catch { e -> emit(Result.Error(Exception(e))) }
+            }
+        }.stateIn(repositoryScope, SharingStarted.Lazily, Result.Success(emptyList()))
 
     private var loadAllegationsJob: Job? = null
-    private var loadEvidenceJob: Job? = null
 
     override suspend fun refreshCases() {
         when (val result = storageService.getAllCases()) {
@@ -70,25 +83,16 @@ class CaseRepositoryImpl @Inject constructor(
         }
 
         loadAllegationsJob?.cancel()
-        loadEvidenceJob?.cancel()
 
         _selectedCase.value = case
 
         if (case == null) {
             _allegations.value = emptyList()
-            _selectedCaseEvidence.value = Result.Success(emptyList())
         } else {
             _allegations.value = emptyList() // Reset or show loading state
-            _selectedCaseEvidence.value = Result.Loading // Indicate evidence is loading
 
             loadAllegationsJob = repositoryScope.launch {
                 internalRefreshAllegations(case.spreadsheetId)
-            }
-            loadEvidenceJob = repositoryScope.launch {
-                val result = storageService.getEvidenceForCase(case.spreadsheetId)
-                if (isActive) {
-                    _selectedCaseEvidence.value = result
-                }
             }
         }
     }
@@ -114,19 +118,10 @@ class CaseRepositoryImpl @Inject constructor(
         val currentSelectedCase = _selectedCase.value
         currentSelectedCase?.spreadsheetId?.let { spreadsheetId ->
             loadAllegationsJob?.cancel()
-            loadEvidenceJob?.cancel()
-
             _allegations.value = emptyList()
-            _selectedCaseEvidence.value = Result.Loading
 
             loadAllegationsJob = repositoryScope.launch {
                 internalRefreshAllegations(spreadsheetId)
-            }
-            loadEvidenceJob = repositoryScope.launch {
-                val result = storageService.getEvidenceForCase(spreadsheetId)
-                if (isActive) {
-                    _selectedCaseEvidence.value = result
-                }
             }
         }
     }
