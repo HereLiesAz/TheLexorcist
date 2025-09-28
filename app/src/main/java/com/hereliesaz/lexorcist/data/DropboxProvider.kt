@@ -21,7 +21,7 @@ class DropboxProvider @Inject constructor(
 
         try {
             val account = client.users().currentAccount
-            Result.Success(CloudUser(account.email, account.name.displayName))
+            Result.Success(CloudUser(account.accountId, account.email, account.name.displayName, account.profilePhotoUrl))
         } catch (e: Exception) {
             Result.Error(e)
         }
