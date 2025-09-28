@@ -2,6 +2,7 @@ package com.hereliesaz.lexorcist.data
 
 import android.content.Context
 import android.net.Uri
+import android.provider.OpenableColumns
 import android.util.Log
 import androidx.core.net.toUri
 import com.google.gson.Gson
@@ -675,14 +676,64 @@ class LocalFileStorageService @Inject constructor(
         Unit
     }
 
+    // Helper function to get display name
+    private fun getDisplayName(context: Context, uri: Uri): String {
+        var displayName: String? = null
+        if (uri.scheme == "content") {
+            try {
+                context.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
+                    if (cursor.moveToFirst()) {
+                        val displayNameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                        if (displayNameIndex != -1) {
+                            displayName = cursor.getString(displayNameIndex)
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.w("LocalFileStorageService", "Error getting display name for content URI $uri: ${e.message}")
+            }
+        }
+        if (displayName == null) {
+            displayName = uri.lastPathSegment
+        }
+        return displayName ?: "file_${System.currentTimeMillis()}"
+    }
+
+    // Sanitize file name
+    private fun sanitizeFileName(name: String): String {
+        return name.replace(Regex("[\\/:*?"<>|]"), "_")
+    }
+
     override suspend fun uploadFile(caseSpreadsheetId: String, fileUri: Uri, mimeType: String): Result<String> = withContext(Dispatchers.IO) {
         try {
             val caseDir = File(storageDir, caseSpreadsheetId).apply { if (!exists()) mkdirs() }
             val rawDir = File(caseDir, "raw").apply { if (!exists()) mkdirs() }
+
+            val rawFileName = getDisplayName(context, fileUri)
+            val baseName = rawFileName.substringBeforeLast('.')
+            val originalExtension = rawFileName.substringAfterLast('.', "")
+
+            val sanitizedBaseName = sanitizeFileName(baseName)
+
+            val mimeTypeSubPart = mimeType.substringAfter('/', "")
             
-            val fileName = fileUri.lastPathSegment ?: "file_${System.currentTimeMillis()}"
-            val extension = mimeType.substringAfter('/', "") 
-            val destinationFile = File(rawDir, if (extension.isNotEmpty()) "$fileName.$extension" else fileName)
+            val finalExtension = if (mimeTypeSubPart.isNotEmpty() && mimeTypeSubPart != "octet-stream") {
+                mimeTypeSubPart // Use extension from MIME type if valid and not generic
+            } else if (originalExtension.isNotEmpty()) {
+                originalExtension // Fallback to original extension
+            } else {
+                "dat" // Default if no other extension found
+            }
+
+            val finalFileName = if (sanitizedBaseName.endsWith(".$finalExtension", ignoreCase = true)) {
+                 sanitizedBaseName // Avoids double extension like .opus.opus if already present
+            } else {
+                 "$sanitizedBaseName.$finalExtension"
+            }
+            
+            val destinationFile = File(rawDir, finalFileName)
+            Log.d("LocalFileStorageService", "Uploading file: URI=$fileUri, MimeType=$mimeType, DestFile=$destinationFile")
+
 
             context.contentResolver.openInputStream(fileUri)?.use { input ->
                 FileOutputStream(destinationFile).use { output ->
@@ -691,7 +742,7 @@ class LocalFileStorageService @Inject constructor(
             }
             Result.Success(destinationFile.absolutePath)
         } catch (e: Exception) {
-            Log.e("LocalFileStorageService", "Error uploading file for case $caseSpreadsheetId", e)
+            Log.e("LocalFileStorageService", "Error uploading file for case $caseSpreadsheetId, URI $fileUri", e)
             Result.Error(e)
         }
     }
