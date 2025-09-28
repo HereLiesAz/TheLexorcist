@@ -23,6 +23,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.hereliesaz.aznavrail.AzButton
 import com.hereliesaz.aznavrail.AzLoad
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.common.state.SaveState
@@ -222,7 +223,8 @@ fun ScriptsPage(
             Text(
                 if (searchQuery.isNotBlank()) stringResource(R.string.no_search_results)
                 else stringResource(R.string.no_scripts_available),
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.End,
+                modifier = Modifier.fillMaxWidth()
             )
         }
         return
@@ -270,7 +272,8 @@ fun TemplatesPage(
             Text(
                 if (searchQuery.isNotBlank()) stringResource(R.string.no_search_results)
                 else stringResource(R.string.no_templates_available),
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.End,
+                modifier = Modifier.fillMaxWidth()
             )
         }
         return
@@ -364,9 +367,7 @@ fun AddonListItem(
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
                 RatingBar(rating = ratingValue.toFloat(), onRate = onRate)
                 Spacer(modifier = Modifier.width(8.dp))
-                Button(onClick = onShareClick, colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.primary), border = ButtonDefaults.outlinedButtonBorder(enabled = true)) {
-                    Text(stringResource(R.string.share))
-                }
+                AzButton(onClick = onShareClick, text = stringResource(R.string.share))
             }
         }
     }
@@ -382,7 +383,7 @@ fun ItemDetailsDialog(
     authorEmail: String,
     type: String,
     onDismiss: () -> Unit,
-    onDelete: () -> Unit, 
+    onDelete: () -> Unit,
     onEdit: () -> Unit
 ) {
     val context = LocalContext.current
@@ -403,19 +404,14 @@ fun ItemDetailsDialog(
                 Text(text = description, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.End)
                 Spacer(modifier = Modifier.height(16.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    Button(
+                    AzButton(
                         onClick = {
                             shareText(context, subject = "Check out this $type: $name", text = content)
                         },
-                        modifier = Modifier.padding(end = 8.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.primary), 
-                        border = ButtonDefaults.outlinedButtonBorder(enabled = true)
-                    ) {
-                        Text(stringResource(R.string.share_content))
-                    }
-                    Button(onClick = onDismiss, colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.primary), border = ButtonDefaults.outlinedButtonBorder(enabled = true)) {
-                        Text(stringResource(R.string.close))
-                    }
+                        text = stringResource(R.string.share_content),
+                        modifier = Modifier.padding(end = 8.dp)
+                    )
+                    AzButton(onClick = onDismiss, text = stringResource(R.string.close))
                 }
             }
         }

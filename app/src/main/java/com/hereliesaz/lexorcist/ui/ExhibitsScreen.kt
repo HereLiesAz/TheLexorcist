@@ -42,10 +42,10 @@ import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.data.Exhibit
 import com.hereliesaz.lexorcist.model.CleanupSuggestion
+import com.hereliesaz.aznavrail.AzButton
 import com.hereliesaz.lexorcist.ui.components.DragAndDropContainer
 import com.hereliesaz.lexorcist.ui.components.DraggableItem
 import com.hereliesaz.lexorcist.ui.components.DropTarget
-import com.hereliesaz.lexorcist.ui.components.LexorcistOutlinedButton
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import java.util.Locale
 
@@ -168,10 +168,11 @@ fun ExhibitItem(
                 .padding(16.dp)
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.End
         ) {
             Column(
                 modifier = Modifier.weight(1f),
-                horizontalAlignment = Alignment.Start,
+                horizontalAlignment = Alignment.End,
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Text(
@@ -180,6 +181,7 @@ fun ExhibitItem(
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.End
                 )
                 Text(
                     text = exhibit.description,
@@ -188,6 +190,7 @@ fun ExhibitItem(
                     overflow = TextOverflow.Ellipsis,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.End
                 )
             }
             IconButton(onClick = { onDeleteClick(exhibit) }) {
@@ -208,7 +211,7 @@ fun CleanUpTab(caseViewModel: CaseViewModel) {
         horizontalAlignment = Alignment.End,
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        LexorcistOutlinedButton(
+        AzButton(
             onClick = { caseViewModel.generateCleanupSuggestions() },
             text = "Scan for Cleanup Suggestions"
         )
@@ -236,7 +239,7 @@ fun CleanUpTab(caseViewModel: CaseViewModel) {
             Text(
                 "No cleanup suggestions. Run a scan to find duplicates or image series.",
                 style = MaterialTheme.typography.bodyMedium,
-                textAlign = TextAlign.Center,
+                textAlign = TextAlign.End,
                 modifier = Modifier.fillMaxWidth().padding(16.dp)
             )
         }
@@ -255,18 +258,18 @@ fun DuplicateGroupItem(group: CleanupSuggestion.DuplicateGroup, onMerge: () -> U
                 "Duplicate Group Found (${group.evidence.size} items)",
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Start
+                textAlign = TextAlign.End
             )
             group.evidence.forEach {
                 Text(
                     " - Evidence ID: ${it.id}, Content: ${it.content.take(50)}...",
                     style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.fillMaxWidth(), 
-                    textAlign = TextAlign.Start 
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.End
                 )
             }
             Spacer(modifier = Modifier.height(8.dp))
-            LexorcistOutlinedButton(onClick = onMerge, text = "Merge (Keep First, Delete Others)")
+            AzButton(onClick = onMerge, text = "Merge (Keep First, Delete Others)")
         }
     }
 }
@@ -283,18 +286,18 @@ fun ImageSeriesGroupItem(group: CleanupSuggestion.ImageSeriesGroup, onMerge: () 
                 "Image Series Found (${group.evidence.size} items)",
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Start
+                textAlign = TextAlign.End
             )
             group.evidence.forEach {
                 Text(
                     " - Evidence ID: ${it.id}, Source: ${it.sourceDocument}",
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Start
+                    textAlign = TextAlign.End
                 )
             }
             Spacer(modifier = Modifier.height(8.dp))
-            LexorcistOutlinedButton(onClick = onMerge, text = "Combine into PDF")
+            AzButton(onClick = onMerge, text = "Combine into PDF")
         }
     }
 }

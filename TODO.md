@@ -7,9 +7,9 @@ This document outlines the features, fixes, and enhancements required to complet
 ### **I. High-Priority Roadmap Items**
 
 1.  **Cloud Synchronization:**
-    *   **On App Close:** Implement a robust mechanism to trigger a full synchronization of the local `lexorcist_data.xlsx` file and the case folder with the selected cloud provider (Google Drive, etc.) when the application is closed.
+    *   **On App Close:** Implement a robust mechanism to trigger a full synchronization of the local `lexorcist_data.xlsx` file and the case folder with the selected cloud provider (Google Drive, etc.) when the application is closed. [COMPLETED]
     *   **On App Load:** Implement a synchronization check upon application startup to ensure the local data is consistent with the latest version in the cloud. [COMPLETED]
-    *   **Note:** The `GoogleDriveCloudStorageProvider` was fully implemented to make the existing `SyncManager` logic functional.
+    *   **Note:** The `GoogleDriveCloudStorageProvider` was fully implemented to make the existing `SyncManager` logic functional. Sync on close was already implemented via `AppLifecycleObserver`.
 
 2.  **Video Evidence Processing:**
     *   **Frame Extraction:** Implement a service to extract individual frames from a video file at a specified interval (e.g., every 5 seconds).
@@ -30,11 +30,13 @@ This document outlines the features, fixes, and enhancements required to complet
 
 ### **II. UI/UX Enhancements & Fixes**
 
-5.  **Component Right-Alignment:**
+5.  **Component Right-Alignment:** [COMPLETED]
     *   Audit every screen (`CasesScreen`, `EvidenceScreen`, `SettingsScreen`, etc.) and ensure all UI components (Buttons, TextFields, Cards, etc.), but not the text within them, are right-aligned as per the UI/UX rules.
+    *   **Note:** This was completed in conjunction with the `AzButton` conversion.
 
-6.  **`AzButton` Conversion:**
+6.  **`AzButton` Conversion:** [COMPLETED]
     *   Systematically review all screens and replace any standard Material `Button`, `ToggleButton`, `FloatingActionButton`, or similar components with their `AzNavRail` library equivalents (`AzButton`, `AzToggle`, `AzCycler`).
+    *   **Note:** All `LexorcistOutlinedButton` and standard `Button` components were replaced with `AzButton`. `AlertDialog` was replaced with `AzAlertDialog`.
 
 7.  **Case List Highlighting:** [COMPLETED]
     *   In `CasesScreen.kt`, implement a visual indicator (e.g., changing the background color) to highlight the currently selected case in the list.
