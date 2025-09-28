@@ -64,9 +64,6 @@ class VideoProcessingWorkerTest {
         mockedStaticLog.`when`<Int> { Log.e(Mockito.anyString(), Mockito.anyString()) }.thenReturn(0)
         mockedStaticLog.`when`<Int> { Log.e(Mockito.anyString(), Mockito.anyString(), any<Throwable>()) }.thenReturn(0)
 
-        // REMOVED: Unnecessary stubbing for mockParsedVideoUri.toString()
-        // whenever(mockParsedVideoUri.toString()).thenReturn(testVideoUriString)
-
         mockEvidence = Evidence(
             id = 1,
             caseId = testCaseIdInput.toLong(),
@@ -79,6 +76,7 @@ class VideoProcessingWorkerTest {
             sourceDocument = testVideoUriString,
             documentDate = System.currentTimeMillis(),
             allegationId = null,
+            allegationElementName = null, // Added this line
             category = "Video Evidence",
             tags = listOf("video"),
             commentary = null,

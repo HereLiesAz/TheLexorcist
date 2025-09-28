@@ -103,7 +103,6 @@ fun ExhibitsScreen(caseViewModel: CaseViewModel = hiltViewModel()) {
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center,
                     ) {
-                        com.hereliesaz.azload.CoinTossLoadingIndicator()
                     }
                 } else if (selectedCase == null) {
                     Column(

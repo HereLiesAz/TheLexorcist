@@ -7,11 +7,11 @@ import org.junit.Test
 class TemplatesScreenTest {
 
     private val templates = listOf(
-        Template("1", "California Pleading", "", "", "", "California"),
-        Template("2", "Federal Pleading", "", "", "", "Federal"),
-        Template("3", "Louisiana Pleading", "", "", "", "Louisiana"),
-        Template("4", "Generic Cover Sheet", "", "", "", "Generic"),
-        Template("5", "Generic Custody Log", "", "", "", "Generic")
+        Template(id = "1", name = "California Pleading", description = "", content = "", authorName = "", authorEmail = "", court = "California"),
+        Template(id = "2", name = "Federal Pleading", description = "", content = "", authorName = "", authorEmail = "", court = "Federal"),
+        Template(id = "3", name = "Louisiana Pleading", description = "", content = "", authorName = "", authorEmail = "", court = "Louisiana"),
+        Template(id = "4", name = "Generic Cover Sheet", description = "", content = "", authorName = "", authorEmail = "", court = "Generic"),
+        Template(id = "5", name = "Generic Custody Log", description = "", content = "", authorName = "", authorEmail = "", court = "Generic")
     )
 
     @Test
@@ -45,7 +45,7 @@ class TemplatesScreenTest {
 
     @Test
     fun `filterTemplates with Texas court returns correct templates`() {
-        val templatesWithTexas = templates + Template("7", "Texas Answer", "", "", "", "Texas")
+        val templatesWithTexas = templates + Template(id = "7", name = "Texas Answer", description = "", content = "", authorName = "", authorEmail = "", court = "Texas")
         val filtered = filterTemplates(templatesWithTexas, "Texas")
         assertEquals(3, filtered.size)
         assert(filtered.any { it.name == "Texas Answer" })
@@ -59,7 +59,7 @@ class TemplatesScreenTest {
 
     @Test
     fun `filterTemplates with New York court returns correct templates`() {
-        val templatesWithNY = templates + Template("6", "New York Complaint", "", "", "", "New York")
+        val templatesWithNY = templates + Template(id = "6", name = "New York Complaint", description = "", content = "", authorName = "", authorEmail = "", court = "New York")
         val filtered = filterTemplates(templatesWithNY, "New York")
         assertEquals(3, filtered.size)
         assert(filtered.any { it.name == "New York Complaint" })
@@ -70,7 +70,7 @@ class TemplatesScreenTest {
     @Test
     fun `filterTemplates with California court returns correct templates including answer`() {
         val templatesWithCalifornia = templates +
-            Template("8", "California Answer", "", "", "", "California")
+            Template(id = "8", name = "California Answer", description = "", content = "", authorName = "", authorEmail = "", court = "California")
         val filtered = filterTemplates(templatesWithCalifornia, "California")
         assertEquals(4, filtered.size)
         assert(filtered.any { it.name == "California Pleading" })
@@ -80,7 +80,7 @@ class TemplatesScreenTest {
     @Test
     fun `filterTemplates with Federal court returns correct templates including answer`() {
         val templatesWithFederal = templates +
-            Template("9", "Federal Answer", "", "", "", "Federal")
+            Template(id = "9", name = "Federal Answer", description = "", content = "", authorName = "", authorEmail = "", court = "Federal")
         val filtered = filterTemplates(templatesWithFederal, "Federal")
         assertEquals(4, filtered.size)
         assert(filtered.any { it.name == "Federal Pleading" })
@@ -90,8 +90,8 @@ class TemplatesScreenTest {
     @Test
     fun `filterTemplates with Federal court returns correct templates including motion`() {
         val templatesWithFederal = templates +
-            Template("9", "Federal Answer", "", "", "", "Federal") +
-            Template("10", "Federal Motion to Dismiss", "", "", "", "Federal")
+            Template(id = "9", name = "Federal Answer", description = "", content = "", authorName = "", authorEmail = "", court = "Federal") +
+            Template(id = "10", name = "Federal Motion to Dismiss", description = "", content = "", authorName = "", authorEmail = "", court = "Federal")
         val filtered = filterTemplates(templatesWithFederal, "Federal")
         assertEquals(5, filtered.size)
         assert(filtered.any { it.name == "Federal Pleading" })
@@ -102,8 +102,8 @@ class TemplatesScreenTest {
     @Test
     fun `filterTemplates with California court returns correct templates including motion`() {
         val templatesWithCalifornia = templates +
-            Template("8", "California Answer", "", "", "", "California") +
-            Template("11", "California Motion to Dismiss", "", "", "", "California")
+            Template(id = "8", name = "California Answer", description = "", content = "", authorName = "", authorEmail = "", court = "California") +
+            Template(id = "11", name = "California Motion to Dismiss", description = "", content = "", authorName = "", authorEmail = "", court = "California")
         val filtered = filterTemplates(templatesWithCalifornia, "California")
         assertEquals(5, filtered.size)
         assert(filtered.any { it.name == "California Pleading" })
@@ -114,8 +114,8 @@ class TemplatesScreenTest {
     @Test
     fun `filterTemplates with Texas court returns correct templates including motion`() {
         val templatesWithTexas = templates +
-            Template("7", "Texas Answer", "", "", "", "Texas") +
-            Template("12", "Texas Motion to Dismiss", "", "", "", "Texas")
+            Template(id = "7", name = "Texas Answer", description = "", content = "", authorName = "", authorEmail = "", court = "Texas") +
+            Template(id = "12", name = "Texas Motion to Dismiss", description = "", content = "", authorName = "", authorEmail = "", court = "Texas")
         val filtered = filterTemplates(templatesWithTexas, "Texas")
         assertEquals(4, filtered.size)
         assert(filtered.any { it.name == "Texas Answer" })
@@ -125,7 +125,7 @@ class TemplatesScreenTest {
     @Test
     fun `filterTemplates with Florida court returns correct templates`() {
         val templatesWithFlorida = templates +
-            Template("13", "Florida Complaint", "", "", "", "Florida")
+            Template(id = "13", name = "Florida Complaint", description = "", content = "", authorName = "", authorEmail = "", court = "Florida")
         val filtered = filterTemplates(templatesWithFlorida, "Florida")
         assertEquals(3, filtered.size)
         assert(filtered.any { it.name == "Florida Complaint" })
@@ -134,7 +134,7 @@ class TemplatesScreenTest {
     @Test
     fun `filterTemplates with Illinois court returns correct templates`() {
         val templatesWithIllinois = templates +
-            Template("14", "Illinois Complaint", "", "", "", "Illinois")
+            Template(id = "14", name = "Illinois Complaint", description = "", content = "", authorName = "", authorEmail = "", court = "Illinois")
         val filtered = filterTemplates(templatesWithIllinois, "Illinois")
         assertEquals(3, filtered.size)
         assert(filtered.any { it.name == "Illinois Complaint" })

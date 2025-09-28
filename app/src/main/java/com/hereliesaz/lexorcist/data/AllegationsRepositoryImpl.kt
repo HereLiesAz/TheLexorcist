@@ -20,7 +20,7 @@ constructor(
             Allegation(
                 id = catalogEntry.id.toIntOrNull() ?: 0, // Or handle parse error more gracefully
                 spreadsheetId = caseId, // Use the passed caseId for context
-                text = catalogEntry.name, // Assuming 'name' from AllegationCatalogEntry is the allegation text
+                text = catalogEntry.allegationName, // Changed from catalogEntry.name
                 elements = elements
             )
         }

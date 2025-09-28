@@ -660,7 +660,7 @@ class LocalFileStorageService @Inject constructor(
             Allegation( 
                 id = allegationId,
                 spreadsheetId = caseSpreadsheetId,
-                text = textFromSheet ?: masterAllegation?.name ?: "" // Changed from .text to .name
+                text = textFromSheet ?: masterAllegation?.allegationName ?: "" // Changed from .name to .allegationName
             )
         }
     }

@@ -354,7 +354,7 @@ fun SettingsScreen(
                     )
                 }
                 is com.hereliesaz.lexorcist.model.OneDriveSignInState.InProgress -> {
-                    com.hereliesaz.azload.CoinTossLoadingIndicator()
+                    com.hereliesaz.aznavrail.AzLoad()
                 }
                 is com.hereliesaz.lexorcist.model.OneDriveSignInState.Success -> {
                     Text(stringResource(R.string.connected_to_onedrive_as_placeholder, stateVal.accountName ?: stringResource(R.string.unknown_account)))

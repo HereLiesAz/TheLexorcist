@@ -7,10 +7,7 @@ data class Allegation(
     val elements: List<AllegationElement> = emptyList()
 )
 
-data class AllegationElement(
-    val name: String,
-    val description: String
-)
+// AllegationElement is now defined in AllegationElement.kt
 
 // Represents a single entry in the allegations_catalog.json
 data class AllegationCatalogEntry(
