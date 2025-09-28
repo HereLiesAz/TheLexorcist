@@ -85,9 +85,29 @@ class LocalFileStorageService @Inject constructor(
                                 modified = true
                             }
 
+                            // Data migration: Check for and add missing columns to Evidence sheet
+                            val evidenceSheet = workbook.getSheet(EVIDENCE_SHEET_NAME)
+                            if (evidenceSheet != null) {
+                                val headerRow = evidenceSheet.getRow(0)
+                                if (headerRow != null) {
+                                    val existingHeaders = (0 until headerRow.lastCellNum).mapNotNull { headerRow.getCell(it)?.stringCellValue }
+                                    val missingHeaders = EVIDENCE_HEADER.filter { it !in existingHeaders }
+
+                                    if (missingHeaders.isNotEmpty()) {
+                                        var lastCellNum = headerRow.lastCellNum.toInt()
+                                        if (lastCellNum < 0) lastCellNum = 0
+                                        missingHeaders.forEach { header ->
+                                            headerRow.createCell(lastCellNum++).setCellValue(header)
+                                        }
+                                        modified = true
+                                        Log.i("LocalFileStorageService", "Added missing headers to Evidence sheet: $missingHeaders")
+                                    }
+                                }
+                            }
+
                             if (modified) {
                                 FileOutputStream(spreadsheetFile).use { fos -> workbook.write(fos) }
-                                Log.i("LocalFileStorageService", "Added missing sheets to existing spreadsheet.")
+                                Log.i("LocalFileStorageService", "Added missing sheets or headers to existing spreadsheet.")
                             }
                         }
                     }
@@ -334,7 +354,7 @@ class LocalFileStorageService @Inject constructor(
 
             Exhibit(
                 id = exhibitId,
-                caseId = caseSpreadsheetId.hashCode().toLong(), 
+                caseId = caseSpreadsheetId.hashCode().toLong(),
                 name = row.getCell(EXHIBITS_HEADER.indexOf("Name"))?.stringCellValue ?: "",
                 description = row.getCell(EXHIBITS_HEADER.indexOf("Description"))?.stringCellValue ?: "",
                 evidenceIds = evidenceIds
