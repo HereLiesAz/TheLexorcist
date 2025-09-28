@@ -60,7 +60,8 @@ class ChatHistoryParser(private val context: Context) {
                     val message = messagesArray.getJSONObject(i)
                     val sender = message.optString("sender_name", "Unknown Sender")
                     val timestamp = message.optLong("timestamp_ms", System.currentTimeMillis())
-                    val text = message.optString("content", null as String?)
+                    // Correctly get nullable string for content
+                    val text: String? = if (message.has("content") && !message.isNull("content")) message.getString("content") else null
 
                     if (text != null) {
                         val chatContent = "From: $sender\n\n$text"
