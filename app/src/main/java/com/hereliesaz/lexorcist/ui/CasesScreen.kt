@@ -274,7 +274,7 @@ fun CaseItem(
     val backgroundColor = when {
         isSelected -> MaterialTheme.colorScheme.primaryContainer
         isLongPressed -> MaterialTheme.colorScheme.surfaceVariant
-        else -> Color.Transparent
+        else -> MaterialTheme.colorScheme.surface
     }
     val contentColor = when {
         isSelected -> MaterialTheme.colorScheme.onPrimaryContainer
