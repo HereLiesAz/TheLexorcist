@@ -40,6 +40,7 @@ import com.hereliesaz.lexorcist.utils.DataParser
 import com.hereliesaz.lexorcist.model.OutlookSignInState
 import com.hereliesaz.lexorcist.service.GmailService
 import com.hereliesaz.lexorcist.service.ImapService
+import com.hereliesaz.lexorcist.data.JurisdictionRepository
 import com.hereliesaz.lexorcist.service.OutlookService
 import com.hereliesaz.lexorcist.utils.ChatHistoryParser
 import com.hereliesaz.lexorcist.utils.EvidenceImporter
@@ -81,7 +82,8 @@ constructor(
     private val gmailService: GmailService,
     private val outlookService: OutlookService,
     private val imapService: ImapService,
-    private val outlookAuthManager: com.hereliesaz.lexorcist.auth.OutlookAuthManager
+    private val outlookAuthManager: com.hereliesaz.lexorcist.auth.OutlookAuthManager,
+    private val jurisdictionRepository: JurisdictionRepository
 ) : ViewModel() {
     private val sharedPref =
         applicationContext.getSharedPreferences("CaseInfoPrefs", Context.MODE_PRIVATE)
@@ -172,6 +174,9 @@ constructor(
     private val _timelineSortType = MutableStateFlow(TimelineSortType.DATE_OF_OCCURRENCE)
     val timelineSortType: StateFlow<TimelineSortType> = _timelineSortType.asStateFlow()
 
+    private val _jurisdictions = MutableStateFlow<List<com.hereliesaz.lexorcist.model.Court>>(emptyList())
+    val jurisdictions: StateFlow<List<com.hereliesaz.lexorcist.model.Court>> = _jurisdictions.asStateFlow()
+
     private val _selectedCaseEvidenceListInternal =
         MutableStateFlow<List<com.hereliesaz.lexorcist.data.Evidence>>(emptyList())
 
@@ -209,6 +214,7 @@ constructor(
         Log.d("CaseViewModel", "--- CaseViewModel INIT --- instancia: $this")
         loadThemeModePreference()
         loadExtrasFromJson()
+        loadJurisdictions()
 
         viewModelScope.launch {
             logService.logEventFlow.collect { newLog ->
@@ -619,9 +625,20 @@ constructor(
         saveCaseInfoToSharedPrefs()
     }
 
-    fun onCourtChanged(name: String) {
-        _court.value = name
+    fun onCourtSelected(courtName: String) {
+        _court.value = courtName
         saveCaseInfoToSharedPrefs()
+    }
+
+    private fun loadJurisdictions() {
+        viewModelScope.launch {
+            try {
+                _jurisdictions.value = jurisdictionRepository.getJurisdictions()
+            } catch (e: Exception) {
+                _errorMessage.value = "Failed to load jurisdictions: ${e.message}"
+                Log.e("CaseViewModel", "Error loading jurisdictions", e)
+            }
+        }
     }
 
     fun updateEvidence(evidence: com.hereliesaz.lexorcist.data.Evidence) {
