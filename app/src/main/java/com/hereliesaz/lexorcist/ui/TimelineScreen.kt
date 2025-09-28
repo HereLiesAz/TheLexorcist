@@ -46,21 +46,16 @@ fun TimelineScreen(
             )
         }
     ) { padding ->
-        if (evidenceList.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .padding(padding)
-                    .fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                PlaceholderExtendedEvent()
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .padding(padding)
-                    .fillMaxSize()
-            ) {
+        LazyColumn(
+            modifier = Modifier
+                .padding(padding)
+                .fillMaxSize()
+        ) {
+            if (evidenceList.isEmpty()) {
+                item {
+                    PlaceholderExtendedEvent()
+                }
+            } else {
                 items(evidenceList.sortedBy { it.documentDate }) { evidence ->
                     ExtendedEvent(evidence = evidence)
                 }

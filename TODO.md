@@ -127,7 +127,7 @@ This document outlines the features, fixes, and enhancements required to complet
     *   Replace the "Roadmap" section with this new, more granular TODO list.
     *   Review and update the UI/UX rules to be more specific where necessary.
 
-23. **Create New Documentation:**
+23. **Create New Documentation:** [COMPLETED]
     *   Create a `CONTRIBUTING.md` file with guidelines for code contributions, pull requests, and code style.
     *   Create a `CODE_OF_CONDUCT.md` file.
 
