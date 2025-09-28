@@ -2,9 +2,8 @@ package com.hereliesaz.lexorcist.viewmodel
 
 import android.content.Context
 import android.content.Intent
-import android.util.Log // Added import for Log
+import android.util.Log
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.asFlow
 import androidx.lifecycle.viewModelScope
 import com.google.api.services.drive.model.File as DriveFile
 import com.hereliesaz.lexorcist.data.ActiveScriptRepository
@@ -18,6 +17,7 @@ import com.hereliesaz.lexorcist.data.Script
 import com.hereliesaz.lexorcist.data.ScriptRepository
 import com.hereliesaz.lexorcist.data.SettingsManager
 import com.hereliesaz.lexorcist.data.SortOrder
+import com.hereliesaz.lexorcist.model.CleanupSuggestion
 import com.hereliesaz.lexorcist.model.ProcessingState
 import com.hereliesaz.lexorcist.model.SheetFilter
 import com.hereliesaz.lexorcist.model.Template
@@ -46,10 +46,9 @@ import com.hereliesaz.lexorcist.service.OutlookService
 import com.hereliesaz.lexorcist.utils.ChatHistoryParser
 import com.hereliesaz.lexorcist.utils.EvidenceImporter
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map // Ensured import
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import androidx.core.net.toUri
@@ -203,6 +202,9 @@ constructor(
             .map { list -> list.filter { it.isSelected } }
             .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
+    private val _cleanupSuggestions = MutableStateFlow<List<CleanupSuggestion>>(emptyList())
+    val cleanupSuggestions: StateFlow<List<CleanupSuggestion>> = _cleanupSuggestions.asStateFlow()
+
     fun onTimelineSortOrderChanged(sortType: TimelineSortType) {
         _timelineSortType.value = sortType
     }
@@ -252,9 +254,6 @@ constructor(
 
         viewModelScope.launch {
             caseRepository.selectedCaseEvidence.collect { result ->
-                // This collects general evidence list for the selected case, not specific to an ongoing processing operation.
-                // _isLoading might be too broad here if only evidence list is updating.
-                // Consider a specific loading state for the evidence list if needed.
                 when (result) {
                     is Result.Success -> {
                         _selectedCaseEvidenceListInternal.value = result.data
@@ -267,8 +266,7 @@ constructor(
                         _userRecoverableAuthIntent.value = result.exception.intent
                         _selectedCaseEvidenceListInternal.value = emptyList()
                     }
-                    is Result.Loading -> { // Handle loading state from repository if provided
-                        // You might want a specific isLoadingEvidenceList StateFlow
+                    is Result.Loading -> {
                     }
                 }
             }
@@ -436,7 +434,7 @@ constructor(
             _userMessage.value = "Loading cases..."
             try {
                 caseRepository.refreshCases()
-                _userMessage.value = "Cases loaded successfully." // User message updated on success
+                _userMessage.value = "Cases loaded successfully."
                 _processingState.value = ProcessingState.Completed("Cases loaded successfully.")
             } catch (e: Exception) {
                 Log.e("CaseViewModel", "Error loading cases: ${e.message}", e)
@@ -444,9 +442,8 @@ constructor(
                 _processingState.value = ProcessingState.Failure("Error loading cases: ${e.message}")
             } finally {
                 globalLoadingState.popLoading()
-                // If the process is still InProgress, it implies an unexpected exit or that the try block didn't set a final state.
                 if (_processingState.value is ProcessingState.InProgress) {
-                    _processingState.value = ProcessingState.Idle // Reset to a neutral state
+                    _processingState.value = ProcessingState.Idle
                 }
             }
         }
@@ -468,11 +465,10 @@ constructor(
                 val errorMsg = "Error loading HTML templates: ${e.message}"
                 Log.e("CaseViewModel", "Error loading HTML templates: $errorMsg", e)
                 _errorMessage.value = errorMsg
-                _userMessage.value = errorMsg // Set user message to the error
+                _userMessage.value = errorMsg
                 _processingState.value = ProcessingState.Failure(errorMsg)
             } finally {
                 globalLoadingState.popLoading()
-                // Ensure a terminal state if still InProgress (e.g., due to cancellation or unexpected error path)
                 if (_processingState.value is ProcessingState.InProgress) {
                     _processingState.value = ProcessingState.Idle
                 }
@@ -486,19 +482,14 @@ constructor(
             _processingState.value = ProcessingState.InProgress(0f)
             _userMessage.value = "Importing spreadsheet..."
             try {
-                // Assuming importSpreadsheet is a suspend function that might throw an exception
-                // and potentially return a Result wrapper or similar for more detailed success/failure.
-                // For now, we'll assume a successful call means it completed without exceptions.
                 caseRepository.importSpreadsheet(spreadsheetId)
                 _userMessage.value = "Spreadsheet imported successfully."
                 _processingState.value = ProcessingState.Completed("Spreadsheet imported successfully.")
-                // Potentially refresh cases or other data if an import changes the state
-                // loadCasesFromRepository() // Example: if import affects the list of cases
             } catch (e: Exception) {
                 val errorMsg = "Error importing spreadsheet: ${e.message}"
                 Log.e("CaseViewModel", errorMsg, e)
                 _errorMessage.value = errorMsg
-                _userMessage.value = errorMsg // Update user message with error
+                _userMessage.value = errorMsg
                 _processingState.value = ProcessingState.Failure(errorMsg)
             } finally {
                 globalLoadingState.popLoading()
@@ -543,7 +534,7 @@ constructor(
                     is Result.UserRecoverableError -> {
                         _userRecoverableAuthIntent.value = result.exception.intent
                     }
-                    is Result.Loading -> { /* Handle Loading if necessary */ }
+                    is Result.Loading -> { }
                 }
             } finally {
                 globalLoadingState.popLoading()
@@ -557,7 +548,6 @@ constructor(
             Log.d("CaseViewModel", "viewModelScope.launch in selectCase for case: ${case?.name ?: "null"}")
             globalLoadingState.pushLoading()
             try {
-                // Reset processing state when a new case is selected or deselected
                 _processingState.value = ProcessingState.Idle
                 _logMessages.value = emptyList()
 
@@ -809,7 +799,7 @@ constructor(
 
     fun clearLogs() {
         _logMessages.value = emptyList()
-        _processingState.value = ProcessingState.Idle // Reset processing state when logs are cleared
+        _processingState.value = ProcessingState.Idle
     }
 
     fun addTextEvidence(text: String, allegationElementName: String) {
@@ -866,7 +856,7 @@ constructor(
             val currentCaseFromState = _vmSelectedCase.value
             Log.d("CaseViewModel", "processImageEvidence: _vmSelectedCase.value AT START is: ${currentCaseFromState?.name ?: "null"}")
             globalLoadingState.pushLoading()
-            clearLogs() // Clears logs and sets processingState to Idle
+            clearLogs()
             val caseToUse = currentCaseFromState ?: run {
                 Log.w("CaseViewModel", "processImageEvidence: No case selected from StateFlow, aborting.")
                 _userMessage.value = "Please select a case first to add image evidence."
@@ -876,14 +866,12 @@ constructor(
             }
             try {
                 Log.d("CaseViewModel", "Processing image for case: ${caseToUse.name}")
-                // OcrProcessingService.processImage now has a callback for ProcessingState updates
-                // So, _processingState will be updated directly from there.
                 val (newEvidence, message) = ocrProcessingService.processImage(
                     uri = uri,
                     context = applicationContext,
                     caseId = caseToUse.id.toLong(),
                     spreadsheetId = caseToUse.spreadsheetId
-                ) { state -> _processingState.value = state } // Pass the lambda to update ViewModel's state
+                ) { state -> _processingState.value = state }
 
                 message?.let {
                     Log.i("CaseViewModel", "Message from ocrProcessingService: $it")
@@ -900,7 +888,6 @@ constructor(
                 _userMessage.value = errorMsg
                 _processingState.value = ProcessingState.Failure(errorMsg)
             } finally {
-                // _processingState should now reflect the final state from the service
                 globalLoadingState.popLoading()
                 Log.d("CaseViewModel", "processImageEvidence finally block. isLoading set to false. Final ProcessingState: ${_processingState.value}")
             }
@@ -908,12 +895,12 @@ constructor(
     }
 
     fun processAudioEvidence(uri: android.net.Uri, allegationElementName: String) {
-        viewModelScope.launch(Dispatchers.Main) { // Ensure UI updates are on Main
+        viewModelScope.launch(Dispatchers.Main) {
             val currentCaseFromState = _vmSelectedCase.value
             Log.d("CaseViewModel", "processAudioEvidence: _vmSelectedCase.value AT START is: ${currentCaseFromState?.name ?: "null"}")
             globalLoadingState.pushLoading()
-            clearLogs() // Clears logs and sets processingState to Idle, then we set InProgress
-            _processingState.value = ProcessingState.InProgress(0.0f) // Initial progress
+            clearLogs()
+            _processingState.value = ProcessingState.InProgress(0.0f)
 
             val caseToUse = currentCaseFromState ?: run {
                 val errorMsg = "Please select a case first to add audio evidence."
@@ -926,9 +913,8 @@ constructor(
 
             try {
                 Log.i("CaseViewModel", "Processing audio for case: ${caseToUse.name}, URI: $uri")
-                _processingState.value = ProcessingState.InProgress(0.1f) // After initial checks, before upload
+                _processingState.value = ProcessingState.InProgress(0.1f)
 
-                // 1. Upload file
                 val uploadResult = withContext(Dispatchers.IO) {
                     evidenceRepository.uploadFile(uri, caseToUse.name, caseToUse.spreadsheetId)
                 }
@@ -938,17 +924,15 @@ constructor(
                         val uploadedFileUriString = uploadResult.data
                         Log.i("CaseViewModel", "Audio file uploaded: $uploadedFileUriString")
                         _userMessage.value = "Raw audio file saved. Starting transcription."
-                        _processingState.value = ProcessingState.InProgress(0.25f) // After upload, before transcription
+                        _processingState.value = ProcessingState.InProgress(0.25f)
 
-                        // 2. Transcribe audio
-                        // The URI passed to transcribeAudio should be the original content URI for Vosk to access
                         val transcriptionResult = transcriptionService.transcribeAudio(uri)
 
                         when (transcriptionResult) {
                             is Result.Success -> {
                                 val transcribedText = transcriptionResult.data
                                 Log.i("CaseViewModel", "Audio transcribed: $transcribedText")
-                                _processingState.value = ProcessingState.InProgress(0.75f) // After transcription, before saving evidence
+                                _processingState.value = ProcessingState.InProgress(0.75f)
 
                                 val fileHash = com.hereliesaz.lexorcist.utils.HashingUtils.getHash(applicationContext, uri)
                                 val newEvidence =
@@ -958,10 +942,10 @@ constructor(
                                         type = "audio",
                                         content = transcribedText,
                                         formattedContent = "```\n$transcribedText\n```",
-                                        mediaUri = uploadedFileUriString, // Use the uploaded file URI/path
+                                        mediaUri = uploadedFileUriString,
                                         timestamp = System.currentTimeMillis(),
-                                        sourceDocument = uploadedFileUriString, // Or original file name if preferred
-                                        documentDate = System.currentTimeMillis(), // Consider Exif or other means for original date
+                                        sourceDocument = uploadedFileUriString,
+                                        documentDate = System.currentTimeMillis(),
                                         allegationId = null,
                                         allegationElementName = allegationElementName,
                                         category = "Audio Transcription",
@@ -1002,11 +986,8 @@ constructor(
                                 _processingState.value = ProcessingState.Failure(errorMsg)
                             }
                             is Result.Loading -> {
-                                // This case should ideally not be returned directly from transcribeAudio if it's a one-shot call.
-                                // If it can, we need to decide how to handle it, perhaps by observing TranscriptionService's own state.
-                                // For now, treat as unexpected if it gets here from a direct suspend call.
                                 Log.w("CaseViewModel", "Transcription returned Loading state, which is unexpected for a direct call.")
-                                _processingState.value = ProcessingState.InProgress(0.5f) // Or some other intermediate state
+                                _processingState.value = ProcessingState.InProgress(0.5f)
                             }
                         }
                     }
@@ -1024,13 +1005,8 @@ constructor(
                         _processingState.value = ProcessingState.Failure(errorMsg)
                     }
                     is Result.Loading -> {
-                        // This might occur if evidenceRepository.uploadFile itself can emit Loading.
-                        // If so, the UI should reflect this. For now, we are awaiting its completion.
                         Log.i("CaseViewModel", "Audio upload is loading...")
-                        _processingState.value = ProcessingState.InProgress(0.15f) // Indicate upload in progress
-                        // This path will exit and the try-catch won't see a final Result.Success/Error from upload
-                        // for this specific call. Consider how to handle if upload truly is async and emits loading.
-                        // For a suspend function, we typically expect it to suspend until a final result.
+                        _processingState.value = ProcessingState.InProgress(0.15f)
                     }
                 }
             } catch (e: Exception) {
@@ -1040,8 +1016,6 @@ constructor(
                 _processingState.value = ProcessingState.Failure(errorMsg)
             } finally {
                 globalLoadingState.popLoading()
-                // _processingState is set to its final value (Completed or Failure) within the try block.
-                // We don't reset it to null here, so the UI can show the final status.
                 Log.d("CaseViewModel", "processAudioEvidence finally block. isLoading set to false. Final ProcessingState: ${_processingState.value}")
             }
         }
@@ -1139,7 +1113,7 @@ constructor(
                             _userMessage.value = errorMsg
                             _processingState.value = ProcessingState.Failure(errorMsg)
                             globalLoadingState.popLoading()
-                            return@launch // Stop processing further photos on error
+                            return@launch
                         }
                         is Result.UserRecoverableError -> {
                             val errorMsg = "User error saving photo ${index + 1}: ${result.exception.message}"
@@ -1147,11 +1121,9 @@ constructor(
                             _userRecoverableAuthIntent.value = result.exception.intent
                             _processingState.value = ProcessingState.Failure(errorMsg)
                             globalLoadingState.popLoading()
-                            return@launch // Stop processing further photos on error
+                            return@launch
                         }
                         is Result.Loading -> {
-                            // If uploadFile can emit Loading, this needs more robust handling, 
-                            // for now, we assume it completes or errors.
                             _userMessage.value = "Photo ${index + 1} is uploading..."
                         }
                     }
@@ -1181,7 +1153,6 @@ constructor(
                     _userMessage.value = "Photo group evidence saved successfully."
                     _processingState.value = ProcessingState.Completed("Photo group saved.")
                 } else if (savedPhotoPaths.isEmpty() && photoUris.isNotEmpty()) {
-                    // This case might be hit if all uploads failed and returned before this check
                     if (_processingState.value !is ProcessingState.Failure) {
                         _userMessage.value = "No photos were saved."
                         _processingState.value = ProcessingState.Failure("No photos saved.")
@@ -1191,16 +1162,11 @@ constructor(
             } finally {
                 globalLoadingState.popLoading()
                 if (_processingState.value is ProcessingState.InProgress) {
-                    // If loop finished due to error, state would be Failure. If success, Completed.
-                    // This is a fallback if somehow it's still InProgress.
                     _processingState.value = ProcessingState.Idle
                 }
             }
         }
     }
-
-    private val _cleanupSuggestions = MutableStateFlow<List<com.hereliesaz.lexorcist.model.CleanupSuggestion>>(emptyList())
-    val cleanupSuggestions: StateFlow<List<com.hereliesaz.lexorcist.model.CleanupSuggestion>> = _cleanupSuggestions.asStateFlow()
 
     fun generateCleanupSuggestions() {
         viewModelScope.launch {
@@ -1209,18 +1175,13 @@ constructor(
                 _userMessage.value = "Scanning for duplicates and image series..."
                 val currentEvidence = _selectedCaseEvidenceListInternal.value
 
-                // Phase 1: Ensure all evidence has hashes. This is a one-by-one update.
-                // The flow should update automatically after each evidenceRepository.updateEvidence call.
-                // This might be inefficient but will work.
                 val evidenceToHash = currentEvidence.filter { it.mediaUri != null && it.fileHash.isNullOrEmpty() }
                 if (evidenceToHash.isNotEmpty()) {
                     _userMessage.value = "Calculating hashes for ${evidenceToHash.size} items..."
                     evidenceToHash.forEach { evidence ->
                         try {
-                            // Parsing URI and getting hash can be slow, so it's good this is in a coroutine.
                             val hash = com.hereliesaz.lexorcist.utils.HashingUtils.getHash(applicationContext, android.net.Uri.parse(evidence.mediaUri))
                             if (hash != null) {
-                                // This update should trigger the flow to emit a new list.
                                 evidenceRepository.updateEvidence(evidence.copy(fileHash = hash))
                             }
                         } catch (e: SecurityException) {
@@ -1228,40 +1189,34 @@ constructor(
                             _errorMessage.value = "Permission error accessing a file. Please check storage permissions."
                         } catch (e: Exception) {
                             Log.e("Cleanup", "Failed to hash ${evidence.mediaUri}", e)
-                            // We can continue to the next item even if one fails.
                         }
                     }
                 }
 
-                // After hashing, the `selectedCaseEvidenceList` flow will have emitted the latest data.
                 val updatedEvidence = selectedCaseEvidenceList.value
-                val suggestions = mutableListOf<com.hereliesaz.lexorcist.model.CleanupSuggestion>()
+                val suggestions = mutableListOf<CleanupSuggestion>()
 
-                // Phase 2: Find duplicates using hashes
                 val evidenceWithHashes = updatedEvidence.filterNot { it.fileHash.isNullOrEmpty() }
                 val duplicateGroups = evidenceWithHashes
                     .groupBy { it.fileHash!! }
                     .filter { it.value.size > 1 }
-                    .map { com.hereliesaz.lexorcist.model.CleanupSuggestion.DuplicateGroup(it.value) }
+                    .map { CleanupSuggestion.DuplicateGroup(it.value) }
 
                 suggestions.addAll(duplicateGroups)
 
-                // Mark items as duplicates in the database for persistence.
                 duplicateGroups.flatMap { it.evidence }.forEach { evidence ->
                     if (!evidence.isDuplicate) {
                         evidenceRepository.updateEvidence(evidence.copy(isDuplicate = true))
                     }
                 }
 
-                // Phase 3: Find image series (ensure we don't process duplicates here)
                 val nonDuplicateImageEvidence = updatedEvidence.filter { it.type == "image" && !it.isDuplicate }
                 val seriesCandidates = nonDuplicateImageEvidence.groupBy {
-                    // A more robust regex to handle names like "IMG_20230101_123456.jpg"
                     it.sourceDocument.replace(Regex("[_\\d]"), "")
                 }.filter { it.value.size > 1 }
 
                 seriesCandidates.forEach { (_, series) ->
-                    suggestions.add(com.hereliesaz.lexorcist.model.CleanupSuggestion.ImageSeriesGroup(series))
+                    suggestions.add(CleanupSuggestion.ImageSeriesGroup(series))
                 }
 
                 _cleanupSuggestions.value = suggestions
@@ -1280,17 +1235,17 @@ constructor(
         }
     }
 
-    fun deleteDuplicates(group: com.hereliesaz.lexorcist.model.CleanupSuggestion.DuplicateGroup) {
+    fun deleteDuplicates(group: CleanupSuggestion.DuplicateGroup) {
         viewModelScope.launch {
             val evidenceToDelete = group.evidence.drop(1)
             evidenceToDelete.forEach { evidence ->
                 deleteEvidence(evidence)
             }
-            generateCleanupSuggestions() // Refresh suggestions
+            generateCleanupSuggestions()
         }
     }
 
-    fun mergeImageSeries(group: com.hereliesaz.lexorcist.model.CleanupSuggestion.ImageSeriesGroup, allegationElementName: String) {
+    fun mergeImageSeries(group: CleanupSuggestion.ImageSeriesGroup, allegationElementName: String) {
         viewModelScope.launch {
             val case = selectedCase.value ?: return@launch
             val caseDir = storageLocation.value?.let { File(it, case.spreadsheetId) } ?: return@launch
@@ -1311,7 +1266,6 @@ constructor(
 
                 pdfDocument.writeTo(FileOutputStream(pdfFile))
             } catch (e: Exception) {
-                // Handle exception
                 e.printStackTrace()
             } finally {
                 pdfDocument.close()
