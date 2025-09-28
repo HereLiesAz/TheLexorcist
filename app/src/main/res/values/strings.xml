@@ -337,4 +337,9 @@ function onOpen() {}</string>
     <string name="exhibits">Exhibits</string>
     <string name="please_select_case_for_exhibits">Please select a case to view its exhibits.</string>
     <string name="no_exhibits_for_case">No exhibits found for this case.</string>
+    <string name="addon_shared_successfully">Addon shared successfully!</string>
+    <string name="error_sharing_addon">Error sharing addon: %1$s</string>
+    <string name="search_addons">Search addons…</string>
+    <string name="clear_search">Clear search</string>
+    <string name="no_search_results">No results found for your search.</string>
 </resources>
