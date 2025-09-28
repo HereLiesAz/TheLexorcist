@@ -59,9 +59,101 @@ The file google-services.template.json located at the root of the /app/ folder s
 
 ---
 
-### Roadmap
+### Roadmap & Task Analysis
 
-A detailed, granular, and up-to-date list of all pending tasks is maintained in the `TODO.md` file at the root of this project. Please refer to it for the current development priorities.
+This section provides a detailed breakdown of the items from `TODO.md`, along with an analysis of the repository for potential missed items or considerations.
+
+#### **I. High-Priority Roadmap Items**
+
+1.  **Cloud Synchronization:**
+    *   **Goal:** Ensure the local `lexorcist_data.xlsx` file and associated case folders are synchronized with a cloud provider on app load and app close.
+    *   **Analysis:** The application already has a `SyncManager` and a `StorageService` interface with a `synchronize` method. An `AppLifecycleObserver` is also in place.
+    *   **Steps:**
+        1.  **On App Load:** Inject the `StorageService` into `LexorcistApplication` and invoke the `storageService.synchronize()` method within the `onCreate` lifecycle event. This ensures the app starts with the latest data.
+        2.  **On App Close:** The existing `AppLifecycleObserver` already calls `storageService.synchronize()` in its `onStop` method. This correctly handles the app-close scenario. No changes are needed here.
+        3.  **Provider Selection:** The `synchronize` method correctly uses the `SettingsManager` to determine which cloud provider to use, making the implementation flexible.
+
+2.  **Video Evidence Processing:**
+    *   **Goal:** Extract text from both the video frames (OCR) and the audio track (transcription) and combine them into a single evidence record.
+    *   **Analysis:** The project has an `OcrProcessingService` and multiple `TranscriptionService` implementations. A `VideoProcessingService` exists but is not fully implemented.
+    *   **Steps:**
+        1.  Implement the frame extraction logic in `VideoProcessingService` using Android's `MediaMetadataRetriever`.
+        2.  For each extracted frame, pass the bitmap to the existing `OcrProcessingService`.
+        3.  Integrate one of the existing transcription services (e.g., `VoskTranscriptionService`) to process the video's audio.
+        4.  Aggregate the text from all sources into a single `Evidence` object, linking it to the original video file.
+        5.  Update the `Evidence` data model if necessary to properly store aggregated video data.
+
+3.  **Editable Audio Transcripts:**
+    *   **Goal:** Allow users to edit audio transcripts and log the changes.
+    *   **Analysis:** The `Evidence` data model needs to be updated. A new UI screen or dialog is required. The `LocalFileStorageService` will need to be updated to handle saving the edits.
+    *   **Steps:**
+        1.  Create a new screen or dialog for transcript editing.
+        2.  Add a `transcriptEdits` list to the `Evidence` data class.
+        3.  Implement the `onSave` logic to prompt for a reason and store the original and edited transcript along with the reason and timestamp.
+        4.  Update `LocalFileStorageService` to read and write these edits from a new "TranscriptEdits" sheet in the `lexorcist_data.xlsx` file.
+
+4.  **Transparent Progress Reporting:**
+    *   **Goal:** Provide detailed, step-by-step progress to the user during evidence processing.
+    *   **Analysis:** A `LogService` and a `ProcessingState` model exist but are not fully utilized. The UI needs to be enhanced to display these logs.
+    *   **Steps:**
+        1.  Refactor the evidence processing services (`OcrProcessingService`, `VideoProcessingService`) to emit structured log entries via the `LogService` at each major step.
+        2.  Enhance the relevant UI screens to include a `LazyColumn` that displays the `logMessages` from the `CaseViewModel`.
+
+#### **II. UI/UX Enhancements & Fixes**
+
+This section involves a systematic audit and update of all UI screens located in `app/src/main/java/com/hereliesaz/lexorcist/ui/`.
+
+*   **Items 5 & 6 (Right-Alignment & `AzButton` Conversion):** A full audit of each screen file is required to replace standard Material components with their `AzNavRail` library equivalents and ensure right-alignment for all components except the `AzNavRail` itself.
+*   **Items 7-12 (Screen-Specific UI Logic):** These items require targeted changes in their respective composable files (`CasesScreen.kt`, `ScriptBuilderScreen.kt`, etc.) to implement specific UI behaviors like list highlighting, placeholder content, and dialogs.
+
+#### **III. Core Functionality & Workflow**
+
+1.  **Automatic Saving:**
+    *   **Goal:** Persist all data changes to the local spreadsheet immediately.
+    *   **Analysis:** The `LocalFileStorageService` is the single source of truth for file I/O. The main issue is that some ViewModels use `SharedPreferences` instead of the `CaseRepository` for persistence.
+    *   **Steps:**
+        1.  Refactor `CaseViewModel`'s `onPlaintiffsChanged`, `onDefendantsChanged`, and `onCourtSelected` methods to update the `Case` object and call `caseRepository.updateCase()`.
+        2.  Remove the now-redundant `saveCaseInfoToSharedPrefs` method.
+        3.  Audit other ViewModels to ensure all data-mutating actions call the appropriate repository method.
+
+2.  **Evidence & Scripting Engine:**
+    *   **Evidence Pipeline:** This involves ensuring all text extraction services wrap their output in Markdown and that raw files are copied to a "raw" folder. This logic should be centralized in the evidence import process.
+    *   **Scripting Engine:** The `ScriptRunner` needs to be extended to support calls to `GoogleApiService`, and a change-detection mechanism (likely using file/content hashes) must be implemented to avoid redundant script executions.
+
+#### **IV. Review Screen & Documentation**
+
+These sections are well-defined in `TODO.md`. They involve creating a new `ReviewScreen.kt` with complex cleanup and export functionality, and updating all documentation files (`README.md`, `AGENTS.md`, etc.).
+
+***
+
+### **Repository Analysis: Missed Items & Considerations**
+
+1.  **Absence of a Testing Strategy:** The `TODO.md` file and the codebase have no mention of unit or instrumentation tests. For a project of this complexity, especially one that handles user data and file I/O, a robust testing strategy is critical to ensure reliability and prevent regressions.
+2.  **ViewModel Complexity:** `CaseViewModel.kt` is extremely large and manages state for many different features (Cases, Evidence, Allegations, UI state, etc.). This makes it difficult to maintain and debug. **I strongly recommend refactoring it into smaller, more focused ViewModels.**
+3.  **Error Handling and User Feedback:** While there are some mechanisms for error handling (`_errorMessage` StateFlow), they are not applied consistently. A global strategy for reporting errors, success messages, and recoverable authentication issues to the user would significantly improve the user experience.
+4.  **Periodic Synchronization:** `AGENTS.md` states that data should be synchronized "often," but the current implementation only syncs on app start and stop. A periodic background sync using `WorkManager` should be considered to prevent data loss in case of a crash.
+
+***
+
+### **Proposed Plan**
+
+1.  **Phase 1: High-Priority Tasks & Core Functionality**
+    *   Implement the **Cloud Synchronization** on app load as described above.
+    *   Implement the **Automatic Saving** logic in `CaseViewModel`.
+    *   Implement the **Video Evidence Processing** service.
+    *   Implement **Editable Audio Transcripts**, including the UI and data model changes.
+
+2.  **Phase 2: UI/UX Overhaul**
+    *   Systematically go through all screens to address **Right-Alignment** and **`AzButton` Conversion**.
+    *   Implement the screen-specific UI logic for **Case List Highlighting**, **Loading Animations**, and enhancements to the **Allegations, Timeline, and Script Builder screens**.
+
+3.  **Phase 3: Advanced Features & Review Screen**
+    *   Implement the **Review Screen**, starting with the layout and cleanup functionality (duplicate detection, image series merging).
+    *   Implement the **Document Generation** and **Case Finalization** features.
+
+4.  **Phase 4: Documentation & Testing**
+    *   Update all project documentation as specified in `TODO.md`.
+    *   **(New)** Develop and implement a testing strategy, adding unit tests for ViewModels and services.
 
 ---
 
