@@ -586,6 +586,48 @@ class LocalFileStorageService @Inject constructor(
         newEvidence
     }
 
+    override suspend fun addEvidenceList(caseSpreadsheetId: String, evidenceList: List<Evidence>): Result<List<Evidence>> = writeToSpreadsheet { workbook ->
+        val sheet = workbook.getSheet(EVIDENCE_SHEET_NAME) ?: workbook.createSheet(EVIDENCE_SHEET_NAME).also {
+            it.createRow(0).apply { EVIDENCE_HEADER.forEachIndexed { index, s -> createCell(index).setCellValue(s) } }
+        }
+        var lastId = (1..sheet.lastRowNum)
+            .mapNotNull { i -> getIntCellValueSafe(sheet.getRow(i)?.getCell(EVIDENCE_HEADER.indexOf("EvidenceID"))) }
+            .maxOrNull() ?: 0
+        
+        val addedEvidenceList = mutableListOf<Evidence>()
+
+        evidenceList.forEach { evidence ->
+            lastId++
+            val newEvidence = evidence.copy(id = lastId)
+            sheet.createRow(sheet.physicalNumberOfRows).apply {
+                createCell(EVIDENCE_HEADER.indexOf("EvidenceID")).setCellValue(newEvidence.id.toDouble())
+                createCell(EVIDENCE_HEADER.indexOf("CaseID")).setCellValue(caseSpreadsheetId)
+                createCell(EVIDENCE_HEADER.indexOf("Type")).setCellValue(newEvidence.type)
+                createCell(EVIDENCE_HEADER.indexOf("Content")).setCellValue(newEvidence.content)
+                createCell(EVIDENCE_HEADER.indexOf("FormattedContent")).setCellValue(newEvidence.formattedContent)
+                createCell(EVIDENCE_HEADER.indexOf("MediaUri")).setCellValue(newEvidence.mediaUri)
+                createCell(EVIDENCE_HEADER.indexOf("Timestamp")).setCellValue(newEvidence.timestamp.toDouble())
+                createCell(EVIDENCE_HEADER.indexOf("SourceDocument")).setCellValue(newEvidence.sourceDocument)
+                createCell(EVIDENCE_HEADER.indexOf("DocumentDate")).setCellValue(newEvidence.documentDate.toDouble())
+                val allegationCell = createCell(EVIDENCE_HEADER.indexOf("AllegationID"))
+                newEvidence.allegationId?.let {
+                    allegationCell.setCellValue(it)
+                } ?: allegationCell.setBlank()
+                createCell(EVIDENCE_HEADER.indexOf("Category")).setCellValue(newEvidence.category)
+                createCell(EVIDENCE_HEADER.indexOf("Tags")).setCellValue(newEvidence.tags.joinToString(","))
+                createCell(EVIDENCE_HEADER.indexOf("Commentary")).setCellValue(newEvidence.commentary ?: "")
+                createCell(EVIDENCE_HEADER.indexOf("LinkedEvidenceIDs")).setCellValue(newEvidence.linkedEvidenceIds.joinToString(","))
+                createCell(EVIDENCE_HEADER.indexOf("ParentVideoID")).setCellValue(newEvidence.parentVideoId ?: "")
+                createCell(EVIDENCE_HEADER.indexOf("Entities")).setCellValue(gson.toJson(newEvidence.entities))
+                createCell(EVIDENCE_HEADER.indexOf("FileSize")).setCellValue(newEvidence.fileSize.toDouble())
+                createCell(EVIDENCE_HEADER.indexOf("FileHash")).setCellValue(newEvidence.fileHash ?: "")
+                createCell(EVIDENCE_HEADER.indexOf("IsDuplicate")).setCellValue(newEvidence.isDuplicate)
+            }
+            addedEvidenceList.add(newEvidence)
+        }
+        addedEvidenceList
+    }
+
     override suspend fun updateEvidence(caseSpreadsheetId: String, evidence: Evidence): Result<Unit> = writeToSpreadsheet { workbook ->
         val sheet = workbook.getSheet(EVIDENCE_SHEET_NAME) ?: throw IOException("Evidence sheet not found.")
         val row = findRowById(sheet, evidence.id, EVIDENCE_HEADER.indexOf("EvidenceID")) ?: throw IOException("Evidence with id ${evidence.id} not found for case $caseSpreadsheetId.")
