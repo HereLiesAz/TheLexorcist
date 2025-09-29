@@ -19,6 +19,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -51,10 +52,6 @@ import com.hereliesaz.lexorcist.model.Script
 import com.hereliesaz.aznavrail.AzButton
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import com.hereliesaz.lexorcist.viewmodel.ScriptBuilderViewModel
-import org.burnoutcrew.reorderable.ReorderableItem
-import org.burnoutcrew.reorderable.detectReorderAfterLongPress
-import org.burnoutcrew.reorderable.rememberReorderableLazyListState
-import org.burnoutcrew.reorderable.reorderable
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -256,33 +253,25 @@ fun ScriptBuilderScreen(
                         val activeScriptObjects = remember(activeScriptIds, allScripts) {
                             activeScriptIds.mapNotNull { scriptId -> allScripts.find { it.id == scriptId } }
                         }
-                        val reorderableState = rememberReorderableLazyListState(onMove = { from, to ->
-                            viewModel.reorderActiveScripts(from.index, to.index)
-                        })
                         LazyColumn(
-                            state = reorderableState.listState,
                             modifier = Modifier
                                 .fillMaxSize()
                                 .padding(16.dp)
-                                .reorderable(reorderableState)
-                                .detectReorderAfterLongPress(reorderableState)
                         ) {
                             items(activeScriptObjects, key = { it.id }) { script ->
-                                ReorderableItem(reorderableState, key = script.id) { isDragging ->
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clickable { viewModel.toggleActiveScript(script.id) }
-                                            .padding(vertical = 8.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        androidx.compose.material3.Checkbox(
-                                            checked = activeScriptIds.contains(script.id),
-                                            onCheckedChange = { viewModel.toggleActiveScript(script.id) }
-                                        )
-                                        Spacer(modifier = Modifier.size(16.dp))
-                                        Text(text = script.name)
-                                    }
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { viewModel.toggleActiveScript(script.id) }
+                                        .padding(vertical = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Checkbox(
+                                        checked = activeScriptIds.contains(script.id),
+                                        onCheckedChange = { viewModel.toggleActiveScript(script.id) }
+                                    )
+                                    Spacer(modifier = Modifier.size(16.dp))
+                                    Text(text = script.name)
                                 }
                             }
                         }

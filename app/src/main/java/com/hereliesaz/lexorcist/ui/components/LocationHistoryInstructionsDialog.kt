@@ -3,15 +3,16 @@ package com.hereliesaz.lexorcist.ui.components
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.hereliesaz.aznavrail.AzButton
@@ -21,16 +22,16 @@ fun LocationHistoryInstructionsDialog(
     onDismiss: () -> Unit,
     onImport: () -> Unit
 ) {
-    val uriHandler = LocalUriHandler.current
+    val uriHandler = LocalUriHandler.current // Still needed if LinkAnnotation needs it, but Text should handle it
     val googleTakeoutUrl = "https://takeout.google.com/"
 
     val annotatedString = buildAnnotatedString {
         append("1. Go to ")
-        pushStringAnnotation(tag = "URL", annotation = googleTakeoutUrl)
-        withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.primary)) {
-            append("Google Takeout")
+        withLink(LinkAnnotation.Url(googleTakeoutUrl)) {
+            withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.primary, textDecoration = TextDecoration.Underline)) {
+                append("Google Takeout")
+            }
         }
-        pop()
         append(".\n\n")
         append("2. Click 'Deselect all' and then select only 'Location History'. Make sure the format is set to JSON.\n\n")
         append("3. Click 'Next step', then 'Create export'. Wait for the export to be created (you will receive an email).\n\n")
@@ -43,15 +44,9 @@ fun LocationHistoryInstructionsDialog(
         title = { Text("Import Location History") },
         text = {
             Column {
-                ClickableText(
+                Text(
                     text = annotatedString,
-                    style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface),
-                    onClick = { offset ->
-                        annotatedString.getStringAnnotations(tag = "URL", start = offset, end = offset)
-                            .firstOrNull()?.let { annotation ->
-                                uriHandler.openUri(annotation.item)
-                            }
-                    }
+                    style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface)
                 )
             }
         },

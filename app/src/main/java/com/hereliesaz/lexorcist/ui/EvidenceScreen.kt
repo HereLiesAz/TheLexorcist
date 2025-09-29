@@ -433,7 +433,7 @@ fun ProcessingProgressView(
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 LinearProgressIndicator(
-                    progress = processingState.progress, // Corrected: pass value directly
+                    progress = { processingState.progress }, // Updated to pass progress as a lambda
                     modifier = Modifier.fillMaxWidth()
                 )
             }

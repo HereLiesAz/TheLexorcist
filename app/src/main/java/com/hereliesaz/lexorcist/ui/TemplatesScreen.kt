@@ -28,7 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-// import androidx.compose.material3.ExposedDropdownMenuAnchorType // Removed this import
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -127,7 +127,7 @@ fun TemplatesScreen(
                         ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
                     },
                     colors = ExposedDropdownMenuDefaults.textFieldColors(),
-                    modifier = Modifier.menuAnchor().fillMaxWidth() // Corrected: removed type parameter
+                    modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.Primary).fillMaxWidth()
                 )
                 DropdownMenu(
                     expanded = expanded,
