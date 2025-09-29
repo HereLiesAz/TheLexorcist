@@ -40,9 +40,11 @@ import com.hereliesaz.lexorcist.ui.components.ChatHistoryImportDialog
 import com.hereliesaz.lexorcist.ui.components.DateRangePickerDialog
 import com.hereliesaz.lexorcist.ui.components.EmailImportDialog
 import com.hereliesaz.lexorcist.ui.components.ImapImportDialog
+import com.hereliesaz.lexorcist.ui.components.ImportFilterDialog
 import com.hereliesaz.lexorcist.ui.components.LocationHistoryInstructionsDialog
 import androidx.compose.ui.Alignment
 import androidx.hilt.navigation.compose.hiltViewModel // Corrected import for hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.hereliesaz.lexorcist.model.OutlookSignInState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -77,6 +79,7 @@ fun EvidenceScreen(
     var showImapImportDialog by remember { mutableStateOf(false) }
     var showLocationInstructionsDialog by remember { mutableStateOf(false) }
     var showLocationDateRangeDialog by remember { mutableStateOf(false) }
+    var showImportFilterDialog by remember { mutableStateOf(false) }
     var text by remember { mutableStateOf("") }
     val evidenceList by caseViewModel.selectedCaseEvidenceList.collectAsState()
     val videoProcessingProgress by caseViewModel.videoProcessingProgress.collectAsState()
@@ -133,6 +136,16 @@ fun EvidenceScreen(
             val startDate = mainViewModel.importStartDate.value
             val endDate = mainViewModel.importEndDate.value
             caseViewModel.importCallLogEvidence(contact, startDate, endDate)
+        } else {
+            // Handle permission denial
+        }
+    }
+
+    val requestLocationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            caseViewModel.importLocationHistoryEvidence()
         } else {
             // Handle permission denial
         }
@@ -273,6 +286,24 @@ fun EvidenceScreen(
                         showLocationDateRangeDialog = false
                         locationDateRange = startDate to endDate
                         locationFilePickerLauncher.launch("application/json") // Consider specific MIME type if available
+                    }
+                )
+            }
+
+            if (showImportFilterDialog) {
+                ImportFilterDialog(
+                    onDismiss = { showImportFilterDialog = false },
+                    onImport = { contact, startDate, endDate, importSms, importCalls ->
+                        showImportFilterDialog = false
+                        if (importSms) {
+                            requestSmsPermissionLauncher.launch(Manifest.permission.READ_SMS)
+                        }
+                        if (importCalls) {
+                            requestCallLogPermissionLauncher.launch(Manifest.permission.READ_CALL_LOG)
+                        }
+                        // The actual import will be triggered by the permission result callbacks,
+                        // we need to update the viewmodel to hold these filter values.
+                        mainViewModel.setImportFilters(contact, startDate, endDate, importSms, importCalls)
                     }
                 )
             }

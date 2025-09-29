@@ -104,10 +104,11 @@ This document outlines the features, fixes, and enhancements required to complet
 8.  **Loading Animations:**
     *   Verify that every asynchronous data-loading operation (e.g., fetching cases, loading evidence, synchronizing with the cloud) displays a loading indicator to the user.
 
-9.  **Script Builder Screen (`ScriptBuilderScreen.kt`):**
+9.  **Script Builder Screen (`ScriptBuilderScreen.kt`):** [COMPLETED]
     *   Implement the "Share" button's `onClick` action to open a dialog.
     *   Create the "Share Script" dialog, which should prompt the user to enter their name and email.
     *   Implement the logic to send the shared script to the creator's email when the "Edit" button is clicked.
+    *   **Note:** The horizontal button list was made scrollable. The "Save Script" button text was changed to "Save". The "Load" button dialog was fixed to populate with default scripts if none are saved.
 
 10. **Allegations Screen (`AllegationsScreen.kt`):** [COMPLETED]
     *   Re-implement the layout to match the specified order: Title, selected allegations list, search box, request/sort buttons, and the main list of allegations.
@@ -124,6 +125,10 @@ This document outlines the features, fixes, and enhancements required to complet
 ---
 
 ### **III. Core Functionality & Workflow**
+
+13. **Device Data Import:** [COMPLETED]
+    *   **Evidence Wiping:** Resolved an issue where importing new evidence (SMS, Calls, etc.) would wipe out previously loaded evidence. This was fixed by refactoring the import process to be a single, atomic batch operation using a new `addEvidenceList` function, preventing file I/O race conditions.
+    *   **Import Filtering:** Implemented import filtering for SMS and Call Logs. A new "Device Records" button opens a dialog allowing users to filter by contact/number and date range.
 
 14. **Evidence Processing Pipeline:**
     *   Ensure that text extracted from any evidence source (image, audio, video) is formatted with Markdown code blocks before being saved.
@@ -143,9 +148,10 @@ This document outlines the features, fixes, and enhancements required to complet
 
 ### **IV. Review Screen Implementation**
 
-17. **Layout and Initial UI:**
+17. **Layout and Initial UI:** [COMPLETED]
     *   Create the basic `ReviewScreen.kt` composable.
     *   Add the "Automatic Cleanup," "Paperwork," and "Finalize" `AzButton`s to the screen, ensuring they are right-aligned.
+    *   **Note:** The buttons at the bottom of the screen were converted to `AzButton`s with the text "Generate", "Package", and "Report". The layout was changed to a `FlowRow` to allow wrapping on smaller screens.
 
 18. **Evidence Cleanup Functionality:**
     *   **Duplicate Detection:**
