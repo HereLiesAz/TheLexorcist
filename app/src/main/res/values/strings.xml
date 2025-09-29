@@ -354,4 +354,7 @@ function onOpen() {}</string>
     <string name="organize">Organize</string>
     <string name="generate">Generate</string>
     <string name="finalize_button">Finalize</string>
+    <string name="automatic_cleanup">Automatic Cleanup</string>
+    <string name="paperwork">Paperwork</string>
+    <string name="finalize">Finalize</string>
 </resources>

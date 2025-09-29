@@ -40,18 +40,20 @@ class DefaultExtrasSeeder @Inject constructor(
             val remoteScriptsResult = googleApiService.getSharedScripts()
             val remoteTemplatesResult = googleApiService.getSharedTemplates()
 
-            val remoteScriptNames = if (remoteScriptsResult is Result.Success) {
-                remoteScriptsResult.data.map { it.name }.toSet()
+            val remoteScriptNames = if (remoteScriptsResult is Result.Success<*>) {
+                @Suppress("UNCHECKED_CAST")
+                (remoteScriptsResult.data as? List<Script>)?.map { it.name }?.toSet() ?: emptySet<String>()
             } else {
                 Log.e("DefaultExtrasSeeder", "Failed to fetch remote scripts. Seeding will proceed based on empty list.")
-                emptySet()
+                emptySet<String>()
             }
 
-            val remoteTemplateNames = if (remoteTemplatesResult is Result.Success) {
-                remoteTemplatesResult.data.map { it.name }.toSet()
+            val remoteTemplateNames = if (remoteTemplatesResult is Result.Success<*>) {
+                @Suppress("UNCHECKED_CAST")
+                (remoteTemplatesResult.data as? List<Template>)?.map { it.name }?.toSet() ?: emptySet<String>()
             } else {
                 Log.e("DefaultExtrasSeeder", "Failed to fetch remote templates. Seeding will proceed based on empty list.")
-                emptySet()
+                emptySet<String>()
             }
 
             // 2. Parse local JSON
@@ -70,7 +72,7 @@ class DefaultExtrasSeeder @Inject constructor(
                         type = "Script",
                         authorName = "Az",
                         authorEmail = "hereliesaz@gmail.com",
-                        court = script.court
+                        court = script.court ?: ""
                     )
                 }
             }
@@ -86,7 +88,7 @@ class DefaultExtrasSeeder @Inject constructor(
                         type = "Template",
                         authorName = "Az",
                         authorEmail = "hereliesaz@gmail.com",
-                        court = template.court
+                        court = template.court ?: ""
                     )
                 }
             }

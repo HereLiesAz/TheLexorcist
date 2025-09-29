@@ -5,6 +5,7 @@ import com.hereliesaz.lexorcist.utils.Result
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
+import android.util.Log // Added for logging errors
 
 @Singleton
 class CloudStorageService @Inject constructor(
@@ -41,7 +42,45 @@ class CloudStorageService @Inject constructor(
     }
 
     override suspend fun addEvidenceList(caseSpreadsheetId: String, evidenceList: List<Evidence>): Result<List<Evidence>> {
-        return localFileStorageService.addEvidenceList(caseSpreadsheetId, evidenceList)
+        val addedEvidence = mutableListOf<Evidence>()
+        var firstError: Exception? = null
+
+        for (evidenceItem in evidenceList) {
+            when (val result = localFileStorageService.addEvidence(caseSpreadsheetId, evidenceItem)) {
+                is Result.Success -> addedEvidence.add(result.data)
+                is Result.Error -> {
+                    Log.e("CloudStorageService", "Error adding evidence ${evidenceItem.id}: ${result.exception.message}", result.exception)
+                    if (firstError == null) {
+                        firstError = result.exception
+                    }
+                }
+                is Result.UserRecoverableError -> {
+                    Log.w("CloudStorageService", "User recoverable error adding evidence ${evidenceItem.id}: ${result.exception.message}", result.exception)
+                    if (firstError == null) {
+                        firstError = result.exception
+                    }
+                }
+                is Result.Loading -> {
+                     Log.w("CloudStorageService", "Unexpected Loading state for evidence ${evidenceItem.id} during addEvidenceList loop.")
+                    if (firstError == null) {
+                        firstError = IllegalStateException("Unexpected Loading state while adding evidence item ${evidenceItem.id}")
+                    }
+                }
+            }
+        }
+
+        return if (addedEvidence.isNotEmpty()) {
+            if (firstError != null) {
+                Log.w("CloudStorageService", "addEvidenceList completed with some errors, but some items were successful. Returning ${addedEvidence.size} successful items.")
+            }
+            Result.Success(addedEvidence)
+        } else if (firstError != null) {
+            Log.e("CloudStorageService", "addEvidenceList failed for all items. Returning first encountered error.")
+            Result.Error(firstError)
+        } else {
+            // This case means evidenceList was empty.
+            Result.Success(emptyList())
+        }
     }
 
     override suspend fun updateEvidence(caseSpreadsheetId: String, evidence: Evidence): Result<Unit> {

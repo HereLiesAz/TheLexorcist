@@ -46,7 +46,7 @@ class ExtrasViewModel @Inject constructor(
 
     init {
         observeSearchQuery()
-        loadExtras()
+        loadExtras() // This will now call the correct parameterless loadExtras()
     }
 
     fun setAuthSource(authSignInState: StateFlow<SignInState>) {
@@ -85,29 +85,9 @@ class ExtrasViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(searchQuery = query)
     }
 
-    private fun loadDefaultExtras(): List<SharedItem> {
-        return try {
-            val jsonString = application.assets.open("default_extras.json").bufferedReader().use { it.readText() }
-            val typeToken = object : TypeToken<DefaultExtras>() {}.type
-            val extras: DefaultExtras = Gson().fromJson(jsonString, typeToken)
+    // Removed the problematic loadDefaultExtras() function
+    // Removed the duplicate loadExtras(isUserLoggedIn: Boolean) function
 
-            val correctedScripts = extras.scripts.map {
-                it.copy(authorName = "Az", authorEmail = "hereliesaz@gmail.com")
-            }
-            val correctedTemplates = extras.templates.map {
-                it.copy(authorName = "Az", authorEmail = "hereliesaz@gmail.com")
-            }
-
-            val sharedItems = mutableListOf<SharedItem>()
-            sharedItems.addAll(correctedScripts.map { SharedItem.from(it) })
-            sharedItems.addAll(correctedTemplates.map { SharedItem.from(it) })
-            sharedItems
-        } catch (e: IOException) {
-            emptyList()
-        }
-    }
-
-    fun loadExtras(isUserLoggedIn: Boolean) {
     fun loadExtras() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
