@@ -138,6 +138,7 @@ constructor(
                 scriptRepository.saveScripts(currentScripts)
                 _allScripts.value = currentScripts
                 _scriptId.value = id // Ensure new scripts have their ID set
+                activeScriptRepository.addScript(id) // Automatically activate the script
                 activeScriptRepository.activateScript(id) // Automatically activate the script
                 _saveState.value = SaveState.Success
             } catch (e: Exception) {
