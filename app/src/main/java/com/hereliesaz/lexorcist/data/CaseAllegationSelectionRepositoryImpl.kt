@@ -15,7 +15,7 @@ class CaseAllegationSelectionRepositoryImpl
     ) : CaseAllegationSelectionRepository {
         // Removed the local googleApiService getter property
 
-        override fun getSelectedAllegations(spreadsheetId: String): Flow<List<String>> =
+        override fun getSelectedAllegations(spreadsheetId: String): Flow<List<SelectedAllegation>> =
             flow {
                 // Use the directly injected googleApiService
                 val result = googleApiService.getSelectedAllegations(spreadsheetId) ?: emptyList()
@@ -24,7 +24,7 @@ class CaseAllegationSelectionRepositoryImpl
 
         override suspend fun updateSelectedAllegations(
             spreadsheetId: String,
-            allegations: List<String>,
+            allegations: List<SelectedAllegation>,
         ) {
             // Use the directly injected googleApiService
             googleApiService.updateSelectedAllegations(spreadsheetId, allegations)
