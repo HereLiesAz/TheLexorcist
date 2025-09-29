@@ -66,7 +66,6 @@ The file google-services.template.json located at the root of the /app/ folder s
 *   **`allegations_catalog.json`**: This file, located in `app/src/main/assets/`, MUST be a valid JSON array `[]`. Each element in the array MUST be an object `{}` representing a single allegation. The previous malformed, multi-object structure has been corrected, and the `AllegationProvider` has been simplified to parse this array structure directly with Gson. DO NOT change the file back to a multi-object format.
 
 ---
----
 
 ### Roadmap & Task Analysis
 
