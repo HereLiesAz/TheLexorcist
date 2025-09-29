@@ -59,22 +59,6 @@ The file google-services.template.json located at the root of the /app/ folder s
 
 ---
 
-### Feature-Specific Technical Notes
-
-#### Location History Import
-
-- **CRITICAL NOTE / WARNING:** Do not attempt to implement location history by querying the Android OS directly. The `FusedLocationProviderClient.getLastLocation()` method **only returns the single most recent location**, not a history. An initial attempt to use this by filtering the single point by a date range was incorrect and failed code review. The only correct way to implement this feature is through file import.
-
-- **Correct Implementation Details:**
-    - **Workflow:** The user is presented with a multi-step dialog flow:
-        1.  `LocationHistoryInstructionsDialog`: This dialog first instructs the user on how to export their location data from Google Takeout.
-        2.  `DateRangePickerDialog`: After the user acknowledges the instructions, this dialog appears, allowing them to specify a start and end date for filtering.
-        3.  **File Picker:** After setting a date range, the system file picker is launched, prompting the user to select the JSON file they downloaded from Google Takeout.
-    - **Parsing:** A dedicated `LocationHistoryParser` class exists in `app/src/main/java/com/hereliesaz/lexorcist/utils/`. This parser is specifically designed to handle the structure of the `Records.json` file from a Google Takeout export. It deserializes the JSON into a list of `LocationRecord` objects.
-    - **ViewModel Logic:** The `CaseViewModel` orchestrates this process. The `importLocationHistoryFromFile` function takes the file's URI and the date range, uses the parser, filters the results, and then creates individual `Evidence` objects for each valid location record.
-
----
-
 ### Roadmap & Task Analysis
 
 This document outlines the features, fixes, and enhancements required to complete "The Lexorcist" application.
@@ -145,6 +129,7 @@ This document outlines the features, fixes, and enhancements required to complet
     *   Ensure that text extracted from any evidence source (image, audio, video) is formatted with Markdown code blocks before being saved.
     *   Verify that all raw evidence files are copied into a dedicated "raw" folder within the case directory.
     *   Implement the logic to index files with no extracted text as "non-textual evidence."
+    *   **Location History Note:** Direct access to a user's location history is not possible via Android APIs. The feature must be implemented via file import (e.g., Google Takeout `Records.json`), parsed with `LocationHistoryParser`, and then filtered by a date range. Do not use `FusedLocationProviderClient` for this.
 
 15. **Scripting Engine:**
     *   Extend the `ScriptRunner` to support scripts that can call Google Apps Script functions via the `GoogleApiService`.
