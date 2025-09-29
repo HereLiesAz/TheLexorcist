@@ -279,10 +279,10 @@ class CaseRepositoryImpl @Inject constructor(
     override suspend fun addAllegation(spreadsheetId: String, allegationText: String) {
         val currentSelectedCaseId = _selectedCase.value?.spreadsheetId
         if (spreadsheetId == currentSelectedCaseId) {
-            // Assuming Allegation constructor takes (id, spreadsheetId, text)
+            // Assuming Allegation constructor takes (id, spreadsheetId, name)
             // and id is auto-generated or handled by storageService.
             // Passing 0 or a placeholder that storageService can interpret.
-            val allegationDetails = Allegation(id = 0, spreadsheetId = spreadsheetId, text = allegationText)
+            val allegationDetails = Allegation(id = 0, spreadsheetId = spreadsheetId, name = allegationText)
             when (val result = storageService.addAllegation(spreadsheetId, allegationDetails)) {
                 is Result.Loading -> {
                     Log.d(tag, "Adding allegation to $spreadsheetId: Loading...")

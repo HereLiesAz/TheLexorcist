@@ -14,13 +14,13 @@ constructor(
         val catalogEntries = allegationProvider.getAllLoadedCatalogEntries()
         Log.d("AllegationsRepositoryImpl", "Loaded ${catalogEntries.size} catalog entries from provider.")
         return catalogEntries.map { catalogEntry ->
-            val elements = catalogEntry.relevant_evidence.map { (elementName, elementDescriptions) ->
+            val elements = catalogEntry.relevantEvidence.map { (elementName, elementDescriptions) ->
                 AllegationElement(name = elementName, description = elementDescriptions.joinToString(", "))
             }
             Allegation(
                 id = catalogEntry.id.toIntOrNull() ?: 0, // Or handle parse error more gracefully
                 spreadsheetId = caseId, // Use the passed caseId for context
-                text = catalogEntry.allegationName, // Changed from catalogEntry.name
+                name = catalogEntry.allegationName, // Changed from catalogEntry.name
                 elements = elements
             )
         }

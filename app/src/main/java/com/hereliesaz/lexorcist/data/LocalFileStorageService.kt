@@ -183,7 +183,7 @@ class LocalFileStorageService @Inject constructor(
 
         private val CASES_HEADER = listOf("ID", "Name", "Plaintiffs", "Defendants", "Court", "FolderID", "LastModified", "IsArchived")
         private val EVIDENCE_HEADER = listOf("EvidenceID", "CaseID", "Type", "Content", "FormattedContent", "MediaUri", "Timestamp", "SourceDocument", "DocumentDate", "AllegationID", "Category", "Tags", "Commentary", "LinkedEvidenceIDs", "ParentVideoID", "Entities", "FileSize", "FileHash", "IsDuplicate")
-        private val ALLEGATIONS_HEADER = listOf("AllegationID", "CaseID", "Text")
+        private val ALLEGATIONS_HEADER = listOf("AllegationID", "CaseID", "Name") // Changed "Text" to "Name"
         private val TRANSCRIPT_EDITS_HEADER = listOf("EditID", "EvidenceID", "Timestamp", "Reason", "NewContent")
         private val EXHIBITS_HEADER = listOf("ExhibitID", "CaseID", "Name", "Description", "EvidenceIDs")
     }
@@ -767,13 +767,13 @@ class LocalFileStorageService @Inject constructor(
                 return@mapNotNull null
             }
             
-            val textFromSheet = row.getCell(ALLEGATIONS_HEADER.indexOf("Text"))?.stringCellValue
+            val textFromSheet = row.getCell(ALLEGATIONS_HEADER.indexOf("Name"))?.stringCellValue // Changed from "Text"
             val masterAllegation = AllegationProvider.getAllegationById(allegationId)
 
             Allegation( 
                 id = allegationId,
                 spreadsheetId = caseSpreadsheetId,
-                text = textFromSheet ?: masterAllegation?.allegationName ?: "" // Changed from .name to .allegationName
+                name = textFromSheet ?: masterAllegation?.allegationName ?: "" // Changed from text = ...
             )
         }
     }
@@ -795,7 +795,7 @@ class LocalFileStorageService @Inject constructor(
         sheet.createRow(sheet.physicalNumberOfRows).apply {
             createCell(ALLEGATIONS_HEADER.indexOf("AllegationID")).setCellValue(newAllegation.id.toDouble())
             createCell(ALLEGATIONS_HEADER.indexOf("CaseID")).setCellValue(caseSpreadsheetId)
-            createCell(ALLEGATIONS_HEADER.indexOf("Text")).setCellValue(newAllegation.text) 
+            createCell(ALLEGATIONS_HEADER.indexOf("Name")).setCellValue(newAllegation.name) // Changed from .text
         }
         newAllegation
     }

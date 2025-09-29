@@ -33,7 +33,7 @@ class AllegationsViewModel
                 if (query.isBlank()) {
                     allegations
                 } else {
-                    allegations.filter { it.text.contains(query, ignoreCase = true) }
+                    allegations.filter { it.name.contains(query, ignoreCase = true) }
                 }
             }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 

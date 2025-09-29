@@ -127,7 +127,7 @@ object DataParser {
         return allegationRegex
             .findAll(text)
             .map {
-                Allegation(id = currentId++, spreadsheetId = spreadsheetId, text = it.value)
+                Allegation(id = currentId++, spreadsheetId = spreadsheetId, name = it.value)
             }.toList()
     }
 
@@ -144,7 +144,7 @@ object DataParser {
         for (sentence in sentences) {
             val date = parseDates(sentence).firstOrNull() ?: System.currentTimeMillis()
 
-            val linkedAllegation = allegations.find { allegation -> sentence.contains(allegation.text, ignoreCase = true) }
+            val linkedAllegation = allegations.find { allegation -> sentence.contains(allegation.name, ignoreCase = true) }
             val categoryRegex = """"(?i)Category:\\s*(\\w+)"""" .toRegex()
             val categoryMatch = categoryRegex.find(sentence)
             val category = categoryMatch?.groupValues?.get(1) ?: ""

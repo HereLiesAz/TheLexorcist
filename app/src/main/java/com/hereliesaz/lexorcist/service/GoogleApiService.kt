@@ -875,7 +875,7 @@ class GoogleApiService @Inject constructor(
                             com.hereliesaz.lexorcist.data.Allegation(
                                 id = row[0].toString().toInt(),
                                 spreadsheetId = spreadsheetId,
-                                text = row[2].toString(),
+                                name = row[2].toString(), // Changed from text
                             )
                         } catch (e: Exception) {
                             null // Skip row if parsing fails

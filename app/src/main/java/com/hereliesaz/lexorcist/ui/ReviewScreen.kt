@@ -163,7 +163,7 @@ fun ReviewScreen(
                     val currentSelectedAllegation = selectedAllegation
                     if (currentSelectedAllegation != null) {
                         Column(modifier = Modifier.weight(1f).padding(start = 8.dp)) {
-                            Text("Elements for ${currentSelectedAllegation.text}", style = MaterialTheme.typography.titleMedium)
+                            Text("Elements for ${currentSelectedAllegation.name}", style = MaterialTheme.typography.titleMedium)
                             // Assuming currentSelectedAllegation.elements is List<AllegationElement>
                             /*
                             currentSelectedAllegation.elements?.forEach { element: AllegationElement -> // Explicit type
@@ -356,7 +356,7 @@ fun AllegationItem(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = allegation.text,
+                text = allegation.name,
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.weight(1f)
             )
