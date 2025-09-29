@@ -221,18 +221,18 @@ fun ReviewScreen(
                     horizontalArrangement = Arrangement.End
                 ) {
                     AzButton(
-                        onClick = { /* TODO: Implement Organize Logic */ },
-                        text = stringResource(R.string.organize),
+                        onClick = { /* TODO: Implement Automatic Cleanup */ },
+                        text = stringResource(id = R.string.automatic_cleanup),
                         modifier = Modifier.padding(start = 8.dp)
                     )
                     AzButton(
                         onClick = { showGenerateDocumentDialog = true },
-                        text = stringResource(R.string.generate),
+                        text = stringResource(id = R.string.paperwork),
                         modifier = Modifier.padding(start = 8.dp)
                     )
                     AzButton(
                         onClick = { showPackageFilesDialog = true },
-                        text = stringResource(R.string.finalize_button),
+                        text = stringResource(id = R.string.finalize),
                         modifier = Modifier.padding(start = 8.dp)
                     )
                 }
