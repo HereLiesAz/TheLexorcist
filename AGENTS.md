@@ -66,6 +66,7 @@ The file google-services.template.json located at the root of the /app/ folder s
 *   **`allegations_catalog.json`**: This file, located in `app/src/main/assets/`, MUST be a valid JSON array `[]`. Each element in the array MUST be an object `{}` representing a single allegation. The previous malformed, multi-object structure has been corrected, and the `AllegationProvider` has been simplified to parse this array structure directly with Gson. DO NOT change the file back to a multi-object format.
 
 ---
+---
 
 ### Roadmap & Task Analysis
 
@@ -130,8 +131,10 @@ This document outlines the features, fixes, and enhancements required to complet
     *   Implement a drag-and-drop interface for assigning evidence to exhibits. [COMPLETED] The drag preview position has been fixed. The list of pertinent exhibits now populates correctly after fixing `allegations_catalog.json`.
     *   Create the exhibit details view that appears when an exhibit is clicked.
 
-13. **Templates Screen (`TemplatesScreen.kt`):**
-    *   Implement a full-screen preview for templates when they are tapped. [COMPLETED]
+13. **Templates Screen Court List:** [COMPLETED]
+    *   **Problem:** The list of courts in `app/src/main/assets/jurisdictions.json` was incomplete.
+    *   **Solution:** The `jurisdictions.json` file was updated to include a comprehensive list of U.S. federal, state, and territorial courts, ensuring existing court IDs were preserved to maintain data integrity.
+    *   **Desired Result:** The "Court" dropdown on the Templates screen now displays a full list of jurisdictions for selection.
 
 ---
 
