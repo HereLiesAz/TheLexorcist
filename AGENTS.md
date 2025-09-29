@@ -194,3 +194,23 @@ This document outlines the features, fixes, and enhancements required to complet
 24. **Review Existing Documentation:**
     *   Verify the accuracy of `GMAIL_API_SETUP.md` and `OUTLOOK_API_SETUP.md`.
     *   Expand `SCRIPT_EXAMPLES.md` with examples of the new AI and UI scripting capabilities.
+
+---
+
+### Jules's Work
+
+This section details the work done by Jules in the last session.
+
+- **UI/UX Enhancements & Fixes:**
+    - **Script Builder Screen (`ScriptBuilderScreen.kt`):**
+        - Made the horizontal list of `AzButton`s scrollable to accommodate more buttons.
+        - Changed the "Save Script" button text to "Save" for brevity.
+        - Fixed the "Load Script" dialog, which was previously empty, by ensuring default scripts are loaded from assets if no `scripts.json` file exists.
+    - **Review Screen (`ReviewScreen.kt`):**
+        - Converted the `Row` of buttons to a `FlowRow` to allow them to wrap to multiple lines on smaller screens.
+        - Updated the button text to "Generate", "Package", and "Report" as requested.
+
+- **Core Functionality & Workflow:**
+    - **Evidence Import:**
+        - Resolved an issue where importing new evidence (SMS, Calls, etc.) would wipe out previously loaded evidence. This was fixed by refactoring the import process to be a single, atomic batch operation using a new `addEvidenceList` function, preventing file I/O race conditions.
+        - Implemented import filtering for SMS and Call Logs. A new "Device Records" button opens a dialog allowing users to filter by contact/number and date range.
