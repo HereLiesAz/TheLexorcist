@@ -723,7 +723,7 @@ class LocalFileStorageService @Inject constructor(
 
     // Sanitize file name
     private fun sanitizeFileName(name: String): String {
-        return name.replace(kotlin.text.Regex("[\\\\/:*?\"<>|]"), "_")
+        return name.replace(Regex("[\\\\/:*?\"<>|]"), "_")
     }
 
     override suspend fun uploadFile(caseSpreadsheetId: String, fileUri: Uri, mimeType: String): Result<String> = withContext(Dispatchers.IO) {
@@ -779,7 +779,7 @@ class LocalFileStorageService @Inject constructor(
                         val videoProcessingRequest = OneTimeWorkRequestBuilder<VideoProcessingWorker>()
                             .setInputData(workData)
                             .build()
-                        
+
                         workManager.enqueue(videoProcessingRequest)
                         Log.i("LocalFileStorageService", "Enqueued video processing for ${destinationFile.name} (Case ID: ${caseDetails.id})")
                     } else {
