@@ -1,0 +1,1076 @@
+[
+  {
+    "id": "002",
+    "allegationName": "Breach of Contract",
+    "relevant_evidence": {
+      "documentary": [],
+      "testimonial": [],
+      "digital": [],
+      "demonstrative": [
+        "Charts showing timelines of performance vs. non-performance",
+        "Graphs illustrating financial losses"
+      ]
+    }
+  },
+  {
+    "id": "003",
+    "allegationName": "Conversion",
+    "relevant_evidence": {
+      "physical": [],
+      "documentary": [],
+      "testimonial": [],
+      "digital": [
+        "Photos or videos of the property in the defendant's possession",
+        "Electronic records of ownership"
+      ]
+    }
+  },
+  {
+    "id": "004",
+    "allegationName": "Defamation",
+    "relevant_evidence": {
+      "documentary": [],
+      "testimonial": [],
+      "digital": [],
+      "demonstrative": [
+        "Charts showing a decline in business revenue following the defamation"
+      ]
+    }
+  },
+  {
+    "id": "005",
+    "allegationName": "Fraudulent Misrepresentation",
+    "relevant_evidence": {
+      "documentary": [
+        "False or altered documents",
+        "Contracts entered into based on the misrepresentation",
+        "Financial statements showing losses"
+      ],
+      "testimonial": [],
+      "digital": []
+    }
+  },
+  {
+    "id": "006",
+    "allegationName": "Injurious Falsehood, Product Disparagement, and Trade Libel",
+    "relevant_evidence": {
+      "documentary": [],
+      "testimonial": [],
+      "digital": []
+    }
+  },
+  {
+    "id": "007",
+    "allegationName": "Malicious Prosecution",
+    "relevant_evidence": {
+      "documentary": [],
+      "testimonial": [],
+      "digital": [
+        "Emails or messages indicating the prior lawsuit was filed for improper reasons"
+      ]
+    }
+  },
+  {
+    "id": "008",
+    "allegationName": "Negligence",
+    "relevant_evidence": {
+      "physical": [],
+      "documentary": [
+        "Accident reports",
+        "Medical records detailing injuries",
+        "Maintenance logs or safety inspection reports"
+      ],
+      "testimonial": [],
+      "digital": [],
+      "demonstrative": []
+    }
+  },
+  {
+    "id": "009",
+    "allegationName": "Personal Injury",
+    "relevant_evidence": {
+      "physical": [],
+      "documentary": [
+        "Medical records and bills",
+        "Police or incident reports",
+        "Pay stubs or tax returns to show lost wages"
+      ],
+      "testimonial": [
+        "Plaintiff's testimony about pain and suffering",
+        "Eyewitness testimony",
+        "Expert medical testimony"
+      ],
+      "digital": [],
+      "demonstrative": []
+    }
+  },
+  {
+    "id": "010",
+    "allegationName": "Medical Malpractice",
+    "relevant_evidence": {
+      "documentary": [],
+      "testimonial": [],
+      "digital": [],
+      "demonstrative": [
+        "Anatomical models",
+        "Medical illustrations explaining the procedure or injury"
+      ]
+    }
+  },
+  {
+    "id": "011",
+    "allegationName": "Wrongful Arrest",
+    "relevant_evidence": {
+      "physical": [
+        "Photographs of any injuries sustained during the arrest"
+      ],
+      "documentary": [
+        "Arrest report",
+        "Court documents showing dismissal of charges",
+        "Internal police department policies"
+      ],
+      "testimonial": [],
+      "digital": []
+    }
+  },
+  {
+    "id": "012",
+    "allegationName": "Landlord/Tenant Dispute",
+    "relevant_evidence": {
+      "physical": [
+        "Photographs of property condition (damage, lack of repairs)"
+      ],
+      "documentary": [],
+      "testimonial": [],
+      "digital": []
+    }
+  },
+  {
+    "id": "027",
+    "allegationName": "Advocating Overthrow of Government",
+    "relevant_evidence": {
+      "documentary": [
+        "Pamphlets, books, or manifestos",
+        "Membership lists of organizations",
+        "Meeting minutes"
+      ],
+      "testimonial": [],
+      "digital": []
+    }
+  },
+  {
+    "id": "028",
+    "allegationName": "Aggravated Assault/Battery",
+    "relevant_evidence": {
+      "physical": [],
+      "testimonial": [
+        "Victim's testimony",
+        "Eyewitness accounts",
+        "Medical expert testimony on the severity of injuries",
+        "Police officer testimony"
+      ],
+      "documentary": [
+        "Medical records",
+        "Police reports",
+        "911 call transcripts"
+      ],
+      "digital": []
+    }
+  },
+  {
+    "id": "029",
+    "allegationName": "Aggravated Identity Theft",
+    "relevant_evidence": {
+      "documentary": [],
+      "testimonial": [],
+      "digital": [
+        "Computer files containing stolen personal information",
+        "IP logs from fraudulent online activity",
+        "Emails or phishing schemes used to obtain information"
+      ]
+    }
+  },
+  {
+    "id": "030",
+    "allegationName": "Aggravated Sexual Abuse",
+    "relevant_evidence": {
+      "physical": [],
+      "testimonial": [],
+      "documentary": [],
+      "digital": []
+    }
+  },
+  {
+    "id": "031",
+    "allegationName": "Aiming a Laser Pointer at an Aircraft",
+    "relevant_evidence": {
+      "physical": [],
+      "testimonial": [
+        "Pilot's testimony",
+        "Air traffic controller testimony",
+        "Eyewitnesses on the ground"
+      ],
+      "digital": []
+    }
+  },
+  {
+    "id": "032",
+    "allegationName": "Airplane Hijacking",
+    "relevant_evidence": {
+      "physical": [],
+      "testimonial": [],
+      "digital": [
+        "Cockpit voice recorder",
+        "Flight data recorder",
+        "Passenger videos or messages sent during the event"
+      ]
+    }
+  },
+  {
+    "id": "033",
+    "allegationName": "Anti-racketeering (RICO)",
+    "relevant_evidence": {
+      "documentary": [],
+      "testimonial": [],
+      "digital": []
+    }
+  },
+  {
+    "id": "034",
+    "allegationName": "Antitrust",
+    "relevant_evidence": {
+      "documentary": [],
+      "testimonial": [],
+      "digital": [
+        "Emails discussing market manipulation",
+        "Chat logs between competitors",
+        "Electronic bidding records"
+      ]
+    }
+  },
+  {
+    "id": "035",
+    "allegationName": "Armed Robbery",
+    "relevant_evidence": {
+      "physical": [],
+      "testimonial": [],
+      "documentary": [
+        "Police reports",
+        "Pawn shop records for stolen items"
+      ],
+      "digital": []
+    }
+  },
+  {
+    "id": "036",
+    "allegationName": "Arson",
+    "relevant_evidence": {
+      "physical": [],
+      "testimonial": [],
+      "documentary": [
+        "Insurance policies",
+        "Financial records",
+        "Fire department reports"
+      ],
+      "digital": [],
+      "demonstrative": []
+    }
+  },
+  {
+    "id": "037",
+    "allegationName": "Assassination",
+    "relevant_evidence": {
+      "physical": [],
+      "testimonial": [
+        "Eyewitness testimony",
+        "Co-conspirator testimony",
+        "Expert testimony (forensic, ballistics)"
+      ],
+      "documentary": [],
+      "digital": []
+    }
+  },
+  {
+    "id": "038",
+    "allegationName": "Assault with a Deadly Weapon",
+    "relevant_evidence": {
+      "physical": [],
+      "testimonial": [
+        "Victim's testimony",
+        "Eyewitness accounts",
+        "Expert medical testimony"
+      ],
+      "documentary": [
+        "Police reports",
+        "911 call transcripts"
+      ],
+      "digital": []
+    }
+  },
+  {
+    "id": "039",
+    "allegationName": "Assaulting or Killing Federal Officer",
+    "relevant_evidence": {
+      "physical": [],
+      "testimonial": [],
+      "documentary": [
+        "Officer's incident report",
+        "Medical examiner's report"
+      ],
+      "digital": []
+    }
+  },
+  {
+    "id": "040",
+    "allegationName": "Assisting or Instigating Escape",
+    "relevant_evidence": {
+      "physical": [],
+      "testimonial": [],
+      "documentary": [
+        "Prison visitor logs",
+        "Maps or plans of the facility"
+      ],
+      "digital": []
+    }
+  },
+  {
+    "id": "041",
+    "allegationName": "Attempt to commit Murder/Manslaughter",
+    "relevant_evidence": {
+      "physical": [],
+      "testimonial": [],
+      "documentary": [],
+      "digital": []
+    }
+  },
+  {
+    "id": "042",
+    "allegationName": "Bank Burglary",
+    "relevant_evidence": {
+      "physical": [],
+      "testimonial": [
+        "Eyewitnesses who saw the break-in",
+        "Informant testimony",
+        "Expert testimony on tool marks"
+      ],
+      "documentary": [],
+      "digital": []
+    }
+  },
+  {
+    "id": "043",
+    "allegationName": "Bankruptcy Fraud/Embezzlement",
+    "relevant_evidence": {
+      "documentary": [],
+      "testimonial": [],
+      "digital": []
+    }
+  },
+  {
+    "id": "044",
+    "allegationName": "Bank Larceny",
+    "relevant_evidence": {
+      "physical": [],
+      "testimonial": [],
+      "documentary": [],
+      "digital": []
+    }
+  },
+  {
+    "id": "045",
+    "allegationName": "Bank Robbery",
+    "relevant_evidence": {
+      "physical": [],
+      "testimonial": [],
+      "documentary": [],
+      "digital": []
+    }
+  },
+  {
+    "id": "046",
+    "allegationName": "Blackmail",
+    "relevant_evidence": {
+      "documentary": [
+        "Extortion letters or notes"
+      ],
+      "testimonial": [],
+      "digital": []
+    }
+  },
+  {
+    "id": "047",
+    "allegationName": "Bombing Matters",
+    "relevant_evidence": {
+      "physical": [],
+      "testimonial": [],
+      "documentary": [],
+      "digital": []
+    }
+  },
+  {
+    "id": "048",
+    "allegationName": "Bond Default",
+    "relevant_evidence": {
+      "documentary": [],
+      "testimonial": [],
+      "digital": [
+        "Electronic court docket entries",
+        "Emails or other communications regarding court dates"
+      ]
+    }
+  },
+  {
+    "id": "049",
+    "allegationName": "Breaking and/or Entering Carrier Facilities",
+    "relevant_evidence": {
+      "physical": [],
+      "testimonial": [],
+      "documentary": [],
+      "digital": []
+    }
+  },
+  {
+    "id": "050",
+    "allegationName": "Bribery Crimes",
+    "relevant_evidence": {
+      "documentary": [],
+      "testimonial": [],
+      "digital": []
+    }
+  },
+  {
+    "id": "051",
+    "allegationName": "Certification of Checks (Fraud)",
+    "relevant_evidence": {
+      "documentary": [],
+      "testimonial": [],
+      "digital": []
+    }
+  },
+  {
+    "id": "052",
+    "allegationName": "Child Abuse",
+    "relevant_evidence": {
+      "physical": [
+        "Photographs of injuries",
+        "Objects used to inflict harm",
+        "X-rays showing fractures"
+      ],
+      "testimonial": [],
+      "documentary": [],
+      "digital": []
+    }
+  },
+  {
+    "id": "053",
+    "allegationName": "Child Exploitation",
+    "relevant_evidence": {
+      "testimonial": [],
+      "documentary": [],
+      "digital": []
+    }
+  },
+  {
+    "id": "054",
+    "allegationName": "Child Pornography",
+    "relevant_evidence": {
+      "physical": [
+        "Computers, hard drives, and other storage media"
+      ],
+      "testimonial": [],
+      "documentary": [
+        "Forensic analysis reports of digital devices"
+      ],
+      "digital": []
+    }
+  },
+  {
+    "id": "055",
+    "allegationName": "Continuing Criminal Enterprise",
+    "relevant_evidence": {
+      "documentary": [],
+      "testimonial": [],
+      "digital": []
+    }
+  },
+  {
+    "id": "056",
+    "allegationName": "Conveying False Information",
+    "relevant_evidence": {
+      "documentary": [],
+      "testimonial": [],
+      "digital": []
+    }
+  },
+  {
+    "id": "057",
+    "allegationName": "Copyright Matters",
+    "relevant_evidence": {
+      "physical": [],
+      "testimonial": [],
+      "documentary": [],
+      "digital": []
+    }
+  },
+  {
+    "id": "058",
+    "allegationName": "Counterfeiting",
+    "relevant_evidence": {
+      "physical": [
+        "Counterfeit currency or goods",
+        "Printing plates, specialized paper, and inks",
+        "Computers and printers used in production"
+      ],
+      "testimonial": [],
+      "documentary": [
+        "Forensic analysis reports on the counterfeit items"
+      ],
+      "digital": []
+    }
+  },
+  {
+    "id": "059",
+    "allegationName": "Counterintelligence Crimes",
+    "relevant_evidence": {
+      "documentary": [
+        "Classified documents",
+        "Coded messages",
+        "Financial records showing payments from foreign governments"
+      ],
+      "testimonial": [],
+      "digital": []
+    }
+  },
+  {
+    "id": "060",
+    "allegationName": "Credit/Debit Card Fraud",
+    "relevant_evidence": {
+      "physical": [],
+      "documentary": [],
+      "testimonial": [],
+      "digital": []
+    }
+  },
+  {
+    "id": "061",
+    "allegationName": "Crime Aboard Aircraft",
+    "relevant_evidence": {
+      "physical": [],
+      "testimonial": [],
+      "digital": [
+        "Passenger videos of the incident",
+        "Cockpit voice recorder (if relevant)"
+      ]
+    }
+  },
+  {
+    "id": "062",
+    "allegationName": "Crimes on Government Reservations",
+    "relevant_evidence": {
+      "physical": [
+        "Varies by the specific crime (e.g., weapon, stolen property)"
+      ],
+      "testimonial": [
+        "Eyewitness testimony",
+        "Federal police officer testimony"
+      ],
+      "documentary": [
+        "Police reports",
+        "Maps showing the location of the crime on federal property"
+      ],
+      "digital": []
+    }
+  },
+  {
+    "id": "063",
+    "allegationName": "Crimes on Indian Reservations",
+    "relevant_evidence": {
+      "physical": [
+        "Varies by the specific crime"
+      ],
+      "testimonial": [],
+      "documentary": []
+    }
+  },
+  {
+    "id": "064",
+    "allegationName": "Criminal Contempt of Court",
+    "relevant_evidence": {
+      "documentary": [],
+      "testimonial": [],
+      "digital": [
+        "Video recording of the court proceeding",
+        "Emails or social media posts violating a court order"
+      ]
+    }
+  },
+  {
+    "id": "065",
+    "allegationName": "Criminal Forfeiture",
+    "relevant_evidence": {
+      "documentary": [
+        "Financial records tracing assets to criminal activity",
+        "Property deeds and titles"
+      ],
+      "testimonial": [
+        "Forensic accountant testimony",
+        "Law enforcement testimony about the underlying crime"
+      ],
+      "digital": [
+        "Electronic bank records",
+        "Cryptocurrency transaction logs"
+      ]
+    }
+  },
+  {
+    "id": "066",
+    "allegationName": "Cyberbullying",
+    "relevant_evidence": {
+      "testimonial": [],
+      "digital": []
+    }
+  },
+  {
+    "id": "067",
+    "allegationName": "Computer Crime",
+    "relevant_evidence": {
+      "testimonial": [
+        "Expert testimony from digital forensic analysts",
+        "Victim testimony (e.g., from a company that was hacked)"
+      ],
+      "digital": []
+    }
+  },
+  {
+    "id": "068",
+    "allegationName": "Conspiracy",
+    "relevant_evidence": {
+      "testimonial": [],
+      "documentary": [],
+      "digital": []
+    }
+  },
+  {
+    "id": "069",
+    "allegationName": "Copyright Infringement",
+    "relevant_evidence": {
+      "physical": [],
+      "documentary": [],
+      "testimonial": [],
+      "digital": []
+    }
+  },
+  {
+    "id": "070",
+    "allegationName": "Counterfeiting",
+    "relevant_evidence": {
+      "physical": [
+        "Counterfeit currency, documents, or goods",
+        "Printing presses, specialized inks, and paper",
+        "Holograms or other security features"
+      ],
+      "testimonial": [],
+      "digital": []
+    }
+  },
+  {
+    "id": "071",
+    "allegationName": "Credit Card Fraud",
+    "relevant_evidence": {
+      "physical": [],
+      "documentary": [],
+      "testimonial": [],
+      "digital": []
+    }
+  },
+  {
+    "id": "072",
+    "allegationName": "Disorderly Conduct",
+    "relevant_evidence": {
+      "testimonial": [
+        "Police officer testimony",
+        "Eyewitness testimony from the public"
+      ],
+      "digital": []
+    }
+  },
+  {
+    "id": "073",
+    "allegationName": "Disturbing the Peace",
+    "relevant_evidence": {
+      "testimonial": [],
+      "digital": [
+        "Audio or video recordings of the disturbance"
+      ]
+    }
+  },
+  {
+    "id": "074",
+    "allegationName": "Domestic Violence",
+    "relevant_evidence": {
+      "physical": [],
+      "testimonial": [],
+      "documentary": [
+        "Medical records",
+        "Protective orders",
+        "911 call transcripts"
+      ],
+      "digital": []
+    }
+  },
+  {
+    "id": "075",
+    "allegationName": "Drug Cultivation and Manufacturing",
+    "relevant_evidence": {
+      "physical": [],
+      "testimonial": [
+        "Undercover officer or informant testimony",
+        "Expert testimony from a forensic chemist"
+      ],
+      "documentary": [],
+      "digital": [
+        "Photos or videos of the operation",
+        "Computer records of sales and formulas"
+      ]
+    }
+  },
+  {
+    "id": "076",
+    "allegationName": "Drug Possession",
+    "relevant_evidence": {
+      "physical": [],
+      "testimonial": [],
+      "documentary": [
+        "Forensic lab report identifying the substance"
+      ],
+      "digital": []
+    }
+  },
+  {
+    "id": "077",
+    "allegationName": "Drug Trafficking and Drug Distribution",
+    "relevant_evidence": {
+      "physical": [],
+      "testimonial": [
+        "Informant or co-conspirator testimony",
+        "Undercover officer testimony about controlled buys",
+        "Expert testimony on drug trade practices"
+      ],
+      "documentary": [],
+      "digital": []
+    }
+  },
+  {
+    "id": "078",
+    "allegationName": "DUI/DWI",
+    "relevant_evidence": {
+      "physical": [
+        "Open containers of alcohol in the vehicle"
+      ],
+      "testimonial": [
+        "Officer's testimony regarding driving behavior, field sobriety tests, and defendant's appearance",
+        "Expert testimony on breathalyzer or blood test results"
+      ],
+      "documentary": [],
+      "digital": []
+    }
+  },
+  {
+    "id": "079",
+    "allegationName": "Embezzlement",
+    "relevant_evidence": {
+      "documentary": [],
+      "testimonial": [],
+      "digital": [
+        "Electronic spreadsheets showing manipulation of funds",
+        "Emails related to the scheme",
+        "Computer logs showing access to financial systems"
+      ]
+    }
+  },
+  {
+    "id": "080",
+    "allegationName": "Espionage",
+    "relevant_evidence": {
+      "documentary": [],
+      "testimonial": [],
+      "digital": []
+    }
+  },
+  {
+    "id": "081",
+    "allegationName": "Extortion",
+    "relevant_evidence": {
+      "testimonial": [],
+      "documentary": [
+        "Extortion note or letter"
+      ],
+      "digital": []
+    }
+  },
+  {
+    "id": "082",
+    "allegationName": "Failure to Report a Crime",
+    "relevant_evidence": {
+      "testimonial": [],
+      "digital": []
+    }
+  },
+  {
+    "id": "083",
+    "allegationName": "False Imprisonment",
+    "relevant_evidence": {
+      "physical": [],
+      "testimonial": [
+        "Victim's testimony",
+        "Eyewitness testimony"
+      ],
+      "digital": []
+    }
+  },
+  {
+    "id": "084",
+    "allegationName": "Felony",
+    "relevant_evidence": {
+      "physical": [
+        "Varies widely based on the specific felony (e.g., weapon in a robbery, drugs in a trafficking case)"
+      ],
+      "testimonial": [
+        "Varies widely (e.g., eyewitness, victim, expert)"
+      ],
+      "documentary": [
+        "Varies widely (e.g., medical records, financial documents)"
+      ],
+      "digital": [
+        "Varies widely (e.g., surveillance video, digital communications)"
+      ]
+    }
+  },
+  {
+    "id": "085",
+    "allegationName": "First Degree Murder",
+    "relevant_evidence": {
+      "physical": [],
+      "testimonial": [],
+      "documentary": [],
+      "digital": []
+    }
+  },
+  {
+    "id": "086",
+    "allegationName": "Forgery",
+    "relevant_evidence": {
+      "documentary": [],
+      "testimonial": [],
+      "digital": []
+    }
+  },
+  {
+    "id": "087",
+    "allegationName": "Fraud",
+    "relevant_evidence": {
+      "documentary": [
+        "False or altered documents",
+        "Financial statements and bank records",
+        "Contracts and invoices"
+      ],
+      "testimonial": [],
+      "digital": [
+        "Emails and chat logs detailing the fraudulent scheme",
+        "Phishing websites or emails",
+        "Electronic transaction records"
+      ]
+    }
+  },
+  {
+    "id": "088",
+    "allegationName": "Genocide",
+    "relevant_evidence": {
+      "physical": [],
+      "testimonial": [],
+      "documentary": [],
+      "digital": []
+    }
+  },
+  {
+    "id": "089",
+    "allegationName": "Gun Crimes",
+    "relevant_evidence": {
+      "physical": [],
+      "testimonial": [],
+      "documentary": [],
+      "digital": []
+    }
+  },
+  {
+    "id": "090",
+    "allegationName": "Hate Crime",
+    "relevant_evidence": {
+      "physical": [],
+      "testimonial": [],
+      "documentary": [
+        "Hate group literature or manifestos"
+      ],
+      "digital": []
+    }
+  },
+  {
+    "id": "091",
+    "allegationName": "Homicide",
+    "relevant_evidence": {
+      "physical": [],
+      "testimonial": [],
+      "documentary": [],
+      "digital": []
+    }
+  },
+  {
+    "id": "092",
+    "allegationName": "Hostage Taking",
+    "relevant_evidence": {
+      "physical": [],
+      "testimonial": [
+        "Hostage testimony",
+        "Negotiator testimony",
+        "Eyewitness accounts"
+      ],
+      "documentary": [],
+      "digital": []
+    }
+  },
+  {
+    "id": "093",
+    "allegationName": "Identity Theft",
+    "relevant_evidence": {
+      "documentary": [
+        "Fraudulent credit card statements",
+        "False loan applications",
+        "Fake identification documents"
+      ],
+      "testimonial": [],
+      "digital": [
+        "Computer files with stolen personal data",
+        "Phishing emails",
+        "IP logs from fraudulent online accounts"
+      ]
+    }
+  },
+  {
+    "id": "094",
+    "allegationName": "Illegal Possession of Firearms",
+    "relevant_evidence": {
+      "physical": [],
+      "testimonial": [
+        "Police officer testimony about the discovery of the weapon",
+        "Eyewitness testimony of possession"
+      ],
+      "documentary": [
+        "Criminal history records showing felony conviction",
+        "Lack of a valid firearm license"
+      ],
+      "digital": []
+    }
+  },
+  {
+    "id": "095",
+    "allegationName": "Immigration Offenses",
+    "relevant_evidence": {
+      "documentary": [],
+      "testimonial": [],
+      "digital": []
+    }
+  },
+  {
+    "id": "096",
+    "allegationName": "Insider Trading",
+    "relevant_evidence": {
+      "documentary": [],
+      "testimonial": [],
+      "digital": [
+        "Emails, text messages, or voicemails conveying inside information",
+        "Computer logs showing access to confidential files"
+      ]
+    }
+  },
+  {
+    "id": "097",
+    "allegationName": "Insurance Fraud",
+    "relevant_evidence": {
+      "physical": [],
+      "documentary": [
+        "False insurance claims",
+        "Altered medical records or repair bills",
+        "Police reports"
+      ],
+      "testimonial": [],
+      "digital": []
+    }
+  },
+  {
+    "id": "098",
+    "allegationName": "Kidnapping",
+    "relevant_evidence": {
+      "physical": [],
+      "testimonial": [],
+      "documentary": [],
+      "digital": []
+    }
+  },
+  {
+    "id": "099",
+    "allegationName": "Larceny",
+    "relevant_evidence": {
+      "physical": [],
+      "testimonial": [
+        "Victim's testimony",
+        "Eyewitness testimony"
+      ],
+      "documentary": [],
+      "digital": []
+    }
+  },
+  {
+    "id": "100",
+    "allegationName": "Manslaughter",
+    "relevant_evidence": {
+      "physical": [],
+      "testimonial": [],
+      "documentary": [
+        "Autopsy report",
+        "Police reports"
+      ],
+      "digital": []
+    }
+  },
+  {
+    "id": "101",
+    "allegationName": "Misdemeanor",
+    "relevant_evidence": {
+      "physical": [
+        "Varies by offense (e.g., stolen item in petty theft)"
+      ],
+      "testimonial": [
+        "Eyewitness testimony",
+        "Police officer testimony"
+      ],
+      "documentary": [
+        "Citations or tickets",
+        "Police reports"
+      ],
+      "digital": []
+    }
+  },
+  {
+    "id": "102",
+    "allegationName": "Money Laundering",
+    "relevant_evidence": {
+      "documentary": [],
+      "testimonial": [],
+      "digital": [
+        "Electronic fund transfer records",
+        "Cryptocurrency transaction logs",
+        "Emails and communications about structuring transactions"
+      ]
+    }
+  }
+]
