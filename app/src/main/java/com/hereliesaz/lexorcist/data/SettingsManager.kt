@@ -33,6 +33,15 @@ class SettingsManager
         private val keyTranscriptionLanguage = "transcription_language"
         private val keyAuthorName = "author_name" // Added key
         private val keyAuthorEmail = "author_email" // Added key
+        private val keyDefaultExtrasSeeded = "default_extras_seeded"
+
+        fun areDefaultExtrasSeeded(): Boolean {
+            return sharedPreferences.getBoolean(keyDefaultExtrasSeeded, false)
+        }
+
+        fun setDefaultExtrasSeeded(seeded: Boolean) {
+            sharedPreferences.edit { putBoolean(keyDefaultExtrasSeeded, seeded) }
+        }
 
         fun saveSelectedCloudProvider(provider: String) {
             sharedPreferences.edit {putString(keyCloudProvider, provider)}
