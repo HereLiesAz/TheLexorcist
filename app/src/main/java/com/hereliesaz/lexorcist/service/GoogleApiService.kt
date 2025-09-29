@@ -1401,12 +1401,12 @@ class GoogleApiService @Inject constructor(
             }
         }
 
-    suspend fun getSelectedAllegations(spreadsheetId: String): List<String> =
+    suspend fun getSelectedAllegations(spreadsheetId: String): List<com.hereliesaz.lexorcist.data.SelectedAllegation> =
         withContext(Dispatchers.IO) {
             val sheets = getSheetsService() ?: return@withContext emptyList()
             try {
                 ensureSheetExists(spreadsheetId, "SelectedAllegations")
-                val range = "SelectedAllegations!A:A"
+                val range = "SelectedAllegations!A:B" // Read both ID and Name columns
                 val response =
                     sheets
                         .spreadsheets()
@@ -1417,7 +1417,13 @@ class GoogleApiService @Inject constructor(
                 if (values.isNullOrEmpty()) {
                     emptyList()
                 } else {
-                    values.map { it[0].toString() }
+                    values.mapNotNull { row ->
+                        if (row.size >= 2) {
+                            com.hereliesaz.lexorcist.data.SelectedAllegation(id = row[0].toString(), name = row[1].toString())
+                        } else {
+                            null // Skip malformed rows
+                        }
+                    }
                 }
             } catch (e: IOException) {
                 emptyList()
@@ -1436,15 +1442,15 @@ class GoogleApiService @Inject constructor(
 
     suspend fun updateSelectedAllegations(
         spreadsheetId: String,
-        allegations: List<String>,
+        allegations: List<com.hereliesaz.lexorcist.data.SelectedAllegation>,
     ) {
         withContext(Dispatchers.IO) {
             try {
                 ensureSheetExists(spreadsheetId, "SelectedAllegations")
-                clearSheet(spreadsheetId, "SelectedAllegations!A:A")
+                clearSheet(spreadsheetId, "SelectedAllegations!A:B") // Clear both columns
 
                 if (allegations.isNotEmpty()) {
-                    val values = allegations.map { listOf(it) }
+                    val values = allegations.map { listOf(it.id, it.name) } // Write both ID and Name
                     writeData(spreadsheetId, "SelectedAllegations!A1", values)
                 }
             } catch (e: IOException) {

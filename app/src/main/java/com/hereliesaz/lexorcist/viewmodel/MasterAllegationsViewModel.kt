@@ -2,9 +2,7 @@ package com.hereliesaz.lexorcist.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.hereliesaz.lexorcist.data.CaseAllegationSelectionRepository
-import com.hereliesaz.lexorcist.data.CaseRepository
-import com.hereliesaz.lexorcist.data.MasterAllegation
+import com.hereliesaz.lexorcist.data.*
 import com.hereliesaz.lexorcist.data.repository.LegalRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -35,30 +33,32 @@ class MasterAllegationsViewModel @Inject constructor(
 
     // Internal state holders
     private val _masterAllegations = MutableStateFlow<List<MasterAllegation>>(emptyList())
-    private val _selectedAllegationNames = MutableStateFlow<Set<String>>(emptySet())
+    private val _selectedAllegations = MutableStateFlow<Set<SelectedAllegation>>(emptySet())
 
     // Public flows for the UI
     val selectedAllegations: StateFlow<List<MasterAllegation>> =
-        combine(_masterAllegations, _selectedAllegationNames) { master, selectedNames ->
-            master.filter { selectedNames.contains(it.name) } // Simplified: it.name is now non-nullable
+        combine(_masterAllegations, _selectedAllegations) { master, selected ->
+            val selectedIds = selected.map { it.id }.toSet()
+            master.filter { selectedIds.contains(it.id) }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val allegations: StateFlow<List<MasterAllegation>> =
         combine(
             _masterAllegations,
-            _selectedAllegationNames,
+            _selectedAllegations,
             _searchQuery,
             _sortType
-        ) { master, selectedNames, query, sort ->
+        ) { master, selected, query, sort ->
+            val selectedIds = selected.map { it.id }.toSet()
             val updatedMaster = master.map {
-                it.copy(isSelected = selectedNames.contains(it.name)) // Simplified: it.name is now non-nullable
+                it.copy(isSelected = selectedIds.contains(it.id))
             }
 
             val filtered = if (query.isBlank()) {
                 updatedMaster
             } else {
                 updatedMaster.filter {
-                    it.name.contains(query, ignoreCase = true) || // Simplified: it.name is now non-nullable
+                    it.name.contains(query, ignoreCase = true) ||
                             (it.description?.contains(query, ignoreCase = true) ?: false) ||
                             (it.category?.contains(query, ignoreCase = true) ?: false) ||
                             (it.type?.contains(query, ignoreCase = true) ?: false)
@@ -67,10 +67,10 @@ class MasterAllegationsViewModel @Inject constructor(
 
             when (sort) {
                 AllegationSortType.TYPE ->
-                    filtered.sortedWith(compareBy({ it.type ?: "" }, { it.category ?: "" }, { it.name })) // Simplified: it.name is now non-nullable
+                    filtered.sortedWith(compareBy({ it.type ?: "" }, { it.category ?: "" }, { it.name }))
                 AllegationSortType.CATEGORY ->
-                    filtered.sortedWith(compareBy({ it.category ?: "" }, { it.type ?: "" }, { it.name })) // Simplified: it.name is now non-nullable
-                AllegationSortType.NAME -> filtered.sortedBy { it.name } // Simplified: it.name is now non-nullable
+                    filtered.sortedWith(compareBy({ it.category ?: "" }, { it.type ?: "" }, { it.name }))
+                AllegationSortType.NAME -> filtered.sortedBy { it.name }
                 AllegationSortType.COURT_LEVEL -> filtered.sortedBy { it.courtLevel ?: "" }
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -85,9 +85,9 @@ class MasterAllegationsViewModel @Inject constructor(
             caseRepository.selectedCase.collectLatest { case ->
                 if (case != null) {
                     val selected = caseAllegationSelectionRepository.getSelectedAllegations(case.spreadsheetId).firstOrNull() ?: emptyList()
-                    _selectedAllegationNames.value = selected.toSet()
+                    _selectedAllegations.value = selected.toSet()
                 } else {
-                    _selectedAllegationNames.value = emptySet()
+                    _selectedAllegations.value = emptySet()
                 }
             }
         }
@@ -103,15 +103,15 @@ class MasterAllegationsViewModel @Inject constructor(
 
     fun toggleAllegationSelection(allegation: MasterAllegation) {
         viewModelScope.launch {
-            val allegationName = allegation.name // Simplified: allegation.name is now non-nullable
+            val selectedAllegation = SelectedAllegation(id = allegation.id, name = allegation.name)
 
-            val currentSelection = _selectedAllegationNames.value.toMutableSet()
-            if (allegationName in currentSelection) {
-                currentSelection.remove(allegationName)
+            val currentSelection = _selectedAllegations.value.toMutableSet()
+            if (currentSelection.contains(selectedAllegation)) {
+                currentSelection.remove(selectedAllegation)
             } else {
-                currentSelection.add(allegationName)
+                currentSelection.add(selectedAllegation)
             }
-            _selectedAllegationNames.value = currentSelection
+            _selectedAllegations.value = currentSelection
 
             // Persist the change to the repository
             val case = caseRepository.selectedCase.value
