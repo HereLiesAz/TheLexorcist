@@ -45,6 +45,7 @@ import com.hereliesaz.lexorcist.data.AllegationProvider
 import com.hereliesaz.lexorcist.service.OutlookService
 import com.hereliesaz.lexorcist.utils.ChatHistoryParser
 import com.hereliesaz.lexorcist.utils.EvidenceImporter
+import com.hereliesaz.lexorcist.utils.LocationHistoryParser
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
@@ -84,7 +85,8 @@ constructor(
     private val outlookService: OutlookService,
     private val imapService: ImapService,
     private val outlookAuthManager: com.hereliesaz.lexorcist.auth.OutlookAuthManager,
-    private val jurisdictionRepository: JurisdictionRepository
+    private val jurisdictionRepository: JurisdictionRepository,
+    private val locationHistoryParser: LocationHistoryParser
 ) : ViewModel() {
     private val sharedPref =
         applicationContext.getSharedPreferences("CaseInfoPrefs", Context.MODE_PRIVATE)
@@ -280,6 +282,45 @@ constructor(
                 if (lastSelectedCase != null) {
                     selectCase(lastSelectedCase)
                 }
+            }
+        }
+    }
+
+    fun importLocationHistoryFromFile(uri: android.net.Uri, startDate: Long, endDate: Long) {
+        viewModelScope.launch {
+            globalLoadingState.pushLoading()
+            try {
+                val locationRecords = locationHistoryParser.parse(uri, applicationContext.contentResolver)
+                val filteredRecords = locationRecords.filter { it.timestampMillis in startDate..endDate }
+
+                if (filteredRecords.isNotEmpty()) {
+                    filteredRecords.forEach { record ->
+                        val locationContent = "Latitude: ${record.latitude}\nLongitude: ${record.longitude}"
+                        val evidence = Evidence(
+                            caseId = selectedCase.value?.id?.toLong() ?: 0,
+                            spreadsheetId = selectedCase.value?.spreadsheetId ?: "",
+                            type = "Location",
+                            content = locationContent,
+                            formattedContent = locationContent,
+                            mediaUri = null,
+                            timestamp = record.timestampMillis,
+                            sourceDocument = "Location History Import",
+                            documentDate = record.timestampMillis,
+                            allegationId = null,
+                            allegationElementName = null,
+                            category = "Location",
+                            tags = listOf("location", "history")
+                        )
+                        evidenceRepository.addEvidence(evidence)
+                    }
+                    _userMessage.value = "Imported ${filteredRecords.size} location records."
+                } else {
+                    _userMessage.value = "No location records found in the selected date range."
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = "Failed to import location history: ${e.message}"
+            } finally {
+                globalLoadingState.popLoading()
             }
         }
     }

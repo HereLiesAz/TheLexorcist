@@ -59,6 +59,15 @@ The file google-services.template.json located at the root of the /app/ folder s
 
 ---
 
+### Feature-Specific Technical Notes
+
+#### Location History Import
+
+- **Limitation**: Direct programmatic access to a user's detailed location history is not possible due to Android's privacy and security restrictions. The `FusedLocationProviderClient` only provides the last known location, not a historical log.
+- **Implementation**: The feature is implemented via a file-based import. The user is instructed to export their location history from Google Takeout (as a JSON file). The application then provides a file picker for the user to select this file. A custom `LocationHistoryParser` processes the JSON, and the data is filtered by a user-selected date range before being added as evidence. This approach works around the platform's limitations while still providing the desired functionality.
+
+---
+
 ### Roadmap & Task Analysis
 
 This document outlines the features, fixes, and enhancements required to complete "The Lexorcist" application.

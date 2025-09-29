@@ -39,7 +39,7 @@ To get a local copy up and running, follow these simple steps.
 
 ## Key Features
 
-- **Multi-Source Evidence Pipeline:** Capture evidence from images (OCR), audio (transcription), and video (frame-by-frame OCR).
+- **Multi-Source Evidence Pipeline:** Capture evidence from images (OCR), audio (transcription), video (frame-by-frame OCR), and location history files.
 - **Customizable Tagging Engine:** Define your own keywords, patterns, and "dorks" using JavaScript to automatically tag evidence.
 - **AI-Powered Analysis:** Go beyond simple keywords. The scripting engine includes a local, on-device AI for semantic analysis and a cloud-based generative AI for creating new content.
 - **Google Suite Integration:** Each case gets its own Google Sheet, where all evidence and its metadata are neatly organized.
@@ -49,6 +49,7 @@ To get a local copy up and running, follow these simple steps.
 - **Transparent Progress Reporting:** See detailed, real-time logs of the evidence processing pipeline.
 - **Configurable Storage:** Choose where your case folders are stored on your device and enable or disable cloud synchronization with providers like Google Drive and Dropbox.
 - **Evidence Management:** Organize evidence into exhibits, clean up duplicates, and merge related items on the Review screen.
+- **Location History Import:** Import your location history from Google Takeout and filter it by a specific date range to add precise location data to your case.
 
 ## Localization
 

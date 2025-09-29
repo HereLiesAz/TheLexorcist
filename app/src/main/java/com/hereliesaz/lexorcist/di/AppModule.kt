@@ -27,6 +27,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import com.hereliesaz.lexorcist.utils.DispatcherProvider
+import com.hereliesaz.lexorcist.utils.LocationHistoryParser
 import com.hereliesaz.lexorcist.utils.StandardDispatchers
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -142,5 +143,11 @@ class AppModule {
     @Singleton
     fun provideImapService(): ImapService {
         return ImapService()
+    }
+
+    @Provides
+    @Singleton
+    fun provideLocationHistoryParser(): LocationHistoryParser {
+        return LocationHistoryParser()
     }
 }
