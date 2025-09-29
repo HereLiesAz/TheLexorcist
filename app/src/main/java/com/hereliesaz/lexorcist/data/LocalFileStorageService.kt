@@ -5,8 +5,12 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import android.util.Log
 import androidx.core.net.toUri
+import androidx.work.Data
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import com.hereliesaz.lexorcist.service.VideoProcessingWorker
 import com.hereliesaz.lexorcist.utils.Result
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -35,7 +39,8 @@ class LocalFileStorageService @Inject constructor(
     private val syncManager: SyncManager,
     @Named("googleDrive") private val googleDriveProvider: CloudStorageProvider,
     @Named("dropbox") private val dropboxProvider: CloudStorageProvider,
-    @Named("oneDrive") private val oneDriveProvider: CloudStorageProvider
+    @Named("oneDrive") private val oneDriveProvider: CloudStorageProvider,
+    private val workManager: WorkManager
 ) : StorageService {
 
     private val storageDir: File by lazy {
@@ -701,7 +706,7 @@ class LocalFileStorageService @Inject constructor(
 
     // Sanitize file name
     private fun sanitizeFileName(name: String): String {
-        return name.replace(Regex("[\\/:*?"<>|]"), "_")
+        return name.replace(kotlin.text.Regex("[\\/:*?"<>|]"), "_")
     }
 
     override suspend fun uploadFile(caseSpreadsheetId: String, fileUri: Uri, mimeType: String): Result<String> = withContext(Dispatchers.IO) {
@@ -740,6 +745,34 @@ class LocalFileStorageService @Inject constructor(
                     input.copyTo(output)
                 }
             }
+
+            if (mimeType.startsWith("video/")) {
+                // Get Case details for the worker
+                val casesResult = getAllCases() // This might be inefficient, consider a direct getCaseById
+                if (casesResult is Result.Success) {
+                    val caseDetails = casesResult.data.find { it.spreadsheetId == caseSpreadsheetId }
+                    if (caseDetails != null) {
+                        val workData = Data.Builder()
+                            .putString(VideoProcessingWorker.KEY_VIDEO_URI, destinationFile.toUri().toString())
+                            .putInt(VideoProcessingWorker.KEY_CASE_ID, caseDetails.id) // case.id is Int (spreadsheetId.hashCode())
+                            .putString(VideoProcessingWorker.KEY_CASE_NAME, caseDetails.name)
+                            .putString(VideoProcessingWorker.KEY_SPREADSHEET_ID, caseSpreadsheetId)
+                            .build()
+
+                        val videoProcessingRequest = OneTimeWorkRequestBuilder<VideoProcessingWorker>()
+                            .setInputData(workData)
+                            .build()
+                        
+                        workManager.enqueue(videoProcessingRequest)
+                        Log.i("LocalFileStorageService", "Enqueued video processing for ${destinationFile.name} (Case ID: ${caseDetails.id})")
+                    } else {
+                        Log.e("LocalFileStorageService", "Could not find case details for $caseSpreadsheetId to enqueue video processing.")
+                    }
+                } else if (casesResult is Result.Error) {
+                     Log.e("LocalFileStorageService", "Failed to retrieve case list to enqueue video processing: ${casesResult.exception.message}")
+                }
+            }
+
             Result.Success(destinationFile.absolutePath)
         } catch (e: Exception) {
             Log.e("LocalFileStorageService", "Error uploading file for case $caseSpreadsheetId, URI $fileUri", e)
