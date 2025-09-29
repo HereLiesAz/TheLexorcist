@@ -85,17 +85,6 @@ fun ScriptBuilderScreen(
         }
     }
 
-    LaunchedEffect(Unit) {
-        viewModel.shareScriptEvent.collect { event ->
-            val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
-                type = "text/plain"
-                putExtra(android.content.Intent.EXTRA_EMAIL, arrayOf(event.recipientEmail))
-                putExtra(android.content.Intent.EXTRA_SUBJECT, event.subject)
-                putExtra(android.content.Intent.EXTRA_TEXT, event.body)
-            }
-            context.startActivity(android.content.Intent.createChooser(intent, "Share Script"))
-        }
-    }
 
     Scaffold(
         topBar = {
@@ -215,7 +204,7 @@ fun ScriptBuilderScreen(
                     confirmButton = {
                         AzButton(
                             onClick = {
-                                viewModel.shareScript(authorName, authorEmail)
+                                viewModel.shareScriptToExtras(authorName, authorEmail)
                                 showShareDialog = false
                             },
                             text = stringResource(R.string.submit)
