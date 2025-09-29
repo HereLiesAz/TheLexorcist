@@ -63,8 +63,15 @@ The file google-services.template.json located at the root of the /app/ folder s
 
 #### Location History Import
 
-- **Limitation**: Direct programmatic access to a user's detailed location history is not possible due to Android's privacy and security restrictions. The `FusedLocationProviderClient` only provides the last known location, not a historical log.
-- **Implementation**: The feature is implemented via a file-based import. The user is instructed to export their location history from Google Takeout (as a JSON file). The application then provides a file picker for the user to select this file. A custom `LocationHistoryParser` processes the JSON, and the data is filtered by a user-selected date range before being added as evidence. This approach works around the platform's limitations while still providing the desired functionality.
+- **CRITICAL NOTE / WARNING:** Do not attempt to implement location history by querying the Android OS directly. The `FusedLocationProviderClient.getLastLocation()` method **only returns the single most recent location**, not a history. An initial attempt to use this by filtering the single point by a date range was incorrect and failed code review. The only correct way to implement this feature is through file import.
+
+- **Correct Implementation Details:**
+    - **Workflow:** The user is presented with a multi-step dialog flow:
+        1.  `LocationHistoryInstructionsDialog`: This dialog first instructs the user on how to export their location data from Google Takeout.
+        2.  `DateRangePickerDialog`: After the user acknowledges the instructions, this dialog appears, allowing them to specify a start and end date for filtering.
+        3.  **File Picker:** After setting a date range, the system file picker is launched, prompting the user to select the JSON file they downloaded from Google Takeout.
+    - **Parsing:** A dedicated `LocationHistoryParser` class exists in `app/src/main/java/com/hereliesaz/lexorcist/utils/`. This parser is specifically designed to handle the structure of the `Records.json` file from a Google Takeout export. It deserializes the JSON into a list of `LocationRecord` objects.
+    - **ViewModel Logic:** The `CaseViewModel` orchestrates this process. The `importLocationHistoryFromFile` function takes the file's URI and the date range, uses the parser, filters the results, and then creates individual `Evidence` objects for each valid location record.
 
 ---
 
