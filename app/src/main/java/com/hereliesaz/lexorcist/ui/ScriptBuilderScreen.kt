@@ -85,17 +85,6 @@ fun ScriptBuilderScreen(
         }
     }
 
-    LaunchedEffect(Unit) {
-        viewModel.shareScriptEvent.collect { event ->
-            val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
-                type = "text/plain"
-                putExtra(android.content.Intent.EXTRA_EMAIL, arrayOf(event.recipientEmail))
-                putExtra(android.content.Intent.EXTRA_SUBJECT, event.subject)
-                putExtra(android.content.Intent.EXTRA_TEXT, event.body)
-            }
-            context.startActivity(android.content.Intent.createChooser(intent, "Share Script"))
-        }
-    }
 
     Scaffold(
         topBar = {
@@ -121,8 +110,8 @@ fun ScriptBuilderScreen(
         ) {
             var tabIndex by remember { mutableIntStateOf(0) }
             val tabs = listOf(
-                "Editor",
                 "Description",
+                "Editor",
                 "Active Scripts"
             )
             var showLoadDialog by remember { mutableStateOf(false) }
@@ -153,41 +142,6 @@ fun ScriptBuilderScreen(
                 )
             }
 
-            if (showSnippetsDialog) {
-                val snippets = listOf(
-                    "lex.text.contains(\"example\")",
-                    "lex.tags.contains(\"example\")",
-                    "lex.date.isAfter(\"YYYY-MM-DD\")",
-                    "lex.date.isBefore(\"YYYY-MM-DD\")"
-                )
-                com.hereliesaz.lexorcist.ui.components.AzAlertDialog(
-                    onDismissRequest = { showSnippetsDialog = false },
-                    title = { Text("Snippets") },
-                    text = {
-                        LazyColumn {
-                            items(snippets) { snippet ->
-                                Text(
-                                    text = snippet,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clickable {
-                                            viewModel.insertText(snippet)
-                                            showSnippetsDialog = false
-                                        }
-                                        .padding(vertical = 8.dp)
-                                )
-                            }
-                        }
-                    },
-                    confirmButton = {
-                        AzButton(
-                            onClick = { showSnippetsDialog = false },
-                            text = "Cancel"
-                        )
-                    },
-                    dismissButton = {}
-                )
-            }
 
             if (showShareDialog) {
                 var authorName by remember { mutableStateOf("") }
@@ -215,7 +169,7 @@ fun ScriptBuilderScreen(
                     confirmButton = {
                         AzButton(
                             onClick = {
-                                viewModel.shareScript(authorName, authorEmail)
+                                viewModel.shareScriptToExtras(authorName, authorEmail)
                                 showShareDialog = false
                             },
                             text = stringResource(R.string.submit)
@@ -250,13 +204,23 @@ fun ScriptBuilderScreen(
                 when (tabIndex) {
                     0 -> {
                         Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-                             OutlinedTextField(
+                            OutlinedTextField(
                                 value = scriptTitle,
                                 onValueChange = { viewModel.onScriptTitleChanged(it) },
                                 label = { Text(stringResource(R.string.script_title)) },
                                 modifier = Modifier.fillMaxWidth(),
                             )
                             Spacer(modifier = Modifier.height(16.dp))
+                            OutlinedTextField(
+                                value = scriptDescription,
+                                onValueChange = { viewModel.onScriptDescriptionChanged(it) },
+                                label = { Text(stringResource(R.string.script_description)) },
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                        }
+                    }
+                    1 -> {
+                        Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
                             OutlinedTextField(
                                 value = scriptText,
                                 onValueChange = { viewModel.onScriptTextChanged(it) },
@@ -267,15 +231,26 @@ fun ScriptBuilderScreen(
                                     .weight(1f)
                                     .padding(horizontal = 16.dp),
                             )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text("Snippets", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(horizontal = 16.dp))
+                            val snippets = listOf(
+                                "lex.text.contains(\"example\")",
+                                "lex.tags.contains(\"example\")",
+                                "lex.date.isAfter(\"YYYY-MM-DD\")",
+                                "lex.date.isBefore(\"YYYY-MM-DD\")",
+                                "lex.google.runAppsScript(\"scriptId\", \"functionName\", [\"param1\", \"param2\"])"
+                            )
+                            snippets.forEach { snippet ->
+                                Text(
+                                    text = snippet,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { viewModel.insertText(snippet) }
+                                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
                         }
-                    }
-                    1 -> {
-                        OutlinedTextField(
-                            value = scriptDescription,
-                            onValueChange = { viewModel.onScriptDescriptionChanged(it) },
-                            label = { Text(stringResource(R.string.script_description)) },
-                            modifier = Modifier.fillMaxWidth(),
-                        )
                     }
                     2 -> {
                         val activeScriptObjects = remember(activeScriptIds, allScripts) {
@@ -330,20 +305,16 @@ fun ScriptBuilderScreen(
                     text = "Load"
                 )
                 AzButton(
-                    onClick = { showSnippetsDialog = true },
-                    text = "Snippets"
-                )
-                AzButton(
                     onClick = { viewModel.saveScript() },
                     text = "Save"
                 )
                 AzButton(
-                    onClick = { caseViewModel.rerunAllScriptsOnAllEvidence() },
-                    text = "Run"
-                )
-                AzButton(
                     onClick = { showShareDialog = true },
                     text = "Share"
+                )
+                AzButton(
+                    onClick = { caseViewModel.rerunAllScriptsOnAllEvidence() },
+                    text = "Run"
                 )
             }
         }

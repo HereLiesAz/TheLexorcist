@@ -19,18 +19,13 @@ import javax.inject.Inject
 import com.hereliesaz.lexorcist.model.Script
 import java.util.UUID
 
-data class ShareScriptEvent(
-    val recipientEmail: String,
-    val subject: String,
-    val body: String
-)
-
 @HiltViewModel
 class ScriptBuilderViewModel
 @Inject
 constructor(
     private val scriptRepository: ScriptRepository,
     private val activeScriptRepository: ActiveScriptRepository,
+    private val extrasRepository: com.hereliesaz.lexorcist.data.ExtrasRepository,
     private val application: Application,
 ) : ViewModel() {
     private val _scriptId = MutableStateFlow<String?>(null)
@@ -52,9 +47,6 @@ constructor(
 
     private val _saveState = MutableStateFlow<SaveState>(SaveState.Idle)
     val saveState: StateFlow<SaveState> = _saveState.asStateFlow()
-
-    private val _shareScriptEvent = MutableSharedFlow<ShareScriptEvent>()
-    val shareScriptEvent = _shareScriptEvent.asSharedFlow()
 
     private val _showScriptSelectionDialog = MutableStateFlow(false)
     val showScriptSelectionDialog: StateFlow<Boolean> = _showScriptSelectionDialog.asStateFlow()
@@ -146,6 +138,7 @@ constructor(
                 scriptRepository.saveScripts(currentScripts)
                 _allScripts.value = currentScripts
                 _scriptId.value = id // Ensure new scripts have their ID set
+                activeScriptRepository.addScript(id) // Automatically activate the script
                 _saveState.value = SaveState.Success
             } catch (e: Exception) {
                 _saveState.value = SaveState.Error("Failed to save script")
@@ -162,51 +155,29 @@ constructor(
         activeScriptRepository.reorderActiveScripts(from, to)
     }
 
-    fun shareScript(authorName: String, authorEmail: String) {
+    fun shareScriptToExtras(authorName: String, authorEmail: String) {
         viewModelScope.launch {
-            // First, save the script with the author's info.
             _saveState.value = SaveState.Saving
-            val scriptToShare: Script
-            try {
-                val currentScripts = _allScripts.value.toMutableList()
-                val id = _scriptId.value ?: UUID.randomUUID().toString()
-                val existingScriptIndex = currentScripts.indexOfFirst { it.id == id }
-
-                val existingScript = if (existingScriptIndex != -1) currentScripts[existingScriptIndex] else null
-
-                scriptToShare = Script(
-                    id = id,
-                    name = _scriptTitle.value,
-                    description = _scriptDescription.value,
-                    content = _scriptText.value,
-                    authorName = authorName,
-                    authorEmail = authorEmail,
-                    court = existingScript?.court,
-                    rating = existingScript?.rating ?: 0.0,
-                    numRatings = existingScript?.numRatings ?: 0
-                )
-
-                if (existingScriptIndex != -1) {
-                    currentScripts[existingScriptIndex] = scriptToShare
-                } else {
-                    currentScripts.add(scriptToShare)
-                }
-                scriptRepository.saveScripts(currentScripts)
-                _allScripts.value = currentScripts
-                _scriptId.value = id // Ensure ID is set for the new/updated script
-                _saveState.value = SaveState.Success
-            } catch (e: Exception) {
-                _saveState.value = SaveState.Error(application.getString(R.string.failed_to_share_script))
-                return@launch // Don't proceed to share if saving failed
-            }
-
-            // After successfully saving, emit the event to trigger the email intent
-            val event = ShareScriptEvent(
-                recipientEmail = authorEmail,
-                subject = "Lexorcist Script: ${scriptToShare.name}",
-                body = scriptToShare.content
+            val result = extrasRepository.shareItem(
+                name = _scriptTitle.value,
+                description = _scriptDescription.value,
+                content = _scriptText.value,
+                type = "Script",
+                authorName = authorName,
+                authorEmail = authorEmail,
+                court = null // Scripts don't have a court property
             )
-            _shareScriptEvent.emit(event)
+            when (result) {
+                is com.hereliesaz.lexorcist.utils.Result.Success -> {
+                    _saveState.value = SaveState.Success
+                }
+                is com.hereliesaz.lexorcist.utils.Result.Error -> {
+                    _saveState.value = SaveState.Error(result.exception.message ?: application.getString(R.string.failed_to_share_script))
+                }
+                else -> {
+                     _saveState.value = SaveState.Error(application.getString(R.string.failed_to_share_script))
+                }
+            }
         }
     }
 }
