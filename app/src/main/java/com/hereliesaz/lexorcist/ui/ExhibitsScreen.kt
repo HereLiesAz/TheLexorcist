@@ -49,11 +49,15 @@ import com.hereliesaz.lexorcist.ui.components.DragAndDropContainer
 import com.hereliesaz.lexorcist.ui.components.DraggableItem
 import com.hereliesaz.lexorcist.ui.components.DropTarget
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
+import com.hereliesaz.lexorcist.viewmodel.ExhibitsViewModel
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ExhibitsScreen(caseViewModel: CaseViewModel = hiltViewModel()) {
+fun ExhibitsScreen(
+    caseViewModel: CaseViewModel = hiltViewModel(),
+    exhibitsViewModel: ExhibitsViewModel = hiltViewModel()
+) {
     val selectedCase by caseViewModel.selectedCase.collectAsState()
     val isLoading by caseViewModel.isLoading.collectAsState()
     var tabIndex by remember { mutableStateOf(0) }
@@ -118,7 +122,7 @@ fun ExhibitsScreen(caseViewModel: CaseViewModel = hiltViewModel()) {
                     when (tabIndex) {
                         0 -> ViewTab(caseViewModel)
                         1 -> CleanUpTab(caseViewModel)
-                        2 -> AssignTab(caseViewModel)
+                        2 -> AssignTab(caseViewModel, exhibitsViewModel)
                     }
                 }
             }
@@ -400,8 +404,11 @@ fun ImageSeriesGroupItem(group: CleanupSuggestion.ImageSeriesGroup, onMerge: () 
 }
 
 @Composable
-fun AssignTab(caseViewModel: CaseViewModel) {
-    val pertinentExhibitTypes by caseViewModel.pertinentExhibitTypes.collectAsState()
+fun AssignTab(
+    caseViewModel: CaseViewModel,
+    exhibitsViewModel: ExhibitsViewModel
+) {
+    val pertinentExhibits by exhibitsViewModel.pertinentExhibits.collectAsState()
     val allEvidence by caseViewModel.selectedCaseEvidenceList.collectAsState()
     val exhibits by caseViewModel.exhibits.collectAsState()
 
@@ -430,14 +437,14 @@ fun AssignTab(caseViewModel: CaseViewModel) {
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     horizontalAlignment = Alignment.End
                 ) {
-                    items(pertinentExhibitTypes) { exhibitType ->
+                    items(pertinentExhibits, key = { it.id }) { exhibit ->
                         DropTarget<Evidence>(
-                            key = exhibitType,
+                            key = exhibit.id,
                             onDropped = { evidence ->
-                                caseViewModel.assignEvidenceToDynamicExhibit(evidence.id, exhibitType)
+                                caseViewModel.assignEvidenceToDynamicExhibit(evidence.id, exhibit.type)
                             }
                         ) { isHovered ->
-                           ExhibitTypeDisplayItem(exhibitType, isHovered)
+                           ExhibitTypeDisplayItem(exhibit.type, isHovered)
                         }
                     }
                 }
