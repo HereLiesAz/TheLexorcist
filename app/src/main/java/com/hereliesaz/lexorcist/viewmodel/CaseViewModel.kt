@@ -230,12 +230,12 @@ constructor(
         AllegationProvider.loadAllegations(applicationContext)
         // Set default storage location on init
         viewModelScope.launch {
-            val savedLocation = settingsManager.getStorageLocation().first()
+            val savedLocation = settingsManager.getStorageLocation()?.first()
             if (savedLocation.isNullOrEmpty()) {
                 _storageLocation.value = applicationContext.filesDir.absolutePath
                 Log.i("CaseViewModel", "Storage location initialized to default: ${_storageLocation.value}")
             } else {
-                _storageLocation.value = savedLocation
+                _storageLocation.value = savedLocation.toString()
                 Log.i("CaseViewModel", "Storage location loaded from settings: $savedLocation")
             }
         }
