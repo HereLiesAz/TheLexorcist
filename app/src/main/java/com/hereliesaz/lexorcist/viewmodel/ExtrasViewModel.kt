@@ -108,9 +108,17 @@ class ExtrasViewModel @Inject constructor(
             val jsonString = application.assets.open("default_extras.json").bufferedReader().use { it.readText() }
             val typeToken = object : TypeToken<DefaultExtras>() {}.type
             val extras: DefaultExtras = Gson().fromJson(jsonString, typeToken)
+
+            val correctedScripts = extras.scripts.map {
+                it.copy(authorName = "Az", authorEmail = "hereliesaz@gmail.com")
+            }
+            val correctedTemplates = extras.templates.map {
+                it.copy(authorName = "Az", authorEmail = "hereliesaz@gmail.com")
+            }
+
             val sharedItems = mutableListOf<SharedItem>()
-            sharedItems.addAll(extras.scripts.map { SharedItem.from(it) })
-            sharedItems.addAll(extras.templates.map { SharedItem.from(it) })
+            sharedItems.addAll(correctedScripts.map { SharedItem.from(it) })
+            sharedItems.addAll(correctedTemplates.map { SharedItem.from(it) })
             sharedItems
         } catch (e: IOException) {
             emptyList()

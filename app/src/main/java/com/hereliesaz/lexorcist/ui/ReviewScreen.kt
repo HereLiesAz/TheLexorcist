@@ -438,8 +438,12 @@ fun EvidenceItem(
                 )
             }
             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                AzButton(onClick = { onEditClick(evidence) }, text = stringResource(R.string.edit))
-                AzButton(onClick = { onDeleteClick(evidence) }, text = stringResource(R.string.delete))
+                IconButton(onClick = { onEditClick(evidence) }) {
+                    Icon(Icons.Filled.Edit, contentDescription = stringResource(R.string.edit))
+                }
+                IconButton(onClick = { onDeleteClick(evidence) }) {
+                    Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.delete))
+                }
             }
         }
     }
