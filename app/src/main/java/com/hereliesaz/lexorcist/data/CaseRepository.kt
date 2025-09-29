@@ -2,6 +2,7 @@ package com.hereliesaz.lexorcist.data
 
 import com.hereliesaz.lexorcist.model.SheetFilter
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow // Added import
 import com.google.api.services.drive.model.File as DriveFile
 import com.hereliesaz.lexorcist.utils.Result
 
@@ -11,7 +12,7 @@ interface CaseRepository {
      * This flow will emit a new list of cases whenever the data changes.
      */
     val cases: Flow<List<Case>>
-    val selectedCase: Flow<Case?>
+    val selectedCase: StateFlow<Case?> // Changed Flow to StateFlow
 
     /**
      * A flow of allegations for the currently selected case.
