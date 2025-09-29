@@ -34,6 +34,14 @@ class ActiveScriptRepository @Inject constructor(@ApplicationContext private val
         saveActiveScriptIds(currentIds)
     }
 
+    fun activateScript(scriptId: String) {
+        val currentIds = _activeScriptIds.value.toMutableList()
+        if (!currentIds.contains(scriptId)) {
+            currentIds.add(scriptId)
+            saveActiveScriptIds(currentIds)
+        }
+    }
+
     fun reorderActiveScripts(from: Int, to: Int) {
         val currentIds = _activeScriptIds.value.toMutableList()
         val item = currentIds.removeAt(from)
