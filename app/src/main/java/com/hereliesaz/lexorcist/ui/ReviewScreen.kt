@@ -213,34 +213,26 @@ fun ReviewScreen(
                     }
                 }
 
+                // Per user feedback, this screen should have "Organize", "Generate", and "Finalize" buttons.
                 FlowRow(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    if (selectedAllegation != null && selectedEvidence.isNotEmpty()) {
-                        AzButton(
-                            onClick = {
-                                caseViewModel.assignAllegationToSelectedEvidence(selectedAllegation!!.id.toString()) // Ensure ID is string
-                            },
-                            text = stringResource(R.string.assign_to_allegation),
-                            modifier = Modifier.padding(start = 8.dp)
-                        )
-                    }
+                    AzButton(
+                        onClick = { /* TODO: Implement Organize Logic */ },
+                        text = stringResource(R.string.organize),
+                        modifier = Modifier.padding(start = 8.dp)
+                    )
                     AzButton(
                         onClick = { showGenerateDocumentDialog = true },
-                        text = "Generate",
+                        text = stringResource(R.string.generate),
                         modifier = Modifier.padding(start = 8.dp)
                     )
                     AzButton(
                         onClick = { showPackageFilesDialog = true },
-                        text = "Package",
-                        modifier = Modifier.padding(start = 8.dp)
-                    )
-                    AzButton(
-                        onClick = { /* caseViewModel.generateReadinessReport() */ },
-                        text = "Report",
+                        text = stringResource(R.string.finalize_button),
                         modifier = Modifier.padding(start = 8.dp)
                     )
                 }

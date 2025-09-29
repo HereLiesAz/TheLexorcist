@@ -129,8 +129,13 @@ fun ExhibitsScreen(caseViewModel: CaseViewModel = hiltViewModel()) {
 @Composable
 fun ViewTab(caseViewModel: CaseViewModel) {
     val exhibits by caseViewModel.exhibits.collectAsState()
+    val evidenceList by caseViewModel.selectedCaseEvidenceList.collectAsState()
+    var selectedExhibitForDetails by remember { mutableStateOf<Exhibit?>(null) }
 
-    if (exhibits.isEmpty()) {
+    // Sort exhibits to show those with evidence first, as per AGENTS.md
+    val sortedExhibits = exhibits.sortedByDescending { it.evidenceIds.isNotEmpty() }
+
+    if (sortedExhibits.isEmpty()) {
         Column(
             modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -140,19 +145,33 @@ fun ViewTab(caseViewModel: CaseViewModel) {
         }
     } else {
         LazyColumn(modifier = Modifier.fillMaxSize().padding(vertical = 16.dp)) {
-            items(exhibits) { exhibit ->
+            items(sortedExhibits) { exhibit ->
                 ExhibitItem(
                     exhibit = exhibit,
+                    onClick = { selectedExhibitForDetails = exhibit },
                     onDeleteClick = { caseViewModel.deleteExhibit(exhibit) }
                 )
             }
         }
+    }
+
+    selectedExhibitForDetails?.let { exhibit ->
+        val exhibitEvidence = evidenceList.filter { it.id in exhibit.evidenceIds }
+        ExhibitDetailsDialog(
+            exhibit = exhibit,
+            evidenceList = exhibitEvidence,
+            onDismiss = { selectedExhibitForDetails = null },
+            onRemoveEvidence = { evidenceId ->
+                caseViewModel.removeEvidenceFromExhibit(exhibit.id, evidenceId)
+            }
+        )
     }
 }
 
 @Composable
 fun ExhibitItem(
     exhibit: Exhibit,
+    onClick: (Exhibit) -> Unit,
     onDeleteClick: (Exhibit) -> Unit,
 ) {
     Card(
@@ -162,7 +181,8 @@ fun ExhibitItem(
             .fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        onClick = { onClick(exhibit) }
     ) {
         Row(
             modifier =
@@ -198,6 +218,74 @@ fun ExhibitItem(
             AzButton(onClick = { onDeleteClick(exhibit) }, text = "Del")
         }
     }
+}
+
+@Composable
+fun ExhibitDetailsDialog(
+    exhibit: Exhibit,
+    evidenceList: List<Evidence>,
+    onDismiss: () -> Unit,
+    onRemoveEvidence: (Int) -> Unit
+) {
+    com.hereliesaz.lexorcist.ui.components.AzAlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                exhibit.name,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.End,
+                style = MaterialTheme.typography.titleLarge
+            )
+        },
+        text = {
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    exhibit.description,
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                    textAlign = TextAlign.End,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    "Contained Evidence:",
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                    textAlign = TextAlign.End,
+                    style = MaterialTheme.typography.titleMedium
+                )
+                if (evidenceList.isEmpty()) {
+                    Text(
+                        "This exhibit is empty.",
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.End,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                } else {
+                    LazyColumn {
+                        items(evidenceList) { evidence ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.End
+                            ) {
+                                Text(
+                                    text = evidence.content.take(80),
+                                    modifier = Modifier.weight(1f),
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                IconButton(onClick = { onRemoveEvidence(evidence.id) }) {
+                                    Icon(Icons.Default.Delete, contentDescription = "Remove Evidence")
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            AzButton(onClick = onDismiss, text = "Close")
+        },
+        dismissButton = {}
+    )
 }
 
 @Composable

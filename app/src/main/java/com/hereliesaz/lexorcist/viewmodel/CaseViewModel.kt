@@ -289,6 +289,22 @@ constructor(
         }
     }
 
+    fun removeEvidenceFromExhibit(exhibitId: Int, evidenceId: Int) {
+        viewModelScope.launch {
+            val exhibit = _exhibits.value.find { it.id == exhibitId }
+            if (exhibit != null) {
+                val updatedEvidenceIds = exhibit.evidenceIds.toMutableList().apply {
+                    remove(evidenceId)
+                }
+                val updatedExhibit = exhibit.copy(evidenceIds = updatedEvidenceIds)
+                selectedCase.value?.let {
+                    evidenceRepository.updateExhibit(it.spreadsheetId, updatedExhibit)
+                }
+                loadExhibits() // Refresh the list
+            }
+        }
+    }
+
     fun importLocationHistoryFromFile(uri: android.net.Uri, startDate: Long, endDate: Long) {
         viewModelScope.launch {
             globalLoadingState.pushLoading()

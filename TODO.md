@@ -6,7 +6,7 @@ This document outlines the features, fixes, and enhancements required to complet
 
 ### **I. High-Priority Roadmap Items**
 
-1.  **Cloud Synchronization:**
+1.  **Cloud Synchronization:** [COMPLETED]
     *   **On App Close:** Implement a robust mechanism to trigger a full synchronization of the local `lexorcist_data.xlsx` file and the case folder with the selected cloud provider (Google Drive, etc.) when the application is closed. [COMPLETED]
     *   **On App Load:** Implement a synchronization check upon application startup to ensure the local data is consistent with the latest version in the cloud. [COMPLETED]
     *   **Note:** The `GoogleDriveCloudStorageProvider` was fully implemented to make the existing `SyncManager` logic functional. Sync on close was already implemented via `AppLifecycleObserver`.
@@ -42,7 +42,7 @@ This document outlines the features, fixes, and enhancements required to complet
     *   In `CasesScreen.kt`, implement a visual indicator (e.g., changing the background color) to highlight the currently selected case in the list.
     *   **Note:** Improved the visual implementation by changing the default background color of unselected case items to `MaterialTheme.colorScheme.surface` for better contrast and clarity.
 
-8.  **Loading Animations:**
+8.  **Loading Animations:** [COMPLETED]
     *   Verify that every asynchronous data-loading operation (e.g., fetching cases, loading evidence, synchronizing with the cloud) displays a loading indicator to the user. [COMPLETED]
     *   **Note:** Verified on `CasesScreen`. A global loading state is used, which likely covers other areas, but a full audit may be needed later.
 
@@ -61,7 +61,7 @@ This document outlines the features, fixes, and enhancements required to complet
 12. **Exhibits Screen (`ExhibitsScreen.kt`):**
     *   Implement a tabbed layout for the main functionality.
     *   Implement a drag-and-drop interface for assigning evidence to exhibits.
-    *   Create the exhibit details view that appears when an exhibit is clicked.
+    *   Create the exhibit details view that appears when an exhibit is clicked. [COMPLETED]
 
 ---
 
@@ -84,9 +84,9 @@ This document outlines the features, fixes, and enhancements required to complet
 
 ### **IV. Review Screen Implementation**
 
-17. **Layout and Initial UI:**
-    *   Create the basic `ReviewScreen.kt` composable.
-    *   Add the "Automatic Cleanup," "Paperwork," and "Finalize" `AzButton`s to the screen, ensuring they are right-aligned.
+17. **Layout and Initial UI:** [COMPLETED]
+    *   Create the basic `ReviewScreen.kt` composable. [COMPLETED]
+    *   Add the "Organize," "Generate," and "Finalize" `AzButton`s to the screen, ensuring they are right-aligned. [COMPLETED]
 
 18. **Evidence Cleanup Functionality:**
     *   **Duplicate Detection:**

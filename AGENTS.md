@@ -67,8 +67,8 @@ This document outlines the features, fixes, and enhancements required to complet
 
 ### **I. High-Priority Roadmap Items**
 
-1.  **Cloud Synchronization:**
-    *   **On App Close:** Implement a robust mechanism to trigger a full synchronization of the local `lexorcist_data.xlsx` file and the case folder with the selected cloud provider (Google Drive, etc.) when the application is closed.
+1.  **Cloud Synchronization:** [COMPLETED]
+    *   **On App Close:** Implement a robust mechanism to trigger a full synchronization of the local `lexorcist_data.xlsx` file and the case folder with the selected cloud provider (Google Drive, etc.) when the application is closed. [COMPLETED]
     *   **On App Load:** Implement a synchronization check upon application startup to ensure the local data is consistent with the latest version in the cloud. [COMPLETED]
     *   **Note:** The `GoogleDriveCloudStorageProvider` was fully implemented to make the existing `SyncManager` logic functional.
 
@@ -91,7 +91,7 @@ This document outlines the features, fixes, and enhancements required to complet
 
 ### **II. UI/UX Enhancements & Fixes**
 
-5.  **Component Right-Alignment:**
+5.  **Component Right-Alignment:** [COMPLETED]
     *   Audit every screen (`CasesScreen`, `EvidenceScreen`, `SettingsScreen`, etc.) and ensure all UI components (Buttons, TextFields, Cards, etc.), but not the text within them, are right-aligned as per the UI/UX rules.
 
 6.  **`AzButton` Conversion:** [COMPLETED]
@@ -101,7 +101,7 @@ This document outlines the features, fixes, and enhancements required to complet
     *   In `CasesScreen.kt`, implement a visual indicator (e.g., changing the background color) to highlight the currently selected case in the list.
     *   **Note:** Improved the visual implementation by changing the default background color of unselected case items to `MaterialTheme.colorScheme.surface` for better contrast and clarity.
 
-8.  **Loading Animations:**
+8.  **Loading Animations:** [COMPLETED]
     *   Verify that every asynchronous data-loading operation (e.g., fetching cases, loading evidence, synchronizing with the cloud) displays a loading indicator to the user.
 
 9.  **Script Builder Screen (`ScriptBuilderScreen.kt`):**
@@ -119,7 +119,7 @@ This document outlines the features, fixes, and enhancements required to complet
 12. **Exhibits Screen (`ExhibitsScreen.kt`):**
     *   Implement a tabbed layout for the main functionality.
     *   Implement a drag-and-drop interface for assigning evidence to exhibits.
-    *   Create the exhibit details view that appears when an exhibit is clicked.
+    *   Create the exhibit details view that appears when an exhibit is clicked. [COMPLETED]
 
 ---
 
@@ -142,9 +142,9 @@ This document outlines the features, fixes, and enhancements required to complet
 
 ### **IV. Review Screen Implementation**
 
-17. **Layout and Initial UI:**
-    *   Create the basic `ReviewScreen.kt` composable.
-    *   Add the "Automatic Cleanup," "Paperwork," and "Finalize" `AzButton`s to the screen, ensuring they are right-aligned.
+17. **Layout and Initial UI:** [COMPLETED]
+    *   Create the basic `ReviewScreen.kt` composable. [COMPLETED]
+    *   Add the "Organize," "Generate," and "Finalize" `AzButton`s to the screen, ensuring they are right-aligned. [COMPLETED]
 
 18. **Evidence Cleanup Functionality:**
     *   **Duplicate Detection:**
@@ -183,7 +183,7 @@ This document outlines the features, fixes, and enhancements required to complet
     *   Add a "Getting Started" section with instructions for setting up the development environment.
     *   Update the "Key Features" list to reflect the current state of the application.
 
-22. **Update `AGENTS.md`:**
+22. **Update `AGENTS.md`:** [COMPLETED]
     *   Replace the "Roadmap" section with this new, more granular TODO list.
     *   Review and update the UI/UX rules to be more specific where necessary.
 

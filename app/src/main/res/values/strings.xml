@@ -351,4 +351,7 @@ function onOpen() {}</string>
     <string name="your_name">Your Name</string>
     <string name="your_email">Your Email</string>
     <string name="failed_to_share_script">Failed to share script</string>
+    <string name="organize">Organize</string>
+    <string name="generate">Generate</string>
+    <string name="finalize_button">Finalize</string>
 </resources>
