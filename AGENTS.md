@@ -58,18 +58,6 @@ The file google-services.template.json located at the root of the /app/ folder s
 
 
 ---
-
-### **Completed Ad-Hoc Tasks**
-
-*   **Updated Court Jurisdictions:**
-    *   **Problem:** The list of courts in `app/src/main/assets/jurisdictions.json` was incomplete, limiting user choice in the Templates screen dropdown.
-    *   **Solution:** Appended a comprehensive list of federal, state, and territorial courts to the JSON file.
-    *   **Implementation Details:**
-        *   Preserved all original court IDs to maintain data integrity and backward compatibility with existing cases.
-        *   Assigned new, unique IDs to all new court entries to prevent conflicts.
-        *   Verified that the existing data pipeline (`JurisdictionRepository` -> `CaseViewModel` -> `TemplatesScreen`) correctly handles the expanded list without requiring code changes.
-    *   **Desired Result:** When the user navigates to the **Templates screen**, the "Court" dropdown menu will contain a significantly expanded and more comprehensive list of U.S. federal, state, and territorial courts, providing a much wider range of options for selection.
-
 ---
 
 ### Roadmap & Task Analysis
@@ -133,6 +121,11 @@ This document outlines the features, fixes, and enhancements required to complet
     *   Implement a tabbed layout for the main functionality.
     *   Implement a drag-and-drop interface for assigning evidence to exhibits.
     *   Create the exhibit details view that appears when an exhibit is clicked.
+
+13. **Templates Screen Court List:** [COMPLETED]
+    *   **Problem:** The list of courts in `app/src/main/assets/jurisdictions.json` was incomplete.
+    *   **Solution:** The `jurisdictions.json` file was updated to include a comprehensive list of U.S. federal, state, and territorial courts, ensuring existing court IDs were preserved to maintain data integrity.
+    *   **Desired Result:** The "Court" dropdown on the Templates screen now displays a full list of jurisdictions for selection.
 
 ---
 
