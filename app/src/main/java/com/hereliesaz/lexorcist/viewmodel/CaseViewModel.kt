@@ -207,6 +207,9 @@ constructor(
     private val _cleanupSuggestions = MutableStateFlow<List<CleanupSuggestion>>(emptyList())
     val cleanupSuggestions: StateFlow<List<CleanupSuggestion>> = _cleanupSuggestions.asStateFlow()
 
+    private val _isScanningForCleanup = MutableStateFlow(false)
+    val isScanningForCleanup: StateFlow<Boolean> = _isScanningForCleanup.asStateFlow()
+
     fun onTimelineSortOrderChanged(sortType: TimelineSortType) {
         _timelineSortType.value = sortType
     }
@@ -1216,6 +1219,7 @@ constructor(
 
     fun generateCleanupSuggestions() {
         viewModelScope.launch {
+            _isScanningForCleanup.value = true
             globalLoadingState.pushLoading()
             try {
                 _userMessage.value = "Scanning for duplicates and image series..."
@@ -1277,6 +1281,7 @@ constructor(
                 Log.e("Cleanup", "Error in generateCleanupSuggestions", e)
             } finally {
                 globalLoadingState.popLoading()
+                _isScanningForCleanup.value = false
             }
         }
     }
