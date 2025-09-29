@@ -1420,19 +1420,28 @@ class GoogleApiService @Inject constructor(
         spreadsheetId: String,
         allegations: List<String>,
     ) {
-        val sheets = getSheetsService() ?: return // Or throw, or return Result
+        val sheets = getSheetsService() ?: return
         withContext(Dispatchers.IO) {
             try {
-                val sheetData = readSpreadsheet(spreadsheetId)
-                if (sheetData?.get("SelectedAllegations") == null) {
-                    addSheet(spreadsheetId, "SelectedAllegations") // Uses sheets internally
+                // Step 1: Get spreadsheet details to check for sheet existence directly
+                val spreadsheet = sheets.spreadsheets().get(spreadsheetId).execute()
+                val sheetExists = spreadsheet.sheets.any { it.properties.title == "SelectedAllegations" }
+
+                // Step 2: Create sheet if it doesn't exist, otherwise clear it
+                if (!sheetExists) {
+                    addSheet(spreadsheetId, "SelectedAllegations")
                 } else {
-                    clearSheet(spreadsheetId, "SelectedAllegations") // Uses sheets internally
+                    clearSheet(spreadsheetId, "SelectedAllegations!A:A")
                 }
-                val values = allegations.map { listOf(it) }
-                writeData(spreadsheetId, "SelectedAllegations!A1", values) // Uses sheets internally
+
+                // Step 3: Write the new data
+                if (allegations.isNotEmpty()) {
+                    val values = allegations.map { listOf(it) }
+                    writeData(spreadsheetId, "SelectedAllegations!A1", values)
+                }
             } catch (e: IOException) {
-                // Handle error
+                Log.e("GoogleApiService", "Failed to update selected allegations for sheet: $spreadsheetId", e)
+                // Optionally re-throw or handle the error as a Result
             }
         }
     }
