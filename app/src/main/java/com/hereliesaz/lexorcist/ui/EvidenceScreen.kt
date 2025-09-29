@@ -42,7 +42,7 @@ import com.hereliesaz.lexorcist.ui.components.EmailImportDialog
 import com.hereliesaz.lexorcist.ui.components.ImapImportDialog
 import com.hereliesaz.lexorcist.ui.components.LocationHistoryInstructionsDialog
 import androidx.compose.ui.Alignment
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel // Updated import
+import androidx.hilt.navigation.compose.hiltViewModel // Corrected import for hiltViewModel
 import com.hereliesaz.lexorcist.model.OutlookSignInState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -116,7 +116,10 @@ fun EvidenceScreen(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
         if (isGranted) {
-            caseViewModel.importSmsEvidence()
+            val contact = mainViewModel.importContact.value
+            val startDate = mainViewModel.importStartDate.value
+            val endDate = mainViewModel.importEndDate.value
+            caseViewModel.importSmsEvidence(contact, startDate, endDate)
         } else {
             // Handle permission denial
         }
@@ -126,7 +129,10 @@ fun EvidenceScreen(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
         if (isGranted) {
-            caseViewModel.importCallLogEvidence()
+            val contact = mainViewModel.importContact.value
+            val startDate = mainViewModel.importStartDate.value
+            val endDate = mainViewModel.importEndDate.value
+            caseViewModel.importCallLogEvidence(contact, startDate, endDate)
         } else {
             // Handle permission denial
         }
@@ -266,7 +272,7 @@ fun EvidenceScreen(
                     onConfirm = { startDate, endDate ->
                         showLocationDateRangeDialog = false
                         locationDateRange = startDate to endDate
-                        locationFilePickerLauncher.launch("application/json")
+                        locationFilePickerLauncher.launch("application/json") // Consider specific MIME type if available
                     }
                 )
             }
@@ -303,16 +309,12 @@ fun EvidenceScreen(
                     onDismiss = { showOutlookImportDialog = false },
                     onImport = { from, subject, before, after ->
                         showOutlookImportDialog = false
-                        // val outlookState = authViewModel.outlookSignInState.value // No longer needed here
-                        // if (outlookState is com.hereliesaz.lexorcist.model.OutlookSignInState.Success) { // Check is inside ViewModel
-                            caseViewModel.importOutlookEmails(
-                                // accessToken = outlookState.accessToken, // REMOVED - ViewModel handles token access
-                                from = from,
-                                subject = subject,
-                                before = before,
-                                after = after
-                            )
-                        // }
+                        caseViewModel.importOutlookEmails(
+                            from = from,
+                            subject = subject,
+                            before = before,
+                            after = after
+                        )
                     }
                 )
             }
@@ -349,7 +351,7 @@ fun EvidenceScreen(
 
 @Composable
 fun EvidenceListItem(
-    evidence: com.hereliesaz.lexorcist.data.Evidence,
+    evidence: com.hereliesaz.lexorcist.data.Evidence, // Changed to data.Evidence for clarity based on other files
     onClick: () -> Unit,
 ) {
     val sdf = remember { SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()) }
@@ -401,7 +403,7 @@ fun ProcessingProgressView(
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 LinearProgressIndicator(
-                    progress = { processingState.progress },
+                    progress = { processingState.progress }, // Updated to pass lambda
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -440,7 +442,7 @@ fun ProcessingProgressView(
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(200.dp)
+                    .height(200.dp) // Consider making this dynamic or a defined dimen
                     .border(
                         1.dp,
                         MaterialTheme.colorScheme.outline,
@@ -453,7 +455,7 @@ fun ProcessingProgressView(
                         LogLevel.INFO -> MaterialTheme.colorScheme.onSurface
                         LogLevel.ERROR -> MaterialTheme.colorScheme.error
                         LogLevel.DEBUG -> MaterialTheme.colorScheme.onSurfaceVariant
-                        LogLevel.WARNING -> MaterialTheme.colorScheme.tertiary
+                        LogLevel.WARNING -> MaterialTheme.colorScheme.tertiary // Consider a more warning-like color
                         LogLevel.VERBOSE -> MaterialTheme.colorScheme.onSurfaceVariant
                         LogLevel.WTF -> MaterialTheme.colorScheme.error
                     }
