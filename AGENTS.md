@@ -59,6 +59,18 @@ The file google-services.template.json located at the root of the /app/ folder s
 
 ---
 
+### **Completed Ad-Hoc Tasks**
+
+*   **Updated Court Jurisdictions:**
+    *   **Problem:** The list of courts in `app/src/main/assets/jurisdictions.json` was incomplete, limiting user choice in the Templates screen dropdown.
+    *   **Solution:** Appended a comprehensive list of federal, state, and territorial courts to the JSON file.
+    *   **Implementation Details:**
+        *   Preserved all original court IDs to maintain data integrity and backward compatibility with existing cases.
+        *   Assigned new, unique IDs to all new court entries to prevent conflicts.
+        *   Verified that the existing data pipeline (`JurisdictionRepository` -> `CaseViewModel` -> `TemplatesScreen`) correctly handles the expanded list without requiring code changes.
+
+---
+
 ### Roadmap & Task Analysis
 
 This document outlines the features, fixes, and enhancements required to complete "The Lexorcist" application.
