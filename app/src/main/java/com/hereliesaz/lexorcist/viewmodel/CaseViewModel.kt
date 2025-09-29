@@ -231,7 +231,7 @@ constructor(
         // Set default storage location on init
         viewModelScope.launch {
             val savedLocation = settingsManager.getStorageLocation()?.first()
-            if (savedLocation.isNullOrEmpty()) {
+            if (savedLocation?.toString().isNullOrEmpty()) {
                 _storageLocation.value = applicationContext.filesDir.absolutePath
                 Log.i("CaseViewModel", "Storage location initialized to default: ${_storageLocation.value}")
             } else {
@@ -1335,7 +1335,7 @@ constructor(
                     }
 
                     // Refresh evidence list after hashing
-                    caseRepository.refreshSelectedCaseDetails().first() // block until refresh is done
+                    caseRepository.refreshSelectedCaseDetails() // block until refresh is done
                     val updatedEvidence = _selectedCaseEvidenceListInternal.value
                     val suggestions = mutableListOf<CleanupSuggestion>()
 
