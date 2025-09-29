@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.geometry.Rect
 
@@ -94,28 +95,34 @@ fun <T> DraggableItem(
 ) {
     @Suppress("UNCHECKED_CAST")
     val state = LocalDragAndDropState.current as DragAndDropState<T>
+    var currentPosition by remember { mutableStateOf(Offset.Zero) }
+
     Box(
-        modifier = modifier.pointerInput(Unit) {
-            detectDragGestures(
-                onDragStart = { offset ->
-                    state.isDragging = true
-                    state.dragPosition = offset
-                    state.dataToDrop = dataToDrop
-                    state.draggedComposable = content
-                },
-                onDrag = { change, dragAmount ->
-                    change.consume()
-                    state.dragOffset += dragAmount
-                },
-                onDragEnd = {
-                    state.onDragEnd()
-                },
-                onDragCancel = {
-                    state.dragOffset = Offset.Zero
-                    state.isDragging = false
-                }
-            )
-        }
+        modifier = modifier
+            .onGloballyPositioned {
+                currentPosition = it.positionInWindow()
+            }
+            .pointerInput(Unit) {
+                detectDragGestures(
+                    onDragStart = { offset ->
+                        state.isDragging = true
+                        state.dragPosition = currentPosition + offset
+                        state.dataToDrop = dataToDrop
+                        state.draggedComposable = content
+                    },
+                    onDrag = { change, dragAmount ->
+                        change.consume()
+                        state.dragOffset += dragAmount
+                    },
+                    onDragEnd = {
+                        state.onDragEnd()
+                    },
+                    onDragCancel = {
+                        state.dragOffset = Offset.Zero
+                        state.isDragging = false
+                    }
+                )
+            }
     ) {
         content()
     }
