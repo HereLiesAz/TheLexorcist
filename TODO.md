@@ -76,7 +76,12 @@ This document outlines the features, fixes, and enhancements required to complet
     *   Extend the `ScriptRunner` to support scripts that can call Google Apps Script functions via the `GoogleApiService`.
     *   Implement a change-detection mechanism to ensure that scripts are only run on evidence that has changed or if the script itself has been updated.
 
-16. **Evidence Cleanup & Organization:**
+16. **Location History Import:** [COMPLETED]
+    *   Implement a method for importing location history from a file (e.g., Google Takeout).
+    *   Allow the user to filter the imported history by a specific date range.
+    *   **Note:** Direct access to location history is not possible due to Android's privacy restrictions. The implementation uses a file-based import as a workaround.
+
+17. **Evidence Cleanup & Organization:**
     *   Create a database or repository to store the legal elements required to support each type of allegation.
     *   Implement the logic on the "Exhibits" screen to use this database to guide the user in creating exhibits.
 
@@ -84,11 +89,11 @@ This document outlines the features, fixes, and enhancements required to complet
 
 ### **IV. Review Screen Implementation**
 
-17. **Layout and Initial UI:**
+18. **Layout and Initial UI:**
     *   Create the basic `ReviewScreen.kt` composable.
     *   Add the "Automatic Cleanup," "Paperwork," and "Finalize" `AzButton`s to the screen, ensuring they are right-aligned.
 
-18. **Evidence Cleanup Functionality:**
+19. **Evidence Cleanup Functionality:**
     *   **Duplicate Detection:**
         *   Implement a file hashing mechanism to generate a unique hash for each media file upon import.
         *   Store the file hash in the `Evidence` data model.
@@ -103,14 +108,14 @@ This document outlines the features, fixes, and enhancements required to complet
         *   Implement a text similarity algorithm to find evidence with highly similar text content.
         *   Display these as potential duplicates for manual review and merging.
 
-19. **Document Generation ("Paperwork" Button):**
+20. **Document Generation ("Paperwork" Button):**
     *   Implement the `onClick` for the "Paperwork" button.
     *   The process should iterate through all `Exhibits` in the current case.
     *   For each `Exhibit`, it should find the associated `Template`.
     *   Call the `GoogleApiService` to generate a document from the template, populating it with data from the evidence within that exhibit.
     *   Display a progress indicator and a final success/failure message.
 
-20. **Case Finalization ("Finalize" Button):**
+21. **Case Finalization ("Finalize" Button):**
     *   **Dialog UI:** Create a dialog that appears when "Finalize" is clicked.
     *   **File Selection:** The dialog must display a checklist of all files and folders within the case directory.
     *   **Export Options:** Include a toggle in the dialog for choosing the output format: `.zip` or `.lex`.
@@ -121,18 +126,18 @@ This document outlines the features, fixes, and enhancements required to complet
 
 ### **V. Documentation**
 
-21. **Update `README.md`:**
+22. **Update `README.md`:**
     *   Add a "Getting Started" section with instructions for setting up the development environment.
     *   Update the "Key Features" list to reflect the current state of the application.
 
-22. **Update `AGENTS.md`:** [COMPLETED]
+23. **Update `AGENTS.md`:** [COMPLETED]
     *   Replace the "Roadmap" section with this new, more granular TODO list.
     *   Review and update the UI/UX rules to be more specific where necessary.
 
-23. **Create New Documentation:** [COMPLETED]
+24. **Create New Documentation:** [COMPLETED]
     *   Create a `CONTRIBUTING.md` file with guidelines for code contributions, pull requests, and code style.
     *   Create a `CODE_OF_CONDUCT.md` file.
 
-24. **Review Existing Documentation:**
+25. **Review Existing Documentation:**
     *   Verify the accuracy of `GMAIL_API_SETUP.md` and `OUTLOOK_API_SETUP.md`.
     *   Expand `SCRIPT_EXAMPLES.md` with examples of the new AI and UI scripting capabilities.

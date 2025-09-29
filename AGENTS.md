@@ -129,6 +129,7 @@ This document outlines the features, fixes, and enhancements required to complet
     *   Ensure that text extracted from any evidence source (image, audio, video) is formatted with Markdown code blocks before being saved.
     *   Verify that all raw evidence files are copied into a dedicated "raw" folder within the case directory.
     *   Implement the logic to index files with no extracted text as "non-textual evidence."
+    *   **Location History Note:** Direct access to a user's location history is not possible via Android APIs. The feature must be implemented via file import (e.g., Google Takeout `Records.json`), parsed with `LocationHistoryParser`, and then filtered by a date range. Do not use `FusedLocationProviderClient` for this.
 
 15. **Scripting Engine:**
     *   Extend the `ScriptRunner` to support scripts that can call Google Apps Script functions via the `GoogleApiService`.
