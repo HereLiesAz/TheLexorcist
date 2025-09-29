@@ -12,6 +12,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow // Added import
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.emptyFlow
@@ -43,7 +44,7 @@ class CaseRepositoryImpl @Inject constructor(
     override val cases: Flow<List<Case>> = _cases.asStateFlow()
 
     private val _selectedCase = MutableStateFlow<Case?>(null)
-    override val selectedCase: Flow<Case?> = _selectedCase.asStateFlow()
+    override val selectedCase: StateFlow<Case?> = _selectedCase.asStateFlow() // Changed Flow to StateFlow
 
     private val _allegations = MutableStateFlow<List<Allegation>>(emptyList())
     override val selectedCaseAllegations: Flow<List<Allegation>> = _allegations.asStateFlow()
