@@ -757,7 +757,7 @@ class LocalFileStorageService @Inject constructor(
 
     override suspend fun getAllegationsForCase(caseSpreadsheetId: String): Result<List<Allegation>> = readFromSpreadsheet { workbook ->
         val sheet = workbook.getSheet(ALLEGATIONS_SHEET_NAME) ?: return@readFromSpreadsheet emptyList()
-        (1..sheet.lastRowNum).mapNotNull { i -> 
+        (1..sheet.lastRowNum).mapNotNull { i ->
             val row = sheet.getRow(i) ?: return@mapNotNull null
             if (row.getCell(ALLEGATIONS_HEADER.indexOf("CaseID"))?.stringCellValue != caseSpreadsheetId) return@mapNotNull null
 
@@ -766,14 +766,13 @@ class LocalFileStorageService @Inject constructor(
                 Log.w("LocalFileStorageService", "Allegation row ${row.rowNum} has invalid or missing AllegationID.")
                 return@mapNotNull null
             }
-            
-            val textFromSheet = row.getCell(ALLEGATIONS_HEADER.indexOf("Name"))?.stringCellValue // Changed from "Text"
-            val masterAllegation = AllegationProvider.getAllegationById(allegationId)
 
-            Allegation( 
+            val name = row.getCell(ALLEGATIONS_HEADER.indexOf("Name"))?.stringCellValue ?: ""
+
+            Allegation(
                 id = allegationId,
                 spreadsheetId = caseSpreadsheetId,
-                name = textFromSheet ?: masterAllegation?.allegationName ?: "" // Changed from text = ...
+                name = name
             )
         }
     }
