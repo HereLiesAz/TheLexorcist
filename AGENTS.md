@@ -52,10 +52,18 @@ The file google-services.template.json located at the root of the /app/ folder s
 21. The Review screen is also where the user generates documents and files. The "Paperwork" button generates all the documents needed for the Case's exhibits using the templates the user loaded or created on the Templates screen. The "Finalize" button is a .zip generator that brings up a dialog for the user to choose what all in the Case folder should be included in the .zip file. At the bottom of the dialog, the user can choose to generate into the .zip or the .lex format (which is really just a .zip file with the extension changed to .lex, but is the file type that The Lexorcist immediately recognizes as a Case file/archive/backup to be imported on the Cases screen).
 22. On the script builder screen, there are three tabs. One is for writing or editing a script. One is a description of the script as it currently is, which is programmatically generated AND the user can edit to add to the description. And the last tab is a list of all the scripts that will be applied on the next screen load.
 23. On every screen load, the app will run all active scripts on all evidence, but only if the evidence or the script has changed since the last run.
-24. On the Exhibits screen, under "Exhibits" at the top, is a tabbed box where most of this screen's functionality will take place. Under that are a series of automatic cleanup and organization tools to handle the assumed fragmented nature of evidence files, like duplicate files, files that need to be combined (like a series of screenshots of a conversation, for example), and evidence assessment.
-25. On the Exhibits screen, under the Assign tab, is a scrollable list of pertinent exhibit types are displayed, determined by the allegations the user has selected. Next to that, all of the unassigned evidences are also displayed. The user is to drag and drop the evidences onto the exhibit it applies to. Each Exhibit that contains evidence is to be kept at the top of the list of exhibits.
+24. **Exhibits Screen (`ExhibitsScreen.kt`):** This screen MUST have a tabbed layout with three tabs: 'View', 'Organize', and 'Assign'.
+    *   The 'Organize' tab (formerly 'Clean Up') MUST contain a button with the text 'Scan'.
+    *   When this 'Scan' button is pressed, the button itself MUST be hidden and replaced with an `AzLoad` animation and a `LinearProgressIndicator` that fills the width of the screen. These loading indicators MUST remain visible until the cleanup suggestion scan is complete.
+25. **Exhibits Screen - Assign Tab (`ExhibitsScreen.kt`):** On the 'Assign' tab, the left column displays pertinent exhibit types derived from the case's allegations. The right column displays unassigned evidence.
+    *   **Drag-and-Drop Behavior:** When a user drags an `EvidenceDisplayItem` from the right column, the drag preview (the 'ghost' image) MUST originate from the exact position of the item being dragged, not from the top of the screen. This is implemented in `DraggableItem` by using `onGloballyPositioned` to get the item's `positionInWindow()` and adding it to the drag offset. This implementation MUST NOT be altered.
 26. If the user clicks on an Exhibit then its description, a list of pertinent evidence types, the Exhibit's completeness and influence factor, and a list of that Exhibit's contents are displayed. Tapping a piece of evidence here allows the user to remove it from that Exhibit, tag it, or do other unknown things via scripting.
+27. **Templates Screen (`TemplatesScreen.kt`):** On the `TemplatesScreen`, tapping a `TemplateItem` card MUST open a full-screen `TemplatePreviewDialog` that displays the template's content in a `WebView`. This functionality is implemented and must be preserved.
 
+
+---
+### Data File Formats
+*   **`allegations_catalog.json`**: This file, located in `app/src/main/assets/`, MUST be a valid JSON array `[]`. Each element in the array MUST be an object `{}` representing a single allegation. The previous malformed, multi-object structure has been corrected, and the `AllegationProvider` has been simplified to parse this array structure directly with Gson. DO NOT change the file back to a multi-object format.
 
 ---
 
@@ -118,9 +126,12 @@ This document outlines the features, fixes, and enhancements required to complet
     *   Add logic to display a placeholder `ExtendedEvent` component when the timeline is empty to show users what to expect.
 
 12. **Exhibits Screen (`ExhibitsScreen.kt`):**
-    *   Implement a tabbed layout for the main functionality.
-    *   Implement a drag-and-drop interface for assigning evidence to exhibits.
+    *   Implement a tabbed layout for the main functionality. [COMPLETED] The tabs are 'View', 'Organize', and 'Assign'.
+    *   Implement a drag-and-drop interface for assigning evidence to exhibits. [COMPLETED] The drag preview position has been fixed. The list of pertinent exhibits now populates correctly after fixing `allegations_catalog.json`.
     *   Create the exhibit details view that appears when an exhibit is clicked.
+
+13. **Templates Screen (`TemplatesScreen.kt`):**
+    *   Implement a full-screen preview for templates when they are tapped. [COMPLETED]
 
 ---
 
