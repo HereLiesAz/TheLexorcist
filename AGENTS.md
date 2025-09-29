@@ -68,6 +68,7 @@ The file google-services.template.json located at the root of the /app/ folder s
         *   Preserved all original court IDs to maintain data integrity and backward compatibility with existing cases.
         *   Assigned new, unique IDs to all new court entries to prevent conflicts.
         *   Verified that the existing data pipeline (`JurisdictionRepository` -> `CaseViewModel` -> `TemplatesScreen`) correctly handles the expanded list without requiring code changes.
+    *   **Desired Result:** When the user navigates to the **Templates screen**, the "Court" dropdown menu will contain a significantly expanded and more comprehensive list of U.S. federal, state, and territorial courts, providing a much wider range of options for selection.
 
 ---
 
