@@ -45,7 +45,7 @@ constructor(
     ) {
         when (val result = localFileStorageService.getEvidenceForCase(spreadsheetId)) {
             is Result.Loading -> { /* Handle loading state, perhaps log or emit a specific UI state */ }
-            is Result.Success -> {
+            is Result.Success<List<Evidence>> -> {
                 evidenceCacheManager.saveEvidence(caseId, result.data)
                 evidenceByCaseMap[spreadsheetId]?.value = result.data
             }
@@ -62,7 +62,7 @@ constructor(
     override suspend fun addEvidence(evidence: Evidence): Evidence? {
         val result = addEvidenceList(listOf(evidence))
         return when (result) {
-            is Result.Success -> result.data.firstOrNull()
+            is Result.Success<List<Evidence>> -> result.data.firstOrNull()
             else -> null
         }
     }
@@ -79,7 +79,7 @@ constructor(
             ?: return Result.Error(Exception("StorageService is not a LocalFileStorageService, cannot perform batch add."))
 
         return when (val result = localService.addEvidenceList(spreadsheetId, evidenceList)) {
-            is Result.Success -> {
+            is Result.Success<List<Evidence>> -> {
                 refreshEvidence(spreadsheetId, caseId)
                 Result.Success(result.data)
             }
@@ -91,14 +91,14 @@ constructor(
 
     override suspend fun updateEvidence(evidence: Evidence) {
         when (localFileStorageService.updateEvidence(evidence.spreadsheetId, evidence)) {
-            is Result.Success -> refreshEvidence(evidence.spreadsheetId, evidence.caseId)
+            is Result.Success<Unit> -> refreshEvidence(evidence.spreadsheetId, evidence.caseId)
             else -> { /* Handle error */ }
         }
     }
 
     override suspend fun deleteEvidence(evidence: Evidence) {
         when (localFileStorageService.deleteEvidence(evidence.spreadsheetId, evidence)) {
-            is Result.Success -> refreshEvidence(evidence.spreadsheetId, evidence.caseId)
+            is Result.Success<Unit> -> refreshEvidence(evidence.spreadsheetId, evidence.caseId)
             else -> { /* Handle error */ }
         }
     }
@@ -129,7 +129,7 @@ constructor(
         reason: String,
     ): Result<Unit> {
         val result: Result<Unit> = localFileStorageService.updateTranscript(evidence, newTranscript, reason)
-        if (result is Result.Success) {
+        if (result is Result.Success<Unit>) {
             refreshEvidence(evidence.spreadsheetId, evidence.caseId)
         }
         return result
@@ -139,14 +139,14 @@ constructor(
         // This is a simple implementation that doesn't cache exhibits.
         // A more robust implementation would cache the exhibits similar to how evidence is cached.
         return when (val result = localFileStorageService.getExhibitsForCase(caseSpreadsheetId)) {
-            is Result.Success -> kotlinx.coroutines.flow.flowOf(result.data)
+            is Result.Success<List<Exhibit>> -> kotlinx.coroutines.flow.flowOf(result.data)
             else -> emptyFlow()
         }
     }
 
     override suspend fun addExhibit(caseSpreadsheetId: String, exhibit: Exhibit): Exhibit? {
         return when (val result = localFileStorageService.addExhibit(caseSpreadsheetId, exhibit)) {
-            is Result.Success -> result.data
+            is Result.Success<Exhibit> -> result.data
             else -> null
         }
     }

@@ -43,7 +43,6 @@ import com.hereliesaz.lexorcist.ui.components.ImapImportDialog
 import com.hereliesaz.lexorcist.ui.components.ImportFilterDialog
 import com.hereliesaz.lexorcist.ui.components.LocationHistoryInstructionsDialog
 import androidx.compose.ui.Alignment
-import androidx.hilt.navigation.compose.hiltViewModel // Corrected import for hiltViewModel
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.hereliesaz.lexorcist.model.OutlookSignInState
 import androidx.compose.ui.Modifier
@@ -434,7 +433,7 @@ fun ProcessingProgressView(
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 LinearProgressIndicator(
-                    progress = { processingState.progress }, // Updated to pass lambda
+                    progress = processingState.progress, // Corrected: pass value directly
                     modifier = Modifier.fillMaxWidth()
                 )
             }
