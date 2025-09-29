@@ -1,11 +1,17 @@
 package com.hereliesaz.lexorcist.data
 
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
+
+@Parcelize
 data class MasterAllegation(
-    val id: String?, // Reverted to nullable
+    val id: String,
     val type: String?,
     val category: String?,
-    val name: String, // Remains non-nullable, as 'name' is present in JSON
+    val name: String,
     val description: String?,
     val courtLevel: String?,
-    val isSelected: Boolean = false,
-)
+    val elements: List<String>?,
+    val relevantEvidence: RelevantEvidence?,
+    val isSelected: Boolean = false
+) : Parcelable
