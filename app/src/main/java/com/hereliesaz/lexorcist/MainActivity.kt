@@ -16,9 +16,11 @@ import com.hereliesaz.lexorcist.MainScreen // Added import
 import com.hereliesaz.lexorcist.ui.theme.LexorcistTheme
 import com.hereliesaz.lexorcist.viewmodel.AuthViewModel
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
+import com.hereliesaz.lexorcist.utils.DataMigration
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 import com.hereliesaz.lexorcist.viewmodel.ScriptedMenuViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import java.io.File
 import java.util.Locale
 import javax.inject.Inject
 
@@ -45,6 +47,12 @@ class MainActivity : ComponentActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false) // Added for edge-to-edge
         super.onCreate(savedInstanceState)
         currentLanguage = settingsManager.getLanguage()
+
+        // Temporary migration code
+        val migrationFile = File(filesDir, "lexorcist_catalogs.xlsx")
+        if (!migrationFile.exists()) {
+            DataMigration(this).migrate()
+        }
 
         authViewModel.signIn(this, mainViewModel, silent = true)
 

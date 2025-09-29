@@ -1,9 +1,15 @@
 package com.hereliesaz.lexorcist.data
 
+import android.content.Context
 import com.hereliesaz.lexorcist.model.Script
 import com.hereliesaz.lexorcist.model.Template
 import com.hereliesaz.lexorcist.service.GoogleApiService
 import com.hereliesaz.lexorcist.utils.Result
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.apache.poi.ss.usermodel.WorkbookFactory
+import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -12,10 +18,9 @@ sealed interface SharedItem {
     val id: String
     val name: String
     val description: String
-    val authorName: String // Added
-    val authorEmail: String // Renamed from author
+    val authorName: String
+    val authorEmail: String
     val content: String
-    // val author: String // REMOVED
     val type: String
     val rating: Double
     val numRatings: Int
@@ -55,18 +60,88 @@ data class TemplateItem(val template: Template) : SharedItem {
 
 @Singleton
 class ExtrasRepository @Inject constructor(
-    private val googleApiService: GoogleApiService
+    private val googleApiService: GoogleApiService,
+    @ApplicationContext private val context: Context
 ) {
 
     suspend fun getSharedItems(): Result<List<SharedItem>> {
         return try {
-            // Assuming googleApiService.getSharedScripts() now returns Scripts with authorName and authorEmail populated
             val scripts = googleApiService.getSharedScripts().map { ScriptItem(it) }
-            // Assuming googleApiService.getSharedTemplates() now returns Templates with authorName and authorEmail populated
             val templates = googleApiService.getSharedTemplates().map { TemplateItem(it) }
             Result.Success(scripts + templates)
         } catch (e: Exception) {
             Result.Error(e)
+        }
+    }
+
+    suspend fun getDefaultScripts(): List<Script> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val file = File(context.filesDir, "lexorcist_catalogs.xlsx")
+                if (!file.exists()) return@withContext emptyList()
+
+                val workbook = WorkbookFactory.create(file)
+                val sheet = workbook.getSheet("DefaultScripts")
+                val scripts = mutableListOf<Script>()
+                val headerRow = sheet.getRow(0)
+                val headers = headerRow.cellIterator().asSequence().map { it.stringCellValue }.toList()
+                val colIndices = headers.withIndex().associate { (index, name) -> name to index }
+
+                for (i in 1..sheet.lastRowNum) {
+                    val row = sheet.getRow(i) ?: continue
+                    scripts.add(
+                        Script(
+                            id = "default_script_$i", // Generating a unique ID
+                            name = row.getCell(colIndices.getValue("name")).stringCellValue,
+                            authorName = row.getCell(colIndices.getValue("authorName")).stringCellValue,
+                            authorEmail = row.getCell(colIndices.getValue("authorEmail")).stringCellValue,
+                            description = row.getCell(colIndices.getValue("description")).stringCellValue,
+                            content = row.getCell(colIndices.getValue("content")).stringCellValue
+                        )
+                    )
+                }
+                workbook.close()
+                scripts
+            } catch (e: Exception) {
+                e.printStackTrace()
+                emptyList()
+            }
+        }
+    }
+
+    suspend fun getDefaultTemplates(): List<Template> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val file = File(context.filesDir, "lexorcist_catalogs.xlsx")
+                if (!file.exists()) return@withContext emptyList()
+
+                val workbook = WorkbookFactory.create(file)
+                val sheet = workbook.getSheet("DefaultTemplates")
+                val templates = mutableListOf<Template>()
+                val headerRow = sheet.getRow(0)
+                val headers = headerRow.cellIterator().asSequence().map { it.stringCellValue }.toList()
+                val colIndices = headers.withIndex().associate { (index, name) -> name to index }
+
+                for (i in 1..sheet.lastRowNum) {
+                    val row = sheet.getRow(i) ?: continue
+                    templates.add(
+                        Template(
+                            id = row.getCell(colIndices.getValue("id")).stringCellValue,
+                            name = row.getCell(colIndices.getValue("name")).stringCellValue,
+                            description = row.getCell(colIndices.getValue("description")).stringCellValue,
+                            content = row.getCell(colIndices.getValue("content")).stringCellValue,
+                            authorName = row.getCell(colIndices.getValue("authorName")).stringCellValue,
+                            authorEmail = row.getCell(colIndices.getValue("authorEmail")).stringCellValue,
+                            court = row.getCell(colIndices.getValue("court"))?.stringCellValue
+                        )
+                    )
+                }
+                workbook.close()
+                templates
+            } catch (e: Exception) {
+                e.printStackTrace()
+                emptyList()
+            }
         }
     }
 
@@ -75,8 +150,6 @@ class ExtrasRepository @Inject constructor(
             is ScriptItem -> item.script
             is TemplateItem -> item.template
         }
-        // This call will now pass a Script/Template object that has authorEmail correctly set.
-        // googleApiService.deleteSharedItem should ideally use originalItem.authorEmail for its checks.
         return googleApiService.deleteSharedItem(originalItem, userEmail)
     }
 
@@ -85,7 +158,6 @@ class ExtrasRepository @Inject constructor(
             is ScriptItem -> item.script
             is TemplateItem -> item.template
         }
-        // Similar to delete, googleApiService.updateSharedItem should use originalItem.authorEmail.
         return googleApiService.updateSharedItem(originalItem, userEmail)
     }
 
@@ -94,11 +166,10 @@ class ExtrasRepository @Inject constructor(
         description: String,
         content: String,
         type: String,
-        authorName: String, // New parameter
+        authorName: String,
         authorEmail: String,
         court: String?
     ): Result<Unit> {
-        // CRITICAL: You MUST update googleApiService.shareAddon to accept authorName.
         return googleApiService.shareAddon(name, description, content, type, authorName, authorEmail, court ?: "")
     }
 
