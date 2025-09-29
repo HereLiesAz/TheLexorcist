@@ -40,7 +40,7 @@ class MasterAllegationsViewModel @Inject constructor(
     // Public flows for the UI
     val selectedAllegations: StateFlow<List<MasterAllegation>> =
         combine(_masterAllegations, _selectedAllegationNames) { master, selectedNames ->
-            master.filter { it.name != null && selectedNames.contains(it.name) }
+            master.filter { selectedNames.contains(it.name) } // Simplified: it.name is now non-nullable
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val allegations: StateFlow<List<MasterAllegation>> =
@@ -51,14 +51,14 @@ class MasterAllegationsViewModel @Inject constructor(
             _sortType
         ) { master, selectedNames, query, sort ->
             val updatedMaster = master.map {
-                it.copy(isSelected = it.name != null && selectedNames.contains(it.name))
+                it.copy(isSelected = selectedNames.contains(it.name)) // Simplified: it.name is now non-nullable
             }
 
             val filtered = if (query.isBlank()) {
                 updatedMaster
             } else {
                 updatedMaster.filter {
-                    (it.name?.contains(query, ignoreCase = true) ?: false) ||
+                    it.name.contains(query, ignoreCase = true) || // Simplified: it.name is now non-nullable
                             (it.description?.contains(query, ignoreCase = true) ?: false) ||
                             (it.category?.contains(query, ignoreCase = true) ?: false) ||
                             (it.type?.contains(query, ignoreCase = true) ?: false)
@@ -67,10 +67,10 @@ class MasterAllegationsViewModel @Inject constructor(
 
             when (sort) {
                 AllegationSortType.TYPE ->
-                    filtered.sortedWith(compareBy({ it.type ?: "" }, { it.category ?: "" }, { it.name ?: "" }))
+                    filtered.sortedWith(compareBy({ it.type ?: "" }, { it.category ?: "" }, { it.name })) // Simplified: it.name is now non-nullable
                 AllegationSortType.CATEGORY ->
-                    filtered.sortedWith(compareBy({ it.category ?: "" }, { it.type ?: "" }, { it.name ?: "" }))
-                AllegationSortType.NAME -> filtered.sortedBy { it.name ?: "" }
+                    filtered.sortedWith(compareBy({ it.category ?: "" }, { it.type ?: "" }, { it.name })) // Simplified: it.name is now non-nullable
+                AllegationSortType.NAME -> filtered.sortedBy { it.name } // Simplified: it.name is now non-nullable
                 AllegationSortType.COURT_LEVEL -> filtered.sortedBy { it.courtLevel ?: "" }
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -103,7 +103,7 @@ class MasterAllegationsViewModel @Inject constructor(
 
     fun toggleAllegationSelection(allegation: MasterAllegation) {
         viewModelScope.launch {
-            val allegationName = allegation.name ?: return@launch
+            val allegationName = allegation.name // Simplified: allegation.name is now non-nullable
 
             val currentSelection = _selectedAllegationNames.value.toMutableSet()
             if (allegationName in currentSelection) {

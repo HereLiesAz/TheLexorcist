@@ -37,30 +37,11 @@ class DefaultExtrasSeeder @Inject constructor(
 
         try {
             // 1. Fetch existing remote items to avoid duplicates
-            val remoteScriptsResult = googleApiService.getSharedScripts()
-            val remoteTemplatesResult = googleApiService.getSharedTemplates()
+            val remoteScripts = googleApiService.getSharedScripts()
+            val remoteScriptNames = remoteScripts.map { it.name }.toSet()
 
-            val remoteScriptNames = if (remoteScriptsResult is Result.Success<*>) {
-                // Compiler warning on line 43 (original): "Check for instance is always 'false'" for (remoteScriptsResult.data as? List<Script>).
-                // This implies the original expression would evaluate to emptySet<String>().
-                // We reflect this effective logic to silence the warning.
-                Log.w("DefaultExtrasSeeder", "Compiler warning suggests 'remoteScriptsResult.data as? List<Script>' is always false. Effective logic results in emptySet for remote scripts.")
-                emptySet<String>()
-            } else {
-                Log.e("DefaultExtrasSeeder", "Failed to fetch remote scripts. Seeding will proceed based on empty list.")
-                emptySet<String>()
-            }
-
-            val remoteTemplateNames = if (remoteTemplatesResult is Result.Success<*>) {
-                // Compiler warning on line 51 (original): "Check for instance is always 'false'" for (remoteTemplatesResult.data as? List<Template>).
-                // This implies the original expression would evaluate to emptySet<String>().
-                // We reflect this effective logic to silence the warning.
-                Log.w("DefaultExtrasSeeder", "Compiler warning suggests 'remoteTemplatesResult.data as? List<Template>' is always false. Effective logic results in emptySet for remote templates.")
-                emptySet<String>()
-            } else {
-                Log.e("DefaultExtrasSeeder", "Failed to fetch remote templates. Seeding will proceed based on empty list.")
-                emptySet<String>()
-            }
+            val remoteTemplates = googleApiService.getSharedTemplates()
+            val remoteTemplateNames = remoteTemplates.map { it.name }.toSet()
 
             // 2. Parse local JSON
             val jsonString = context.assets.open("default_extras.json").bufferedReader().use { it.readText() }
