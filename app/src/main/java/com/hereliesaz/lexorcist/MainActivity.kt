@@ -48,9 +48,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         currentLanguage = settingsManager.getLanguage()
 
-        // Temporary migration code
-        val migrationFile = File(filesDir, "lexorcist_catalogs.xlsx")
-        if (!migrationFile.exists()) {
+        // Run the data migration if the catalog file doesn't exist.
+        val catalogFile = File(applicationContext.filesDir, "lexorcist_catalogs.xlsx")
+        if (!catalogFile.exists()) {
             DataMigration(this).migrate()
         }
 

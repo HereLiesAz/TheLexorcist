@@ -23,9 +23,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import android.graphics.pdf.PdfDocument
-import android.provider.MediaStore
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import com.hereliesaz.lexorcist.utils.DataParser
 import com.hereliesaz.lexorcist.model.OutlookSignInState
 import com.hereliesaz.lexorcist.service.GmailService
@@ -44,8 +41,6 @@ import androidx.core.net.toUri
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
-import java.io.InputStreamReader
-import java.util.Locale
 
 @HiltViewModel
 class CaseViewModel
@@ -129,8 +124,8 @@ constructor(
     private val _htmlTemplates = MutableStateFlow<List<DriveFile>>(emptyList())
     val htmlTemplates: StateFlow<List<DriveFile>> = _htmlTemplates.asStateFlow()
 
-    private val _scripts = MutableStateFlow<List<Script>>(emptyList())
-    val scripts: StateFlow<List<Script>> = _scripts.asStateFlow()
+    private val _scripts = MutableStateFlow<List<com.hereliesaz.lexorcist.data.Script>>(emptyList())
+    val scripts: StateFlow<List<com.hereliesaz.lexorcist.data.Script>> = _scripts.asStateFlow()
 
     private val _templates = MutableStateFlow<List<Template>>(emptyList())
     val templates: StateFlow<List<Template>> = _templates.asStateFlow()
