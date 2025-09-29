@@ -110,13 +110,13 @@ class MasterAllegationsViewModel @Inject constructor(
             _selectedAllegationNames.value = currentSelection
 
             // Persist the change to the repository
-            val case = caseRepository.selectedCase.firstOrNull()
-            if (case != null) {
-                caseAllegationSelectionRepository.updateSelectedAllegations(
-                    case.spreadsheetId,
-                    currentSelection.toList()
-                )
-            }
+            val case = caseRepository.selectedCase.value
+                ?: throw IllegalStateException("Cannot toggle allegation when no case is selected.")
+
+            caseAllegationSelectionRepository.updateSelectedAllegations(
+                case.spreadsheetId,
+                currentSelection.toList()
+            )
         }
     }
 }

@@ -947,6 +947,7 @@ class GoogleApiService @Inject constructor(
         withContext(Dispatchers.IO) {
             val sheets = getSheetsService() ?: return@withContext null
             try {
+                ensureSheetExists(evidence.spreadsheetId, "Evidence")
                 val values =
                     listOf(
                         listOf(
@@ -987,6 +988,7 @@ class GoogleApiService @Inject constructor(
         withContext(Dispatchers.IO) {
             val sheets = getSheetsService() ?: return@withContext false
             try {
+                ensureSheetExists(spreadsheetId, "Allegations")
                 val values =
                     listOf(
                         listOf(
@@ -1013,6 +1015,7 @@ class GoogleApiService @Inject constructor(
         val sheets = getSheetsService() ?: return false
         return withContext(Dispatchers.IO) {
             try {
+                ensureSheetExists(evidence.spreadsheetId, "Evidence")
                 val range = "Evidence!A:A" // Assuming IDs are in column A
                 val response =
                     sheets
@@ -1064,6 +1067,7 @@ class GoogleApiService @Inject constructor(
         val sheets = getSheetsService() ?: return false
         return withContext(Dispatchers.IO) {
             try {
+                ensureSheetExists(evidence.spreadsheetId, "Evidence")
                 val range = "Evidence!A:A" // Assuming IDs are in column A
                 val response =
                     sheets
@@ -1204,6 +1208,7 @@ class GoogleApiService @Inject constructor(
             try {
                 val spreadsheetId = EXTRAS_SPREADSHEET_ID
                 val sheetName = if (type == "Script") "Scripts" else "Templates"
+                ensureSheetExists(spreadsheetId, sheetName)
                 val range = "$sheetName!A:A"
                 val response =
                     sheets
@@ -1249,6 +1254,7 @@ class GoogleApiService @Inject constructor(
         sheetName: String,
         itemId: String,
     ): Int {
+        ensureSheetExists(spreadsheetId, sheetName)
         val idColumnRange = "$sheetName!A:A"
         val response = sheets.spreadsheets().values().get(spreadsheetId, idColumnRange).execute()
         val values = response.getValues() ?: return -1
@@ -1360,6 +1366,7 @@ class GoogleApiService @Inject constructor(
             try {
                 val spreadsheetId = EXTRAS_SPREADSHEET_ID
                 val sheetName = if (type == "Script") "Scripts" else "Templates"
+                ensureSheetExists(spreadsheetId, sheetName)
 
                 val rowIndex = findRowOfSharedItem(sheets, spreadsheetId, sheetName, id)
                 if (rowIndex == -1) {
@@ -1398,6 +1405,7 @@ class GoogleApiService @Inject constructor(
         withContext(Dispatchers.IO) {
             val sheets = getSheetsService() ?: return@withContext emptyList()
             try {
+                ensureSheetExists(spreadsheetId, "SelectedAllegations")
                 val range = "SelectedAllegations!A:A"
                 val response =
                     sheets
@@ -1416,23 +1424,32 @@ class GoogleApiService @Inject constructor(
             }
         }
 
+    private suspend fun ensureSheetExists(spreadsheetId: String, sheetName: String) {
+        val sheets = getSheetsService() ?: throw IOException("Sheets service not available")
+        val spreadsheet = sheets.spreadsheets().get(spreadsheetId).execute()
+        val sheetExists = spreadsheet.sheets.any { it.properties.title == sheetName }
+
+        if (!sheetExists) {
+            addSheet(spreadsheetId, sheetName)
+        }
+    }
+
     suspend fun updateSelectedAllegations(
         spreadsheetId: String,
         allegations: List<String>,
     ) {
-        val sheets = getSheetsService() ?: return // Or throw, or return Result
         withContext(Dispatchers.IO) {
             try {
-                val sheetData = readSpreadsheet(spreadsheetId)
-                if (sheetData?.get("SelectedAllegations") == null) {
-                    addSheet(spreadsheetId, "SelectedAllegations") // Uses sheets internally
-                } else {
-                    clearSheet(spreadsheetId, "SelectedAllegations") // Uses sheets internally
+                ensureSheetExists(spreadsheetId, "SelectedAllegations")
+                clearSheet(spreadsheetId, "SelectedAllegations!A:A")
+
+                if (allegations.isNotEmpty()) {
+                    val values = allegations.map { listOf(it) }
+                    writeData(spreadsheetId, "SelectedAllegations!A1", values)
                 }
-                val values = allegations.map { listOf(it) }
-                writeData(spreadsheetId, "SelectedAllegations!A1", values) // Uses sheets internally
             } catch (e: IOException) {
-                // Handle error
+                Log.e("GoogleApiService", "Failed to update selected allegations for sheet: $spreadsheetId", e)
+                // Optionally re-throw or handle the error as a Result
             }
         }
     }
