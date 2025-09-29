@@ -10,22 +10,38 @@ import java.io.InputStreamReader
 
 object AllegationProvider {
     private var allegations: List<AllegationCatalogEntry> = emptyList()
+    private var evidenceCatalog: EvidenceCatalogRoot? = null
 
     fun loadAllegations(context: Context) {
-        if (allegations.isNotEmpty()) return
-
-        try {
-            context.assets.open("allegations_catalog.json").use { inputStream ->
-                InputStreamReader(inputStream).use { reader ->
-                    val gson = Gson()
-                    val allegationListType = object : TypeToken<List<AllegationCatalogEntry>>() {}.type
-                    val loadedAllegations: List<AllegationCatalogEntry> = gson.fromJson(reader, allegationListType)
-                    allegations = loadedAllegations
-                    Log.i("AllegationProvider", "Successfully loaded ${allegations.size} allegation catalog entries.")
+        if (allegations.isEmpty()) {
+            try {
+                context.assets.open("allegations_catalog.json").use { inputStream ->
+                    InputStreamReader(inputStream).use { reader ->
+                        val gson = Gson()
+                        val allegationListType = object : TypeToken<List<AllegationCatalogEntry>>() {}.type
+                        allegations = gson.fromJson(reader, allegationListType)
+                        Log.i("AllegationProvider", "Successfully loaded ${allegations.size} allegation catalog entries.")
+                    }
                 }
+            } catch (e: Exception) {
+                Log.e("AllegationProvider", "Failed to load allegations_catalog.json", e)
             }
-        } catch (e: Exception) {
-            Log.e("AllegationProvider", "Failed to load or parse allegations_catalog.json", e)
+        }
+
+        if (evidenceCatalog == null) {
+            try {
+                context.assets.open("evidence_catalog.json").use { inputStream ->
+                    InputStreamReader(inputStream).use { reader ->
+                        val gson = Gson()
+                        evidenceCatalog = gson.fromJson(reader, EvidenceCatalogRoot::class.java)
+                        val count = evidenceCatalog?.allegationEvidenceCatalog?.civilAllegations?.size ?: 0 +
+                                    (evidenceCatalog?.allegationEvidenceCatalog?.criminalAllegations?.size ?: 0)
+                        Log.i("AllegationProvider", "Successfully loaded $count evidence catalog entries.")
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("AllegationProvider", "Failed to load or parse evidence_catalog.json", e)
+            }
         }
     }
 
@@ -33,6 +49,12 @@ object AllegationProvider {
         val idString = id.toString()
         val paddedIdString = id.toString().padStart(3, '0')
         return allegations.find { it.id == idString || it.id == paddedIdString }
+    }
+
+    fun getEvidenceCatalogForAllegation(allegationName: String): EvidenceCatalogEntry? {
+        val allAllegations = (evidenceCatalog?.allegationEvidenceCatalog?.civilAllegations ?: emptyList()) +
+                               (evidenceCatalog?.allegationEvidenceCatalog?.criminalAllegations ?: emptyList())
+        return allAllegations.find { it.allegationName.equals(allegationName, ignoreCase = true) }
     }
 
     fun getAllLoadedCatalogEntries(): List<AllegationCatalogEntry> {

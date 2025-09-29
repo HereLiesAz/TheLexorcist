@@ -228,18 +228,22 @@ constructor(
         loadExtrasFromJson()
         loadJurisdictions()
         AllegationProvider.loadAllegations(applicationContext)
+        // Set default storage location on init
+        viewModelScope.launch {
+            val savedLocation = settingsManager.getStorageLocation().first()
+            if (savedLocation.isNullOrEmpty()) {
+                _storageLocation.value = applicationContext.filesDir.absolutePath
+                Log.i("CaseViewModel", "Storage location initialized to default: ${_storageLocation.value}")
+            } else {
+                _storageLocation.value = savedLocation
+                Log.i("CaseViewModel", "Storage location loaded from settings: $savedLocation")
+            }
+        }
 
         viewModelScope.launch {
             allegations.collect { currentAllegations ->
-                val exhibitTypes = mutableSetOf<String>()
-                currentAllegations.forEach { allegation ->
-                    AllegationProvider.getAllegationById(allegation.id)?.let { catalogEntry ->
-                        catalogEntry.relevant_evidence.keys.forEach { evidenceType ->
-                            exhibitTypes.add(evidenceType.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() })
-                        }
-                    }
-                }
-                _pertinentExhibitTypes.value = exhibitTypes.toList()
+                // When allegations change, re-run the exhibit creation logic.
+                createMissingExhibitsForCurrentAllegations(currentAllegations)
             }
         }
 
@@ -284,6 +288,69 @@ constructor(
                 val lastSelectedCase = allCases.find { it.spreadsheetId == lastSelectedCaseId }
                 if (lastSelectedCase != null) {
                     selectCase(lastSelectedCase)
+                }
+            }
+        }
+    }
+
+    private fun createMissingExhibitsForCurrentAllegations(currentCaseAllegations: List<Allegation>) {
+        viewModelScope.launch {
+            val case = selectedCase.value ?: return@launch
+            if (currentCaseAllegations.isEmpty()) {
+                _pertinentExhibitTypes.value = emptyList()
+                return@launch
+            }
+
+            val allPertinentExhibitTypes = mutableSetOf<String>()
+            val exhibitsToCreate = mutableListOf<com.hereliesaz.lexorcist.data.Exhibit>()
+            val currentExhibits = evidenceRepository.getExhibitsForCase(case.spreadsheetId).first()
+            _exhibits.value = currentExhibits
+
+            currentCaseAllegations.forEach { caseAllegation ->
+                val canonicalAllegation = AllegationProvider.getAllegationById(caseAllegation.id)
+                if (canonicalAllegation == null) {
+                    Log.w("ExhibitCreation", "Could not find canonical allegation for ID: ${caseAllegation.id}")
+                    return@forEach
+                }
+
+                val evidenceCatalogEntry = AllegationProvider.getEvidenceCatalogForAllegation(canonicalAllegation.allegationName)
+                if (evidenceCatalogEntry == null) {
+                    Log.w("ExhibitCreation", "Could not find evidence catalog for: ${canonicalAllegation.allegationName}")
+                    return@forEach
+                }
+
+                evidenceCatalogEntry.relevantEvidence.forEach { (category, evidenceItems) ->
+                    allPertinentExhibitTypes.add(category)
+                    evidenceItems.forEach { exhibitName ->
+                        val exhibitDescription = "Exhibit for '$exhibitName' to support the allegation of ${canonicalAllegation.allegationName}."
+                        val exhibitExists = currentExhibits.any { it.name.equals(exhibitName, ignoreCase = true) && it.description == exhibitDescription }
+                        val alreadyInBatch = exhibitsToCreate.any { it.name.equals(exhibitName, ignoreCase = true) && it.description == exhibitDescription }
+
+                        if (!exhibitExists && !alreadyInBatch) {
+                            exhibitsToCreate.add(
+                                com.hereliesaz.lexorcist.data.Exhibit(
+                                    caseId = case.id.toLong(),
+                                    name = exhibitName,
+                                    description = exhibitDescription,
+                                    evidenceIds = emptyList()
+                                )
+                            )
+                        }
+                    }
+                }
+            }
+
+            _pertinentExhibitTypes.value = allPertinentExhibitTypes.toList()
+
+            if (exhibitsToCreate.isNotEmpty()) {
+                viewModelScope.launch(Dispatchers.IO) {
+                    exhibitsToCreate.forEach { newExhibit ->
+                        evidenceRepository.addExhibit(case.spreadsheetId, newExhibit)
+                    }
+                    // After adding all, trigger a refresh from the main thread
+                    withContext(Dispatchers.Main) {
+                        loadExhibits()
+                    }
                 }
             }
         }
@@ -622,6 +689,8 @@ constructor(
                     Log.d("CaseViewModel", "Case is not null, proceeding to load filters/templates for ${case.name}")
                     loadSheetFiltersFromRepository(case.spreadsheetId)
                     loadHtmlTemplatesFromRepository()
+                    // Exhibit creation is now handled by the allegations collector,
+                    // which is triggered when the case's allegations are loaded after selection.
                 } else {
                     Log.d("CaseViewModel", "Case is null, clearing filters/templates.")
                     _sheetFilters.value = emptyList()
@@ -1237,67 +1306,77 @@ constructor(
         viewModelScope.launch {
             _isScanningForCleanup.value = true
             globalLoadingState.pushLoading()
+            _userMessage.value = "Scanning for duplicates and image series..."
             try {
-                _userMessage.value = "Scanning for duplicates and image series..."
-                val currentEvidence = _selectedCaseEvidenceListInternal.value
+                // Heavy lifting should be on a background thread
+                withContext(Dispatchers.IO) {
+                    val currentEvidence = _selectedCaseEvidenceListInternal.value
 
-                val evidenceToHash = currentEvidence.filter { it.mediaUri != null && it.fileHash.isNullOrEmpty() }
-                if (evidenceToHash.isNotEmpty()) {
-                    _userMessage.value = "Calculating hashes for ${evidenceToHash.size} items..."
-                    evidenceToHash.forEach { evidence ->
-                        try {
-                            val hash = com.hereliesaz.lexorcist.utils.HashingUtils.getHash(applicationContext, android.net.Uri.parse(evidence.mediaUri))
-                            if (hash != null) {
-                                evidenceRepository.updateEvidence(evidence.copy(fileHash = hash))
+                    val evidenceToHash = currentEvidence.filter { it.mediaUri != null && it.fileHash.isNullOrEmpty() }
+                    if (evidenceToHash.isNotEmpty()) {
+                        withContext(Dispatchers.Main) {
+                            _userMessage.value = "Calculating hashes for ${evidenceToHash.size} items..."
+                        }
+                        evidenceToHash.forEach { evidence ->
+                            try {
+                                val hash = com.hereliesaz.lexorcist.utils.HashingUtils.getHash(applicationContext, android.net.Uri.parse(evidence.mediaUri))
+                                if (hash != null) {
+                                    evidenceRepository.updateEvidence(evidence.copy(fileHash = hash))
+                                }
+                            } catch (e: SecurityException) {
+                                Log.e("Cleanup", "Permission error hashing ${evidence.mediaUri}, may need to re-grant access.", e)
+                                withContext(Dispatchers.Main) {
+                                    _errorMessage.value = "Permission error accessing a file. Please check storage permissions."
+                                }
+                            } catch (e: Exception) {
+                                Log.e("Cleanup", "Failed to hash ${evidence.mediaUri}", e)
                             }
-                        } catch (e: SecurityException) {
-                            Log.e("Cleanup", "Permission error hashing ${evidence.mediaUri}, may need to re-grant access.", e)
-                            _errorMessage.value = "Permission error accessing a file. Please check storage permissions."
-                        } catch (e: Exception) {
-                            Log.e("Cleanup", "Failed to hash ${evidence.mediaUri}", e)
+                        }
+                    }
+
+                    // Refresh evidence list after hashing
+                    caseRepository.refreshSelectedCaseDetails().first() // block until refresh is done
+                    val updatedEvidence = _selectedCaseEvidenceListInternal.value
+                    val suggestions = mutableListOf<CleanupSuggestion>()
+
+                    val evidenceWithHashes = updatedEvidence.filterNot { it.fileHash.isNullOrEmpty() }
+                    val duplicateGroups = evidenceWithHashes
+                        .groupBy { it.fileHash!! }
+                        .filter { it.value.size > 1 }
+                        .map { CleanupSuggestion.DuplicateGroup(it.value) }
+
+                    suggestions.addAll(duplicateGroups)
+
+                    duplicateGroups.flatMap { it.evidence }.forEach { evidence ->
+                        if (!evidence.isDuplicate) {
+                            evidenceRepository.updateEvidence(evidence.copy(isDuplicate = true))
+                        }
+                    }
+
+                    val nonDuplicateImageEvidence = updatedEvidence.filter { it.type == "image" && !it.isDuplicate }
+                    val seriesCandidates = nonDuplicateImageEvidence.groupBy {
+                        it.sourceDocument.replace(Regex("[_\\d]"), "")
+                    }.filter { it.value.size > 1 }
+
+                    seriesCandidates.forEach { (_, series) ->
+                        suggestions.add(CleanupSuggestion.ImageSeriesGroup(series))
+                    }
+
+                    withContext(Dispatchers.Main) {
+                        _cleanupSuggestions.value = suggestions
+                        _userMessage.value = if (suggestions.isNotEmpty()) {
+                            "Cleanup scan complete. Found ${suggestions.size} suggestion(s)."
+                        } else {
+                            "Cleanup scan complete. No duplicates or image series found."
                         }
                     }
                 }
-
-                val updatedEvidence = selectedCaseEvidenceList.value
-                val suggestions = mutableListOf<CleanupSuggestion>()
-
-                val evidenceWithHashes = updatedEvidence.filterNot { it.fileHash.isNullOrEmpty() }
-                val duplicateGroups = evidenceWithHashes
-                    .groupBy { it.fileHash!! }
-                    .filter { it.value.size > 1 }
-                    .map { CleanupSuggestion.DuplicateGroup(it.value) }
-
-                suggestions.addAll(duplicateGroups)
-
-                duplicateGroups.flatMap { it.evidence }.forEach { evidence ->
-                    if (!evidence.isDuplicate) {
-                        evidenceRepository.updateEvidence(evidence.copy(isDuplicate = true))
-                    }
-                }
-
-                val nonDuplicateImageEvidence = updatedEvidence.filter { it.type == "image" && !it.isDuplicate }
-                val seriesCandidates = nonDuplicateImageEvidence.groupBy {
-                    it.sourceDocument.replace(Regex("[_\\d]"), "")
-                }.filter { it.value.size > 1 }
-
-                seriesCandidates.forEach { (_, series) ->
-                    suggestions.add(CleanupSuggestion.ImageSeriesGroup(series))
-                }
-
-                _cleanupSuggestions.value = suggestions
-                _userMessage.value = if (suggestions.isNotEmpty()) {
-                    "Cleanup scan complete. Found ${suggestions.size} suggestion(s)."
-                } else {
-                    "Cleanup scan complete. No duplicates or image series found."
-                }
-
             } catch (e: Exception) {
                 _errorMessage.value = "Failed to run cleanup scan: ${e.message}"
                 Log.e("Cleanup", "Error in generateCleanupSuggestions", e)
             } finally {
                 globalLoadingState.popLoading()
-                _isScanningForCleanup.value = false
+                _isScanningForCleanup.value = false // This ensures the loading indicator is always turned off
             }
         }
     }
@@ -1314,59 +1393,79 @@ constructor(
 
     fun mergeImageSeries(group: CleanupSuggestion.ImageSeriesGroup, allegationElementName: String) {
         viewModelScope.launch {
-            val case = selectedCase.value ?: return@launch
-            val caseDir = storageLocation.value?.let { File(it, case.spreadsheetId) } ?: return@launch
-            val rawDir = File(caseDir, "raw").apply { if (!exists()) mkdirs() }
-            val pdfFile = File(rawDir, "merged_series_${System.currentTimeMillis()}.pdf")
-
-            val pdfDocument = PdfDocument()
-
+            globalLoadingState.pushLoading()
+            _userMessage.value = "Merging image series into PDF..."
             try {
-                group.evidence.forEach { evidence ->
-                    val bitmap = MediaStore.Images.Media.getBitmap(applicationContext.contentResolver, android.net.Uri.parse(evidence.mediaUri))
-                    val pageInfo = PdfDocument.PageInfo.Builder(bitmap.width, bitmap.height, 1).create()
-                    val page = pdfDocument.startPage(pageInfo)
-                    page.canvas.drawBitmap(bitmap, 0f, 0f, null)
-                    pdfDocument.finishPage(page)
-                    bitmap.recycle()
+                val case = selectedCase.value
+                val storagePath = storageLocation.value
+                if (case == null || storagePath == null) {
+                    _errorMessage.value = "Cannot merge series: Case or storage location is not set."
+                    return@launch
                 }
 
-                pdfDocument.writeTo(FileOutputStream(pdfFile))
+                val newEvidence = withContext(Dispatchers.IO) {
+                    val caseDir = File(storagePath, case.spreadsheetId)
+                    val rawDir = File(caseDir, "raw").apply { if (!exists()) mkdirs() }
+                    val pdfFile = File(rawDir, "merged_series_${System.currentTimeMillis()}.pdf")
+
+                    val pdfDocument = PdfDocument()
+                    try {
+                        group.evidence.forEach { evidence ->
+                            applicationContext.contentResolver.openInputStream(android.net.Uri.parse(evidence.mediaUri))?.use { inputStream ->
+                                val bitmap = android.graphics.BitmapFactory.decodeStream(inputStream)
+                                val pageInfo = PdfDocument.PageInfo.Builder(bitmap.width, bitmap.height, 1).create()
+                                val page = pdfDocument.startPage(pageInfo)
+                                page.canvas.drawBitmap(bitmap, 0f, 0f, null)
+                                pdfDocument.finishPage(page)
+                                bitmap.recycle()
+                            }
+                        }
+                        pdfDocument.writeTo(FileOutputStream(pdfFile))
+                    } catch (e: Exception) {
+                        Log.e("MergeSeries", "Error creating PDF", e)
+                        // Return null to indicate failure
+                        return@withContext null
+                    } finally {
+                        pdfDocument.close()
+                    }
+
+                    val combinedContent = group.evidence.joinToString("\n\n") { it.content }
+                    com.hereliesaz.lexorcist.data.Evidence(
+                        caseId = case.id.toLong(),
+                        spreadsheetId = case.spreadsheetId,
+                        type = "pdf",
+                        content = combinedContent,
+                        formattedContent = "```\n$combinedContent\n```",
+                        mediaUri = pdfFile.toUri().toString(),
+                        timestamp = System.currentTimeMillis(),
+                        sourceDocument = "Merged from image series",
+                        documentDate = System.currentTimeMillis(),
+                        allegationId = null,
+                        allegationElementName = allegationElementName,
+                        category = "Document",
+                        tags = listOf("pdf", "merged"),
+                        fileHash = com.hereliesaz.lexorcist.utils.HashingUtils.getHash(applicationContext, pdfFile.toUri())
+                    )
+                }
+
+                if (newEvidence != null) {
+                    evidenceRepository.addEvidence(newEvidence)
+                    group.evidence.forEach { evidence ->
+                        deleteEvidence(evidence)
+                    }
+                    _userMessage.value = "Successfully merged images into a new PDF."
+                } else {
+                    _errorMessage.value = "Failed to create merged PDF."
+                }
+
             } catch (e: Exception) {
-                e.printStackTrace()
+                _errorMessage.value = "An error occurred while merging images: ${e.message}"
+                Log.e("MergeSeries", "Merge failed", e)
             } finally {
-                pdfDocument.close()
+                globalLoadingState.popLoading()
+                // Refresh suggestions after the operation
+                generateCleanupSuggestions()
             }
-
-            val combinedContent = group.evidence.joinToString("\n\n") { it.content }
-
-            val newEvidence = com.hereliesaz.lexorcist.data.Evidence(
-                caseId = case.id.toLong(),
-                spreadsheetId = case.spreadsheetId,
-                type = "pdf",
-                content = combinedContent,
-                formattedContent = "```\n$combinedContent\n```",
-                mediaUri = pdfFile.toUri().toString(),
-                timestamp = System.currentTimeMillis(),
-                sourceDocument = "Merged from image series",
-                documentDate = System.currentTimeMillis(),
-                allegationId = null,
-                allegationElementName = allegationElementName,
-                category = "Document",
-                tags = listOf("pdf", "merged"),
-                commentary = null,
-                parentVideoId = null,
-                entities = DataParser.tagData(combinedContent),
-                fileHash = com.hereliesaz.lexorcist.utils.HashingUtils.getHash(applicationContext, pdfFile.toUri())
-            )
-
-            evidenceRepository.addEvidence(newEvidence)
-
-            group.evidence.forEach { evidence ->
-                deleteEvidence(evidence)
-            }
-
-            generateCleanupSuggestions()
         }
     }
 
