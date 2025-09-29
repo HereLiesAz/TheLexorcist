@@ -120,7 +120,7 @@ fun ExhibitsScreen(
                     }
                 } else {
                     when (tabIndex) {
-                        0 -> ViewTab(caseViewModel)
+                        0 -> ViewTab(caseViewModel, exhibitsViewModel)
                         1 -> CleanUpTab(caseViewModel)
                         2 -> AssignTab(caseViewModel, exhibitsViewModel)
                     }
@@ -131,13 +131,19 @@ fun ExhibitsScreen(
 }
 
 @Composable
-fun ViewTab(caseViewModel: CaseViewModel) {
+fun ViewTab(caseViewModel: CaseViewModel, exhibitsViewModel: ExhibitsViewModel) {
     val exhibits by caseViewModel.exhibits.collectAsState()
     val evidenceList by caseViewModel.selectedCaseEvidenceList.collectAsState()
+    val pertinentExhibits by exhibitsViewModel.pertinentExhibits.collectAsState()
     var selectedExhibitForDetails by remember { mutableStateOf<Exhibit?>(null) }
 
+    val pertinentExhibitTypes = pertinentExhibits.map { it.type }.toSet()
+
+    // Filter exhibits to show only those that are pertinent to the selected allegations
+    val filteredExhibits = exhibits.filter { it.name in pertinentExhibitTypes }
+
     // Sort exhibits to show those with evidence first, as per AGENTS.md
-    val sortedExhibits = exhibits.sortedByDescending { it.evidenceIds.isNotEmpty() }
+    val sortedExhibits = filteredExhibits.sortedByDescending { it.evidenceIds.isNotEmpty() }
 
     if (sortedExhibits.isEmpty()) {
         Column(
