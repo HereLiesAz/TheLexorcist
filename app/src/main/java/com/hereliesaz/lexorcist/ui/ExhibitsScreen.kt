@@ -137,7 +137,7 @@ fun ViewTab(caseViewModel: CaseViewModel, exhibitsViewModel: ExhibitsViewModel) 
     val pertinentExhibits by exhibitsViewModel.pertinentExhibits.collectAsState()
     var selectedExhibitForDetails by remember { mutableStateOf<Exhibit?>(null) }
 
-    val pertinentExhibitTypes = pertinentExhibits.map { it.exhibit_type }.toSet()
+    val pertinentExhibitTypes = pertinentExhibits.map { it.type }.toSet()
 
     // Filter exhibits to show only those that are pertinent to the selected allegations
     val filteredExhibits = exhibits.filter { it.name in pertinentExhibitTypes }
