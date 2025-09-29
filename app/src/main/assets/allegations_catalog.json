@@ -1,0 +1,373 @@
+[
+  {
+    "type": "Civil",
+    "category": "Personal injury (Torts)",
+    "name": "Negligence",
+    "description": "Failure to exercise reasonable care, e.g., car accidents, slip-and-fall, medical malpractice, wrongful death.",
+    "courtLevel": "State"
+  },
+  {
+    "type": "Civil",
+    "category": "Personal injury (Torts)",
+    "name": "Assault and battery",
+    "description": "Intentional act causing fear of attack (assault) or unlawful physical contact (battery).",
+    "courtLevel": "State"
+  },
+  {
+    "type": "Civil",
+    "category": "Personal injury (Torts)",
+    "name": "False imprisonment",
+    "description": "Unlawful confinement of a person without their consent.",
+    "courtLevel": "State"
+  },
+  {
+    "type": "Civil",
+    "category": "Personal injury (Torts)",
+    "name": "Intentional infliction of emotional distress",
+    "description": "Extreme or outrageous conduct that causes severe emotional harm.",
+    "courtLevel": "State"
+  },
+  {
+    "type": "Civil",
+    "category": "Personal injury (Torts)",
+    "name": "Trespass",
+    "description": "Intentional entry onto the land of another without permission.",
+    "courtLevel": "State"
+  },
+  {
+    "type": "Civil",
+    "category": "Personal injury (Torts)",
+    "name": "Product Liability",
+    "description": "Holds manufacturers, distributors, or sellers responsible for a defective product that causes harm.",
+    "courtLevel": "Federal"
+  },
+  {
+    "type": "Civil",
+    "category": "Contract disputes",
+    "name": "Breach of contract",
+    "description": "Failure to perform the duties stipulated in a valid and binding contract.",
+    "courtLevel": "State"
+  },
+  {
+    "type": "Civil",
+    "category": "Contract disputes",
+    "name": "Fraudulent inducement",
+    "description": "Alleging that a party was intentionally deceived into entering a contract.",
+    "courtLevel": "State"
+  },
+  {
+    "type": "Civil",
+    "category": "Contract disputes",
+    "name": "Duress",
+    "description": "Claiming a party was coerced into an agreement.",
+    "courtLevel": "State"
+  },
+  {
+    "type": "Civil",
+    "category": "Contract disputes",
+    "name": "Lesion",
+    "description": "An allegation where a contract's price is unfairly low, typically for immovable property.",
+    "courtLevel": "State"
+  },
+  {
+    "type": "Civil",
+    "category": "Contract disputes",
+    "name": "Specific performance",
+    "description": "Seeking a court order for the other party to fulfill their part of the contract, rather than paying monetary damages.",
+    "courtLevel": "State"
+  },
+  {
+    "type": "Civil",
+    "category": "Property disputes",
+    "name": "Boundary disputes",
+    "description": "When neighbors disagree on the exact location of their property lines.",
+    "courtLevel": "District"
+  },
+  {
+    "type": "Civil",
+    "category": "Property disputes",
+    "name": "Servitude disputes",
+    "description": "Disagreements over the right to use another person's property for a specific purpose, similar to an easement in other states.",
+    "courtLevel": "District"
+  },
+  {
+    "type": "Civil",
+    "category": "Property disputes",
+    "name": "Acquisitive prescription (Adverse Possession)",
+    "description": "A claim to ownership of property by someone who has openly occupied it for an extended period.",
+    "courtLevel": "District"
+  },
+  {
+    "type": "Civil",
+    "category": "Property disputes",
+    "name": "Landlord-Tenant disputes",
+    "description": "Allegations concerning rent, property maintenance, or eviction.",
+    "courtLevel": "District"
+  },
+  {
+    "type": "Civil",
+    "category": "Property disputes",
+    "name": "Co-ownership disputes",
+    "description": "Disagreements among multiple owners of a single property.",
+    "courtLevel": "District"
+  },
+  {
+    "type": "Civil",
+    "category": "Family law",
+    "name": "Divorce",
+    "description": "Allegations related to fault or no-fault grounds for ending a marriage.",
+    "courtLevel": "State"
+  },
+  {
+    "type": "Civil",
+    "category": "Family law",
+    "name": "Custody proceedings",
+    "description": "Actions to determine child custody and support.",
+    "courtLevel": "State"
+  },
+  {
+    "type": "Civil",
+    "category": "Family law",
+    "name": "Filiation actions",
+    "description": "Claims to establish or disavow the legal relationship between a child and a parent.",
+    "courtLevel": "State"
+  },
+  {
+    "type": "Civil",
+    "category": "Family law",
+    "name": "Child abuse and neglect",
+    "description": "Legal services are mandated in cases of alleged abuse, neglect, or exploitation.",
+    "courtLevel": "State"
+  },
+  {
+    "type": "Civil",
+    "category": "Family law",
+    "name": "Protective orders",
+    "description": "Allegations involving domestic violence that require a protective order.",
+    "courtLevel": "State"
+  },
+  {
+    "type": "Civil",
+    "category": "Civil rights violations",
+    "name": "Discrimination",
+    "description": "Claims of discrimination based on a protected characteristic in employment, housing, or public accommodation.",
+    "courtLevel": "Federal"
+  },
+  {
+    "type": "Civil",
+    "category": "Civil rights violations",
+    "name": "Violations under 42 U.S.C. § 1983",
+    "description": "This covers constitutional violations by state actors, such as allegations of excessive force by law enforcement.",
+    "courtLevel": "Federal"
+  },
+  {
+    "type": "Civil",
+    "category": "Other civil allegations",
+    "name": "Open account or promissory note actions",
+    "description": "Claims to collect on unpaid commercial accounts or promissory notes.",
+    "courtLevel": "State"
+  },
+  {
+    "type": "Civil",
+    "category": "Other civil allegations",
+    "name": "Insurance policy disputes",
+    "description": "Disputes over claims against an insurance company.",
+    "courtLevel": "State"
+  },
+  {
+    "type": "Civil",
+    "category": "Other civil allegations",
+    "name": "Suits on a judicial bond",
+    "description": "Actions to recover damages from a bond.",
+    "courtLevel": "State"
+  },
+  {
+    "type": "Criminal",
+    "category": "Offenses Against Persons",
+    "name": "Homicide",
+    "description": "First degree murder, second degree murder, manslaughter, negligent homicide, vehicular homicide.",
+    "courtLevel": "State"
+  },
+  {
+    "type": "Criminal",
+    "category": "Offenses Against Persons",
+    "name": "Feticide",
+    "description": "First degree feticide, second degree feticide, third degree feticide.",
+    "courtLevel": "State"
+  },
+  {
+    "type": "Criminal",
+    "category": "Offenses Against Persons",
+    "name": "Assault and Battery",
+    "description": "Aggravated assault, simple assault, aggravated battery, second degree battery, simple battery.",
+    "courtLevel": "State"
+  },
+  {
+    "type": "Criminal",
+    "category": "Offenses Against Persons",
+    "name": "Rape and Sexual Offenses",
+    "description": "Forcible rape, simple rape, sexual battery, oral sexual battery, etc.",
+    "courtLevel": "State"
+  },
+  {
+    "type": "Criminal",
+    "category": "Offenses Against Persons",
+    "name": "Kidnapping",
+    "description": "Aggravated kidnapping, second degree kidnapping, simple kidnapping.",
+    "courtLevel": "State"
+  },
+  {
+    "type": "Criminal",
+    "category": "Offenses Against Persons",
+    "name": "Robbery",
+    "description": "First degree robbery, second degree robbery, simple robbery, carjacking.",
+    "courtLevel": "State"
+  },
+  {
+    "type": "Criminal",
+    "category": "Offenses Affecting Property",
+    "name": "Arson and Use of Explosives",
+    "description": "Aggravated arson, simple arson.",
+    "courtLevel": "State"
+  },
+  {
+    "type": "Criminal",
+    "category": "Offenses Affecting Property",
+    "name": "Burglary",
+    "description": "Aggravated burglary, simple burglary.",
+    "courtLevel": "State"
+  },
+  {
+    "type": "Criminal",
+    "category": "Offenses Affecting Property",
+    "name": "Theft",
+    "description": "Theft, theft of a firearm, theft of livestock, etc.",
+    "courtLevel": "State"
+  },
+  {
+    "type": "Criminal",
+    "category": "Offenses Affecting Property",
+    "name": "Fraud and Forgery",
+    "description": "Issuing worthless checks, forgery, identity theft, etc.",
+    "courtLevel": "State"
+  },
+  {
+    "type": "Criminal",
+    "category": "Offenses Affecting the Public Morals",
+    "name": "Gambling",
+    "description": "Gambling, gambling in public, etc.",
+    "courtLevel": "State"
+  },
+  {
+    "type": "Criminal",
+    "category": "Offenses Affecting the Public Morals",
+    "name": "Obscenity",
+    "description": "Obscenity, pornography involving juveniles.",
+    "courtLevel": "State"
+  },
+  {
+    "type": "Criminal",
+    "category": "Offenses Affecting the Public Morals",
+    "name": "Prostitution",
+    "description": "Prostitution, soliciting for prostitutes, etc.",
+    "courtLevel": "State"
+  },
+  {
+    "type": "Criminal",
+    "category": "Offenses Affecting the Public Generally",
+    "name": "Bribery and Corrupt Influencing",
+    "description": "Public bribery, bribery of sports participants, etc.",
+    "courtLevel": "Federal"
+  },
+  {
+    "type": "Criminal",
+    "category": "Offenses Affecting the Public Generally",
+    "name": "Treason and Disloyal Acts",
+    "description": "Treason, misprision of treason.",
+    "courtLevel": "Federal"
+  },
+  {
+    "type": "Criminal",
+    "category": "Offenses Affecting the Public Generally",
+    "name": "Weapons",
+    "description": "Illegal carrying of weapons, illegal use of weapons or dangerous instrumentalities.",
+    "courtLevel": "State"
+  },
+  {
+    "type": "Criminal",
+    "category": "Inchoate Offenses",
+    "name": "Solicitation",
+    "description": "Inciting, commanding, or urging another person to commit a felony.",
+    "courtLevel": "State and Federal"
+  },
+  {
+    "type": "Criminal",
+    "category": "Offenses Against Persons",
+    "name": "Homicide (Murder & Manslaughter)",
+    "description": "The unlawful killing of a human being. Murder typically requires malice aforethought (intent or extreme recklessness), while manslaughter involves a killing without malice (e.g., in the heat of passion or through criminal negligence). [1, 2, 3, 4]",
+    "courtLevel": "State and Federal"
+  },
+  {
+    "type": "Criminal",
+    "category": "Offenses Against Persons",
+    "name": "Assault/Battery",
+    "description": "Assault is an intentional act creating a reasonable apprehension of imminent harmful contact. Battery is the intentional harmful or offensive touching of another. They are often charged together.",
+    "courtLevel": "State and Federal"
+  },
+  {
+    "type": "Criminal",
+    "category": "Offenses Against Property",
+    "name": "Theft / Larceny / Burglary / Robbery",
+    "description": "Theft/Larceny is the unlawful taking of property. Burglary is unlawfully entering a structure to commit a crime. Robbery is theft by force or threat of force.",
+    "courtLevel": "State and Federal"
+  },
+  {
+    "type": "Criminal",
+    "category": "Financial Crime",
+    "name": "Mail Fraud / Wire Fraud / Securities Fraud",
+    "description": "Using mail, wire communication (internet, phone), or deceptive practices in stock/commodities markets to defraud others of money or property.",
+    "courtLevel": "Federal"
+  },
+  {
+    "type": "Criminal",
+    "category": "Drug Offenses",
+    "name": "Drug Trafficking / Possession",
+    "description": "The illegal sale, transportation, or distribution of controlled substances, or the knowing possession of an illegal controlled substance.",
+    "courtLevel": "State and Federal"
+  },
+  {
+    "type": "Civil",
+    "category": "Personal Injury (Torts)",
+    "name": "Negligence",
+    "description": "Failure to exercise the degree of care that a reasonably prudent person would have exercised under the same circumstances. Elements are duty, breach, causation, and damages.",
+    "courtLevel": "State and Federal"
+  },
+  {
+    "type": "Civil",
+    "category": "Contract Law",
+    "name": "Breach of Contract",
+    "description": "Failure by one party to a valid contract to perform their obligations. Elements are: (1) existence of a valid contract, (2) plaintiff's performance, (3) defendant's breach, and (4) resulting damages.",
+    "courtLevel": "State and Federal"
+  },
+  {
+    "type": "Civil",
+    "category": "Family Law",
+    "name": "Divorce / Child Custody Action",
+    "description": "Legal proceeding to terminate a marriage or to determine the care, control, and maintenance of a minor child.",
+    "courtLevel": "State Only"
+  },
+  {
+    "type": "Civil",
+    "category": "Intellectual Property",
+    "name": "Patent / Copyright Infringement",
+    "description": "The unauthorized making, using, or selling of a patented invention, or the unauthorized use of works protected by copyright law.",
+    "courtLevel": "Federal Only"
+  },
+  {
+    "type": "Civil",
+    "category": "Civil Rights",
+    "name": "Employment / Housing Discrimination",
+    "description": "Discrimination in employment or housing based on protected characteristics like race, color, religion, sex, national origin, or disability.",
+    "courtLevel": "State and Federal (Concurrent)"
+  }
+]
