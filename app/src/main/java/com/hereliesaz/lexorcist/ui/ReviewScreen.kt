@@ -219,28 +219,19 @@ fun ReviewScreen(
                         .padding(16.dp),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    if (selectedAllegation != null && selectedEvidence.isNotEmpty()) {
-                        AzButton(
-                            onClick = {
-                                caseViewModel.assignAllegationToSelectedEvidence(selectedAllegation!!.id.toString()) // Ensure ID is string
-                            },
-                            text = stringResource(R.string.assign_to_allegation),
-                            modifier = Modifier.padding(start = 8.dp)
-                        )
-                    }
+                    AzButton(
+                        onClick = { /* TODO: Implement Automatic Cleanup */ },
+                        text = stringResource(id = R.string.automatic_cleanup),
+                        modifier = Modifier.padding(start = 8.dp)
+                    )
                     AzButton(
                         onClick = { showGenerateDocumentDialog = true },
-                        text = "Generate",
+                        text = stringResource(id = R.string.paperwork),
                         modifier = Modifier.padding(start = 8.dp)
                     )
                     AzButton(
                         onClick = { showPackageFilesDialog = true },
-                        text = "Package",
-                        modifier = Modifier.padding(start = 8.dp)
-                    )
-                    AzButton(
-                        onClick = { /* caseViewModel.generateReadinessReport() */ },
-                        text = "Report",
+                        text = stringResource(id = R.string.finalize),
                         modifier = Modifier.padding(start = 8.dp)
                     )
                 }

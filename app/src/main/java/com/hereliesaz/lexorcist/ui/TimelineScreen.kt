@@ -1,17 +1,6 @@
 package com.hereliesaz.lexorcist.ui
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -40,6 +29,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.hereliesaz.lexorcist.R
+import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.ui.components.ExtendedEvent
 import com.hereliesaz.lexorcist.ui.components.PlaceholderExtendedEvent
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
@@ -79,25 +69,24 @@ fun TimelineScreen(
                 .padding(padding)
         ) {
             if (evidenceList.isEmpty()) {
+                // Per AGENTS.md, show a placeholder if the timeline is empty
                 JetLimeColumn(
-                    itemsList = ItemsList(listOf("placeholder")),
-                    style = JetLimeDefaults.columnStyle(
-                    )
+                    itemsList = ItemsList(listOf(Unit)), // Create a list with a single dummy item
+                    style = JetLimeDefaults.columnStyle()
                 ) { _, _, _ ->
                     JetLimeExtendedEvent(
                         style = JetLimeEventDefaults.eventStyle(
-                            pointType = EventPointType.EMPTY
+                            pointType = EventPointType.EMPTY // Use an empty point type so it doesn't draw a circle
                         )
                     ) {
-                        PlaceholderExtendedEvent()
+                        PlaceholderExtendedEvent() // Your custom placeholder composable
                     }
                 }
             } else {
                 JetLimeColumn(
                     itemsList = ItemsList(evidenceList.sortedBy { it.documentDate }),
                     key = { _, item -> item.id },
-                    style = JetLimeDefaults.columnStyle(
-                    )
+                    style = JetLimeDefaults.columnStyle()
                 ) { _, evidence, position ->
                     JetLimeExtendedEvent(
                         style = JetLimeEventDefaults.eventStyle(position = position),

@@ -6,6 +6,14 @@ This file contains instructions for AI agents working on this codebase.
 Do not run a build or test without explicitly being told to do so. Call for a code review every 10 changes. Could be across 10 different files, could be all on one file. But every 10 changes, you get a code review. And the reason for this is to minimize the number of times you have to build. You are only allowed one build, IF ANY AT ALL. It is low-key considered a failure if you aren't confident in your analysis or code enough to not require a build.
 Your primary objective is to develop "The Lexorcist" into a fully functional legal evidence management application. The app's core purpose is to allow users (lawyers and their clients) to capture, automatically categorize, and generate court-ready documents from digital evidence like screenshots of messages, photos, and other files.
 
+### Work Log
+
+*   **Session: 2025-09-28**
+    *   **Task:** Complete two random items from `TODO.md`.
+    *   **Item 10: Allegations Screen Layout:** Verified that the layout of `app/src/main/java/com/hereliesaz/lexorcist/ui/AllegationsScreen.kt` already matched the requirements specified in the documentation. No code changes were necessary.
+    *   **Item 17: Review Screen Initial UI:** The `ReviewScreen.kt` component already existed. Replaced the incorrect buttons ("Generate", "Package", "Report") with the specified buttons ("Automatic Cleanup", "Paperwork", "Finalize"). Added new string resources (`automatic_cleanup`, `paperwork`, `finalize`) to `app/src/main/res/values/strings.xml` to support this change.
+    *   **Documentation:** Updated `TODO.md` to mark both items as `[COMPLETED]` and added notes detailing the work performed.
+
 ### The Workflow to Enable
 
 1.  A user captures or imports an image (e.g., a screenshot of a threatening text message).

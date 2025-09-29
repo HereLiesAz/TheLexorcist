@@ -701,7 +701,7 @@ class LocalFileStorageService @Inject constructor(
 
     // Sanitize file name
     private fun sanitizeFileName(name: String): String {
-        return name.replace(Regex("[\\/:*?"<>|]"), "_")
+        return name.replace(Regex("[\\\\/:*?\"<>|]"), "_")
     }
 
     override suspend fun uploadFile(caseSpreadsheetId: String, fileUri: Uri, mimeType: String): Result<String> = withContext(Dispatchers.IO) {

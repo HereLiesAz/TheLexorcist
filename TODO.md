@@ -51,9 +51,10 @@ This document outlines the features, fixes, and enhancements required to complet
     *   Create the "Share Script" dialog, which should prompt the user to enter their name and email. [COMPLETED - UI Only]
     *   Implement the logic to send the shared script to the creator's email when the "Edit" button is clicked.
 
-10. **Allegations Screen (`AllegationsScreen.kt`):**
+10. **Allegations Screen (`AllegationsScreen.kt`):** [COMPLETED]
     *   Re-implement the layout to match the specified order: Title, selected allegations list, search box, request/sort buttons, and the main list of allegations.
     *   Add a `onLongClick` modifier to the allegation list items to trigger a details dialog.
+    *   **Note:** The layout already conformed to the requirements. No changes were necessary.
 
 11. **Timeline Screen (`TimelineScreen.kt`):** [COMPLETED]
     *   Add logic to display a placeholder `ExtendedEvent` component when the timeline is empty to show users what to expect.
@@ -84,9 +85,10 @@ This document outlines the features, fixes, and enhancements required to complet
 
 ### **IV. Review Screen Implementation**
 
-17. **Layout and Initial UI:**
+17. **Layout and Initial UI:** [COMPLETED]
     *   Create the basic `ReviewScreen.kt` composable.
     *   Add the "Automatic Cleanup," "Paperwork," and "Finalize" `AzButton`s to the screen, ensuring they are right-aligned.
+    *   **Note:** The `ReviewScreen.kt` file already existed. The task was updated to replace the incorrect buttons ("Generate", "Package", "Report") with the specified ones.
 
 18. **Evidence Cleanup Functionality:**
     *   **Duplicate Detection:**
