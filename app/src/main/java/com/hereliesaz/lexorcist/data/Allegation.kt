@@ -1,17 +1,18 @@
 package com.hereliesaz.lexorcist.data
 
+import com.google.gson.annotations.SerializedName
+
 data class Allegation(
     val id: Int = 0,
     val spreadsheetId: String,
-    val text: String,
+    val name: String,
     val elements: List<AllegationElement> = emptyList()
 )
-
-// AllegationElement is now defined in AllegationElement.kt
 
 // Represents a single entry in the allegations_catalog.json
 data class AllegationCatalogEntry(
     val id: String,
     val allegationName: String,
-    val relevant_evidence: Map<String, List<String>>
+    @SerializedName("relevant_evidence")
+    val relevantEvidence: Map<String, List<String>>
 )
