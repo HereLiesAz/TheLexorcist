@@ -58,7 +58,6 @@ The file google-services.template.json located at the root of the /app/ folder s
 
 
 ---
----
 
 ### Roadmap & Task Analysis
 
