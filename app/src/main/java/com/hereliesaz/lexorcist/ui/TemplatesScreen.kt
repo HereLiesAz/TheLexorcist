@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement // Added import
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -15,6 +16,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import com.hereliesaz.aznavrail.AzButton
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -41,6 +43,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.window.Dialog
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.model.Template
@@ -67,6 +70,15 @@ fun TemplatesScreen(
     val court by caseViewModel.court.collectAsState()
     val jurisdictions by caseViewModel.jurisdictions.collectAsState()
     var expanded by remember { mutableStateOf(false) }
+    var selectedTemplate by remember { mutableStateOf<Template?>(null) }
+
+
+    if (selectedTemplate != null) {
+        TemplatePreviewDialog(
+            template = selectedTemplate!!,
+            onDismiss = { selectedTemplate = null }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -140,7 +152,7 @@ fun TemplatesScreen(
                 items(filteredTemplates) { template ->
                     TemplateItem(
                         template = template,
-                        onEdit = { /* TODO */ },
+                        onPreview = { selectedTemplate = it },
                         onShare = { /* TODO */ },
                     )
                 }
@@ -152,7 +164,7 @@ fun TemplatesScreen(
 @Composable
 fun TemplateItem(
     template: Template,
-    onEdit: () -> Unit,
+    onPreview: (Template) -> Unit,
     onShare: () -> Unit,
 ) {
     Card(
@@ -160,7 +172,7 @@ fun TemplateItem(
         Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp)
-            .clickable(onClick = onEdit),
+            .clickable(onClick = { onPreview(template) }),
     ) {
         Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.End) {
             Text(
@@ -193,6 +205,25 @@ fun TemplateItem(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 AzButton(onClick = onShare, text = "Share")
+            }
+        }
+    }
+}
+
+@Composable
+fun TemplatePreviewDialog(template: Template, onDismiss: () -> Unit) {
+    Dialog(onDismissRequest = onDismiss) {
+        Scaffold { padding ->
+            Column(modifier = Modifier.padding(padding)) {
+                AndroidView(
+                    factory = { context ->
+                        WebView(context).apply {
+                            settings.userAgentString += " Lexorcist-Agent"
+                            loadDataWithBaseURL(null, template.content, "text/html", "UTF-8", null)
+                        }
+                    },
+                    modifier = Modifier.fillMaxSize(),
+                )
             }
         }
     }

@@ -18,6 +18,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
@@ -43,6 +44,7 @@ import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.data.Exhibit
 import com.hereliesaz.lexorcist.model.CleanupSuggestion
 import com.hereliesaz.aznavrail.AzButton
+import com.hereliesaz.aznavrail.AzLoad
 import com.hereliesaz.lexorcist.ui.components.DragAndDropContainer
 import com.hereliesaz.lexorcist.ui.components.DraggableItem
 import com.hereliesaz.lexorcist.ui.components.DropTarget
@@ -55,7 +57,7 @@ fun ExhibitsScreen(caseViewModel: CaseViewModel = hiltViewModel()) {
     val selectedCase by caseViewModel.selectedCase.collectAsState()
     val isLoading by caseViewModel.isLoading.collectAsState()
     var tabIndex by remember { mutableStateOf(0) }
-    val tabs = listOf("View", "Clean Up", "Assign")
+    val tabs = listOf("View", "Organize", "Assign")
 
     LaunchedEffect(selectedCase) {
         selectedCase?.let {
@@ -201,6 +203,7 @@ fun ExhibitItem(
 @Composable
 fun CleanUpTab(caseViewModel: CaseViewModel) {
     val cleanupSuggestions by caseViewModel.cleanupSuggestions.collectAsState()
+    val isScanning by caseViewModel.isScanningForCleanup.collectAsState()
 
     Column(
         modifier = Modifier
@@ -209,12 +212,20 @@ fun CleanUpTab(caseViewModel: CaseViewModel) {
         horizontalAlignment = Alignment.End,
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        AzButton(
-            onClick = { caseViewModel.generateCleanupSuggestions() },
-            text = "Scan for Cleanup Suggestions"
-        )
+        if (isScanning) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                AzLoad()
+                Spacer(modifier = Modifier.height(8.dp))
+                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            }
+        } else {
+            AzButton(
+                onClick = { caseViewModel.generateCleanupSuggestions() },
+                text = "Scan"
+            )
+        }
 
-        if (cleanupSuggestions.isNotEmpty()) {
+        if (cleanupSuggestions.isNotEmpty() && !isScanning) {
             LazyColumn(modifier = Modifier.weight(1f).fillMaxWidth()) {
                 items(cleanupSuggestions) { suggestion ->
                     when (suggestion) {
@@ -233,7 +244,7 @@ fun CleanUpTab(caseViewModel: CaseViewModel) {
                     }
                 }
             }
-        } else {
+        } else if (!isScanning) {
             Text(
                 "No cleanup suggestions. Run a scan to find duplicates or image series.",
                 style = MaterialTheme.typography.bodyMedium,
