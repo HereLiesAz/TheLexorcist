@@ -12,6 +12,8 @@ import com.hereliesaz.lexorcist.data.MasterAllegationRepository
 import com.hereliesaz.lexorcist.data.MasterAllegationRepositoryImpl
 import com.hereliesaz.lexorcist.data.repository.ExhibitRepository
 import com.hereliesaz.lexorcist.data.repository.ExhibitRepositoryImpl
+import com.hereliesaz.lexorcist.data.repository.SelectionRepository
+import com.hereliesaz.lexorcist.data.repository.SelectionRepositoryImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -46,4 +48,10 @@ abstract class RepositoryModule {
     abstract fun bindExhibitRepository(
         exhibitRepositoryImpl: com.hereliesaz.lexorcist.data.repository.ExhibitRepositoryImpl
     ): com.hereliesaz.lexorcist.data.repository.ExhibitRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindSelectionRepository(
+        selectionRepositoryImpl: SelectionRepositoryImpl
+    ): SelectionRepository
 }

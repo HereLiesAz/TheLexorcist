@@ -36,6 +36,11 @@ import android.graphics.pdf.PdfDocument
 import android.provider.MediaStore
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import com.hereliesaz.lexorcist.data.CaseAllegationSelectionRepository
+import com.hereliesaz.lexorcist.data.MasterAllegationRepository
+import com.hereliesaz.lexorcist.data.repository.ExhibitRepository
+import com.hereliesaz.lexorcist.data.repository.SelectionRepository
+import com.hereliesaz.lexorcist.model.DisplayExhibit
 import com.hereliesaz.lexorcist.utils.DataParser
 import com.hereliesaz.lexorcist.model.OutlookSignInState
 import com.hereliesaz.lexorcist.service.GmailService
@@ -46,9 +51,12 @@ import com.hereliesaz.lexorcist.service.OutlookService
 import com.hereliesaz.lexorcist.utils.ChatHistoryParser
 import com.hereliesaz.lexorcist.utils.EvidenceImporter
 import com.hereliesaz.lexorcist.utils.LocationHistoryParser
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -86,7 +94,11 @@ constructor(
     private val imapService: ImapService,
     private val outlookAuthManager: com.hereliesaz.lexorcist.auth.OutlookAuthManager,
     private val jurisdictionRepository: JurisdictionRepository,
-    private val locationHistoryParser: LocationHistoryParser
+    private val locationHistoryParser: LocationHistoryParser,
+    private val exhibitRepository: ExhibitRepository,
+    private val caseAllegationSelectionRepository: CaseAllegationSelectionRepository,
+    private val masterAllegationRepository: MasterAllegationRepository,
+    private val selectionRepository: SelectionRepository
 ) : ViewModel() {
     private val sharedPref =
         applicationContext.getSharedPreferences("CaseInfoPrefs", Context.MODE_PRIVATE)
@@ -134,8 +146,53 @@ constructor(
     private val _exhibits = MutableStateFlow<List<com.hereliesaz.lexorcist.data.Exhibit>>(emptyList())
     val exhibits: StateFlow<List<com.hereliesaz.lexorcist.data.Exhibit>> = _exhibits.asStateFlow()
 
-    private val _pertinentExhibitTypes = MutableStateFlow<List<String>>(emptyList())
-    val pertinentExhibitTypes: StateFlow<List<String>> = _pertinentExhibitTypes.asStateFlow()
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val selectedAllegationNames: StateFlow<List<String>> =
+        selectedCase.flatMapLatest { case ->
+            if (case != null) {
+                caseAllegationSelectionRepository.getSelectedAllegations(case.spreadsheetId)
+            } else {
+                flowOf(emptyList())
+            }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    private val pertinentExhibits: StateFlow<List<com.hereliesaz.lexorcist.data.ExhibitCatalogItem>> = combine(
+        exhibitRepository.getExhibitCatalog(),
+        selectedAllegationNames,
+        masterAllegationRepository.getMasterAllegations()
+    ) { catalog, selectedNames, masterAllegations ->
+        if (selectedNames.isEmpty()) {
+            emptyList()
+        } else {
+            val allegationNameToIdMap = masterAllegations.associateBy({ it.name }, { it.id })
+            val selectedAllegationIds = selectedNames.mapNotNull { allegationNameToIdMap[it] }.toSet()
+
+            catalog.filter { exhibit ->
+                exhibit.applicableAllegationIds.any { it in selectedAllegationIds }
+            }
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val displayExhibits: StateFlow<List<DisplayExhibit>> = combine(
+        pertinentExhibits,
+        exhibits
+    ) { pertinent, caseExhibitsList ->
+        val caseExhibitsByName = caseExhibitsList.associateBy { it.name }
+        pertinent.map { catalogItem ->
+            DisplayExhibit(
+                catalogItem = catalogItem,
+                caseExhibit = caseExhibitsByName[catalogItem.type]
+            )
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val selectedExhibit: StateFlow<DisplayExhibit?> = combine(
+        selectionRepository.selectionState,
+        displayExhibits
+    ) { selectionState, exhibits ->
+        exhibits.find { it.catalogItem.id == selectionState.selectedExhibitId }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
 
     private val _htmlTemplates = MutableStateFlow<List<DriveFile>>(emptyList())
     val htmlTemplates: StateFlow<List<DriveFile>> = _htmlTemplates.asStateFlow()
@@ -282,12 +339,14 @@ constructor(
         }
 
         viewModelScope.launch {
-            val lastSelectedCaseId = sharedPref.getString("last_selected_case_id", null)
-            if (lastSelectedCaseId != null) {
-                val allCases = caseRepository.cases.first()
-                val lastSelectedCase = allCases.find { it.spreadsheetId == lastSelectedCaseId }
-                if (lastSelectedCase != null) {
-                    selectCase(lastSelectedCase)
+            selectionRepository.selectionState.collect { selectionState ->
+                val lastSelectedCaseId = selectionState.selectedCaseId
+                if (lastSelectedCaseId != null) {
+                    val allCases = caseRepository.cases.first()
+                    val lastSelectedCase = allCases.find { it.spreadsheetId == lastSelectedCaseId }
+                    if (lastSelectedCase != null && _vmSelectedCase.value?.spreadsheetId != lastSelectedCaseId) {
+                        selectCase(lastSelectedCase)
+                    }
                 }
             }
         }
@@ -297,7 +356,6 @@ constructor(
         viewModelScope.launch {
             val case = selectedCase.value ?: return@launch
             if (currentCaseAllegations.isEmpty()) {
-                _pertinentExhibitTypes.value = emptyList()
                 return@launch
             }
 
@@ -339,8 +397,6 @@ constructor(
                     }
                 }
             }
-
-            _pertinentExhibitTypes.value = allPertinentExhibitTypes.toList()
 
             if (exhibitsToCreate.isNotEmpty()) {
                 viewModelScope.launch(Dispatchers.IO) {
@@ -669,20 +725,17 @@ constructor(
     }
 
     fun selectCase(case: Case?) {
-        Log.d("CaseViewModel", "--- CaseViewModel.selectCase ENTERED with case: ${case?.name ?: "null"} --- instance: $this, repo instance: $caseRepository")
         viewModelScope.launch {
-            Log.d("CaseViewModel", "viewModelScope.launch in selectCase for case: ${case?.name ?: "null"}")
+            selectionRepository.selectCase(case?.spreadsheetId)
+
+            Log.d("CaseViewModel", "--- CaseViewModel.selectCase ENTERED with case: ${case?.name ?: "null"} --- instance: $this, repo instance: $caseRepository")
             globalLoadingState.pushLoading()
             try {
                 _processingState.value = ProcessingState.Idle
                 _logMessages.value = emptyList()
 
                 caseRepository.selectCase(case)
-                if (case != null) {
-                    sharedPref.edit().putString("last_selected_case_id", case.spreadsheetId).apply()
-                } else {
-                    sharedPref.edit().remove("last_selected_case_id").apply()
-                }
+
                 Log.d("CaseViewModel", "IMMEDIATELY AFTER caseRepository.selectCase, ViewModel's _vmSelectedCase.value is: ${_vmSelectedCase.value?.name ?: "null"}")
 
                 if (case != null) {
@@ -700,6 +753,12 @@ constructor(
                 globalLoadingState.popLoading()
                 Log.d("CaseViewModel", "isLoading SET TO false in selectCase finally block for case: ${case?.name ?: "null"}")
             }
+        }
+    }
+
+    fun selectExhibit(exhibit: DisplayExhibit?) {
+        viewModelScope.launch {
+            selectionRepository.selectExhibit(exhibit?.catalogItem?.id)
         }
     }
 
