@@ -64,14 +64,18 @@ class CaseAllegationSelectionRepositoryImpl @Inject constructor(
 
     override suspend fun addAllegation(allegation: Allegation) {
         val spreadsheetId = currentSpreadsheetId ?: return
+        // Use ID-based check for existence
         if (_selectedAllegations.value.any { it.id == allegation.id }) return
 
-        _selectedAllegations.value = _selectedAllegations.value + allegation
+        // Optimistically update the UI
+        val newSet = _selectedAllegations.value + allegation
+        _selectedAllegations.value = newSet
+
         when (val result = storageService.addAllegation(spreadsheetId, allegation)) {
             is Result.Error -> {
                 errorReporter.reportError(result.exception)
-                // Rollback on failure
-                _selectedAllegations.value = _selectedAllegations.value - allegation
+                // Rollback on failure by finding the item by ID
+                _selectedAllegations.value = _selectedAllegations.value.filterNot { it.id == allegation.id }.toSet()
             }
             else -> {
                 // Success or other states
@@ -81,13 +85,17 @@ class CaseAllegationSelectionRepositoryImpl @Inject constructor(
 
     override suspend fun removeAllegation(allegation: Allegation) {
         val spreadsheetId = currentSpreadsheetId ?: return
+        // Use ID-based check for existence
         if (_selectedAllegations.value.none { it.id == allegation.id }) return
 
-        _selectedAllegations.value = _selectedAllegations.value - allegation
+        // Optimistically update the UI
+        val newSet = _selectedAllegations.value.filterNot { it.id == allegation.id }.toSet()
+        _selectedAllegations.value = newSet
+
         when (val result = storageService.removeAllegation(spreadsheetId, allegation)) {
             is Result.Error -> {
                 errorReporter.reportError(result.exception)
-                // Rollback on failure
+                // Rollback on failure by adding the item back
                 _selectedAllegations.value = _selectedAllegations.value + allegation
             }
             else -> {

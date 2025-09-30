@@ -808,16 +808,30 @@ class LocalFileStorageService @Inject constructor(
 
     override suspend fun removeAllegation(caseSpreadsheetId: String, allegation: Allegation): Result<Unit> = writeToSpreadsheet { workbook ->
         val sheet = workbook.getSheet(ALLEGATIONS_SHEET_NAME) ?: throw IOException("Allegations sheet not found.")
-        val row = findRowById(sheet, allegation.id, ALLEGATIONS_HEADER.indexOf("AllegationID")) ?: throw IOException("Allegation with id ${allegation.id} not found for case $caseSpreadsheetId.")
 
-        if (row.getCell(ALLEGATIONS_HEADER.indexOf("CaseID"))?.stringCellValue != caseSpreadsheetId) {
-            throw IOException("Allegation with id ${allegation.id} does not belong to case $caseSpreadsheetId. Cannot delete.")
+        val allegationIdColumn = ALLEGATIONS_HEADER.indexOf("AllegationID")
+        val caseIdColumn = ALLEGATIONS_HEADER.indexOf("CaseID")
+
+        var rowToDelete: Row? = null
+        for (i in 1..sheet.lastRowNum) {
+            val row = sheet.getRow(i) ?: continue
+            val rowAllegationId = getIntCellValueSafe(row.getCell(allegationIdColumn))
+            val rowCaseId = row.getCell(caseIdColumn)?.stringCellValue
+
+            if (rowAllegationId == allegation.id && rowCaseId == caseSpreadsheetId) {
+                rowToDelete = row
+                break
+            }
         }
 
-        val rowIndex = row.rowNum
-        sheet.removeRow(row)
-        if (rowIndex < sheet.lastRowNum) {
-            sheet.shiftRows(rowIndex + 1, sheet.lastRowNum, -1)
+        if (rowToDelete != null) {
+            val rowIndex = rowToDelete.rowNum
+            sheet.removeRow(rowToDelete)
+            if (rowIndex < sheet.lastRowNum) {
+                sheet.shiftRows(rowIndex + 1, sheet.lastRowNum, -1)
+            }
+        } else {
+            throw IOException("Allegation with id ${allegation.id} not found for case $caseSpreadsheetId.")
         }
         Unit
     }
