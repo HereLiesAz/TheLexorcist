@@ -41,7 +41,7 @@ import com.hereliesaz.lexorcist.model.OutlookSignInState
 import com.hereliesaz.lexorcist.service.GmailService
 import com.hereliesaz.lexorcist.service.ImapService
 import com.hereliesaz.lexorcist.data.JurisdictionRepository
-import com.hereliesaz.lexorcist.data.AllegationProvider
+import com.hereliesaz.lexorcist.data.repository.ExhibitRepository
 import com.hereliesaz.lexorcist.service.OutlookService
 import com.hereliesaz.lexorcist.utils.ChatHistoryParser
 import com.hereliesaz.lexorcist.utils.EvidenceImporter
@@ -86,7 +86,8 @@ constructor(
     private val imapService: ImapService,
     private val outlookAuthManager: com.hereliesaz.lexorcist.auth.OutlookAuthManager,
     private val jurisdictionRepository: JurisdictionRepository,
-    private val locationHistoryParser: LocationHistoryParser
+    private val locationHistoryParser: LocationHistoryParser,
+    private val exhibitRepository: ExhibitRepository
 ) : ViewModel() {
     private val sharedPref =
         applicationContext.getSharedPreferences("CaseInfoPrefs", Context.MODE_PRIVATE)
@@ -225,9 +226,7 @@ constructor(
     init {
         Log.d("CaseViewModel", "--- CaseViewModel INIT --- instancia: $this")
         loadThemeModePreference()
-        loadExtrasFromJson()
         loadJurisdictions()
-        AllegationProvider.loadAllegations(applicationContext)
         // Set default storage location on init
         viewModelScope.launch {
             val savedLocation = settingsManager.getStorageLocation()?.first()
@@ -301,57 +300,47 @@ constructor(
                 return@launch
             }
 
-            val allPertinentExhibitTypes = mutableSetOf<String>()
-            val exhibitsToCreate = mutableListOf<com.hereliesaz.lexorcist.data.Exhibit>()
+            val selectedAllegationIds = currentCaseAllegations.mapNotNull { it.id }.toSet()
+            if (selectedAllegationIds.isEmpty()) {
+                _pertinentExhibitTypes.value = emptyList()
+                return@launch
+            }
+
+            // Fetch the full catalog and the current case exhibits
+            val exhibitCatalog = exhibitRepository.getExhibitCatalog().first()
             val currentExhibits = evidenceRepository.getExhibitsForCase(case.spreadsheetId).first()
             _exhibits.value = currentExhibits
 
-            currentCaseAllegations.forEach { caseAllegation ->
-                val canonicalAllegation = AllegationProvider.getAllegationById(caseAllegation.id)
-                if (canonicalAllegation == null) {
-                    Log.w("ExhibitCreation", "Could not find canonical allegation for ID: ${caseAllegation.id}")
-                    return@forEach
-                }
-
-                val evidenceCatalogEntry = AllegationProvider.getEvidenceCatalogForAllegation(canonicalAllegation.allegationName)
-                if (evidenceCatalogEntry == null) {
-                    Log.w("ExhibitCreation", "Could not find evidence catalog for: ${canonicalAllegation.allegationName}")
-                    return@forEach
-                }
-
-                evidenceCatalogEntry.relevantEvidence.forEach { (category, evidenceItems) ->
-                    allPertinentExhibitTypes.add(category)
-                    evidenceItems.forEach { exhibitName ->
-                        val exhibitDescription = "Exhibit for '$exhibitName' to support the allegation of ${canonicalAllegation.allegationName}."
-                        val exhibitExists = currentExhibits.any { it.name.equals(exhibitName, ignoreCase = true) && it.description == exhibitDescription }
-                        val alreadyInBatch = exhibitsToCreate.any { it.name.equals(exhibitName, ignoreCase = true) && it.description == exhibitDescription }
-
-                        if (!exhibitExists && !alreadyInBatch) {
-                            exhibitsToCreate.add(
-                                com.hereliesaz.lexorcist.data.Exhibit(
-                                    caseId = case.id.toLong(),
-                                    name = exhibitName,
-                                    description = exhibitDescription,
-                                    evidenceIds = emptyList()
-                                )
-                            )
-                        }
-                    }
-                }
+            // Determine which exhibits are pertinent based on selected allegations
+            val pertinentExhibits = exhibitCatalog.filter { catalogItem ->
+                catalogItem.applicableAllegationIds.any { it in selectedAllegationIds }
             }
 
-            _pertinentExhibitTypes.value = allPertinentExhibitTypes.toList()
+            _pertinentExhibitTypes.value = pertinentExhibits.map { it.type }.distinct()
 
+            // Determine which of the pertinent exhibits need to be created
+            val exhibitsToCreate = pertinentExhibits.filter { catalogItem ->
+                currentExhibits.none { it.name == catalogItem.type }
+            }.map { catalogItem ->
+                com.hereliesaz.lexorcist.data.Exhibit(
+                    caseId = case.id.toLong(),
+                    name = catalogItem.type,
+                    description = catalogItem.description,
+                    evidenceIds = emptyList()
+                )
+            }
+
+            // Create the missing exhibits
             if (exhibitsToCreate.isNotEmpty()) {
-                viewModelScope.launch(Dispatchers.IO) {
-                    exhibitsToCreate.forEach { newExhibit ->
+                Log.d("ExhibitCreation", "Creating ${exhibitsToCreate.size} missing exhibits.")
+                exhibitsToCreate.forEach { newExhibit ->
+                    // This should be done on a background thread
+                    withContext(Dispatchers.IO) {
                         evidenceRepository.addExhibit(case.spreadsheetId, newExhibit)
                     }
-                    // After adding all, trigger a refresh from the main thread
-                    withContext(Dispatchers.Main) {
-                        loadExhibits()
-                    }
                 }
+                // After adding, refresh the list of exhibits for the UI
+                loadExhibits()
             }
         }
     }
@@ -440,30 +429,6 @@ constructor(
         }
     }
 
-    private fun loadExtrasFromJson() {
-        viewModelScope.launch {
-            try {
-                applicationContext.assets.open("default_extras.json").use { inputStream ->
-                    InputStreamReader(inputStream).use { reader ->
-                        val gson = Gson()
-                        val extrasType = object : TypeToken<Map<String, List<Any>>>() {}.type
-                        val extrasMap: Map<String, List<Any>> = gson.fromJson(reader, extrasType)
-
-                        val scriptsJson = gson.toJson(extrasMap["scripts"])
-                        val scriptType = object : TypeToken<List<Script>>() {}.type
-                        _scripts.value = gson.fromJson(scriptsJson, scriptType)
-
-                        val templatesJson = gson.toJson(extrasMap["templates"])
-                        val templateType = object : TypeToken<List<Template>>() {}.type
-                        _templates.value = gson.fromJson(templatesJson, templateType)
-                    }
-                }
-            } catch (e: Exception) {
-                Log.e("CaseViewModel", "Error loading extras from JSON", e)
-                _errorMessage.value = "Error loading scripts and templates."
-            }
-        }
-    }
 
     fun updateExhibit(exhibit: com.hereliesaz.lexorcist.data.Exhibit) {
         viewModelScope.launch {

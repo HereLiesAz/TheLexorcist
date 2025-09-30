@@ -1,28 +1,41 @@
 package com.hereliesaz.lexorcist.data
 
-import android.util.Log
-// import com.hereliesaz.lexorcist.service.GoogleApiService // Not used in this file
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import com.hereliesaz.lexorcist.data.repository.LegalRepository
+import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
-class AllegationsRepositoryImpl
-@Inject
-constructor(
-    private val allegationProvider: AllegationProvider
+class AllegationsRepositoryImpl @Inject constructor(
+    private val legalRepository: LegalRepository,
+    private val gson: Gson
 ) : AllegationsRepository {
     override suspend fun getAllegations(caseId: String): List<Allegation> {
-        Log.d("AllegationsRepositoryImpl", "Fetching allegations for caseId: $caseId using AllegationProvider instance: $allegationProvider")
-        val catalogEntries = allegationProvider.getAllLoadedCatalogEntries()
-        Log.d("AllegationsRepositoryImpl", "Loaded ${catalogEntries.size} catalog entries from provider.")
-        return catalogEntries.map { catalogEntry ->
-            val elements = catalogEntry.relevantEvidence.map { (elementName, elementDescriptions) ->
-                AllegationElement(name = elementName, description = elementDescriptions.joinToString(", "))
+        val masterAllegations = legalRepository.getMasterAllegations().first()
+        return masterAllegations.mapNotNull { master ->
+            val elements = try {
+                if (master.relevantEvidence.isNullOrBlank() || master.relevantEvidence == "{}") {
+                    emptyList()
+                } else {
+                    val type = object : TypeToken<Map<String, List<String>>>() {}.type
+                    val evidenceMap: Map<String, List<String>> = gson.fromJson(master.relevantEvidence, type)
+                    evidenceMap.map { (elementName, elementDescriptions) ->
+                        AllegationElement(name = elementName, description = elementDescriptions.joinToString(", "))
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                emptyList()
             }
-            Allegation(
-                id = catalogEntry.id.toIntOrNull() ?: 0, // Or handle parse error more gracefully
-                spreadsheetId = caseId, // Use the passed caseId for context
-                name = catalogEntry.allegationName, // Changed from catalogEntry.name
-                elements = elements
-            )
+
+            master.id?.let {
+                Allegation(
+                    id = it.toIntOrNull() ?: 0,
+                    spreadsheetId = caseId,
+                    name = master.name,
+                    elements = elements
+                )
+            }
         }
     }
 }

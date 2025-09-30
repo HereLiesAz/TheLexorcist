@@ -5,6 +5,7 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.hereliesaz.lexorcist.model.Script
 import dagger.hilt.android.qualifiers.ApplicationContext
+import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader
 import javax.inject.Inject
@@ -21,33 +22,47 @@ class ScriptRepository @Inject constructor(@ApplicationContext private val conte
             return loadDefaultScripts()
         }
         val json = scriptsFile.readText()
-        return gson.fromJson(json, object : TypeToken<List<Script>>() {}.type)
+        // Using model.Script here because that's what the rest of the app seems to use when saving/loading scripts.
+        return gson.fromJson(json, object : TypeToken<List<com.hereliesaz.lexorcist.model.Script>>() {}.type)
     }
 
-    fun saveScripts(scripts: List<Script>) {
+    fun saveScripts(scripts: List<com.hereliesaz.lexorcist.model.Script>) {
         val json = gson.toJson(scripts)
         scriptsFile.writeText(json)
     }
 
-    private fun loadDefaultScripts(): List<Script> {
-        return try {
-            context.assets.open("default_extras.json").use { inputStream ->
-                InputStreamReader(inputStream).use { reader ->
-                    val extrasType = object : TypeToken<Map<String, List<Any>>>() {}.type
-                    val extrasMap: Map<String, List<Any>> = gson.fromJson(reader, extrasType)
+    private fun loadDefaultScripts(): List<com.hereliesaz.lexorcist.model.Script> {
+        val defaultScripts = mutableListOf<com.hereliesaz.lexorcist.model.Script>()
+        try {
+            context.assets.open("default_scripts.csv").use { inputStream ->
+                BufferedReader(InputStreamReader(inputStream)).use { reader ->
+                    // Skip header line
+                    reader.readLine()
 
-                    val scriptsJson = gson.toJson(extrasMap["scripts"])
-                    val scriptType = object : TypeToken<List<Script>>() {}.type
-                    val defaultScripts: List<Script> = gson.fromJson(scriptsJson, scriptType)
+                    val regex = "\"(.*?)\"".toRegex()
+                    var line: String?
+                    while (reader.readLine().also { line = it } != null) {
+                        val tokens = regex.findAll(line!!).map { it.groupValues[1] }.toList()
 
-                    saveScripts(defaultScripts)
-                    defaultScripts
+                        if (tokens.size >= 5) {
+                            val script = com.hereliesaz.lexorcist.model.Script(
+                                id = tokens[0],
+                                name = tokens[1],
+                                author = tokens[2],
+                                description = tokens[3],
+                                content = tokens[4],
+                                authorName = "", // author field now contains both
+                                authorEmail = "" // author field now contains both
+                            )
+                            defaultScripts.add(script)
+                        }
+                    }
                 }
             }
+            saveScripts(defaultScripts)
         } catch (e: Exception) {
-            // Log the error
             e.printStackTrace()
-            emptyList()
         }
+        return defaultScripts
     }
 }

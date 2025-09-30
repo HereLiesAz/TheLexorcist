@@ -72,7 +72,12 @@ The file google-services.template.json located at the root of the /app/ folder s
 
 ---
 ### Data File Formats
-*   **`allegations_catalog.json`**: This file, located in `app/src/main/assets/`, MUST be a valid JSON array `[]`. Each element in the array MUST be an object `{}` representing a single allegation. The previous malformed, multi-object structure has been corrected, and the `AllegationProvider` has been simplified to parse this array structure directly with Gson. DO NOT change the file back to a multi-object format.
+*   The application's data catalogs, formerly in JSON format, have been consolidated into CSV files located in the `app/src/main/assets/` directory. This includes:
+  - `allegations.csv`: Contains the master list of all possible allegations.
+  - `exhibits.csv`: Contains the master list of all possible exhibits and their mapping to allegation IDs.
+  - `jurisdictions.csv`: Contains the list of courts for the dropdown menu on the templates screen.
+  - `default_scripts.csv`: Contains the default scripts available to the user.
+  - `default_templates.csv`: Contains the default templates available to the user.
 
 ---
 
