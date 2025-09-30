@@ -146,29 +146,20 @@ constructor(
     private val _exhibits = MutableStateFlow<List<com.hereliesaz.lexorcist.data.Exhibit>>(emptyList())
     val exhibits: StateFlow<List<com.hereliesaz.lexorcist.data.Exhibit>> = _exhibits.asStateFlow()
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private val selectedAllegationNames: StateFlow<List<String>> =
-        selectedCase.flatMapLatest { case ->
-            if (case != null) {
-                caseAllegationSelectionRepository.getSelectedAllegations(case.spreadsheetId)
-            } else {
-                flowOf(emptyList())
-            }
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    private val selectedAllegationIds: StateFlow<Set<String>> =
+        caseAllegationSelectionRepository.selectedAllegations.map { allegations ->
+            allegations.mapNotNull { it.id.toString() }.toSet()
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
 
     private val pertinentExhibits: StateFlow<List<com.hereliesaz.lexorcist.data.ExhibitCatalogItem>> = combine(
         exhibitRepository.getExhibitCatalog(),
-        selectedAllegationNames,
-        masterAllegationRepository.getMasterAllegations()
-    ) { catalog, selectedNames, masterAllegations ->
-        if (selectedNames.isEmpty()) {
+        selectedAllegationIds
+    ) { catalog, selectedIds ->
+        if (selectedIds.isEmpty()) {
             emptyList()
         } else {
-            val allegationNameToIdMap = masterAllegations.associateBy({ it.name }, { it.id })
-            val selectedAllegationIds = selectedNames.mapNotNull { allegationNameToIdMap[it] }.toSet()
-
             catalog.filter { exhibit ->
-                exhibit.applicableAllegationIds.any { it in selectedAllegationIds }
+                exhibit.applicableAllegationIds.any { it in selectedIds }
             }
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
