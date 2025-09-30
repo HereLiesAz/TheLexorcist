@@ -133,7 +133,7 @@ fun ExhibitsScreen(
 fun ViewTab(caseViewModel: CaseViewModel) {
     val displayExhibits by caseViewModel.displayExhibits.collectAsState()
     val evidenceList by caseViewModel.selectedCaseEvidenceList.collectAsState()
-    var selectedExhibitForDetails by remember { mutableStateOf<DisplayExhibit?>(null) }
+    val selectedExhibitForDetails by caseViewModel.selectedExhibit.collectAsState()
 
     val sortedExhibits = displayExhibits.sortedByDescending { it.caseExhibit?.evidenceIds?.isNotEmpty() == true }
 
@@ -150,7 +150,7 @@ fun ViewTab(caseViewModel: CaseViewModel) {
             items(sortedExhibits, key = { it.catalogItem.id }) { displayExhibit ->
                 ExhibitItem(
                     displayExhibit = displayExhibit,
-                    onClick = { selectedExhibitForDetails = it },
+                    onClick = { caseViewModel.selectExhibit(it) },
                     onDeleteClick = {
                         displayExhibit.caseExhibit?.let {
                             caseViewModel.deleteExhibit(it)
@@ -168,7 +168,7 @@ fun ViewTab(caseViewModel: CaseViewModel) {
         ExhibitDetailsDialog(
             displayExhibit = exhibit,
             evidenceList = exhibitEvidence,
-            onDismiss = { selectedExhibitForDetails = null },
+            onDismiss = { caseViewModel.selectExhibit(null) },
             onRemoveEvidence = { evidenceId ->
                 exhibit.caseExhibit?.let {
                     caseViewModel.removeEvidenceFromExhibit(it.id, evidenceId)
