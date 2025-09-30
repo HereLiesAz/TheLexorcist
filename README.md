@@ -8,35 +8,6 @@ Whether you're dealing with harassment screenshots, recorded threats,  slanderou
 
 This project is in an advanced stage of development, with a robust architecture designed to realize a specific vision: to create a seamless pipeline where a user can take a photo of evidence, have the app's OCR extract the text, and then use a custom, user-defined rules engine to automatically tag and categorize that evidence. This categorized data is then organized in a Google Sheet, where a powerful backend script can be triggered to generate all necessary legal paperwork, such as cover sheets, metadata reports, and affidavits.
 
-## Getting Started
-
-To get a local copy up and running, follow these simple steps.
-
-### Prerequisites
-
-- Android Studio (latest stable version)
-- JDK 17
-
-### Installation
-
-1.  **Clone the repo**
-    ```sh
-    git clone https://github.com/HereLiesAz/The-Lexorcist.git
-    ```
-2.  **Set up Google Services**
-    -   Navigate to the `app/` directory.
-    -   Copy the `google-services.template.json` file and rename the copy to `google-services.json`.
-    -   Follow the instructions in `GMAIL_API_SETUP.md` to obtain your own Google API credentials and populate the `google-services.json` file.
-3.  **Build the Project**
-    -   Open the project in Android Studio.
-    -   Let Gradle sync and download the necessary dependencies.
-    -   Build the application using the command:
-        ```sh
-        ./gradlew :app:compileDebugKotlin
-        ```
-4.  **Run the App**
-    -   Run the app on an emulator or a physical device.
-
 ## Key Features
 
 - **Multi-Source Evidence Pipeline:** Capture evidence from images (OCR), audio (transcription), video (frame-by-frame OCR), and location history files.
