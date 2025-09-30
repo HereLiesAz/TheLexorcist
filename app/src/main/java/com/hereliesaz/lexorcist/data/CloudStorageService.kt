@@ -103,6 +103,10 @@ class CloudStorageService @Inject constructor(
         return localFileStorageService.addAllegation(caseSpreadsheetId, allegation)
     }
 
+    override suspend fun removeAllegation(caseSpreadsheetId: String, allegation: Allegation): Result<Unit> {
+        return localFileStorageService.removeAllegation(caseSpreadsheetId, allegation)
+    }
+
     override suspend fun updateTranscript(evidence: Evidence, newTranscript: String, reason: String): Result<Unit> {
         return localFileStorageService.updateTranscript(evidence, newTranscript, reason)
     }
