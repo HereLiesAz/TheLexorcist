@@ -36,7 +36,7 @@ android {
         }
     }
     namespace = "com.hereliesaz.lexorcist"
-    compileSdk = 36
+    compileSdkPreview = "CANARY"
 
     defaultConfig {
         applicationId = "com.hereliesaz.lexorcist"
@@ -104,8 +104,8 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    buildToolsVersion = "36.0.0"
-    ndkVersion = "29.0.13599879 rc2"
+    buildToolsVersion = "36.1.0 rc1"
+    ndkVersion = "29.0.14033849 rc4"
 }
 
 dependencies {

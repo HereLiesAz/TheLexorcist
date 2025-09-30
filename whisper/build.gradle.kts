@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "com.hereliesaz.whisper"
-    compileSdk = 36
+    compileSdkPreview = "CANARY"
 
     defaultConfig {
         minSdk = 26
@@ -32,18 +32,20 @@ android {
             assets.srcDirs("src/main/assets", "../whisper_android/whisper_java/app/src/main/assets")
         }
     }
+    buildToolsVersion = "36.1.0 rc1"
+    ndkVersion = "29.0.14033849 rc4"
 }
 
 dependencies {
-    implementation("androidx.appcompat:appcompat:1.7.1")
-    implementation("com.google.android.material:material:1.13.0")
+    implementation(libs.androidx.appcompat)
+    implementation(libs.google.android.material)
 
     // Core litert library for runtime management
-    implementation("com.google.ai.edge.litert:litert:2.0.2") // This is libs.litert
+    implementation(libs.litert) // This is libs.litert
 
     // Standard TensorFlow Lite libraries - aligning with app module's version 2.14.0
-    implementation("org.tensorflow:tensorflow-lite-api:2.14.0")
-    implementation("org.tensorflow:tensorflow-lite:2.14.0")
+    implementation(libs.tensorflow.lite.api)
+    implementation(libs.tensorflow.lite)
     // implementation("org.tensorflow:tensorflow-lite-gpu:2.14.0") // Add if you plan to use GPU delegate directly via TFLite APIs
 
 }
