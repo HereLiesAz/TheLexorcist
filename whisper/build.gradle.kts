@@ -32,24 +32,24 @@ android {
             assets.srcDirs("src/main/assets", "../whisper_android/whisper_java/app/src/main/assets")
         }
     }
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_17
+    }
     buildToolsVersion = "36.1.0 rc1"
     ndkVersion = "29.0.14033849 rc4"
 }
 
 dependencies {
-    implementation(libs.androidx.appcompat)
-    implementation(libs.google.android.material)
+    implementation("androidx.appcompat:appcompat:1.7.1")
+    implementation("com.google.android.material:material:1.13.0")
 
     // Core litert library for runtime management
-    implementation(libs.litert) {
-        exclude(group = "org.tensorflow", module = "tensorflow-lite-api")
-        exclude(group = "org.tensorflow", module = "tensorflow-lite")
-    }
+    implementation("com.google.ai.edge.litert:litert:2.0.2") // This is libs.litert
 
-    // Standard TensorFlow Lite libraries - Using version 2.17.0 from version catalog
-    implementation(libs.tensorflow.lite.api)
-    implementation(libs.tensorflow.lite)
-    // implementation("org.tensorflow:tensorflow-lite-gpu:2.17.0") // Use consistent version if GPU delegate is needed
+    // Standard TensorFlow Lite libraries - aligning with app module's version 2.14.0
+    implementation("org.tensorflow:tensorflow-lite-api:2.14.0")
+    implementation("org.tensorflow:tensorflow-lite:2.14.0")
+    // implementation("org.tensorflow:tensorflow-lite-gpu:2.14.0") // Add if you plan to use GPU delegate directly via TFLite APIs
 
 }
 

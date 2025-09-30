@@ -35,6 +35,8 @@ junitJupiterEngine = "5.13.4"
 mockkAndroid = "1.14.5"
 coreTesting = "2.2.0"
 kotlinxCoroutinesTest = "1.10.2"
+playServicesTfliteJava = "16.4.0"
+playServicesTfliteSupport = "16.4.0"
 protobufJavalite = "4.32.1"
 tensorflowLiteApi = "2.17.0"
 turbine = "1.2.1"
@@ -135,6 +137,8 @@ kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-cor
 mockwebserver = { module = "com.squareup.okhttp3:mockwebserver", version.ref = "mockwebserver" }
 msal = { module = "com.microsoft.identity.client:msal", version.ref = "msal" }
 msal4j = { module = "com.microsoft.azure:msal4j", version.ref = "msal4j" }
+play-services-tflite-java = { module = "com.google.android.gms:play-services-tflite-java", version.ref = "playServicesTfliteJava" }
+play-services-tflite-support = { module = "com.google.android.gms:play-services-tflite-support", version.ref = "playServicesTfliteSupport" }
 protobuf-javalite = { module = "com.google.protobuf:protobuf-javalite", version.ref = "protobufJavalite" }
 tensorflow-lite-api = { module = "org.tensorflow:tensorflow-lite-api", version.ref = "tensorflowLiteApi" }
 turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
