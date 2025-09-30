@@ -146,21 +146,27 @@ constructor(
             if (case == null) {
                 flowOf(emptyList<DisplayExhibit>())
             } else {
-                combine(
-                    caseRepository.selectedCaseAllegations,
-                    exhibitRepository.getExhibitCatalog(),
-                    evidenceRepository.getExhibitsForCase(case.spreadsheetId)
-                ) { allegations, catalog, caseExhibits ->
-                    val selectedAllegationIds = allegations.mapNotNull { it.id }.toSet()
+                // Explicitly typed local flow variables
+                val allegationsFlow: kotlinx.coroutines.flow.Flow<List<Allegation>> = caseRepository.selectedCaseAllegations
+                val catalogFlow: kotlinx.coroutines.flow.Flow<List<com.hereliesaz.lexorcist.data.ExhibitCatalogItem>> = exhibitRepository.getExhibitCatalog()
+                val caseExhibitsFlow: kotlinx.coroutines.flow.Flow<List<com.hereliesaz.lexorcist.data.Exhibit>> = evidenceRepository.getExhibitsForCase(case.spreadsheetId)
+
+                // Combine with explicit type arguments
+                combine<List<Allegation>, List<com.hereliesaz.lexorcist.data.ExhibitCatalogItem>, List<com.hereliesaz.lexorcist.data.Exhibit>, List<DisplayExhibit>>(
+                    allegationsFlow,
+                    catalogFlow,
+                    caseExhibitsFlow
+                ) { currentAllegations, catalogItems, caseExhibitsList -> // Lambda params without explicit types
+                    val selectedAllegationIds = currentAllegations.mapNotNull { it.id }.toSet()
 
                     if (selectedAllegationIds.isEmpty()) {
                         emptyList<DisplayExhibit>()
                     } else {
-                        catalog.filter { catalogItem ->
+                        catalogItems.filter { catalogItem ->
                             catalogItem.applicableAllegationIds.any { it in selectedAllegationIds }
                         }.map { pertinentCatalogItem ->
                             val matchingCaseExhibit =
-                                caseExhibits.find { it.name == pertinentCatalogItem.type }
+                                caseExhibitsList.find { it.name == pertinentCatalogItem.type }
                             DisplayExhibit(
                                 catalogItem = pertinentCatalogItem,
                                 caseExhibit = matchingCaseExhibit

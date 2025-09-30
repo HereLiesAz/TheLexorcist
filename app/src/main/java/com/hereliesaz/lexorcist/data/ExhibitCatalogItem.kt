@@ -10,5 +10,5 @@ data class ExhibitCatalogItem(
     @SerializedName("description")
     val description: String,
     @SerializedName("applicable_allegation_ids")
-    val applicableAllegationIds: List<String>
+    val applicableAllegationIds: List<Int>
 )

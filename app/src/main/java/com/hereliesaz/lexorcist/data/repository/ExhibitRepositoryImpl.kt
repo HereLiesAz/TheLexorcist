@@ -35,7 +35,7 @@ class ExhibitRepositoryImpl @Inject constructor(
                                 id = tokens[0],
                                 type = tokens[1],
                                 description = tokens[2],
-                                applicableAllegationIds = tokens[3].split(",").map { it.trim() }
+                                applicableAllegationIds = tokens[3].split(",").map { it.trim().toInt() }
                             )
                             exhibits.add(exhibit)
                         }
