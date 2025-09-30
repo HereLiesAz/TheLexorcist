@@ -214,3 +214,4 @@
     { "modifier_id": "MOD_GEN_NEG_001", "description": "Binding, on-point, negative precedent from a higher court in the jurisdiction.", "impact": -0.30, "scope": "case_level" }
   ]
 }
+
