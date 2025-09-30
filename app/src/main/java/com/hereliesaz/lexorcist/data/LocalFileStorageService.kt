@@ -767,12 +767,13 @@ class LocalFileStorageService @Inject constructor(
                 return@mapNotNull null
             }
 
-            val name = row.getCell(ALLEGATIONS_HEADER.indexOf("Name"))?.stringCellValue ?: ""
+            val textFromSheet = row.getCell(ALLEGATIONS_HEADER.indexOf("Name"))?.stringCellValue // Changed from "Text"
+            val masterAllegation = AllegationProvider.getAllegationById(allegationId)
 
             Allegation(
                 id = allegationId,
                 spreadsheetId = caseSpreadsheetId,
-                name = name
+                name = textFromSheet ?: masterAllegation?.allegationName ?: "" // Changed from text = ...
             )
         }
     }

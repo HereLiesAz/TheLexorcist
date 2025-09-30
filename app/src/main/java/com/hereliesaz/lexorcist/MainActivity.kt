@@ -16,11 +16,9 @@ import com.hereliesaz.lexorcist.MainScreen // Added import
 import com.hereliesaz.lexorcist.ui.theme.LexorcistTheme
 import com.hereliesaz.lexorcist.viewmodel.AuthViewModel
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
-import com.hereliesaz.lexorcist.utils.DataMigration
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 import com.hereliesaz.lexorcist.viewmodel.ScriptedMenuViewModel
 import dagger.hilt.android.AndroidEntryPoint
-import java.io.File
 import java.util.Locale
 import javax.inject.Inject
 
@@ -47,12 +45,6 @@ class MainActivity : ComponentActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false) // Added for edge-to-edge
         super.onCreate(savedInstanceState)
         currentLanguage = settingsManager.getLanguage()
-
-        // Run the data migration if the catalog file doesn't exist.
-        val catalogFile = File(applicationContext.filesDir, "lexorcist_catalogs.xlsx")
-        if (!catalogFile.exists()) {
-            DataMigration(this).migrate()
-        }
 
         authViewModel.signIn(this, mainViewModel, silent = true)
 
