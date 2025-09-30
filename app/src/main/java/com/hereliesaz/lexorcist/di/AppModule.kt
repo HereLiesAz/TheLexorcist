@@ -42,6 +42,12 @@ class AppModule {
     fun provideDispatcherProvider(): DispatcherProvider = StandardDispatchers()
     @Provides
     @Singleton
+    fun provideAllegationProvider(): com.hereliesaz.lexorcist.data.AllegationProvider {
+        return com.hereliesaz.lexorcist.data.AllegationProvider
+    }
+
+    @Provides
+    @Singleton
     @ApplicationScope // Ensure this qualifier is defined
     fun provideApplicationScope(): CoroutineScope {
         return CoroutineScope(SupervisorJob() + Dispatchers.Default)

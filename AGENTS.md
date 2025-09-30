@@ -67,18 +67,17 @@ The file google-services.template.json located at the root of the /app/ folder s
     *   **Drag-and-Drop Behavior:** When a user drags an `EvidenceDisplayItem` from the right column, the drag preview (the 'ghost' image) MUST originate from the exact position of the item being dragged, not from the top of the screen. This is implemented in `DraggableItem` by using `onGloballyPositioned` to get the item's `positionInWindow()` and adding it to the drag offset. This implementation MUST NOT be altered.
 26. If the user clicks on an Exhibit then its description, a list of pertinent evidence types, the Exhibit's completeness and influence factor, and a list of that Exhibit's contents are displayed. Tapping a piece of evidence here allows the user to remove it from that Exhibit, tag it, or do other unknown things via scripting.
 27. **Templates Screen (`TemplatesScreen.kt`):** On the `TemplatesScreen`, tapping a `TemplateItem` card MUST open a full-screen `TemplatePreviewDialog` that displays the template's content in a `WebView`. This functionality is implemented and must be preserved.
-28. The allegations are correctly pulled from the `Allegations` sheet in `lexorcist_catalogs.xlsx`, which provides each allegation with an ID. Similarly, on the Exhibits screen, the list of exhibits needs to be pulled from the `Exhibits` sheet. Each exhibit in that sheet has a column called `applicable_allegation_ids`, with a comma-separated list of numbers. Those numbers correspond to the allegation IDs in the `Allegations` sheet.
+28. The allegations are correctly pulled from `allegations.csv`, which provides each allegation with an ID. Similarly, on the Exhibits screen, the list of exhibits needs to be pulled from `exhibits.csv`. Each exhibit in that file has a column called `applicable_allegation_ids`, with a comma-separated list of numbers. Those numbers correspond to the allegation IDs in `allegations.csv`.
 29. If any allegations were selected for the case, the exhibits that have the allegation ID listed under the applicable allegation ids need to be shown under the View tab.
 
 ---
 ### Data File Formats
-*   **`lexorcist_catalogs.xlsx`**: The single source of truth for all application catalog data. This file is generated once on the first app launch and is stored in the app's private files directory. It contains the following sheets:
-    *   `Allegations`: The master list of all possible allegations.
-    *   `Exhibits`: The master list of all exhibit types and their descriptions.
-    *   `Jurisdictions`: A list of all courts for dropdown menus.
-    *   `DefaultScripts`: The default scripts available in the Script Builder.
-    *   `DefaultTemplates`: The default templates available on the Templates screen.
-    *   `StatisticalWeights`: Data for the programmatic modeling methods.
+*   **CSV Data Catalogs**: The application's primary data catalogs have been consolidated into a series of CSV files located in the `app/src/main/assets/` directory. These files serve as the new single source of truth for catalog data. The files include:
+    *   `allegations.csv`: The master list of all possible allegations.
+    *   `exhibits.csv`: The master list of all exhibit types and their descriptions.
+    *   `jurisdictions.csv`: A list of all courts for dropdown menus.
+    *   `default_scripts.csv`: The default scripts available in the Script Builder.
+    *   `default_templates.csv`: The default templates available on the Templates screen.
 
 ---
 

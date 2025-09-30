@@ -6,7 +6,17 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.api.services.drive.model.File as DriveFile
-import com.hereliesaz.lexorcist.data.*
+import com.hereliesaz.lexorcist.data.ActiveScriptRepository
+import com.hereliesaz.lexorcist.data.Allegation
+import com.hereliesaz.lexorcist.data.Case
+import com.hereliesaz.lexorcist.data.CaseRepository
+import com.hereliesaz.lexorcist.data.Evidence
+import com.hereliesaz.lexorcist.data.EvidenceRepository
+import com.hereliesaz.lexorcist.data.LocalFileStorageService
+import com.hereliesaz.lexorcist.data.Script
+import com.hereliesaz.lexorcist.data.ScriptRepository
+import com.hereliesaz.lexorcist.data.SettingsManager
+import com.hereliesaz.lexorcist.data.SortOrder
 import com.hereliesaz.lexorcist.model.CleanupSuggestion
 import com.hereliesaz.lexorcist.model.ProcessingState
 import com.hereliesaz.lexorcist.model.SheetFilter
@@ -23,10 +33,15 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import android.graphics.pdf.PdfDocument
+import android.provider.MediaStore
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import com.hereliesaz.lexorcist.utils.DataParser
 import com.hereliesaz.lexorcist.model.OutlookSignInState
 import com.hereliesaz.lexorcist.service.GmailService
 import com.hereliesaz.lexorcist.service.ImapService
+import com.hereliesaz.lexorcist.data.JurisdictionRepository
+import com.hereliesaz.lexorcist.data.AllegationProvider
 import com.hereliesaz.lexorcist.service.OutlookService
 import com.hereliesaz.lexorcist.utils.ChatHistoryParser
 import com.hereliesaz.lexorcist.utils.EvidenceImporter
@@ -41,6 +56,8 @@ import androidx.core.net.toUri
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
+import java.io.InputStreamReader
+import java.util.Locale
 
 @HiltViewModel
 class CaseViewModel
@@ -69,8 +86,7 @@ constructor(
     private val imapService: ImapService,
     private val outlookAuthManager: com.hereliesaz.lexorcist.auth.OutlookAuthManager,
     private val jurisdictionRepository: JurisdictionRepository,
-    private val locationHistoryParser: LocationHistoryParser,
-    private val extrasRepository: com.hereliesaz.lexorcist.data.ExtrasRepository
+    private val locationHistoryParser: LocationHistoryParser
 ) : ViewModel() {
     private val sharedPref =
         applicationContext.getSharedPreferences("CaseInfoPrefs", Context.MODE_PRIVATE)
@@ -124,8 +140,8 @@ constructor(
     private val _htmlTemplates = MutableStateFlow<List<DriveFile>>(emptyList())
     val htmlTemplates: StateFlow<List<DriveFile>> = _htmlTemplates.asStateFlow()
 
-    private val _scripts = MutableStateFlow<List<com.hereliesaz.lexorcist.data.Script>>(emptyList())
-    val scripts: StateFlow<List<com.hereliesaz.lexorcist.data.Script>> = _scripts.asStateFlow()
+    private val _scripts = MutableStateFlow<List<Script>>(emptyList())
+    val scripts: StateFlow<List<Script>> = _scripts.asStateFlow()
 
     private val _templates = MutableStateFlow<List<Template>>(emptyList())
     val templates: StateFlow<List<Template>> = _templates.asStateFlow()
@@ -209,9 +225,9 @@ constructor(
     init {
         Log.d("CaseViewModel", "--- CaseViewModel INIT --- instancia: $this")
         loadThemeModePreference()
-        loadExtras()
+        loadExtrasFromJson()
         loadJurisdictions()
-
+        AllegationProvider.loadAllegations(applicationContext)
         // Set default storage location on init
         viewModelScope.launch {
             val savedLocation = settingsManager.getStorageLocation()?.first()
@@ -221,6 +237,13 @@ constructor(
             } else {
                 _storageLocation.value = savedLocation.toString()
                 Log.i("CaseViewModel", "Storage location loaded from settings: $savedLocation")
+            }
+        }
+
+        viewModelScope.launch {
+            allegations.collect { currentAllegations ->
+                // When allegations change, re-run the exhibit creation logic.
+                createMissingExhibitsForCurrentAllegations(currentAllegations)
             }
         }
 
@@ -265,6 +288,69 @@ constructor(
                 val lastSelectedCase = allCases.find { it.spreadsheetId == lastSelectedCaseId }
                 if (lastSelectedCase != null) {
                     selectCase(lastSelectedCase)
+                }
+            }
+        }
+    }
+
+    private fun createMissingExhibitsForCurrentAllegations(currentCaseAllegations: List<Allegation>) {
+        viewModelScope.launch {
+            val case = selectedCase.value ?: return@launch
+            if (currentCaseAllegations.isEmpty()) {
+                _pertinentExhibitTypes.value = emptyList()
+                return@launch
+            }
+
+            val allPertinentExhibitTypes = mutableSetOf<String>()
+            val exhibitsToCreate = mutableListOf<com.hereliesaz.lexorcist.data.Exhibit>()
+            val currentExhibits = evidenceRepository.getExhibitsForCase(case.spreadsheetId).first()
+            _exhibits.value = currentExhibits
+
+            currentCaseAllegations.forEach { caseAllegation ->
+                val canonicalAllegation = AllegationProvider.getAllegationById(caseAllegation.id)
+                if (canonicalAllegation == null) {
+                    Log.w("ExhibitCreation", "Could not find canonical allegation for ID: ${caseAllegation.id}")
+                    return@forEach
+                }
+
+                val evidenceCatalogEntry = AllegationProvider.getEvidenceCatalogForAllegation(canonicalAllegation.allegationName)
+                if (evidenceCatalogEntry == null) {
+                    Log.w("ExhibitCreation", "Could not find evidence catalog for: ${canonicalAllegation.allegationName}")
+                    return@forEach
+                }
+
+                evidenceCatalogEntry.relevantEvidence.forEach { (category, evidenceItems) ->
+                    allPertinentExhibitTypes.add(category)
+                    evidenceItems.forEach { exhibitName ->
+                        val exhibitDescription = "Exhibit for '$exhibitName' to support the allegation of ${canonicalAllegation.allegationName}."
+                        val exhibitExists = currentExhibits.any { it.name.equals(exhibitName, ignoreCase = true) && it.description == exhibitDescription }
+                        val alreadyInBatch = exhibitsToCreate.any { it.name.equals(exhibitName, ignoreCase = true) && it.description == exhibitDescription }
+
+                        if (!exhibitExists && !alreadyInBatch) {
+                            exhibitsToCreate.add(
+                                com.hereliesaz.lexorcist.data.Exhibit(
+                                    caseId = case.id.toLong(),
+                                    name = exhibitName,
+                                    description = exhibitDescription,
+                                    evidenceIds = emptyList()
+                                )
+                            )
+                        }
+                    }
+                }
+            }
+
+            _pertinentExhibitTypes.value = allPertinentExhibitTypes.toList()
+
+            if (exhibitsToCreate.isNotEmpty()) {
+                viewModelScope.launch(Dispatchers.IO) {
+                    exhibitsToCreate.forEach { newExhibit ->
+                        evidenceRepository.addExhibit(case.spreadsheetId, newExhibit)
+                    }
+                    // After adding all, trigger a refresh from the main thread
+                    withContext(Dispatchers.Main) {
+                        loadExhibits()
+                    }
                 }
             }
         }
@@ -354,22 +440,26 @@ constructor(
         }
     }
 
-    private fun loadExtras() {
+    private fun loadExtrasFromJson() {
         viewModelScope.launch {
             try {
-                val modelScripts = extrasRepository.getDefaultScripts()
-                _scripts.value = modelScripts.map { modelScript ->
-                    com.hereliesaz.lexorcist.data.Script(
-                        id = modelScript.id,
-                        name = modelScript.name,
-                        description = modelScript.description,
-                        content = modelScript.content,
-                        author = modelScript.authorName
-                    )
+                applicationContext.assets.open("default_extras.json").use { inputStream ->
+                    InputStreamReader(inputStream).use { reader ->
+                        val gson = Gson()
+                        val extrasType = object : TypeToken<Map<String, List<Any>>>() {}.type
+                        val extrasMap: Map<String, List<Any>> = gson.fromJson(reader, extrasType)
+
+                        val scriptsJson = gson.toJson(extrasMap["scripts"])
+                        val scriptType = object : TypeToken<List<Script>>() {}.type
+                        _scripts.value = gson.fromJson(scriptsJson, scriptType)
+
+                        val templatesJson = gson.toJson(extrasMap["templates"])
+                        val templateType = object : TypeToken<List<Template>>() {}.type
+                        _templates.value = gson.fromJson(templatesJson, templateType)
+                    }
                 }
-                _templates.value = extrasRepository.getDefaultTemplates()
             } catch (e: Exception) {
-                Log.e("CaseViewModel", "Error loading extras from repository", e)
+                Log.e("CaseViewModel", "Error loading extras from JSON", e)
                 _errorMessage.value = "Error loading scripts and templates."
             }
         }
@@ -599,6 +689,8 @@ constructor(
                     Log.d("CaseViewModel", "Case is not null, proceeding to load filters/templates for ${case.name}")
                     loadSheetFiltersFromRepository(case.spreadsheetId)
                     loadHtmlTemplatesFromRepository()
+                    // Exhibit creation is now handled by the allegations collector,
+                    // which is triggered when the case's allegations are loaded after selection.
                 } else {
                     Log.d("CaseViewModel", "Case is null, clearing filters/templates.")
                     _sheetFilters.value = emptyList()
