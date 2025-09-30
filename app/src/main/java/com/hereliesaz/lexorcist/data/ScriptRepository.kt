@@ -48,11 +48,10 @@ class ScriptRepository @Inject constructor(@ApplicationContext private val conte
                             val script = com.hereliesaz.lexorcist.model.Script(
                                 id = tokens[0],
                                 name = tokens[1],
-                                author = tokens[2],
                                 description = tokens[3],
                                 content = tokens[4],
-                                authorName = "", // author field now contains both
-                                authorEmail = "" // author field now contains both
+                                authorName = tokens[2], // Correctly assigned tokens[2]
+                                authorEmail = "" // Kept as is
                             )
                             defaultScripts.add(script)
                         }
