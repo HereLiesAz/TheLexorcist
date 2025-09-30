@@ -1,9 +1,14 @@
 package com.hereliesaz.lexorcist.ui
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,9 +16,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -21,8 +28,8 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,23 +37,23 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel // Updated import
-import com.hereliesaz.lexorcist.R
-import com.hereliesaz.lexorcist.data.MasterAllegation
-import com.hereliesaz.lexorcist.viewmodel.AllegationSortType
-import com.hereliesaz.lexorcist.viewmodel.MasterAllegationsViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.hereliesaz.aznavrail.AzButton
 import com.hereliesaz.aznavrail.AzCycler
+import com.hereliesaz.lexorcist.R
+import com.hereliesaz.lexorcist.data.MasterAllegation
 import com.hereliesaz.lexorcist.ui.components.AzAlertDialog
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.ExperimentalMaterial3Api
+import com.hereliesaz.lexorcist.viewmodel.AllegationSortType
+import com.hereliesaz.lexorcist.viewmodel.MasterAllegationsViewModel
 import java.util.Locale
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun AllegationsScreen(
     viewModel: MasterAllegationsViewModel = hiltViewModel()
@@ -57,14 +64,6 @@ fun AllegationsScreen(
     val sortOption by viewModel.sortType.collectAsState()
     var showRequestDialog by remember { mutableStateOf(false) }
     var showDetailsDialog by remember { mutableStateOf<MasterAllegation?>(null) }
-
-    // According to AGENTS.md, this screen should be laid out as:
-    // 1. "Allegations" Title (Handled by TopAppBar)
-    // 2. List of selected allegations applied to the case
-    // 3. Search box
-    // 4. Request button next to sort-by option on the same row
-    // 5. Complete list of available allegations to select from
-
 
     Scaffold(
         topBar = {
@@ -87,33 +86,41 @@ fun AllegationsScreen(
                 .padding(horizontal = 16.dp),
             horizontalAlignment = Alignment.End
         ) {
-            // 2. List of selected allegations
+            // Section for displaying selected allegations as chips
             if (selectedAllegations.isNotEmpty()) {
                 Text(
                     text = stringResource(R.string.selected_allegations),
                     style = MaterialTheme.typography.titleMedium,
                     textAlign = TextAlign.End,
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
-                )
-                LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(100.dp) // Fixed height for selected allegations list
+                        .padding(vertical = 8.dp)
+                )
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    itemsIndexed(selectedAllegations) { _, allegation ->
-                        Text(
-                            text = allegation.name,
+                    selectedAllegations.forEach { allegation ->
+                        Box(
                             modifier = Modifier
-                                .fillMaxWidth()
+                                .border(
+                                    1.dp,
+                                    MaterialTheme.colorScheme.primary,
+                                    RoundedCornerShape(16.dp)
+                                )
+                                .clip(RoundedCornerShape(16.dp))
                                 .combinedClickable(
                                     onClick = { viewModel.toggleAllegationSelection(allegation) },
                                     onLongClick = { showDetailsDialog = allegation }
                                 )
-                                .padding(vertical = 4.dp),
-                            textAlign = TextAlign.End
-                        )
-                        if (selectedAllegations.last() != allegation) {
-                            HorizontalDivider()
+                                .padding(horizontal = 12.dp, vertical = 6.dp)
+                        ) {
+                            Text(
+                                text = allegation.name,
+                                color = MaterialTheme.colorScheme.primary,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
                         }
                     }
                 }
@@ -122,7 +129,7 @@ fun AllegationsScreen(
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
-            // 3. Search Box
+            // Search Box
             OutlinedTextField(
                 value = searchTerm,
                 onValueChange = { viewModel.onSearchQueryChanged(it) },
@@ -133,7 +140,7 @@ fun AllegationsScreen(
             )
             Spacer(modifier = Modifier.height(8.dp))
 
-            // 4. Request button next to sort-by option
+            // Sort and Request buttons
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -157,41 +164,54 @@ fun AllegationsScreen(
             }
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 5. Complete list of available allegations
+            // Main list of all available allegations
             if (allegations.isEmpty() && searchTerm.isNotEmpty()) {
                 Text(
                     text = stringResource(R.string.no_allegations_found_for_search, searchTerm),
                     style = MaterialTheme.typography.bodyLarge,
                     fontStyle = FontStyle.Italic,
-                    modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp),
                     textAlign = TextAlign.Center
                 )
             } else if (allegations.isEmpty()) {
-                 Text(
+                Text(
                     text = stringResource(R.string.no_allegations_available),
                     style = MaterialTheme.typography.bodyLarge,
                     fontStyle = FontStyle.Italic,
-                    modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp),
                     textAlign = TextAlign.Center
                 )
             }
             LazyColumn(modifier = Modifier.fillMaxWidth()) {
-                itemsIndexed(allegations, key = { index, item -> "${item.name}-$index" }) { index, allegation ->
-                    Text(
-                        text = allegation.name,
+                items(allegations, key = { it.id ?: it.name }) { allegation ->
+                    val backgroundColor = if (allegation.isSelected) {
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                    } else {
+                        Color.Transparent
+                    }
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(backgroundColor)
                             .combinedClickable(
                                 onClick = { viewModel.toggleAllegationSelection(allegation) },
                                 onLongClick = { showDetailsDialog = allegation }
                             )
-                            .padding(vertical = 8.dp),
-                        color = if (allegation.isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-                        textAlign = TextAlign.End
-                    )
-                    if (index < allegations.size - 1) {
-                        HorizontalDivider()
+                    ) {
+                        Text(
+                            text = allegation.name,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 12.dp, horizontal = 8.dp),
+                            textAlign = TextAlign.End
+                        )
                     }
+                    HorizontalDivider(thickness = 0.5.dp, color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
                 }
             }
         }
@@ -253,7 +273,6 @@ fun AllegationsScreen(
                     text = stringResource(id = R.string.cancel)
                 )
             },
-
         )
     }
 
@@ -267,7 +286,13 @@ fun AllegationsScreen(
                     textAlign = TextAlign.End
                 )
             },
-            text = { Text("${stringResource(id = R.string.category)}: ${allegation.category}\n\n${allegation.description}", textAlign = TextAlign.End, modifier = Modifier.fillMaxWidth()) },
+            text = {
+                Text(
+                    "${stringResource(id = R.string.category)}: ${allegation.category}\n\n${allegation.description}",
+                    textAlign = TextAlign.End,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
             confirmButton = {
                 AzButton(
                     onClick = { showDetailsDialog = null },

@@ -109,7 +109,11 @@ class MasterAllegationsViewModel @Inject constructor(
                 name = allegation.name
             )
 
-            if (allegation.isSelected) {
+            // The source of truth is the repository, not the UI state.
+            // Check if the allegation ID exists in the set of selected allegations from the repo.
+            val isCurrentlySelected = selectedAllegationsFromRepo.value.any { it.id == allegationId }
+
+            if (isCurrentlySelected) {
                 caseAllegationSelectionRepository.removeAllegation(repoAllegation)
             } else {
                 caseAllegationSelectionRepository.addAllegation(repoAllegation)
