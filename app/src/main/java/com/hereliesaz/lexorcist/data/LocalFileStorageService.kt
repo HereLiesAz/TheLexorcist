@@ -767,13 +767,12 @@ class LocalFileStorageService @Inject constructor(
                 return@mapNotNull null
             }
 
-            val textFromSheet = row.getCell(ALLEGATIONS_HEADER.indexOf("Name"))?.stringCellValue // Changed from "Text"
-            val masterAllegation = AllegationProvider.getAllegationById(allegationId)
+            val textFromSheet = row.getCell(ALLEGATIONS_HEADER.indexOf("Name"))?.stringCellValue
 
             Allegation(
                 id = allegationId,
                 spreadsheetId = caseSpreadsheetId,
-                name = textFromSheet ?: masterAllegation?.allegationName ?: "" // Changed from text = ...
+                name = textFromSheet ?: ""
             )
         }
     }
@@ -782,58 +781,22 @@ class LocalFileStorageService @Inject constructor(
         val sheet = workbook.getSheet(ALLEGATIONS_SHEET_NAME) ?: workbook.createSheet(ALLEGATIONS_SHEET_NAME).also {
             it.createRow(0).apply { ALLEGATIONS_HEADER.forEachIndexed { index, s -> createCell(index).setCellValue(s) } }
         }
-
-        val allegationIdColumn = ALLEGATIONS_HEADER.indexOf("AllegationID")
-        val caseIdColumn = ALLEGATIONS_HEADER.indexOf("CaseID")
-
-        // Check if the allegation already exists for this case
-        for (i in 1..sheet.lastRowNum) {
-            val row = sheet.getRow(i) ?: continue
-            val rowAllegationId = getIntCellValueSafe(row.getCell(allegationIdColumn))
-            val rowCaseId = row.getCell(caseIdColumn)?.stringCellValue
-            if (rowAllegationId == allegation.id && rowCaseId == caseSpreadsheetId) {
-                // Allegation already exists, return it without adding a duplicate
-                return@writeToSpreadsheet allegation
-            }
-        }
-
-        // Allegation does not exist for this case, so add it
-        sheet.createRow(sheet.physicalNumberOfRows).apply {
-            createCell(allegationIdColumn).setCellValue(allegation.id.toDouble())
-            createCell(caseIdColumn).setCellValue(caseSpreadsheetId)
-            createCell(ALLEGATIONS_HEADER.indexOf("Name")).setCellValue(allegation.name)
-        }
-        allegation
-    }
-
-    override suspend fun removeAllegation(caseSpreadsheetId: String, allegation: Allegation): Result<Unit> = writeToSpreadsheet { workbook ->
-        val sheet = workbook.getSheet(ALLEGATIONS_SHEET_NAME) ?: throw IOException("Allegations sheet not found.")
-
-        val allegationIdColumn = ALLEGATIONS_HEADER.indexOf("AllegationID")
-        val caseIdColumn = ALLEGATIONS_HEADER.indexOf("CaseID")
-
-        var rowToDelete: Row? = null
-        for (i in 1..sheet.lastRowNum) {
-            val row = sheet.getRow(i) ?: continue
-            val rowAllegationId = getIntCellValueSafe(row.getCell(allegationIdColumn))
-            val rowCaseId = row.getCell(caseIdColumn)?.stringCellValue
-
-            if (rowAllegationId == allegation.id && rowCaseId == caseSpreadsheetId) {
-                rowToDelete = row
-                break
-            }
-        }
-
-        if (rowToDelete != null) {
-            val rowIndex = rowToDelete.rowNum
-            sheet.removeRow(rowToDelete)
-            if (rowIndex < sheet.lastRowNum) {
-                sheet.shiftRows(rowIndex + 1, sheet.lastRowNum, -1)
-            }
+        val newAllegationId = if (allegation.id != 0 && findRowById(sheet, allegation.id, ALLEGATIONS_HEADER.indexOf("AllegationID")) == null) {
+            allegation.id 
         } else {
-            throw IOException("Allegation with id ${allegation.id} not found for case $caseSpreadsheetId.")
+             (1..sheet.lastRowNum)
+                .mapNotNull { i -> getIntCellValueSafe(sheet.getRow(i)?.getCell(ALLEGATIONS_HEADER.indexOf("AllegationID"))) }
+                .maxOrNull()?.plus(1) ?: 1 
         }
-        Unit
+
+        val newAllegation = allegation.copy(id = newAllegationId)
+        
+        sheet.createRow(sheet.physicalNumberOfRows).apply {
+            createCell(ALLEGATIONS_HEADER.indexOf("AllegationID")).setCellValue(newAllegation.id.toDouble())
+            createCell(ALLEGATIONS_HEADER.indexOf("CaseID")).setCellValue(caseSpreadsheetId)
+            createCell(ALLEGATIONS_HEADER.indexOf("Name")).setCellValue(newAllegation.name) // Changed from .text
+        }
+        newAllegation
     }
 
     override suspend fun updateTranscript(evidence: Evidence, newTranscript: String, reason: String): Result<Unit> = writeToSpreadsheet { workbook ->

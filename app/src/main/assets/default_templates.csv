@@ -1,0 +1,4 @@
+"id","name","description","authorName","authorEmail","court","content"
+"1","Generic Affidavit","A standard, general-purpose affidavit template.","Az","az@example.com","Generic","<html><body><h2>AFFIDAVIT</h2><p>I, [Name], being duly sworn, depose and say:</p><p>1. [Statement 1]</p><p>2. [Statement 2]</p></body></html>"
+"2","Motion to Compel","A template for a motion to compel discovery.","Az","az@example.com","Supreme Court of California","<html><body><h2>MOTION TO COMPEL</h2><p>Plaintiff/Defendant, [Your Name], moves this court to compel discovery from [Opposing Party].</p></body></html>"
+"3","Notice of Deposition","A template for a notice of deposition.","Az","az@example.com","Supreme Court of Texas","<html><body><h2>NOTICE OF DEPOSITION</h2><p>PLEASE TAKE NOTICE that pursuant to [Rule], the deposition of [Deponent Name] will be taken at [Location] on [Date] at [Time].</p></body></html>"

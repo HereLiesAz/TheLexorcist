@@ -40,11 +40,6 @@ class AppModule {
     @Provides
     @Singleton
     fun provideDispatcherProvider(): DispatcherProvider = StandardDispatchers()
-    @Provides
-    @Singleton
-    fun provideAllegationProvider(): com.hereliesaz.lexorcist.data.AllegationProvider {
-        return com.hereliesaz.lexorcist.data.AllegationProvider
-    }
 
     @Provides
     @Singleton
