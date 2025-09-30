@@ -39,24 +39,22 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import com.hereliesaz.lexorcist.R
-import com.hereliesaz.lexorcist.data.Evidence
-import com.hereliesaz.lexorcist.data.Exhibit
-import com.hereliesaz.lexorcist.model.CleanupSuggestion
 import com.hereliesaz.aznavrail.AzButton
 import com.hereliesaz.aznavrail.AzLoad
+import com.hereliesaz.lexorcist.R
+import com.hereliesaz.lexorcist.data.Evidence
+import com.hereliesaz.lexorcist.model.CleanupSuggestion
+import com.hereliesaz.lexorcist.model.DisplayExhibit
 import com.hereliesaz.lexorcist.ui.components.DragAndDropContainer
 import com.hereliesaz.lexorcist.ui.components.DraggableItem
 import com.hereliesaz.lexorcist.ui.components.DropTarget
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
-import com.hereliesaz.lexorcist.viewmodel.ExhibitsViewModel
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExhibitsScreen(
-    caseViewModel: CaseViewModel = hiltViewModel(),
-    exhibitsViewModel: ExhibitsViewModel = hiltViewModel()
+    caseViewModel: CaseViewModel = hiltViewModel()
 ) {
     val selectedCase by caseViewModel.selectedCase.collectAsState()
     val isLoading by caseViewModel.isLoading.collectAsState()
@@ -107,8 +105,9 @@ fun ExhibitsScreen(
                 if (isLoading) {
                     Box(
                         modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center,
+                        contentAlignment = Alignment.Center
                     ) {
+                        AzLoad()
                     }
                 } else if (selectedCase == null) {
                     Column(
@@ -120,9 +119,9 @@ fun ExhibitsScreen(
                     }
                 } else {
                     when (tabIndex) {
-                        0 -> ViewTab(caseViewModel, exhibitsViewModel)
+                        0 -> ViewTab(caseViewModel)
                         1 -> CleanUpTab(caseViewModel)
-                        2 -> AssignTab(caseViewModel, exhibitsViewModel)
+                        2 -> AssignTab(caseViewModel)
                     }
                 }
             }
@@ -131,19 +130,12 @@ fun ExhibitsScreen(
 }
 
 @Composable
-fun ViewTab(caseViewModel: CaseViewModel, exhibitsViewModel: ExhibitsViewModel) {
-    val exhibits by caseViewModel.exhibits.collectAsState()
+fun ViewTab(caseViewModel: CaseViewModel) {
+    val displayExhibits by caseViewModel.displayExhibits.collectAsState()
     val evidenceList by caseViewModel.selectedCaseEvidenceList.collectAsState()
-    val pertinentExhibits by exhibitsViewModel.pertinentExhibits.collectAsState()
-    var selectedExhibitForDetails by remember { mutableStateOf<Exhibit?>(null) }
+    var selectedExhibitForDetails by remember { mutableStateOf<DisplayExhibit?>(null) }
 
-    val pertinentExhibitTypes = pertinentExhibits.map { it.type }.toSet()
-
-    // Filter exhibits to show only those that are pertinent to the selected allegations
-    val filteredExhibits = exhibits.filter { it.name in pertinentExhibitTypes }
-
-    // Sort exhibits to show those with evidence first, as per AGENTS.md
-    val sortedExhibits = filteredExhibits.sortedByDescending { it.evidenceIds.isNotEmpty() }
+    val sortedExhibits = displayExhibits.sortedByDescending { it.caseExhibit?.evidenceIds?.isNotEmpty() == true }
 
     if (sortedExhibits.isEmpty()) {
         Column(
@@ -155,24 +147,32 @@ fun ViewTab(caseViewModel: CaseViewModel, exhibitsViewModel: ExhibitsViewModel) 
         }
     } else {
         LazyColumn(modifier = Modifier.fillMaxSize().padding(vertical = 16.dp)) {
-            items(sortedExhibits) { exhibit ->
+            items(sortedExhibits, key = { it.catalogItem.id }) { displayExhibit ->
                 ExhibitItem(
-                    exhibit = exhibit,
-                    onClick = { selectedExhibitForDetails = exhibit },
-                    onDeleteClick = { caseViewModel.deleteExhibit(exhibit) }
+                    displayExhibit = displayExhibit,
+                    onClick = { selectedExhibitForDetails = it },
+                    onDeleteClick = {
+                        displayExhibit.caseExhibit?.let {
+                            caseViewModel.deleteExhibit(it)
+                        }
+                    }
                 )
             }
         }
     }
 
     selectedExhibitForDetails?.let { exhibit ->
-        val exhibitEvidence = evidenceList.filter { it.id in exhibit.evidenceIds }
+        val exhibitEvidence = evidenceList.filter { ev ->
+            exhibit.caseExhibit?.evidenceIds?.contains(ev.id) == true
+        }
         ExhibitDetailsDialog(
-            exhibit = exhibit,
+            displayExhibit = exhibit,
             evidenceList = exhibitEvidence,
             onDismiss = { selectedExhibitForDetails = null },
             onRemoveEvidence = { evidenceId ->
-                caseViewModel.removeEvidenceFromExhibit(exhibit.id, evidenceId)
+                exhibit.caseExhibit?.let {
+                    caseViewModel.removeEvidenceFromExhibit(it.id, evidenceId)
+                }
             }
         )
     }
@@ -180,9 +180,9 @@ fun ViewTab(caseViewModel: CaseViewModel, exhibitsViewModel: ExhibitsViewModel) 
 
 @Composable
 fun ExhibitItem(
-    exhibit: Exhibit,
-    onClick: (Exhibit) -> Unit,
-    onDeleteClick: (Exhibit) -> Unit,
+    displayExhibit: DisplayExhibit,
+    onClick: (DisplayExhibit) -> Unit,
+    onDeleteClick: () -> Unit,
 ) {
     Card(
         modifier =
@@ -192,7 +192,7 @@ fun ExhibitItem(
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        onClick = { onClick(exhibit) }
+        onClick = { onClick(displayExhibit) }
     ) {
         Row(
             modifier =
@@ -208,7 +208,7 @@ fun ExhibitItem(
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Text(
-                    text = exhibit.name,
+                    text = displayExhibit.catalogItem.type,
                     style = MaterialTheme.typography.titleMedium,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
@@ -216,7 +216,7 @@ fun ExhibitItem(
                     textAlign = TextAlign.End
                 )
                 Text(
-                    text = exhibit.description,
+                    text = displayExhibit.catalogItem.description,
                     style = MaterialTheme.typography.bodySmall,
                     maxLines = 3,
                     overflow = TextOverflow.Ellipsis,
@@ -225,14 +225,16 @@ fun ExhibitItem(
                     textAlign = TextAlign.End
                 )
             }
-            AzButton(onClick = { onDeleteClick(exhibit) }, text = "Del")
+            if (displayExhibit.caseExhibit != null) {
+                AzButton(onClick = onDeleteClick, text = "Del")
+            }
         }
     }
 }
 
 @Composable
 fun ExhibitDetailsDialog(
-    exhibit: Exhibit,
+    displayExhibit: DisplayExhibit,
     evidenceList: List<Evidence>,
     onDismiss: () -> Unit,
     onRemoveEvidence: (Int) -> Unit
@@ -241,7 +243,7 @@ fun ExhibitDetailsDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                exhibit.name,
+                displayExhibit.catalogItem.type,
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.End,
                 style = MaterialTheme.typography.titleLarge
@@ -250,7 +252,7 @@ fun ExhibitDetailsDialog(
         text = {
             Column(horizontalAlignment = Alignment.End) {
                 Text(
-                    exhibit.description,
+                    displayExhibit.catalogItem.description,
                     modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
                     textAlign = TextAlign.End,
                     style = MaterialTheme.typography.bodyMedium
@@ -411,10 +413,10 @@ fun ImageSeriesGroupItem(group: CleanupSuggestion.ImageSeriesGroup, onMerge: () 
 
 @Composable
 fun AssignTab(
-    caseViewModel: CaseViewModel,
-    exhibitsViewModel: ExhibitsViewModel
+    caseViewModel: CaseViewModel
 ) {
-    val pertinentExhibits by exhibitsViewModel.pertinentExhibits.collectAsState()
+    val displayExhibits by caseViewModel.displayExhibits.collectAsState()
+    val pertinentExhibits = displayExhibits.map { it.catalogItem }
     val allEvidence by caseViewModel.selectedCaseEvidenceList.collectAsState()
     val exhibits by caseViewModel.exhibits.collectAsState()
 

@@ -36,6 +36,10 @@ import android.graphics.pdf.PdfDocument
 import android.provider.MediaStore
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import com.hereliesaz.lexorcist.data.CaseAllegationSelectionRepository
+import com.hereliesaz.lexorcist.data.MasterAllegationRepository
+import com.hereliesaz.lexorcist.data.repository.ExhibitRepository
+import com.hereliesaz.lexorcist.model.DisplayExhibit
 import com.hereliesaz.lexorcist.utils.DataParser
 import com.hereliesaz.lexorcist.model.OutlookSignInState
 import com.hereliesaz.lexorcist.service.GmailService
@@ -46,9 +50,12 @@ import com.hereliesaz.lexorcist.service.OutlookService
 import com.hereliesaz.lexorcist.utils.ChatHistoryParser
 import com.hereliesaz.lexorcist.utils.EvidenceImporter
 import com.hereliesaz.lexorcist.utils.LocationHistoryParser
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -86,7 +93,10 @@ constructor(
     private val imapService: ImapService,
     private val outlookAuthManager: com.hereliesaz.lexorcist.auth.OutlookAuthManager,
     private val jurisdictionRepository: JurisdictionRepository,
-    private val locationHistoryParser: LocationHistoryParser
+    private val locationHistoryParser: LocationHistoryParser,
+    private val exhibitRepository: ExhibitRepository,
+    private val caseAllegationSelectionRepository: CaseAllegationSelectionRepository,
+    private val masterAllegationRepository: MasterAllegationRepository
 ) : ViewModel() {
     private val sharedPref =
         applicationContext.getSharedPreferences("CaseInfoPrefs", Context.MODE_PRIVATE)
@@ -134,8 +144,45 @@ constructor(
     private val _exhibits = MutableStateFlow<List<com.hereliesaz.lexorcist.data.Exhibit>>(emptyList())
     val exhibits: StateFlow<List<com.hereliesaz.lexorcist.data.Exhibit>> = _exhibits.asStateFlow()
 
-    private val _pertinentExhibitTypes = MutableStateFlow<List<String>>(emptyList())
-    val pertinentExhibitTypes: StateFlow<List<String>> = _pertinentExhibitTypes.asStateFlow()
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val selectedAllegationNames: StateFlow<List<String>> =
+        selectedCase.flatMapLatest { case ->
+            if (case != null) {
+                caseAllegationSelectionRepository.getSelectedAllegations(case.spreadsheetId)
+            } else {
+                flowOf(emptyList())
+            }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    private val pertinentExhibits: StateFlow<List<com.hereliesaz.lexorcist.data.ExhibitCatalogItem>> = combine(
+        exhibitRepository.getExhibitCatalog(),
+        selectedAllegationNames,
+        masterAllegationRepository.getMasterAllegations()
+    ) { catalog, selectedNames, masterAllegations ->
+        if (selectedNames.isEmpty()) {
+            emptyList()
+        } else {
+            val allegationNameToIdMap = masterAllegations.associateBy({ it.name }, { it.id })
+            val selectedAllegationIds = selectedNames.mapNotNull { allegationNameToIdMap[it] }.toSet()
+
+            catalog.filter { exhibit ->
+                exhibit.applicableAllegationIds.any { it in selectedAllegationIds }
+            }
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val displayExhibits: StateFlow<List<DisplayExhibit>> = combine(
+        pertinentExhibits,
+        exhibits
+    ) { pertinent, caseExhibitsList ->
+        val caseExhibitsByName = caseExhibitsList.associateBy { it.name }
+        pertinent.map { catalogItem ->
+            DisplayExhibit(
+                catalogItem = catalogItem,
+                caseExhibit = caseExhibitsByName[catalogItem.type]
+            )
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val _htmlTemplates = MutableStateFlow<List<DriveFile>>(emptyList())
     val htmlTemplates: StateFlow<List<DriveFile>> = _htmlTemplates.asStateFlow()
@@ -297,7 +344,6 @@ constructor(
         viewModelScope.launch {
             val case = selectedCase.value ?: return@launch
             if (currentCaseAllegations.isEmpty()) {
-                _pertinentExhibitTypes.value = emptyList()
                 return@launch
             }
 
@@ -339,8 +385,6 @@ constructor(
                     }
                 }
             }
-
-            _pertinentExhibitTypes.value = allPertinentExhibitTypes.toList()
 
             if (exhibitsToCreate.isNotEmpty()) {
                 viewModelScope.launch(Dispatchers.IO) {
