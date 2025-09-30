@@ -5,5 +5,5 @@ import com.hereliesaz.lexorcist.data.ExhibitCatalogItem
 
 data class DisplayExhibit(
     val catalogItem: ExhibitCatalogItem,
-    val caseExhibit: Exhibit? = null
+    val caseExhibit: Exhibit?
 )

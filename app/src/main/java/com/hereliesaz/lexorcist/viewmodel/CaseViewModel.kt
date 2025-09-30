@@ -19,6 +19,7 @@ import com.hereliesaz.lexorcist.data.SettingsManager
 import com.hereliesaz.lexorcist.data.SortOrder
 import com.hereliesaz.lexorcist.model.CleanupSuggestion
 import com.hereliesaz.lexorcist.model.ProcessingState
+import com.hereliesaz.lexorcist.model.DisplayExhibit
 import com.hereliesaz.lexorcist.model.SheetFilter
 import com.hereliesaz.lexorcist.model.Template
 import com.hereliesaz.lexorcist.ui.theme.ThemeMode
@@ -49,6 +50,8 @@ import com.hereliesaz.lexorcist.utils.LocationHistoryParser
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -134,6 +137,39 @@ constructor(
 
     private val _exhibits = MutableStateFlow<List<com.hereliesaz.lexorcist.data.Exhibit>>(emptyList())
     val exhibits: StateFlow<List<com.hereliesaz.lexorcist.data.Exhibit>> = _exhibits.asStateFlow()
+
+    private val _selectedExhibit = MutableStateFlow<DisplayExhibit?>(null)
+    val selectedExhibit: StateFlow<DisplayExhibit?> = _selectedExhibit.asStateFlow()
+
+    val displayExhibits: StateFlow<List<DisplayExhibit>> =
+        selectedCase.flatMapLatest { case ->
+            if (case == null) {
+                flowOf(emptyList<DisplayExhibit>())
+            } else {
+                combine(
+                    caseRepository.selectedCaseAllegations,
+                    exhibitRepository.getExhibitCatalog(),
+                    evidenceRepository.getExhibitsForCase(case.spreadsheetId)
+                ) { allegations, catalog, caseExhibits ->
+                    val selectedAllegationIds = allegations.mapNotNull { it.id }.toSet()
+
+                    if (selectedAllegationIds.isEmpty()) {
+                        emptyList<DisplayExhibit>()
+                    } else {
+                        catalog.filter { catalogItem ->
+                            catalogItem.applicableAllegationIds.any { it in selectedAllegationIds }
+                        }.map { pertinentCatalogItem ->
+                            val matchingCaseExhibit =
+                                caseExhibits.find { it.name == pertinentCatalogItem.type }
+                            DisplayExhibit(
+                                catalogItem = pertinentCatalogItem,
+                                caseExhibit = matchingCaseExhibit
+                            )
+                        }
+                    }
+                }
+            }
+        }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     private val _pertinentExhibitTypes = MutableStateFlow<List<String>>(emptyList())
     val pertinentExhibitTypes: StateFlow<List<String>> = _pertinentExhibitTypes.asStateFlow()
@@ -239,12 +275,6 @@ constructor(
             }
         }
 
-        viewModelScope.launch {
-            allegations.collect { currentAllegations ->
-                // When allegations change, re-run the exhibit creation logic.
-                createMissingExhibitsForCurrentAllegations(currentAllegations)
-            }
-        }
 
         viewModelScope.launch {
             logService.logEventFlow.collect { newLog ->
@@ -292,57 +322,8 @@ constructor(
         }
     }
 
-    private fun createMissingExhibitsForCurrentAllegations(currentCaseAllegations: List<Allegation>) {
-        viewModelScope.launch {
-            val case = selectedCase.value ?: return@launch
-            if (currentCaseAllegations.isEmpty()) {
-                _pertinentExhibitTypes.value = emptyList()
-                return@launch
-            }
-
-            val selectedAllegationIds = currentCaseAllegations.mapNotNull { it.id }.toSet()
-            if (selectedAllegationIds.isEmpty()) {
-                _pertinentExhibitTypes.value = emptyList()
-                return@launch
-            }
-
-            // Fetch the full catalog and the current case exhibits
-            val exhibitCatalog = exhibitRepository.getExhibitCatalog().first()
-            val currentExhibits = evidenceRepository.getExhibitsForCase(case.spreadsheetId).first()
-            _exhibits.value = currentExhibits
-
-            // Determine which exhibits are pertinent based on selected allegations
-            val pertinentExhibits = exhibitCatalog.filter { catalogItem ->
-                catalogItem.applicableAllegationIds.any { it in selectedAllegationIds }
-            }
-
-            _pertinentExhibitTypes.value = pertinentExhibits.map { it.type }.distinct()
-
-            // Determine which of the pertinent exhibits need to be created
-            val exhibitsToCreate = pertinentExhibits.filter { catalogItem ->
-                currentExhibits.none { it.name == catalogItem.type }
-            }.map { catalogItem ->
-                com.hereliesaz.lexorcist.data.Exhibit(
-                    caseId = case.id.toLong(),
-                    name = catalogItem.type,
-                    description = catalogItem.description,
-                    evidenceIds = emptyList()
-                )
-            }
-
-            // Create the missing exhibits
-            if (exhibitsToCreate.isNotEmpty()) {
-                Log.d("ExhibitCreation", "Creating ${exhibitsToCreate.size} missing exhibits.")
-                exhibitsToCreate.forEach { newExhibit ->
-                    // This should be done on a background thread
-                    withContext(Dispatchers.IO) {
-                        evidenceRepository.addExhibit(case.spreadsheetId, newExhibit)
-                    }
-                }
-                // After adding, refresh the list of exhibits for the UI
-                loadExhibits()
-            }
-        }
+    fun selectExhibit(displayExhibit: DisplayExhibit?) {
+        _selectedExhibit.value = displayExhibit
     }
 
     fun removeEvidenceFromExhibit(exhibitId: Int, evidenceId: Int) {

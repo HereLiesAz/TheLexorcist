@@ -36,7 +36,7 @@ android {
         }
     }
     namespace = "com.hereliesaz.lexorcist"
-    compileSdkPreview = "CANARY"
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.hereliesaz.lexorcist"

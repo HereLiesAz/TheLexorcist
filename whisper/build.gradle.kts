@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "com.hereliesaz.whisper"
-    compileSdkPreview = "CANARY"
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 26
