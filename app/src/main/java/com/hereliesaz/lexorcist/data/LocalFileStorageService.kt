@@ -800,6 +800,22 @@ class LocalFileStorageService @Inject constructor(
         newAllegation
     }
 
+    override suspend fun removeAllegation(caseSpreadsheetId: String, allegation: Allegation): Result<Unit> = writeToSpreadsheet { workbook ->
+        val sheet = workbook.getSheet(ALLEGATIONS_SHEET_NAME) ?: throw IOException("Allegations sheet not found.")
+        val row = findRowById(sheet, allegation.id, ALLEGATIONS_HEADER.indexOf("AllegationID")) ?: throw IOException("Allegation with id ${allegation.id} not found for case $caseSpreadsheetId.")
+
+        if (row.getCell(ALLEGATIONS_HEADER.indexOf("CaseID"))?.stringCellValue != caseSpreadsheetId) {
+            throw IOException("Allegation with id ${allegation.id} does not belong to case $caseSpreadsheetId. Cannot delete.")
+        }
+
+        val rowIndex = row.rowNum
+        sheet.removeRow(row)
+        if (rowIndex < sheet.lastRowNum) {
+            sheet.shiftRows(rowIndex + 1, sheet.lastRowNum, -1)
+        }
+        Unit
+    }
+
     override suspend fun updateTranscript(evidence: Evidence, newTranscript: String, reason: String): Result<Unit> = writeToSpreadsheet { workbook ->
         val evidenceSheet = workbook.getSheet(EVIDENCE_SHEET_NAME) ?: throw IOException("Evidence sheet not found.")
         val evidenceRow = findRowById(sheet = evidenceSheet, id = evidence.id, idColumn = EVIDENCE_HEADER.indexOf("EvidenceID")) ?: throw IOException("Evidence with id ${evidence.id} not found.")

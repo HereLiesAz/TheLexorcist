@@ -30,6 +30,7 @@ interface StorageService {
 
     suspend fun getAllegationsForCase(caseSpreadsheetId: String): Result<List<Allegation>>
     suspend fun addAllegation(caseSpreadsheetId: String, allegation: Allegation): Result<Allegation>
+    suspend fun removeAllegation(caseSpreadsheetId: String, allegation: Allegation): Result<Unit>
 
     // --- Transcript Management ---
 
