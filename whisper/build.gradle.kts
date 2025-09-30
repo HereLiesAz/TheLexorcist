@@ -41,12 +41,15 @@ dependencies {
     implementation(libs.google.android.material)
 
     // Core litert library for runtime management
-    implementation(libs.litert) // This is libs.litert
+    implementation(libs.litert) {
+        exclude(group = "org.tensorflow", module = "tensorflow-lite-api")
+        exclude(group = "org.tensorflow", module = "tensorflow-lite")
+    }
 
-    // Standard TensorFlow Lite libraries - aligning with app module's version 2.14.0
+    // Standard TensorFlow Lite libraries - Using version 2.17.0 from version catalog
     implementation(libs.tensorflow.lite.api)
     implementation(libs.tensorflow.lite)
-    // implementation("org.tensorflow:tensorflow-lite-gpu:2.14.0") // Add if you plan to use GPU delegate directly via TFLite APIs
+    // implementation("org.tensorflow:tensorflow-lite-gpu:2.17.0") // Use consistent version if GPU delegate is needed
 
 }
 
