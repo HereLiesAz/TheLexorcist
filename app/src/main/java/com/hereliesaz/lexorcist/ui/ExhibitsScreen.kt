@@ -131,9 +131,9 @@ fun ExhibitsScreen(
 
 @Composable
 fun ViewTab(caseViewModel: CaseViewModel) {
-    val displayExhibits by caseViewModel.displayExhibits.collectAsState()
+    val displayExhibits: List<DisplayExhibit> by caseViewModel.displayExhibits.collectAsState()
     val evidenceList by caseViewModel.selectedCaseEvidenceList.collectAsState()
-    val selectedExhibitForDetails by caseViewModel.selectedExhibit.collectAsState()
+    val selectedExhibitForDetails: DisplayExhibit? by caseViewModel.selectedExhibit.collectAsState()
 
     val sortedExhibits = displayExhibits.sortedByDescending { it.caseExhibit?.evidenceIds?.isNotEmpty() == true }
 
@@ -150,7 +150,7 @@ fun ViewTab(caseViewModel: CaseViewModel) {
             items(sortedExhibits, key = { it.catalogItem.id }) { displayExhibit ->
                 ExhibitItem(
                     displayExhibit = displayExhibit,
-                    onClick = { caseViewModel.selectExhibit(it) },
+                    onClick = { caseViewModel.selectExhibit(displayExhibit) },
                     onDeleteClick = {
                         displayExhibit.caseExhibit?.let {
                             caseViewModel.deleteExhibit(it)
@@ -415,7 +415,7 @@ fun ImageSeriesGroupItem(group: CleanupSuggestion.ImageSeriesGroup, onMerge: () 
 fun AssignTab(
     caseViewModel: CaseViewModel
 ) {
-    val displayExhibits by caseViewModel.displayExhibits.collectAsState()
+    val displayExhibits: List<DisplayExhibit> by caseViewModel.displayExhibits.collectAsState()
     val pertinentExhibits = displayExhibits.map { it.catalogItem }
     val allEvidence by caseViewModel.selectedCaseEvidenceList.collectAsState()
     val exhibits by caseViewModel.exhibits.collectAsState()
