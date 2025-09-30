@@ -69,6 +69,7 @@ The file google-services.template.json located at the root of the /app/ folder s
 27. **Templates Screen (`TemplatesScreen.kt`):** On the `TemplatesScreen`, tapping a `TemplateItem` card MUST open a full-screen `TemplatePreviewDialog` that displays the template's content in a `WebView`. This functionality is implemented and must be preserved.
 28. The allegations are correctly pulled from `allegations.csv`, which provides each allegation with an ID. Similarly, on the Exhibits screen, the list of exhibits needs to be pulled from `exhibits.csv`. Each exhibit in that file has a column called `applicable_allegation_ids`, with a comma-separated list of numbers. Those numbers correspond to the allegation IDs in `allegations.csv`.
 29. If any allegations were selected for the case, the exhibits that have the allegation ID listed under the applicable allegation ids need to be shown under the View tab.
+30. Any time something is selected, be it a case, allegation, Exhibit, Script, etc., it must immediately be "enabled" and persist. Otherwise, what's the point of ever selecting it? And the same must be true of deselection. In fact, the mechanism that makes a case persist for the user must be the same mechanism that makes anything else persist.
 
 ---
 ### Data File Formats
