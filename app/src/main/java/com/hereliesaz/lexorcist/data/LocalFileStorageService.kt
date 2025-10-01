@@ -781,36 +781,60 @@ class LocalFileStorageService @Inject constructor(
         val sheet = workbook.getSheet(ALLEGATIONS_SHEET_NAME) ?: workbook.createSheet(ALLEGATIONS_SHEET_NAME).also {
             it.createRow(0).apply { ALLEGATIONS_HEADER.forEachIndexed { index, s -> createCell(index).setCellValue(s) } }
         }
-        val newAllegationId = if (allegation.id != 0 && findRowById(sheet, allegation.id, ALLEGATIONS_HEADER.indexOf("AllegationID")) == null) {
-            allegation.id 
-        } else {
-             (1..sheet.lastRowNum)
-                .mapNotNull { i -> getIntCellValueSafe(sheet.getRow(i)?.getCell(ALLEGATIONS_HEADER.indexOf("AllegationID"))) }
-                .maxOrNull()?.plus(1) ?: 1 
+
+        val caseIdCol = ALLEGATIONS_HEADER.indexOf("CaseID")
+        val allegationIdCol = ALLEGATIONS_HEADER.indexOf("AllegationID")
+
+        // Check if this specific allegation already exists for this specific case
+        val rowExists = (1..sheet.lastRowNum).any { i ->
+            val row = sheet.getRow(i) ?: return@any false
+            val rowCaseId = row.getCell(caseIdCol)?.stringCellValue
+            val rowAllegationId = getIntCellValueSafe(row.getCell(allegationIdCol))
+            rowCaseId == caseSpreadsheetId && rowAllegationId == allegation.id
         }
 
-        val newAllegation = allegation.copy(id = newAllegationId)
-        
-        sheet.createRow(sheet.physicalNumberOfRows).apply {
-            createCell(ALLEGATIONS_HEADER.indexOf("AllegationID")).setCellValue(newAllegation.id.toDouble())
-            createCell(ALLEGATIONS_HEADER.indexOf("CaseID")).setCellValue(caseSpreadsheetId)
-            createCell(ALLEGATIONS_HEADER.indexOf("Name")).setCellValue(newAllegation.name) // Changed from .text
+        if (rowExists) {
+            Log.d("LocalFileStorageService", "Allegation ${allegation.id} already exists for case $caseSpreadsheetId. No action taken.")
+            return@writeToSpreadsheet allegation // Return the original object as it's already there
         }
-        newAllegation
+
+        // If it doesn't exist, add it. The ID from the master list is preserved.
+        sheet.createRow(sheet.physicalNumberOfRows).apply {
+            createCell(allegationIdCol).setCellValue(allegation.id.toDouble())
+            createCell(caseIdCol).setCellValue(caseSpreadsheetId)
+            createCell(ALLEGATIONS_HEADER.indexOf("Name")).setCellValue(allegation.name)
+        }
+        allegation
     }
 
     override suspend fun removeAllegation(caseSpreadsheetId: String, allegation: Allegation): Result<Unit> = writeToSpreadsheet { workbook ->
-        val sheet = workbook.getSheet(ALLEGATIONS_SHEET_NAME) ?: throw IOException("Allegations sheet not found.")
-        val row = findRowById(sheet, allegation.id, ALLEGATIONS_HEADER.indexOf("AllegationID")) ?: throw IOException("Allegation with id ${allegation.id} not found for case $caseSpreadsheetId.")
+        val sheet = workbook.getSheet(ALLEGATIONS_SHEET_NAME) ?: return@writeToSpreadsheet Unit // Sheet doesn't exist, so nothing to remove
 
-        if (row.getCell(ALLEGATIONS_HEADER.indexOf("CaseID"))?.stringCellValue != caseSpreadsheetId) {
-            throw IOException("Allegation with id ${allegation.id} does not belong to case $caseSpreadsheetId. Cannot delete.")
+        val caseIdCol = ALLEGATIONS_HEADER.indexOf("CaseID")
+        val allegationIdCol = ALLEGATIONS_HEADER.indexOf("AllegationID")
+        var rowToDelete: Row? = null
+
+        // Find the exact row matching both case and allegation ID
+        for (i in 1..sheet.lastRowNum) {
+            val row = sheet.getRow(i) ?: continue
+            val rowCaseId = row.getCell(caseIdCol)?.stringCellValue
+            val rowAllegationId = getIntCellValueSafe(row.getCell(allegationIdCol))
+            if (rowCaseId == caseSpreadsheetId && rowAllegationId == allegation.id) {
+                rowToDelete = row
+                break
+            }
         }
 
-        val rowIndex = row.rowNum
-        sheet.removeRow(row)
-        if (rowIndex < sheet.lastRowNum) {
-            sheet.shiftRows(rowIndex + 1, sheet.lastRowNum, -1)
+        if (rowToDelete != null) {
+            val rowIndex = rowToDelete.rowNum
+            sheet.removeRow(rowToDelete)
+            // Shift subsequent rows up to fill the gap, which is crucial
+            if (rowIndex < sheet.lastRowNum) {
+                sheet.shiftRows(rowIndex + 1, sheet.lastRowNum, -1)
+            }
+            Log.d("LocalFileStorageService", "Removed allegation ${allegation.id} from case $caseSpreadsheetId.")
+        } else {
+            Log.w("LocalFileStorageService", "Attempted to remove allegation ${allegation.id} from case $caseSpreadsheetId, but it was not found.")
         }
         Unit
     }
