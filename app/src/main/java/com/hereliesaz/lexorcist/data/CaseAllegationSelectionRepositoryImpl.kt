@@ -64,18 +64,19 @@ class CaseAllegationSelectionRepositoryImpl @Inject constructor(
 
     override suspend fun addAllegation(allegation: Allegation) {
         val spreadsheetId = currentSpreadsheetId ?: return
-        // Use ID-based check for existence
-        if (_selectedAllegations.value.any { it.id == allegation.id }) return
+        if (_selectedAllegations.value.any { it.id == allegation.id && it.spreadsheetId == spreadsheetId }) return
+
+        val allegationForCase = allegation.copy(spreadsheetId = spreadsheetId)
 
         // Optimistically update the UI
-        val newSet = _selectedAllegations.value + allegation
+        val newSet = _selectedAllegations.value + allegationForCase
         _selectedAllegations.value = newSet
 
-        when (val result = storageService.addAllegation(spreadsheetId, allegation)) {
+        when (val result = storageService.addAllegation(spreadsheetId, allegationForCase)) {
             is Result.Error -> {
                 errorReporter.reportError(result.exception)
-                // Rollback on failure by finding the item by ID
-                _selectedAllegations.value = _selectedAllegations.value.filterNot { it.id == allegation.id }.toSet()
+                // Rollback on failure
+                _selectedAllegations.value = _selectedAllegations.value.filterNot { it.id == allegationForCase.id }.toSet()
             }
             else -> {
                 // Success or other states
@@ -85,18 +86,20 @@ class CaseAllegationSelectionRepositoryImpl @Inject constructor(
 
     override suspend fun removeAllegation(allegation: Allegation) {
         val spreadsheetId = currentSpreadsheetId ?: return
-        // Use ID-based check for existence
-        if (_selectedAllegations.value.none { it.id == allegation.id }) return
+        val allegationForCase = allegation.copy(spreadsheetId = spreadsheetId)
+        // Ensure the allegation to be removed actually exists in the set with the correct spreadsheetId
+        if (_selectedAllegations.value.none { it.id == allegationForCase.id && it.spreadsheetId == spreadsheetId }) return
+
 
         // Optimistically update the UI
-        val newSet = _selectedAllegations.value.filterNot { it.id == allegation.id }.toSet()
+        val newSet = _selectedAllegations.value.filterNot { it.id == allegationForCase.id && it.spreadsheetId == spreadsheetId }.toSet()
         _selectedAllegations.value = newSet
 
-        when (val result = storageService.removeAllegation(spreadsheetId, allegation)) {
+        when (val result = storageService.removeAllegation(spreadsheetId, allegationForCase)) {
             is Result.Error -> {
                 errorReporter.reportError(result.exception)
-                // Rollback on failure by adding the item back
-                _selectedAllegations.value = _selectedAllegations.value + allegation
+                // Rollback on failure
+                _selectedAllegations.value = _selectedAllegations.value + allegationForCase
             }
             else -> {
                 // Success or other states
