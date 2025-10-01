@@ -58,7 +58,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import androidx.core.net.toUri
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
@@ -416,7 +415,7 @@ constructor(
 
                 if (filteredRecords.isNotEmpty()) {
                     filteredRecords.forEach { record ->
-                        val locationContent = "Latitude: ${record.latitude}\nLongitude: ${record.longitude}" // Corrected string formatting
+                        val locationContent = "Latitude: ${record.latitude}\nLongitude: ${record.longitude}"
                         val evidence = Evidence(
                             caseId = selectedCase.value?.id?.toLong() ?: 0,
                             spreadsheetId = selectedCase.value?.spreadsheetId ?: "",
@@ -599,7 +598,7 @@ constructor(
                 name = allegation.name
             )
 
-            val isCurrentlySelected = selectedCaseAllegations.value.any { selected -> selected.id == allegationId }
+            val isCurrentlySelected = selectedCaseAllegations.value.any { it.id == allegationId }
 
             if (isCurrentlySelected) {
                 caseRepository.removeAllegation(repoAllegation)
@@ -1401,7 +1400,7 @@ constructor(
 
                     val nonDuplicateImageEvidence = updatedEvidence.filter { it.type == "image" && !it.isDuplicate }
                     val seriesCandidates = nonDuplicateImageEvidence.groupBy {
-                        it.sourceDocument.replace(Regex("[_\d]"), "")
+                        it.sourceDocument.replace(Regex("[_\\d]"), "")
                     }.filter { it.value.size > 1 }
 
                     seriesCandidates.forEach { (_, series) ->
@@ -1717,17 +1716,19 @@ constructor(
                 }
 
                 val messages = gmailService.searchEmails(from, subject, before, after)
-                val emailEvidence = messages.map {
+                val emailEvidence = messages.map<com.google.api.services.gmail.model.Message, Evidence> { message ->
+                    val subjectHeader = message.payload.headers.find { it.name == "Subject" }?.value ?: "No Subject"
+                    val fromHeader = message.payload.headers.find { it.name == "From" }?.value ?: "Unknown Sender"
                     Evidence(
+                        content = "From: $fromHeader\nSubject: $subjectHeader\n\n${message.snippet}",
+                        type = "Email",
+                        timestamp = message.internalDate,
                         caseId = caseId,
                         spreadsheetId = spreadsheetId,
-                        type = "Email",
-                        content = "From: ${it.payload.headers.find { header -> header.name == "From" }?.value ?: "Unknown Sender"}\nSubject: ${it.payload.headers.find { header -> header.name == "Subject" }?.value ?: "No Subject"}\n\n${it.snippet}",
                         formattedContent = null,
                         mediaUri = null,
-                        timestamp = it.internalDate,
                         sourceDocument = "Imported Email",
-                        documentDate = it.internalDate,
+                        documentDate = message.internalDate,
                         allegationId = null,
                         allegationElementName = null,
                         category = "Email",
@@ -1760,16 +1761,16 @@ constructor(
                 val outlookState = outlookAuthManager.outlookSignInState.value
                 if (outlookState is OutlookSignInState.Success) {
                     val messages = outlookService.searchEmails(outlookState.accessToken, from, subject, before, after)
-                    val emailEvidence = messages?.map {
-                        val receivedDateTime = it.receivedDateTime?.toInstant()?.toEpochMilli() ?: System.currentTimeMillis()
+                    val emailEvidence = messages?.map<com.microsoft.graph.models.Message, Evidence> { message ->
+                        val receivedDateTime = message.receivedDateTime?.toInstant()?.toEpochMilli() ?: System.currentTimeMillis()
                         Evidence(
+                            content = "From: ${message.from?.emailAddress?.address}\nSubject: ${message.subject}\n\n${message.bodyPreview}",
+                            type = "Email",
+                            timestamp = receivedDateTime,
                             caseId = caseId,
                             spreadsheetId = spreadsheetId,
-                            type = "Email",
-                            content = "From: ${it.from?.emailAddress?.address ?: "Unknown Sender"}\nSubject: ${it.subject}\n\n${it.bodyPreview}",
                             formattedContent = null,
                             mediaUri = null,
-                            timestamp = receivedDateTime,
                             sourceDocument = "Imported Email",
                             documentDate = receivedDateTime,
                             allegationId = null,
