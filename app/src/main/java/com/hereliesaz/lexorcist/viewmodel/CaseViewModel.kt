@@ -58,11 +58,14 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import androidx.core.net.toUri
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStreamReader
 import java.util.Locale
+
+private val Flow<List<Allegation>>.value: Any
 
 enum class AllegationSortType {
     TYPE,
