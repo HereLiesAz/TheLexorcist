@@ -277,38 +277,38 @@ class CaseRepositoryImpl @Inject constructor(
     override fun getHtmlTemplates(): Flow<List<DriveFile>> = emptyFlow()
     override suspend fun refreshHtmlTemplates() { /* TODO */ }
 
-    override suspend fun addAllegation(spreadsheetId: String, allegationText: String) {
+    override suspend fun addAllegation(allegation: Allegation) {
         val currentSelectedCaseId = _selectedCase.value?.spreadsheetId
-        if (spreadsheetId == currentSelectedCaseId) {
-            // Assuming Allegation constructor takes (id, spreadsheetId, name)
-            // and id is auto-generated or handled by storageService.
-            // Passing 0 or a placeholder that storageService can interpret.
-            val allegationDetails = Allegation(id = 0, spreadsheetId = spreadsheetId, name = allegationText)
-            when (val result = storageService.addAllegation(spreadsheetId, allegationDetails)) {
-                is Result.Loading -> {
-                    Log.d(tag, "Adding allegation to $spreadsheetId: Loading...")
-                }
+        if (allegation.spreadsheetId == currentSelectedCaseId) {
+            when (val result = storageService.addAllegation(allegation.spreadsheetId, allegation)) {
                 is Result.Success -> {
-                    // Assuming result.data is the added Allegation or a list containing it
-                    // If addAllegation in storageService returns the created allegation:
-                     val newAllegation = result.data
-                    _allegations.update { currentAllegations ->
-                        (currentAllegations + newAllegation).distinctBy { it.id }
-                    }
-                    // If you need to refresh all allegations for the case:
-                    // internalRefreshAllegations(spreadsheetId)
+                    val newAllegation = result.data
+                    _allegations.update { (it + newAllegation).distinctBy { a -> a.id } }
                 }
-                is Result.Error -> {
-                    errorReporter.reportError(result.exception)
-                }
-                is Result.UserRecoverableError -> {
-                    errorReporter.reportError(result.exception)
-                }
+                is Result.Error -> errorReporter.reportError(result.exception)
+                is Result.UserRecoverableError -> errorReporter.reportError(result.exception)
+                is Result.Loading -> {}
             }
         } else {
-            val exception = Exception("Attempted to add allegation to a non-selected case. Target: $spreadsheetId, Selected: $currentSelectedCaseId")
+            val exception = Exception("Attempted to add allegation to a non-selected case. Target: ${allegation.spreadsheetId}, Selected: $currentSelectedCaseId")
             errorReporter.reportError(exception)
-            Log.w(tag, exception.message, exception)
+        }
+    }
+
+    override suspend fun removeAllegation(allegation: Allegation) {
+        val currentSelectedCaseId = _selectedCase.value?.spreadsheetId
+        if (allegation.spreadsheetId == currentSelectedCaseId) {
+            when (val result = storageService.removeAllegation(allegation.spreadsheetId, allegation)) {
+                is Result.Success -> {
+                    _allegations.update { it.filterNot { a -> a.id == allegation.id } }
+                }
+                is Result.Error -> errorReporter.reportError(result.exception)
+                is Result.UserRecoverableError -> errorReporter.reportError(result.exception)
+                is Result.Loading -> {}
+            }
+        } else {
+            val exception = Exception("Attempted to remove allegation from a non-selected case. Target: ${allegation.spreadsheetId}, Selected: $currentSelectedCaseId")
+            errorReporter.reportError(exception)
         }
     }
 }

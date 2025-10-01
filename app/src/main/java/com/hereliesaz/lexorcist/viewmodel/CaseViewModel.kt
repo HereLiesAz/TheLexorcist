@@ -42,7 +42,9 @@ import com.hereliesaz.lexorcist.model.OutlookSignInState
 import com.hereliesaz.lexorcist.service.GmailService
 import com.hereliesaz.lexorcist.service.ImapService
 import com.hereliesaz.lexorcist.data.JurisdictionRepository
+import com.hereliesaz.lexorcist.data.MasterAllegation
 import com.hereliesaz.lexorcist.data.repository.ExhibitRepository
+import com.hereliesaz.lexorcist.data.repository.LegalRepository
 import com.hereliesaz.lexorcist.service.OutlookService
 import com.hereliesaz.lexorcist.utils.ChatHistoryParser
 import com.hereliesaz.lexorcist.utils.EvidenceImporter
@@ -61,6 +63,13 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStreamReader
 import java.util.Locale
+
+enum class AllegationSortType {
+    TYPE,
+    CATEGORY,
+    NAME,
+    COURT_LEVEL,
+}
 
 @HiltViewModel
 class CaseViewModel
@@ -90,7 +99,8 @@ constructor(
     private val outlookAuthManager: com.hereliesaz.lexorcist.auth.OutlookAuthManager,
     private val jurisdictionRepository: JurisdictionRepository,
     private val locationHistoryParser: LocationHistoryParser,
-    private val exhibitRepository: ExhibitRepository
+    private val exhibitRepository: ExhibitRepository,
+    private val legalRepository: LegalRepository
 ) : ViewModel() {
     private val sharedPref =
         applicationContext.getSharedPreferences("CaseInfoPrefs", Context.MODE_PRIVATE)
@@ -131,9 +141,56 @@ constructor(
     private val _sheetFilters = MutableStateFlow<List<SheetFilter>>(emptyList())
     val sheetFilters: StateFlow<List<SheetFilter>> = _sheetFilters.asStateFlow()
 
-    val allegations: StateFlow<List<Allegation>> =
-        caseRepository.selectedCaseAllegations
-            .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+    // Allegations Section
+    private val _allegationSearchQuery = MutableStateFlow("")
+    val allegationSearchQuery: StateFlow<String> = _allegationSearchQuery.asStateFlow()
+
+    private val _allegationSortType = MutableStateFlow(AllegationSortType.TYPE)
+    val allegationSortType: StateFlow<AllegationSortType> = _allegationSortType.asStateFlow()
+
+    private val _masterAllegations = MutableStateFlow<List<MasterAllegation>>(emptyList())
+
+    private val selectedCaseAllegations = caseRepository.selectedCaseAllegations
+
+    val selectedAllegations: StateFlow<List<MasterAllegation>> =
+        combine(_masterAllegations, selectedCaseAllegations) { master, selected ->
+            val selectedIds = selected.map { it.id.toString() }.toSet()
+            master.filter { selectedIds.contains(it.id) }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+
+    val allegations: StateFlow<List<MasterAllegation>> =
+        combine(
+            _masterAllegations,
+            selectedCaseAllegations,
+            allegationSearchQuery,
+            allegationSortType
+        ) { master, selected, query, sort ->
+            val selectedIds = selected.map { it.id.toString() }.toSet()
+            val updatedMaster = master.map {
+                it.copy(isSelected = selectedIds.contains(it.id))
+            }
+
+            val filtered = if (query.isBlank()) {
+                updatedMaster
+            } else {
+                updatedMaster.filter {
+                    it.name.contains(query, ignoreCase = true) ||
+                            (it.description?.contains(query, ignoreCase = true) ?: false) ||
+                            (it.category?.contains(query, ignoreCase = true) ?: false) ||
+                            (it.type?.contains(query, ignoreCase = true) ?: false)
+                }
+            }
+
+            when (sort) {
+                AllegationSortType.TYPE ->
+                    filtered.sortedWith(compareBy({ it.type ?: "" }, { it.category ?: "" }, { it.name }))
+                AllegationSortType.CATEGORY ->
+                    filtered.sortedWith(compareBy({ it.category ?: "" }, { it.type ?: "" }, { it.name }))
+                AllegationSortType.NAME -> filtered.sortedBy { it.name }
+                AllegationSortType.COURT_LEVEL -> filtered.sortedBy { it.courtLevel ?: "" }
+            }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val _exhibits = MutableStateFlow<List<com.hereliesaz.lexorcist.data.Exhibit>>(emptyList())
     val exhibits: StateFlow<List<com.hereliesaz.lexorcist.data.Exhibit>> = _exhibits.asStateFlow()
@@ -269,6 +326,7 @@ constructor(
         Log.d("CaseViewModel", "--- CaseViewModel INIT --- instancia: $this")
         loadThemeModePreference()
         loadJurisdictions()
+        loadMasterAllegations()
         // Set default storage location on init
         viewModelScope.launch {
             val savedLocation = settingsManager.getStorageLocation()?.first()
@@ -504,6 +562,52 @@ constructor(
         _searchQuery.value = query
     }
 
+    fun onAllegationSearchQueryChanged(query: String) {
+        _allegationSearchQuery.value = query
+    }
+
+    fun onAllegationSortTypeChanged(sortType: AllegationSortType) {
+        _allegationSortType.value = sortType
+    }
+
+    private fun loadMasterAllegations() {
+        viewModelScope.launch {
+            legalRepository.getMasterAllegations().collect {
+                _masterAllegations.value = it
+            }
+        }
+    }
+
+    fun toggleAllegationSelection(allegation: MasterAllegation) {
+        viewModelScope.launch {
+            val case = selectedCase.value
+                ?: run {
+                    _errorMessage.value = "Cannot toggle allegation: No case selected."
+                    return@launch
+                }
+
+            val allegationId = allegation.id?.toIntOrNull()
+            if (allegationId == null) {
+                _errorMessage.value = "Cannot toggle allegation: Invalid ID."
+                return@launch
+            }
+
+            val repoAllegation = Allegation(
+                id = allegationId,
+                spreadsheetId = case.spreadsheetId,
+                name = allegation.name
+            )
+
+            val isCurrentlySelected = selectedCaseAllegations.value.any { it.id == allegationId }
+
+            if (isCurrentlySelected) {
+                caseRepository.removeAllegation(repoAllegation)
+            } else {
+                caseRepository.addAllegation(repoAllegation)
+            }
+        }
+    }
+
     fun loadCasesFromRepository() {
         Log.d("CaseViewModel", "loadCasesFromRepository called.")
         viewModelScope.launch {
@@ -684,17 +788,6 @@ constructor(
         }
     }
 
-    fun addAllegationWithRepository(allegationText: String) {
-        viewModelScope.launch {
-            globalLoadingState.pushLoading()
-            try {
-                val case = selectedCase.value ?: return@launch
-                caseRepository.addAllegation(case.spreadsheetId, allegationText)
-            } finally {
-                globalLoadingState.popLoading()
-            }
-        }
-    }
 
     fun toggleEvidenceSelection(evidenceId: Int) {
         val updatedList =

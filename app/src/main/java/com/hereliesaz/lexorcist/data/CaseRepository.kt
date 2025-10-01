@@ -60,10 +60,9 @@ interface CaseRepository {
         value: String,
     )
 
-    suspend fun addAllegation(
-        spreadsheetId: String,
-        allegationText: String,
-    )
+    suspend fun addAllegation(allegation: Allegation)
+
+    suspend fun removeAllegation(allegation: Allegation)
 
     fun getHtmlTemplates(): Flow<List<DriveFile>>
 
