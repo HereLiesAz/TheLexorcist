@@ -202,8 +202,8 @@ constructor(
     val displayExhibits: StateFlow<List<DisplayExhibit>> =
         selectedCase.flatMapLatest { case ->
             if (case == null) {
-                flowOf(emptyList<DisplayExhibit>())
-            } else {
+                flowOf(emptyList<DisplayExhibit>())}
+            else {
                 // Explicitly typed local flow variables
                 val allegationsFlow: kotlinx.coroutines.flow.Flow<List<Allegation>> = caseRepository.selectedCaseAllegations
                 val catalogFlow: kotlinx.coroutines.flow.Flow<List<com.hereliesaz.lexorcist.data.ExhibitCatalogItem>> = exhibitRepository.getExhibitCatalog()
@@ -599,7 +599,8 @@ constructor(
                 name = allegation.name
             )
 
-            val isCurrentlySelected = selectedCaseAllegations.first().any { selected -> selected.id == allegationId }
+            val currentSelectedAllegationsList: List<Allegation> = selectedCaseAllegations.first()
+            val isCurrentlySelected = currentSelectedAllegationsList.any { selectedAllegation: Allegation -> selectedAllegation.id == allegationId }
 
             if (isCurrentlySelected) {
                 caseRepository.removeAllegation(repoAllegation)
@@ -1209,8 +1210,6 @@ constructor(
                 val result = evidenceRepository.updateTranscript(evidence, newTranscript, reason)
                 if (result is Result.Error) {
                     logService.addLog("Error updating transcript: ${result.exception.message}", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
-                } else {
-                    logService.addLog("Transcript updated successfully")
                 }
             } finally {
                 globalLoadingState.popLoading()
