@@ -50,18 +50,18 @@ import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.data.MasterAllegation
 import com.hereliesaz.lexorcist.ui.components.AzAlertDialog
 import com.hereliesaz.lexorcist.viewmodel.AllegationSortType
-import com.hereliesaz.lexorcist.viewmodel.MasterAllegationsViewModel
+import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import java.util.Locale
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun AllegationsScreen(
-    viewModel: MasterAllegationsViewModel = hiltViewModel()
+    viewModel: CaseViewModel = hiltViewModel()
 ) {
     val allegations by viewModel.allegations.collectAsState()
     val selectedAllegations by viewModel.selectedAllegations.collectAsState()
-    val searchTerm by viewModel.searchQuery.collectAsState()
-    val sortOption by viewModel.sortType.collectAsState()
+    val searchTerm by viewModel.allegationSearchQuery.collectAsState()
+    val sortOption by viewModel.allegationSortType.collectAsState()
     var showRequestDialog by remember { mutableStateOf(false) }
     var showDetailsDialog by remember { mutableStateOf<MasterAllegation?>(null) }
 
@@ -132,7 +132,7 @@ fun AllegationsScreen(
             // Search Box
             OutlinedTextField(
                 value = searchTerm,
-                onValueChange = { viewModel.onSearchQueryChanged(it) },
+                onValueChange = { viewModel.onAllegationSearchQueryChanged(it) },
                 label = { Text(stringResource(id = R.string.search_allegations)) },
                 leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
                 modifier = Modifier.fillMaxWidth(),
@@ -152,7 +152,7 @@ fun AllegationsScreen(
                     selectedOption = sortOption.name,
                     onCycle = {
                         val nextIndex = (sortOption.ordinal + 1) % AllegationSortType.entries.size
-                        viewModel.onSortTypeChanged(AllegationSortType.entries[nextIndex])
+                        viewModel.onAllegationSortTypeChanged(AllegationSortType.entries[nextIndex])
                     }
                 )
                 val requestText = stringResource(id = R.string.request)
