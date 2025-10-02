@@ -94,8 +94,8 @@ constructor(
     private val evidenceImporter: EvidenceImporter,
     private val chatHistoryParser: ChatHistoryParser,
     private val gmailService: GmailService,
-    private val outlookService: OutlookService,
-    private val imapService: ImapService,
+    private val outlookService: com.hereliesaz.lexorcist.service.OutlookService,
+    private val imapService: com.hereliesaz.lexorcist.service.ImapService,
     private val outlookAuthManager: com.hereliesaz.lexorcist.auth.OutlookAuthManager,
     private val jurisdictionRepository: JurisdictionRepository,
     private val locationHistoryParser: LocationHistoryParser,
@@ -767,7 +767,8 @@ constructor(
                 caseRepository.getSheetFilters(spreadsheetId).collect {
                     _sheetFilters.value = it
                 }
-            } finally {
+            }
+            finally {
                 globalLoadingState.popLoading()
             }
         }
@@ -955,7 +956,8 @@ constructor(
             globalLoadingState.pushLoading()
             try {
                 evidenceRepository.deleteEvidence(evidence)
-            } finally {
+            }
+            finally {
                 globalLoadingState.popLoading()
             }
         }
@@ -1419,7 +1421,8 @@ constructor(
             } catch (e: Exception) {
                 _errorMessage.value = "Failed to run cleanup scan: ${e.message}"
                 Log.e("Cleanup", "Error in generateCleanupSuggestions", e)
-            } finally {
+            }
+            finally {
                 globalLoadingState.popLoading()
                 _isScanningForCleanup.value = false // This ensures the loading indicator is always turned off
             }
@@ -1555,8 +1558,14 @@ constructor(
 
     fun generateDocument(exhibit: com.hereliesaz.lexorcist.data.Exhibit, template: com.google.api.services.drive.model.File) {
         viewModelScope.launch {
-            val scriptId = selectedCase.value?.scriptId ?: return@launch
-            val caseId = selectedCase.value?.id ?: return@launch
+            val currentCase = _vmSelectedCase.value // Directly access the mutable state flow's value
+            if (currentCase == null) {
+                // Consider adding an error message to the user
+                return@launch
+            }
+
+            val scriptId = currentCase.scriptId ?: return@launch
+            val caseId = currentCase.id ?: return@launch
             val templateId = template.id ?: return@launch
 
             val scriptToRun = """
@@ -1623,9 +1632,11 @@ constructor(
                     evidenceRepository.addEvidenceList(smsEvidence)
                 }
                 _userMessage.value = "Imported ${smsEvidence.size} SMS messages."
-            } catch (e: Exception) {
+            }
+            catch (e: Exception) {
                 _errorMessage.value = "Failed to import SMS messages: ${e.message}"
-            } finally {
+            }
+            finally {
                 globalLoadingState.popLoading()
             }
         }
@@ -1650,9 +1661,11 @@ constructor(
                     evidenceRepository.addEvidenceList(callLogEvidence)
                 }
                 _userMessage.value = "Imported ${callLogEvidence.size} call log entries."
-            } catch (e: Exception) {
+            }
+            catch (e: Exception) {
                 _errorMessage.value = "Failed to import call logs: ${e.message}"
-            } finally {
+            }
+            finally {
                 globalLoadingState.popLoading()
             }
         }
@@ -1666,12 +1679,12 @@ constructor(
                 if (locationEvidence != null) {
                     evidenceRepository.addEvidence(locationEvidence.copy(caseId = selectedCase.value?.id?.toLong() ?: 0, spreadsheetId = selectedCase.value?.spreadsheetId ?: ""))
                     _userMessage.value = "Imported last known location."
-                } else {
-                    _userMessage.value = "Could not retrieve location."
                 }
-            } catch (e: Exception) {
+            }
+            catch (e: Exception) {
                 _errorMessage.value = "Failed to import location: ${e.message}"
-            } finally {
+            }
+            finally {
                 globalLoadingState.popLoading()
             }
         }
@@ -1696,9 +1709,11 @@ constructor(
                     evidenceRepository.addEvidenceList(chatEvidence)
                 }
                 _userMessage.value = "Imported ${chatEvidence.size} chat messages."
-            } catch (e: Exception) {
+            }
+            catch (e: Exception) {
                 _errorMessage.value = "Failed to import chat history: ${e.message}"
-            } finally {
+            }
+            finally {
                 globalLoadingState.popLoading()
             }
         }
@@ -1739,9 +1754,11 @@ constructor(
                     evidenceRepository.addEvidenceList(emailEvidence)
                 }
                 _userMessage.value = "Imported ${emailEvidence.size} emails."
-            } catch (e: Exception) {
+            }
+            catch (e: Exception) {
                 _errorMessage.value = "Failed to import emails: ${e.message}"
-            } finally {
+            }
+            finally {
                 globalLoadingState.popLoading()
             }
         }
@@ -1786,9 +1803,11 @@ constructor(
                 } else {
                     _userMessage.value = "Not signed in to Outlook."
                 }
-            } catch (e: Exception) {
+            }
+            catch (e: Exception) {
                 _errorMessage.value = "Failed to import emails from Outlook: ${e.message}"
-            } finally {
+            }
+            finally {
                 globalLoadingState.popLoading()
             }
         }
@@ -1811,9 +1830,11 @@ constructor(
                     evidenceRepository.addEvidenceList(emailEvidence)
                 }
                 _userMessage.value = "Imported ${emailEvidence.size} emails."
-            } catch (e: Exception) {
+            }
+            catch (e: Exception) {
                 _errorMessage.value = "Failed to import emails via IMAP: ${e.message}"
-            } finally {
+            }
+            finally {
                 globalLoadingState.popLoading()
             }
         }
