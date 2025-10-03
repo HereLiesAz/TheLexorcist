@@ -598,7 +598,7 @@ constructor(
                 name = allegation.name
             )
 
-            val isCurrentlySelected = selectedCaseAllegations.value.any { it.id == allegationId }
+            val isCurrentlySelected = selectedCaseAllegations.first().any { it.id == allegationId }
 
             if (isCurrentlySelected) {
                 caseRepository.removeAllegation(repoAllegation)
@@ -615,7 +615,12 @@ constructor(
             _processingState.value = ProcessingState.InProgress(0f)
             _userMessage.value = "Loading cases..."
             try {
-                caseRepository.refreshCases()
+                caseRepository.refreshCases() // This fetches from the remote source
+                caseRepository.cases.collect { updatedCases -> // This collects the updated local flow
+                    // The collected list is already assigned to the `cases` StateFlow
+                    // by the stateIn operator at the top level.
+                    // This block can be used for any additional logic needed after collection.
+                }
                 _userMessage.value = "Cases loaded successfully."
                 _processingState.value = ProcessingState.Completed("Cases loaded successfully.")
             } catch (e: Exception) {
