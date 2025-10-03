@@ -168,10 +168,15 @@ dependencies {
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
-    debugImplementation(libs.androidx.ui.test.manifest)
+    androidTestImplementation(libs.androidx.ui.test.manifest)
     androidTestImplementation(libs.androidx.test.uiautomator)
     androidTestImplementation(libs.mockk.android) // MockK for AndroidTest, if used there
     androidTestImplementation(libs.play.services.auth)
+
+    // Mockito for AndroidTest
+    androidTestImplementation(libs.mockito.core)
+    androidTestImplementation(libs.kotlin.mockito.kotlin)
+    androidTestImplementation(libs.mockito.inline)
 
     implementation(libs.google.play.services.mlkit.text.recognition) {
         exclude(group = "org.tensorflow")

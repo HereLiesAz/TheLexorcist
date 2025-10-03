@@ -198,6 +198,7 @@ constructor(
     private val _selectedExhibit = MutableStateFlow<DisplayExhibit?>(null)
     val selectedExhibit: StateFlow<DisplayExhibit?> = _selectedExhibit.asStateFlow()
 
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     val displayExhibits: StateFlow<List<DisplayExhibit>> =
         selectedCase.flatMapLatest { case ->
             if (case == null) {
