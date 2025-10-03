@@ -198,6 +198,7 @@ constructor(
     private val _selectedExhibit = MutableStateFlow<DisplayExhibit?>(null)
     val selectedExhibit: StateFlow<DisplayExhibit?> = _selectedExhibit.asStateFlow()
 
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     val displayExhibits: StateFlow<List<DisplayExhibit>> =
         selectedCase.flatMapLatest { case ->
             if (case == null) {
@@ -598,7 +599,7 @@ constructor(
                 name = allegation.name
             )
 
-            val isCurrentlySelected = selectedCaseAllegations.value.any { it.id == allegationId }
+            val isCurrentlySelected = selectedCaseAllegations.first().any { it.id == allegationId }
 
             if (isCurrentlySelected) {
                 caseRepository.removeAllegation(repoAllegation)

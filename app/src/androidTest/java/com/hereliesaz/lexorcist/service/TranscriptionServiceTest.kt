@@ -13,11 +13,11 @@ import org.junit.After // Added for cleaning up static mock
 import org.junit.Rule // Added for TemporaryFolder
 import org.junit.Test
 import org.junit.rules.TemporaryFolder // Added for TemporaryFolder
-import org.junit.runner.RunWith
 import org.mockito.Mock
-import org.mockito.MockedStatic // Added for static mocking
-import org.mockito.Mockito // Added for Mockito.mockStatic and Mockito.RETURNS_DEEP_STUBS
-import org.mockito.junit.MockitoJUnitRunner
+import org.mockito.MockedStatic
+import org.mockito.Mockito
+import org.mockito.junit.MockitoJUnit
+import org.mockito.junit.MockitoRule
 import org.mockito.kotlin.any
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.eq
@@ -25,11 +25,13 @@ import org.mockito.kotlin.whenever
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.InputStream
-import java.io.IOException // Still useful to have, though the check is broader
+import java.io.IOException
 
 @ExperimentalCoroutinesApi
-@RunWith(MockitoJUnitRunner::class)
 class TranscriptionServiceTest {
+
+    @get:Rule
+    val mockitoRule: MockitoRule = MockitoJUnit.rule()
 
     @get:Rule
     val tempFolder = TemporaryFolder()
@@ -82,7 +84,7 @@ class TranscriptionServiceTest {
     }
 
     @Test
-    fun `transcribeAudio when contentResolver throws FileNotFoundException should return Error`() = runTest {
+    fun transcribeAudio_whenFileNotFound_returnsError() = runTest {
         // REMOVED: Unnecessary stub as model initialization is expected to fail first.
         // whenever(mockContentResolver.openInputStream(eq(mockParsedUri)))
         //     .thenThrow(FileNotFoundException("Mock FNF Exception"))
@@ -92,7 +94,7 @@ class TranscriptionServiceTest {
         assertTrue("Expected Result.Error, got $result", result is Result.Error)
         if (result is Result.Error) {
             // Changed from IOException to generic Exception to catch other init failures e.g. SecurityException
-            assertTrue("Expected Exception due to model init failure, got ${result.exception::class.java}", 
+            assertTrue("Expected Exception due to model init failure, got ${result.exception::class.java}",
                 result.exception is Exception)
             val message = result.exception.message ?: ""
             assertTrue(
@@ -103,7 +105,7 @@ class TranscriptionServiceTest {
     }
 
     @Test
-    fun `transcribeAudio when contentResolver returns null InputStream should return Error`() = runTest {
+    fun transcribeAudio_whenInputStreamNull_returnsError() = runTest {
         // REMOVED: Unnecessary stub as model initialization is expected to fail first.
         // whenever(mockContentResolver.openInputStream(eq(mockParsedUri))).thenReturn(null)
 
@@ -112,7 +114,7 @@ class TranscriptionServiceTest {
         assertTrue("Expected Result.Error, got $result", result is Result.Error)
         if (result is Result.Error) {
             // Changed from IOException to generic Exception to catch other init failures e.g. SecurityException
-            assertTrue("Expected Exception due to model init failure, got ${result.exception::class.java}", 
+            assertTrue("Expected Exception due to model init failure, got ${result.exception::class.java}",
                 result.exception is Exception)
             val message = result.exception.message ?: ""
             assertTrue(

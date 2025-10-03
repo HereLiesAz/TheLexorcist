@@ -12,6 +12,7 @@ import dagger.Provides
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import dagger.hilt.testing.TestInstallIn
+import com.hereliesaz.lexorcist.service.OcrProcessingService
 import io.mockk.mockk
 import javax.inject.Singleton
 
@@ -21,6 +22,10 @@ import javax.inject.Singleton
     replaces = [AppModule::class],
 )
 object TestAppModule {
+    @Provides
+    @Singleton
+    fun provideOcrProcessingService(): OcrProcessingService = mockk(relaxed = true)
+
     @Provides
     @Singleton
     fun provideEvidenceRepository(): EvidenceRepository = mockk(relaxed = true)
