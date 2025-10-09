@@ -49,7 +49,8 @@ This document outlines the features, fixes, and enhancements required to complet
 9.  **Script Builder Screen (`ScriptBuilderScreen.kt`):**
     *   Implement the "Share" button's `onClick` action to open a dialog. [COMPLETED - UI Only]
     *   Create the "Share Script" dialog, which should prompt the user to enter their name and email. [COMPLETED - UI Only]
-    *   Implement the logic to send the shared script to the creator's email when the "Edit" button is clicked.
+    *   Implement the logic to send the shared script to the creator's email when the "Edit" button is clicked. [COMPLETED]
+    *   **Note:** The end-to-end logic for sharing a script was already fully implemented. No code changes were necessary.
 
 10. **Allegations Screen (`AllegationsScreen.kt`):** [COMPLETED]
     *   Re-implement the layout to match the specified order: Title, selected allegations list, search box, request/sort buttons, and the main list of allegations.
@@ -69,7 +70,8 @@ This document outlines the features, fixes, and enhancements required to complet
 ### **III. Core Functionality & Workflow**
 
 14. **Evidence Processing Pipeline:**
-    *   Ensure that text extracted from any evidence source (image, audio, video) is formatted with Markdown code blocks before being saved.
+    *   Ensure that text extracted from any evidence source (image, audio, video) is formatted with Markdown code blocks before being saved. [COMPLETED]
+    *   **Note:** This functionality was already implemented in the `OcrProcessingService` and `VideoProcessingService`.
     *   Verify that all raw evidence files are copied into a dedicated "raw" folder within the case directory.
     *   Implement the logic to index files with no extracted text as "non-textual evidence."
 
