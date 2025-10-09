@@ -8,6 +8,44 @@ Whether you're dealing with harassment screenshots, recorded threats,  slanderou
 
 This project is in an advanced stage of development, with a robust architecture designed to realize a specific vision: to create a seamless pipeline where a user can take a photo of evidence, have the app's OCR extract the text, and then use a custom, user-defined rules engine to automatically tag and categorize that evidence. This categorized data is then organized in a Google Sheet, where a powerful backend script can be triggered to generate all necessary legal paperwork, such as cover sheets, metadata reports, and affidavits.
 
+## Getting Started
+
+Follow these instructions to set up the development environment and get the application running on an Android emulator or a physical device.
+
+### Prerequisites
+
+-   **Android Studio:** The official integrated development environment (IDE) for Android app development. You can download it from the [Android Developer website](https://developer.android.com/studio).
+-   **Java Development Kit (JDK):** Version 17 or higher. Android Studio often comes with its own embedded JDK, which is recommended.
+-   **Google Account:** Required for Google Drive and Google Sheets integration.
+
+### Setup Instructions
+
+1.  **Clone the Repository:**
+    ```bash
+    git clone https://github.com/HereLiesAz/TheLexorcist.git
+    cd TheLexorcist
+    ```
+
+2.  **Configure Google Services:**
+    The application uses Google services for features like cloud storage and document generation. You'll need to provide your own configuration file.
+    -   Locate the template file at `app/google-services.template.json`.
+    -   Copy this file and rename the copy to `app/google-services.json`.
+    -   Follow the instructions in the [Firebase documentation](https://firebase.google.com/docs/android/setup) to obtain your own `google-services.json` file and replace the contents of the copied file with your own configuration.
+
+3.  **Build the Application:**
+    The project uses the Gradle wrapper to ensure a consistent build environment. Open a terminal in the project's root directory and run the following command:
+    ```bash
+    ./gradlew :app:assembleDebug
+    ```
+    This command will download the required dependencies and compile the debug version of the application.
+
+4.  **Run the Application:**
+    -   Open the project in Android Studio.
+    -   Android Studio will automatically sync the Gradle project.
+    -   Select a run configuration (usually `app`).
+    -   Choose an available emulator or connect a physical Android device.
+    -   Click the "Run" button (green play icon).
+
 ## Key Features
 
 - **Multi-Source Evidence Pipeline:** Capture evidence from images (OCR), audio (transcription), video (frame-by-frame OCR), and location history files.

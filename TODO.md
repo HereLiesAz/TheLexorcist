@@ -128,9 +128,9 @@ This document outlines the features, fixes, and enhancements required to complet
 
 ### **V. Documentation**
 
-22. **Update `README.md`:**
-    *   Add a "Getting Started" section with instructions for setting up the development environment.
-    *   Update the "Key Features" list to reflect the current state of the application.
+22. **Update `README.md`:** [COMPLETED]
+    *   Add a "Getting Started" section with instructions for setting up the development environment. [COMPLETED]
+    *   Update the "Key Features" list to reflect the current state of the application. [COMPLETED]
 
 23. **Update `AGENTS.md`:** [COMPLETED]
     *   Replace the "Roadmap" section with this new, more granular TODO list.
@@ -140,6 +140,7 @@ This document outlines the features, fixes, and enhancements required to complet
     *   Create a `CONTRIBUTING.md` file with guidelines for code contributions, pull requests, and code style.
     *   Create a `CODE_OF_CONDUCT.md` file.
 
-25. **Review Existing Documentation:**
-    *   Verify the accuracy of `GMAIL_API_SETUP.md` and `OUTLOOK_API_SETUP.md`.
-    *   Expand `SCRIPT_EXAMPLES.md` with examples of the new AI and UI scripting capabilities.
+25. **Review Existing Documentation:** [COMPLETED]
+    *   Verify the accuracy of `GMAIL_API_SETUP.md` and `OUTLOOK_API_SETUP.md`. [COMPLETED]
+    *   Expand `SCRIPT_EXAMPLES.md` with examples of the new AI and UI scripting capabilities. [COMPLETED]
+    *   **Note:** The API setup documents were not found. The `SCRIPT_EXAMPLES.md` file was expanded with new examples for the implemented AI APIs and clarified the status of unimplemented conceptual APIs.
