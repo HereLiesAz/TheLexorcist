@@ -72,7 +72,8 @@ This document outlines the features, fixes, and enhancements required to complet
 14. **Evidence Processing Pipeline:**
     *   Ensure that text extracted from any evidence source (image, audio, video) is formatted with Markdown code blocks before being saved. [COMPLETED]
     *   **Note:** This functionality was already implemented in the `OcrProcessingService` and `VideoProcessingService`.
-    *   Verify that all raw evidence files are copied into a dedicated "raw" folder within the case directory.
+    *   Verify that all raw evidence files are copied into a dedicated "raw" folder within the case directory. [COMPLETED]
+    *   **Note:** This functionality was confirmed to be working as intended in the `LocalFileStorageService`.
     *   Implement the logic to index files with no extracted text as "non-textual evidence."
 
 15. **Scripting Engine:**
@@ -99,8 +100,9 @@ This document outlines the features, fixes, and enhancements required to complet
 
 19. **Evidence Cleanup Functionality:**
     *   **Duplicate Detection:**
-        *   Implement a file hashing mechanism to generate a unique hash for each media file upon import.
-        *   Store the file hash in the `Evidence` data model.
+        *   Implement a file hashing mechanism to generate a unique hash for each media file upon import. [COMPLETED]
+        *   Store the file hash in the `Evidence` data model. [COMPLETED]
+        *   **Note:** This functionality was already implemented. The `Evidence` data model contains a `fileHash` property, and the processing services (`OcrProcessingService`, `VideoProcessingService`) correctly populate it.
         *   Create a `CleanupService` that compares file hashes to identify duplicates.
         *   Implement a UI component on the Review screen to display groups of duplicate evidence.
         *   Provide a button for each group to "Keep One, Delete Rest."
