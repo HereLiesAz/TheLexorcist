@@ -119,6 +119,7 @@ fun ExtrasScreen(
                 showDetailsDialog = null
             },
             onEdit = {
+                addonsBrowserViewModel.suggestEditViaEmail(context, dialogAuthorEmail, dialogName, dialogContent)
                 showDetailsDialog = null
             }
         )
@@ -402,6 +403,11 @@ fun ItemDetailsDialog(
                 Text(text = description, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.End)
                 Spacer(modifier = Modifier.height(16.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    AzButton(
+                        onClick = onEdit,
+                        text = stringResource(R.string.suggest_an_edit),
+                        modifier = Modifier.padding(end = 8.dp)
+                    )
                     AzButton(
                         onClick = {
                             shareText(context, subject = "Check out this $type: $name", text = content)
