@@ -61,7 +61,8 @@ This document outlines the features, fixes, and enhancements required to complet
     *   Add logic to display a placeholder `ExtendedEvent` component when the timeline is empty to show users what to expect.
 
 12. **Exhibits Screen (`ExhibitsScreen.kt`):**
-    *   Implement a tabbed layout for the main functionality.
+    *   Implement a tabbed layout for the main functionality. [COMPLETED]
+    *   **Note:** Verified that a `PrimaryTabRow` was already implemented, fulfilling the requirement.
     *   Implement a drag-and-drop interface for assigning evidence to exhibits.
     *   Create the exhibit details view that appears when an exhibit is clicked. [COMPLETED]
 
@@ -74,7 +75,7 @@ This document outlines the features, fixes, and enhancements required to complet
     *   **Note:** This functionality was already implemented in the `OcrProcessingService` and `VideoProcessingService`.
     *   Verify that all raw evidence files are copied into a dedicated "raw" folder within the case directory. [COMPLETED]
     *   **Note:** This functionality was confirmed to be working as intended in the `LocalFileStorageService`.
-    *   Implement the logic to index files with no extracted text as "non-textual evidence."
+    *   Implement the logic to index files with no extracted text as "non-textual evidence." [COMPLETED]
 
 15. **Scripting Engine:**
     *   Extend the `ScriptRunner` to support scripts that can call Google Apps Script functions via the `GoogleApiService`. [COMPLETED]

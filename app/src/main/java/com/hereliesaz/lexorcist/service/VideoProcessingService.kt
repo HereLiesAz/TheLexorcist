@@ -60,20 +60,23 @@ class VideoProcessingService @Inject constructor(
         val audioUri = extractAudio(videoUri)
         onProgress(0.15f, "Audio extraction attempt complete.")
 
-        var audioTranscript: String? = "No audio processed."
-        when (val transcriptionResult = transcriptionService.transcribeAudio(videoUri)) {
+        val transcriptionResult = transcriptionService.transcribeAudio(videoUri)
+        val audioTranscript = when (transcriptionResult) {
             is Result.Success -> {
-                audioTranscript = transcriptionResult.data
-                logService.addLog("Transcription successful: ${audioTranscript?.take(100)}...")
+                logService.addLog("Transcription successful: ${transcriptionResult.data.take(100)}...")
                 onProgress(0.40f, "Audio transcription complete.")
+                transcriptionResult.data
             }
             is Result.Error -> {
                 val transcriptionError = transcriptionResult.exception.message ?: "Unknown transcription error"
                 logService.addLog("Transcription failed: $transcriptionError", LogLevel.ERROR)
                 onProgress(0.40f, "Audio transcription failed.")
+                null
             }
             else -> {
-                // Handle other cases like UserRecoverableError or Loading if the sealed class supports them
+                logService.addLog("Transcription in unknown state.", LogLevel.WARNING)
+                onProgress(0.40f, "Audio transcription failed.")
+                null
             }
         }
 
@@ -110,7 +113,7 @@ class VideoProcessingService @Inject constructor(
         onProgress(0.90f, "Frame OCR complete.")
 
         val videoOcrText = ocrTextBuilder.toString().trim()
-        val combinedContent = "Audio Transcript:\n${audioTranscript}\n\nOCR from Frames:\n${if (videoOcrText.isNotEmpty()) videoOcrText else "No text extracted from frames."}"
+        val combinedContent = "Audio Transcript:\n${audioTranscript ?: "Transcription failed."}\n\nOCR from Frames:\n${if (videoOcrText.isNotEmpty()) videoOcrText else "No text extracted from frames."}"
         val fileHash = com.hereliesaz.lexorcist.utils.HashingUtils.getHash(context, videoUri)
 
         var videoEvidence =
@@ -128,7 +131,12 @@ class VideoProcessingService @Inject constructor(
                 allegationId = null,
                 allegationElementName = null, // Added
                 category = "Video Evidence",
-                tags = listOfNotNull("video", if (audioTranscript?.contains("failed", ignoreCase = true) != true) "transcription" else null, if (videoOcrText.isNotEmpty()) "ocr" else null),
+                tags = listOfNotNull(
+                    "video",
+                    if (audioTranscript?.isNotBlank() == true) "transcription" else null,
+                    if (videoOcrText.isNotBlank()) "ocr" else null,
+                    if ((audioTranscript == null || audioTranscript.isBlank()) && videoOcrText.isBlank()) "non-textual" else null
+                ),
                 commentary = null,
                 parentVideoId = null,
                 entities = emptyMap<String, List<String>>(), // TODO: Implement entity parsing for combined video content
