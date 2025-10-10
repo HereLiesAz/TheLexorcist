@@ -50,7 +50,7 @@ This document outlines the features, fixes, and enhancements required to complet
     *   Implement the "Share" button's `onClick` action to open a dialog. [COMPLETED - UI Only]
     *   Create the "Share Script" dialog, which should prompt the user to enter their name and email. [COMPLETED - UI Only]
     *   Implement the logic to send the shared script to the creator's email when the "Edit" button is clicked. [COMPLETED]
-    *   **Note:** The end-to-end logic for sharing a script was already fully implemented. No code changes were necessary.
+    *   **Note:** The initial "Share" functionality (saving a *new* script to the public spreadsheet) was already implemented. The "Suggest an Edit" feature for *existing* scripts on the Extras screen (sending an email to the author) has now been added.
 
 10. **Allegations Screen (`AllegationsScreen.kt`):** [COMPLETED]
     *   Re-implement the layout to match the specified order: Title, selected allegations list, search box, request/sort buttons, and the main list of allegations.
