@@ -77,7 +77,8 @@ This document outlines the features, fixes, and enhancements required to complet
     *   Implement the logic to index files with no extracted text as "non-textual evidence."
 
 15. **Scripting Engine:**
-    *   Extend the `ScriptRunner` to support scripts that can call Google Apps Script functions via the `GoogleApiService`.
+    *   Extend the `ScriptRunner` to support scripts that can call Google Apps Script functions via the `GoogleApiService`. [COMPLETED]
+    *   **Note:** This was verified to be implemented via the `lex.google.runAppsScript` function.
     *   Implement a change-detection mechanism to ensure that scripts are only run on evidence that has changed or if the script itself has been updated.
 
 16. **Location History Import:** [COMPLETED]
@@ -86,7 +87,8 @@ This document outlines the features, fixes, and enhancements required to complet
     *   **Note:** Direct access to location history is not possible due to Android's privacy restrictions. The implementation uses a file-based import as a workaround.
 
 17. **Evidence Cleanup & Organization:**
-    *   Create a database or repository to store the legal elements required to support each type of allegation.
+    *   Create a database or repository to store the legal elements required to support each type of allegation. [COMPLETED]
+    *   **Note:** Created the `LegalElement` data class and the `LegalElementsRepository` with a placeholder implementation.
     *   Implement the logic on the "Exhibits" screen to use this database to guide the user in creating exhibits.
 
 ---
