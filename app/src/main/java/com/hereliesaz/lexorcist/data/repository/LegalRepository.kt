@@ -24,7 +24,7 @@ class LegalRepository @Inject constructor(@ApplicationContext private val contex
                 // Skip header line
                 reader.readLine()
 
-                val regex = ""(.*?)"".toRegex()
+                val regex = "\"(.*?)\"".toRegex()
                 var line: String?
                 while (reader.readLine().also { line = it } != null) {
                     val matches = regex.findAll(line!!)
@@ -49,6 +49,6 @@ class LegalRepository @Inject constructor(@ApplicationContext private val contex
         emit(allegations)
     }.catch { e ->
         e.printStackTrace()
-        emit(emptyList())
+        emit(mutableListOf<MasterAllegation>())
     }
 }

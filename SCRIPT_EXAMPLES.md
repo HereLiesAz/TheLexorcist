@@ -268,4 +268,45 @@ For advanced functionality, scripts can use the global `lex` object, which provi
     ```
 
 ---
-*Note: The remaining scripts are conceptual examples demonstrating the potential of the scripting engine. Their full functionality may depend on future API additions.*
+
+### **Level 4: Advanced AI & Automation**
+
+**17. Translate and Summarize**
+*   **Description:** Translates foreign-language evidence into English and then creates a summary.
+*   **Script:**
+    ```javascript
+    const prompt = "Translate the following text to English, then provide a one-sentence summary: " + evidence.text;
+    const result = lex.ai.generate.generateContent(prompt);
+    if (result) {
+        createNote("AI Translation & Summary: " + result);
+        addTag("Translated");
+        addTag("AI Summary");
+    }
+    ```
+
+**18. Draft a Response**
+*   **Description:** Generates a draft of a professional, non-emotional response to hostile or harassing text.
+*   **Script:**
+    ```javascript
+    const prompt = "Read the following text. Draft a brief, professional, and non-emotional response that states the communication is received and will be reviewed. Do not make any admissions. Text: " + evidence.text;
+    const draft = lex.ai.generate.generateContent(prompt);
+    if (draft) {
+        createNote("AI Draft Response: " + draft);
+        addTag("Draft Response");
+    }
+    ```
+
+**19. Extract Structured Data**
+*   **Description:** Scans a block of text and extracts key events into a structured, bulleted list.
+*   **Script:**
+    ```javascript
+    const prompt = "From the text below, extract a timeline of events as a bulleted list. Include dates and times if mentioned. Text: " + evidence.text;
+    const timeline = lex.ai.generate.generateContent(prompt);
+    if (timeline) {
+        createNote("AI Extracted Timeline:\n" + timeline);
+        addTag("Timeline Extracted");
+    }
+    ```
+
+---
+*Note: The `lex.ai.local` and `lex.ui` examples are conceptual and demonstrate the potential of the scripting engine. Their full functionality depends on future API additions, as they are not yet implemented in the core `ScriptRunner`.*

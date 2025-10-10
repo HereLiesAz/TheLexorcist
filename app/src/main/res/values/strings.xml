@@ -357,4 +357,5 @@ function onOpen() {}</string>
     <string name="automatic_cleanup">Automatic Cleanup</string>
     <string name="paperwork">Paperwork</string>
     <string name="finalize">Finalize</string>
+    <string name="suggest_an_edit">Suggest an Edit</string>
 </resources>

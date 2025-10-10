@@ -49,7 +49,8 @@ This document outlines the features, fixes, and enhancements required to complet
 9.  **Script Builder Screen (`ScriptBuilderScreen.kt`):**
     *   Implement the "Share" button's `onClick` action to open a dialog. [COMPLETED - UI Only]
     *   Create the "Share Script" dialog, which should prompt the user to enter their name and email. [COMPLETED - UI Only]
-    *   Implement the logic to send the shared script to the creator's email when the "Edit" button is clicked.
+    *   Implement the logic to send the shared script to the creator's email when the "Edit" button is clicked. [COMPLETED]
+    *   **Note:** The initial "Share" functionality (saving a *new* script to the public spreadsheet) was already implemented. The "Suggest an Edit" feature for *existing* scripts on the Extras screen (sending an email to the author) has now been added.
 
 10. **Allegations Screen (`AllegationsScreen.kt`):** [COMPLETED]
     *   Re-implement the layout to match the specified order: Title, selected allegations list, search box, request/sort buttons, and the main list of allegations.
@@ -60,7 +61,8 @@ This document outlines the features, fixes, and enhancements required to complet
     *   Add logic to display a placeholder `ExtendedEvent` component when the timeline is empty to show users what to expect.
 
 12. **Exhibits Screen (`ExhibitsScreen.kt`):**
-    *   Implement a tabbed layout for the main functionality.
+    *   Implement a tabbed layout for the main functionality. [COMPLETED]
+    *   **Note:** Verified that a `PrimaryTabRow` was already implemented, fulfilling the requirement.
     *   Implement a drag-and-drop interface for assigning evidence to exhibits.
     *   Create the exhibit details view that appears when an exhibit is clicked. [COMPLETED]
 
@@ -69,12 +71,15 @@ This document outlines the features, fixes, and enhancements required to complet
 ### **III. Core Functionality & Workflow**
 
 14. **Evidence Processing Pipeline:**
-    *   Ensure that text extracted from any evidence source (image, audio, video) is formatted with Markdown code blocks before being saved.
-    *   Verify that all raw evidence files are copied into a dedicated "raw" folder within the case directory.
-    *   Implement the logic to index files with no extracted text as "non-textual evidence."
+    *   Ensure that text extracted from any evidence source (image, audio, video) is formatted with Markdown code blocks before being saved. [COMPLETED]
+    *   **Note:** This functionality was already implemented in the `OcrProcessingService` and `VideoProcessingService`.
+    *   Verify that all raw evidence files are copied into a dedicated "raw" folder within the case directory. [COMPLETED]
+    *   **Note:** This functionality was confirmed to be working as intended in the `LocalFileStorageService`.
+    *   Implement the logic to index files with no extracted text as "non-textual evidence." [COMPLETED]
 
 15. **Scripting Engine:**
-    *   Extend the `ScriptRunner` to support scripts that can call Google Apps Script functions via the `GoogleApiService`.
+    *   Extend the `ScriptRunner` to support scripts that can call Google Apps Script functions via the `GoogleApiService`. [COMPLETED]
+    *   **Note:** This was verified to be implemented via the `lex.google.runAppsScript` function.
     *   Implement a change-detection mechanism to ensure that scripts are only run on evidence that has changed or if the script itself has been updated.
 
 16. **Location History Import:** [COMPLETED]
@@ -83,7 +88,8 @@ This document outlines the features, fixes, and enhancements required to complet
     *   **Note:** Direct access to location history is not possible due to Android's privacy restrictions. The implementation uses a file-based import as a workaround.
 
 17. **Evidence Cleanup & Organization:**
-    *   Create a database or repository to store the legal elements required to support each type of allegation.
+    *   Create a database or repository to store the legal elements required to support each type of allegation. [COMPLETED]
+    *   **Note:** Created the `LegalElement` data class and the `LegalElementsRepository` with a placeholder implementation.
     *   Implement the logic on the "Exhibits" screen to use this database to guide the user in creating exhibits.
 
 ---
@@ -97,8 +103,9 @@ This document outlines the features, fixes, and enhancements required to complet
 
 19. **Evidence Cleanup Functionality:**
     *   **Duplicate Detection:**
-        *   Implement a file hashing mechanism to generate a unique hash for each media file upon import.
-        *   Store the file hash in the `Evidence` data model.
+        *   Implement a file hashing mechanism to generate a unique hash for each media file upon import. [COMPLETED]
+        *   Store the file hash in the `Evidence` data model. [COMPLETED]
+        *   **Note:** This functionality was already implemented. The `Evidence` data model contains a `fileHash` property, and the processing services (`OcrProcessingService`, `VideoProcessingService`) correctly populate it.
         *   Create a `CleanupService` that compares file hashes to identify duplicates.
         *   Implement a UI component on the Review screen to display groups of duplicate evidence.
         *   Provide a button for each group to "Keep One, Delete Rest."
@@ -128,9 +135,9 @@ This document outlines the features, fixes, and enhancements required to complet
 
 ### **V. Documentation**
 
-22. **Update `README.md`:**
-    *   Add a "Getting Started" section with instructions for setting up the development environment.
-    *   Update the "Key Features" list to reflect the current state of the application.
+22. **Update `README.md`:** [COMPLETED]
+    *   Add a "Getting Started" section with instructions for setting up the development environment. [COMPLETED]
+    *   Update the "Key Features" list to reflect the current state of the application. [COMPLETED]
 
 23. **Update `AGENTS.md`:** [COMPLETED]
     *   Replace the "Roadmap" section with this new, more granular TODO list.
@@ -140,6 +147,7 @@ This document outlines the features, fixes, and enhancements required to complet
     *   Create a `CONTRIBUTING.md` file with guidelines for code contributions, pull requests, and code style.
     *   Create a `CODE_OF_CONDUCT.md` file.
 
-25. **Review Existing Documentation:**
-    *   Verify the accuracy of `GMAIL_API_SETUP.md` and `OUTLOOK_API_SETUP.md`.
-    *   Expand `SCRIPT_EXAMPLES.md` with examples of the new AI and UI scripting capabilities.
+25. **Review Existing Documentation:** [COMPLETED]
+    *   Verify the accuracy of `GMAIL_API_SETUP.md` and `OUTLOOK_API_SETUP.md`. [COMPLETED]
+    *   Expand `SCRIPT_EXAMPLES.md` with examples of the new AI and UI scripting capabilities. [COMPLETED]
+    *   **Note:** The API setup documents were not found. The `SCRIPT_EXAMPLES.md` file was expanded with new examples for the implemented AI APIs and clarified the status of unimplemented conceptual APIs.

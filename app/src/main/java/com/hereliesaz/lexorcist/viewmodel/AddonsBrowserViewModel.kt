@@ -128,4 +128,18 @@ constructor(
             }
         }
     }
+
+    fun suggestEditViaEmail(context: android.content.Context, authorEmail: String, itemName: String, content: String) {
+        val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+            type = "message/rfc822"
+            putExtra(android.content.Intent.EXTRA_EMAIL, arrayOf(authorEmail))
+            putExtra(android.content.Intent.EXTRA_SUBJECT, "Suggested Edit for Lexorcist Addon: $itemName")
+            putExtra(android.content.Intent.EXTRA_TEXT, "Hello,\n\nI have a suggested edit for your addon '$itemName'.\n\nHere is the modified content:\n\n---\n\n$content\n\n---\n\nThank you!")
+        }
+        try {
+            context.startActivity(android.content.Intent.createChooser(intent, "Send Email"))
+        } catch (e: android.content.ActivityNotFoundException) {
+            // Handle case where no email app is installed
+        }
+    }
 }
