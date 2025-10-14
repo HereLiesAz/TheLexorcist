@@ -20,12 +20,11 @@ object ExifUtils {
         }
     }
 
-    fun getExifData(context: Context, uri: Uri): String {
-        return try {
+    fun getExifData(context: Context, uri: Uri): Map<String, String> {
+        val exifData = mutableMapOf<String, String>()
+        try {
             context.contentResolver.openInputStream(uri)?.use { inputStream ->
                 val exifInterface = ExifInterface(inputStream)
-                val allTags = StringBuilder()
-                // You can iterate over a predefined list of tags or use reflection to get all available tags
                 val tags = arrayOf(
                     ExifInterface.TAG_DATETIME,
                     ExifInterface.TAG_GPS_LATITUDE,
@@ -38,14 +37,14 @@ object ExifUtils {
                 for (tag in tags) {
                     val value = exifInterface.getAttribute(tag)
                     if (value != null) {
-                        allTags.append("$tag: $value\n")
+                        exifData[tag] = value
                     }
                 }
-                allTags.toString()
-            } ?: ""
+            }
         } catch (e: IOException) {
-            ""
+            // Handle exception
         }
+        return exifData
     }
 
     fun getFileSize(context: Context, uri: Uri): Long {

@@ -6,7 +6,7 @@ import java.io.InputStream
 import java.security.MessageDigest
 
 object HashingUtils {
-    fun getHash(context: Context, uri: Uri): String {
+    fun getHash(context: Context, uri: Uri): String? {
         return try {
             context.contentResolver.openInputStream(uri)?.use { inputStream ->
                 val digest = MessageDigest.getInstance("SHA-256")
@@ -16,9 +16,9 @@ object HashingUtils {
                     digest.update(buffer, 0, bytesRead)
                 }
                 digest.digest().joinToString("") { "%02x".format(it) }
-            } ?: ""
+            }
         } catch (e: Exception) {
-            ""
+            null
         }
     }
 }
