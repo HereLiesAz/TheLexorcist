@@ -38,16 +38,16 @@ class VideoProcessingWorker @AssistedInject constructor(
 
         try {
             finalEvidenceProcessed = videoProcessingService.processVideo(
+                context = appContext,
                 videoUri = videoUri,
                 caseId = caseId,
-                caseName = caseName,
-                spreadsheetId = spreadsheetId,
+                spreadsheetId = spreadsheetId
             ) { percent, message ->
                 val progressData = Data.Builder()
                     .putFloat(PROGRESS_PERCENT, percent)
                     .putString(PROGRESS_MESSAGE, message)
                     .build()
-                setProgressAsync(progressData) 
+                setProgressAsync(progressData)
             }
 
             if (finalEvidenceProcessed != null) {

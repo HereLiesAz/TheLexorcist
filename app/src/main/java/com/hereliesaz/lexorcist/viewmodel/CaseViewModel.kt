@@ -1237,9 +1237,9 @@ constructor(
             try {
                 val result =
                     videoProcessingService.processVideo(
+                        context = applicationContext,
                         videoUri = uri,
                         caseId = currentCase.id,
-                        caseName = currentCase.name,
                         spreadsheetId = currentCase.spreadsheetId
                     ) { progress, message ->
                         _processingState.value = ProcessingState.InProgress(progress)

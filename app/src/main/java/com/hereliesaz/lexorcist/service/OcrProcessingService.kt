@@ -268,7 +268,7 @@ constructor(
                     Evidence(
                         id = 0,
                         caseId = caseId,
-                        metadata = metadata,
+                        metadata = emptyMap(),
                         fileSize = fileSize,
                         spreadsheetId = spreadsheetId,
                         type = "image",
