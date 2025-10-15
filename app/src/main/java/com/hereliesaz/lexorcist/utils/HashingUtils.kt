@@ -2,26 +2,22 @@ package com.hereliesaz.lexorcist.utils
 
 import android.content.Context
 import android.net.Uri
+import java.io.InputStream
 import java.security.MessageDigest
 
 object HashingUtils {
-
-    fun getHash(context: Context, uri: Uri, algorithm: String = "SHA-256"): String? {
+    fun getHash(context: Context, uri: Uri): String? {
         return try {
             context.contentResolver.openInputStream(uri)?.use { inputStream ->
-                val digest = MessageDigest.getInstance(algorithm)
+                val digest = MessageDigest.getInstance("SHA-256")
                 val buffer = ByteArray(8192)
-                var read: Int
-                while (inputStream.read(buffer).also { read = it } != -1) {
-                    digest.update(buffer, 0, read)
+                var bytesRead: Int
+                while (inputStream.read(buffer).also { bytesRead = it } != -1) {
+                    digest.update(buffer, 0, bytesRead)
                 }
-                val hashBytes = digest.digest()
-                // Convert byte array to hex string
-                hashBytes.joinToString("") { "%02x".format(it) }
+                digest.digest().joinToString("") { "%02x".format(it) }
             }
         } catch (e: Exception) {
-            // In a real app, you'd want to log this error more formally
-            e.printStackTrace()
             null
         }
     }

@@ -35,6 +35,7 @@ import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.aznavrail.AzButton
 import com.hereliesaz.lexorcist.model.TranscriptEdit
+import com.hereliesaz.lexorcist.ui.components.LogView
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 import java.text.SimpleDateFormat
@@ -205,6 +206,17 @@ fun TranscriptionScreen(
                                 EditHistoryItem(edit = edit)
                             }
                         }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Text(
+                            stringResource(R.string.processing_logs),
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.End
+                        )
+                        val logMessages by caseViewModel.logMessages.collectAsState()
+                        LogView(logs = logMessages)
                     }
                 }
             }
