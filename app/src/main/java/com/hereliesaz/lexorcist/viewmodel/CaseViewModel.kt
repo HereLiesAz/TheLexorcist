@@ -100,7 +100,8 @@ constructor(
     private val jurisdictionRepository: JurisdictionRepository,
     private val locationHistoryParser: LocationHistoryParser,
     private val exhibitRepository: ExhibitRepository,
-    private val legalRepository: LegalRepository
+    private val legalRepository: LegalRepository,
+    private val cleanupService: com.hereliesaz.lexorcist.service.CleanupService
 ) : ViewModel() {
     private val sharedPref =
         applicationContext.getSharedPreferences("CaseInfoPrefs", Context.MODE_PRIVATE)
@@ -1392,28 +1393,13 @@ constructor(
                     val updatedEvidence = _selectedCaseEvidenceListInternal.value
                     val suggestions = mutableListOf<CleanupSuggestion>()
 
-                    val evidenceWithHashes = updatedEvidence.filterNot { it.fileHash.isNullOrEmpty() }
-                    val duplicateGroups = evidenceWithHashes
-                        .groupBy { it.fileHash!! }
-                        .filter { it.value.size > 1 }
-                        .map { CleanupSuggestion.DuplicateGroup(it.value) }
-
+                    val duplicateGroups = cleanupService.detectDuplicates(updatedEvidence)
+                        .map { CleanupSuggestion.DuplicateGroup(it) }
                     suggestions.addAll(duplicateGroups)
 
-                    duplicateGroups.flatMap { it.evidence }.forEach { evidence ->
-                        if (!evidence.isDuplicate) {
-                            evidenceRepository.updateEvidence(evidence.copy(isDuplicate = true))
-                        }
-                    }
-
-                    val nonDuplicateImageEvidence = updatedEvidence.filter { it.type == "image" && !it.isDuplicate }
-                    val seriesCandidates = nonDuplicateImageEvidence.groupBy {
-                        it.sourceDocument.replace(Regex("[_\\d]"), "")
-                    }.filter { it.value.size > 1 }
-
-                    seriesCandidates.forEach { (_, series) ->
-                        suggestions.add(CleanupSuggestion.ImageSeriesGroup(series))
-                    }
+                    val imageSeriesGroups = cleanupService.detectImageSeries(updatedEvidence)
+                        .map { CleanupSuggestion.ImageSeriesGroup(it) }
+                    suggestions.addAll(imageSeriesGroups)
 
                     withContext(Dispatchers.Main) {
                         _cleanupSuggestions.value = suggestions

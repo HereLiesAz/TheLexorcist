@@ -17,14 +17,14 @@ This document outlines the features, fixes, and enhancements required to complet
     *   **Audio Transcription:** Integrate the existing audio transcription service to process the video's audio track.
     *   **Evidence Aggregation:** Combine the transcribed audio and the text from all frames into a single, comprehensive evidence record linked to the original video file.
 
-3.  **Editable Audio Transcripts:**
-    *   **UI Implementation:** Create a new screen or dialog that displays an audio transcript in an editable text field.
-    *   **Edit Tracking:** When an edit is made, prompt the user for a reason for the change.
-    *   **Data Storage:** Store the original transcript and a log of all edits (including the change, timestamp, and reason) in the evidence record.
+3.  **Editable Audio Transcripts:** [COMPLETED]
+    *   **UI Implementation:** Create a new screen or dialog that displays an audio transcript in an editable text field. [COMPLETED]
+    *   **Edit Tracking:** When an edit is made, prompt the user for a reason for the change. [COMPLETED]
+    *   **Data Storage:** Store the original transcript and a log of all edits (including the change, timestamp, and reason) in the evidence record. [COMPLETED]
 
-4.  **Transparent Progress Reporting:**
-    *   **Detailed Log View:** Enhance the existing progress reporting UI to include a scrollable, detailed log view that displays each step of the evidence processing pipeline (e.g., "Uploading file," "Running OCR," "Applying script 'Profanity Tagger'").
-    *   **Structured Logging:** Refactor the logging services to provide more structured and user-friendly log messages.
+4.  **Transparent Progress Reporting:** [COMPLETED]
+    *   **Detailed Log View:** Enhance the existing progress reporting UI to include a scrollable, detailed log view that displays each step of the evidence processing pipeline (e.g., "Uploading file," "Running OCR," "Applying script 'Profanity Tagger'"). [COMPLETED]
+    *   **Structured Logging:** Refactor the logging services to provide more structured and user-friendly log messages. [COMPLETED]
 
 ---
 
@@ -101,28 +101,28 @@ This document outlines the features, fixes, and enhancements required to complet
     *   Add the "Automatic Cleanup," "Paperwork," and "Finalize" `AzButton`s to the screen, ensuring they are right-aligned.
     *   **Note:** The `ReviewScreen.kt` file already existed. The task was updated to replace the incorrect buttons ("Generate", "Package", "Report") with the specified ones.
 
-19. **Evidence Cleanup Functionality:**
-    *   **Duplicate Detection:**
+19. **Evidence Cleanup Functionality:** [COMPLETED]
+    *   **Duplicate Detection:** [COMPLETED]
         *   Implement a file hashing mechanism to generate a unique hash for each media file upon import. [COMPLETED]
         *   Store the file hash in the `Evidence` data model. [COMPLETED]
         *   **Note:** This functionality was already implemented. The `Evidence` data model contains a `fileHash` property, and the processing services (`OcrProcessingService`, `VideoProcessingService`) correctly populate it.
-        *   Create a `CleanupService` that compares file hashes to identify duplicates.
-        *   Implement a UI component on the Review screen to display groups of duplicate evidence.
-        *   Provide a button for each group to "Keep One, Delete Rest."
-    *   **Image Series Merging (for conversations):**
-        *   Develop an algorithm to identify sequential screenshots based on filename patterns and timestamps.
-        *   Implement a UI component to display these identified series.
-        *   Provide a "Merge" button that combines the images into a single PDF and merges their OCR text into one evidence record.
+        *   Create a `CleanupService` that compares file hashes to identify duplicates. [COMPLETED]
+        *   Implement a UI component on the Review screen to display groups of duplicate evidence. [COMPLETED]
+        *   Provide a button for each group to "Keep One, Delete Rest." [COMPLETED]
+    *   **Image Series Merging (for conversations):** [COMPLETED]
+        *   Develop an algorithm to identify sequential screenshots based on filename patterns and timestamps. [COMPLETED]
+        *   Implement a UI component to display these identified series. [COMPLETED]
+        *   Provide a "Merge" button that combines the images into a single PDF and merges their OCR text into one evidence record. [COMPLETED]
     *   **Redundant Text Cleanup:**
         *   Implement a text similarity algorithm to find evidence with highly similar text content.
         *   Display these as potential duplicates for manual review and merging.
 
-20. **Document Generation ("Paperwork" Button):**
-    *   Implement the `onClick` for the "Paperwork" button.
-    *   The process should iterate through all `Exhibits` in the current case.
-    *   For each `Exhibit`, it should find the associated `Template`.
-    *   Call the `GoogleApiService` to generate a document from the template, populating it with data from the evidence within that exhibit.
-    *   Display a progress indicator and a final success/failure message.
+20. **Document Generation ("Paperwork" Button):** [COMPLETED]
+    *   Implement the `onClick` for the "Paperwork" button. [COMPLETED]
+    *   The process should iterate through all `Exhibits` in the current case. [COMPLETED]
+    *   For each `Exhibit`, it should find the associated `Template`. [COMPLETED]
+    *   Call the `GoogleApiService` to generate a document from the template, populating it with data from the evidence within that exhibit. [COMPLETED]
+    *   Display a progress indicator and a final success/failure message. [COMPLETED]
 
 21. **Case Finalization ("Finalize" Button):**
     *   **Dialog UI:** Create a dialog that appears when "Finalize" is clicked.
