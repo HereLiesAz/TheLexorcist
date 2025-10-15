@@ -130,9 +130,9 @@ class VideoProcessingWorkerTest {
     fun `doWork when video processing is successful returns success`() = runTest {
         whenever(
             mockVideoProcessingService.processVideo(
-                eq(mockParsedVideoUri), // This should now match correctly
+                any(),
+                eq(mockParsedVideoUri),
                 eq(testCaseIdInput),
-                eq(testCaseName),
                 eq(testSpreadsheetId),
                 any()
             )
@@ -151,7 +151,7 @@ class VideoProcessingWorkerTest {
     @Test
     fun `doWork when video processing service returns null returns failure`() = runTest {
         whenever(
-            mockVideoProcessingService.processVideo(eq(mockParsedVideoUri), any(), any(), any(), any())
+            mockVideoProcessingService.processVideo(any(), eq(mockParsedVideoUri), any(), any(), any())
         ).thenReturn(null)
 
         val result = worker.doWork()
@@ -168,7 +168,7 @@ class VideoProcessingWorkerTest {
     fun `doWork when video processing service throws exception returns failure`() = runTest {
         val exceptionMessage = "Test processing exception"
         whenever(
-            mockVideoProcessingService.processVideo(eq(mockParsedVideoUri), any(), any(), any(), any())
+            mockVideoProcessingService.processVideo(any(), eq(mockParsedVideoUri), any(), any(), any())
         ).thenThrow(RuntimeException(exceptionMessage))
 
         val result = worker.doWork()

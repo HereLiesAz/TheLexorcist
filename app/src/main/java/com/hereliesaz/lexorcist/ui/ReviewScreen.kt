@@ -57,6 +57,8 @@ import com.hereliesaz.lexorcist.data.Allegation
 import com.hereliesaz.lexorcist.data.AllegationElement
 import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.data.Exhibit
+import com.hereliesaz.lexorcist.ui.components.DuplicateGroupItem
+import com.hereliesaz.lexorcist.ui.components.ImageSeriesGroupItem
 import com.hereliesaz.lexorcist.viewmodel.AllegationsViewModel
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import java.util.Locale
@@ -235,6 +237,23 @@ fun ReviewScreen(
                         text = stringResource(id = R.string.finalize),
                         modifier = Modifier.padding(start = 8.dp)
                     )
+                }
+                val cleanupSuggestions by caseViewModel.cleanupSuggestions.collectAsState()
+                LazyColumn {
+                    items(cleanupSuggestions) { suggestion ->
+                        if (suggestion is com.hereliesaz.lexorcist.model.CleanupSuggestion.DuplicateGroup) {
+                            DuplicateGroupItem(
+                                group = suggestion,
+                                onMerge = { caseViewModel.deleteDuplicates(suggestion) }
+                            )
+                        }
+                        if (suggestion is com.hereliesaz.lexorcist.model.CleanupSuggestion.ImageSeriesGroup) {
+                            ImageSeriesGroupItem(
+                                group = suggestion,
+                                onMerge = { caseViewModel.mergeImageSeries(suggestion, "Merged Series") }
+                            )
+                        }
+                    }
                 }
             }
         }
