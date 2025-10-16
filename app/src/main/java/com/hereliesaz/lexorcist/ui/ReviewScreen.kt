@@ -68,6 +68,7 @@ import java.util.Locale
 fun ReviewScreen(
     caseViewModel: CaseViewModel = hiltViewModel(),
     allegationsViewModel: AllegationsViewModel = hiltViewModel(),
+    reviewViewModel: com.hereliesaz.lexorcist.viewmodel.ReviewViewModel = hiltViewModel()
 ) {
     val evidenceList by caseViewModel.selectedCaseEvidenceList.collectAsState()
     val selectedCase by caseViewModel.selectedCase.collectAsState()
@@ -85,9 +86,16 @@ fun ReviewScreen(
     var showEditDialog by remember { mutableStateOf(false) }
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
     var showGenerateDocumentDialog by remember { mutableStateOf(false) }
-    var showPackageFilesDialog by remember { mutableStateOf(false) }
+    var showFinalizeCaseDialog by remember { mutableStateOf(false) }
     var evidenceToEdit by remember { mutableStateOf<Evidence?>(null) }
     var evidenceToDelete by remember { mutableStateOf<Evidence?>(null) }
+    var filesToPackage by remember { mutableStateOf<List<java.io.File>>(emptyList()) }
+
+    val packageLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("*/*"),
+    ) { uri ->
+        uri?.let { caseViewModel.packageFiles(filesToPackage, it) }
+    }
 
     Scaffold(
         topBar = {
@@ -233,12 +241,18 @@ fun ReviewScreen(
                         modifier = Modifier.padding(start = 8.dp)
                     )
                     AzButton(
-                        onClick = { showPackageFilesDialog = true },
+                        onClick = { showFinalizeCaseDialog = true },
                         text = stringResource(id = R.string.finalize),
                         modifier = Modifier.padding(start = 8.dp)
                     )
                 }
                 val cleanupSuggestions by caseViewModel.cleanupSuggestions.collectAsState()
+                val similarTextGroups by reviewViewModel.similarTextGroups.collectAsState()
+
+                LaunchedEffect(evidenceList) {
+                    reviewViewModel.findSimilarTextEvidence(evidenceList)
+                }
+
                 LazyColumn {
                     items(cleanupSuggestions) { suggestion ->
                         if (suggestion is com.hereliesaz.lexorcist.model.CleanupSuggestion.DuplicateGroup) {
@@ -254,15 +268,36 @@ fun ReviewScreen(
                             )
                         }
                     }
+                    if (similarTextGroups.isNotEmpty()) {
+                        item {
+                            Text("Potential Text Duplicates")
+                        }
+                        items(similarTextGroups) { group ->
+                            Card(modifier = Modifier.padding(8.dp)) {
+                                Column {
+                                    group.forEach { evidence ->
+                                        Text(text = evidence.content)
+                                    }
+                                    AzButton(onClick = { /* TODO */ }) {
+                                        Text("Review & Merge")
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
     }
 
-    if (showPackageFilesDialog) {
-        PackageFilesDialog(
+    if (showFinalizeCaseDialog) {
+        FinalizeCaseDialog(
             caseViewModel = caseViewModel,
-            onDismiss = { showPackageFilesDialog = false }
+            onDismiss = { showFinalizeCaseDialog = false },
+            onConfirm = { files, name, ext ->
+                filesToPackage = files
+                packageLauncher.launch("$name.$ext")
+            }
         )
     }
 

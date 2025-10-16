@@ -49,6 +49,7 @@ import com.hereliesaz.lexorcist.service.OutlookService
 import com.hereliesaz.lexorcist.utils.ChatHistoryParser
 import com.hereliesaz.lexorcist.utils.EvidenceImporter
 import com.hereliesaz.lexorcist.utils.LocationHistoryParser
+import com.hereliesaz.lexorcist.model.UiComponentModel
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
@@ -79,10 +80,10 @@ constructor(
     private val caseRepository: CaseRepository,
     private val evidenceRepository: EvidenceRepository,
     private val localFileStorageService: LocalFileStorageService,
-    private val scriptRunner: com.hereliesaz.lexorcist.service.ScriptRunner,
+    val scriptRunner: com.hereliesaz.lexorcist.service.ScriptRunner,
     private val ocrProcessingService: com.hereliesaz.lexorcist.service.OcrProcessingService,
-    private val transcriptionService: com.hereliesaz.lexorcist.service.TranscriptionService,
     private val videoProcessingService: com.hereliesaz.lexorcist.service.VideoProcessingService,
+    private val whisperTranscriptionService: com.hereliesaz.lexorcist.service.WhisperTranscriptionService,
     private val workManager: androidx.work.WorkManager,
     private val scriptRepository: ScriptRepository,
     private val activeScriptRepository: ActiveScriptRepository,
@@ -101,7 +102,8 @@ constructor(
     private val locationHistoryParser: LocationHistoryParser,
     private val exhibitRepository: ExhibitRepository,
     private val legalRepository: LegalRepository,
-    private val cleanupService: com.hereliesaz.lexorcist.service.CleanupService
+    private val cleanupService: com.hereliesaz.lexorcist.service.CleanupService,
+    private val packagingService: com.hereliesaz.lexorcist.service.PackagingService
 ) : ViewModel() {
     private val sharedPref =
         applicationContext.getSharedPreferences("CaseInfoPrefs", Context.MODE_PRIVATE)
@@ -312,6 +314,20 @@ constructor(
     private val _isScanningForCleanup = MutableStateFlow(false)
     val isScanningForCleanup: StateFlow<Boolean> = _isScanningForCleanup.asStateFlow()
 
+    private val _dynamicUiComponents = MutableStateFlow<List<UiComponentModel>>(emptyList())
+    val dynamicUiComponents: StateFlow<List<UiComponentModel>> = _dynamicUiComponents.asStateFlow()
+
+    fun addOrUpdateDynamicUiComponent(component: UiComponentModel) {
+        val currentComponents = _dynamicUiComponents.value.toMutableList()
+        val index = currentComponents.indexOfFirst { it.id == component.id }
+        if (index != -1) {
+            currentComponents[index] = component
+        } else {
+            currentComponents.add(component)
+        }
+        _dynamicUiComponents.value = currentComponents
+    }
+
     fun onTimelineSortOrderChanged(sortType: TimelineSortType) {
         _timelineSortType.value = sortType
     }
@@ -385,6 +401,12 @@ constructor(
                     selectCase(lastSelectedCase)
                 }
             }
+        }
+    }
+
+    fun packageFiles(files: List<File>, destinationUri: android.net.Uri) {
+        viewModelScope.launch {
+            packagingService.createArchive(files, destinationUri)
         }
     }
 
@@ -937,7 +959,7 @@ constructor(
                 allEvidence.forEach { evidence ->
                     var updatedEvidence = evidence
                     sortedScriptsToRun.forEach { script ->
-                        val result = scriptRunner.runScript(script.content, updatedEvidence)
+                        val result = scriptRunner.runScript(script.content, updatedEvidence, this)
                         if (result is Result.Success) {
                             val currentTagsInEvidence: List<String> = updatedEvidence.tags
                             val newTagsFromScript: List<String> = result.data.tags
@@ -1830,5 +1852,10 @@ constructor(
                 globalLoadingState.popLoading()
             }
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        whisperTranscriptionService.release()
     }
 }

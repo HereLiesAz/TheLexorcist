@@ -1,121 +1,50 @@
 package com.hereliesaz.lexorcist.service
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.media.MediaMetadataRetriever
 import android.net.Uri
+import androidx.tracing.trace
 import com.hereliesaz.lexorcist.data.Evidence
-import com.hereliesaz.lexorcist.data.EvidenceRepository
-import com.hereliesaz.lexorcist.data.ScriptRepository
-import com.hereliesaz.lexorcist.data.ActiveScriptRepository
-import com.hereliesaz.lexorcist.utils.ExifUtils
-import com.hereliesaz.lexorcist.utils.HashingUtils
-import com.hereliesaz.lexorcist.utils.VideoUtils
-import com.hereliesaz.lexorcist.utils.Result
+import com.hereliesaz.lexorcist.utils.DispatcherProvider
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
-import javax.inject.Singleton
 
-@Singleton
 class VideoProcessingService @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val ocrProcessingService: OcrProcessingService,
-    private val transcriptionService: TranscriptionService,
-    private val evidenceRepository: EvidenceRepository,
-    private val scriptRepository: ScriptRepository,
-    private val activeScriptRepository: ActiveScriptRepository,
-    private val scriptRunner: ScriptRunner,
-    private val logService: LogService
+    private val whisperTranscriptionService: WhisperTranscriptionService,
+    private val dispatcherProvider: DispatcherProvider
 ) {
 
-    suspend fun processVideo(
-        context: Context,
-        videoUri: Uri,
-        caseId: Int,
-        spreadsheetId: String,
-        onProgress: (Float, String) -> Unit
-    ): Evidence? {
-        onProgress(0.1f, "Extracting frames...")
-        val frameFiles = VideoUtils.extractFrames(context, videoUri, 5000)
+    suspend fun processVideo(uri: Uri): String = trace("processVideo") {
+        return withContext(dispatcherProvider.io) {
+            val retriever = MediaMetadataRetriever()
+            retriever.setDataSource(context, uri)
 
-        onProgress(0.3f, "Transcribing audio...")
-        val transcriptionResult = transcriptionService.transcribeVideo(videoUri)
-        val audioTranscript = if (transcriptionResult is Result.Success) {
-            transcriptionResult.data
-        } else {
-            "Audio transcription failed."
-        }
+            val durationString = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
+            val duration = durationString?.toLongOrNull() ?: 0
 
-        onProgress(0.5f, "Processing frames for OCR...")
-        val ocrTexts = mutableListOf<String>()
-        frameFiles.forEach { frameFile ->
-            val frameUri = Uri.fromFile(frameFile)
-            val evidence = ocrProcessingService.processImageFrame(frameUri, context, caseId, spreadsheetId, null)
-            evidence?.content?.let { ocrTexts.add(it) }
-        }
-
-        onProgress(0.7f, "Combining results...")
-        val combinedText = buildString {
-            append("Audio Transcript:\n")
-            append(audioTranscript)
-            append("\n\n--- OCR Text from Frames ---\n")
-            ocrTexts.forEachIndexed { index, text ->
-                append("\n[Frame ${index + 1}]\n")
-                append(text)
-            }
-        }
-
-        val documentDate = ExifUtils.getExifDate(context, videoUri) ?: System.currentTimeMillis()
-        val fileHash = HashingUtils.getHash(context, videoUri)
-
-        val initialEvidence = Evidence(
-            id = 0,
-            caseId = caseId.toLong(),
-            spreadsheetId = spreadsheetId,
-            type = "video",
-            content = combinedText,
-            formattedContent = "```\n$combinedText\n```",
-            mediaUri = videoUri.toString(),
-            timestamp = System.currentTimeMillis(),
-            sourceDocument = videoUri.toString(),
-            documentDate = documentDate,
-            allegationId = null,
-            allegationElementName = "",
-            category = "Video Evidence",
-            tags = listOf("video") + if (combinedText.isBlank()) listOf("non-textual") else emptyList(),
-            commentary = null,
-            parentVideoId = null,
-            entities = emptyMap(),
-            fileHash = fileHash
-        )
-
-        onProgress(0.8f, "Saving evidence...")
-        val savedEvidence = evidenceRepository.addEvidence(initialEvidence)
-
-        val evidenceToUpdate = savedEvidence?.let { evidence ->
-            logService.addLog("Evidence saved with ID: ${evidence.id}. Applying scripts...")
-            val allScripts = scriptRepository.getScripts()
-            val activeScriptIds = activeScriptRepository.activeScriptIds.value
-            val activeScripts = allScripts.filter { activeScriptIds.contains(it.id) }
-            val sortedActiveScripts = activeScripts.sortedBy { script -> activeScriptIds.indexOf(script.id) }
-
-            var tempEvidence = evidence
-            sortedActiveScripts.forEach { script ->
-                logService.addLog("Running script '${script.name}' on evidence ${tempEvidence.id}")
-                val scriptResult = scriptRunner.runScript(script.content, tempEvidence)
-                if (scriptResult is Result.Success) {
-                    val currentTags: List<String> = tempEvidence.tags
-                    val newTags: List<String> = scriptResult.data.tags
-                    val combinedTags: List<String> = (currentTags + newTags).distinct()
-                    tempEvidence = tempEvidence.copy(tags = combinedTags)
+            val ocrText = StringBuilder()
+            var currentTime = 0L
+            while (currentTime < duration) {
+                val frame = retriever.getFrameAtTime(currentTime * 1000, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
+                if (frame != null) {
+                    val text = ocrProcessingService.processBitmap(frame)
+                    if (text.isNotBlank()) {
+                        ocrText.append(text).append("\n")
+                    }
                 }
+                currentTime += 5000 // 5 seconds
             }
-            if (tempEvidence != evidence) {
-                evidenceRepository.updateEvidence(tempEvidence)
-            }
-            tempEvidence
+
+            val transcription = whisperTranscriptionService.transcribeVideo(uri)
+
+            retriever.release()
+
+            val aggregatedText = "## OCR Text\n$ocrText\n## Transcription\n$transcription"
+            aggregatedText
         }
-
-        onProgress(0.9f, "Cleaning up...")
-        frameFiles.forEach { it.delete() }
-
-        onProgress(1.0f, "Done.")
-        return evidenceToUpdate
     }
 }

@@ -60,6 +60,10 @@ Follow these instructions to set up the development environment and get the appl
 - **Evidence Management:** Organize evidence into exhibits, clean up duplicates, and merge related items on the Review screen.
 - **Location History Import:** Import your location history from Google Takeout and filter it by a specific date range to add precise location data to your case.
 
+## Project Roadmap
+
+The project's roadmap and a detailed list of tasks are tracked in the `TODO.md` file. This includes the "Production Readiness and Remediation Protocol," which outlines the steps to bring the application to a production-ready state.
+
 ## Localization
 
 This application and its documentation are also available in Spanish.

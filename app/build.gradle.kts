@@ -29,7 +29,7 @@ ksp {
 android {
     signingConfigs {
         maybeCreate("release").apply {
-            storeFile = file("G://My Drive//az_apk_keystore.jks")
+            storeFile = localProperties.getProperty("MY_KEYSTORE_FILE")?.let { file(it) }
             storePassword = localProperties.getProperty("MY_KEYSTORE_PASSWORD") ?: System.getenv("MY_KEYSTORE_PASSWORD") ?: ""
             keyAlias = "key0"
             keyPassword = localProperties.getProperty("MY_KEY_PASSWORD") ?: System.getenv("MY_KEY_PASSWORD") ?: ""
@@ -47,14 +47,11 @@ android {
         versionName = "0.9.2"
 
         testInstrumentationRunner = "com.hereliesaz.lexorcist.HiltTestRunner"
-
-        // Expose the API key to the app
-        buildConfigField("String", "API_KEY", "\"${localProperties.getProperty("API_KEY")}\"")
     }
 
     buildTypes {
         getByName("release") {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             signingConfig = signingConfigs.getByName("release") // Explicitly assign signing config
         }
@@ -63,6 +60,13 @@ android {
         compose = true
         viewBinding = true // ADDED
         buildConfig = true
+    }
+    externalNativeBuild {
+        cmake {
+            path = file("src/main/cpp/CMakeLists.txt")
+            version = "3.22.1"
+            arguments "-DAPI_KEY=${localProperties.getProperty("API_KEY")}"
+        }
     }
     composeOptions {
     }
@@ -168,7 +172,7 @@ dependencies {
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
-    androidTestImplementation(libs.androidx.ui.test.manifest)
+    debugImplementation(libs.androidx.ui.test.manifest)
     androidTestImplementation(libs.androidx.test.uiautomator)
     androidTestImplementation(libs.mockk.android) // MockK for AndroidTest, if used there
     androidTestImplementation(libs.play.services.auth)
@@ -193,6 +197,9 @@ dependencies {
     implementation(libs.androidx.lifecycle.process) // Added lifecycle-process
     implementation(libs.androidx.work.runtime.ktx) // This is 2.10.4
     implementation(libs.androidx.compose.runtime.livedata)
+
+    implementation(libs.mediapipe.tasks.text)
+    implementation(libs.androidx.tracing.ktx)
 
     // Jetpack Compose
     implementation(platform(libs.androidx.compose.bom))
@@ -273,7 +280,7 @@ dependencies {
     implementation(libs.vosk.android) // UNCOMMENTED
 
     // Whisper for on-device speech-to-text
-    implementation(project(":whisper"))
+    implementation(project(":libs:whispercpp-android"))
     // Explicit gRPC dependencies with consistent versions
     implementation(libs.grpc.okhttp)
     implementation(libs.grpc.core)
