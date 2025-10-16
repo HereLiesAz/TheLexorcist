@@ -147,6 +147,21 @@ These examples use the legacy global functions. They are simple, direct, and per
     }
     ```
 
+**17. Create a Dynamic UI Button**
+*   **Description:** Adds a button to the UI that, when clicked, adds a "Clicked!" tag to the evidence.
+*   **Script:**
+    ```javascript
+    const component = {
+        id: "my_button",
+        type: "button",
+        properties: {
+            text: "Click Me!"
+        },
+        onClick: "lex.ui.addOrUpdate(JSON.stringify({ id: 'my_text', type: 'text', properties: { text: 'Button Clicked!' } }))"
+    };
+    lex.ui.addOrUpdate(JSON.stringify(component));
+    ```
+
 ---
 ## Part 2: Advanced Scripting with the `lex` Object
 
@@ -309,4 +324,3 @@ For advanced functionality, scripts can use the global `lex` object, which provi
     ```
 
 ---
-*Note: The `lex.ai.local` and `lex.ui` examples are conceptual and demonstrate the potential of the scripting engine. Their full functionality depends on future API additions, as they are not yet implemented in the core `ScriptRunner`.*

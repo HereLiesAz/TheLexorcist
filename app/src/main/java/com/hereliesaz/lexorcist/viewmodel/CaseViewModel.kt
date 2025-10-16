@@ -102,7 +102,8 @@ constructor(
     private val locationHistoryParser: LocationHistoryParser,
     private val exhibitRepository: ExhibitRepository,
     private val legalRepository: LegalRepository,
-    private val cleanupService: com.hereliesaz.lexorcist.service.CleanupService
+    private val cleanupService: com.hereliesaz.lexorcist.service.CleanupService,
+    private val packagingService: com.hereliesaz.lexorcist.service.PackagingService
 ) : ViewModel() {
     private val sharedPref =
         applicationContext.getSharedPreferences("CaseInfoPrefs", Context.MODE_PRIVATE)
@@ -400,6 +401,12 @@ constructor(
                     selectCase(lastSelectedCase)
                 }
             }
+        }
+    }
+
+    fun packageFiles(files: List<File>, destinationUri: android.net.Uri) {
+        viewModelScope.launch {
+            packagingService.createArchive(files, destinationUri)
         }
     }
 
