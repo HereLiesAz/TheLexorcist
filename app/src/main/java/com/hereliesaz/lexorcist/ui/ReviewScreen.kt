@@ -97,6 +97,13 @@ fun ReviewScreen(
         uri?.let { caseViewModel.packageFiles(filesToPackage, it) }
     }
     var evidenceToDelete by remember { mutableStateOf<Evidence?>(null) }
+    var filesToPackage by remember { mutableStateOf<List<java.io.File>>(emptyList()) }
+
+    val packageLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("*/*"),
+    ) { uri ->
+        uri?.let { caseViewModel.packageFiles(filesToPackage, it) }
+    }
 
     Scaffold(
         topBar = {

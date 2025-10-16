@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.media.MediaMetadataRetriever
 import android.net.Uri
+import androidx.tracing.trace
 import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.utils.DispatcherProvider
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -17,7 +18,7 @@ class VideoProcessingService @Inject constructor(
     private val dispatcherProvider: DispatcherProvider
 ) {
 
-    suspend fun processVideo(uri: Uri): String {
+    suspend fun processVideo(uri: Uri): String = trace("processVideo") {
         return withContext(dispatcherProvider.io) {
             val retriever = MediaMetadataRetriever()
             retriever.setDataSource(context, uri)

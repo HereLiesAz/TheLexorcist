@@ -1,6 +1,7 @@
 package com.hereliesaz.lexorcist.service
 
 import com.hereliesaz.lexorcist.data.Evidence
+import androidx.tracing.trace
 import com.hereliesaz.lexorcist.data.Evidence
 import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
@@ -9,7 +10,7 @@ import javax.inject.Singleton
 @Singleton
 class CleanupService @Inject constructor(private val semanticService: SemanticService) {
 
-    suspend fun findSimilarTextEvidence(evidenceList: List<Evidence>): List<List<Evidence>> {
+    suspend fun findSimilarTextEvidence(evidenceList: List<Evidence>): List<List<Evidence>> = trace("findSimilarTextEvidence") {
         val groups = mutableListOf<MutableList<Evidence>>()
         val processedEvidence = mutableSetOf<Int>()
 

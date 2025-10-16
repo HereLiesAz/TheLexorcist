@@ -47,14 +47,11 @@ android {
         versionName = "0.9.2"
 
         testInstrumentationRunner = "com.hereliesaz.lexorcist.HiltTestRunner"
-
-        // Expose the API key to the app
-        buildConfigField("String", "API_KEY", "\"${localProperties.getProperty("API_KEY")}\"")
     }
 
     buildTypes {
         getByName("release") {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             signingConfig = signingConfigs.getByName("release") // Explicitly assign signing config
         }
@@ -63,6 +60,13 @@ android {
         compose = true
         viewBinding = true // ADDED
         buildConfig = true
+    }
+    externalNativeBuild {
+        cmake {
+            path = file("src/main/cpp/CMakeLists.txt")
+            version = "3.22.1"
+            arguments "-DAPI_KEY=${localProperties.getProperty("API_KEY")}"
+        }
     }
     composeOptions {
     }
@@ -195,6 +199,7 @@ dependencies {
     implementation(libs.androidx.compose.runtime.livedata)
 
     implementation(libs.mediapipe.tasks.text)
+    implementation(libs.androidx.tracing.ktx)
 
     // Jetpack Compose
     implementation(platform(libs.androidx.compose.bom))

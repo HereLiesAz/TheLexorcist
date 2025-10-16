@@ -86,6 +86,7 @@ litert = "2.0.2"
 litertApi = "1.4.0"
 playServicesLocation = "21.3.0"
 mediaPipe = "0.20230731"
+tracing = "1.2.0"
 
 [libraries]
 androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastorePreferences" }
@@ -207,6 +208,7 @@ vosk-android = { module = "com.alphacephei:vosk-android", version.ref = "voskAnd
 litert-api = { group = "com.google.ai.edge.litert", name = "litert-api", version.ref = "litertApi" }
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 mediapipe-tasks-text = { group = "com.google.mediapipe", name = "tasks-text", version.ref = "mediaPipe" }
+androidx-tracing-ktx = { group = "androidx.tracing", name = "tracing-ktx", version.ref = "tracing" }
 microsoft-azure = {group = "com.microsoft.azure", name = "microsoft-aad-msal4j", version = "1.23.1"}
 
 
