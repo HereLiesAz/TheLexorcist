@@ -68,6 +68,7 @@ import java.util.Locale
 fun ReviewScreen(
     caseViewModel: CaseViewModel = hiltViewModel(),
     allegationsViewModel: AllegationsViewModel = hiltViewModel(),
+    reviewViewModel: com.hereliesaz.lexorcist.viewmodel.ReviewViewModel = hiltViewModel()
 ) {
     val evidenceList by caseViewModel.selectedCaseEvidenceList.collectAsState()
     val selectedCase by caseViewModel.selectedCase.collectAsState()
@@ -239,6 +240,12 @@ fun ReviewScreen(
                     )
                 }
                 val cleanupSuggestions by caseViewModel.cleanupSuggestions.collectAsState()
+                val similarTextGroups by reviewViewModel.similarTextGroups.collectAsState()
+
+                LaunchedEffect(evidenceList) {
+                    reviewViewModel.findSimilarTextEvidence(evidenceList)
+                }
+
                 LazyColumn {
                     items(cleanupSuggestions) { suggestion ->
                         if (suggestion is com.hereliesaz.lexorcist.model.CleanupSuggestion.DuplicateGroup) {
@@ -252,6 +259,23 @@ fun ReviewScreen(
                                 group = suggestion,
                                 onMerge = { caseViewModel.mergeImageSeries(suggestion, "Merged Series") }
                             )
+                        }
+                    }
+                    if (similarTextGroups.isNotEmpty()) {
+                        item {
+                            Text("Potential Text Duplicates")
+                        }
+                        items(similarTextGroups) { group ->
+                            Card(modifier = Modifier.padding(8.dp)) {
+                                Column {
+                                    group.forEach { evidence ->
+                                        Text(text = evidence.content)
+                                    }
+                                    AzButton(onClick = { /* TODO */ }) {
+                                        Text("Review & Merge")
+                                    }
+                                }
+                            }
                         }
                     }
                 }
