@@ -375,6 +375,9 @@ fun EvidenceScreen(
                     )
                 }
             }
+
+            val dynamicUiComponents by caseViewModel.dynamicUiComponents.collectAsState()
+            DynamicUiRenderer(components = dynamicUiComponents, scriptRunner = caseViewModel.scriptRunner)
         }
     }
 }
