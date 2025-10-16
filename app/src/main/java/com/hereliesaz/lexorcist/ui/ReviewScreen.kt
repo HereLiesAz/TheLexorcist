@@ -88,6 +88,14 @@ fun ReviewScreen(
     var showGenerateDocumentDialog by remember { mutableStateOf(false) }
     var showFinalizeCaseDialog by remember { mutableStateOf(false) }
     var evidenceToEdit by remember { mutableStateOf<Evidence?>(null) }
+
+    var filesToPackage by remember { mutableStateOf<List<File>>(emptyList()) }
+
+    val packageLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("*/*"),
+    ) { uri ->
+        uri?.let { caseViewModel.packageFiles(filesToPackage, it) }
+    }
     var evidenceToDelete by remember { mutableStateOf<Evidence?>(null) }
     var filesToPackage by remember { mutableStateOf<List<java.io.File>>(emptyList()) }
 
