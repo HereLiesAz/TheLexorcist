@@ -6,9 +6,10 @@ import com.hereliesaz.lexorcist.utils.DispatcherProvider
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.net.URL
 import javax.inject.Inject
+import javax.inject.Singleton
 
+@Singleton
 class SemanticService @Inject constructor(
     @ApplicationContext private val context: Context,
     private val dispatcherProvider: DispatcherProvider
@@ -18,14 +19,9 @@ class SemanticService @Inject constructor(
     private suspend fun initialize() {
         if (textEmbedder == null) {
             withContext(dispatcherProvider.io) {
-                val modelsDir = File(context.filesDir, "models")
-                if (!modelsDir.exists()) {
-                    modelsDir.mkdirs()
-                }
-                val modelFile = File(modelsDir, "universal_sentence_encoder.tflite")
+                val modelFile = File(context.filesDir, "universal_sentence_encoder.tflite")
                 if (!modelFile.exists()) {
-                    val modelUrl = "https://tfhub.dev/google/lite-model/universal-sentence-encoder-lite/2/default/1?lite-format=tflite"
-                    URL(modelUrl).openStream().use { input ->
+                    context.assets.open("universal_sentence_encoder.tflite").use { input ->
                         modelFile.outputStream().use { output ->
                             input.copyTo(output)
                         }

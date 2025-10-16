@@ -183,18 +183,19 @@ This section outlines the step-by-step protocol for transforming "The Lexorcist"
     *   Invoke the `WhisperService` to perform audio transcription on the video URI.
     *   Aggregate the transcribed audio and all collected OCR text into a single, formatted string.
 
-30. **Advanced Scripting Engine Activation:**
-    *   **On-Device Semantic Similarity (`lex.ai.local`):**
-        *   Add the `com.google.mediapipe:tasks-text` dependency.
-        *   Download a compatible text embedding model (e.g., `universal_sentence_encoder`) and place it in `app/src/main/assets`.
-        *   Create a `SemanticService.kt` with a singleton instance of `TextEmbedder`.
-        *   Implement a function `calculateSimilarity(text1: String, text2: String): Float` that uses `textEmbedder.embed()` and `TextEmbedder.cosineSimilarity()`.
-        *   In `ScriptRunner.kt`, expose the `SemanticService` to the JavaScript context.
-    *   **Dynamic UI Generation (`lex.ui`):**
-        *   Define data classes for a simple UI schema (e.g., `UiComponentModel`).
-        *   In the relevant ViewModel, create a `MutableStateFlow<List<UiComponentModel>>`.
-        *   Create a `DynamicUiRenderer(components: List<UiComponentModel>)` Composable that uses a `when` block to render different components based on the schema.
-        *   In `ScriptRunner.kt`, expose a function `lex.ui.addOrUpdate()` that accepts a JSON string, parses it, and updates the ViewModel's `StateFlow`.
+30. **Advanced Scripting Engine Activation:** [COMPLETED]
+    *   **On-Device Semantic Similarity (`lex.ai.local`):** [COMPLETED]
+        *   Add the `com.google.mediapipe:tasks-text` dependency. [COMPLETED]
+        *   Download a compatible text embedding model (e.g., `universal_sentence_encoder`) and place it in `app/src/main/assets`. [COMPLETED]
+        *   Create a `SemanticService.kt` with a singleton instance of `TextEmbedder`. [COMPLETED]
+        *   Implement a function `calculateSimilarity(text1: String, text2: String): Float` that uses `textEmbedder.embed()` and `TextEmbedder.cosineSimilarity()`. [COMPLETED]
+        *   In `ScriptRunner.kt`, expose the `SemanticService` to the JavaScript context. [COMPLETED]
+    *   **Dynamic UI Generation (`lex.ui`):** [COMPLETED]
+        *   Define data classes for a simple UI schema (e.g., `UiComponentModel`). [COMPLETED]
+        *   In the relevant ViewModel, create a `MutableStateFlow<List<UiComponentModel>>`. [COMPLETED]
+        *   Create a `DynamicUiRenderer(components: List<UiComponentModel>)` Composable that uses a `when` block to render different components based on the schema. [COMPLETED]
+        *   In `ScriptRunner.kt`, expose a function `lex.ui.addOrUpdate()` that accepts a JSON string, parses it, and updates the ViewModel's `StateFlow`. [COMPLETED]
+    *   **Note:** All features for this task have been implemented.
 
 31. **Redundant Text Cleanup Implementation:**
     *   Create a `CleanupService.kt`.
