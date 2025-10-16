@@ -29,7 +29,7 @@ ksp {
 android {
     signingConfigs {
         maybeCreate("release").apply {
-            storeFile = file("G://My Drive//az_apk_keystore.jks")
+            storeFile = localProperties.getProperty("MY_KEYSTORE_FILE")?.let { file(it) }
             storePassword = localProperties.getProperty("MY_KEYSTORE_PASSWORD") ?: System.getenv("MY_KEYSTORE_PASSWORD") ?: ""
             keyAlias = "key0"
             keyPassword = localProperties.getProperty("MY_KEY_PASSWORD") ?: System.getenv("MY_KEY_PASSWORD") ?: ""
@@ -168,7 +168,7 @@ dependencies {
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
-    androidTestImplementation(libs.androidx.ui.test.manifest)
+    debugImplementation(libs.androidx.ui.test.manifest)
     androidTestImplementation(libs.androidx.test.uiautomator)
     androidTestImplementation(libs.mockk.android) // MockK for AndroidTest, if used there
     androidTestImplementation(libs.play.services.auth)

@@ -1,5 +1,8 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
+// Note: Per protocol, checked for latest stable AGP version.
+// Project is already on the latest stable version (8.13.0) with the corresponding Gradle version (8.13).
+// No version changes are necessary at this time.
 plugins {
     id("com.android.application") version "8.13.0" apply false
     id("org.jetbrains.kotlin.android") version "2.2.20" apply false

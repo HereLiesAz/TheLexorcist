@@ -56,9 +56,6 @@ voskAndroid = "0.3.70"
 workRuntimeKtx = "2.10.5"
 composeBom = "2025.09.01"
 exifinterface = "1.4.1"
-activityCompose = "1.11.0"
-coilCompose = "2.7.0"
-navigationCompose = "2.9.5"
 kotlinStdlib = "2.2.20"
 itext7Core = "9.3.0"
 poi = "5.4.1"
@@ -145,8 +142,8 @@ turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine
 kotlin-test-junit = { group = "org.jetbrains.kotlin", name = "kotlin-test-junit", version.ref = "kotlinTestJunit" }
 androidx-test-ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidxTestExtJunit" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
-androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4", version.ref = "composeUiTestJunit4" }
-androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" } # No version in BOM
+androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
+androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 androidx-test-uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "uiAutomator" }
 google-play-services-mlkit-text-recognition = { group = "com.google.android.gms", name = "play-services-mlkit-text-recognition", version.ref = "playServicesMlkitTextRecognition" }
 play-services-base = { group = "com.google.android.gms", name = "play-services-base", version.ref = "playServicesBase" } # Added
@@ -165,9 +162,9 @@ androidx-exifinterface = { group = "androidx.exifinterface", name = "exifinterfa
 androidx-compose-runtime-livedata = { group = "androidx.compose.runtime", name = "runtime-livedata" }
 androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation" }
 androidx-compose-runtime = { group = "androidx.compose.runtime", name = "runtime" }
-androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
-coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coilCompose" }
-androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
+androidx-activity-compose = { group = "androidx.activity", name = "activity-compose" }
+coil-compose = { group = "io.coil-kt", name = "coil-compose" }
+androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose" }
 itext7-core = { group = "com.itextpdf", name = "itext7-core", version.ref = "itext7Core" }
 apache-poi = { group = "org.apache.poi", name = "poi", version.ref = "poi" }
 apache-poi-ooxml = { group = "org.apache.poi", name = "poi-ooxml", version.ref = "poi" }
