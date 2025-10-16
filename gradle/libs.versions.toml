@@ -85,6 +85,7 @@ tensorflowLiteSupport = "0.5.0"
 litert = "2.0.2"
 litertApi = "1.4.0"
 playServicesLocation = "21.3.0"
+mediaPipe = "0.20230731"
 
 [libraries]
 androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastorePreferences" }
@@ -205,6 +206,7 @@ material3 = { group = "androidx.compose.material3", name = "material3", version.
 vosk-android = { module = "com.alphacephei:vosk-android", version.ref = "voskAndroid" }
 litert-api = { group = "com.google.ai.edge.litert", name = "litert-api", version.ref = "litertApi" }
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
+mediapipe-tasks-text = { group = "com.google.mediapipe", name = "tasks-text", version.ref = "mediaPipe" }
 microsoft-azure = {group = "com.microsoft.azure", name = "microsoft-aad-msal4j", version = "1.23.1"}
 
 

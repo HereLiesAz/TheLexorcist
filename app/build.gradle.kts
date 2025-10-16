@@ -194,6 +194,8 @@ dependencies {
     implementation(libs.androidx.work.runtime.ktx) // This is 2.10.4
     implementation(libs.androidx.compose.runtime.livedata)
 
+    implementation(libs.mediapipe.tasks.text)
+
     // Jetpack Compose
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.foundation)

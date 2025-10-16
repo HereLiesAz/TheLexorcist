@@ -20,7 +20,7 @@ class VideoProcessingWorker @AssistedInject constructor(
     @Assisted private val appContext: Context,
     @Assisted workerParams: WorkerParameters,
     private val videoProcessingService: VideoProcessingService,
-    // private val googleApiService: GoogleApiService, // Removed googleApiService
+    private val evidenceRepository: com.hereliesaz.lexorcist.data.EvidenceRepository,
     private val logService: LogService
 ) : CoroutineWorker(appContext, workerParams) {
 
@@ -59,6 +59,22 @@ class VideoProcessingWorker @AssistedInject constructor(
             val aggregatedText = videoProcessingService.processVideo(videoUri)
 
             if (aggregatedText.isNotBlank()) {
+                val newEvidence = com.hereliesaz.lexorcist.data.Evidence(
+                    caseId = caseId.toLong(),
+                    spreadsheetId = spreadsheetId,
+                    type = "video",
+                    content = aggregatedText,
+                    formattedContent = aggregatedText,
+                    mediaUri = videoUriString,
+                    timestamp = System.currentTimeMillis(),
+                    sourceDocument = "Video Upload",
+                    documentDate = System.currentTimeMillis(),
+                    allegationId = null,
+                    allegationElementName = null,
+                    category = "Video",
+                    tags = listOf("video", "transcription", "ocr")
+                )
+                evidenceRepository.addEvidence(newEvidence)
                 val successMsg = "Video processed successfully."
                 logService.addLog(successMsg)
                 val outputData = Data.Builder().putString(RESULT_SUCCESS, successMsg).build()
