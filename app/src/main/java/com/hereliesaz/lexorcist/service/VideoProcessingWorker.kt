@@ -5,6 +5,10 @@ import android.net.Uri
 import android.util.Log
 import androidx.core.net.toUri
 import androidx.hilt.work.HiltWorker
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.core.content.ContextCompat
 import androidx.work.CoroutineWorker
 import androidx.work.Data
 import androidx.work.WorkerParameters
@@ -26,6 +30,22 @@ class VideoProcessingWorker @AssistedInject constructor(
         val caseName = inputData.getString(KEY_CASE_NAME)
         val spreadsheetId = inputData.getString(KEY_SPREADSHEET_ID)
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(appContext, Manifest.permission.READ_MEDIA_VIDEO) != PackageManager.PERMISSION_GRANTED) {
+                val errorMsg = "READ_MEDIA_VIDEO permission not granted"
+                Log.e(TAG, errorMsg)
+                val outputData = Data.Builder().putString(RESULT_FAILURE, errorMsg).build()
+                return Result.failure(outputData)
+            }
+        } else {
+            if (ContextCompat.checkSelfPermission(appContext, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                val errorMsg = "READ_EXTERNAL_STORAGE permission not granted"
+                Log.e(TAG, errorMsg)
+                val outputData = Data.Builder().putString(RESULT_FAILURE, errorMsg).build()
+                return Result.failure(outputData)
+            }
+        }
+
         if (videoUriString.isNullOrEmpty() || caseId == -1 || caseName.isNullOrEmpty() || spreadsheetId.isNullOrEmpty()) {
             val errorMsg = "Invalid input data: videoUriString=$videoUriString, caseId=$caseId, caseName=$caseName, spreadsheetId=$spreadsheetId"
             Log.e(TAG, errorMsg)
@@ -34,29 +54,17 @@ class VideoProcessingWorker @AssistedInject constructor(
         }
 
         val videoUri = videoUriString.toUri()
-        var finalEvidenceProcessed: com.hereliesaz.lexorcist.data.Evidence? = null
 
         try {
-            finalEvidenceProcessed = videoProcessingService.processVideo(
-                context = appContext,
-                videoUri = videoUri,
-                caseId = caseId,
-                spreadsheetId = spreadsheetId
-            ) { percent, message ->
-                val progressData = Data.Builder()
-                    .putFloat(PROGRESS_PERCENT, percent)
-                    .putString(PROGRESS_MESSAGE, message)
-                    .build()
-                setProgressAsync(progressData)
-            }
+            val aggregatedText = videoProcessingService.processVideo(videoUri)
 
-            if (finalEvidenceProcessed != null) {
-                val successMsg = "Video processed successfully. Evidence ID: ${finalEvidenceProcessed.id}"
+            if (aggregatedText.isNotBlank()) {
+                val successMsg = "Video processed successfully."
                 logService.addLog(successMsg)
                 val outputData = Data.Builder().putString(RESULT_SUCCESS, successMsg).build()
                 return Result.success(outputData)
             } else {
-                val errorMsg = "Video processing finished but no evidence was created."
+                val errorMsg = "Video processing finished but no text was extracted."
                 logService.addLog(errorMsg, com.hereliesaz.lexorcist.model.LogLevel.ERROR)
                 val outputData = Data.Builder().putString(RESULT_FAILURE, errorMsg).build()
                 return Result.failure(outputData)

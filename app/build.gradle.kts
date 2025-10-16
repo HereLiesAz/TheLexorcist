@@ -273,7 +273,7 @@ dependencies {
     implementation(libs.vosk.android) // UNCOMMENTED
 
     // Whisper for on-device speech-to-text
-    implementation(project(":whisper"))
+    implementation(project(":libs:whispercpp-android"))
     // Explicit gRPC dependencies with consistent versions
     implementation(libs.grpc.okhttp)
     implementation(libs.grpc.core)

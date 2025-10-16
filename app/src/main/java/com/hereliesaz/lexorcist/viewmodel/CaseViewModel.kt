@@ -81,8 +81,8 @@ constructor(
     private val localFileStorageService: LocalFileStorageService,
     private val scriptRunner: com.hereliesaz.lexorcist.service.ScriptRunner,
     private val ocrProcessingService: com.hereliesaz.lexorcist.service.OcrProcessingService,
-    private val transcriptionService: com.hereliesaz.lexorcist.service.TranscriptionService,
     private val videoProcessingService: com.hereliesaz.lexorcist.service.VideoProcessingService,
+    private val whisperTranscriptionService: com.hereliesaz.lexorcist.service.WhisperTranscriptionService,
     private val workManager: androidx.work.WorkManager,
     private val scriptRepository: ScriptRepository,
     private val activeScriptRepository: ActiveScriptRepository,
@@ -1830,5 +1830,10 @@ constructor(
                 globalLoadingState.popLoading()
             }
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        whisperTranscriptionService.release()
     }
 }
