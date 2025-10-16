@@ -169,21 +169,22 @@ This section outlines the step-by-step protocol for transforming "The Lexorcist"
     *   In `app/build.gradle.kts`, modify the `signingConfigs.release` block to read `storeFile`, `storePassword`, and `keyPassword` dynamically from the `local.properties` file. [COMPLETED]
     *   **Note:** The project was already using the latest stable AGP and Gradle versions (8.13.0 and 8.13, respectively), and the signing configuration was already secure. No changes were necessary.
 
-28. **Dependency Graph Harmonization:**
-    *   In `app/build.gradle.kts`, add the Jetpack Compose Bill of Materials: `implementation(platform(libs.androidx.compose.bom))`.
-    *   Remove all explicit version strings from individual `androidx.compose.*` dependencies in the same file.
-    *   Systematically audit `app/build.gradle.kts` and `gradle/libs.versions.toml` to ensure every dependency's version is defined once in the TOML file and referenced by its alias.
-    *   Locate the dependency declaration for `androidx.compose.ui:ui-test-manifest` and modify its configuration to `debugImplementation`.
-    *   Execute `./gradlew :app:dependencies --refresh-dependencies` and parse the output to verify that all major version conflicts have been resolved.
+28. **Dependency Graph Harmonization:** [COMPLETED]
+    *   In `app/build.gradle.kts`, add the Jetpack Compose Bill of Materials: `implementation(platform(libs.androidx.compose.bom))`. [COMPLETED]
+    *   Remove all explicit version strings from individual `androidx.compose.*` dependencies in the same file. [COMPLETED]
+    *   Systematically audit `app/build.gradle.kts` and `gradle/libs.versions.toml` to ensure every dependency's version is defined once in the TOML file and referenced by its alias. [COMPLETED]
+    *   Locate the dependency declaration for `androidx.compose.ui:ui-test-manifest` and modify its configuration to `debugImplementation`. [COMPLETED]
+    *   Execute `./gradlew :app:dependencies --refresh-dependencies` and parse the output to verify that all major version conflicts have been resolved. [COMPLETED]
+    *   **Note:** The Compose BOM was already implemented. I have harmonized the remaining dependencies to use the version catalog.
 
 #### **Phase 2: Implementation of Incomplete Core Features**
 
-29. **Video Evidence Processing Pipeline:**
-    *   Create a new `VideoProcessingService.kt` file.
-    *   Implement a public function `processVideo(uri: Uri): String` that uses `MediaMetadataRetriever` to extract frames at a fixed interval.
-    *   For each extracted frame (Bitmap), invoke the existing `OcrProcessingService`.
-    *   Invoke the `WhisperService` to perform audio transcription on the video URI.
-    *   Aggregate the transcribed audio and all collected OCR text into a single, formatted string.
+29. **Video Evidence Processing Pipeline:** [COMPLETED]
+    *   Create a new `VideoProcessingService.kt` file. [COMPLETED]
+    *   Implement a public function `processVideo(uri: Uri): String` that uses `MediaMetadataRetriever` to extract frames at a fixed interval. [COMPLETED]
+    *   For each extracted frame (Bitmap), invoke the existing `OcrProcessingService`. [COMPLETED]
+    *   Invoke the `WhisperService` to perform audio transcription on the video URI. [COMPLETED]
+    *   Aggregate the transcribed audio and all collected OCR text into a single, formatted string. [COMPLETED]
 
 30. **Advanced Scripting Engine Activation:**
     *   **On-Device Semantic Similarity (`lex.ai.local`):**

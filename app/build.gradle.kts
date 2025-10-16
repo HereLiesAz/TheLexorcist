@@ -110,21 +110,6 @@ android {
 
 dependencies {
 
-    constraints {
-        implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable:0.3.5") {
-            because("Align kotlin versions")
-        }
-        implementation("org.jetbrains.kotlin:kotlin-stdlib:2.2.20") {
-            because("Align kotlin versions")
-        }
-        implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.2.20") {
-            because("Align kotlin versions")
-        }
-        implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.2.20") {
-            because("Align kotlin versions")
-        }
-    }
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.browser)
@@ -140,7 +125,7 @@ dependencies {
     implementation(libs.google.firebase.ai) {
         exclude(group = "org.tensorflow")
     }
-    implementation(libs.material3)
+    implementation(libs.androidx.material3)
     implementation(libs.play.services.location) // Explicitly use KTX version and direct coordinate
 
     // Core testing dependencies
@@ -154,8 +139,8 @@ dependencies {
     
     // TensorFlow Lite / AI Edge Runtime
     implementation(libs.litert) // com.google.ai.edge.litert:litert:2.0.2 (for runtime mgmt)
-    implementation("org.tensorflow:tensorflow-lite:${libs.versions.tensorflowLite.get()}")
-    implementation("org.tensorflow:tensorflow-lite-api:${libs.versions.tensorflowLite.get()}")
+    implementation(libs.tensorflow.lite)
+    implementation(libs.tensorflow.lite.api)
     // REMOVED: implementation("com.google.android.gms:play-services-tflite-java:16.4.0")
     // REMOVED: implementation("com.google.android.gms:play-services-tflite-support:16.4.0")
 
@@ -167,6 +152,7 @@ dependencies {
     // AndroidX Test dependencies (androidTest)
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.ui.test.manifest)
     androidTestImplementation(libs.androidx.test.uiautomator)
