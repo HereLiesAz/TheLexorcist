@@ -28,6 +28,7 @@ gradle/buildOutputCleanup.lock
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+*.log
 
 # Android
 /.gradle
@@ -41,7 +42,6 @@ local.properties
 
 # Google services
 app/google-services.json
-dependencies.txt
 /app/src/main/res/raw/template_cover_sheet.gdoc
 /app/src/main/res/raw/template_custody_log.gdoc
 /app/src/main/res/raw/template_declaration.gdoc
@@ -51,12 +51,6 @@ dependencies.txt
 # IDE files
 /.idea/
 /.kotlin/
-/project_backup_full_2025-09-15_23-34-37.txt
-/hs_err_pid20740.mdmp
-/backup.ps1
-/hs_err_pid20740.log
 /app/release/baselineProfiles/0/app-release.dm
 /app/release/baselineProfiles/1/app-release.dm
 /app/release/output-metadata.json
-
-whisper_android/
