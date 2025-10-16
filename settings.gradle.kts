@@ -18,4 +18,5 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "The Lexorcist"
-include(":app", ":whisper", )
+include(":app")
+include(":libs:whispercpp-android")

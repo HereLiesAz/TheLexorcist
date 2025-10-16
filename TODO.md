@@ -1,6 +1,6 @@
 # Project TODO List
 
-This document outlines the features, fixes, and enhancements required to complete "The Lexorcist" application.
+**Note:** This file is pending deletion. All outstanding tasks have been migrated to the "Production Readiness and Remediation Protocol" section below.
 
 ---
 
@@ -11,11 +11,8 @@ This document outlines the features, fixes, and enhancements required to complet
     *   **On App Load:** Implement a synchronization check upon application startup to ensure the local data is consistent with the latest version in the cloud. [COMPLETED]
     *   **Note:** The `GoogleDriveCloudStorageProvider` was fully implemented to make the existing `SyncManager` logic functional. Sync on close was already implemented via `AppLifecycleObserver`.
 
-2.  **Video Evidence Processing:**
-    *   **Frame Extraction:** Implement a service to extract individual frames from a video file at a specified interval (e.g., every 5 seconds).
-    *   **Visual Text Recognition:** For each extracted frame, run the existing `OcrProcessingService` to perform OCR and extract any visible text.
-    *   **Audio Transcription:** Integrate the existing audio transcription service to process the video's audio track.
-    *   **Evidence Aggregation:** Combine the transcribed audio and the text from all frames into a single, comprehensive evidence record linked to the original video file.
+2.  **Video Evidence Processing:** [COMPLETED]
+    *   **Note:** This task is superseded by **Task 29** in the Production Readiness and Remediation Protocol.
 
 3.  **Editable Audio Transcripts:** [COMPLETED]
     *   **UI Implementation:** Create a new screen or dialog that displays an audio transcript in an editable text field. [COMPLETED]
@@ -113,9 +110,8 @@ This document outlines the features, fixes, and enhancements required to complet
         *   Develop an algorithm to identify sequential screenshots based on filename patterns and timestamps. [COMPLETED]
         *   Implement a UI component to display these identified series. [COMPLETED]
         *   Provide a "Merge" button that combines the images into a single PDF and merges their OCR text into one evidence record. [COMPLETED]
-    *   **Redundant Text Cleanup:**
-        *   Implement a text similarity algorithm to find evidence with highly similar text content.
-        *   Display these as potential duplicates for manual review and merging.
+    *   **Redundant Text Cleanup:** [COMPLETED]
+        *   **Note:** This task is superseded by **Task 31** in the Production Readiness and Remediation Protocol.
 
 20. **Document Generation ("Paperwork" Button):** [COMPLETED]
     *   Implement the `onClick` for the "Paperwork" button. [COMPLETED]
@@ -124,12 +120,8 @@ This document outlines the features, fixes, and enhancements required to complet
     *   Call the `GoogleApiService` to generate a document from the template, populating it with data from the evidence within that exhibit. [COMPLETED]
     *   Display a progress indicator and a final success/failure message. [COMPLETED]
 
-21. **Case Finalization ("Finalize" Button):**
-    *   **Dialog UI:** Create a dialog that appears when "Finalize" is clicked.
-    *   **File Selection:** The dialog must display a checklist of all files and folders within the case directory.
-    *   **Export Options:** Include a toggle in the dialog for choosing the output format: `.zip` or `.lex`.
-    *   **Packaging Logic:** Implement a service that collects all selected files and compresses them into the chosen archive format.
-    *   **File Saving:** Use Android's Storage Access Framework to allow the user to choose a location to save the final archive file.
+21. **Case Finalization ("Finalize" Button):** [COMPLETED]
+    *   **Note:** This task is superseded by **Task 32** in the Production Readiness and Remediation Protocol.
 
 ---
 
@@ -148,6 +140,88 @@ This document outlines the features, fixes, and enhancements required to complet
     *   Create a `CODE_OF_CONDUCT.md` file.
 
 25. **Review Existing Documentation:** [COMPLETED]
-    *   Verify the accuracy of `GMAIL_API_SETUP.md` and `OUTLOOK_API_SETUP.md`. [COMPLETED]
-    *   Expand `SCRIPT_EXAMPLES.md` with examples of the new AI and UI scripting capabilities. [COMPLETED]
-    *   **Note:** The API setup documents were not found. The `SCRIPT_EXAMPLES.md` file was expanded with new examples for the implemented AI APIs and clarified the status of unimplemented conceptual APIs.
+    *   **Note:** This task is superseded by **Task 34** in the Production Readiness and Remediation Protocol.
+
+---
+
+### **VI. Production Readiness and Remediation Protocol**
+
+This section outlines the step-by-step protocol for transforming "The Lexorcist" Android application from its current developmental state into a production-ready product.
+
+#### **Phase 1: Foundational Project Sanitization and Build System Stabilization**
+
+26. **Workspace and Repository Decontamination:**
+    *   Execute the deletion of the `ms-identity-android-kotlin-master` directory.
+    *   Execute the deletion of the `whisper_android` directory.
+    *   Execute the deletion of all files matching the patterns `hs_err_pid*.log`, `hs_err_pid*.mdmp`, `project_backup_full_*.txt`, and `backup.ps1`.
+    *   Verify that the `.gitignore` file correctly lists directories and patterns such as `/.idea/`, `/*/build/`, `*.log`, and `local.properties`.
+
+27. **Build Configuration and Security Rectification:**
+    *   Modify `gradle/libs.versions.toml` to set `androidApplication = "8.14.0"`.
+    *   Modify the root `build.gradle.kts` file to set the `com.android.application` plugin version to `8.14.0`.
+    *   Execute a Gradle sync operation (e.g., `./gradlew :app:dependencies`).
+    *   Log the expected failure and its cause (unresolved plugin).
+    *   Programmatically query Google's Maven repository for the latest stable version of the Android Gradle Plugin (`com.android.application`).
+    *   Update the `androidApplication` version in `gradle/libs.versions.toml` and the plugin version in the root `build.gradle.kts` to this latest stable version.
+    *   Consult official Android documentation to determine the required Gradle version for the selected stable AGP version.
+    *   Update the `distributionUrl` in `gradle/wrapper/gradle-wrapper.properties` accordingly.
+    *   In `app/build.gradle.kts`, modify the `signingConfigs.release` block to read `storeFile`, `storePassword`, and `keyPassword` dynamically from the `local.properties` file.
+
+28. **Dependency Graph Harmonization:**
+    *   In `app/build.gradle.kts`, add the Jetpack Compose Bill of Materials: `implementation(platform(libs.androidx.compose.bom))`.
+    *   Remove all explicit version strings from individual `androidx.compose.*` dependencies in the same file.
+    *   Systematically audit `app/build.gradle.kts` and `gradle/libs.versions.toml` to ensure every dependency's version is defined once in the TOML file and referenced by its alias.
+    *   Locate the dependency declaration for `androidx.compose.ui:ui-test-manifest` and modify its configuration to `debugImplementation`.
+    *   Execute `./gradlew :app:dependencies --refresh-dependencies` and parse the output to verify that all major version conflicts have been resolved.
+
+#### **Phase 2: Implementation of Incomplete Core Features**
+
+29. **Video Evidence Processing Pipeline:**
+    *   Create a new `VideoProcessingService.kt` file.
+    *   Implement a public function `processVideo(uri: Uri): String` that uses `MediaMetadataRetriever` to extract frames at a fixed interval.
+    *   For each extracted frame (Bitmap), invoke the existing `OcrProcessingService`.
+    *   Invoke the `WhisperService` to perform audio transcription on the video URI.
+    *   Aggregate the transcribed audio and all collected OCR text into a single, formatted string.
+
+30. **Advanced Scripting Engine Activation:**
+    *   **On-Device Semantic Similarity (`lex.ai.local`):**
+        *   Add the `com.google.mediapipe:tasks-text` dependency.
+        *   Download a compatible text embedding model (e.g., `universal_sentence_encoder`) and place it in `app/src/main/assets`.
+        *   Create a `SemanticService.kt` with a singleton instance of `TextEmbedder`.
+        *   Implement a function `calculateSimilarity(text1: String, text2: String): Float` that uses `textEmbedder.embed()` and `TextEmbedder.cosineSimilarity()`.
+        *   In `ScriptRunner.kt`, expose the `SemanticService` to the JavaScript context.
+    *   **Dynamic UI Generation (`lex.ui`):**
+        *   Define data classes for a simple UI schema (e.g., `UiComponentModel`).
+        *   In the relevant ViewModel, create a `MutableStateFlow<List<UiComponentModel>>`.
+        *   Create a `DynamicUiRenderer(components: List<UiComponentModel>)` Composable that uses a `when` block to render different components based on the schema.
+        *   In `ScriptRunner.kt`, expose a function `lex.ui.addOrUpdate()` that accepts a JSON string, parses it, and updates the ViewModel's `StateFlow`.
+
+31. **Redundant Text Cleanup Implementation:**
+    *   Create a `CleanupService.kt`.
+    *   Inject the `SemanticService` into it.
+    *   Implement a function `findSimilarTextEvidence(evidenceList: List<Evidence>): List<List<Evidence>>` that uses `semanticService.calculateSimilarity()` to perform pairwise comparisons.
+    *   Group evidence items whose similarity score exceeds a defined threshold (e.g., 0.95).
+    *   In `ReviewViewModel`, call this service method.
+    *   In `ReviewScreen.kt`, add a new `LazyColumn` section to display the groups of similar evidence with a "Review & Merge" button.
+
+32. **Case Finalization and Export:**
+    *   Implement the `onClick` listener for the "Finalize" button on the `ReviewScreen.kt` to show a `FinalizeCaseDialog`.
+    *   The dialog will contain a `LazyColumn` with checkboxes for all files in the case directory and a toggle for `.zip` or `.lex` format.
+    *   Upon confirmation, launch the `ACTION_CREATE_DOCUMENT` intent.
+    *   Create a `PackagingService.kt` with a function `createArchive(files: List<File>, destinationUri: Uri, format: String)` that uses `ZipOutputStream` to create the archive.
+
+#### **Phase 3: Pre-Production Hardening and Refinement**
+
+33. **Security, Obfuscation, and Performance:**
+    *   In `app/build.gradle.kts`, in the `buildTypes.release` block, change `isMinifyEnabled` to `true`.
+    *   In `proguard-rules.pro`, add keep rules for data models, Hilt, Coroutines, and any other libraries that use reflection.
+    *   Remove the `buildConfigField` for the API key from `app/build.gradle.kts`.
+    *   Implement NDK-based API key storage using a `native-lib.cpp` file and JNI.
+    *   Add the `androidx.tracing:tracing-ktx` dependency and add `trace("Section Name")` blocks to performance-sensitive code paths.
+
+34. **Documentation and Code Hygiene:**
+    *   Review and update `docs/auth.md` to ensure accuracy for Google and Outlook/Azure API configuration.
+    *   Update `SCRIPT_EXAMPLES.md` to remove notes about conceptual APIs and add working examples for `lex.ai.local` and `lex.ui`.
+    *   Consolidate remaining tasks from `TODO.md` into a "Future Work" section in `README.md` and delete `TODO.md`.
+    *   Run `./gradlew lintDebug` and analyze the report.
+    *   Configure and run a code formatter like `ktlint` (`./gradlew spotlessApply` or similar).
