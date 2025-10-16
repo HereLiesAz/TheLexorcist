@@ -29,7 +29,7 @@ ksp {
 android {
     signingConfigs {
         maybeCreate("release").apply {
-            storeFile = file("G://My Drive//az_apk_keystore.jks")
+            storeFile = localProperties.getProperty("MY_KEYSTORE_FILE")?.let { file(it) }
             storePassword = localProperties.getProperty("MY_KEYSTORE_PASSWORD") ?: System.getenv("MY_KEYSTORE_PASSWORD") ?: ""
             keyAlias = "key0"
             keyPassword = localProperties.getProperty("MY_KEY_PASSWORD") ?: System.getenv("MY_KEY_PASSWORD") ?: ""
