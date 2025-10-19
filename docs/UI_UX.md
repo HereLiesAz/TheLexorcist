@@ -18,11 +18,12 @@ This document contains strict rules and guidelines for the user interface and us
 
 ## Specific Component Behavior
 
-1.  **AzNavRail Library:** When working with the `AzNavRail` library, you must **never guess** how it works. Read the official documentation and follow the instructions precisely.
+1.  **AzNavRail Library:** When working with the `AzNavRail` library, you must **never guess** how it works. Read the official documentation and follow the instructions precisely. The `AzButton` component does not have an `enabled` parameter; its state must be managed with conditional logic in the `onClick` handler.
     *   **Documentation:** [https://github.com/HereLiesAz/AzNavRail](https://github.com/HereLiesAz/AzNavRail)
-2.  **Saving and Syncing:**
+2.  **Review Screen Buttons**: The buttons on the `ReviewScreen` must be labeled "Organize", "Generate", and "Finalize".
+3.  **Saving and Syncing:**
     *   All changes to a case must be saved immediately and automatically.
     *   The case folder must be synchronized with the selected cloud service (e.g., Google Drive) frequently.
     *   Synchronization **must always** be attempted when the application is closed. The app needs to be explicit about its closing process to ensure this happens.
-3.  **Drag-and-Drop Preview:** On the 'Assign' tab of the Exhibits screen, when a user drags an `EvidenceDisplayItem`, the drag preview (the 'ghost' image) **must** originate from the exact position of the item being dragged, not from the top of the screen. This is a critical implementation detail that must not be altered.
-4.  **Template Preview:** On the Templates screen, tapping a `TemplateItem` card **must** open a full-screen `TemplatePreviewDialog` that displays the template's content in a `WebView`. This functionality is implemented and must be preserved.
+4.  **Drag-and-Drop Preview:** On the 'Assign' tab of the Exhibits screen, when a user drags an `EvidenceDisplayItem`, the drag preview (the 'ghost' image) **must** originate from the exact position of the item being dragged, not from the top of the screen. This is a critical implementation detail that must not be altered.
+5.  **Template Preview:** On the Templates screen, tapping a `TemplateItem` card **must** open a full-screen `TemplatePreviewDialog` that displays the template's content in a `WebView`. This functionality is implemented and must be preserved.
