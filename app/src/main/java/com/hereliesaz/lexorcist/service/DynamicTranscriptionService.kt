@@ -8,17 +8,11 @@ import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 class DynamicTranscriptionService @Inject constructor(
-    private val settingsManager: SettingsManager,
-    private val voskService: VoskTranscriptionService,
-    private val whisperService: WhisperTranscriptionService
+    private val voskService: VoskTranscriptionService
 ) : TranscriptionService {
 
     private fun getCurrentService(): TranscriptionService {
-        return when (settingsManager.getTranscriptionService()) {
-            "Whisper" -> whisperService
-            // Default to Vosk if the setting is anything else or not set
-            else -> voskService
-        }
+        return voskService
     }
 
     // Note: If the setting can change while a Flow is being collected,

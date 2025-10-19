@@ -18,7 +18,7 @@ class SemanticService @Inject constructor(
 
     private suspend fun initialize() {
         if (textEmbedder == null) {
-            withContext(dispatcherProvider.io) {
+            withContext(dispatcherProvider.io()) {
                 val modelFile = File(context.filesDir, "universal_sentence_encoder.tflite")
                 if (!modelFile.exists()) {
                     context.assets.open("universal_sentence_encoder.tflite").use { input ->
@@ -41,5 +41,11 @@ class SemanticService @Inject constructor(
             return TextEmbedder.cosineSimilarity(embeddings1.embeddingResult().embeddings()[0], embeddings2.embeddingResult().embeddings()[0]).toFloat()
         }
         return 0.0f
+    }
+
+    suspend fun getEmbedding(text: String): com.google.mediapipe.tasks.components.containers.Embedding? {
+        initialize()
+        val embeddings = textEmbedder?.embed(text)
+        return embeddings?.embeddingResult()?.embeddings()?.get(0)
     }
 }

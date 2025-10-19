@@ -12,7 +12,6 @@ import com.hereliesaz.lexorcist.model.DownloadState
 import com.hereliesaz.lexorcist.model.LanguageModel
 import com.hereliesaz.lexorcist.model.TranscriptionModels
 import com.hereliesaz.lexorcist.service.VoskTranscriptionService
-import com.hereliesaz.lexorcist.service.WhisperTranscriptionService
 import com.hereliesaz.lexorcist.ui.theme.ThemeMode
 import com.hereliesaz.lexorcist.utils.Result
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -33,7 +32,6 @@ class SettingsViewModel @Inject constructor(
     @Named("oneDrive") private val oneDriveProvider: CloudStorageProvider,
     private val dropboxAuthManager: DropboxAuthManager,
     private val voskTranscriptionService: VoskTranscriptionService,
-    private val whisperTranscriptionService: WhisperTranscriptionService,
     private val extrasRepository: ExtrasRepository, // Injected ExtrasRepository
     application: Application
 ) : AndroidViewModel(application) {
@@ -77,14 +75,11 @@ class SettingsViewModel @Inject constructor(
     // Transcription Service
     private val _selectedTranscriptionService = MutableStateFlow("Vosk")
     val selectedTranscriptionService: StateFlow<String> = _selectedTranscriptionService.asStateFlow()
-    val availableTranscriptionServices: List<String> = listOf("Vosk", "Whisper")
+    val availableTranscriptionServices: List<String> = listOf("Vosk")
 
     // Transcription Language Models
     private val _voskLanguageModels = MutableStateFlow<List<LanguageModel>>(emptyList())
     val voskLanguageModels: StateFlow<List<LanguageModel>> = _voskLanguageModels.asStateFlow()
-
-    private val _whisperLanguageModels = MutableStateFlow<List<LanguageModel>>(emptyList())
-    val whisperLanguageModels: StateFlow<List<LanguageModel>> = _whisperLanguageModels.asStateFlow()
 
     private val _selectedTranscriptionLanguageCode = MutableStateFlow("en-us") // Default to english
     val selectedTranscriptionLanguageCode: StateFlow<String> = _selectedTranscriptionLanguageCode.asStateFlow()
@@ -101,7 +96,6 @@ class SettingsViewModel @Inject constructor(
 
     init {
         _voskLanguageModels.value = TranscriptionModels.voskModels
-        _whisperLanguageModels.value = TranscriptionModels.whisperModels
         loadSettings()
         observeDropboxAuthState()
         checkAllModelsStatus()
@@ -182,7 +176,7 @@ class SettingsViewModel @Inject constructor(
         _selectedTranscriptionService.value = service
         // When switching services, update selected language to a valid one for that service
         val currentLangCode = _selectedTranscriptionLanguageCode.value
-        val models = if (service == "Vosk") voskLanguageModels.value else whisperLanguageModels.value
+        val models = voskLanguageModels.value
         if (models.none { it.code == currentLangCode }) {
             models.firstOrNull()?.let { selectTranscriptionLanguage(it.code) }
         }
@@ -195,7 +189,7 @@ class SettingsViewModel @Inject constructor(
 
     private fun checkAllModelsStatus() {
         viewModelScope.launch {
-            (voskLanguageModels.value + whisperLanguageModels.value).forEach { model ->
+            voskLanguageModels.value.forEach { model ->
                 checkModelStatus(model)
             }
         }
@@ -216,11 +210,7 @@ class SettingsViewModel @Inject constructor(
             model.downloadState.value = DownloadState.Downloading
             model.progress.value = 0f
 
-            val resultFlow = if (selectedTranscriptionService.value == "Vosk") {
-                voskTranscriptionService.downloadModel(model)
-            } else {
-                whisperTranscriptionService.downloadModel(model)
-            }
+            val resultFlow = voskTranscriptionService.downloadModel(model)
 
             resultFlow.collect { state ->
                 when (state) {
@@ -241,11 +231,7 @@ class SettingsViewModel @Inject constructor(
 
         // Separately collect progress
         viewModelScope.launch {
-            val progressFlow = if (selectedTranscriptionService.value == "Vosk") {
-                voskTranscriptionService.getDownloadProgress(model.modelName)
-            } else {
-                whisperTranscriptionService.getDownloadProgress(model.modelName)
-            }
+            val progressFlow = voskTranscriptionService.getDownloadProgress(model.modelName)
             progressFlow.collect { progress ->
                 model.progress.value = progress
             }

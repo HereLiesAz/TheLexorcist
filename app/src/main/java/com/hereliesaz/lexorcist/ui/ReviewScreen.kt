@@ -1,5 +1,7 @@
 package com.hereliesaz.lexorcist.ui
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -57,18 +59,16 @@ import com.hereliesaz.lexorcist.data.Allegation
 import com.hereliesaz.lexorcist.data.AllegationElement
 import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.data.Exhibit
-import com.hereliesaz.lexorcist.ui.components.DuplicateGroupItem
-import com.hereliesaz.lexorcist.ui.components.ImageSeriesGroupItem
 import com.hereliesaz.lexorcist.viewmodel.AllegationsViewModel
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
+import java.io.File
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReviewScreen(
     caseViewModel: CaseViewModel = hiltViewModel(),
-    allegationsViewModel: AllegationsViewModel = hiltViewModel(),
-    reviewViewModel: com.hereliesaz.lexorcist.viewmodel.ReviewViewModel = hiltViewModel()
+    allegationsViewModel: AllegationsViewModel = hiltViewModel()
 ) {
     val evidenceList by caseViewModel.selectedCaseEvidenceList.collectAsState()
     val selectedCase by caseViewModel.selectedCase.collectAsState()
@@ -88,29 +88,14 @@ fun ReviewScreen(
     var showGenerateDocumentDialog by remember { mutableStateOf(false) }
     var showFinalizeCaseDialog by remember { mutableStateOf(false) }
     var evidenceToEdit by remember { mutableStateOf<Evidence?>(null) }
-
-    var filesToPackage by remember { mutableStateOf<List<File>>(emptyList()) }
-
-    val packageLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("*/*"),
-    ) { uri ->
-        uri?.let { caseViewModel.packageFiles(filesToPackage, it) }
-    }
     var evidenceToDelete by remember { mutableStateOf<Evidence?>(null) }
-    var filesToPackage by remember { mutableStateOf<List<java.io.File>>(emptyList()) }
-
-    val packageLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("*/*"),
-    ) { uri ->
-        uri?.let { caseViewModel.packageFiles(filesToPackage, it) }
-    }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        (
+                        text = (
                             if (selectedCase != null) {
                                 stringResource(R.string.data_review_title_case, selectedCase!!.name)
                             } else {
@@ -148,7 +133,7 @@ fun ReviewScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                 ) {
-                    Text(stringResource(R.string.please_select_case_for_evidence).uppercase(Locale.getDefault()))
+                    Text(text = stringResource(R.string.please_select_case_for_evidence).uppercase(Locale.getDefault()))
                 }
             } else if (evidenceList.isEmpty()) {
                 Column(
@@ -160,7 +145,7 @@ fun ReviewScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                 ) {
-                    Text(stringResource(R.string.no_evidence_for_case).uppercase(Locale.getDefault()))
+                    Text(text = stringResource(R.string.no_evidence_for_case).uppercase(Locale.getDefault()))
                 }
             } else {
                 Row(
@@ -181,7 +166,7 @@ fun ReviewScreen(
                     val currentSelectedAllegation = selectedAllegation
                     if (currentSelectedAllegation != null) {
                         Column(modifier = Modifier.weight(1f).padding(start = 8.dp)) {
-                            Text("Elements for ${currentSelectedAllegation.name}", style = MaterialTheme.typography.titleMedium)
+                            Text(text = "Elements for ${currentSelectedAllegation.name}", style = MaterialTheme.typography.titleMedium)
                             // Assuming currentSelectedAllegation.elements is List<AllegationElement>
                             /*
                             currentSelectedAllegation.elements?.forEach { element: AllegationElement -> // Explicit type
@@ -199,7 +184,7 @@ fun ReviewScreen(
                                 )
                             }
                             */
-                            Text("Suggested Evidence", style = MaterialTheme.typography.titleMedium)
+                            Text(text = "Suggested Evidence", style = MaterialTheme.typography.titleMedium)
                             /*
                             currentSelectedAllegation.evidenceSuggestions?.forEach { suggestion: String -> // Explicit type
                                 Text(suggestion)
@@ -239,58 +224,36 @@ fun ReviewScreen(
                     horizontalArrangement = Arrangement.End
                 ) {
                     AzButton(
-                        onClick = { /* TODO: Implement Automatic Cleanup */ },
-                        text = stringResource(id = R.string.automatic_cleanup),
-                        modifier = Modifier.padding(start = 8.dp)
-                    )
+                        onClick = { caseViewModel.generateCleanupSuggestions() }
+                    ) {
+                        Text(text = "Organize")
+                    }
                     AzButton(
-                        onClick = { showGenerateDocumentDialog = true },
-                        text = stringResource(id = R.string.paperwork),
-                        modifier = Modifier.padding(start = 8.dp)
-                    )
+                        onClick = { showGenerateDocumentDialog = true }
+                    ) {
+                        Text(text = "Generate")
+                    }
                     AzButton(
-                        onClick = { showFinalizeCaseDialog = true },
-                        text = stringResource(id = R.string.finalize),
-                        modifier = Modifier.padding(start = 8.dp)
-                    )
+                        onClick = { showFinalizeCaseDialog = true }
+                    ) {
+                        Text(text = "Finalize")
+                    }
                 }
                 val cleanupSuggestions by caseViewModel.cleanupSuggestions.collectAsState()
-                val similarTextGroups by reviewViewModel.similarTextGroups.collectAsState()
-
-                LaunchedEffect(evidenceList) {
-                    reviewViewModel.findSimilarTextEvidence(evidenceList)
-                }
 
                 LazyColumn {
                     items(cleanupSuggestions) { suggestion ->
                         if (suggestion is com.hereliesaz.lexorcist.model.CleanupSuggestion.DuplicateGroup) {
-                            DuplicateGroupItem(
-                                group = suggestion,
-                                onMerge = { caseViewModel.deleteDuplicates(suggestion) }
-                            )
+                            // DuplicateGroupItem(
+                            //     group = suggestion,
+                            //     onMerge = { caseViewModel.deleteDuplicates(suggestion) }
+                            // )
                         }
                         if (suggestion is com.hereliesaz.lexorcist.model.CleanupSuggestion.ImageSeriesGroup) {
-                            ImageSeriesGroupItem(
-                                group = suggestion,
-                                onMerge = { caseViewModel.mergeImageSeries(suggestion, "Merged Series") }
-                            )
-                        }
-                    }
-                    if (similarTextGroups.isNotEmpty()) {
-                        item {
-                            Text("Potential Text Duplicates")
-                        }
-                        items(similarTextGroups) { group ->
-                            Card(modifier = Modifier.padding(8.dp)) {
-                                Column {
-                                    group.forEach { evidence ->
-                                        Text(text = evidence.content)
-                                    }
-                                    AzButton(onClick = { /* TODO */ }) {
-                                        Text("Review & Merge")
-                                    }
-                                }
-                            }
+                            // ImageSeriesGroupItem(
+                            //     group = suggestion,
+                            //     onMerge = { caseViewModel.mergeImageSeries(suggestion, "Merged Series") }
+                            // )
                         }
                     }
                 }
@@ -299,11 +262,21 @@ fun ReviewScreen(
     }
 
     if (showFinalizeCaseDialog) {
+        var filesToPackage by remember { mutableStateOf<List<File>>(emptyList()) }
+        var packageName by remember { mutableStateOf("") }
+        var packageExtension by remember { mutableStateOf("zip") }
+        val packageLauncher = rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.CreateDocument("*/*"),
+        ) { uri ->
+            uri?.let { caseViewModel.packageFilesForCase(filesToPackage, packageName, packageExtension) }
+        }
         FinalizeCaseDialog(
             caseViewModel = caseViewModel,
             onDismiss = { showFinalizeCaseDialog = false },
             onConfirm = { files, name, ext ->
                 filesToPackage = files
+                packageName = name
+                packageExtension = ext
                 packageLauncher.launch("$name.$ext")
             }
         )
@@ -330,16 +303,20 @@ fun ReviewScreen(
     if (showDeleteConfirmDialog && evidenceToDelete != null) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirmDialog = false },
-            title = { Text(stringResource(R.string.delete_evidence).uppercase(Locale.getDefault())) },
-            text = { Text(stringResource(R.string.delete_evidence_confirmation)) },
+            title = { Text(text = stringResource(R.string.delete_evidence).uppercase(Locale.getDefault())) },
+            text = { Text(text = stringResource(R.string.delete_evidence_confirmation)) },
             confirmButton = {
                 AzButton(onClick = {
                     caseViewModel.deleteEvidence(evidenceToDelete!!)
                     showDeleteConfirmDialog = false
-                }, text = stringResource(R.string.delete).uppercase(Locale.getDefault()))
+                    }) {
+                        Text(text = stringResource(R.string.delete).uppercase(Locale.getDefault()))
+                    }
             },
             dismissButton = {
-                AzButton(onClick = { showDeleteConfirmDialog = false }, text = stringResource(R.string.cancel).uppercase(Locale.getDefault()))
+                    AzButton(onClick = { showDeleteConfirmDialog = false }) {
+                        Text(text = stringResource(R.string.cancel).uppercase(Locale.getDefault()))
+                    }
             },
         )
     }
@@ -351,26 +328,7 @@ fun CaseStrengthMeter(
     allegation: Allegation
 ) {
     Column {
-        Text("Case Strength", style = MaterialTheme.typography.titleMedium)
-        /*
-        allegation.elements?.forEach { element: AllegationElement -> // Explicit type
-            val evidenceCount = evidenceList.count { it.allegationElementName == element.name } // Assuming AllegationElement has .name
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(element.name, modifier = Modifier.weight(1f)) // Assuming AllegationElement has .name
-                Row(modifier = Modifier.weight(1f)) {
-                    repeat(evidenceCount) {
-                        Box(
-                            modifier = Modifier
-                                .height(20.dp)
-                                .width(20.dp)
-                                .background(Color.Green)
-                                .padding(2.dp)
-                        )
-                    }
-                }
-            }
-        }
-        */
+        Text(text = "Case Strength", style = MaterialTheme.typography.titleMedium)
     }
 }
 
@@ -387,9 +345,11 @@ fun AllegationElementItem(
         shape = MaterialTheme.shapes.medium
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(element.name, style = MaterialTheme.typography.titleMedium) // Assuming AllegationElement has .name
-            Text(element.description, style = MaterialTheme.typography.bodyMedium)
-            AzButton(onClick = onAssignEvidence, text = "Assign Selected Evidence")
+            Text(text = element.name, style = MaterialTheme.typography.titleMedium) // Assuming AllegationElement has .name
+            Text(text = element.description, style = MaterialTheme.typography.bodyMedium)
+            AzButton(onClick = onAssignEvidence) {
+                Text(text = "Assign Selected Evidence")
+            }
         }
     }
 }
@@ -588,10 +548,14 @@ fun EditEvidenceDialog(
                         tags = tags.split(", ").map { it.trim() }.filter { it.isNotEmpty() },
                     )
                 onSave(updatedEvidence)
-            }, text = stringResource(R.string.save).uppercase(Locale.getDefault()))
+            }) {
+                Text(text = stringResource(R.string.save).uppercase(Locale.getDefault()))
+            }
         },
         dismissButton = {
-            AzButton(onClick = onDismiss, text = stringResource(R.string.cancel).uppercase(Locale.getDefault()))
+            AzButton(onClick = onDismiss) {
+                Text(text = stringResource(R.string.cancel).uppercase(Locale.getDefault()))
+            }
         },
     )
 }
@@ -599,7 +563,8 @@ fun EditEvidenceDialog(
 @Composable
 fun PackageFilesDialog(
     caseViewModel: CaseViewModel,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onConfirm: (List<File>, String, String) -> Unit
 ) {
     val case by caseViewModel.selectedCase.collectAsState()
     val files = remember(case) {
@@ -612,7 +577,7 @@ fun PackageFilesDialog(
             }
         } ?: emptyList()
     }
-    var selectedFiles by remember { mutableStateOf<List<String>>(emptyList()) }
+    var selectedFiles by remember { mutableStateOf<List<File>>(emptyList()) }
     var packageName by remember { mutableStateOf("") }
     var extension by remember { mutableStateOf("zip") }
 
@@ -642,12 +607,12 @@ fun PackageFilesDialog(
                     items(files) { file ->
                         Row {
                             Checkbox(
-                                checked = selectedFiles.contains(file.absolutePath),
+                                checked = selectedFiles.contains(file),
                                 onCheckedChange = {
                                     selectedFiles = if (it) {
-                                        selectedFiles + file.absolutePath
+                                        selectedFiles + file
                                     } else {
-                                        selectedFiles - file.absolutePath
+                                        selectedFiles - file
                                     }
                                 }
                             )
@@ -661,15 +626,17 @@ fun PackageFilesDialog(
             AzButton(
                 onClick = {
                     if (selectedFiles.isNotEmpty() && packageName.isNotBlank()) {
-                        caseViewModel.packageFiles(selectedFiles.map { java.io.File(it) }, packageName, extension)
+                        onConfirm(selectedFiles, packageName, extension)
                         onDismiss()
                     }
-                },
-                text = "Package"
-            )
+                }) {
+                Text("Package")
+            }
         },
         dismissButton = {
-            AzButton(onClick = onDismiss, text = "Cancel")
+            AzButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
         }
     )
 }
@@ -701,7 +668,7 @@ fun GenerateDocumentDialog(
                         onValueChange = {},
                         readOnly = true,
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = exhibitExpanded) },
-                        modifier = Modifier.menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryEditable, enabled = true).fillMaxWidth() // Added fillMaxWidth
+                        modifier = Modifier.menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = true).fillMaxWidth() // Added fillMaxWidth
                     )
                     ExposedDropdownMenu(
                         expanded = exhibitExpanded,
@@ -730,7 +697,7 @@ fun GenerateDocumentDialog(
                         onValueChange = {},
                         readOnly = true,
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = templateExpanded) },
-                        modifier = Modifier.menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryEditable, enabled = true).fillMaxWidth() // Added fillMaxWidth
+                        modifier = Modifier.menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = true).fillMaxWidth() // Added fillMaxWidth
                     )
                     ExposedDropdownMenu(
                         expanded = templateExpanded,
@@ -760,12 +727,14 @@ fun GenerateDocumentDialog(
                         }
                         onDismiss()
                     }
-                },
-                text = "Generate"
-            )
+                }) {
+                Text("Generate")
+            }
         },
         dismissButton = {
-            AzButton(onClick = onDismiss, text = "Cancel")
+            AzButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
         }
     )
 }

@@ -91,10 +91,6 @@ class GoogleApiService @Inject constructor(
     private fun getPublicSheetsService(): Sheets {
         return Sheets.Builder(httpTransport, gsonFactory, null) // No credential needed for public API access
             .setApplicationName(applicationName)
-            .setGoogleClientRequestInitializer { request ->
-                val sheetsRequest = request as com.google.api.services.sheets.v4.SheetsRequest<*>
-                sheetsRequest.key = com.hereliesaz.lexorcist.BuildConfig.API_KEY
-            }
             .build()
     }
 

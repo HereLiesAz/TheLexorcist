@@ -1,40 +1,46 @@
 package com.hereliesaz.lexorcist.service
 
-import com.hereliesaz.lexorcist.data.Evidence
 import androidx.tracing.trace
 import com.hereliesaz.lexorcist.data.Evidence
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class CleanupService @Inject constructor(private val semanticService: SemanticService) {
 
-    suspend fun findSimilarTextEvidence(evidenceList: List<Evidence>): List<List<Evidence>> = trace("findSimilarTextEvidence") {
-        val groups = mutableListOf<MutableList<Evidence>>()
-        val processedEvidence = mutableSetOf<Int>()
+    suspend fun findSimilarTextEvidence(evidenceList: List<Evidence>): List<List<Evidence>> = withContext(Dispatchers.Default) {
+        trace("findSimilarTextEvidence") {
+            val embeddings = evidenceList.map { evidence ->
+                semanticService.getEmbedding(evidence.content)
+            }
 
-        for (i in evidenceList.indices) {
-            if (processedEvidence.contains(evidenceList[i].id)) continue
+            val groups = mutableListOf<MutableList<Evidence>>()
+            val processedEvidence = mutableSetOf<Int>()
 
-            val group = mutableListOf(evidenceList[i])
-            processedEvidence.add(evidenceList[i].id)
+            for (i in evidenceList.indices) {
+                if (processedEvidence.contains(evidenceList[i].id) || embeddings[i] == null) continue
 
-            for (j in i + 1 until evidenceList.size) {
-                if (processedEvidence.contains(evidenceList[j].id)) continue
+                val group = mutableListOf(evidenceList[i])
+                processedEvidence.add(evidenceList[i].id)
 
-                val similarity = semanticService.calculateSimilarity(evidenceList[i].content, evidenceList[j].content)
+                for (j in i + 1 until evidenceList.size) {
+                    if (processedEvidence.contains(evidenceList[j].id) || embeddings[j] == null) continue
 
-                if (similarity > 0.95) {
-                    group.add(evidenceList[j])
-                    processedEvidence.add(evidenceList[j].id)
+                    val similarity = com.google.mediapipe.tasks.text.textembedder.TextEmbedder.cosineSimilarity(embeddings[i]!!, embeddings[j]!!)
+
+                    if (similarity > 0.95) {
+                        group.add(evidenceList[j])
+                        processedEvidence.add(evidenceList[j].id)
+                    }
+                }
+                if (group.size > 1) {
+                    groups.add(group)
                 }
             }
-            if (group.size > 1) {
-                groups.add(group)
-            }
+            groups
         }
-        return groups
     }
 
     fun detectDuplicates(evidenceList: List<Evidence>): List<List<Evidence>> {

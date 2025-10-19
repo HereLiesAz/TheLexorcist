@@ -59,6 +59,11 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import androidx.core.net.toUri
+import androidx.work.WorkManager
+import com.hereliesaz.lexorcist.service.CleanupService
+import com.hereliesaz.lexorcist.service.OcrProcessingService
+import com.hereliesaz.lexorcist.service.PackagingService
+import com.hereliesaz.lexorcist.service.VideoProcessingService
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
@@ -81,10 +86,9 @@ constructor(
     private val evidenceRepository: EvidenceRepository,
     private val localFileStorageService: LocalFileStorageService,
     val scriptRunner: com.hereliesaz.lexorcist.service.ScriptRunner,
-    private val ocrProcessingService: com.hereliesaz.lexorcist.service.OcrProcessingService,
-    private val videoProcessingService: com.hereliesaz.lexorcist.service.VideoProcessingService,
-    private val whisperTranscriptionService: com.hereliesaz.lexorcist.service.WhisperTranscriptionService,
-    private val workManager: androidx.work.WorkManager,
+    private val ocrProcessingService: OcrProcessingService,
+    private val videoProcessingService: VideoProcessingService,
+    private val workManager: WorkManager,
     private val scriptRepository: ScriptRepository,
     private val activeScriptRepository: ActiveScriptRepository,
     private val logService: com.hereliesaz.lexorcist.service.LogService,
@@ -95,15 +99,15 @@ constructor(
     private val evidenceImporter: EvidenceImporter,
     private val chatHistoryParser: ChatHistoryParser,
     private val gmailService: GmailService,
-    private val outlookService: com.hereliesaz.lexorcist.service.OutlookService,
-    private val imapService: com.hereliesaz.lexorcist.service.ImapService,
+    private val outlookService: OutlookService,
+    private val imapService: ImapService,
     private val outlookAuthManager: com.hereliesaz.lexorcist.auth.OutlookAuthManager,
     private val jurisdictionRepository: JurisdictionRepository,
     private val locationHistoryParser: LocationHistoryParser,
     private val exhibitRepository: ExhibitRepository,
     private val legalRepository: LegalRepository,
-    private val cleanupService: com.hereliesaz.lexorcist.service.CleanupService,
-    private val packagingService: com.hereliesaz.lexorcist.service.PackagingService
+    private val cleanupService: CleanupService,
+    private val packagingService: PackagingService
 ) : ViewModel() {
     private val sharedPref =
         applicationContext.getSharedPreferences("CaseInfoPrefs", Context.MODE_PRIVATE)
@@ -404,8 +408,9 @@ constructor(
         }
     }
 
-    fun packageFiles(files: List<File>, destinationUri: android.net.Uri) {
+    fun packageFilesForCase(files: List<File>, packageName: String, extension: String) {
         viewModelScope.launch {
+            val destinationUri = android.net.Uri.parse("${storageLocation.value}/$packageName.$extension")
             packagingService.createArchive(files, destinationUri)
         }
     }
@@ -959,7 +964,7 @@ constructor(
                 allEvidence.forEach { evidence ->
                     var updatedEvidence = evidence
                     sortedScriptsToRun.forEach { script ->
-                        val result = scriptRunner.runScript(script.content, updatedEvidence, this)
+                        val result = scriptRunner.runScript(script.content, updatedEvidence)
                         if (result is Result.Success) {
                             val currentTagsInEvidence: List<String> = updatedEvidence.tags
                             val newTagsFromScript: List<String> = result.data.tags
@@ -1136,12 +1141,6 @@ constructor(
                         _userMessage.value = "Raw audio file saved. Starting transcription."
                         _processingState.value = ProcessingState.InProgress(0.25f)
 
-                        val transcriptionResult = transcriptionService.transcribeAudio(uri)
-
-                        when (transcriptionResult) {
-                            is Result.Success -> {
-                                val transcribedText = transcriptionResult.data
-                                Log.i("CaseViewModel", "Audio transcribed: $transcribedText")
                                 _processingState.value = ProcessingState.InProgress(0.75f)
 
                                 val fileHash = com.hereliesaz.lexorcist.utils.HashingUtils.getHash(applicationContext, uri)
@@ -1150,8 +1149,8 @@ constructor(
                                         caseId = caseToUse.id.toLong(),
                                         spreadsheetId = caseToUse.spreadsheetId,
                                         type = "audio",
-                                        content = transcribedText,
-                                        formattedContent = "```\n$transcribedText\n```",
+                                        content = "",
+                                        formattedContent = "```\n\n```",
                                         mediaUri = uploadedFileUriString,
                                         timestamp = System.currentTimeMillis(),
                                         sourceDocument = uploadedFileUriString,
@@ -1162,7 +1161,7 @@ constructor(
                                         tags = listOf("audio", "transcription"),
                                         commentary = null,
                                         parentVideoId = null,
-                                        entities = DataParser.tagData(transcribedText),
+                                        entities = emptyMap(),
                                         fileHash = fileHash
                                     )
                                 val savedEvidence = withContext(Dispatchers.IO) {
@@ -1181,25 +1180,6 @@ constructor(
                                     _userMessage.value = errorMsg
                                     _processingState.value = ProcessingState.Failure(errorMsg)
                                 }
-                            }
-                            is Result.Error -> {
-                                val errorMsg = "Transcription failed: ${transcriptionResult.exception.message}"
-                                Log.e("CaseViewModel", errorMsg, transcriptionResult.exception)
-                                _userMessage.value = errorMsg
-                                _processingState.value = ProcessingState.Failure(errorMsg)
-                            }
-                            is Result.UserRecoverableError -> {
-                                val errorMsg = "User recoverable transcription error: ${transcriptionResult.exception.message}"
-                                Log.w("CaseViewModel", errorMsg, transcriptionResult.exception)
-                                _userMessage.value = errorMsg
-                                _userRecoverableAuthIntent.value = transcriptionResult.exception.intent
-                                _processingState.value = ProcessingState.Failure(errorMsg)
-                            }
-                            is Result.Loading -> {
-                                Log.w("CaseViewModel", "Transcription returned Loading state, which is unexpected for a direct call.")
-                                _processingState.value = ProcessingState.InProgress(0.5f)
-                            }
-                        }
                     }
                     is Result.Error -> {
                         val errorMsg = "Error uploading audio file: ${uploadResult.exception.message}"
@@ -1259,15 +1239,7 @@ constructor(
             clearLogs()
             try {
                 val result =
-                    videoProcessingService.processVideo(
-                        context = applicationContext,
-                        videoUri = uri,
-                        caseId = currentCase.id,
-                        spreadsheetId = currentCase.spreadsheetId
-                    ) { progress, message ->
-                        _processingState.value = ProcessingState.InProgress(progress)
-                        _videoProcessingProgress.value = "$message (${(progress * 100).toInt()}%)."
-                    }
+                    videoProcessingService.processVideo(uri)
 
                 if (result != null) {
                     _userMessage.value = "Video processed successfully."
@@ -1608,25 +1580,6 @@ constructor(
         }
     }
 
-    fun packageFiles(files: List<java.io.File>, packageName: String, extension: String) {
-        viewModelScope.launch {
-            val zipFile = java.io.File(storageLocation.value, "$packageName.$extension")
-            try {
-                java.util.zip.ZipOutputStream(java.io.FileOutputStream(zipFile)).use { zos ->
-                    files.forEach { file ->
-                        zos.putNextEntry(java.util.zip.ZipEntry(file.name))
-                        java.io.FileInputStream(file).use { fis ->
-                            fis.copyTo(zos)
-                        }
-                        zos.closeEntry()
-                    }
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
-    }
-
     fun importSmsEvidence(contact: String?, startDate: Long?, endDate: Long?) {
         viewModelScope.launch {
             globalLoadingState.pushLoading()
@@ -1852,10 +1805,5 @@ constructor(
                 globalLoadingState.popLoading()
             }
         }
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        whisperTranscriptionService.release()
     }
 }

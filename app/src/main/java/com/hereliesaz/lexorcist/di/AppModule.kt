@@ -74,8 +74,9 @@ class AppModule {
     @Singleton
     fun provideScriptRunner(
         generativeAIService: GenerativeAIService,
-        googleApiService: GoogleApiService // Using the imported com.hereliesaz.lexorcist.service.GoogleApiService
-    ): ScriptRunner = ScriptRunner(generativeAIService, googleApiService)
+        googleApiService: GoogleApiService, // Using the imported com.hereliesaz.lexorcist.service.GoogleApiService
+        semanticService: com.hereliesaz.lexorcist.service.SemanticService
+    ): ScriptRunner = ScriptRunner(generativeAIService, googleApiService, semanticService)
 
     @Provides
     @Singleton

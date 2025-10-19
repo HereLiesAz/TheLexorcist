@@ -3,11 +3,11 @@ package com.hereliesaz.lexorcist.service
 import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.model.ScriptResult
 import com.hereliesaz.lexorcist.utils.Result
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.mozilla.javascript.Context
 import org.mozilla.javascript.Scriptable
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.mozilla.javascript.ScriptableObject
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -37,16 +37,6 @@ class ScriptRunner @Inject constructor(
         }
     }
 
-    inner class UiApi(private val viewModel: com.hereliesaz.lexorcist.viewmodel.CaseViewModel) {
-        @Suppress("unused") // Used by Rhino
-        fun addOrUpdate(json: String) {
-            runBlocking {
-                val component = kotlinx.serialization.json.Json.decodeFromString<com.hereliesaz.lexorcist.model.UiComponentModel>(json)
-                viewModel.addOrUpdateDynamicUiComponent(component)
-            }
-        }
-    }
-
     inner class GenerativeAIApi {
         @Suppress("unused") // Used by Rhino
         fun generateContent(prompt: String): String {
@@ -58,8 +48,7 @@ class ScriptRunner @Inject constructor(
 
     fun runScript(
         script: String,
-        evidence: Evidence,
-        viewModel: com.hereliesaz.lexorcist.viewmodel.CaseViewModel
+        evidence: Evidence
     ): Result<ScriptResult> {
         val rhino = Context.enter()
         @Suppress("deprecation")
@@ -75,9 +64,6 @@ class ScriptRunner @Inject constructor(
             ScriptableObject.putProperty(lexObject, "ai", aiObject)
             ScriptableObject.putProperty(aiObject, "generate", Context.javaToJS(GenerativeAIApi(), scope))
             ScriptableObject.putProperty(aiObject, "local", Context.javaToJS(semanticService, scope))
-            val uiObject = rhino.newObject(scope)
-            ScriptableObject.putProperty(lexObject, "ui", uiObject)
-            ScriptableObject.putProperty(uiObject, "addOrUpdate", Context.javaToJS(UiApi(viewModel), scope))
             val googleApiObject = rhino.newObject(scope)
             ScriptableObject.putProperty(lexObject, "google", googleApiObject)
             ScriptableObject.putProperty(googleApiObject, "runAppsScript", Context.javaToJS(GoogleApi(), scope))
