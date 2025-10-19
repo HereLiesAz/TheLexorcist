@@ -61,13 +61,6 @@ android {
         viewBinding = true // ADDED
         buildConfig = true
     }
-    externalNativeBuild {
-        cmake {
-            path = file("src/main/cpp/CMakeLists.txt")
-            version = "3.22.1"
-            arguments "-DAPI_KEY=${localProperties.getProperty("API_KEY")}"
-        }
-    }
     composeOptions {
     }
     packaging {
@@ -279,8 +272,6 @@ dependencies {
     // Vosk for on-device speech-to-text
     implementation(libs.vosk.android) // UNCOMMENTED
 
-    // Whisper for on-device speech-to-text
-    implementation(project(":libs:whispercpp-android"))
     // Explicit gRPC dependencies with consistent versions
     implementation(libs.grpc.okhttp)
     implementation(libs.grpc.core)

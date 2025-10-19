@@ -170,10 +170,9 @@ fun SettingsScreen(
 
             // Transcription Language Settings
             val voskModels by settingsViewModel.voskLanguageModels.collectAsState()
-            val whisperModels by settingsViewModel.whisperLanguageModels.collectAsState()
             val selectedLanguageCode by settingsViewModel.selectedTranscriptionLanguageCode.collectAsState()
 
-            val models = if (selectedTranscriptionService == "Vosk") voskModels else whisperModels
+            val models = voskModels
 
             LanguageModelDownloader(
                 models = models,

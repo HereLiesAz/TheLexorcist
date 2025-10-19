@@ -6,8 +6,6 @@ import androidx.compose.runtime.Composable
 import com.hereliesaz.aznavrail.AzButton
 import com.hereliesaz.lexorcist.model.UiComponentModel
 import com.hereliesaz.lexorcist.service.ScriptRunner
-import androidx.compose.foundation.layout.Column
-import androidx.compose.material3.Text
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
@@ -22,11 +20,14 @@ fun DynamicUiRenderer(
         components.forEach { component ->
             when (component.type) {
                 "button" -> {
+                    val isEnabled = component.properties["enabled"]?.toBoolean() ?: true
                     val onClickScript = remember(component.onClick) { component.onClick }
                     AzButton(onClick = {
-                        onClickScript?.let {
-                            coroutineScope.launch {
-                                scriptRunner.runGenericScript(it, emptyMap())
+                        if (isEnabled) {
+                            onClickScript?.let {
+                                coroutineScope.launch {
+                                    scriptRunner.runGenericScript(it, emptyMap())
+                                }
                             }
                         }
                     }) {

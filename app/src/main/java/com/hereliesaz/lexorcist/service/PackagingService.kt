@@ -15,7 +15,7 @@ class PackagingService @Inject constructor(
     private val dispatcherProvider: DispatcherProvider
 ) {
     suspend fun createArchive(files: List<File>, destinationUri: Uri) {
-        withContext(dispatcherProvider.io) {
+        withContext(dispatcherProvider.io()) {
             context.contentResolver.openOutputStream(destinationUri)?.use { outputStream ->
                 ZipOutputStream(outputStream).use { zos ->
                     files.forEach { file ->
