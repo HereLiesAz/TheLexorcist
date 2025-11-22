@@ -224,20 +224,17 @@ fun ReviewScreen(
                     horizontalArrangement = Arrangement.End
                 ) {
                     AzButton(
-                        onClick = { caseViewModel.generateCleanupSuggestions() }
-                    ) {
-                        Text(text = "Organize")
-                    }
+                        onClick = { caseViewModel.generateCleanupSuggestions() },
+                        text = "Organize"
+                    )
                     AzButton(
-                        onClick = { showGenerateDocumentDialog = true }
-                    ) {
-                        Text(text = "Generate")
-                    }
+                        onClick = { showGenerateDocumentDialog = true },
+                        text = "Generate"
+                    )
                     AzButton(
-                        onClick = { showFinalizeCaseDialog = true }
-                    ) {
-                        Text(text = "Finalize")
-                    }
+                        onClick = { showFinalizeCaseDialog = true },
+                        text = "Finalize"
+                    )
                 }
                 val cleanupSuggestions by caseViewModel.cleanupSuggestions.collectAsState()
 
@@ -306,17 +303,19 @@ fun ReviewScreen(
             title = { Text(text = stringResource(R.string.delete_evidence).uppercase(Locale.getDefault())) },
             text = { Text(text = stringResource(R.string.delete_evidence_confirmation)) },
             confirmButton = {
-                AzButton(onClick = {
-                    caseViewModel.deleteEvidence(evidenceToDelete!!)
-                    showDeleteConfirmDialog = false
-                    }) {
-                        Text(text = stringResource(R.string.delete).uppercase(Locale.getDefault()))
-                    }
+                AzButton(
+                    onClick = {
+                        caseViewModel.deleteEvidence(evidenceToDelete!!)
+                        showDeleteConfirmDialog = false
+                    },
+                    text = stringResource(R.string.delete).uppercase(Locale.getDefault())
+                )
             },
             dismissButton = {
-                    AzButton(onClick = { showDeleteConfirmDialog = false }) {
-                        Text(text = stringResource(R.string.cancel).uppercase(Locale.getDefault()))
-                    }
+                AzButton(
+                    onClick = { showDeleteConfirmDialog = false },
+                    text = stringResource(R.string.cancel).uppercase(Locale.getDefault())
+                )
             },
         )
     }
@@ -347,9 +346,10 @@ fun AllegationElementItem(
         Column(modifier = Modifier.padding(16.dp)) {
             Text(text = element.name, style = MaterialTheme.typography.titleMedium) // Assuming AllegationElement has .name
             Text(text = element.description, style = MaterialTheme.typography.bodyMedium)
-            AzButton(onClick = onAssignEvidence) {
-                Text(text = "Assign Selected Evidence")
-            }
+            AzButton(
+                onClick = onAssignEvidence,
+                text = "Assign Selected Evidence"
+            )
         }
     }
 }
@@ -539,23 +539,25 @@ fun EditEvidenceDialog(
             }
         },
         confirmButton = {
-            AzButton(onClick = {
-                val updatedEvidence =
-                    evidence.copy(
-                        content = content,
-                        sourceDocument = sourceDocument,
-                        category = category,
-                        tags = tags.split(", ").map { it.trim() }.filter { it.isNotEmpty() },
-                    )
-                onSave(updatedEvidence)
-            }) {
-                Text(text = stringResource(R.string.save).uppercase(Locale.getDefault()))
-            }
+            AzButton(
+                onClick = {
+                    val updatedEvidence =
+                        evidence.copy(
+                            content = content,
+                            sourceDocument = sourceDocument,
+                            category = category,
+                            tags = tags.split(", ").map { it.trim() }.filter { it.isNotEmpty() },
+                        )
+                    onSave(updatedEvidence)
+                },
+                text = stringResource(R.string.save).uppercase(Locale.getDefault())
+            )
         },
         dismissButton = {
-            AzButton(onClick = onDismiss) {
-                Text(text = stringResource(R.string.cancel).uppercase(Locale.getDefault()))
-            }
+            AzButton(
+                onClick = onDismiss,
+                text = stringResource(R.string.cancel).uppercase(Locale.getDefault())
+            )
         },
     )
 }
@@ -629,14 +631,15 @@ fun PackageFilesDialog(
                         onConfirm(selectedFiles, packageName, extension)
                         onDismiss()
                     }
-                }) {
-                Text("Package")
-            }
+                },
+                text = "Package"
+            )
         },
         dismissButton = {
-            AzButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
+            AzButton(
+                onClick = onDismiss,
+                text = "Cancel"
+            )
         }
     )
 }
@@ -727,14 +730,15 @@ fun GenerateDocumentDialog(
                         }
                         onDismiss()
                     }
-                }) {
-                Text("Generate")
-            }
+                },
+                text = "Generate"
+            )
         },
         dismissButton = {
-            AzButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
+            AzButton(
+                onClick = onDismiss,
+                text = "Cancel"
+            )
         }
     )
 }

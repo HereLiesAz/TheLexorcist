@@ -22,17 +22,18 @@ fun DynamicUiRenderer(
                 "button" -> {
                     val isEnabled = component.properties["enabled"]?.toBoolean() ?: true
                     val onClickScript = remember(component.onClick) { component.onClick }
-                    AzButton(onClick = {
-                        if (isEnabled) {
-                            onClickScript?.let {
-                                coroutineScope.launch {
-                                    scriptRunner.runGenericScript(it, emptyMap())
+                    AzButton(
+                        onClick = {
+                            if (isEnabled) {
+                                onClickScript?.let {
+                                    coroutineScope.launch {
+                                        scriptRunner.runGenericScript(it, emptyMap())
+                                    }
                                 }
                             }
-                        }
-                    }) {
-                        Text(text = component.properties["text"] ?: "")
-                    }
+                        },
+                        text = component.properties["text"] ?: ""
+                    )
                 }
                 "text" -> {
                     Text(text = component.properties["text"] ?: "")
