@@ -108,16 +108,16 @@ android {
 dependencies {
 
     constraints {
-        implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable:0.3.5") {
+        implementation(libs.kotlinx.collections.immutable) {
             because("Align kotlin versions")
         }
-        implementation("org.jetbrains.kotlin:kotlin-stdlib:2.2.20") {
+        implementation(libs.kotlin.stdlib) {
             because("Align kotlin versions")
         }
-        implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.2.20") {
+        implementation(libs.kotlin.stdlib.jdk8) {
             because("Align kotlin versions")
         }
-        implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.2.20") {
+        implementation(libs.kotlin.stdlib.jdk7) {
             because("Align kotlin versions")
         }
     }
