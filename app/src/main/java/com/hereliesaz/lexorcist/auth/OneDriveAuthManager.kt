@@ -43,6 +43,7 @@ class OneDriveAuthManager constructor(
     }
 
     fun signIn(activity: Activity, callback: AuthenticationCallback) {
+        // Implementation of MSAL sign-in logic
         val wrappedCallback = object : AuthenticationCallback {
             override fun onSuccess(result: IAuthenticationResult?) {
                 authenticationResult = result
