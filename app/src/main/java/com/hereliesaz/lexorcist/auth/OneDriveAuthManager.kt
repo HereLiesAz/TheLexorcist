@@ -2,6 +2,7 @@ package com.hereliesaz.lexorcist.auth
 
 import android.app.Activity
 import android.content.Context
+import android.util.Log
 import com.microsoft.identity.client.AcquireTokenSilentParameters
 import com.microsoft.identity.client.AuthenticationCallback
 import com.microsoft.identity.client.IAccount
@@ -31,14 +32,15 @@ class OneDriveAuthManager constructor(
                 object : IPublicClientApplication.ISingleAccountApplicationCreatedListener {
                     override fun onCreated(application: ISingleAccountPublicClientApplication) {
                         msalApplication = application
+                        Log.d("OneDriveAuthManager", "MSAL application created successfully")
                     }
 
                     override fun onError(exception: MsalException?) {
-                        // Handle exception - logging would be appropriate here
+                        Log.e("OneDriveAuthManager", "Error creating MSAL application", exception)
                     }
                 })
         } catch (e: Exception) {
-            // Handle initialization failure
+            Log.e("OneDriveAuthManager", "Exception initializing MSAL", e)
         }
     }
 
