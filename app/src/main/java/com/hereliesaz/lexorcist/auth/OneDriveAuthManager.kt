@@ -43,6 +43,12 @@ class OneDriveAuthManager constructor(
     }
 
     fun signIn(activity: Activity, callback: AuthenticationCallback) {
+        val app = msalApplication
+        if (app == null) {
+            callback.onError(MsalClientException("msal_not_initialized", "MSAL application not initialized"))
+            return
+        }
+
         val wrappedCallback = object : AuthenticationCallback {
             override fun onSuccess(result: IAuthenticationResult?) {
                 authenticationResult = result
@@ -62,15 +68,26 @@ class OneDriveAuthManager constructor(
             .withScopes(scopes.toMutableList())
             .withCallback(wrappedCallback)
             .build()
-        msalApplication?.signIn(signInParameters)
+        app.signIn(signInParameters)
     }
 
     fun signOut(callback: ISingleAccountPublicClientApplication.SignOutCallback) {
         authenticationResult = null
-        msalApplication?.signOut(callback)
+        val app = msalApplication
+        if (app == null) {
+             callback.onError(MsalClientException("msal_not_initialized", "MSAL application not initialized"))
+             return
+        }
+        app.signOut(callback)
     }
 
     fun acquireTokenSilent(callback: AuthenticationCallback) {
+        val app = msalApplication
+        if (app == null) {
+            callback.onError(MsalClientException("msal_not_initialized", "MSAL application not initialized"))
+            return
+        }
+
         val wrappedCallback = object : AuthenticationCallback {
             override fun onSuccess(result: IAuthenticationResult?) {
                 authenticationResult = result
@@ -86,7 +103,7 @@ class OneDriveAuthManager constructor(
             }
         }
 
-        msalApplication?.getCurrentAccountAsync(object : ISingleAccountPublicClientApplication.CurrentAccountCallback {
+        app.getCurrentAccountAsync(object : ISingleAccountPublicClientApplication.CurrentAccountCallback {
             override fun onAccountLoaded(activeAccount: IAccount?) {
                 if (activeAccount != null) {
                     val authority = activeAccount.authority
@@ -96,7 +113,7 @@ class OneDriveAuthManager constructor(
                         .fromAuthority(authority)
                         .withCallback(wrappedCallback)
                         .build()
-                    msalApplication?.acquireTokenSilentAsync(parameters)
+                    app.acquireTokenSilentAsync(parameters)
                 } else {
                     // Handle case where there is no account
                      callback.onError(MsalClientException("no_account", "No active account"))
@@ -104,11 +121,12 @@ class OneDriveAuthManager constructor(
             }
 
             override fun onAccountChanged(priorAccount: IAccount?, currentAccount: IAccount?) {
-                // Handle account change
+                // This callback is invoked if the account changes.
+                // For acquireTokenSilent, we don't necessarily need to handle this unless we want to retry or notify.
+                // Leaving empty as per typical usage for a one-shot check.
             }
 
             override fun onError(exception: MsalException) {
-                // Handle exception
                 callback.onError(exception)
             }
         })
