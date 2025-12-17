@@ -30,6 +30,7 @@ class OneDriveViewModel @Inject constructor(
     fun connectToOneDrive(activity: Activity) {
         _oneDriveSignInState.value = OneDriveSignInState.InProgress
 
+        // MSAL Authentication logic
         oneDriveAuthManager.signIn(activity, object : AuthenticationCallback {
             override fun onSuccess(authenticationResult: IAuthenticationResult?) {
                 val account = authenticationResult?.account
