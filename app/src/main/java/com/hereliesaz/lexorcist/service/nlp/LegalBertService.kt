@@ -1,7 +1,8 @@
 package com.hereliesaz.lexorcist.service.nlp
 
 import android.content.Context
-// import org.tensorflow.lite.Interpreter // TODO: Fix TFLite dependency and uncomment
+import org.tensorflow.lite.InterpreterApi
+import org.tensorflow.lite.InterpreterFactory
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.FileInputStream
 import java.io.IOException
@@ -24,7 +25,7 @@ import javax.inject.Singleton
 class LegalBertService @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
-    // private lateinit var interpreter: Interpreter // TODO: Fix TFLite dependency and uncomment
+    private lateinit var interpreter: InterpreterApi
     private lateinit var tokenizer: LegalBertTokenizer
 
     private val maxSeqLength = 128 // Standard sequence length for BERT models.
@@ -32,8 +33,7 @@ class LegalBertService @Inject constructor(
     init {
         try {
             tokenizer = LegalBertTokenizer(context)
-            // TODO: Fix TFLite dependency and uncomment
-            // interpreter = Interpreter(loadModelFile())
+            interpreter = InterpreterFactory().create(loadModelFile(), InterpreterApi.Options())
         } catch (e: IOException) {
             // If the model or vocab can't be loaded, the app cannot perform a core function.
             // Throwing an exception here will crash the app on startup, making the issue
@@ -86,13 +86,12 @@ class LegalBertService @Inject constructor(
         outputs[0] = outputEmbeddings
 
         // 4. Run inference using the TFLite interpreter.
-        // interpreter.runForMultipleInputsOutputs(inputs, outputs) // TODO: Fix TFLite dependency and uncomment
+        interpreter.runForMultipleInputsOutputs(inputs, outputs)
 
         // 5. Return the embedding for the [CLS] token. The embedding of this special token
         // at the beginning of the sequence is conventionally used as the aggregate
         // representation of the entire sequence's meaning.
-        // return outputEmbeddings[0][0] // TODO: Fix TFLite dependency and uncomment
-        return FloatArray(768) // Placeholder return
+        return outputEmbeddings[0][0]
     }
 
     /**
