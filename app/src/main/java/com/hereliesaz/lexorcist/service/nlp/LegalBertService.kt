@@ -52,7 +52,6 @@ class LegalBertService @Inject constructor(
      *         derived from the [CLS] token's output.
      */
     fun getEmbedding(text: String): FloatArray {
-        // TODO: Fix TFLite dependency and re-implement this method fully
         // 1. Tokenize the input text using our custom tokenizer.
         val tokenized = tokenizer.tokenize(text, maxSeqLength)
 
