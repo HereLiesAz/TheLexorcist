@@ -6,6 +6,7 @@ import com.hereliesaz.lexorcist.utils.Result
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import org.mozilla.javascript.ClassShutter
 import org.mozilla.javascript.Context
 import org.mozilla.javascript.Scriptable
 import org.mozilla.javascript.ScriptableObject
@@ -53,6 +54,7 @@ class ScriptRunner @Inject constructor(
         val rhino = Context.enter()
         @Suppress("deprecation")
         rhino.optimizationLevel = -1 // Necessary for Android compatibility
+        rhino.setClassShutter { false } // Sandbox: Block all Java class access
         try {
             val scope: Scriptable = rhino.initStandardObjects()
             val scriptResult = ScriptResult()
@@ -102,6 +104,7 @@ class ScriptRunner @Inject constructor(
             val rhino = Context.enter()
             @Suppress("deprecation")
             rhino.optimizationLevel = -1
+            rhino.setClassShutter { false } // Sandbox: Block all Java class access
             try {
                 val scope: Scriptable = rhino.initStandardObjects()
 
