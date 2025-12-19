@@ -361,12 +361,10 @@ fun AllegationItem(
     onClick: (Allegation) -> Unit
 ) {
     Card(
+        onClick = { onClick(allegation) },
         modifier = Modifier
             .padding(vertical = 4.dp)
-            .fillMaxWidth()
-            .pointerInput(allegation) {
-                detectTapGestures(onTap = { onClick(allegation) })
-            },
+            .fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant)
@@ -395,13 +393,11 @@ fun EvidenceItem(
     onDeleteClick: (Evidence) -> Unit,
 ) {
     Card(
+        onClick = { onClick(evidence.id) },
         modifier =
         Modifier
             .padding(vertical = 4.dp)
-            .fillMaxWidth()
-            .pointerInput(evidence) {
-                detectTapGestures(onTap = { onClick(evidence.id) })
-            },
+            .fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant)
