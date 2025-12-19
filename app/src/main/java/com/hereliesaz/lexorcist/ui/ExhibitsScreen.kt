@@ -135,7 +135,9 @@ fun ViewTab(caseViewModel: CaseViewModel) {
     val evidenceList by caseViewModel.selectedCaseEvidenceList.collectAsState()
     val selectedExhibitForDetails by caseViewModel.selectedExhibit.collectAsState()
 
-    val sortedExhibits = displayExhibits.sortedByDescending { it.caseExhibit != null }
+    val sortedExhibits = remember(displayExhibits) {
+        displayExhibits.sortedByDescending { it.caseExhibit != null }
+    }
 
     if (sortedExhibits.isEmpty()) {
         Column(
@@ -162,8 +164,10 @@ fun ViewTab(caseViewModel: CaseViewModel) {
     }
 
     selectedExhibitForDetails?.let { exhibit ->
-        val exhibitEvidence = evidenceList.filter { ev ->
-            exhibit.caseExhibit?.evidenceIds?.contains(ev.id) == true
+        val exhibitEvidence = remember(evidenceList, exhibit) {
+            evidenceList.filter { ev ->
+                exhibit.caseExhibit?.evidenceIds?.contains(ev.id) == true
+            }
         }
         ExhibitDetailsDialog(
             displayExhibit = exhibit,
@@ -272,7 +276,7 @@ fun ExhibitDetailsDialog(
                     )
                 } else {
                     LazyColumn {
-                        items(evidenceList) { evidence ->
+                        items(evidenceList, key = { it.id }) { evidence ->
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically,
@@ -416,12 +420,14 @@ fun AssignTab(
     caseViewModel: CaseViewModel
 ) {
     val displayExhibits by caseViewModel.displayExhibits.collectAsState()
-    val pertinentExhibits = displayExhibits.map { it.catalogItem }
+    val pertinentExhibits = remember(displayExhibits) { displayExhibits.map { it.catalogItem } }
     val allEvidence by caseViewModel.selectedCaseEvidenceList.collectAsState()
     val exhibits by caseViewModel.exhibits.collectAsState()
 
-    val assignedEvidenceIds = exhibits.flatMap { it.evidenceIds }.toSet()
-    val unassignedEvidence = allEvidence.filter { it.id !in assignedEvidenceIds }
+    val assignedEvidenceIds = remember(exhibits) { exhibits.flatMap { it.evidenceIds }.toSet() }
+    val unassignedEvidence = remember(allEvidence, assignedEvidenceIds) {
+        allEvidence.filter { it.id !in assignedEvidenceIds }
+    }
 
     DragAndDropContainer<Evidence> {
         Row(
@@ -473,7 +479,7 @@ fun AssignTab(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     horizontalAlignment = Alignment.End
                 ) {
-                    items(unassignedEvidence) { evidence ->
+                    items(unassignedEvidence, key = { it.id }) { evidence ->
                         DraggableItem(dataToDrop = evidence) {
                             EvidenceDisplayItem(evidence)
                         }
