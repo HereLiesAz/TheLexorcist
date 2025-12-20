@@ -1,8 +1,19 @@
 package com.hereliesaz.lexorcist.data
 
 import android.os.Parcelable
+import androidx.compose.runtime.Immutable
 import kotlinx.parcelize.Parcelize
 
+/**
+ * Represents a piece of evidence.
+ *
+ * Marked as [Immutable] to optimize Jetpack Compose performance.
+ * The [List] and [Map] properties are normally considered unstable by the Compose compiler,
+ * which would cause unnecessary recompositions of UI components taking [Evidence] as a parameter.
+ * By annotating this class as [Immutable], we promise that the data will not be mutated after creation,
+ * allowing Compose to skip recomposition when the object reference hasn't changed.
+ */
+@Immutable
 @Parcelize
 data class Evidence(
     val id: Int = 0,
