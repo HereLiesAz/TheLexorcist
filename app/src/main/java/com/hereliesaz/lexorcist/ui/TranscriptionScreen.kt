@@ -54,6 +54,7 @@ fun TranscriptionScreen(
 ) {
     var transcript by remember(evidence) { mutableStateOf(evidence.content) }
     var reason by remember { mutableStateOf("") }
+    var showReasonError by remember { mutableStateOf(false) }
     val isTranscriptChanged = transcript != evidence.content
     val processingState by caseViewModel.processingState.collectAsState()
 
@@ -112,26 +113,42 @@ fun TranscriptionScreen(
                         if (isTranscriptChanged) {
                             OutlinedTextField(
                                 value = reason,
-                                onValueChange = { reason = it },
+                                onValueChange = {
+                                    reason = it
+                                    if (it.isNotBlank()) showReasonError = false
+                                },
                                 label = { Text(stringResource(R.string.reason_for_edit)) },
                                 modifier = Modifier.fillMaxWidth(),
-                                textStyle = TextStyle(textAlign = TextAlign.End)
+                                textStyle = TextStyle(textAlign = TextAlign.End),
+                                isError = showReasonError,
+                                supportingText = if (showReasonError) {
+                                    {
+                                        Text(
+                                            text = "Reason is required",
+                                            textAlign = TextAlign.End,
+                                            modifier = Modifier.fillMaxWidth(),
+                                            color = MaterialTheme.colorScheme.error
+                                        )
+                                    }
+                                } else null
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                         }
 
-                        if (!isTranscriptChanged || reason.isNotBlank()) {
-                            AzButton(
-                                onClick = {
+                        AzButton(
+                            onClick = {
+                                if (isTranscriptChanged && reason.isBlank()) {
+                                    showReasonError = true
+                                } else {
                                     if (isTranscriptChanged) {
                                         caseViewModel.updateTranscript(evidence, transcript, reason)
                                     }
                                     navController.popBackStack()
-                                },
-                                modifier = Modifier.fillMaxWidth(),
-                                text = stringResource(if (isTranscriptChanged) R.string.save_edit else R.string.done).uppercase(Locale.getDefault())
-                            )
-                        }
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            text = stringResource(if (isTranscriptChanged) R.string.save_edit else R.string.done).uppercase(Locale.getDefault())
+                        )
 
                         Spacer(modifier = Modifier.height(16.dp))
 
@@ -172,26 +189,42 @@ fun TranscriptionScreen(
                         if (isTranscriptChanged) {
                             OutlinedTextField(
                                 value = reason,
-                                onValueChange = { reason = it },
+                                onValueChange = {
+                                    reason = it
+                                    if (it.isNotBlank()) showReasonError = false
+                                },
                                 label = { Text(stringResource(R.string.reason_for_edit)) },
                                 modifier = Modifier.fillMaxWidth(),
-                                textStyle = TextStyle(textAlign = TextAlign.End)
+                                textStyle = TextStyle(textAlign = TextAlign.End),
+                                isError = showReasonError,
+                                supportingText = if (showReasonError) {
+                                    {
+                                        Text(
+                                            text = "Reason is required",
+                                            textAlign = TextAlign.End,
+                                            modifier = Modifier.fillMaxWidth(),
+                                            color = MaterialTheme.colorScheme.error
+                                        )
+                                    }
+                                } else null
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                         }
 
-                        if (!isTranscriptChanged || reason.isNotBlank()) {
-                            AzButton(
-                                onClick = {
+                        AzButton(
+                            onClick = {
+                                if (isTranscriptChanged && reason.isBlank()) {
+                                    showReasonError = true
+                                } else {
                                     if (isTranscriptChanged) {
                                         caseViewModel.updateTranscript(evidence, transcript, reason)
                                     }
                                     navController.popBackStack()
-                                },
-                                modifier = Modifier.fillMaxWidth(),
-                                text = stringResource(if (isTranscriptChanged) R.string.save_edit else R.string.done).uppercase(Locale.getDefault())
-                            )
-                        }
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            text = stringResource(if (isTranscriptChanged) R.string.save_edit else R.string.done).uppercase(Locale.getDefault())
+                        )
 
                         Spacer(modifier = Modifier.height(16.dp))
 
