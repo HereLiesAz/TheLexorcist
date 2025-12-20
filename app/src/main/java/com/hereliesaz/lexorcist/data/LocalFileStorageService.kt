@@ -684,9 +684,16 @@ class LocalFileStorageService @Inject constructor(
         return name.replace(Regex("[\\\\/:*?\"<>|]"), "_")
     }
 
+    // Sanitize ID or extension to ensure it is safe for file paths (alphanumeric, -, _)
+    private fun sanitizeSafePathSegment(value: String): String {
+        return value.replace(Regex("[^a-zA-Z0-9\\-_]"), "_")
+    }
+
     override suspend fun uploadFile(caseSpreadsheetId: String, fileUri: Uri, mimeType: String): Result<String> = withContext(Dispatchers.IO) {
         try {
-            val caseDir = File(storageDir, caseSpreadsheetId).apply { if (!exists()) mkdirs() }
+            // Validate and sanitize caseSpreadsheetId to prevent path traversal
+            val sanitizedCaseId = sanitizeSafePathSegment(caseSpreadsheetId)
+            val caseDir = File(storageDir, sanitizedCaseId).apply { if (!exists()) mkdirs() }
             val rawDir = File(caseDir, "raw").apply { if (!exists()) mkdirs() }
 
             val rawFileName = getDisplayName(context, fileUri)
@@ -697,13 +704,16 @@ class LocalFileStorageService @Inject constructor(
 
             val mimeTypeSubPart = mimeType.substringAfter('/', "")
             
-            val finalExtension = if (mimeTypeSubPart.isNotEmpty() && mimeTypeSubPart != "octet-stream") {
+            var finalExtension = if (mimeTypeSubPart.isNotEmpty() && mimeTypeSubPart != "octet-stream") {
                 mimeTypeSubPart // Use extension from MIME type if valid and not generic
             } else if (originalExtension.isNotEmpty()) {
                 originalExtension // Fallback to original extension
             } else {
                 "dat" // Default if no other extension found
             }
+
+            // Sanitize extension to prevent path traversal via malicious MIME types
+            finalExtension = sanitizeSafePathSegment(finalExtension)
 
             val finalFileName = if (sanitizedBaseName.endsWith(".$finalExtension", ignoreCase = true)) {
                  sanitizedBaseName // Avoids double extension like .opus.opus if already present
