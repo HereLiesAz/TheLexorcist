@@ -2,6 +2,7 @@ package com.hereliesaz.lexorcist.auth
 
 import android.app.Activity
 import android.content.Context
+import android.util.Log
 import com.hereliesaz.lexorcist.R
 import com.microsoft.identity.client.AuthenticationCallback
 import com.microsoft.identity.client.IPublicClientApplication
@@ -12,6 +13,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.anyString
 import org.mockito.ArgumentMatchers.eq
 import org.mockito.Mock
 import org.mockito.MockedStatic
@@ -40,6 +42,7 @@ class OneDriveAuthManagerTest {
     fun testSignIn() {
         // Mock static PublicClientApplication
         val mockedPublicClientApplication: MockedStatic<PublicClientApplication> = Mockito.mockStatic(PublicClientApplication::class.java)
+        val mockedLog: MockedStatic<Log> = Mockito.mockStatic(Log::class.java)
 
         try {
             // Initialize the manager
@@ -55,6 +58,9 @@ class OneDriveAuthManagerTest {
                 )
             }
 
+            // Mock Log.d to prevent "Method d in android.util.Log not mocked"
+            mockedLog.`when`<Int> { Log.d(anyString(), anyString()) }.thenReturn(0)
+
             // Trigger onCreated to set the msalApplication inside the manager
             listenerCaptor.value.onCreated(msalApp)
 
@@ -66,6 +72,7 @@ class OneDriveAuthManagerTest {
 
         } finally {
             mockedPublicClientApplication.close()
+            mockedLog.close()
         }
     }
 }
