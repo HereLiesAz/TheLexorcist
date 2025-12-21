@@ -11,6 +11,7 @@ import androidx.compose.foundation.verticalScroll
 import com.hereliesaz.aznavrail.AzButton
 import com.hereliesaz.lexorcist.ui.components.AzAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -42,6 +43,7 @@ fun CreateCaseDialog(
 ) {
     val context = LocalContext.current
     var caseName by remember { mutableStateOf("") }
+    var isSubmitted by remember { mutableStateOf(false) }
     val defaultExhibitSheetNameStr = stringResource(R.string.default_exhibit_sheet_name)
     var exhibitSheetName by remember { mutableStateOf(defaultExhibitSheetNameStr) }
     var caseNumber by remember { mutableStateOf("") }
@@ -94,9 +96,19 @@ fun CreateCaseDialog(
                     value = caseName,
                     onValueChange = { caseName = it },
                     label = { Text(stringResource(R.string.case_name_required)) },
-                    isError = caseName.isBlank(),
+                    isError = caseName.isBlank() && isSubmitted,
                     modifier = Modifier.fillMaxWidth(), // TextField takes full width
-                    textStyle = TextStyle(textAlign = TextAlign.End)
+                    textStyle = TextStyle(textAlign = TextAlign.End),
+                    supportingText = if (caseName.isBlank() && isSubmitted) {
+                        {
+                            Text(
+                                text = stringResource(R.string.case_name_required),
+                                textAlign = TextAlign.End,
+                                modifier = Modifier.fillMaxWidth(),
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    } else null
                 )
                 OutlinedTextField(
                     value = exhibitSheetName,
@@ -132,6 +144,7 @@ fun CreateCaseDialog(
             val createText = stringResource(R.string.create)
             AzButton(
                 onClick = {
+                    isSubmitted = true
                     if (caseName.isNotBlank()) {
                         caseViewModel.createCase(
                             caseName = caseName,
