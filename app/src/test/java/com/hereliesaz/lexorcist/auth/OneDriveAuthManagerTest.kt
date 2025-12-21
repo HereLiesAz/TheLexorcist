@@ -38,10 +38,16 @@ class OneDriveAuthManagerTest {
 
     @Test
     fun testSignIn() {
-        // Mock static PublicClientApplication
+        // Mock static PublicClientApplication and Log
         val mockedPublicClientApplication: MockedStatic<PublicClientApplication> = Mockito.mockStatic(PublicClientApplication::class.java)
+        val mockedLog: MockedStatic<android.util.Log> = Mockito.mockStatic(android.util.Log::class.java)
 
         try {
+            // Mock Log methods to prevent RuntimeException
+            mockedLog.`when`<Int> { android.util.Log.d(any(), any()) }.thenReturn(0)
+            mockedLog.`when`<Int> { android.util.Log.e(any(), any(), any()) }.thenReturn(0)
+            mockedLog.`when`<Int> { android.util.Log.e(any(), any()) }.thenReturn(0)
+
             // Initialize the manager
             authManager = OneDriveAuthManager(context)
 
@@ -66,6 +72,7 @@ class OneDriveAuthManagerTest {
 
         } finally {
             mockedPublicClientApplication.close()
+            mockedLog.close()
         }
     }
 }
