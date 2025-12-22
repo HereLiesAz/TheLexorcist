@@ -1,7 +1,9 @@
 package com.hereliesaz.lexorcist.data
 
+import androidx.compose.runtime.Immutable
 import com.google.gson.annotations.SerializedName
 
+@Immutable
 data class ExhibitCatalogItem(
     @SerializedName("id")
     val id: String,

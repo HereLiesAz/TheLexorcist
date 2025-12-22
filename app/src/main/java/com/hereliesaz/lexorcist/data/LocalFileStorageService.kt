@@ -12,6 +12,7 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.hereliesaz.lexorcist.service.VideoProcessingWorker
 import com.hereliesaz.lexorcist.utils.Result
+import com.hereliesaz.lexorcist.utils.SpreadsheetUtils
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -390,8 +391,8 @@ class LocalFileStorageService @Inject constructor(
         sheet.createRow(sheet.physicalNumberOfRows).apply {
             createCell(EXHIBITS_HEADER.indexOf("ExhibitID")).setCellValue(newExhibit.id.toDouble())
             createCell(EXHIBITS_HEADER.indexOf("CaseID")).setCellValue(caseSpreadsheetId)
-            createCell(EXHIBITS_HEADER.indexOf("Name")).setCellValue(newExhibit.name)
-            createCell(EXHIBITS_HEADER.indexOf("Description")).setCellValue(newExhibit.description)
+            createCell(EXHIBITS_HEADER.indexOf("Name")).setCellValue(SpreadsheetUtils.sanitizeForSpreadsheet(newExhibit.name))
+            createCell(EXHIBITS_HEADER.indexOf("Description")).setCellValue(SpreadsheetUtils.sanitizeForSpreadsheet(newExhibit.description))
             createCell(EXHIBITS_HEADER.indexOf("EvidenceIDs")).setCellValue(newExhibit.evidenceIds.joinToString(","))
         }
         newExhibit
@@ -405,8 +406,8 @@ class LocalFileStorageService @Inject constructor(
             throw IOException("Exhibit with id ${exhibit.id} does not belong to case $caseSpreadsheetId.")
         }
 
-        (row.getCell(EXHIBITS_HEADER.indexOf("Name")) ?: row.createCell(EXHIBITS_HEADER.indexOf("Name"))).setCellValue(exhibit.name)
-        (row.getCell(EXHIBITS_HEADER.indexOf("Description")) ?: row.createCell(EXHIBITS_HEADER.indexOf("Description"))).setCellValue(exhibit.description)
+        (row.getCell(EXHIBITS_HEADER.indexOf("Name")) ?: row.createCell(EXHIBITS_HEADER.indexOf("Name"))).setCellValue(SpreadsheetUtils.sanitizeForSpreadsheet(exhibit.name))
+        (row.getCell(EXHIBITS_HEADER.indexOf("Description")) ?: row.createCell(EXHIBITS_HEADER.indexOf("Description"))).setCellValue(SpreadsheetUtils.sanitizeForSpreadsheet(exhibit.description))
         (row.getCell(EXHIBITS_HEADER.indexOf("EvidenceIDs")) ?: row.createCell(EXHIBITS_HEADER.indexOf("EvidenceIDs"))).setCellValue(exhibit.evidenceIds.joinToString(","))
         Unit 
     }
@@ -436,10 +437,10 @@ class LocalFileStorageService @Inject constructor(
         
         sheet.createRow(sheet.physicalNumberOfRows).apply {
             createCell(CASES_HEADER.indexOf("ID")).setCellValue(newCase.spreadsheetId)
-            createCell(CASES_HEADER.indexOf("Name")).setCellValue(newCase.name)
-            createCell(CASES_HEADER.indexOf("Plaintiffs")).setCellValue(newCase.plaintiffs)
-            createCell(CASES_HEADER.indexOf("Defendants")).setCellValue(newCase.defendants)
-            createCell(CASES_HEADER.indexOf("Court")).setCellValue(newCase.court)
+            createCell(CASES_HEADER.indexOf("Name")).setCellValue(SpreadsheetUtils.sanitizeForSpreadsheet(newCase.name))
+            createCell(CASES_HEADER.indexOf("Plaintiffs")).setCellValue(SpreadsheetUtils.sanitizeForSpreadsheet(newCase.plaintiffs))
+            createCell(CASES_HEADER.indexOf("Defendants")).setCellValue(SpreadsheetUtils.sanitizeForSpreadsheet(newCase.defendants))
+            createCell(CASES_HEADER.indexOf("Court")).setCellValue(SpreadsheetUtils.sanitizeForSpreadsheet(newCase.court))
             createCell(CASES_HEADER.indexOf("FolderID")).setCellValue(newCase.folderId ?: "") 
             createCell(CASES_HEADER.indexOf("LastModified")).setCellValue(newCase.lastModifiedTime!!.toDouble()) 
             createCell(CASES_HEADER.indexOf("IsArchived")).setCellValue(newCase.isArchived)
@@ -451,10 +452,10 @@ class LocalFileStorageService @Inject constructor(
         val sheet = workbook.getSheet(CASES_SHEET_NAME) ?: throw IOException("Cases sheet not found.")
         val row = findRowById(sheet, case.spreadsheetId, CASES_HEADER.indexOf("ID")) ?: throw IOException("Case with id ${case.spreadsheetId} not found.")
         
-        (row.getCell(CASES_HEADER.indexOf("Name")) ?: row.createCell(CASES_HEADER.indexOf("Name"))).setCellValue(case.name)
-        (row.getCell(CASES_HEADER.indexOf("Plaintiffs")) ?: row.createCell(CASES_HEADER.indexOf("Plaintiffs"))).setCellValue(case.plaintiffs)
-        (row.getCell(CASES_HEADER.indexOf("Defendants")) ?: row.createCell(CASES_HEADER.indexOf("Defendants"))).setCellValue(case.defendants)
-        (row.getCell(CASES_HEADER.indexOf("Court")) ?: row.createCell(CASES_HEADER.indexOf("Court"))).setCellValue(case.court)
+        (row.getCell(CASES_HEADER.indexOf("Name")) ?: row.createCell(CASES_HEADER.indexOf("Name"))).setCellValue(SpreadsheetUtils.sanitizeForSpreadsheet(case.name))
+        (row.getCell(CASES_HEADER.indexOf("Plaintiffs")) ?: row.createCell(CASES_HEADER.indexOf("Plaintiffs"))).setCellValue(SpreadsheetUtils.sanitizeForSpreadsheet(case.plaintiffs))
+        (row.getCell(CASES_HEADER.indexOf("Defendants")) ?: row.createCell(CASES_HEADER.indexOf("Defendants"))).setCellValue(SpreadsheetUtils.sanitizeForSpreadsheet(case.defendants))
+        (row.getCell(CASES_HEADER.indexOf("Court")) ?: row.createCell(CASES_HEADER.indexOf("Court"))).setCellValue(SpreadsheetUtils.sanitizeForSpreadsheet(case.court))
         (row.getCell(CASES_HEADER.indexOf("FolderID")) ?: row.createCell(CASES_HEADER.indexOf("FolderID"))).setCellValue(case.folderId ?: "")
         (row.getCell(CASES_HEADER.indexOf("LastModified")) ?: row.createCell(CASES_HEADER.indexOf("LastModified"))).setCellValue(System.currentTimeMillis().toDouble()) 
         (row.getCell(CASES_HEADER.indexOf("IsArchived")) ?: row.createCell(CASES_HEADER.indexOf("IsArchived"))).setCellValue(case.isArchived)
@@ -584,19 +585,19 @@ class LocalFileStorageService @Inject constructor(
                 createCell(EVIDENCE_HEADER.indexOf("EvidenceID")).setCellValue(newEvidence.id.toDouble())
                 createCell(EVIDENCE_HEADER.indexOf("CaseID")).setCellValue(caseSpreadsheetId)
                 createCell(EVIDENCE_HEADER.indexOf("Type")).setCellValue(newEvidence.type)
-                createCell(EVIDENCE_HEADER.indexOf("Content")).setCellValue(newEvidence.content)
-                createCell(EVIDENCE_HEADER.indexOf("FormattedContent")).setCellValue(newEvidence.formattedContent)
+                createCell(EVIDENCE_HEADER.indexOf("Content")).setCellValue(SpreadsheetUtils.sanitizeForSpreadsheet(newEvidence.content))
+                createCell(EVIDENCE_HEADER.indexOf("FormattedContent")).setCellValue(SpreadsheetUtils.sanitizeForSpreadsheet(newEvidence.formattedContent ?: ""))
                 createCell(EVIDENCE_HEADER.indexOf("MediaUri")).setCellValue(newEvidence.mediaUri)
                 createCell(EVIDENCE_HEADER.indexOf("Timestamp")).setCellValue(newEvidence.timestamp.toDouble())
-                createCell(EVIDENCE_HEADER.indexOf("SourceDocument")).setCellValue(newEvidence.sourceDocument)
+                createCell(EVIDENCE_HEADER.indexOf("SourceDocument")).setCellValue(SpreadsheetUtils.sanitizeForSpreadsheet(newEvidence.sourceDocument))
                 createCell(EVIDENCE_HEADER.indexOf("DocumentDate")).setCellValue(newEvidence.documentDate.toDouble())
                 val allegationCell = createCell(EVIDENCE_HEADER.indexOf("AllegationID"))
                 newEvidence.allegationId?.let {
                     allegationCell.setCellValue(it)
                 } ?: allegationCell.setBlank()
-                createCell(EVIDENCE_HEADER.indexOf("Category")).setCellValue(newEvidence.category)
-                createCell(EVIDENCE_HEADER.indexOf("Tags")).setCellValue(newEvidence.tags.joinToString(","))
-                createCell(EVIDENCE_HEADER.indexOf("Commentary")).setCellValue(newEvidence.commentary ?: "")
+                createCell(EVIDENCE_HEADER.indexOf("Category")).setCellValue(SpreadsheetUtils.sanitizeForSpreadsheet(newEvidence.category))
+                createCell(EVIDENCE_HEADER.indexOf("Tags")).setCellValue(newEvidence.tags.map { SpreadsheetUtils.sanitizeForSpreadsheet(it) }.joinToString(","))
+                createCell(EVIDENCE_HEADER.indexOf("Commentary")).setCellValue(SpreadsheetUtils.sanitizeForSpreadsheet(newEvidence.commentary ?: ""))
                 createCell(EVIDENCE_HEADER.indexOf("LinkedEvidenceIDs")).setCellValue(newEvidence.linkedEvidenceIds.joinToString(","))
                 createCell(EVIDENCE_HEADER.indexOf("ParentVideoID")).setCellValue(newEvidence.parentVideoId ?: "")
                 createCell(EVIDENCE_HEADER.indexOf("Entities")).setCellValue(gson.toJson(newEvidence.entities))
@@ -618,19 +619,19 @@ class LocalFileStorageService @Inject constructor(
         }
 
         (row.getCell(EVIDENCE_HEADER.indexOf("Type")) ?: row.createCell(EVIDENCE_HEADER.indexOf("Type"))).setCellValue(evidence.type)
-        (row.getCell(EVIDENCE_HEADER.indexOf("Content")) ?: row.createCell(EVIDENCE_HEADER.indexOf("Content"))).setCellValue(evidence.content)
-        (row.getCell(EVIDENCE_HEADER.indexOf("FormattedContent")) ?: row.createCell(EVIDENCE_HEADER.indexOf("FormattedContent"))).setCellValue(evidence.formattedContent)
+        (row.getCell(EVIDENCE_HEADER.indexOf("Content")) ?: row.createCell(EVIDENCE_HEADER.indexOf("Content"))).setCellValue(SpreadsheetUtils.sanitizeForSpreadsheet(evidence.content))
+        (row.getCell(EVIDENCE_HEADER.indexOf("FormattedContent")) ?: row.createCell(EVIDENCE_HEADER.indexOf("FormattedContent"))).setCellValue(SpreadsheetUtils.sanitizeForSpreadsheet(evidence.formattedContent ?: ""))
         (row.getCell(EVIDENCE_HEADER.indexOf("MediaUri")) ?: row.createCell(EVIDENCE_HEADER.indexOf("MediaUri"))).setCellValue(evidence.mediaUri)
         (row.getCell(EVIDENCE_HEADER.indexOf("Timestamp")) ?: row.createCell(EVIDENCE_HEADER.indexOf("Timestamp"))).setCellValue(evidence.timestamp.toDouble())
-        (row.getCell(EVIDENCE_HEADER.indexOf("SourceDocument")) ?: row.createCell(EVIDENCE_HEADER.indexOf("SourceDocument"))).setCellValue(evidence.sourceDocument)
+        (row.getCell(EVIDENCE_HEADER.indexOf("SourceDocument")) ?: row.createCell(EVIDENCE_HEADER.indexOf("SourceDocument"))).setCellValue(SpreadsheetUtils.sanitizeForSpreadsheet(evidence.sourceDocument))
         (row.getCell(EVIDENCE_HEADER.indexOf("DocumentDate")) ?: row.createCell(EVIDENCE_HEADER.indexOf("DocumentDate"))).setCellValue(evidence.documentDate.toDouble())
         val allegationCell = row.getCell(EVIDENCE_HEADER.indexOf("AllegationID")) ?: row.createCell(EVIDENCE_HEADER.indexOf("AllegationID"))
         evidence.allegationId?.let {
             allegationCell.setCellValue(it)
         } ?: allegationCell.setBlank()
-        (row.getCell(EVIDENCE_HEADER.indexOf("Category")) ?: row.createCell(EVIDENCE_HEADER.indexOf("Category"))).setCellValue(evidence.category)
-        (row.getCell(EVIDENCE_HEADER.indexOf("Tags")) ?: row.createCell(EVIDENCE_HEADER.indexOf("Tags"))).setCellValue(evidence.tags.joinToString(","))
-        (row.getCell(EVIDENCE_HEADER.indexOf("Commentary")) ?: row.createCell(EVIDENCE_HEADER.indexOf("Commentary"))).setCellValue(evidence.commentary ?: "")
+        (row.getCell(EVIDENCE_HEADER.indexOf("Category")) ?: row.createCell(EVIDENCE_HEADER.indexOf("Category"))).setCellValue(SpreadsheetUtils.sanitizeForSpreadsheet(evidence.category))
+        (row.getCell(EVIDENCE_HEADER.indexOf("Tags")) ?: row.createCell(EVIDENCE_HEADER.indexOf("Tags"))).setCellValue(evidence.tags.map { SpreadsheetUtils.sanitizeForSpreadsheet(it) }.joinToString(","))
+        (row.getCell(EVIDENCE_HEADER.indexOf("Commentary")) ?: row.createCell(EVIDENCE_HEADER.indexOf("Commentary"))).setCellValue(SpreadsheetUtils.sanitizeForSpreadsheet(evidence.commentary ?: ""))
         (row.getCell(EVIDENCE_HEADER.indexOf("LinkedEvidenceIDs")) ?: row.createCell(EVIDENCE_HEADER.indexOf("LinkedEvidenceIDs"))).setCellValue(evidence.linkedEvidenceIds.joinToString(","))
         (row.getCell(EVIDENCE_HEADER.indexOf("ParentVideoID")) ?: row.createCell(EVIDENCE_HEADER.indexOf("ParentVideoID"))).setCellValue(evidence.parentVideoId ?: "")
         (row.getCell(EVIDENCE_HEADER.indexOf("Entities")) ?: row.createCell(EVIDENCE_HEADER.indexOf("Entities"))).setCellValue(gson.toJson(evidence.entities))
@@ -688,6 +689,7 @@ class LocalFileStorageService @Inject constructor(
     private fun sanitizeSafePathSegment(value: String): String {
         return value.replace(Regex("[^a-zA-Z0-9\\-_]"), "_")
     }
+
 
     override suspend fun uploadFile(caseSpreadsheetId: String, fileUri: Uri, mimeType: String): Result<String> = withContext(Dispatchers.IO) {
         try {
@@ -812,7 +814,7 @@ class LocalFileStorageService @Inject constructor(
         sheet.createRow(sheet.physicalNumberOfRows).apply {
             createCell(allegationIdCol).setCellValue(allegation.id.toDouble())
             createCell(caseIdCol).setCellValue(caseSpreadsheetId)
-            createCell(ALLEGATIONS_HEADER.indexOf("Name")).setCellValue(allegation.name)
+            createCell(ALLEGATIONS_HEADER.indexOf("Name")).setCellValue(SpreadsheetUtils.sanitizeForSpreadsheet(allegation.name))
         }
         allegation
     }
@@ -853,8 +855,8 @@ class LocalFileStorageService @Inject constructor(
         val evidenceSheet = workbook.getSheet(EVIDENCE_SHEET_NAME) ?: throw IOException("Evidence sheet not found.")
         val evidenceRow = findRowById(sheet = evidenceSheet, id = evidence.id, idColumn = EVIDENCE_HEADER.indexOf("EvidenceID")) ?: throw IOException("Evidence with id ${evidence.id} not found.")
 
-        (evidenceRow.getCell(EVIDENCE_HEADER.indexOf("Content")) ?: evidenceRow.createCell(EVIDENCE_HEADER.indexOf("Content"))).setCellValue(newTranscript)
-        (evidenceRow.getCell(EVIDENCE_HEADER.indexOf("FormattedContent")) ?: evidenceRow.createCell(EVIDENCE_HEADER.indexOf("FormattedContent"))).setCellValue("```\n$newTranscript\n```")
+        (evidenceRow.getCell(EVIDENCE_HEADER.indexOf("Content")) ?: evidenceRow.createCell(EVIDENCE_HEADER.indexOf("Content"))).setCellValue(SpreadsheetUtils.sanitizeForSpreadsheet(newTranscript))
+        (evidenceRow.getCell(EVIDENCE_HEADER.indexOf("FormattedContent")) ?: evidenceRow.createCell(EVIDENCE_HEADER.indexOf("FormattedContent"))).setCellValue(SpreadsheetUtils.sanitizeForSpreadsheet("```\n$newTranscript\n```"))
 
         val editsSheet = workbook.getSheet(TRANSCRIPT_EDITS_SHEET_NAME) ?: workbook.createSheet(TRANSCRIPT_EDITS_SHEET_NAME).also {
             it.createRow(0).apply { TRANSCRIPT_EDITS_HEADER.forEachIndexed { index, s -> createCell(index).setCellValue(s) } }
@@ -868,8 +870,8 @@ class LocalFileStorageService @Inject constructor(
             createCell(TRANSCRIPT_EDITS_HEADER.indexOf("EditID")).setCellValue(newEditId.toDouble())
             createCell(TRANSCRIPT_EDITS_HEADER.indexOf("EvidenceID")).setCellValue(evidence.id.toDouble())
             createCell(TRANSCRIPT_EDITS_HEADER.indexOf("Timestamp")).setCellValue(System.currentTimeMillis().toDouble())
-            createCell(TRANSCRIPT_EDITS_HEADER.indexOf("Reason")).setCellValue(reason)
-            createCell(TRANSCRIPT_EDITS_HEADER.indexOf("NewContent")).setCellValue(newTranscript)
+            createCell(TRANSCRIPT_EDITS_HEADER.indexOf("Reason")).setCellValue(SpreadsheetUtils.sanitizeForSpreadsheet(reason))
+            createCell(TRANSCRIPT_EDITS_HEADER.indexOf("NewContent")).setCellValue(SpreadsheetUtils.sanitizeForSpreadsheet(newTranscript))
         }
         Unit
     }
