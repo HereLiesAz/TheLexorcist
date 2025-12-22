@@ -1,8 +1,10 @@
 package com.hereliesaz.lexorcist.data
 
 import android.os.Parcelable
+import androidx.compose.runtime.Immutable
 import kotlinx.parcelize.Parcelize
 
+@Immutable
 @Parcelize
 data class Exhibit(
     val id: Int = 0,
