@@ -7,15 +7,18 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth // Added import
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import com.hereliesaz.aznavrail.AzButton
-import com.hereliesaz.lexorcist.ui.components.AzAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.text.input.ImeAction
+import com.hereliesaz.aznavrail.AzButton
+import com.hereliesaz.lexorcist.ui.components.AzAlertDialog
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -73,6 +76,21 @@ fun CreateCaseDialog(
         }
     }
 
+    val onConfirm = {
+        isSubmitted = true
+        if (caseName.isNotBlank()) {
+            caseViewModel.createCase(
+                caseName = caseName,
+                exhibitSheetName = exhibitSheetName.ifBlank { context.getString(R.string.default_exhibit_sheet_name) },
+                caseNumber = caseNumber,
+                caseSection = caseSection,
+                caseJudge = caseJudge
+            )
+            onDismiss()
+            navController.navigate("cases")
+        }
+    }
+
     AzAlertDialog(
         onDismissRequest = onDismiss,
         title = {
@@ -108,55 +126,48 @@ fun CreateCaseDialog(
                                 color = MaterialTheme.colorScheme.error
                             )
                         }
-                    } else null
+                    } else null,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
                 )
                 OutlinedTextField(
                     value = exhibitSheetName,
                     onValueChange = { exhibitSheetName = it },
                     label = { Text(stringResource(R.string.exhibit_sheet_name)) },
                     modifier = Modifier.fillMaxWidth(),
-                    textStyle = TextStyle(textAlign = TextAlign.End)
+                    textStyle = TextStyle(textAlign = TextAlign.End),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
                 )
                 OutlinedTextField(
                     value = caseNumber,
                     onValueChange = { caseNumber = it },
                     label = { Text(stringResource(R.string.case_number)) },
                     modifier = Modifier.fillMaxWidth(),
-                    textStyle = TextStyle(textAlign = TextAlign.End)
+                    textStyle = TextStyle(textAlign = TextAlign.End),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
                 )
                 OutlinedTextField(
                     value = caseSection,
                     onValueChange = { caseSection = it },
                     label = { Text(stringResource(R.string.case_section)) },
                     modifier = Modifier.fillMaxWidth(),
-                    textStyle = TextStyle(textAlign = TextAlign.End)
+                    textStyle = TextStyle(textAlign = TextAlign.End),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
                 )
                 OutlinedTextField(
                     value = caseJudge,
                     onValueChange = { caseJudge = it },
                     label = { Text(stringResource(R.string.judge)) },
                     modifier = Modifier.fillMaxWidth(),
-                    textStyle = TextStyle(textAlign = TextAlign.End)
+                    textStyle = TextStyle(textAlign = TextAlign.End),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = { onConfirm() })
                 )
             }
         },
         confirmButton = {
             val createText = stringResource(R.string.create)
             AzButton(
-                onClick = {
-                    isSubmitted = true
-                    if (caseName.isNotBlank()) {
-                        caseViewModel.createCase(
-                            caseName = caseName,
-                            exhibitSheetName = exhibitSheetName.ifBlank { context.getString(R.string.default_exhibit_sheet_name) },
-                            caseNumber = caseNumber,
-                            caseSection = caseSection,
-                            caseJudge = caseJudge
-                        )
-                        onDismiss()
-                        navController.navigate("cases")
-                    }
-                },
+                onClick = onConfirm,
                 text = createText
             )
         },
