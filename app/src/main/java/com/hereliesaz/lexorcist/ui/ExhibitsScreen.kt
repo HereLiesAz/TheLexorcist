@@ -165,8 +165,11 @@ fun ViewTab(caseViewModel: CaseViewModel) {
 
     selectedExhibitForDetails?.let { exhibit ->
         val exhibitEvidence = remember(evidenceList, exhibit) {
+            // Optimization: Convert evidenceIds to a Set for O(1) lookups instead of O(M)
+            // This reduces filtering complexity from O(N * M) to O(N)
+            val exhibitEvidenceIds = exhibit.caseExhibit?.evidenceIds?.toHashSet() ?: emptySet()
             evidenceList.filter { ev ->
-                exhibit.caseExhibit?.evidenceIds?.contains(ev.id) == true
+                exhibitEvidenceIds.contains(ev.id)
             }
         }
         ExhibitDetailsDialog(
