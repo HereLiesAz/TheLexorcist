@@ -7,7 +7,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -169,7 +171,15 @@ fun CasesScreen(
                     Text(
                         text = noCasesText,
                         style = MaterialTheme.typography.bodyLarge,
+                        textAlign = TextAlign.Center
                     )
+                    if (searchQuery.isBlank()) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        AzButton(
+                            onClick = { showCreateCaseDialog = true },
+                            text = stringResource(R.string.new_case_fab_text).uppercase(Locale.getDefault())
+                        )
+                    }
                 }
             } else {
                 LazyColumn(
