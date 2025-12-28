@@ -20,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
@@ -324,9 +325,24 @@ fun CaseItem(
                 )
             }
             if (isLongPressed) {
-                AzButton(onClick = onDelete, text = "Del")
-                AzButton(onClick = onArchive, text = "Arc")
-                AzButton(onClick = onCancel, text = "X")
+                IconButton(onClick = onDelete) {
+                    Icon(
+                        imageVector = Icons.Filled.Delete,
+                        contentDescription = stringResource(R.string.delete_case)
+                    )
+                }
+                IconButton(onClick = onArchive) {
+                    Icon(
+                        imageVector = Icons.Filled.Archive,
+                        contentDescription = stringResource(R.string.archive)
+                    )
+                }
+                IconButton(onClick = onCancel) {
+                    Icon(
+                        imageVector = Icons.Filled.Close,
+                        contentDescription = stringResource(R.string.cancel)
+                    )
+                }
             }
         }
     }
