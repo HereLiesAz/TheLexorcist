@@ -55,6 +55,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -311,6 +312,14 @@ constructor(
         selectedCaseEvidenceList
             .map { list -> list.filter { it.isSelected } }
             .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+
+    val unassignedEvidence: StateFlow<List<com.hereliesaz.lexorcist.data.Evidence>> =
+        combine(selectedCaseEvidenceList, exhibits) { evidenceList, exhibitsList ->
+            val assignedIds = exhibitsList.flatMap { it.evidenceIds }.toSet()
+            evidenceList.filter { it.id !in assignedIds }
+        }
+        .flowOn(Dispatchers.Default)
+        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     private val _cleanupSuggestions = MutableStateFlow<List<CleanupSuggestion>>(emptyList())
     val cleanupSuggestions: StateFlow<List<CleanupSuggestion>> = _cleanupSuggestions.asStateFlow()
