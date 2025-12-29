@@ -424,13 +424,7 @@ fun AssignTab(
 ) {
     val displayExhibits by caseViewModel.displayExhibits.collectAsState()
     val pertinentExhibits = remember(displayExhibits) { displayExhibits.map { it.catalogItem } }
-    val allEvidence by caseViewModel.selectedCaseEvidenceList.collectAsState()
-    val exhibits by caseViewModel.exhibits.collectAsState()
-
-    val assignedEvidenceIds = remember(exhibits) { exhibits.flatMap { it.evidenceIds }.toSet() }
-    val unassignedEvidence = remember(allEvidence, assignedEvidenceIds) {
-        allEvidence.filter { it.id !in assignedEvidenceIds }
-    }
+    val unassignedEvidence by caseViewModel.unassignedEvidence.collectAsState()
 
     DragAndDropContainer<Evidence> {
         Row(
