@@ -126,6 +126,7 @@ constructor(
 
     val cases: StateFlow<List<Case>> =
         caseRepository.cases
+            .map { cases -> cases.filter { !it.isArchived } }
             .combine(sortOrder) { cases, currentSortOrder ->
                 when (currentSortOrder) {
                     SortOrder.NAME_ASC -> cases.sortedBy { it.name }

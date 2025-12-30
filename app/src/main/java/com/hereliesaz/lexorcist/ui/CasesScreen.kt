@@ -78,10 +78,7 @@ fun CasesScreen(
     val selectedCase by caseViewModel.selectedCase.collectAsState()
 
     // Filter unarchived cases. Search query filtering is already handled by the ViewModel.
-    val unarchivedCases =
-        remember(casesState) {
-            casesState.filter { case -> !case.isArchived }
-        }
+    val unarchivedCases = casesState
 
     LaunchedEffect(Unit) {
         caseViewModel.loadCasesFromRepository()
