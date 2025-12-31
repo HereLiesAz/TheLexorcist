@@ -186,6 +186,10 @@ fun TemplateItem(
                 factory = { context ->
                     WebView(context).apply {
                         settings.userAgentString += " Lexorcist-Agent"
+                        // Security hardening: Disable file access and other risky features
+                        settings.allowFileAccess = false
+                        settings.allowContentAccess = false
+                        settings.javaScriptEnabled = false
                         loadDataWithBaseURL(null, template.content, "text/html", "UTF-8", null)
                     }
                 },
@@ -219,6 +223,10 @@ fun TemplatePreviewDialog(template: Template, onDismiss: () -> Unit) {
                     factory = { context ->
                         WebView(context).apply {
                             settings.userAgentString += " Lexorcist-Agent"
+                            // Security hardening: Disable file access and other risky features
+                            settings.allowFileAccess = false
+                            settings.allowContentAccess = false
+                            settings.javaScriptEnabled = false
                             loadDataWithBaseURL(null, template.content, "text/html", "UTF-8", null)
                         }
                     },
