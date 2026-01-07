@@ -148,16 +148,24 @@ fun ViewTab(caseViewModel: CaseViewModel) {
             Text(stringResource(R.string.no_exhibits_for_case).uppercase(Locale.getDefault()))
         }
     } else {
+        val onSelectExhibit: (DisplayExhibit) -> Unit = remember(caseViewModel) {
+            { exhibit -> caseViewModel.selectExhibit(exhibit) }
+        }
+
+        val onDeleteExhibit: (DisplayExhibit) -> Unit = remember(caseViewModel) {
+            { exhibit ->
+                exhibit.caseExhibit?.let {
+                    caseViewModel.deleteExhibit(it)
+                }
+            }
+        }
+
         LazyColumn(modifier = Modifier.fillMaxSize().padding(vertical = 16.dp)) {
             items(sortedExhibits, key = { it.catalogItem.id }) { displayExhibit ->
                 ExhibitItem(
                     displayExhibit = displayExhibit,
-                    onClick = { caseViewModel.selectExhibit(displayExhibit) },
-                    onDeleteClick = {
-                        displayExhibit.caseExhibit?.let {
-                            caseViewModel.deleteExhibit(it)
-                        }
-                    }
+                    onClick = onSelectExhibit,
+                    onDeleteClick = onDeleteExhibit
                 )
             }
         }
@@ -189,7 +197,7 @@ fun ViewTab(caseViewModel: CaseViewModel) {
 fun ExhibitItem(
     displayExhibit: DisplayExhibit,
     onClick: (DisplayExhibit) -> Unit,
-    onDeleteClick: () -> Unit,
+    onDeleteClick: (DisplayExhibit) -> Unit,
 ) {
     Card(
         modifier =
@@ -233,7 +241,7 @@ fun ExhibitItem(
                 )
             }
             if (displayExhibit.caseExhibit != null) {
-                AzButton(onClick = onDeleteClick, text = "Del")
+                AzButton(onClick = { onDeleteClick(displayExhibit) }, text = "Del")
             }
         }
     }
@@ -333,19 +341,26 @@ fun CleanUpTab(caseViewModel: CaseViewModel) {
         }
 
         if (cleanupSuggestions.isNotEmpty() && !isScanning) {
+            val onMergeDuplicates: (CleanupSuggestion.DuplicateGroup) -> Unit = remember(caseViewModel) {
+                { group -> caseViewModel.deleteDuplicates(group) }
+            }
+            val onMergeImageSeries: (CleanupSuggestion.ImageSeriesGroup) -> Unit = remember(caseViewModel) {
+                { group -> caseViewModel.mergeImageSeries(group, "Merged Series") }
+            }
+
             LazyColumn(modifier = Modifier.weight(1f).fillMaxWidth()) {
                 items(cleanupSuggestions) { suggestion ->
                     when (suggestion) {
                         is CleanupSuggestion.DuplicateGroup -> {
                             DuplicateGroupItem(
                                 group = suggestion,
-                                onMerge = { caseViewModel.deleteDuplicates(suggestion) }
+                                onMerge = onMergeDuplicates
                             )
                         }
                         is CleanupSuggestion.ImageSeriesGroup -> {
                             ImageSeriesGroupItem(
                                 group = suggestion,
-                                onMerge = { caseViewModel.mergeImageSeries(suggestion, "Merged Series") }
+                                onMerge = onMergeImageSeries
                             )
                         }
                     }
@@ -363,7 +378,10 @@ fun CleanUpTab(caseViewModel: CaseViewModel) {
 }
 
 @Composable
-fun DuplicateGroupItem(group: CleanupSuggestion.DuplicateGroup, onMerge: () -> Unit) {
+fun DuplicateGroupItem(
+    group: CleanupSuggestion.DuplicateGroup,
+    onMerge: (CleanupSuggestion.DuplicateGroup) -> Unit
+) {
     Card(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
         Column(
             modifier = Modifier.padding(16.dp).fillMaxWidth(),
@@ -385,13 +403,16 @@ fun DuplicateGroupItem(group: CleanupSuggestion.DuplicateGroup, onMerge: () -> U
                 )
             }
             Spacer(modifier = Modifier.height(8.dp))
-            AzButton(onClick = onMerge, text = "Merge (Keep First, Delete Others)")
+            AzButton(onClick = { onMerge(group) }, text = "Merge (Keep First, Delete Others)")
         }
     }
 }
 
 @Composable
-fun ImageSeriesGroupItem(group: CleanupSuggestion.ImageSeriesGroup, onMerge: () -> Unit) {
+fun ImageSeriesGroupItem(
+    group: CleanupSuggestion.ImageSeriesGroup,
+    onMerge: (CleanupSuggestion.ImageSeriesGroup) -> Unit
+) {
     Card(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
         Column(
             modifier = Modifier.padding(16.dp).fillMaxWidth(),
@@ -413,7 +434,7 @@ fun ImageSeriesGroupItem(group: CleanupSuggestion.ImageSeriesGroup, onMerge: () 
                 )
             }
             Spacer(modifier = Modifier.height(8.dp))
-            AzButton(onClick = onMerge, text = "Combine into PDF")
+            AzButton(onClick = { onMerge(group) }, text = "Combine into PDF")
         }
     }
 }
