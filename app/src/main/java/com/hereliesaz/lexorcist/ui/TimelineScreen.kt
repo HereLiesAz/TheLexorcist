@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ExperimentalComposeApi
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -51,30 +52,34 @@ fun TimelineScreen(
 ) {
     val evidenceList by caseViewModel.selectedCaseEvidenceList.collectAsState()
 
-    val placeholderEvidenceItem = Evidence(
-        id = 0, // Placeholder ID
-        caseId = 0L,
-        spreadsheetId = "placeholder_case",
-        type = "placeholder",
-        content = "No evidence items yet. Add some evidence to see the timeline.",
-        formattedContent = null,
-        mediaUri = null,
-        timestamp = System.currentTimeMillis(),
-        sourceDocument = "System",
-        documentDate = System.currentTimeMillis(),
-        allegationId = null,
-        allegationElementName = null,
-        category = "Placeholder",
-        tags = emptyList(),
-        commentary = null,
-        linkedEvidenceIds = emptyList(),
-        parentVideoId = null,
-        entities = emptyMap(),
-        transcriptEdits = emptyList(),
-        fileSize = 0L,
-        fileHash = null,
-        isDuplicate = false
-    )
+    // Optimization: remember the placeholder item to avoid object allocation on every recomposition
+    // and to keep timestamp stable.
+    val placeholderEvidenceItem = remember {
+        Evidence(
+            id = 0, // Placeholder ID
+            caseId = 0L,
+            spreadsheetId = "placeholder_case",
+            type = "placeholder",
+            content = "No evidence items yet. Add some evidence to see the timeline.",
+            formattedContent = null,
+            mediaUri = null,
+            timestamp = System.currentTimeMillis(),
+            sourceDocument = "System",
+            documentDate = System.currentTimeMillis(),
+            allegationId = null,
+            allegationElementName = null,
+            category = "Placeholder",
+            tags = emptyList(),
+            commentary = null,
+            linkedEvidenceIds = emptyList(),
+            parentVideoId = null,
+            entities = emptyMap(),
+            transcriptEdits = emptyList(),
+            fileSize = 0L,
+            fileHash = null,
+            isDuplicate = false
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -94,10 +99,13 @@ fun TimelineScreen(
             modifier = Modifier
                 .padding(padding)
         ) {
-            val itemsToDisplay: List<Evidence> = if (evidenceList.isEmpty()) {
-                listOf(placeholderEvidenceItem)
-            } else {
-                evidenceList.sortedBy { it.documentDate }
+            // Optimization: remember the sorted list to avoid O(N log N) sorting on every recomposition.
+            val itemsToDisplay: List<Evidence> = remember(evidenceList) {
+                if (evidenceList.isEmpty()) {
+                    listOf(placeholderEvidenceItem)
+                } else {
+                    evidenceList.sortedBy { it.documentDate }
+                }
             }
 
             JetLimeColumn(
