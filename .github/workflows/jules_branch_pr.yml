@@ -1,0 +1,32 @@
+name: Jules Branch PR Handler
+
+on:
+  create:
+
+jobs:
+  handle_branch:
+    if: github.event.ref_type == 'branch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Invoke Jules
+        uses: google-labs-code/jules-invoke@v1
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        with:
+          prompt: |
+            A new branch '${{ github.event.ref }}' has been created.
+
+            Please perform the following task:
+            1. Create a pull request for this new branch merging into the default branch.
+            2. Examine and evaluate the validity and necessity of that pull request.
+            3. Review the pull request.
+            4. Fix anything suggested by other reviewers, and handle any conflicts.
+            5. Merge the pull request into the default branch.
+            6. Ensure the pull request is closed.
+            7. Delete the head branch '${{ github.event.ref }}'.
+
+          jules_api_key: ${{ secrets.JULES_API_KEY }}
