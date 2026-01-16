@@ -1,0 +1,24 @@
+name: Jules Issue Handler
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  handle_issue:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: read
+    steps:
+      - name: Invoke Jules
+        uses: google-labs-code/jules-invoke@v1
+        with:
+          prompt: |
+            A new issue has been created.
+            Title: ${{ github.event.issue.title }}
+            Body: ${{ github.event.issue.body }}
+
+            Please complete the task described in the issue.
+            Once you have completed the task, please close this issue.
+          jules_api_key: ${{ secrets.JULES_API_KEY }}
