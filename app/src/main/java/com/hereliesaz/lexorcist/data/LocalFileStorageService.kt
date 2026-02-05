@@ -27,11 +27,22 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
 import java.util.UUID
-import java.util.zip.ZipException // Added import
+import java.util.zip.ZipException
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
 
+/**
+ * Service responsible for managing local data storage using an Excel (.xlsx) file as the database.
+ *
+ * This architecture mimics the structure of the Google Sheet used in the cloud backend, allowing for easy synchronization.
+ * It handles all CRUD operations for Cases, Evidence, Exhibits, Allegations, and Transcript Edits.
+ *
+ * SECURITY NOTE:
+ * This service implements strict sanitization for file paths and spreadsheet content to prevent:
+ * 1. Path Traversal attacks (via [sanitizeSafePathSegment]).
+ * 2. Formula Injection attacks (via [SpreadsheetUtils.sanitizeForSpreadsheet]).
+ */
 @Singleton
 class LocalFileStorageService @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -44,23 +55,30 @@ class LocalFileStorageService @Inject constructor(
     private val workManager: WorkManager
 ) : StorageService {
 
+    // The directory where application data is stored. Can be customized by the user.
     private val storageDir: File by lazy {
         val customLocation = settingsManager.getStorageLocation()
         val dir = if (customLocation != null) {
             File(customLocation.toUri().path!!)
         } else {
+            // Fallback to internal storage if no custom location is set.
             context.getExternalFilesDir(null) ?: context.filesDir
         }
         if (!dir.exists()) dir.mkdirs()
         dir
     }
 
+    // The main database file.
     private val spreadsheetFile: File by lazy { File(storageDir, "lexorcist_data.xlsx") }
 
     init {
         initializeSpreadsheet()
     }
 
+    /**
+     * Ensures the spreadsheet file exists and has the correct schema.
+     * Handles corruption recovery by recreating the file if necessary.
+     */
     private fun initializeSpreadsheet() {
         try {
             if (!spreadsheetFile.exists() || spreadsheetFile.length() == 0L) {
@@ -72,6 +90,7 @@ class LocalFileStorageService @Inject constructor(
                     FileInputStream(spreadsheetFile).use { fis ->
                         XSSFWorkbook(fis).use { workbook ->
                             var modified = false
+                            // Check for missing sheets and create them if needed.
                             if (workbook.getSheet(CASES_SHEET_NAME) == null) {
                                 createSheetWithHeader(workbook, CASES_SHEET_NAME, CASES_HEADER)
                                 modified = true
@@ -94,6 +113,7 @@ class LocalFileStorageService @Inject constructor(
                             }
 
                             // Data migration: Check for and add missing columns to Evidence sheet
+                            // This allows for non-destructive updates when the schema changes.
                             val evidenceSheet = workbook.getSheet(EVIDENCE_SHEET_NAME)
                             if (evidenceSheet != null) {
                                 val headerRow = evidenceSheet.getRow(0)
@@ -120,6 +140,7 @@ class LocalFileStorageService @Inject constructor(
                         }
                     }
                 } catch (zipEx: ZipException) {
+                    // Corruption detected (not a valid zip/xlsx file).
                     Log.w("LocalFileStorageService", "Spreadsheet file '${spreadsheetFile.absolutePath}' is corrupted (ZipException). Deleting and creating a new one.", zipEx)
                     try {
                         if (spreadsheetFile.exists()) {
@@ -131,6 +152,7 @@ class LocalFileStorageService @Inject constructor(
                         throw RuntimeException("Corrupted spreadsheet (ZipException) encountered, failed to delete it and/or create a new one.", delEx)
                     }
                 } catch (noxmlEx: NotOfficeXmlFileException) {
+                     // Invalid file format detected.
                     Log.w("LocalFileStorageService", "Spreadsheet file '${spreadsheetFile.absolutePath}' is not a valid OOXML file (NotOfficeXmlFileException). Deleting and creating a new one.", noxmlEx)
                     try {
                         if (spreadsheetFile.exists()) {
@@ -145,10 +167,10 @@ class LocalFileStorageService @Inject constructor(
             }
         } catch (e: IOException) {
             Log.e("LocalFileStorageService", "Failed to initialize spreadsheet due to IOException", e)
-            throw e // Rethrow critical IOExceptions
+            throw e
         } catch (e: SecurityException) {
             Log.e("LocalFileStorageService", "Failed to initialize spreadsheet due to SecurityException", e)
-            throw e // Rethrow critical SecurityExceptions
+            throw e
         } catch (e: Exception) {
             Log.e("LocalFileStorageService", "An unexpected error occurred during spreadsheet initialization", e)
             throw RuntimeException("Failed to initialize spreadsheet due to an unexpected error", e)
@@ -184,11 +206,12 @@ class LocalFileStorageService @Inject constructor(
 
         private val CASES_HEADER = listOf("ID", "Name", "Plaintiffs", "Defendants", "Court", "FolderID", "LastModified", "IsArchived")
         private val EVIDENCE_HEADER = listOf("EvidenceID", "CaseID", "Type", "Content", "FormattedContent", "MediaUri", "Timestamp", "SourceDocument", "DocumentDate", "AllegationID", "Category", "Tags", "Commentary", "LinkedEvidenceIDs", "ParentVideoID", "Entities", "FileSize", "FileHash", "IsDuplicate")
-        private val ALLEGATIONS_HEADER = listOf("AllegationID", "CaseID", "Name") // Changed "Text" to "Name"
+        private val ALLEGATIONS_HEADER = listOf("AllegationID", "CaseID", "Name")
         private val TRANSCRIPT_EDITS_HEADER = listOf("EditID", "EvidenceID", "Timestamp", "Reason", "NewContent")
         private val EXHIBITS_HEADER = listOf("ExhibitID", "CaseID", "Name", "Description", "EvidenceIDs")
     }
 
+    // Helper to safely read from the spreadsheet in a background thread.
     private suspend fun <T> readFromSpreadsheet(block: (XSSFWorkbook) -> T): Result<T> = withContext(Dispatchers.IO) {
         try {
             if (!spreadsheetFile.exists() || spreadsheetFile.length() == 0L) {
@@ -219,6 +242,7 @@ class LocalFileStorageService @Inject constructor(
         }
     }
 
+    // Helper to safely write to the spreadsheet in a background thread.
     private suspend fun <T> writeToSpreadsheet(block: (XSSFWorkbook) -> T): Result<T> = withContext(Dispatchers.IO) {
         try {
             if (!spreadsheetFile.exists() || spreadsheetFile.length() == 0L) {
@@ -247,6 +271,8 @@ class LocalFileStorageService @Inject constructor(
             Result.Error(e)
         }
     }
+
+    // --- Helper Methods for Cell Access ---
 
     private fun findRowById(sheet: XSSFSheet, id: String, idColumn: Int): Row? {
         for (i in 1..sheet.lastRowNum) { 
@@ -329,6 +355,9 @@ class LocalFileStorageService @Inject constructor(
             }
         }
     }
+
+    // --- CRUD Implementations ---
+    // Note: All user input strings are sanitized using SpreadsheetUtils.sanitizeForSpreadsheet to prevent Formula Injection.
 
     override suspend fun getAllCases(): Result<List<Case>> = readFromSpreadsheet { workbook ->
         val sheet = workbook.getSheet(CASES_SHEET_NAME) ?: return@readFromSpreadsheet emptyList()
@@ -478,6 +507,7 @@ class LocalFileStorageService @Inject constructor(
         val sheet = workbook.getSheet(EVIDENCE_SHEET_NAME) ?: return@readFromSpreadsheet emptyList()
         val editsSheet = workbook.getSheet(TRANSCRIPT_EDITS_SHEET_NAME)
 
+        // Pre-fetch transcript edits to avoid N+1 problem
         val allEdits = editsSheet?.let {
             (1..it.lastRowNum).mapNotNull { j -> 
                 val editRow = it.getRow(j) ?: return@mapNotNull null
@@ -563,8 +593,7 @@ class LocalFileStorageService @Inject constructor(
             is Result.Success -> Result.Success(result.data.first())
             is Result.Error -> Result.Error(result.exception)
             is Result.UserRecoverableError -> Result.UserRecoverableError(result.exception)
-            is Result.Loading -> Result.Loading // Added else branch for exhaustive when
-            // else -> Result.Error(Exception("Unknown error during addEvidenceList")) // Or handle appropriately
+            is Result.Loading -> Result.Loading
         }
     }
 
@@ -657,7 +686,6 @@ class LocalFileStorageService @Inject constructor(
         Unit
     }
 
-    // Helper function to get display name
     private fun getDisplayName(context: Context, uri: Uri): String {
         var displayName: String? = null
         if (uri.scheme == "content") {
@@ -680,21 +708,23 @@ class LocalFileStorageService @Inject constructor(
         return displayName ?: "file_${System.currentTimeMillis()}"
     }
 
-    // Sanitize file name
+    // Sanitize file name by replacing restricted characters with underscores.
     private fun sanitizeFileName(name: String): String {
         return name.replace(Regex("[\\\\/:*?\"<>|]"), "_")
     }
 
-    // Sanitize ID or extension to ensure it is safe for file paths (alphanumeric, -, _)
+    // Sanitize ID or extension to ensure it is safe for file paths (alphanumeric, -, _ only).
+    // This is a defense against Path Traversal.
     private fun sanitizeSafePathSegment(value: String): String {
         return value.replace(Regex("[^a-zA-Z0-9\\-_]"), "_")
     }
 
-
     override suspend fun uploadFile(caseSpreadsheetId: String, fileUri: Uri, mimeType: String): Result<String> = withContext(Dispatchers.IO) {
         try {
-            // Validate and sanitize caseSpreadsheetId to prevent path traversal
+            // SECURITY: Validate and sanitize caseSpreadsheetId to prevent path traversal
             val sanitizedCaseId = sanitizeSafePathSegment(caseSpreadsheetId)
+
+            // Create the case directory structure (files are stored in 'raw' subdir).
             val caseDir = File(storageDir, sanitizedCaseId).apply { if (!exists()) mkdirs() }
             val rawDir = File(caseDir, "raw").apply { if (!exists()) mkdirs() }
 
@@ -704,21 +734,22 @@ class LocalFileStorageService @Inject constructor(
 
             val sanitizedBaseName = sanitizeFileName(baseName)
 
+            // Determine the file extension safely.
             val mimeTypeSubPart = mimeType.substringAfter('/', "")
             
             var finalExtension = if (mimeTypeSubPart.isNotEmpty() && mimeTypeSubPart != "octet-stream") {
-                mimeTypeSubPart // Use extension from MIME type if valid and not generic
+                mimeTypeSubPart
             } else if (originalExtension.isNotEmpty()) {
-                originalExtension // Fallback to original extension
+                originalExtension
             } else {
-                "dat" // Default if no other extension found
+                "dat"
             }
 
-            // Sanitize extension to prevent path traversal via malicious MIME types
+            // SECURITY: Sanitize extension to prevent path traversal via malicious MIME types (e.g. "../")
             finalExtension = sanitizeSafePathSegment(finalExtension)
 
             val finalFileName = if (sanitizedBaseName.endsWith(".$finalExtension", ignoreCase = true)) {
-                 sanitizedBaseName // Avoids double extension like .opus.opus if already present
+                 sanitizedBaseName
             } else {
                  "$sanitizedBaseName.$finalExtension"
             }
@@ -726,22 +757,22 @@ class LocalFileStorageService @Inject constructor(
             val destinationFile = File(rawDir, finalFileName)
             Log.d("LocalFileStorageService", "Uploading file: URI=$fileUri, MimeType=$mimeType, DestFile=$destinationFile")
 
-
+            // Copy file content.
             context.contentResolver.openInputStream(fileUri)?.use { input ->
                 FileOutputStream(destinationFile).use { output ->
                     input.copyTo(output)
                 }
             }
 
+            // Trigger video post-processing if applicable.
             if (mimeType.startsWith("video/")) {
-                // Get Case details for the worker
-                val casesResult = getAllCases() // This might be inefficient, consider a direct getCaseById
+                val casesResult = getAllCases()
                 if (casesResult is Result.Success) {
                     val caseDetails = casesResult.data.find { it.spreadsheetId == caseSpreadsheetId }
                     if (caseDetails != null) {
                         val workData = Data.Builder()
                             .putString(VideoProcessingWorker.KEY_VIDEO_URI, destinationFile.toUri().toString())
-                            .putInt(VideoProcessingWorker.KEY_CASE_ID, caseDetails.id) // case.id is Int (spreadsheetId.hashCode())
+                            .putInt(VideoProcessingWorker.KEY_CASE_ID, caseDetails.id)
                             .putString(VideoProcessingWorker.KEY_CASE_NAME, caseDetails.name)
                             .putString(VideoProcessingWorker.KEY_SPREADSHEET_ID, caseSpreadsheetId)
                             .build()
@@ -807,10 +838,9 @@ class LocalFileStorageService @Inject constructor(
 
         if (rowExists) {
             Log.d("LocalFileStorageService", "Allegation ${allegation.id} already exists for case $caseSpreadsheetId. No action taken.")
-            return@writeToSpreadsheet allegation // Return the original object as it's already there
+            return@writeToSpreadsheet allegation
         }
 
-        // If it doesn't exist, add it. The ID from the master list is preserved.
         sheet.createRow(sheet.physicalNumberOfRows).apply {
             createCell(allegationIdCol).setCellValue(allegation.id.toDouble())
             createCell(caseIdCol).setCellValue(caseSpreadsheetId)
@@ -820,7 +850,7 @@ class LocalFileStorageService @Inject constructor(
     }
 
     override suspend fun removeAllegation(caseSpreadsheetId: String, allegation: Allegation): Result<Unit> = writeToSpreadsheet { workbook ->
-        val sheet = workbook.getSheet(ALLEGATIONS_SHEET_NAME) ?: return@writeToSpreadsheet Unit // Sheet doesn't exist, so nothing to remove
+        val sheet = workbook.getSheet(ALLEGATIONS_SHEET_NAME) ?: return@writeToSpreadsheet Unit
 
         val caseIdCol = ALLEGATIONS_HEADER.indexOf("CaseID")
         val allegationIdCol = ALLEGATIONS_HEADER.indexOf("AllegationID")
@@ -840,7 +870,7 @@ class LocalFileStorageService @Inject constructor(
         if (rowToDelete != null) {
             val rowIndex = rowToDelete.rowNum
             sheet.removeRow(rowToDelete)
-            // Shift subsequent rows up to fill the gap, which is crucial
+            // Shift subsequent rows up to fill the gap
             if (rowIndex < sheet.lastRowNum) {
                 sheet.shiftRows(rowIndex + 1, sheet.lastRowNum, -1)
             }

@@ -16,6 +16,7 @@ jobs:
         uses: google-labs-code/jules-invoke@v1
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        uses: google-labs-code/jules-invoke@main
         with:
           prompt: |
             A new branch '${{ github.event.ref }}' has been created.

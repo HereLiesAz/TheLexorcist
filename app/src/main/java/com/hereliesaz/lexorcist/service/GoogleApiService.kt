@@ -34,19 +34,35 @@ import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Service responsible for all interactions with Google APIs (Drive, Sheets, Apps Script).
+ *
+ * This service handles:
+ * 1. File management on Google Drive (creating folders, uploading/downloading files).
+ * 2. Spreadsheet manipulation (creating sheets, reading/writing data) for Case metadata and Evidence.
+ * 3. Execution of Google Apps Script functions.
+ * 4. Interaction with the "Extras" ecosystem (shared scripts/templates marketplace).
+ *
+ * It manages authentication via [CredentialHolder] and handles `UserRecoverableAuthIOException`
+ * to trigger consent flows in the UI.
+ */
 @Singleton
 class GoogleApiService @Inject constructor(
     private val credentialHolder: CredentialHolder,
     private val application: Application
 ) {
-    private val applicationName = "The Lexorcist" // Or load from string resource via application context
+    private val applicationName = "The Lexorcist"
     private val gsonFactory = GsonFactory.getDefaultInstance()
     private val httpTransport = NetHttpTransport()
 
     companion object {
+        // The ID of the public Google Sheet acting as the "Marketplace" for shared scripts and templates.
         private const val EXTRAS_SPREADSHEET_ID = "18hB2Kx5Le1uaF2pImeITgWntcBB-JfYxvpU2aqTzRr8"
     }
 
+    /**
+     * Helper to build an authenticated Drive service client.
+     */
     private fun getDriveService(): Drive? {
         return credentialHolder.credential?.let { cred ->
             Drive.Builder(httpTransport, gsonFactory, cred)
@@ -55,6 +71,14 @@ class GoogleApiService @Inject constructor(
         }
     }
 
+    /**
+     * Executes a function in a Google Apps Script project.
+     *
+     * @param scriptId The ID of the Apps Script project.
+     * @param functionName The name of the function to call.
+     * @param parameters List of arguments to pass to the function.
+     * @return The result of the execution or an error.
+     */
     suspend fun runGoogleAppsScript(
         scriptId: String,
         functionName: String,
@@ -67,6 +91,7 @@ class GoogleApiService @Inject constructor(
                 .setParameters(parameters)
             val response = scriptService.scripts().run(scriptId, request).execute()
             if (response.error != null) {
+                // Handle execution errors returned by the API.
                 val error = response.error.details
                 val message = error?.joinToString(separator = "\n") { it["errorMessage"] as? String ?: "" } ?: "Unknown script error"
                 Result.Error(IOException(message))
@@ -74,6 +99,7 @@ class GoogleApiService @Inject constructor(
                 Result.Success(response.getResponse()?.get("result") ?: Unit)
             }
         } catch (e: UserRecoverableAuthIOException) {
+            // Propagate auth errors so the UI can prompt the user.
             Result.UserRecoverableError(e)
         } catch (e: IOException) {
             Result.Error(e)
@@ -88,8 +114,11 @@ class GoogleApiService @Inject constructor(
         }
     }
 
+    /**
+     * Returns a Sheets service instance without credentials, for accessing public/read-only sheets.
+     */
     private fun getPublicSheetsService(): Sheets {
-        return Sheets.Builder(httpTransport, gsonFactory, null) // No credential needed for public API access
+        return Sheets.Builder(httpTransport, gsonFactory, null)
             .setApplicationName(applicationName)
             .build()
     }
@@ -102,10 +131,15 @@ class GoogleApiService @Inject constructor(
         }
     }
 
+    /**
+     * Retrieves the ID of the "Lexorcist" root folder in the user's Drive.
+     * Creates it if it doesn't exist.
+     */
     suspend fun getOrCreateAppRootFolder(): Result<String> =
         withContext(Dispatchers.IO) {
             val drive = getDriveService() ?: return@withContext Result.Error(IOException("Credential not available for Drive service"))
             val folderName = "Lexorcist"
+            // Check for existing folder to avoid duplicates.
             val query = "mimeType='application/vnd.google-apps.folder' and name='$folderName' and trashed=false"
             Log.d("GoogleApiService", "Querying for root folder with: $query")
             try {
@@ -212,6 +246,9 @@ class GoogleApiService @Inject constructor(
         }
     }
 
+    /**
+     * Recursively uploads a local folder to Google Drive.
+     */
     suspend fun uploadFolder(
         folder: java.io.File,
         parentId: String,
@@ -236,7 +273,7 @@ class GoogleApiService @Inject constructor(
                 // 2. List files in the local folder
                 val filesToUpload = folder.listFiles() ?: emptyArray()
 
-                // 3. Upload each file
+                // 3. Upload each file (recursively if needed, though this impl seems flat for now)
                 for (file in filesToUpload) {
                     if (file.isFile) {
                         val mimeType = when (file.extension.lowercase()) {
@@ -281,6 +318,9 @@ class GoogleApiService @Inject constructor(
             }
         }
 
+    /**
+     * gets or creates the central "CaseRegistry" spreadsheet used to track all cases.
+     */
     suspend fun getOrCreateCaseRegistrySpreadsheetId(folderId: String): String =
         withContext(Dispatchers.IO) {
             val drive = getDriveService() ?: throw IOException("Credential not available for Drive service")
@@ -1131,6 +1171,10 @@ class GoogleApiService @Inject constructor(
         return emptyList()
     }
 
+    /**
+     * Retrieves the list of shared scripts from the Extras marketplace spreadsheet.
+     * Uses a public, API-key-free access method (if the sheet is public) or standard auth.
+     */
     suspend fun getSharedScripts(): List<Script> {
         val sheets = getPublicSheetsService()
         val sheetData = readSpreadsheet(EXTRAS_SPREADSHEET_ID, isPublic = true)
@@ -1190,12 +1234,13 @@ class GoogleApiService @Inject constructor(
             }
         }
     }
+
     suspend fun shareAddon(
         name: String,
         description: String,
         content: String,
         type: String,
-        authorName: String, // New parameter
+        authorName: String,
         authorEmail: String,
         court: String
     ): Result<Unit> =
@@ -1222,7 +1267,7 @@ class GoogleApiService @Inject constructor(
                             name,
                             description,
                             content,
-                            authorName, // Added authorName
+                            authorName,
                             authorEmail,
                             0.0, // Rating
                             0, // NumRatings
@@ -1259,7 +1304,7 @@ class GoogleApiService @Inject constructor(
 
     suspend fun updateSharedItem(
         item: Any,
-        userEmail: String, // This is the email of the logged-in user trying to perform the update
+        userEmail: String,
     ): Result<Unit> =
         withContext(Dispatchers.IO) {
             val sheets = getSheetsService() ?: return@withContext Result.Error(IOException("Credential not available for Sheets service"))
@@ -1268,25 +1313,26 @@ class GoogleApiService @Inject constructor(
 
                 val sheetName: String
                 val itemId: String
-                val itemAuthorEmail: String // Email of the item's author
+                val itemAuthorEmail: String
                 val rowData: List<Any?>
 
                 when (item) {
                     is Script -> {
                         sheetName = "Scripts"
                         itemId = item.id
-                        itemAuthorEmail = item.authorEmail // Use item's authorEmail for check
+                        itemAuthorEmail = item.authorEmail
                         rowData = listOf(item.id, item.name, item.description, item.content, item.authorName, item.authorEmail, item.rating, item.numRatings, item.court)
                     }
                     is Template -> {
                         sheetName = "Templates"
                         itemId = item.id
-                        itemAuthorEmail = item.authorEmail // Use item's authorEmail for check
+                        itemAuthorEmail = item.authorEmail
                         rowData = listOf(item.id, item.name, item.description, item.content, item.authorName, item.authorEmail, item.rating, item.numRatings, item.court)
                     }
                     else -> return@withContext Result.Error(IllegalArgumentException("Unsupported item type"))
                 }
 
+                // Security check: Only the author or the admin can update an item.
                 if (userEmail != itemAuthorEmail && userEmail != "hereliesaz@gmail.com") {
                     return@withContext Result.Error(SecurityException("User not authorized to edit this item."))
                 }
@@ -1310,7 +1356,7 @@ class GoogleApiService @Inject constructor(
 
     suspend fun deleteSharedItem(
         item: Any,
-        userEmail: String, // This is the email of the logged-in user trying to perform the delete
+        userEmail: String,
     ): Result<Unit> =
         withContext(Dispatchers.IO) {
             val sheets = getSheetsService() ?: return@withContext Result.Error(IOException("Credential not available for Sheets service"))
@@ -1323,7 +1369,8 @@ class GoogleApiService @Inject constructor(
                         else -> return@withContext Result.Error(IllegalArgumentException("Unsupported item type"))
                     }
 
-                if (userEmail != itemAuthorEmail && userEmail != "hereliesaz@gmail.com") { // Check against item's authorEmail
+                // Security check.
+                if (userEmail != itemAuthorEmail && userEmail != "hereliesaz@gmail.com") {
                     return@withContext Result.Error(SecurityException("User not authorized to delete this item."))
                 }
 
@@ -1369,22 +1416,22 @@ class GoogleApiService @Inject constructor(
                     return@withContext false
                 }
 
-                // Fetch current rating and numRatings - Column F for rating (index 5), G for numRatings (index 6)
-                // New sheet structure has authorName, authorEmail, then rating, numRatings
-                // So Rating is column G (index 6), NumRatings is column H (index 7)
+                // Fetch current rating and numRatings
+                // Rating is column G (index 6), NumRatings is column H (index 7)
                 val range = "$sheetName!G${rowIndex + 1}:H${rowIndex + 1}"
                 val response = sheets.spreadsheets().values().get(spreadsheetId, range).execute()
                 val values = response.getValues()
                 if (values.isNullOrEmpty() || values[0].size < 2) {
                     Log.e("GoogleApiService", "Could not fetch rating/numRatings for $id in $sheetName")
-                    return@withContext false // or handle error
+                    return@withContext false
                 }
 
                 val currentRating = values[0][0].toString().toDoubleOrNull() ?: 0.0
                 val numRatings = values[0][1].toString().toIntOrNull() ?: 0
 
                 val newNumRatings = numRatings + 1
-                val newAverageRating = ((currentRating * numRatings) + rating) / newNumRatings.toDouble() // Ensure double division
+                // Calculate new rolling average.
+                val newAverageRating = ((currentRating * numRatings) + rating) / newNumRatings.toDouble()
 
                 val valueRange = ValueRange().setValues(listOf(listOf(newAverageRating, newNumRatings)))
                 sheets.spreadsheets().values().update(spreadsheetId, range, valueRange)
@@ -1445,7 +1492,6 @@ class GoogleApiService @Inject constructor(
                 }
             } catch (e: IOException) {
                 Log.e("GoogleApiService", "Failed to update selected allegations for sheet: $spreadsheetId", e)
-                // Optionally re-throw or handle the error as a Result
             }
         }
     }
