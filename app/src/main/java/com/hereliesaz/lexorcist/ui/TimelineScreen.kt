@@ -29,7 +29,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel // Updated import
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.ui.components.ExtendedEvent
@@ -45,15 +45,23 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+/**
+ * Screen displaying the chronological timeline of evidence.
+ *
+ * Uses the JetLime library to render a timeline view.
+ * Evidence items are sorted by their `documentDate` (occurrence date).
+ */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeApi::class)
 @Composable
 fun TimelineScreen(
     caseViewModel: CaseViewModel = hiltViewModel()
 ) {
+    // Collect evidence list from ViewModel.
+    // NOTE: sorting is already handled in ViewModel for the main list, but here we enforce chronological sort by date.
     val evidenceList by caseViewModel.selectedCaseEvidenceList.collectAsState()
 
-    // Optimization: remember the placeholder item to avoid object allocation on every recomposition
-    // and to keep timestamp stable.
+    // Optimization: remember the placeholder item to avoid object allocation on every recomposition.
+    // This placeholder is shown when the list is empty to provide user feedback.
     val placeholderEvidenceItem = remember {
         Evidence(
             id = 0, // Placeholder ID
@@ -100,6 +108,7 @@ fun TimelineScreen(
                 .padding(padding)
         ) {
             // Optimization: remember the sorted list to avoid O(N log N) sorting on every recomposition.
+            // If the input evidenceList reference changes (new data), this block re-runs.
             val itemsToDisplay: List<Evidence> = remember(evidenceList) {
                 if (evidenceList.isEmpty()) {
                     listOf(placeholderEvidenceItem)
@@ -108,17 +117,19 @@ fun TimelineScreen(
                 }
             }
 
+            // Render the timeline using JetLime.
             JetLimeColumn(
                 itemsList = ItemsList(itemsToDisplay),
-                key = { _, item -> item.id }, // item is Evidence
+                key = { _, item -> item.id }, // Stable key based on Evidence ID for efficient updates.
                 style = JetLimeDefaults.columnStyle()
-            ) { _, item, position -> // item is Evidence, position is Int
+            ) { _, item, position ->
                 JetLimeExtendedEvent(
                     style = JetLimeEventDefaults.eventStyle(
                         position = position,
                         pointType = if (evidenceList.isEmpty() && item.id == 0) EventPointType.Default else EventPointType.filled()
                     ),
-                    additionalContent = if (evidenceList.isNotEmpty() || item.id != 0) { // Show for actual evidence
+                    // Additional content (left/right of the timeline line) showing date and type icon.
+                    additionalContent = if (evidenceList.isNotEmpty() || item.id != 0) {
                         @Composable {
                             Column(horizontalAlignment = Alignment.End, modifier = Modifier.padding(end = 8.dp)) {
                                 val date = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(Date(item.documentDate))
@@ -133,13 +144,11 @@ fun TimelineScreen(
                                 )
                             }
                         }
-                    } else { {}
-                        // Provide an empty composable when there's no additional content
-                    }
+                    } else { {} }
                 ) {
-                    if (evidenceList.isEmpty() && item.id == 0) { // True placeholder
+                    if (evidenceList.isEmpty() && item.id == 0) { // Render placeholder card
                         PlaceholderExtendedEvent()
-                    } else { // Actual evidence item
+                    } else { // Render actual evidence card
                         ExtendedEvent(evidence = item)
                     }
                 }
@@ -148,12 +157,15 @@ fun TimelineScreen(
     }
 }
 
+/**
+ * Returns the appropriate Material Icon for a given evidence type string.
+ */
 private fun getIconForType(type: String): ImageVector {
     return when (type.lowercase()) {
         "text" -> Icons.AutoMirrored.Filled.Message
         "image" -> Icons.Default.Image
         "video" -> Icons.Default.Videocam
         "audio" -> Icons.Default.Audiotrack
-        else -> Icons.AutoMirrored.Filled.Article // Default for "placeholder" or other types
+        else -> Icons.AutoMirrored.Filled.Article // Fallback icon
     }
 }

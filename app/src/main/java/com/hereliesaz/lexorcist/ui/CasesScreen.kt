@@ -28,7 +28,6 @@ import com.hereliesaz.aznavrail.AzButton
 import com.hereliesaz.lexorcist.ui.components.AzAlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-// import androidx.compose.material3.CircularProgressIndicator // Duplicate import removed
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.Icon
@@ -60,6 +59,16 @@ import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 import java.util.Locale
 
+/**
+ * Screen for displaying and managing the list of legal cases.
+ *
+ * Features:
+ * - Search bar for filtering cases by name.
+ * - LazyColumn for efficient list rendering.
+ * - Long-press context menu on case items for Delete/Archive actions.
+ * - Floating Action Button (FAB) to create new cases.
+ * - Empty state handling with call-to-action.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CasesScreen(
@@ -67,19 +76,24 @@ fun CasesScreen(
     navController: NavController,
     mainViewModel: MainViewModel,
 ) {
+    // Collect UI state from ViewModel flows.
+    // Sorting and filtering are handled in the ViewModel, so we just observe the results here.
     val casesState by caseViewModel.cases.collectAsState()
-    val sortOrder by caseViewModel.sortOrder.collectAsState() // Retain for logic if sort is re-added
+    val sortOrder by caseViewModel.sortOrder.collectAsState()
     val searchQuery by caseViewModel.searchQuery.collectAsState()
+    val selectedCase by caseViewModel.selectedCase.collectAsState()
+
+    // Local UI state for dialogs and interaction modes.
     var longPressedCase by remember { mutableStateOf<Case?>(null) }
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
     var showCreateCaseDialog by remember { mutableStateOf(false) }
     var currentSortOrderState by remember { mutableStateOf(sortOrder) }
 
-    val selectedCase by caseViewModel.selectedCase.collectAsState()
-
     // Filter unarchived cases. Search query filtering is already handled by the ViewModel.
+    // Note: ViewModel filters archived cases already, so this variable name might be redundant but clarifies intent.
     val unarchivedCases = casesState
 
+    // Load cases when the screen enters the composition.
     LaunchedEffect(Unit) {
         caseViewModel.loadCasesFromRepository()
     }
@@ -102,6 +116,7 @@ fun CasesScreen(
             )
         },
         floatingActionButton = {
+            // FAB for creating a new case.
             AzButton(
                 onClick = { showCreateCaseDialog = true },
                 text = "New"
@@ -112,11 +127,12 @@ fun CasesScreen(
         Column(
             modifier =
                 Modifier
-                    .padding(innerPadding) // Apply padding from Scaffold (e.g., for FAB)
-                    .statusBarsPadding() // Add status bar padding directly to the content
+                    .padding(innerPadding)
+                    .statusBarsPadding()
                     .fillMaxSize(),
             horizontalAlignment = Alignment.End
         ) {
+            // Search Input Field
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { caseViewModel.onSearchQueryChanged(it) },
@@ -125,7 +141,6 @@ fun CasesScreen(
                     Modifier
                         .fillMaxWidth()
                         .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 8.dp),
-                // Padding for the search field
                 leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
                 trailingIcon = {
                     if (searchQuery.isNotEmpty()) {
@@ -141,7 +156,10 @@ fun CasesScreen(
             )
 
             val isLoading by caseViewModel.isLoading.collectAsState()
-            if (isLoading && unarchivedCases.isEmpty()) { // Show loader only if cases are empty
+
+            // --- Content Loading / Empty States ---
+            if (isLoading && unarchivedCases.isEmpty()) {
+                // Show loader only if we have no data yet.
                 Column(
                     modifier = Modifier.fillMaxSize(),
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -150,6 +168,7 @@ fun CasesScreen(
                     AzLoad()
                 }
             } else if (unarchivedCases.isEmpty()) {
+                // Show Empty State with CTA if no cases found.
                 Column(
                     modifier =
                         Modifier
@@ -171,6 +190,7 @@ fun CasesScreen(
                         style = MaterialTheme.typography.bodyLarge,
                         textAlign = TextAlign.Center
                     )
+                    // Only show "New Case" button in empty state if we are NOT searching.
                     if (searchQuery.isBlank()) {
                         Spacer(modifier = Modifier.height(16.dp))
                         AzButton(
@@ -180,13 +200,14 @@ fun CasesScreen(
                     }
                 }
             } else {
+                // --- Case List ---
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding =
-                        PaddingValues( // Adjust padding as needed now that topBar is gone
+                        PaddingValues(
                             start = 16.dp,
                             end = 16.dp,
-                            top = 8.dp, // Adjusted top padding
+                            top = 8.dp,
                             bottom = 16.dp,
                         ),
                 ) {
@@ -212,12 +233,11 @@ fun CasesScreen(
                                 longPressedCase = null
                             },
                             onClick = {
-                                Log.d("CasesScreen", "onClick triggered for case: ${case.name}. longPressedCase is: ${longPressedCase?.name ?: "null"}")
+                                Log.d("CasesScreen", "onClick triggered for case: ${case.name}")
                                 if (longPressedCase == null) {
-                                    Log.d("CasesScreen", "Calling caseViewModel.selectCase for: ${case.name}")
                                     caseViewModel.selectCase(case)
                                 } else {
-                                    Log.d("CasesScreen", "onClick: longPressedCase was not null (${longPressedCase?.name}), setting it to null instead of selecting.")
+                                    // If a context menu is open, tapping elsewhere closes it.
                                     longPressedCase = null
                                 }
                             },
@@ -228,12 +248,13 @@ fun CasesScreen(
         }
     }
 
+    // --- Dialogs ---
+
     if (showDeleteConfirmDialog && longPressedCase != null) {
         val deleteText = stringResource(R.string.delete)
         val cancelText = stringResource(R.string.cancel)
         AzAlertDialog(
             onDismissRequest = {
-                Log.d("CasesScreen", "Delete dialog dismissed, clearing longPressedCase.")
                 showDeleteConfirmDialog = false
                 longPressedCase = null
             },
@@ -242,7 +263,6 @@ fun CasesScreen(
             confirmButton = {
                 AzButton(
                     onClick = {
-                        Log.d("CasesScreen", "Delete dialog confirmed, clearing longPressedCase.")
                         longPressedCase?.let { caseViewModel.deleteCaseWithRepository(it) }
                         showDeleteConfirmDialog = false
                         longPressedCase = null
@@ -253,7 +273,6 @@ fun CasesScreen(
             dismissButton = {
                 AzButton(
                     onClick = {
-                        Log.d("CasesScreen", "Delete dialog cancel button, clearing longPressedCase.")
                         showDeleteConfirmDialog = false
                         longPressedCase = null
                     },
@@ -272,6 +291,10 @@ fun CasesScreen(
     }
 }
 
+/**
+ * Composable representing a single case item in the list.
+ * Supports tap selection and long-press context menu.
+ */
 @Composable
 fun CaseItem(
     case: Case,
@@ -299,6 +322,7 @@ fun CaseItem(
             Modifier
                 .fillMaxWidth()
                 .padding(vertical = 4.dp)
+                // Use pointerInput for robust gesture detection (tap vs long press).
                 .pointerInput(Unit) {
                     detectTapGestures(
                         onLongPress = { onLongPress(case) },
@@ -321,6 +345,7 @@ fun CaseItem(
                     textAlign = TextAlign.End,
                 )
             }
+            // Context menu actions shown only on long press.
             if (isLongPressed) {
                 IconButton(onClick = onDelete) {
                     Icon(
@@ -344,8 +369,3 @@ fun CaseItem(
         }
     }
 }
-
-// Placeholder for new string resources that would be added to strings.xml
-// R.string.no_cases_match_search = "No cases match your search."
-// R.string.no_cases_found_line1 = "No cases found."
-// R.string.no_cases_found_line2 = "Create a new case or open an existing one."

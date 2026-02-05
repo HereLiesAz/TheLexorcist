@@ -8,23 +8,52 @@ This document describes the data storage strategy and file formats used in The L
 
 The application follows a **local-first** data management strategy. This is a core principle that must be respected in all development.
 
--   **Primary Storage:** All user data, including case information and evidence, is stored in a single spreadsheet file named `lexorcist_data.xlsx` located within the application's folder.
+-   **Primary Storage:** All user data, including case information, evidence, and exhibits, is stored in a single spreadsheet file named `lexorcist_data.xlsx` located within the application's private storage directory (or a user-configured location).
+-   **Service:** The `LocalFileStorageService` is the single source of truth for reading and writing to this file. It handles all CRUD operations.
 -   **Offline Functionality:** This approach ensures that the app is always fully functional, even when there is no internet connectivity.
 -   **Synchronization:**
-    *   Upon loading, the app **must** attempt to synchronize with the configured cloud service to ensure it is using the most recent saved state.
-    *   Synchronization must also be attempted whenever the application is closed.
+    *   Upon loading, the app attempts to synchronize with the configured cloud service (Google Drive, Dropbox, OneDrive) via `SyncManager` to ensure it is using the most recent saved state.
+    *   Synchronization is also attempted whenever the application is closed or significant changes are made.
+
+---
+
+## Security Measures
+
+The Data Layer implements strict security controls to prevent common vulnerabilities associated with file handling and spreadsheet manipulation.
+
+### Path Sanitization
+To prevent **Path Traversal** attacks, where a malicious file name could overwrite critical system files:
+*   All file names and directory names derived from user input (e.g., Case IDs, file attachments) are sanitized.
+*   Only alphanumeric characters, dashes (`-`), and underscores (`_`) are allowed in path segments.
+*   The `LocalFileStorageService.sanitizeSafePathSegment` function enforces this rule.
+
+### Formula Injection Prevention
+To prevent **CSV/Formula Injection** attacks, where malicious cell data executes code when opened in Excel/Sheets:
+*   All user-controlled string inputs written to the spreadsheet are sanitized using `SpreadsheetUtils.sanitizeForSpreadsheet`.
+*   Any string starting with `=`, `+`, `-`, or `@` is prepended with a single quote (`'`), forcing the spreadsheet application to treat it as a string literal rather than an executable formula.
+
+### Encrypted Storage
+*   Sensitive authentication tokens (e.g., for Dropbox, OneDrive) and user preferences are stored in **EncryptedSharedPreferences**, ensuring they are encrypted at rest.
 
 ---
 
 ## Data File Formats
 
-The application's primary data catalogs have been consolidated into a series of CSV files located in the `app/src/main/assets/` directory. These files serve as the new single source of truth for catalog data.
+### Core Database (`lexorcist_data.xlsx`)
+This Excel file contains multiple sheets acting as database tables:
+*   **Cases**: Metadata for each legal case.
+*   **Evidence**: All evidence items associated with cases.
+*   **Exhibits**: Definitions of exhibits grouping evidence.
+*   **Allegations**: Specific allegations associated with cases.
+*   **TranscriptEdits**: History of edits made to audio transcripts.
 
--   **`allegations.csv`**: The master list of all possible legal allegations.
--   **`exhibits.csv`**: The master list of all exhibit types, their descriptions, and their mapping to allegations via `applicable_allegation_ids`.
--   **`jurisdictions.csv`**: A comprehensive list of all courts, used for populating dropdown menus.
--   **`default_scripts.csv`**: The default scripts that are available in the Script Builder.
--   **`default_templates.csv`**: The default templates that are available on the Templates screen.
+### Assets
+The application's static data catalogs are located in `app/src/main/assets/`:
+-   **`allegations.csv`**: Master list of legal allegations.
+-   **`exhibits.csv`**: Master list of exhibit types.
+-   **`jurisdictions.csv`**: List of courts.
+-   **`default_scripts.csv`**: Default automation scripts.
+-   **`default_templates.csv`**: Default document templates.
 
 ---
 
