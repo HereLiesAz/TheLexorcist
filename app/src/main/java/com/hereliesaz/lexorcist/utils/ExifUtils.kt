@@ -5,7 +5,17 @@ import android.net.Uri
 import androidx.exifinterface.media.ExifInterface
 import java.io.IOException
 
+/**
+ * Utility class for extracting EXIF metadata from media files.
+ */
 object ExifUtils {
+    /**
+     * Extracts the original creation date from the image metadata.
+     *
+     * @param context The application context.
+     * @param uri The URI of the image file.
+     * @return The timestamp in milliseconds, or null if not found or on error.
+     */
     fun getExifDate(context: Context, uri: Uri): Long? {
         return try {
             context.contentResolver.openInputStream(uri)?.use { inputStream ->
@@ -20,6 +30,13 @@ object ExifUtils {
         }
     }
 
+    /**
+     * Extracts a set of common EXIF tags from the image metadata.
+     *
+     * @param context The application context.
+     * @param uri The URI of the image file.
+     * @return A map of EXIF tag names to their values.
+     */
     fun getExifData(context: Context, uri: Uri): Map<String, String> {
         val exifData = mutableMapOf<String, String>()
         try {
@@ -42,11 +59,18 @@ object ExifUtils {
                 }
             }
         } catch (e: IOException) {
-            // Handle exception
+            // Log error or ignore
         }
         return exifData
     }
 
+    /**
+     * Retrieves the file size of the content at the given URI.
+     *
+     * @param context The application context.
+     * @param uri The URI of the file.
+     * @return The file size in bytes, or 0 if not determined.
+     */
     fun getFileSize(context: Context, uri: Uri): Long {
         return try {
             context.contentResolver.openFileDescriptor(uri, "r")?.use {

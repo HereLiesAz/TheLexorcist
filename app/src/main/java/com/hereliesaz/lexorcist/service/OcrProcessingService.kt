@@ -27,6 +27,15 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import androidx.core.net.toUri
 
+/**
+ * Service responsible for Optical Character Recognition (OCR) on images.
+ *
+ * This service orchestrates the pipeline of:
+ * 1. Extracting text from an image URI using Google MLKit.
+ * 2. Creating an [Evidence] object with the extracted text and metadata.
+ * 3. Saving the evidence to the local database/spreadsheet.
+ * 4. Automatically running any "active" user scripts against the new evidence.
+ */
 @Singleton
 class OcrProcessingService
 @Inject
@@ -39,17 +48,28 @@ constructor(
     private val logService: LogService,
     private val storageService: com.hereliesaz.lexorcist.data.StorageService,
 ) {
+    /**
+     * Performs OCR on an image located at the given URI.
+     *
+     * @param context The application context.
+     * @param uri The URI of the image to process (content:// or file://).
+     * @return The extracted text as a String.
+     */
     private suspend fun recognizeTextFromUri(
         context: Context,
         uri: Uri,
     ): String {
+        // Initialize MLKit Text Recognizer with default options (Latin script).
         val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
         try {
+            // suspendCancellableCoroutine converts the callback-based MLKit API into a coroutine-suspending function.
             return suspendCancellableCoroutine { continuation ->
+                // Ensure the recognizer is closed if the coroutine is cancelled.
                 continuation.invokeOnCancellation { recognizer.close() }
                 val image: InputImage
                 var inputStream: InputStream? = null
                 try {
+                    // Handle different URI schemes to get an InputStream.
                     when (uri.scheme) {
                         "content" -> {
                             inputStream = context.contentResolver.openInputStream(uri)
@@ -79,7 +99,8 @@ constructor(
                         continuation.resumeWithException(RuntimeException("Failed to decode bitmap from URI: $uri"))
                         return@suspendCancellableCoroutine
                     }
-                    image = InputImage.fromBitmap(bitmap, 0) // Using 0 rotation for now
+                    // Create MLKit InputImage. Rotation is set to 0 as we assume correct orientation or don't handle it yet.
+                    image = InputImage.fromBitmap(bitmap, 0)
                 } catch (e: Exception) {
                     Log.e("OcrProcessingService", "Error creating InputImage from URI: $uri", e)
                     continuation.resumeWithException(e)
@@ -88,6 +109,7 @@ constructor(
                     inputStream?.close()
                 }
 
+                // Process the image asynchronously.
                 recognizer
                     .process(image)
                     .addOnSuccessListener { visionText ->
@@ -102,6 +124,10 @@ constructor(
         }
     }
 
+    /**
+     * Processes a single video frame as an image.
+     * Called by [VideoProcessingWorker] or similar services.
+     */
     suspend fun processImageFrame(
         uri: Uri,
         context: Context,
@@ -120,6 +146,7 @@ constructor(
             }
         logService.addLog("Frame recognition complete. Found ${ocrText.length} characters.")
 
+        // Heuristic extraction of entities and dates.
         val entities = DataParser.tagData(ocrText)
         val documentDate =
             ExifUtils.getExifDate(context, uri)
@@ -152,6 +179,7 @@ constructor(
         logService.addLog("Saving frame evidence...")
         val savedEvidence = evidenceRepository.addEvidence(initialEvidence)
 
+        // If saved successfully, run active scripts on this new evidence.
         return savedEvidence?.let { evidence ->
             logService.addLog("Frame evidence saved with ID: ${evidence.id}. Applying scripts...")
             val allScripts = scriptRepository.getScripts()
@@ -199,6 +227,12 @@ constructor(
         }
     }
 
+    /**
+     * Main entry point for processing an image.
+     * Uploads the file, runs OCR, extracts metadata, saves evidence, and runs scripts.
+     *
+     * @param onProgress Callback to report processing status and percentage.
+     */
     suspend fun processImage(
         uri: Uri,
         context: Context,
@@ -210,6 +244,7 @@ constructor(
         logService.addLog("Starting image processing for URI: $uri")
         onProgress(ProcessingState.InProgress(0.0f))
 
+        // Step 1: Upload file to local storage (sanitized).
         logService.addLog("Uploading image to raw evidence folder...")
         onProgress(ProcessingState.InProgress(0.1f))
         val mimeType = context.contentResolver.getType(uri) ?: "image/jpeg"
@@ -231,7 +266,6 @@ constructor(
                 Pair(null, statusMessage)
             }
             is Result.Loading -> {
-                // This should ideally not happen if the suspending function is designed correctly
                 statusMessage = "Image upload is still in progress."
                 logService.addLog(statusMessage, LogLevel.INFO)
                 onProgress(ProcessingState.Failure(statusMessage))
@@ -242,6 +276,7 @@ constructor(
                 logService.addLog("Image uploaded to: $newUri")
                 onProgress(ProcessingState.InProgress(0.25f))
 
+                // Step 2: Run OCR.
                 val ocrText =
                     try {
                         recognizeTextFromUri(context, newUri)
@@ -256,6 +291,7 @@ constructor(
                 logService.addLog("Text recognition complete. Found ${ocrText.length} characters.")
                 onProgress(ProcessingState.InProgress(0.5f))
 
+                // Step 3: Extract Metadata & create Evidence object.
                 val entities = DataParser.tagData(ocrText)
                 val documentDate = ExifUtils.getExifDate(context, newUri)
                     ?: DataParser.parseDates(ocrText).firstOrNull()
@@ -292,6 +328,7 @@ constructor(
                 onProgress(ProcessingState.InProgress(0.7f))
                 val savedEvidence = evidenceRepository.addEvidence(initialEvidence)
 
+                // Step 4: Run Active Scripts.
                 savedEvidence?.let { evidence ->
                     logService.addLog("Evidence saved with ID: ${evidence.id}. Applying scripts...")
                     onProgress(ProcessingState.InProgress(0.8f))
@@ -299,6 +336,7 @@ constructor(
                     val allScripts = scriptRepository.getScripts()
                     val activeScriptIds = activeScriptRepository.activeScriptIds.value
                     val activeScripts = allScripts.filter { activeScriptIds.contains(it.id) }
+                    // Preserve order of script execution.
                     val sortedActiveScripts = activeScripts.sortedBy { script -> activeScriptIds.indexOf(script.id) }
 
                     var evidenceToUpdate = evidence
@@ -312,7 +350,6 @@ constructor(
                                 val combinedTags: List<String> = (currentTags + newTags).distinct()
                                 evidenceToUpdate = evidenceToUpdate.copy(
                                     tags = combinedTags,
-                                    // Potentially update other fields here if the script supports it
                                 )
                                 scriptStateRepository.addScriptState(evidenceToUpdate.id, script.id)
                                 logService.addLog("Script '${script.name}' finished. Added tags: ${newTags.joinToString(", ")}")
@@ -328,7 +365,6 @@ constructor(
                                 Log.w("OcrProcessingService", statusMessage, scriptResult.exception)
                             }
                             is Result.Loading -> {
-                                // This case might not be relevant for synchronous script execution
                                 logService.addLog("Script '${script.name}' is loading...", LogLevel.INFO)
                             }
                         }
@@ -344,7 +380,6 @@ constructor(
                     return Pair(evidenceToUpdate, statusMessage)
                 }
 
-                // This block is reached if savedEvidence is null
                 statusMessage = "Image processed but failed to save evidence."
                 logService.addLog(statusMessage, LogLevel.ERROR)
                 onProgress(ProcessingState.Failure(statusMessage))

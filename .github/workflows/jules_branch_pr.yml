@@ -13,7 +13,7 @@ jobs:
       issues: write
     steps:
       - name: Invoke Jules
-        uses: google-labs-code/jules-invoke@v1
+        uses: google-labs-code/jules-invoke@main
         with:
           prompt: |
             A new branch '${{ github.event.ref }}' has been created.
