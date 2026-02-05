@@ -18,8 +18,11 @@ This document provides detailed descriptions and requirements for the various sc
 
 ## Cases Screen (`CasesScreen.kt`)
 
--   **Interaction:** When a user taps a case in the list, it must be visually highlighted (e.g., by changing its background color) to indicate selection.
--   **Functionality:** Selecting a case should load all its associated data, including evidence, parsed text, selected allegations, templates, and scripts, restoring all screens to their most recent state for that case.
+-   **Layout:** Displays a list of cases. Includes a Search Bar and a Floating Action Button (FAB) to create new cases.
+-   **Empty State:** If no cases exist (and no search query is active), a call-to-action button to create a new case is displayed.
+-   **Interaction:**
+    *   **Tap:** Selects a case, loading its data (Evidence, Allegations, etc.) and navigating to the case detail view.
+    *   **Long-Press:** Activates a context mode for the selected case, revealing "Delete" and "Archive" options.
 
 ---
 
@@ -39,11 +42,12 @@ This document provides detailed descriptions and requirements for the various sc
 
 ## Review Screen (`ReviewScreen.kt`)
 
--   **Layout:** The screen should feature three primary action buttons: "Automatic Cleanup", "Paperwork", and "Finalize". These must be `AzButton` components.
--   **Functionality:**
-    *   **Automatic Cleanup:** Initiates a process to clean up evidence, such as merging sequential screenshots of a conversation or identifying duplicate files.
-    *   **Paperwork:** Generates all necessary legal documents for the case's exhibits using the user's selected templates.
-    *   **Finalize:** Opens a dialog allowing the user to select which case files to include in a final archive, which can be exported as a `.zip` or a `.lex` file (a renamed `.zip` for easy import back into the app).
+-   **Layout:** The screen layout adapts based on screen size, typically offering a multi-pane view for Allegations and Evidence.
+-   **Action Buttons:** The screen features three primary action buttons at the bottom:
+    *   **Organize:** Initiates the cleanup scan (duplicates, image series).
+    *   **Generate:** Opens a dialog to generate legal documents based on templates.
+    *   **Finalize:** Opens a dialog to package selected case files into an archive (`.zip` or `.lex`) for export.
+-   **Functionality:** Users can review evidence, toggle selection, edit metadata, and delete items.
 
 ---
 
@@ -62,9 +66,13 @@ This document provides detailed descriptions and requirements for the various sc
 ## Templates Screen (`TemplatesScreen.kt`)
 
 -   **Interaction:** Tapping a `TemplateItem` card must open a full-screen `TemplatePreviewDialog` that displays the template's content in a `WebView`.
+-   **Security:** The `WebView` is configured to disable JavaScript and file access for security.
 
 ---
 
 ## Timeline Screen (`TimelineScreen.kt`)
 
--   **Empty State:** If there is no evidence to display, the screen must still show the "Timeline" title and a placeholder extended event to demonstrate to the user what the screen is for and what to expect.
+-   **Layout:** Displays evidence items in a chronological vertical timeline using the `JetLime` library.
+-   **Sorting:** Items are sorted by their `documentDate`.
+-   **Empty State:** If there is no evidence to display, the screen shows a placeholder timeline event to demonstrate functionality.
+-   **Performance:** The screen uses stable keys and `remember` blocks to optimize list rendering and avoid unnecessary recompositions.

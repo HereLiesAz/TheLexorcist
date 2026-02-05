@@ -2,6 +2,7 @@
 
 This directory contains the documentation for The Lexorcist application, broken down into logical sections.
 
+- [**Architecture (`ARCHITECTURE.md`)**](./ARCHITECTURE.md): A high-level technical overview of the application's layers, technologies, and data flow.
 - [**Authentication (`auth.md`)**](./auth.md): Setup guides for Google and Outlook APIs.
 - [**Screens (`screens.md`)**](./screens.md): Detailed descriptions of each application screen.
 - [**Workflow (`workflow.md`)**](./workflow.md): The core logic and user workflow.

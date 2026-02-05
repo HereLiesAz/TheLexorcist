@@ -21,6 +21,10 @@ class CloudStorageService @Inject constructor(
         return localFileStorageService.getAllCases()
     }
 
+    override suspend fun getCaseBySpreadsheetId(spreadsheetId: String): Result<Case?> {
+        return localFileStorageService.getCaseBySpreadsheetId(spreadsheetId)
+    }
+
     override suspend fun createCase(case: Case): Result<Case> {
         return localFileStorageService.createCase(case)
     }

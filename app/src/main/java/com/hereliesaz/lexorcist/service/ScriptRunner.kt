@@ -13,20 +13,35 @@ import org.mozilla.javascript.ScriptableObject
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Service responsible for executing user-defined JavaScript code safely.
+ *
+ * This service uses the Mozilla Rhino engine to run scripts. It enforces a strict security sandbox
+ * to prevent malicious code from accessing sensitive system resources or Java classes.
+ */
 @Singleton
 class ScriptRunner @Inject constructor(
     private val generativeAIService: GenerativeAIService,
     private val googleApiService: GoogleApiService,
     private val semanticService: SemanticService
 ) {
+    /**
+     * Exception thrown when script execution fails.
+     */
     class ScriptExecutionException(
         message: String,
         cause: Throwable,
     ) : Exception(message, cause)
 
+    /**
+     * Bridge class to expose Google API functionality to the JavaScript environment.
+     * Methods in this class are callable from JS via `lex.google`.
+     */
     inner class GoogleApi {
         @Suppress("unused") // Used by Rhino
         fun runAppsScript(scriptId: String, functionName: String, parameters: Array<Any>): Any? {
+            // runBlocking is used here because Rhino's execution model is synchronous,
+            // but our internal API is suspending.
             return runBlocking {
                 when (val result = googleApiService.runGoogleAppsScript(scriptId, functionName, parameters.toList())) {
                     is Result.Success -> result.data
@@ -38,6 +53,10 @@ class ScriptRunner @Inject constructor(
         }
     }
 
+    /**
+     * Bridge class to expose Generative AI functionality to the JavaScript environment.
+     * Methods in this class are callable from JS via `lex.ai`.
+     */
     inner class GenerativeAIApi {
         @Suppress("unused") // Used by Rhino
         fun generateContent(prompt: String): String {
@@ -47,31 +66,51 @@ class ScriptRunner @Inject constructor(
         }
     }
 
+    /**
+     * Executes a script against a specific piece of evidence.
+     *
+     * @param script The JavaScript source code.
+     * @param evidence The [Evidence] object to be processed/analyzed.
+     * @return A [Result] containing the [ScriptResult] (tags, notes, etc.) or an error.
+     */
     fun runScript(
         script: String,
         evidence: Evidence
     ): Result<ScriptResult> {
         val rhino = Context.enter()
+        // IMPORTANT: optimizationLevel = -1 is required for Android compatibility.
+        // Higher levels use dynamic bytecode generation which is not supported by Dalvik/ART.
         @Suppress("deprecation")
-        rhino.optimizationLevel = -1 // Necessary for Android compatibility
-        rhino.setClassShutter { false } // Sandbox: Block all Java class access
+        rhino.optimizationLevel = -1
+
+        // SECURITY SANDBOX:
+        // This ClassShutter prevents the script from accessing ANY Java classes (e.g., java.io.File, java.lang.System).
+        // Returning false blocks the access.
+        rhino.setClassShutter { false }
+
         try {
             val scope: Scriptable = rhino.initStandardObjects()
             val scriptResult = ScriptResult()
 
             // --- Modern API (`lex` object) ---
+            // Construct the `lex` global object and its sub-namespaces (`ai`, `google`, `local`).
             val lexObject = rhino.newObject(scope)
             ScriptableObject.putProperty(scope, "lex", lexObject)
+
             val aiObject = rhino.newObject(scope)
             ScriptableObject.putProperty(lexObject, "ai", aiObject)
             ScriptableObject.putProperty(aiObject, "generate", Context.javaToJS(GenerativeAIApi(), scope))
             ScriptableObject.putProperty(aiObject, "local", Context.javaToJS(semanticService, scope))
+
             val googleApiObject = rhino.newObject(scope)
             ScriptableObject.putProperty(lexObject, "google", googleApiObject)
             ScriptableObject.putProperty(googleApiObject, "runAppsScript", Context.javaToJS(GoogleApi(), scope))
+
+            // Expose a direct `tags` list for convenience.
             ScriptableObject.putProperty(scope, "tags", Context.javaToJS(scriptResult.tags, scope))
 
             // --- Legacy API (Global Functions) ---
+            // Inject helper functions for backward compatibility with older scripts.
             ScriptableObject.putProperty(scope, "scriptResult", Context.javaToJS(scriptResult, scope))
             val legacyFunctionDefinitions = """
                 function addTag(tag) { scriptResult.tags.add(tag); }
@@ -82,7 +121,10 @@ class ScriptRunner @Inject constructor(
             rhino.evaluateString(scope, legacyFunctionDefinitions, "LegacyAPISetup", 1, null)
 
             // --- Context & Execution ---
+            // Inject the evidence object itself.
             ScriptableObject.putProperty(scope, "evidence", Context.javaToJS(evidence, scope))
+
+            // Execute the user's script.
             rhino.evaluateString(scope, script, "JavaScript<ScriptRunner>", 1, null)
 
             return Result.Success(scriptResult)
@@ -96,6 +138,13 @@ class ScriptRunner @Inject constructor(
         }
     }
 
+    /**
+     * Executes a generic script with a custom set of context objects.
+     * Useful for background tasks or utility scripts that don't operate on a specific evidence item.
+     *
+     * @param script The JavaScript source code.
+     * @param contextObjects A map of objects to expose to the script scope (key = variable name).
+     */
     suspend fun runGenericScript(
         script: String,
         contextObjects: Map<String, Any>

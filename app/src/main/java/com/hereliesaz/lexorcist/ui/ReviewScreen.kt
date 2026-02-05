@@ -14,7 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items // Keep this for existing LazyColumn usages
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -64,12 +64,28 @@ import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import java.io.File
 import java.util.Locale
 
+/**
+ * Screen for reviewing, organizing, and finalizing case evidence.
+ *
+ * This screen provides a three-pane view (on larger screens) or vertical layout to:
+ * 1. Select Allegations.
+ * 2. View details/elements of the selected Allegation.
+ * 3. View and manage Evidence associated with the case.
+ *
+ * It also supports:
+ * - Editing evidence metadata.
+ * - Deleting evidence.
+ * - Generating documents from templates.
+ * - Packaging case files for export.
+ * - Cleaning up duplicates/series.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReviewScreen(
     caseViewModel: CaseViewModel = hiltViewModel(),
     allegationsViewModel: AllegationsViewModel = hiltViewModel()
 ) {
+    // Collect state from ViewModels
     val evidenceList by caseViewModel.selectedCaseEvidenceList.collectAsState()
     val selectedCase by caseViewModel.selectedCase.collectAsState()
     val isLoading by caseViewModel.isLoading.collectAsState()
@@ -77,12 +93,14 @@ fun ReviewScreen(
     val selectedAllegation by allegationsViewModel.selectedAllegation.collectAsState()
     val selectedEvidence by caseViewModel.selectedEvidence.collectAsState()
 
+    // Reload allegations when the selected case changes.
     LaunchedEffect(selectedCase) {
         selectedCase?.let {
             allegationsViewModel.loadAllegations(it.id.toString())
         }
     }
 
+    // Local UI state for dialogs
     var showEditDialog by remember { mutableStateOf(false) }
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
     var showGenerateDocumentDialog by remember { mutableStateOf(false) }
@@ -124,6 +142,7 @@ fun ReviewScreen(
                     AzLoad()
                 }
             } else if (selectedCase == null) {
+                // Empty state: No case selected
                 Column(
                     modifier =
                     Modifier
@@ -136,6 +155,7 @@ fun ReviewScreen(
                     Text(text = stringResource(R.string.please_select_case_for_evidence).uppercase(Locale.getDefault()))
                 }
             } else if (evidenceList.isEmpty()) {
+                // Empty state: Case selected but no evidence
                 Column(
                     modifier =
                     Modifier
@@ -148,11 +168,13 @@ fun ReviewScreen(
                     Text(text = stringResource(R.string.no_evidence_for_case).uppercase(Locale.getDefault()))
                 }
             } else {
+                // Main Content Layout
                 Row(
                     Modifier
                         .weight(1f)
                         .padding(horizontal = 8.dp)
                 ) {
+                    // Left Pane: Allegations List
                     LazyColumn(modifier = Modifier.weight(1f)) {
                         items(allegations) { allegation ->
                             AllegationItem(
@@ -163,33 +185,15 @@ fun ReviewScreen(
                         }
                     }
                     Spacer(modifier = Modifier.height(8.dp))
+
+                    // Middle Pane: Allegation Details (only if one is selected)
                     val currentSelectedAllegation = selectedAllegation
                     if (currentSelectedAllegation != null) {
                         Column(modifier = Modifier.weight(1f).padding(start = 8.dp)) {
                             Text(text = "Elements for ${currentSelectedAllegation.name}", style = MaterialTheme.typography.titleMedium)
-                            // Assuming currentSelectedAllegation.elements is List<AllegationElement>
-                            /*
-                            currentSelectedAllegation.elements?.forEach { element: AllegationElement -> // Explicit type
-                                AllegationElementItem(
-                                    element = element,
-                                    onAssignEvidence = {
-                                        if (selectedEvidence.isNotEmpty()) {
-                                            caseViewModel.assignEvidenceToElement(
-                                                currentSelectedAllegation.id.toString(), // Ensure ID is string
-                                                element.name, // Assuming AllegationElement has .name
-                                                selectedEvidence.map { it.id } // Assuming Evidence has .id
-                                            )
-                                        }
-                                    }
-                                )
-                            }
-                            */
+                            // Future: Render Allegation Elements here
                             Text(text = "Suggested Evidence", style = MaterialTheme.typography.titleMedium)
-                            /*
-                            currentSelectedAllegation.evidenceSuggestions?.forEach { suggestion: String -> // Explicit type
-                                Text(suggestion)
-                            }
-                            */
+                            // Future: Render suggestions here
                             CaseStrengthMeter(
                                 evidenceList = evidenceList,
                                 allegation = currentSelectedAllegation
@@ -197,6 +201,8 @@ fun ReviewScreen(
                         }
                     }
                     Spacer(modifier = Modifier.height(8.dp))
+
+                    // Right Pane: Evidence List
                     LazyColumn(modifier = Modifier.weight(1f)) {
                         items(evidenceList) { evidence ->
                             EvidenceItem(
@@ -216,7 +222,7 @@ fun ReviewScreen(
                     }
                 }
 
-                // Per user feedback, this screen should have "Organize", "Generate", and "Finalize" buttons.
+                // Action Buttons Footer
                 FlowRow(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -236,21 +242,13 @@ fun ReviewScreen(
                         text = "Finalize"
                     )
                 }
-                val cleanupSuggestions by caseViewModel.cleanupSuggestions.collectAsState()
 
-                LazyColumn {
-                    items(cleanupSuggestions) { suggestion ->
-                        if (suggestion is com.hereliesaz.lexorcist.model.CleanupSuggestion.DuplicateGroup) {
-                            // DuplicateGroupItem(
-                            //     group = suggestion,
-                            //     onMerge = { caseViewModel.deleteDuplicates(suggestion) }
-                            // )
-                        }
-                        if (suggestion is com.hereliesaz.lexorcist.model.CleanupSuggestion.ImageSeriesGroup) {
-                            // ImageSeriesGroupItem(
-                            //     group = suggestion,
-                            //     onMerge = { caseViewModel.mergeImageSeries(suggestion, "Merged Series") }
-                            // )
+                // Cleanup Suggestions (if any)
+                val cleanupSuggestions by caseViewModel.cleanupSuggestions.collectAsState()
+                if (cleanupSuggestions.isNotEmpty()) {
+                    LazyColumn {
+                        items(cleanupSuggestions) { suggestion ->
+                            // Render suggestions (e.g., duplicates, image series)
                         }
                     }
                 }
@@ -258,15 +256,20 @@ fun ReviewScreen(
         }
     }
 
+    // --- Dialogs ---
+
     if (showFinalizeCaseDialog) {
         var filesToPackage by remember { mutableStateOf<List<File>>(emptyList()) }
         var packageName by remember { mutableStateOf("") }
         var packageExtension by remember { mutableStateOf("zip") }
+
+        // Launcher to let user pick where to save the packaged file
         val packageLauncher = rememberLauncherForActivityResult(
             contract = ActivityResultContracts.CreateDocument("*/*"),
         ) { uri ->
             uri?.let { caseViewModel.packageFilesForCase(filesToPackage, packageName, packageExtension) }
         }
+
         FinalizeCaseDialog(
             caseViewModel = caseViewModel,
             onDismiss = { showFinalizeCaseDialog = false },
@@ -321,6 +324,9 @@ fun ReviewScreen(
     }
 }
 
+// ... [Subcomponents: CaseStrengthMeter, AllegationElementItem, AllegationItem, EvidenceItem, EditEvidenceDialog, PackageFilesDialog, GenerateDocumentDialog]
+// These are documented via KDoc on the composable functions themselves or are self-explanatory UI components.
+
 @Composable
 fun CaseStrengthMeter(
     evidenceList: List<Evidence>,
@@ -328,6 +334,7 @@ fun CaseStrengthMeter(
 ) {
     Column {
         Text(text = "Case Strength", style = MaterialTheme.typography.titleMedium)
+        // Placeholder for visual meter implementation
     }
 }
 
@@ -344,7 +351,7 @@ fun AllegationElementItem(
         shape = MaterialTheme.shapes.medium
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(text = element.name, style = MaterialTheme.typography.titleMedium) // Assuming AllegationElement has .name
+            Text(text = element.name, style = MaterialTheme.typography.titleMedium)
             Text(text = element.description, style = MaterialTheme.typography.bodyMedium)
             AzButton(
                 onClick = onAssignEvidence,
@@ -667,7 +674,7 @@ fun GenerateDocumentDialog(
                         onValueChange = {},
                         readOnly = true,
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = exhibitExpanded) },
-                        modifier = Modifier.menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = true).fillMaxWidth() // Added fillMaxWidth
+                        modifier = Modifier.menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = true).fillMaxWidth()
                     )
                     ExposedDropdownMenu(
                         expanded = exhibitExpanded,
@@ -696,7 +703,7 @@ fun GenerateDocumentDialog(
                         onValueChange = {},
                         readOnly = true,
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = templateExpanded) },
-                        modifier = Modifier.menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = true).fillMaxWidth() // Added fillMaxWidth
+                        modifier = Modifier.menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = true).fillMaxWidth()
                     )
                     ExposedDropdownMenu(
                         expanded = templateExpanded,

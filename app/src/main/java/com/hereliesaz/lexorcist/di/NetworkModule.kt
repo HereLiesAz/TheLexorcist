@@ -7,19 +7,28 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
-import javax.inject.Singleton // Added for FirebaseAuth provider
+import javax.inject.Singleton
 
+/**
+ * Hilt module for providing network-related dependencies.
+ */
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
-    // GoogleApiService is not provided here because it requires a user's credential.
-    // It will be created in the AuthViewModel after the user signs in.
 
+    /**
+     * Provides the [FirebaseAuth] instance for Firebase-based authentication.
+     * Note: This project largely uses direct Google Identity Services, but Firebase is kept for legacy or specific feature support.
+     */
     @Provides
-    @Singleton // Added to ensure a single instance of FirebaseAuth
+    @Singleton
     fun provideFirebaseAuth(): FirebaseAuth = FirebaseAuth.getInstance()
 
+    /**
+     * Provides the IO [CoroutineDispatcher] for network and disk operations.
+     * Injected using the [@IODispatcher] qualifier.
+     */
     @Provides
-    @IODispatcher // Using the imported qualifier
+    @IODispatcher
     fun provideIODispatcher(): CoroutineDispatcher = Dispatchers.IO
 }
