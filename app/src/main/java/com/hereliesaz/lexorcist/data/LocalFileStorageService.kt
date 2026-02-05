@@ -380,6 +380,23 @@ class LocalFileStorageService @Inject constructor(
         }
     }
 
+    override suspend fun getCaseBySpreadsheetId(spreadsheetId: String): Result<Case?> = readFromSpreadsheet { workbook ->
+        val sheet = workbook.getSheet(CASES_SHEET_NAME) ?: return@readFromSpreadsheet null
+        val row = findRowById(sheet, spreadsheetId, CASES_HEADER.indexOf("ID")) ?: return@readFromSpreadsheet null
+
+        Case(
+            id = spreadsheetId.hashCode(),
+            spreadsheetId = spreadsheetId,
+            name = row.getCell(CASES_HEADER.indexOf("Name"))?.stringCellValue ?: "",
+            plaintiffs = row.getCell(CASES_HEADER.indexOf("Plaintiffs"))?.stringCellValue ?: "",
+            defendants = row.getCell(CASES_HEADER.indexOf("Defendants"))?.stringCellValue ?: "",
+            court = row.getCell(CASES_HEADER.indexOf("Court"))?.stringCellValue ?: "",
+            folderId = row.getCell(CASES_HEADER.indexOf("FolderID"))?.stringCellValue,
+            lastModifiedTime = getLongCellValueSafe(row.getCell(CASES_HEADER.indexOf("LastModified"))) ?: 0L,
+            isArchived = getBooleanCellValueSafe(row.getCell(CASES_HEADER.indexOf("IsArchived"))) ?: false
+        )
+    }
+
     override suspend fun getExhibitsForCase(caseSpreadsheetId: String): Result<List<Exhibit>> = readFromSpreadsheet { workbook ->
         val sheet = workbook.getSheet(EXHIBITS_SHEET_NAME) ?: return@readFromSpreadsheet emptyList()
         (1..sheet.lastRowNum).mapNotNull { i -> 
@@ -766,9 +783,9 @@ class LocalFileStorageService @Inject constructor(
 
             // Trigger video post-processing if applicable.
             if (mimeType.startsWith("video/")) {
-                val casesResult = getAllCases()
-                if (casesResult is Result.Success) {
-                    val caseDetails = casesResult.data.find { it.spreadsheetId == caseSpreadsheetId }
+                val caseResult = getCaseBySpreadsheetId(caseSpreadsheetId)
+                if (caseResult is Result.Success) {
+                    val caseDetails = caseResult.data
                     if (caseDetails != null) {
                         val workData = Data.Builder()
                             .putString(VideoProcessingWorker.KEY_VIDEO_URI, destinationFile.toUri().toString())

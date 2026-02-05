@@ -13,6 +13,7 @@ interface StorageService {
     // --- Case Management ---
 
     suspend fun getAllCases(): Result<List<Case>>
+    suspend fun getCaseBySpreadsheetId(spreadsheetId: String): Result<Case?>
     suspend fun createCase(case: Case): Result<Case>
     suspend fun updateCase(case: Case): Result<Unit>
     suspend fun deleteCase(case: Case): Result<Unit>
