@@ -1,7 +1,7 @@
 
 [versions]
 androidApplication = "8.13.1"
-aznavrail = "3.10"
+aznavrail = "3.16"
 browser = "1.9.0"
 datastorePreferences = "1.1.7"
 dropboxCoreSdk = "7.0.0"
@@ -171,7 +171,7 @@ androidx-compose-runtime-livedata = { group = "androidx.compose.runtime", name =
 androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation" }
 androidx-compose-runtime = { group = "androidx.compose.runtime", name = "runtime" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose" }
-coil-compose = { group = "io.coil-kt", name = "coil-compose" }
+coil-compose = { group = "io.coil-kt", name = "coil-compose", version = "2.7.0" }
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose" }
 itext7-core = { group = "com.itextpdf", name = "itext7-core", version.ref = "itext7Core" }
 apache-poi = { group = "org.apache.poi", name = "poi", version.ref = "poi" }

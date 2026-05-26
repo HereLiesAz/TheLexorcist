@@ -4,6 +4,7 @@ import android.app.Application
 import android.util.Log
 import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException
 import com.google.api.client.http.FileContent
+import com.google.api.client.http.HttpRequestInitializer
 import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.gson.GsonFactory
 import com.google.api.services.drive.Drive
@@ -61,11 +62,22 @@ class GoogleApiService @Inject constructor(
     }
 
     /**
+     * Wraps a credential (or null) with connect/read timeouts so network calls don't hang
+     * indefinitely on a stalled connection.
+     */
+    private fun withTimeouts(initializer: HttpRequestInitializer?): HttpRequestInitializer =
+        HttpRequestInitializer { request ->
+            initializer?.initialize(request)
+            request.connectTimeout = 30_000 // 30s
+            request.readTimeout = 60_000 // 60s
+        }
+
+    /**
      * Helper to build an authenticated Drive service client.
      */
     private fun getDriveService(): Drive? {
         return credentialHolder.credential?.let { cred ->
-            Drive.Builder(httpTransport, gsonFactory, cred)
+            Drive.Builder(httpTransport, gsonFactory, withTimeouts(cred))
                 .setApplicationName(applicationName)
                 .build()
         }
@@ -108,7 +120,7 @@ class GoogleApiService @Inject constructor(
 
     private fun getScriptService(): com.google.api.services.script.Script? {
         return credentialHolder.credential?.let { cred ->
-            com.google.api.services.script.Script.Builder(httpTransport, gsonFactory, cred)
+            com.google.api.services.script.Script.Builder(httpTransport, gsonFactory, withTimeouts(cred))
                 .setApplicationName(applicationName)
                 .build()
         }
@@ -118,14 +130,14 @@ class GoogleApiService @Inject constructor(
      * Returns a Sheets service instance without credentials, for accessing public/read-only sheets.
      */
     private fun getPublicSheetsService(): Sheets {
-        return Sheets.Builder(httpTransport, gsonFactory, null)
+        return Sheets.Builder(httpTransport, gsonFactory, withTimeouts(null))
             .setApplicationName(applicationName)
             .build()
     }
 
     private fun getSheetsService(): Sheets? {
         return credentialHolder.credential?.let { cred ->
-            Sheets.Builder(httpTransport, gsonFactory, cred)
+            Sheets.Builder(httpTransport, gsonFactory, withTimeouts(cred))
                 .setApplicationName(applicationName)
                 .build()
         }

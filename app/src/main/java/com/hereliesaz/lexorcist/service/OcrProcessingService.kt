@@ -1,6 +1,7 @@
 package com.hereliesaz.lexorcist.service
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.Log
@@ -17,7 +18,9 @@ import com.hereliesaz.lexorcist.model.ProcessingState
 import com.hereliesaz.lexorcist.utils.DataParser
 import com.hereliesaz.lexorcist.utils.ExifUtils
 import com.hereliesaz.lexorcist.utils.Result
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileInputStream
 import java.io.InputStream
@@ -55,10 +58,59 @@ constructor(
      * @param uri The URI of the image to process (content:// or file://).
      * @return The extracted text as a String.
      */
+    private fun openStream(context: Context, uri: Uri): InputStream {
+        return when (uri.scheme) {
+            "content" ->
+                context.contentResolver.openInputStream(uri)
+                    ?: throw java.io.FileNotFoundException("Failed to open InputStream for URI: $uri")
+            "file", null -> {
+                val path = uri.path ?: throw java.io.FileNotFoundException("URI path is null")
+                val file = File(path)
+                if (!file.exists()) throw java.io.FileNotFoundException("File not found at path: $path")
+                FileInputStream(file)
+            }
+            else -> throw IllegalArgumentException("Unsupported URI scheme: ${uri.scheme}")
+        }
+    }
+
+    /**
+     * Decodes a bitmap from the URI, downsampling so neither dimension exceeds [maxDimension].
+     * This caps memory use and prevents OutOfMemory errors on large document scans.
+     */
+    private fun decodeSampledBitmap(context: Context, uri: Uri, maxDimension: Int = 2048): Bitmap {
+        // First pass: read only the bounds.
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        openStream(context, uri).use { BitmapFactory.decodeStream(it, null, bounds) }
+
+        var sampleSize = 1
+        while (bounds.outHeight / sampleSize > maxDimension || bounds.outWidth / sampleSize > maxDimension) {
+            sampleSize *= 2
+        }
+
+        // Second pass: decode at the computed sample size.
+        val options = BitmapFactory.Options().apply { inSampleSize = sampleSize }
+        return openStream(context, uri).use { BitmapFactory.decodeStream(it, null, options) }
+            ?: throw RuntimeException("Failed to decode bitmap from URI: $uri")
+    }
+
     private suspend fun recognizeTextFromUri(
         context: Context,
         uri: Uri,
     ): String {
+        val bitmap = withContext(Dispatchers.IO) { decodeSampledBitmap(context, uri) }
+        return try {
+            recognizeTextFromBitmap(bitmap)
+        } finally {
+            // We own this bitmap; recognizeTextFromBitmap has finished with it by now.
+            bitmap.recycle()
+        }
+    }
+
+    /**
+     * Runs MLKit OCR on an already-decoded [Bitmap]. The caller retains ownership of the
+     * bitmap and is responsible for recycling it after this function returns.
+     */
+    suspend fun recognizeTextFromBitmap(bitmap: Bitmap): String {
         // Initialize MLKit Text Recognizer with default options (Latin script).
         val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
         try {
@@ -66,56 +118,14 @@ constructor(
             return suspendCancellableCoroutine { continuation ->
                 // Ensure the recognizer is closed if the coroutine is cancelled.
                 continuation.invokeOnCancellation { recognizer.close() }
-                val image: InputImage
-                var inputStream: InputStream? = null
-                try {
-                    // Handle different URI schemes to get an InputStream.
-                    when (uri.scheme) {
-                        "content" -> {
-                            inputStream = context.contentResolver.openInputStream(uri)
-                        }
-                        "file", null -> {
-                            uri.path?.let {
-                                val file = File(it)
-                                if (file.exists()) {
-                                    inputStream = FileInputStream(file)
-                                } else {
-                                    throw java.io.FileNotFoundException("File not found at path: $it")
-                                }
-                            } ?: throw java.io.FileNotFoundException("URI path is null")
-                        }
-                        else -> {
-                            throw IllegalArgumentException("Unsupported URI scheme: ${uri.scheme}")
-                        }
-                    }
-
-                    if (inputStream == null) {
-                        throw java.io.FileNotFoundException("Failed to open InputStream for URI: $uri")
-                    }
-
-                    val bitmap = BitmapFactory.decodeStream(inputStream)
-
-                    if (bitmap == null) {
-                        continuation.resumeWithException(RuntimeException("Failed to decode bitmap from URI: $uri"))
-                        return@suspendCancellableCoroutine
-                    }
-                    // Create MLKit InputImage. Rotation is set to 0 as we assume correct orientation or don't handle it yet.
-                    image = InputImage.fromBitmap(bitmap, 0)
-                } catch (e: Exception) {
-                    Log.e("OcrProcessingService", "Error creating InputImage from URI: $uri", e)
-                    continuation.resumeWithException(e)
-                    return@suspendCancellableCoroutine
-                } finally {
-                    inputStream?.close()
-                }
-
-                // Process the image asynchronously.
+                // Rotation is set to 0 as we assume correct orientation or don't handle it yet.
+                val image = InputImage.fromBitmap(bitmap, 0)
                 recognizer
                     .process(image)
                     .addOnSuccessListener { visionText ->
                         continuation.resume(visionText.text)
                     }.addOnFailureListener { e ->
-                        Log.e("OcrProcessingService", "Text recognition failed for URI: $uri", e)
+                        Log.e("OcrProcessingService", "Text recognition failed", e)
                         continuation.resumeWithException(e)
                     }
             }

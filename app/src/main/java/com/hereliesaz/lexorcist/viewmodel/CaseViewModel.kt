@@ -408,13 +408,19 @@ constructor(
 
         // Initialize storage location
         viewModelScope.launch {
-            val savedLocation = settingsManager.getStorageLocation()?.first()
-            if (savedLocation?.toString().isNullOrEmpty()) {
+            try {
+                // getStorageLocation() returns a String? path (not a Flow); use it directly.
+                val savedLocation = settingsManager.getStorageLocation()
+                if (savedLocation.isNullOrEmpty()) {
+                    _storageLocation.value = applicationContext.filesDir.absolutePath
+                    Log.i("CaseViewModel", "Storage location initialized to default: ${_storageLocation.value}")
+                } else {
+                    _storageLocation.value = savedLocation
+                    Log.i("CaseViewModel", "Storage location loaded from settings: $savedLocation")
+                }
+            } catch (e: Exception) {
                 _storageLocation.value = applicationContext.filesDir.absolutePath
-                Log.i("CaseViewModel", "Storage location initialized to default: ${_storageLocation.value}")
-            } else {
-                _storageLocation.value = savedLocation.toString()
-                Log.i("CaseViewModel", "Storage location loaded from settings: $savedLocation")
+                Log.e("CaseViewModel", "Failed to initialize storage location; using default", e)
             }
         }
 
@@ -457,13 +463,17 @@ constructor(
 
         // Restore last selected case on app launch
         viewModelScope.launch {
-            val lastSelectedCaseId = sharedPref.getString("last_selected_case_id", null)
-            if (lastSelectedCaseId != null) {
-                val allCases = caseRepository.cases.first()
-                val lastSelectedCase = allCases.find { it.spreadsheetId == lastSelectedCaseId }
-                if (lastSelectedCase != null) {
-                    selectCase(lastSelectedCase)
+            try {
+                val lastSelectedCaseId = sharedPref.getString("last_selected_case_id", null)
+                if (lastSelectedCaseId != null) {
+                    val allCases = caseRepository.cases.first()
+                    val lastSelectedCase = allCases.find { it.spreadsheetId == lastSelectedCaseId }
+                    if (lastSelectedCase != null) {
+                        selectCase(lastSelectedCase)
+                    }
                 }
+            } catch (e: Exception) {
+                Log.e("CaseViewModel", "Failed to restore last selected case", e)
             }
         }
     }
@@ -1515,14 +1525,19 @@ constructor(
                         group.evidence.forEach { evidence ->
                             applicationContext.contentResolver.openInputStream(android.net.Uri.parse(evidence.mediaUri))?.use { inputStream ->
                                 val bitmap = android.graphics.BitmapFactory.decodeStream(inputStream)
-                                val pageInfo = PdfDocument.PageInfo.Builder(bitmap.width, bitmap.height, 1).create()
-                                val page = pdfDocument.startPage(pageInfo)
-                                page.canvas.drawBitmap(bitmap, 0f, 0f, null)
-                                pdfDocument.finishPage(page)
-                                bitmap.recycle()
+                                if (bitmap != null) {
+                                    try {
+                                        val pageInfo = PdfDocument.PageInfo.Builder(bitmap.width, bitmap.height, 1).create()
+                                        val page = pdfDocument.startPage(pageInfo)
+                                        page.canvas.drawBitmap(bitmap, 0f, 0f, null)
+                                        pdfDocument.finishPage(page)
+                                    } finally {
+                                        bitmap.recycle()
+                                    }
+                                }
                             }
                         }
-                        pdfDocument.writeTo(FileOutputStream(pdfFile))
+                        FileOutputStream(pdfFile).use { pdfDocument.writeTo(it) }
                     } catch (e: Exception) {
                         Log.e("MergeSeries", "Error creating PDF", e)
                         // Return null to indicate failure
