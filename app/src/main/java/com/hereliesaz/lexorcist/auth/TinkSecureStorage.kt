@@ -2,6 +2,7 @@ package com.hereliesaz.lexorcist.auth
 
 import android.content.Context
 import android.util.Base64
+import android.util.Log
 import com.google.crypto.tink.Aead
 import com.google.crypto.tink.KeyTemplates
 import com.google.crypto.tink.aead.AeadConfig
@@ -30,12 +31,27 @@ constructor(
     init {
         AeadConfig.register()
         val keysetHandle =
-            AndroidKeysetManager.Builder()
-                .withSharedPref(context, KEYSET_NAME, KEYSET_PREFS_NAME)
-                .withKeyTemplate(KeyTemplates.get("AES256_GCM"))
-                .withMasterKeyUri(MASTER_KEY_URI)
-                .build()
-                .keysetHandle
+            try {
+                AndroidKeysetManager.Builder()
+                    .withSharedPref(context, KEYSET_NAME, KEYSET_PREFS_NAME)
+                    .withKeyTemplate(KeyTemplates.get("AES256_GCM"))
+                    .withMasterKeyUri(MASTER_KEY_URI)
+                    .build()
+                    .keysetHandle
+            } catch (e: Exception) {
+                // On some devices/custom ROMs the Android Keystore can throw or be reset/corrupted
+                // (KeyStoreException / GeneralSecurityException). This runs in a Hilt singleton at
+                // startup, so an unhandled exception would crash the app continuously. Discard the
+                // unreadable keyset and fall back to an unencrypted one to stay functional — no worse
+                // than the app's previous plaintext token storage on those edge-case devices.
+                Log.e(TAG, "Tink Keystore init failed; falling back to an unencrypted keyset.", e)
+                context.getSharedPreferences(KEYSET_PREFS_NAME, Context.MODE_PRIVATE).edit().clear().apply()
+                AndroidKeysetManager.Builder()
+                    .withSharedPref(context, KEYSET_NAME, KEYSET_PREFS_NAME)
+                    .withKeyTemplate(KeyTemplates.get("AES256_GCM"))
+                    .build()
+                    .keysetHandle
+            }
         aead = keysetHandle.getPrimitive(Aead::class.java)
     }
 
@@ -62,6 +78,7 @@ constructor(
     }
 
     companion object {
+        private const val TAG = "TinkSecureStorage"
         private const val PREFS_NAME = "lexorcist_secure_store"
         private const val KEYSET_PREFS_NAME = "lexorcist_tink_keyset_prefs"
         private const val KEYSET_NAME = "lexorcist_tink_keyset"

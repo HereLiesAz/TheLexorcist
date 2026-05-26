@@ -35,6 +35,17 @@ constructor(
 
     /** Persists the full OAuth credential (access + refresh token), encrypted at rest. */
     fun saveCredential(credential: DbxCredential) {
+        // Auth.getDbxCredential() reads AuthActivity's static result, which the SDK never clears,
+        // so MainActivity.onResume re-delivers the same credential on every foreground. Skip the
+        // redundant encrypt + disk write when it's unchanged, while still persisting a genuinely
+        // new credential (e.g. after the user re-authenticates).
+        val current = this.credential
+        if (current != null &&
+            current.accessToken == credential.accessToken &&
+            current.refreshToken == credential.refreshToken
+        ) {
+            return
+        }
         this.credential = credential
         secureStorage.putString(KEY_CREDENTIAL, DbxCredential.Writer.writeToString(credential))
         _isAuthenticated.value = true

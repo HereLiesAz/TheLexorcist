@@ -7,6 +7,7 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.mockito.Mockito.times
 import org.mockito.kotlin.any
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
@@ -57,6 +58,18 @@ class DropboxAuthManagerTest {
         verify(storage).remove(key)
         assertFalse(manager.isAuthenticated.value)
         assertNull(manager.getClient())
+    }
+
+    @Test
+    fun `saveCredential skips redundant write for an unchanged credential`() {
+        val storage = mock<TinkSecureStorage>()
+        whenever(storage.getString(key)).thenReturn(null)
+        val manager = DropboxAuthManager(requestConfig, storage)
+
+        manager.saveCredential(credential())
+        manager.saveCredential(credential()) // same access + refresh token (e.g. repeated onResume)
+
+        verify(storage, times(1)).putString(eq(key), any())
     }
 
     @Test
