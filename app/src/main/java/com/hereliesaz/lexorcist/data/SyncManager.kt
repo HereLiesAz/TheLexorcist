@@ -19,11 +19,9 @@ class SyncManager @Inject constructor(
 ) {
     private val storageDir: File by lazy {
         val customLocation = settingsManager.getStorageLocation()
-        val dir = if (customLocation != null) {
-            File(customLocation.toUri().path!!)
-        } else {
-            context.getExternalFilesDir(null) ?: context.filesDir
-        }
+        val dir = customLocation?.toUri()?.path?.let { File(it) }
+            ?: context.getExternalFilesDir(null)
+            ?: context.filesDir
         if (!dir.exists()) dir.mkdirs()
         dir
     }

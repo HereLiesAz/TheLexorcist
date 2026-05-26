@@ -2,6 +2,7 @@ package com.hereliesaz.lexorcist.data
 
 import android.app.Application
 import android.net.Uri
+import android.util.Log
 import com.hereliesaz.lexorcist.utils.EvidenceCacheManager
 import com.hereliesaz.lexorcist.utils.Result
 import kotlinx.coroutines.flow.Flow
@@ -20,6 +21,10 @@ constructor(
     private val evidenceCacheManager: EvidenceCacheManager,
     private val application: Application,
 ) : EvidenceRepository {
+    private companion object {
+        private const val TAG = "EvidenceRepositoryImpl"
+    }
+
     private val evidenceByCaseMap =
         mutableMapOf<String, MutableStateFlow<List<Evidence>>>()
 
@@ -49,8 +54,10 @@ constructor(
                 evidenceCacheManager.saveEvidence(caseId, result.data)
                 evidenceByCaseMap[spreadsheetId]?.value = result.data
             }
-            is Result.Error -> { /* Handle error */ }
-            is Result.UserRecoverableError -> { /* Handle error */ }
+            is Result.Error ->
+                Log.e(TAG, "Failed to refresh evidence for spreadsheet $spreadsheetId", result.exception)
+            is Result.UserRecoverableError ->
+                Log.w(TAG, "User-recoverable error refreshing evidence for spreadsheet $spreadsheetId", result.exception)
         }
     }
 
@@ -90,16 +97,20 @@ constructor(
     }
 
     override suspend fun updateEvidence(evidence: Evidence) {
-        when (localFileStorageService.updateEvidence(evidence.spreadsheetId, evidence)) {
+        when (val result = localFileStorageService.updateEvidence(evidence.spreadsheetId, evidence)) {
             is Result.Success<Unit> -> refreshEvidence(evidence.spreadsheetId, evidence.caseId)
-            else -> { /* Handle error */ }
+            is Result.Error -> Log.e(TAG, "Failed to update evidence ${evidence.id}", result.exception)
+            is Result.UserRecoverableError -> Log.w(TAG, "User-recoverable error updating evidence ${evidence.id}", result.exception)
+            is Result.Loading -> { /* No terminal state to handle */ }
         }
     }
 
     override suspend fun deleteEvidence(evidence: Evidence) {
-        when (localFileStorageService.deleteEvidence(evidence.spreadsheetId, evidence)) {
+        when (val result = localFileStorageService.deleteEvidence(evidence.spreadsheetId, evidence)) {
             is Result.Success<Unit> -> refreshEvidence(evidence.spreadsheetId, evidence.caseId)
-            else -> { /* Handle error */ }
+            is Result.Error -> Log.e(TAG, "Failed to delete evidence ${evidence.id}", result.exception)
+            is Result.UserRecoverableError -> Log.w(TAG, "User-recoverable error deleting evidence ${evidence.id}", result.exception)
+            is Result.Loading -> { /* No terminal state to handle */ }
         }
     }
 

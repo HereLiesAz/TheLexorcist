@@ -1,10 +1,15 @@
 package com.hereliesaz.lexorcist.utils
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.ContentResolver
+import android.content.Context
+import android.content.pm.PackageManager
 import android.location.Location
 import android.provider.CallLog
 import android.provider.Telephony
+import android.util.Log
+import androidx.core.content.ContextCompat
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.hereliesaz.lexorcist.data.Evidence
 import java.util.Date
@@ -13,6 +18,7 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
 class EvidenceImporter(
+    private val context: Context,
     private val contentResolver: ContentResolver,
     private val fusedLocationProviderClient: FusedLocationProviderClient
 ) {
@@ -151,7 +157,14 @@ class EvidenceImporter(
      * A full location history would require a different approach, such as Google Takeout.
      */
     @SuppressLint("MissingPermission")
-    suspend fun importLocationHistory(): Evidence? = suspendCoroutine { continuation ->
+    suspend fun importLocationHistory(): Evidence? {
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            Log.w("EvidenceImporter", "ACCESS_FINE_LOCATION not granted; skipping location import.")
+            return null
+        }
+        return suspendCoroutine { continuation ->
         fusedLocationProviderClient.lastLocation
             .addOnSuccessListener { location: Location? ->
                 if (location != null) {
@@ -179,5 +192,6 @@ class EvidenceImporter(
             .addOnFailureListener {
                 continuation.resume(null)
             }
+        }
     }
 }

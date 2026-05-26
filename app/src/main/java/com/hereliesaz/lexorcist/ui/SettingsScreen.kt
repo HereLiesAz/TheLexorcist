@@ -238,7 +238,14 @@ fun SettingsScreen(
             )
             Spacer(modifier = Modifier.height(8.dp))
             val selectedCloudProvider by settingsViewModel.selectedCloudProvider.collectAsState()
-            val cloudProviders = listOf("GoogleDrive", "Dropbox", "OneDrive", "None")
+            // OneDrive/Dropbox sync is not implemented yet; only Google Drive is offered.
+            // Flip this to re-enable their selection and connection UI once implemented.
+            val showExperimentalCloudProviders = false
+            val cloudProviders = if (showExperimentalCloudProviders) {
+                listOf("GoogleDrive", "Dropbox", "OneDrive", "None")
+            } else {
+                listOf("GoogleDrive", "None")
+            }
             AzCycler(
                 options = cloudProviders,
                 selectedOption = selectedCloudProvider,
@@ -300,6 +307,7 @@ fun SettingsScreen(
             HorizontalDivider()
             Spacer(modifier = Modifier.height(16.dp))
 
+            if (showExperimentalCloudProviders) {
             // Dropbox
             Text(
                 text = stringResource(R.string.dropbox),
@@ -376,6 +384,7 @@ fun SettingsScreen(
                     )
                 }
             }
+            } // end if (showExperimentalCloudProviders)
 
             Spacer(modifier = Modifier.height(16.dp))
             HorizontalDivider()

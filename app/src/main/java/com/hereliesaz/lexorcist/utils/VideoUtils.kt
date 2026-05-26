@@ -17,24 +17,28 @@ object VideoUtils {
 
     fun extractFrames(context: Context, videoUri: Uri, intervalMs: Int): List<File> {
         val retriever = MediaMetadataRetriever()
-        retriever.setDataSource(context, videoUri)
-
-        val durationStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
-        val durationMs = durationStr?.toLongOrNull() ?: 0
-
         val frames = mutableListOf<File>()
-        var currentTimeMs = 0L
+        try {
+            retriever.setDataSource(context, videoUri)
 
-        while (currentTimeMs < durationMs) {
-            val bitmap = retriever.getFrameAtTime(currentTimeMs * 1000, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
-            if (bitmap != null) {
-                val frameFile = saveBitmapToFile(context, bitmap, "frame_${currentTimeMs}.jpg")
-                frames.add(frameFile)
+            val durationStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
+            val durationMs = durationStr?.toLongOrNull() ?: 0
+
+            var currentTimeMs = 0L
+            while (currentTimeMs < durationMs) {
+                val bitmap = retriever.getFrameAtTime(currentTimeMs * 1000, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
+                if (bitmap != null) {
+                    try {
+                        frames.add(saveBitmapToFile(context, bitmap, "frame_${currentTimeMs}.jpg"))
+                    } finally {
+                        bitmap.recycle()
+                    }
+                }
+                currentTimeMs += intervalMs
             }
-            currentTimeMs += intervalMs
+        } finally {
+            retriever.release()
         }
-
-        retriever.release()
         return frames
     }
 
@@ -51,48 +55,56 @@ object VideoUtils {
     }
 
     fun extractAudio(context: Context, videoUri: Uri): String {
-        val extractor = MediaExtractor()
         val parcelFileDescriptor = context.contentResolver.openFileDescriptor(videoUri, "r")
-        extractor.setDataSource(parcelFileDescriptor!!.fileDescriptor)
-
-        val audioTrackIndex = (0 until extractor.trackCount).firstOrNull {
-            val format = extractor.getTrackFormat(it)
-            val mime = format.getString(MediaFormat.KEY_MIME)
-            mime?.startsWith("audio/") == true
-        } ?: throw IOException("No audio track found in video")
-
-        extractor.selectTrack(audioTrackIndex)
-
+            ?: throw IOException("Could not open file descriptor for $videoUri")
+        val extractor = MediaExtractor()
+        var muxer: MediaMuxer? = null
         val outputFile = File.createTempFile("extracted_audio", ".m4a", context.cacheDir)
-        val muxer = MediaMuxer(outputFile.absolutePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
-        val buffer = ByteBuffer.allocate(1024 * 1024)
-        val bufferInfo = MediaCodec.BufferInfo()
-        var isEos = false
+        try {
+            extractor.setDataSource(parcelFileDescriptor.fileDescriptor)
 
-        val trackFormat = extractor.getTrackFormat(audioTrackIndex)
-        val muxerTrackIndex = muxer.addTrack(trackFormat)
-        muxer.start()
+            val audioTrackIndex = (0 until extractor.trackCount).firstOrNull {
+                val format = extractor.getTrackFormat(it)
+                val mime = format.getString(MediaFormat.KEY_MIME)
+                mime?.startsWith("audio/") == true
+            } ?: throw IOException("No audio track found in video")
 
-        while (!isEos) {
-            val sampleSize = extractor.readSampleData(buffer, 0)
-            if (sampleSize < 0) {
-                isEos = true
-            } else {
-                bufferInfo.offset = 0
-                bufferInfo.size = sampleSize
-                bufferInfo.presentationTimeUs = extractor.sampleTime
-                bufferInfo.flags = extractor.sampleFlags
+            extractor.selectTrack(audioTrackIndex)
 
-                muxer.writeSampleData(muxerTrackIndex, buffer, bufferInfo)
-                extractor.advance()
+            muxer = MediaMuxer(outputFile.absolutePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
+            val buffer = ByteBuffer.allocate(1024 * 1024)
+            val bufferInfo = MediaCodec.BufferInfo()
+            var isEos = false
+
+            val trackFormat = extractor.getTrackFormat(audioTrackIndex)
+            val muxerTrackIndex = muxer.addTrack(trackFormat)
+            muxer.start()
+
+            while (!isEos) {
+                val sampleSize = extractor.readSampleData(buffer, 0)
+                if (sampleSize < 0) {
+                    isEos = true
+                } else {
+                    bufferInfo.offset = 0
+                    bufferInfo.size = sampleSize
+                    bufferInfo.presentationTimeUs = extractor.sampleTime
+                    bufferInfo.flags = extractor.sampleFlags
+
+                    muxer.writeSampleData(muxerTrackIndex, buffer, bufferInfo)
+                    extractor.advance()
+                }
             }
+
+            muxer.stop()
+            return outputFile.absolutePath
+        } catch (e: Exception) {
+            // Clean up the partial output file on failure.
+            if (outputFile.exists()) outputFile.delete()
+            throw e
+        } finally {
+            try { muxer?.release() } catch (_: Exception) { /* already released or never started */ }
+            extractor.release()
+            try { parcelFileDescriptor.close() } catch (_: Exception) { /* best-effort */ }
         }
-
-        muxer.stop()
-        muxer.release()
-        extractor.release()
-        parcelFileDescriptor.close()
-
-        return outputFile.absolutePath
     }
 }

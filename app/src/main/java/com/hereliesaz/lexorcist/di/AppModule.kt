@@ -180,7 +180,7 @@ class AppModule {
         @ApplicationContext context: Context,
         fusedLocationProviderClient: com.google.android.gms.location.FusedLocationProviderClient
     ): EvidenceImporter {
-        return EvidenceImporter(context.contentResolver, fusedLocationProviderClient)
+        return EvidenceImporter(context, context.contentResolver, fusedLocationProviderClient)
     }
 
     /**

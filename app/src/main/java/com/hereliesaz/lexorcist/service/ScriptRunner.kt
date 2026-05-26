@@ -73,10 +73,10 @@ class ScriptRunner @Inject constructor(
      * @param evidence The [Evidence] object to be processed/analyzed.
      * @return A [Result] containing the [ScriptResult] (tags, notes, etc.) or an error.
      */
-    fun runScript(
+    suspend fun runScript(
         script: String,
         evidence: Evidence
-    ): Result<ScriptResult> {
+    ): Result<ScriptResult> = withContext(Dispatchers.Default) {
         val rhino = Context.enter()
         // IMPORTANT: optimizationLevel = -1 is required for Android compatibility.
         // Higher levels use dynamic bytecode generation which is not supported by Dalvik/ART.
@@ -127,12 +127,12 @@ class ScriptRunner @Inject constructor(
             // Execute the user's script.
             rhino.evaluateString(scope, script, "JavaScript<ScriptRunner>", 1, null)
 
-            return Result.Success(scriptResult)
+            return@withContext Result.Success(scriptResult)
 
         } catch (e: org.mozilla.javascript.RhinoException) {
-            return Result.Error(ScriptExecutionException("Error during JavaScript execution", e))
+            return@withContext Result.Error(ScriptExecutionException("Error during JavaScript execution", e))
         } catch (e: Exception) {
-            return Result.Error(ScriptExecutionException("An unexpected error occurred while running script or processing results", e))
+            return@withContext Result.Error(ScriptExecutionException("An unexpected error occurred while running script or processing results", e))
         } finally {
             Context.exit()
         }

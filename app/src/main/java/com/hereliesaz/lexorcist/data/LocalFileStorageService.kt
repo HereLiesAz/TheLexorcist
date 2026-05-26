@@ -58,12 +58,10 @@ class LocalFileStorageService @Inject constructor(
     // The directory where application data is stored. Can be customized by the user.
     private val storageDir: File by lazy {
         val customLocation = settingsManager.getStorageLocation()
-        val dir = if (customLocation != null) {
-            File(customLocation.toUri().path!!)
-        } else {
-            // Fallback to internal storage if no custom location is set.
-            context.getExternalFilesDir(null) ?: context.filesDir
-        }
+        // Fall back to internal storage if no (valid) custom location is set.
+        val dir = customLocation?.toUri()?.path?.let { File(it) }
+            ?: context.getExternalFilesDir(null)
+            ?: context.filesDir
         if (!dir.exists()) dir.mkdirs()
         dir
     }
@@ -347,8 +345,14 @@ class LocalFileStorageService @Inject constructor(
 
     suspend fun moveFilesToNewLocation(oldLocation: String, newLocation: String) {
         withContext(Dispatchers.IO) {
-            val oldDir = File(oldLocation.toUri().path!!)
-            val newDir = File(newLocation.toUri().path!!)
+            val oldPath = oldLocation.toUri().path
+            val newPath = newLocation.toUri().path
+            if (oldPath == null || newPath == null) {
+                Log.e("LocalFileStorageService", "Invalid storage path for move: old=$oldLocation, new=$newLocation")
+                return@withContext
+            }
+            val oldDir = File(oldPath)
+            val newDir = File(newPath)
             if (oldDir.exists() && oldDir.isDirectory) {
                 oldDir.copyRecursively(newDir, overwrite = true)
                 oldDir.deleteRecursively()
@@ -803,8 +807,8 @@ class LocalFileStorageService @Inject constructor(
                     } else {
                         Log.e("LocalFileStorageService", "Could not find case details for $caseSpreadsheetId to enqueue video processing.")
                     }
-                } else if (casesResult is Result.Error) {
-                     Log.e("LocalFileStorageService", "Failed to retrieve case list to enqueue video processing: ${casesResult.exception.message}")
+                } else if (caseResult is Result.Error) {
+                     Log.e("LocalFileStorageService", "Failed to retrieve case list to enqueue video processing: ${caseResult.exception.message}")
                 }
             }
 

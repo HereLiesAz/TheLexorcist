@@ -5,18 +5,25 @@ on:
     tags:
       - '*'
 
+# Least-privilege token: the release step needs to write a GitHub Release.
+permissions:
+  contents: write
+
 jobs:
   Gradle:
     runs-on: ubuntu-latest
     steps:
     - name: checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
     - name: setup jdk
-      uses: actions/setup-java@v1
+      uses: actions/setup-java@v4
       with:
-        java-version: 11
+        distribution: temurin
+        java-version: '17'
     - name: Make Gradle executable
       run: chmod +x ./gradlew
+    # Release signing reads MY_KEYSTORE_FILE / MY_KEYSTORE_PASSWORD / MY_KEY_PASSWORD.
+    # Configure these as repository secrets (and decode the keystore to a file) for a signed build.
     - name: Build Release APK
       run: ./gradlew assembleRelease
     - name: Releasing using Hub

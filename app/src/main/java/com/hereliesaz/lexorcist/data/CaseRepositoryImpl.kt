@@ -105,13 +105,15 @@ class CaseRepositoryImpl @Inject constructor(
             is Result.Loading -> {
                 Log.d(tag, "Refreshing allegations for $spreadsheetId: Loading...")
             }
-            is Result.Success -> if (repositoryScope.isActive) _allegations.value = result.data
+            // Only apply the result if this case is still the selected one, so a stale load
+            // from a previously-selected case can't overwrite the current case's allegations.
+            is Result.Success -> if (_selectedCase.value?.spreadsheetId == spreadsheetId) _allegations.value = result.data
             is Result.Error -> {
-                if (repositoryScope.isActive) _allegations.value = emptyList()
+                if (_selectedCase.value?.spreadsheetId == spreadsheetId) _allegations.value = emptyList()
                 errorReporter.reportError(result.exception)
             }
             is Result.UserRecoverableError -> {
-                if (repositoryScope.isActive) _allegations.value = emptyList()
+                if (_selectedCase.value?.spreadsheetId == spreadsheetId) _allegations.value = emptyList()
                 errorReporter.reportError(result.exception)
             }
         }

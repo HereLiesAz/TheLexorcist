@@ -3,27 +3,28 @@ package com.hereliesaz.lexorcist.service
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import java.util.concurrent.atomic.AtomicInteger
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class GlobalLoadingState @Inject constructor() {
 
-    private val loadingCount = AtomicInteger(0)
+    private var loadingCount = 0
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
+    // Synchronized so the counter update and the StateFlow update are atomic together,
+    // preventing interleaved push/pop from leaving isLoading inconsistent with the count.
+    @Synchronized
     fun pushLoading() {
-        if (loadingCount.incrementAndGet() > 0) {
-            _isLoading.value = true
-        }
+        loadingCount++
+        _isLoading.value = loadingCount > 0
     }
 
+    @Synchronized
     fun popLoading() {
-        if (loadingCount.decrementAndGet() <= 0) {
-            _isLoading.value = false
-        }
+        if (loadingCount > 0) loadingCount--
+        _isLoading.value = loadingCount > 0
     }
 }
