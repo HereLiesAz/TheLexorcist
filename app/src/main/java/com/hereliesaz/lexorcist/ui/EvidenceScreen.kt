@@ -429,8 +429,7 @@ fun ProcessingProgressView(
                         style = MaterialTheme.typography.bodySmall,
                         textAlign = TextAlign.End
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    AzLoad(modifier = Modifier.size(24.dp))
+                    AzLoad()
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 LinearProgressIndicator(

@@ -551,7 +551,7 @@ fun ModelStatusIcon(
             AzButton(onClick = onDownload, text = stringResource(id = R.string.download_model_description))
         }
         is DownloadState.Downloading -> {
-            AzLoad(modifier = Modifier.size(24.dp).padding(8.dp))
+            AzLoad()
         }
         is DownloadState.Downloaded -> {
             Row(verticalAlignment = Alignment.CenterVertically) {

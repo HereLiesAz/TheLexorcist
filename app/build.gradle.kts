@@ -1,20 +1,19 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Properties
 
-val localProperties = Properties() // Create a Properties object
-val localPropertiesFile = rootProject.file("local.properties")
+val myLocalProperties = Properties() // Create a Properties object
+val myLocalPropertiesFile = rootProject.file("local.properties")
 
-if (localPropertiesFile.exists()) {
-    localPropertiesFile.inputStream().use { input ->
-        localProperties.load(input)
+if (myLocalPropertiesFile.exists()) {
+    myLocalPropertiesFile.inputStream().use { input ->
+        myLocalProperties.load(input)
     }
 }
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.hilt.android)
-    id("com.google.devtools.ksp") // Changed from alias
+    alias(libs.plugins.ksp)
     alias(libs.plugins.compose.compiler) // UPDATED from libs.plugins.kotlin.compose
     id("com.google.gms.google-services") // Added Google Services plugin
     id("kotlin-parcelize") // ADDED
@@ -25,23 +24,55 @@ ksp {
     arg("dagger.validateTransitiveComponentDependencies", "ENABLED")
     arg("dagger.fullBindingGraphValidation", "ERROR") // You can also try "WARNING"
 }
+// Load version properties
+val versionPropsFile = project.rootProject.file("version.properties")
+val versionProps = Properties().apply {
+    if (versionPropsFile.exists()) {
+        versionPropsFile.inputStream().use { load(it) }
+    }
+}
+
+// Load local properties
+val localProperties = Properties().apply {
+    val localPropertiesFile = project.rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        localPropertiesFile.inputStream().use { load(it) }
+    }
+}
+
+var currentVersionCode = versionProps.getProperty("versionBuild", "1").toInt()
+
+// Automatically increment versionCode for release builds
+val isReleaseBuild = gradle.startParameter.taskNames.any { it.contains("Release", ignoreCase = true) }
+if (isReleaseBuild) {
+    currentVersionCode++
+    versionProps.setProperty("versionBuild", currentVersionCode.toString())
+    versionPropsFile.outputStream().use {
+        versionProps.store(it, "Auto-incremented by release build")
+    }
+}
+
+val verMajor = versionProps.getProperty("versionMajor", "1")
+val verMinor = versionProps.getProperty("versionMinor", "0")
+val verPatch = versionProps.getProperty("versionPatch", "0")
+val currentVersionName = "$verMajor.$verMinor.$verPatch"
 
 android {
     signingConfigs {
         maybeCreate("release").apply {
-            storeFile = localProperties.getProperty("MY_KEYSTORE_FILE")?.let { file(it) }
-            storePassword = localProperties.getProperty("MY_KEYSTORE_PASSWORD") ?: System.getenv("MY_KEYSTORE_PASSWORD") ?: ""
+            storeFile = myLocalProperties.getProperty("MY_KEYSTORE_FILE")?.let { file(it) }
+            storePassword = myLocalProperties.getProperty("MY_KEYSTORE_PASSWORD") ?: System.getenv("MY_KEYSTORE_PASSWORD") ?: ""
             keyAlias = "key0"
-            keyPassword = localProperties.getProperty("MY_KEY_PASSWORD") ?: System.getenv("MY_KEY_PASSWORD") ?: ""
+            keyPassword = myLocalProperties.getProperty("MY_KEY_PASSWORD") ?: System.getenv("MY_KEY_PASSWORD") ?: ""
         }
     }
     namespace = "com.hereliesaz.lexorcist"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.hereliesaz.lexorcist"
         minSdk = 26
-        targetSdk = 36
+        targetSdk = 37
 
         versionCode = 4
         versionName = "0.9.2"
@@ -52,6 +83,7 @@ android {
     buildTypes {
         getByName("release") {
             isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             signingConfig = signingConfigs.getByName("release") // Explicitly assign signing config
         }
@@ -257,7 +289,6 @@ dependencies {
 
     // Vico Charting Library
     implementation(libs.vico.compose)
-    implementation(libs.vico.core)
 
     // JetLime Timeline Library
     implementation(libs.jetlime)
