@@ -36,11 +36,18 @@
             android:name="com.google.mlkit.vision.DEPENDENCIES"
             android:value="ocr" />
 
-        <!-- Add this for Dropbox AuthActivity -->
+        <!-- Dropbox AuthActivity: the db-<APP_KEY> scheme is the OAuth redirect back into the app. -->
         <activity
             android:name="com.dropbox.core.android.AuthActivity"
             android:exported="true"
+            android:launchMode="singleTask"
             tools:replace="android:exported">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="@string/dropbox_auth_scheme" />
+            </intent-filter>
         </activity>
 
         <activity

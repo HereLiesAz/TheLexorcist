@@ -312,7 +312,8 @@ function onOpen() {}</string>
     <string name="dropbox">Dropbox</string>
     <string name="connected_as_placeholder">Connected as: %1$s</string>
     <string name="disconnect_from_dropbox">Disconnect from Dropbox</string>
-    <string name="dropbox_app_key">Dropbox App Key</string>
+    <string name="dropbox_app_key">f0uqbas5hc8zihy</string>
+    <string name="dropbox_auth_scheme">db-f0uqbas5hc8zihy</string>
     <string name="connect_to_dropbox">Connect to Dropbox</string>
     <string name="onedrive">OneDrive</string>
     <string name="connect_to_onedrive">Connect to OneDrive</string>

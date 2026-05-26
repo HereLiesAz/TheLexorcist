@@ -262,8 +262,8 @@ class AuthViewModel
             return digest.fold("") { str, it -> str + "%02x".format(it) }
         }
 
-        fun storeDropboxAccessToken(accessToken: String) {
-            dropboxAuthManager.setAccessToken(accessToken)
+        fun storeDropboxCredential(credential: com.dropbox.core.oauth.DbxCredential) {
+            dropboxAuthManager.saveCredential(credential)
         }
 
         fun signInWithOutlook(activity: Activity) {
