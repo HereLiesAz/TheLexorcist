@@ -1,8 +1,8 @@
 package com.hereliesaz.lexorcist.di
 
-import android.content.SharedPreferences
 import com.dropbox.core.DbxRequestConfig
 import com.hereliesaz.lexorcist.auth.DropboxAuthManager
+import com.hereliesaz.lexorcist.auth.TinkSecureStorage
 import com.hereliesaz.lexorcist.data.CloudStorageProvider
 import com.hereliesaz.lexorcist.data.DropboxProvider
 import dagger.Module
@@ -26,9 +26,9 @@ object DropboxModule {
     @Singleton
     fun provideDropboxAuthManager(
         requestConfig: DbxRequestConfig,
-        sharedPreferences: SharedPreferences // Added SharedPreferences dependency
+        secureStorage: TinkSecureStorage
     ): DropboxAuthManager {
-        return DropboxAuthManager(requestConfig, sharedPreferences) // Pass SharedPreferences to constructor
+        return DropboxAuthManager(requestConfig, secureStorage)
     }
 
     @Provides

@@ -129,7 +129,7 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun disconnectDropbox() {
-        dropboxAuthManager.clearAccessToken()
+        dropboxAuthManager.clearCredential()
     }
 
     private fun loadSettings() {

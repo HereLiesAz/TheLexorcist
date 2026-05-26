@@ -266,6 +266,9 @@ dependencies {
     implementation(libs.dropbox.core.sdk)
     implementation(libs.dropbox.android.sdk)
 
+    // Google Tink — authenticated encryption for OAuth credentials at rest.
+    implementation(libs.google.tink.android)
+
     // Microsoft Graph SDK for OneDrive & MSAL for Authentication
     // implementation(libs.microsoft.graph.core) // REMOVED
     implementation(libs.microsoft.graph)

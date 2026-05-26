@@ -48,6 +48,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel // Updated import
+import com.dropbox.core.DbxRequestConfig
 import com.dropbox.core.android.Auth
 import com.hereliesaz.lexorcist.R
 import com.hereliesaz.lexorcist.model.DownloadState
@@ -238,13 +239,15 @@ fun SettingsScreen(
             )
             Spacer(modifier = Modifier.height(8.dp))
             val selectedCloudProvider by settingsViewModel.selectedCloudProvider.collectAsState()
-            // OneDrive/Dropbox sync is not implemented yet; only Google Drive is offered.
-            // Flip this to re-enable their selection and connection UI once implemented.
-            val showExperimentalCloudProviders = false
-            val cloudProviders = if (showExperimentalCloudProviders) {
-                listOf("GoogleDrive", "Dropbox", "OneDrive", "None")
-            } else {
-                listOf("GoogleDrive", "None")
+            // Dropbox is enabled (PKCE + encrypted credential). OneDrive is dropped for now;
+            // flip showOneDrive to re-enable it once its Graph provider is implemented.
+            val showDropbox = true
+            val showOneDrive = false
+            val cloudProviders = buildList {
+                add("GoogleDrive")
+                if (showDropbox) add("Dropbox")
+                if (showOneDrive) add("OneDrive")
+                add("None")
             }
             AzCycler(
                 options = cloudProviders,
@@ -307,7 +310,7 @@ fun SettingsScreen(
             HorizontalDivider()
             Spacer(modifier = Modifier.height(16.dp))
 
-            if (showExperimentalCloudProviders) {
+            if (showDropbox) {
             // Dropbox
             Text(
                 text = stringResource(R.string.dropbox),
@@ -330,12 +333,27 @@ fun SettingsScreen(
             } else {
                 AzButton(
                     onClick = {
-                        Auth.startOAuth2Authentication(context, context.getString(R.string.dropbox_app_key))
+                        // PKCE flow issues a short-lived access token + refresh token; the
+                        // credential is captured in MainActivity.onResume via Auth.getDbxCredential().
+                        val dbxRequestConfig = DbxRequestConfig.newBuilder("TheLexorcist").build()
+                        Auth.startOAuth2PKCE(
+                            context,
+                            context.getString(R.string.dropbox_app_key),
+                            dbxRequestConfig,
+                            listOf(
+                                "account_info.read",
+                                "files.metadata.read",
+                                "files.content.read",
+                                "files.content.write"
+                            )
+                        )
                     },
                     text = stringResource(R.string.connect_to_dropbox).uppercase(Locale.getDefault())
                 )
             }
+            } // end if (showDropbox)
 
+            if (showOneDrive) {
             Spacer(modifier = Modifier.height(16.dp))
             HorizontalDivider()
             Spacer(modifier = Modifier.height(16.dp))
@@ -384,7 +402,7 @@ fun SettingsScreen(
                     )
                 }
             }
-            } // end if (showExperimentalCloudProviders)
+            } // end if (showOneDrive)
 
             Spacer(modifier = Modifier.height(16.dp))
             HorizontalDivider()

@@ -140,11 +140,11 @@ class MainActivity : ComponentActivity() {
             recreate()
         }
 
-        // Handle Dropbox OAuth callback.
-        // If the user just returned from the Dropbox auth flow, the token should be available.
-        val accessToken = Auth.getOAuth2Token()
-        if (accessToken != null) {
-            authViewModel.storeDropboxAccessToken(accessToken)
+        // Handle Dropbox OAuth (PKCE) callback. If the user just returned from the Dropbox auth
+        // flow, the full credential (access + refresh token) is available here.
+        val dropboxCredential = Auth.getDbxCredential()
+        if (dropboxCredential != null) {
+            authViewModel.storeDropboxCredential(dropboxCredential)
         }
     }
 }

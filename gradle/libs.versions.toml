@@ -5,6 +5,7 @@ aznavrail = "3.16"
 browser = "1.9.0"
 datastorePreferences = "1.1.7"
 dropboxCoreSdk = "7.0.0"
+tinkAndroid = "1.14.1"
 errorProneAnnotations = "2.42.0"
 firebaseAuthKtx = "23.2.1"
 grpcContext = "1.75.0"
@@ -114,6 +115,7 @@ androidx-work-testing = { module = "androidx.work:work-testing", version.ref = "
 aznavrail = { module = "com.github.hereliesaz:aznavrail", version.ref = "aznavrail" }
 dropbox-core-sdk = { module = "com.dropbox.core:dropbox-core-sdk", version.ref = "dropboxCoreSdk" }
 dropbox-android-sdk = { module = "com.dropbox.core:dropbox-android-sdk", version.ref = "dropboxCoreSdk" }
+google-tink-android = { module = "com.google.crypto.tink:tink-android", version.ref = "tinkAndroid" }
 firebase-auth-ktx = { module = "com.google.firebase:firebase-auth-ktx" }
 google-android-material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 androidx-navigation-runtime-ktx = { group = "androidx.navigation", name = "navigation-runtime-ktx", version.ref = "navigationRuntimeKtx" }
