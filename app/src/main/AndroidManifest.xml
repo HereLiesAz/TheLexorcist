@@ -46,7 +46,7 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <category android:name="android.intent.category.DEFAULT" />
-                <data android:scheme="db-f0uqbas5hc8zihy" />
+                <data android:scheme="@string/dropbox_auth_scheme" />
             </intent-filter>
         </activity>
 
