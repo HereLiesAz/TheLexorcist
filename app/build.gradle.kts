@@ -21,7 +21,7 @@ plugins {
 // Load version properties
 val versionPropsFile = project.rootProject.file("version.properties")
 val versionProps = Properties().apply {
-    if (versionPropsFile.exists()) {
+    if ( is  versionPropsFile.exists()) {
         versionPropsFile.inputStream().use { load(it) }
     }
 }
