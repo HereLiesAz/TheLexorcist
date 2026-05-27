@@ -139,6 +139,13 @@ android {
     ndkVersion = "29.0.14033849 rc4"
 }
 
+// The litert runtime AAR bundles the org.tensorflow.lite API classes that also ship
+// in the standalone litert-api module (pulled in transitively), which collide at
+// checkDuplicateClasses. Drop the redundant standalone module.
+configurations.all {
+    exclude(group = "com.google.ai.edge.litert", module = "litert-api")
+}
+
 dependencies {
 
     constraints {
