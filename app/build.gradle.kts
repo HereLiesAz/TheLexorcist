@@ -159,20 +159,20 @@ dependencies {
         // releases (Dependabot alerts). These are constraints, so they are no-ops for any
         // coordinate not actually present in the resolved graph. Dependabot remains the
         // source of truth for newer CVEs published after these pins.
-        implementation("org.bouncycastle:bcprov-jdk18on:1.78.1") { because("CVE: timing channel / resource consumption") }
-        implementation("org.bouncycastle:bcpkix-jdk18on:1.78.1") { because("CVE: BouncyCastle (MSAL/Graph, iText)") }
-        implementation("org.bouncycastle:bcutil-jdk18on:1.78.1") { because("CVE: BouncyCastle (MSAL/Graph)") }
-        implementation("org.bouncycastle:bcpg-jdk18on:1.78.1") { because("CVE: BouncyCastle uncontrolled resource consumption") }
+        implementation("org.bouncycastle:bcprov-jdk18on:1.84") { because("CVE: timing channel / resource consumption") }
+        implementation("org.bouncycastle:bcpkix-jdk18on:1.84") { because("CVE: BouncyCastle (MSAL/Graph, iText)") }
+        implementation("org.bouncycastle:bcutil-jdk18on:1.84") { because("CVE: BouncyCastle (MSAL/Graph)") }
+        implementation("org.bouncycastle:bcpg-jdk18on:1.84") { because("CVE: BouncyCastle uncontrolled resource consumption") }
         implementation("org.bitbucket.b_c:jose4j:0.9.6") { because("CVE: jose4j DoS via compressed JWE (MSAL)") }
         implementation("org.jdom:jdom2:2.0.6.1") { because("CVE-2021-33813: JDOM XXE (Apache POI)") }
-        implementation("org.apache.commons:commons-lang3:3.18.0") { because("CVE: commons-lang3 uncontrolled recursion (POI)") }
+        implementation("org.apache.commons:commons-lang3:3.20.0") { because("CVE: commons-lang3 uncontrolled recursion (POI)") }
         implementation("org.apache.commons:commons-compress:1.27.1") { because("CVE: commons-compress Pack200 OOM (POI)") }
         implementation("com.fasterxml.jackson.core:jackson-core:2.18.2") { because("CVE: jackson-core async parser DoS") }
         implementation("com.fasterxml.jackson.core:jackson-databind:2.18.2") { because("CVE: align jackson-databind with patched core") }
-        implementation("io.netty:netty-codec-http2:4.1.118.Final") { because("CVE: Netty HTTP/2 DoS family") }
-        implementation("io.netty:netty-codec-http:4.1.118.Final") { because("CVE: Netty HTTP request smuggling / decompression") }
-        implementation("io.netty:netty-codec:4.1.118.Final") { because("CVE: Netty codec resource exhaustion / zip bomb") }
-        implementation("io.netty:netty-handler:4.1.118.Final") { because("CVE: Netty SslHandler / SNI allocation") }
+        implementation("io.netty:netty-codec-http2:4.1.132.Final") { because("CVE: Netty HTTP/2 DoS family") }
+        implementation("io.netty:netty-codec-http:4.1.132.Final") { because("CVE: Netty HTTP request smuggling / decompression") }
+        implementation("io.netty:netty-codec:4.1.132.Final") { because("CVE: Netty codec resource exhaustion / zip bomb") }
+        implementation("io.netty:netty-handler:4.1.132.Final") { because("CVE: Netty SslHandler / SNI allocation") }
     }
 
     implementation(libs.androidx.core.ktx)
