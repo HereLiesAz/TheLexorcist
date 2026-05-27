@@ -1,14 +1,14 @@
-// Top-level build file where you can add configuration options common to all sub-projects/modules.
+// Top-level build file where you can add configuration options common to all subprojects/modules.
 
 // Note: Per protocol, checked for latest stable AGP version.
-// Project is already on the latest stable version (8.13.0) with the corresponding Gradle version (8.13).
-// No version changes are necessary at this time.
+// Project is updated to the latest stable version (9.2.1) with the corresponding Gradle version (9.5).
+// Hilt 2.59.2 requires AGP 9.0.0 or higher.
 plugins {
-    id("com.android.application") version "8.13.1" apply false
-    id("org.jetbrains.kotlin.android") version "2.2.20" apply false
+    alias(libs.plugins.android.application) apply false
+    alias(libs.plugins.kotlin.android) apply false
     id("com.google.gms.google-services") version "4.4.4" apply false
-    id("com.google.dagger.hilt.android") version "2.57.2" apply false
-    id("com.google.devtools.ksp") version "2.2.20-2.0.3" apply false
-    id("com.palantir.git-version") version "4.0.0" apply false
-    id("org.jetbrains.kotlin.plugin.compose") version "2.2.20" apply false
+    alias(libs.plugins.hilt.android) apply false
+    alias(libs.plugins.ksp) apply false
+    id("com.palantir.git-version") version "5.0.0" apply false
+    alias(libs.plugins.compose.compiler) apply false
 }
