@@ -7,7 +7,7 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "{{MOBILESDK_APP_ID}}",
+        "mobilesdk_app_id": "{{APP_ID}}",
         "android_client_info": {
           "package_name": "com.hereliesaz.lexorcist"
         }
