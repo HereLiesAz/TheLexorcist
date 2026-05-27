@@ -31,6 +31,8 @@ jobs:
         env:
           GOOGLE_SERVICES_API_KEY: ${{ secrets.GOOGLE_SERVICES_API_KEY }}
           PROJECT_ID: ${{ secrets.PROJECT_ID }}
+          PROJECT_NUMBER: ${{ secrets.PROJECT_NUMBER }}
+          MOBILESDK_APP_ID: ${{ secrets.MOBILESDK_APP_ID }}
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
           ARCORE_API_KEY: ${{ secrets.ARCORE_API_KEY }}
         run: |
