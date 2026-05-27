@@ -23,7 +23,7 @@ plugins {
 // Load version properties
 val versionPropsFile = project.rootProject.file("version.properties")
 val versionProps = Properties().apply {
-    if ( is  versionPropsFile.exists()) {
+    if (versionPropsFile.exists()) {
         versionPropsFile.inputStream().use { load(it) }
     }
 }
@@ -58,38 +58,6 @@ ksp {
     arg("dagger.validateTransitiveComponentDependencies", "ENABLED")
     arg("dagger.fullBindingGraphValidation", "ERROR") // You can also try "WARNING"
 }
-// Load version properties
-val versionPropsFile = project.rootProject.file("version.properties")
-val versionProps = Properties().apply {
-    if (versionPropsFile.exists()) {
-        versionPropsFile.inputStream().use { load(it) }
-    }
-}
-
-// Load local properties
-val localProperties = Properties().apply {
-    val localPropertiesFile = project.rootProject.file("local.properties")
-    if (localPropertiesFile.exists()) {
-        localPropertiesFile.inputStream().use { load(it) }
-    }
-}
-
-var currentVersionCode = versionProps.getProperty("versionBuild", "1").toInt()
-
-// Automatically increment versionCode for release builds
-val isReleaseBuild = gradle.startParameter.taskNames.any { it.contains("Release", ignoreCase = true) }
-if (isReleaseBuild) {
-    currentVersionCode++
-    versionProps.setProperty("versionBuild", currentVersionCode.toString())
-    versionPropsFile.outputStream().use {
-        versionProps.store(it, "Auto-incremented by release build")
-    }
-}
-
-val verMajor = versionProps.getProperty("versionMajor", "1")
-val verMinor = versionProps.getProperty("versionMinor", "0")
-val verPatch = versionProps.getProperty("versionPatch", "0")
-val currentVersionName = "$verMajor.$verMinor.$verPatch"
 
 android {
     signingConfigs {
