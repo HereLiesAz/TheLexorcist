@@ -1,6 +1,7 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Properties
 
+
 val myLocalProperties = Properties() // Create a Properties object
 val myLocalPropertiesFile = rootProject.file("local.properties")
 
@@ -9,6 +10,7 @@ if (myLocalPropertiesFile.exists()) {
         myLocalProperties.load(input)
     }
 }
+
 
 plugins {
     alias(libs.plugins.android.application)
