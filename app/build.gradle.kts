@@ -1,15 +1,6 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Properties
 
-val localProperties = Properties() // Create a Properties object
-val localPropertiesFile = rootProject.file("local.properties")
-
-if (localPropertiesFile.exists()) {
-    localPropertiesFile.inputStream().use { input ->
-        localProperties.load(input)
-    }
-}
-
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
