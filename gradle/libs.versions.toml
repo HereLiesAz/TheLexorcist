@@ -112,7 +112,7 @@ androidx-ui-graphics = { module = "androidx.compose.ui:ui-graphics" }
 androidx-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest" }
 androidx-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
 androidx-work-testing = { module = "androidx.work:work-testing", version.ref = "workTesting" }
-aznavrail = { module = "com.github.hereliesaz:aznavrail", version.ref = "aznavrail" }
+aznavrail = { module = "com.github.hereliesaz.aznavrail:aznavrail-cmp-android", version.ref = "aznavrail" }
 dropbox-core-sdk = { module = "com.dropbox.core:dropbox-core-sdk", version.ref = "dropboxCoreSdk" }
 dropbox-android-sdk = { module = "com.dropbox.core:dropbox-android-sdk", version.ref = "dropboxCoreSdk" }
 google-tink-android = { module = "com.google.crypto.tink:tink-android", version.ref = "tinkAndroid" }

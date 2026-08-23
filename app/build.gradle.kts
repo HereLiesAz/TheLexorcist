@@ -331,13 +331,17 @@ dependencies {
     implementation(libs.grpc.core)
     implementation(libs.grpc.context)
 
-    implementation(libs.aznavrail) {
-        // AzNavRail 11.x is a Compose Multiplatform rewrite, but its JitPack
-        // module metadata lists the wasm-js artifact as a dependency of the
-        // root module rather than of the wasm variant, so Android resolution
-        // tries to fetch a wasm library and fails.
-        exclude(group = "com.github.hereliesaz.aznavrail", module = "aznavrail-cmp-wasm-js")
-    }
+    // AzNavRail 11.x is a Compose Multiplatform rewrite. Its JitPack umbrella
+    // module (com.github.hereliesaz:aznavrail) declares every platform
+    // publication -- android, desktop, wasm-js and the legacy AAR -- as a plain
+    // dependency rather than as variants of one module, so an Android consumer
+    // resolving it gets a wasm library it cannot fetch and three copies of
+    // every class, and the build dies at checkDuplicateClasses. Compilation
+    // succeeds either way, which is why this only appears in a full assemble.
+    //
+    // Depending on the Android publication directly sidesteps the broken
+    // metadata. Worth fixing upstream in the library's publication.
+    implementation(libs.aznavrail)
 
     // Kotlin/Compose Multiplatform core: domain models, LexResult, the evidence
     // pipeline contracts and the cross-platform UI.

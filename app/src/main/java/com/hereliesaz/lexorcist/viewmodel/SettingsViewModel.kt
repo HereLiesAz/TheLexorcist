@@ -36,7 +36,7 @@ class SettingsViewModel @Inject constructor(
     application: Application
 ) : AndroidViewModel(application) {
 
-    private val _themeMode = MutableStateFlow(ThemeMode.SYSTEM)
+    private val _themeMode = MutableStateFlow(ThemeMode.System)
     val themeMode: StateFlow<ThemeMode> = _themeMode.asStateFlow()
 
     private val _caseFolderPath = MutableStateFlow<String?>(null)
@@ -134,7 +134,7 @@ class SettingsViewModel @Inject constructor(
 
     private fun loadSettings() {
         val themeName = settingsManager.getTheme()
-        _themeMode.value = ThemeMode.values().firstOrNull { it.name.equals(themeName, ignoreCase = true) } ?: ThemeMode.SYSTEM
+        _themeMode.value = ThemeMode.values().firstOrNull { it.name.equals(themeName, ignoreCase = true) } ?: ThemeMode.System
         _caseFolderPath.value = settingsManager.getCaseFolderPath()
         _cloudSyncEnabled.value = settingsManager.getCloudSyncEnabled()
         _selectedCloudProvider.value = settingsManager.getSelectedCloudProvider()

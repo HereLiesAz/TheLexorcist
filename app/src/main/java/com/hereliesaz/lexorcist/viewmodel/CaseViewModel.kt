@@ -393,7 +393,7 @@ constructor(
     }
 
     private val _themeMode =
-        MutableStateFlow(ThemeMode.SYSTEM)
+        MutableStateFlow(ThemeMode.System)
     val themeMode: StateFlow<ThemeMode> =
         _themeMode.asStateFlow()
 
@@ -653,11 +653,11 @@ constructor(
         val themeName =
             sharedPref.getString(
                 "theme_mode",
-                ThemeMode.SYSTEM.name
+                ThemeMode.System.name
             )
         _themeMode.value =
             ThemeMode.valueOf(
-                themeName ?: ThemeMode.SYSTEM.name
+                themeName ?: ThemeMode.System.name
             )
     }
 
