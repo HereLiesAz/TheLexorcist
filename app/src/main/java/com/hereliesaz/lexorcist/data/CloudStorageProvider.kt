@@ -18,5 +18,14 @@ interface CloudStorageProvider {
 data class CloudFile(
     val id: String,
     val name: String,
-    val modifiedTime: Long
+    val modifiedTime: Long,
+    /**
+     * Size in bytes, or -1 when the provider did not report one.
+     *
+     * Used by [SyncManager] to tell a cloud file that is the same evidence as
+     * the local one from a different file that happens to share its name.
+     * Unknown sizes are treated as "same", which errs towards not creating
+     * spurious duplicates.
+     */
+    val size: Long = -1L,
 )

@@ -392,6 +392,49 @@ class LocalFileStorageService @Inject constructor(
     /** Sibling of the database holding the last known-good copy. */
     private val backupFile: File get() = File(storageDir, "$SPREADSHEET_FILE_NAME.bak")
 
+    // ---------------------------------------------------------------------
+    // Cloud sync access to the database.
+    //
+    // The database is encrypted under a key in this device's hardware
+    // keystore, which cannot be exported. Uploading the ciphertext would give
+    // the user a cloud copy that no other device -- and no restored device --
+    // could ever open, and that a fresh install would quarantine as corrupt.
+    // Sync therefore works in plaintext, which the privacy policy states.
+    // ---------------------------------------------------------------------
+
+    /** The database as plaintext bytes, for upload. */
+    suspend fun readDatabaseForSync(): ByteArray = withContext(Dispatchers.IO) {
+        workbookMutex.withLock {
+            migratePlaintextDatabaseIfNeeded()
+            FileInputStream(spreadsheetFile).use { raw ->
+                cipher.decryptingStream(raw).use { it.readBytes() }
+            }
+        }
+    }
+
+    /**
+     * Replaces the database with [plaintext], encrypting it.
+     *
+     * Rejects bytes that are not a readable workbook before touching the live
+     * file: a truncated or wrong-typed download must not be able to destroy a
+     * working database, and the previous implementation wrote whatever it
+     * received straight over it with `FileOutputStream`.
+     */
+    suspend fun writeDatabaseFromSync(plaintext: ByteArray): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val workbook = XSSFWorkbook(plaintext.inputStream())
+            workbookMutex.withLock { workbook.use { writeWorkbookAtomically(it) } }
+            Result.Success(Unit)
+        } catch (e: Exception) {
+            Log.e("LocalFileStorageService", "Refusing to install an unreadable database from the cloud.", e)
+            Result.Error(IOException("The database downloaded from the cloud could not be read.", e))
+        }
+    }
+
+    /** Writes [plaintext] to a sibling file rather than the live database. */
+    fun writeConflictCopy(plaintext: ByteArray, name: String): File =
+        File(storageDir, name).apply { writeBytes(plaintext) }
+
     /**
      * Helper to safely write to the spreadsheet in a background thread.
      *
@@ -1175,7 +1218,7 @@ class LocalFileStorageService @Inject constructor(
 
         return if (cloudStorageProvider != null) {
             Log.i("LocalFileStorageService", "Starting synchronization with $selectedProviderName.")
-            syncManager.synchronize(cloudStorageProvider, this) 
+            syncManager.synchronize(cloudStorageProvider, this, selectedProviderName ?: "unknown") 
         } else {
             Result.Success(Unit) 
         }

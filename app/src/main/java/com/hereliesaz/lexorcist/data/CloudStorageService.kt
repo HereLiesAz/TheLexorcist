@@ -139,7 +139,7 @@ class CloudStorageService @Inject constructor(
         }
 
         return if (cloudStorageProvider != null) {
-            syncManager.synchronize(cloudStorageProvider, localFileStorageService)
+            syncManager.synchronize(cloudStorageProvider, localFileStorageService, selectedProvider ?: "unknown")
         } else {
             Result.Success(Unit) // No provider selected, so nothing to sync
         }

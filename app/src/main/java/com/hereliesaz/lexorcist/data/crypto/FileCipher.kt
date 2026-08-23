@@ -6,6 +6,7 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.InputStream
 import java.io.OutputStream
+import java.nio.ByteBuffer
 import java.nio.channels.SeekableByteChannel
 
 /**
@@ -50,6 +51,15 @@ interface FileCipher {
      * demand, so nothing is ever fully materialised.
      */
     fun seekableDecryptingChannel(file: File): SeekableByteChannel
+
+    /**
+     * The length of [file]'s plaintext, or -1 when it cannot be determined.
+     *
+     * Separate from `seekableDecryptingChannel(...).size()` because Tink's
+     * decrypting channel refuses to report a size until something has been
+     * read from it, and a zero-length payload never satisfies that.
+     */
+    fun plaintextSize(file: File): Long
 
     /**
      * True when [file] can be decrypted with this cipher.
@@ -106,6 +116,7 @@ object NoOpFileCipher : FileCipher {
     override fun decryptingStream(source: InputStream): InputStream = source
     override fun seekableDecryptingChannel(file: File): SeekableByteChannel =
         FileInputStream(file).channel
+    override fun plaintextSize(file: File): Long = file.length()
     override fun canDecrypt(file: File): Boolean = false
 }
 
@@ -128,11 +139,35 @@ class StreamingAeadFileCipher(
     override fun decryptingStream(source: InputStream): InputStream =
         streamingAead.newDecryptingStream(source, associatedData)
 
-    override fun seekableDecryptingChannel(file: File): SeekableByteChannel =
-        streamingAead.newSeekableDecryptingChannel(
+    /**
+     * A decrypting channel that has already been primed.
+     *
+     * Tink's `SeekableByteChannelDecrypter.size()` throws
+     * "Cannot determine size before first read()-call" until something has
+     * been read, and `ProxyFileDescriptorCallback.onGetSize` is called by the
+     * system before any read -- so an unprimed channel makes every evidence
+     * read through the content provider fail. Reading one byte here and
+     * rewinding costs one segment decryption and makes the channel behave the
+     * way its callers assume.
+     */
+    override fun seekableDecryptingChannel(file: File): SeekableByteChannel {
+        val channel = streamingAead.newSeekableDecryptingChannel(
             FileInputStream(file).channel,
             associatedData,
         )
+        runCatching {
+            channel.read(ByteBuffer.allocate(1))
+            channel.position(0)
+        }
+        return channel
+    }
+
+    override fun plaintextSize(file: File): Long =
+        runCatching { seekableDecryptingChannel(file).use { it.size() } }.getOrElse {
+            // A zero-length payload: Tink cannot report a size for one, because
+            // no read ever succeeds against it.
+            if (canDecrypt(file)) 0L else -1L
+        }
 
     override fun canDecrypt(file: File): Boolean = try {
         FileInputStream(file).use { raw ->

@@ -195,7 +195,7 @@ class GoogleApiService @Inject constructor(
     suspend fun getFileMetadata(fileId: String): Result<File> = withContext(Dispatchers.IO) {
         val drive = getDriveService() ?: return@withContext Result.Error(IOException("Credential not available for Drive service"))
         try {
-            val file = drive.files().get(fileId).setFields("id, name, modifiedTime").execute()
+            val file = drive.files().get(fileId).setFields("id, name, modifiedTime, size").execute()
             Result.Success(file)
         } catch (e: UserRecoverableAuthIOException) {
             Result.UserRecoverableError(e)
@@ -234,7 +234,7 @@ class GoogleApiService @Inject constructor(
         try {
             val files = drive.files().list()
                 .setQ("'$folderId' in parents and trashed=false")
-                .setFields("files(id, name, modifiedTime)")
+                .setFields("files(id, name, modifiedTime, size)")
                 .execute()
                 .files
             Result.Success(files)

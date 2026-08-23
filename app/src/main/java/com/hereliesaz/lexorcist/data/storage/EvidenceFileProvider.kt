@@ -117,7 +117,10 @@ class EvidenceFileProvider : ContentProvider() {
         private val channel: SeekableByteChannel,
     ) : ProxyFileDescriptorCallback() {
 
-        override fun onGetSize(): Long = channel.size()
+        // Cached: the system calls onGetSize before any read, and repeatedly.
+        private val size: Long by lazy { runCatching { channel.size() }.getOrDefault(0L) }
+
+        override fun onGetSize(): Long = size
 
         override fun onRead(offset: Long, size: Int, data: ByteArray): Int {
             channel.position(offset)
@@ -145,15 +148,10 @@ class EvidenceFileProvider : ContentProvider() {
     ): Cursor {
         val file = resolve(uri)
         val columns = projection ?: arrayOf(OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE)
-        val size = if (cipher.isEnabled && cipher.canDecrypt(file)) {
-            // The plaintext length, not the file length: a consumer that
-            // allocates a buffer from SIZE and then reads must not come up
-            // short, and Tink's ciphertext is longer than its plaintext.
-            runCatching { cipher.seekableDecryptingChannel(file).use { it.size() } }
-                .getOrDefault(file.length())
-        } else {
-            file.length()
-        }
+        // The plaintext length, not the file length: a consumer that allocates
+        // a buffer from SIZE and then reads must not come up short, and Tink's
+        // ciphertext is longer than its plaintext.
+        val size = cipher.plaintextSize(file).takeIf { it >= 0 } ?: file.length()
         val row = columns.map { column ->
             when (column) {
                 OpenableColumns.DISPLAY_NAME -> file.name

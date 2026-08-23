@@ -47,6 +47,7 @@ class GoogleDriveCloudStorageProvider @Inject constructor(
                             id = driveFile.id,
                             name = driveFile.name,
                             modifiedTime = driveFile.modifiedTime.value,
+                            size = driveFile.getSize() ?: -1L,
                         )
                     }
                 Result.Success(cloudFiles)
@@ -147,6 +148,7 @@ class GoogleDriveCloudStorageProvider @Inject constructor(
                         id = driveFile.id,
                         name = driveFile.name,
                         modifiedTime = driveFile.modifiedTime.value,
+                        size = driveFile.getSize() ?: -1L,
                     ),
                 )
             }
