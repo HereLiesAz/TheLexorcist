@@ -18,9 +18,11 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-feature android:name="android.hardware.camera" android:required="true" />
 
+    <!-- allowBackup is false: case files are privileged legal material and are
+         not copied to Google account backup. See res/xml/backup_rules.xml. -->
     <application
         android:name=".LexorcistApplication"
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:enableOnBackInvokedCallback="true"
         android:networkSecurityConfig="@xml/network_security_config"
         android:dataExtractionRules="@xml/data_extraction_rules"

@@ -10,6 +10,9 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import com.hereliesaz.lexorcist.data.crypto.AndroidDatabaseCipherProvider
+import com.hereliesaz.lexorcist.data.crypto.DatabaseCipher
+import com.hereliesaz.lexorcist.data.crypto.StreamingAeadDatabaseCipher
 import com.hereliesaz.lexorcist.service.VideoProcessingWorker
 import com.hereliesaz.lexorcist.utils.Result
 import com.hereliesaz.lexorcist.utils.SpreadsheetUtils
@@ -54,22 +57,49 @@ class LocalFileStorageService @Inject constructor(
     @Named("googleDrive") private val googleDriveProvider: CloudStorageProvider,
     @Named("dropbox") private val dropboxProvider: CloudStorageProvider,
     @Named("oneDrive") private val oneDriveProvider: CloudStorageProvider,
-    private val workManager: WorkManager
+    private val workManager: WorkManager,
+    private val cipherProvider: AndroidDatabaseCipherProvider,
 ) : StorageService {
 
-    // The directory where application data is stored. Can be customized by the user.
-    private val storageDir: File by lazy {
-        val customLocation = settingsManager.getStorageLocation()
-        // Fall back to internal storage if no (valid) custom location is set.
-        val dir = customLocation?.toUri()?.path?.let { File(it) }
-            ?: context.getExternalFilesDir(null)
-            ?: context.filesDir
-        if (!dir.exists()) dir.mkdirs()
-        dir
-    }
+    private val cipher: DatabaseCipher get() = cipherProvider.cipher
+
+    /**
+     * Where case data lives.
+     *
+     * Two changes from the previous implementation:
+     *
+     * The default is now internal storage. It was `getExternalFilesDir(null)`,
+     * i.e. `/sdcard/Android/data/<pkg>/`, which is reachable over USB/MTP, by
+     * `adb pull` without root, and by any app holding All Files Access. For
+     * privileged legal material that is the wrong default; `filesDir` is
+     * private to the app.
+     *
+     * A user-chosen location is only honoured when it is a real filesystem
+     * path. The old code called `.path` on the settings value, which is a
+     * Storage Access Framework tree URI such as
+     * `content://com.android.externalstorage.documents/tree/primary%3ALexorcist`,
+     * yielding the nonsense path `/tree/primary:Lexorcist` at the filesystem
+     * root -- `mkdirs()` there fails and every subsequent file operation fails
+     * with it. A SAF tree is not a `File` and cannot be treated as one, so such
+     * a value is ignored rather than silently breaking storage.
+     *
+     * Not `by lazy`: that captured the directory for the lifetime of the
+     * process, so changing the location in Settings had no effect until the app
+     * was killed.
+     */
+    private val storageDir: File
+        get() {
+            val custom = settingsManager.getStorageLocation()
+                ?.takeIf { it.startsWith("/") }
+                ?.let { File(it) }
+                ?.takeIf { it.isDirectory || it.mkdirs() }
+            val dir = custom ?: context.filesDir
+            if (!dir.exists()) dir.mkdirs()
+            return dir
+        }
 
     // The main database file.
-    private val spreadsheetFile: File by lazy { File(storageDir, SPREADSHEET_FILE_NAME) }
+    private val spreadsheetFile: File get() = File(storageDir, SPREADSHEET_FILE_NAME)
 
     init {
         initializeSpreadsheet()
@@ -87,8 +117,8 @@ class LocalFileStorageService @Inject constructor(
             } else {
                 try {
                     // Attempt to open and validate existing spreadsheet
-                    FileInputStream(spreadsheetFile).use { fis ->
-                        XSSFWorkbook(fis).use { workbook ->
+                    openWorkbook().use { workbook ->
+                        run {
                             var modified = false
                             // Check for missing sheets and create them if needed.
                             if (workbook.getSheet(CASES_SHEET_NAME) == null) {
@@ -134,7 +164,7 @@ class LocalFileStorageService @Inject constructor(
                             }
 
                             if (modified) {
-                                FileOutputStream(spreadsheetFile).use { fos -> workbook.write(fos) }
+                                writeWorkbookAtomically(workbook)
                                 Log.i("LocalFileStorageService", "Added missing sheets or headers to existing spreadsheet.")
                             }
                         }
@@ -220,6 +250,26 @@ class LocalFileStorageService @Inject constructor(
         }
     }
 
+
+    /**
+     * Forces [file]'s contents to storage.
+     *
+     * Opened in append mode and immediately synced: nothing is written, but the
+     * descriptor is valid, which it is not after an encrypting stream has
+     * closed the one it wrapped. Without this a power loss between the write
+     * and the rename could leave a renamed but empty database.
+     */
+    private fun syncToDisk(file: File) {
+        try {
+            FileOutputStream(file, true).use { it.fd.sync() }
+        } catch (e: IOException) {
+            // A failed fsync is not a reason to abandon the save; the data is
+            // in the page cache and the rename still orders correctly against
+            // it on any journalling filesystem.
+            Log.w("LocalFileStorageService", "Could not fsync ${file.name}.", e)
+        }
+    }
+
     /** A never-colliding name to preserve an unreadable database under. */
     private fun quarantineFile(): File {
         var index = 0
@@ -238,7 +288,7 @@ class LocalFileStorageService @Inject constructor(
             createSheetWithHeader(workbook, ALLEGATIONS_SHEET_NAME, ALLEGATIONS_HEADER)
             createSheetWithHeader(workbook, TRANSCRIPT_EDITS_SHEET_NAME, TRANSCRIPT_EDITS_HEADER)
             createSheetWithHeader(workbook, EXHIBITS_SHEET_NAME, EXHIBITS_HEADER)
-            FileOutputStream(spreadsheetFile).use { fos -> workbook.write(fos) }
+            writeWorkbookAtomically(workbook)
             Log.i("LocalFileStorageService", "Successfully created a new spreadsheet file at '${spreadsheetFile.absolutePath}'.")
         }
     }
@@ -299,8 +349,8 @@ class LocalFileStorageService @Inject constructor(
                      return@withContext Result.Error(IOException("Spreadsheet not available after re-initialization."))
                 }
             }
-            FileInputStream(spreadsheetFile).use { fis ->
-                val workbook = XSSFWorkbook(fis)
+            run {
+                val workbook = openWorkbook()
                 val result = block(workbook)
                 workbook.close() 
                 Result.Success(result)
@@ -312,6 +362,36 @@ class LocalFileStorageService @Inject constructor(
             Log.e("LocalFileStorageService", "Error reading from spreadsheet", e)
             Result.Error(e)
         }
+        }
+    }
+
+    /**
+     * Opens the database, decrypting it.
+     *
+     * A database written before encryption existed is plaintext OOXML. Rather
+     * than fail, it is re-written as ciphertext on first open and then read
+     * normally, so an upgrade does not lose anyone their cases.
+     */
+    private fun openWorkbook(): XSSFWorkbook {
+        migratePlaintextDatabaseIfNeeded()
+        return FileInputStream(spreadsheetFile).use { raw ->
+            cipher.decryptingStream(raw).use { plain -> XSSFWorkbook(plain) }
+        }
+    }
+
+    /** One-time upgrade of a pre-encryption database. */
+    private fun migratePlaintextDatabaseIfNeeded() {
+        val active = cipher
+        if (active !is StreamingAeadDatabaseCipher) return
+        if (!DatabaseCipher.looksLikePlaintextWorkbook(spreadsheetFile)) return
+        try {
+            if (active.encryptInPlace(spreadsheetFile)) {
+                Log.i("LocalFileStorageService", "Encrypted the existing database at rest.")
+            }
+        } catch (e: Exception) {
+            // Leave the plaintext file in place and keep working; an unreadable
+            // database would be a far worse outcome than an unencrypted one.
+            Log.e("LocalFileStorageService", "Could not encrypt the existing database.", e)
         }
     }
 
@@ -352,7 +432,7 @@ class LocalFileStorageService @Inject constructor(
                      return@withContext Result.Error(IOException("Spreadsheet not available after re-initialization."))
                 }
             }
-            val workbook = FileInputStream(spreadsheetFile).use { fis -> XSSFWorkbook(fis) }
+            val workbook = openWorkbook()
             val result = try {
                 block(workbook)
             } catch (e: Exception) {
@@ -379,13 +459,21 @@ class LocalFileStorageService @Inject constructor(
         val tempFile = File(storageDir, "$SPREADSHEET_FILE_NAME.tmp")
         if (tempFile.exists()) tempFile.delete()
 
+        // Encrypted at rest. See DatabaseCipher for why the whole workbook --
+        // parties, allegations, extracted text, transcripts -- was previously
+        // readable by anything that could read the directory.
+        //
+        // The encrypting stream closes the FileOutputStream it wraps, so the
+        // descriptor is gone by the time the stream returns; fsyncing it here
+        // throws SyncFailedException. The flush to disk is done separately,
+        // below, on a descriptor that is still open.
         FileOutputStream(tempFile).use { fos ->
-            workbook.write(fos)
-            fos.flush()
-            // Force the bytes to disk before the rename, so a power loss
-            // cannot leave a renamed-but-empty file.
-            fos.fd.sync()
+            cipher.encryptingStream(fos).use { out ->
+                workbook.write(out)
+                out.flush()
+            }
         }
+        syncToDisk(tempFile)
 
         if (tempFile.length() == 0L) {
             tempFile.delete()
