@@ -44,16 +44,20 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            implementation(libs.kotlinx.coroutines.core)
+            // `api` rather than `implementation`: the domain models and the
+            // composables here expose Instant, Flow and Compose types in their
+            // public signatures, so consumers need them on the compile
+            // classpath to call this module at all.
+            api(libs.kotlinx.coroutines.core)
+            api(libs.kotlinx.datetime)
+            api(libs.kotlinx.collections.immutable)
             implementation(libs.kotlinx.serialization.json)
-            implementation(libs.kotlinx.datetime)
-            implementation(libs.kotlinx.collections.immutable)
 
-            implementation(compose.runtime)
-            implementation(compose.foundation)
-            implementation(compose.material3)
+            api(compose.runtime)
+            api(compose.foundation)
+            api(compose.material3)
+            api(compose.ui)
             implementation(compose.materialIconsExtended)
-            implementation(compose.ui)
             implementation(compose.components.resources)
 
             implementation(libs.jetbrains.lifecycle.viewmodel)

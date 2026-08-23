@@ -31,6 +31,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.hereliesaz.lexorcist.R
+import com.hereliesaz.lexorcist.service.OcrProcessingService
 import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.ui.components.ExtendedEvent
 import com.hereliesaz.lexorcist.ui.components.PlaceholderExtendedEvent
@@ -109,11 +110,23 @@ fun TimelineScreen(
         ) {
             // Optimization: remember the sorted list to avoid O(N log N) sorting on every recomposition.
             // If the input evidenceList reference changes (new data), this block re-runs.
+            // Evidence whose date could not be established sorts to the end
+            // and is labelled, rather than being plotted at a position the app
+            // invented. documentDate == DATE_NOT_ESTABLISHED (0L) means unknown;
+            // the old code both sorted and formatted that value as if it were a
+            // real date, so undated items landed at the epoch or, before the
+            // date parser was fixed, at their scan time.
             val itemsToDisplay: List<Evidence> = remember(evidenceList) {
                 if (evidenceList.isEmpty()) {
                     listOf(placeholderEvidenceItem)
                 } else {
-                    evidenceList.sortedBy { it.documentDate }
+                    val dated = evidenceList
+                        .filter { it.documentDate > OcrProcessingService.DATE_NOT_ESTABLISHED }
+                        .sortedBy { it.documentDate }
+                    val undated = evidenceList
+                        .filter { it.documentDate <= OcrProcessingService.DATE_NOT_ESTABLISHED }
+                        .sortedBy { it.timestamp }
+                    dated + undated
                 }
             }
 
@@ -132,10 +145,19 @@ fun TimelineScreen(
                     additionalContent = if (evidenceList.isNotEmpty() || item.id != 0) {
                         @Composable {
                             Column(horizontalAlignment = Alignment.End, modifier = Modifier.padding(end = 8.dp)) {
-                                val date = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(Date(item.documentDate))
-                                val time = SimpleDateFormat("hh:mm a", Locale.getDefault()).format(Date(item.documentDate))
-                                Text(text = date, style = MaterialTheme.typography.labelMedium)
-                                Text(text = time, style = MaterialTheme.typography.labelSmall)
+                                if (item.documentDate > OcrProcessingService.DATE_NOT_ESTABLISHED) {
+                                    val date = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(Date(item.documentDate))
+                                    val time = SimpleDateFormat("hh:mm a", Locale.getDefault()).format(Date(item.documentDate))
+                                    Text(text = date, style = MaterialTheme.typography.labelMedium)
+                                    Text(text = time, style = MaterialTheme.typography.labelSmall)
+                                } else {
+                                    Text(
+                                        text = stringResource(R.string.date_not_established),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.outline,
+                                        textAlign = TextAlign.End,
+                                    )
+                                }
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Icon(
                                     imageVector = getIconForType(item.type),

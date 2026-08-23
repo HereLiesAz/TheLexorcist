@@ -158,10 +158,14 @@ constructor(
 
         // Heuristic extraction of entities and dates.
         val entities = DataParser.tagData(ocrText)
+        // 0L means "date not established". The previous fallback here was
+        // System.currentTimeMillis(), which stamped every screenshot -- none of
+        // which carry EXIF DateTimeOriginal -- with its scan time and let the
+        // timeline present that as the moment the events happened.
         val documentDate =
             ExifUtils.getExifDate(context, uri)
-                ?: DataParser.parseDates(ocrText).firstOrNull()
-                ?: System.currentTimeMillis()
+                ?: DataParser.parseFirstDate(ocrText)
+                ?: DATE_NOT_ESTABLISHED
 
         val fileHash = com.hereliesaz.lexorcist.utils.HashingUtils.getHash(context, uri)
         val initialEvidence =
@@ -304,8 +308,8 @@ constructor(
                 // Step 3: Extract Metadata & create Evidence object.
                 val entities = DataParser.tagData(ocrText)
                 val documentDate = ExifUtils.getExifDate(context, newUri)
-                    ?: DataParser.parseDates(ocrText).firstOrNull()
-                    ?: System.currentTimeMillis()
+                    ?: DataParser.parseFirstDate(ocrText)
+                    ?: DATE_NOT_ESTABLISHED
                 val metadata = ExifUtils.getExifData(context, newUri)
                 val fileSize = ExifUtils.getFileSize(context, newUri)
                 val fileHash = com.hereliesaz.lexorcist.utils.HashingUtils.getHash(context, newUri)
@@ -397,4 +401,17 @@ constructor(
             }
         }
     }
+
+    companion object {
+        /**
+         * Sentinel for `Evidence.documentDate` meaning the date of the
+         * underlying event could not be established.
+         *
+         * Anything presenting a chronology must exclude or explicitly label
+         * evidence carrying this value rather than plotting it at the epoch or
+         * at ingest time.
+         */
+        const val DATE_NOT_ESTABLISHED = 0L
+    }
+
 }
