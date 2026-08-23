@@ -15,6 +15,8 @@ import com.hereliesaz.lexorcist.utils.Result
 import com.hereliesaz.lexorcist.utils.SpreadsheetUtils
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.apache.poi.openxml4j.exceptions.NotOfficeXmlFileException
 import org.apache.poi.ss.usermodel.Cell
@@ -67,7 +69,7 @@ class LocalFileStorageService @Inject constructor(
     }
 
     // The main database file.
-    private val spreadsheetFile: File by lazy { File(storageDir, "lexorcist_data.xlsx") }
+    private val spreadsheetFile: File by lazy { File(storageDir, SPREADSHEET_FILE_NAME) }
 
     init {
         initializeSpreadsheet()
@@ -138,29 +140,9 @@ class LocalFileStorageService @Inject constructor(
                         }
                     }
                 } catch (zipEx: ZipException) {
-                    // Corruption detected (not a valid zip/xlsx file).
-                    Log.w("LocalFileStorageService", "Spreadsheet file '${spreadsheetFile.absolutePath}' is corrupted (ZipException). Deleting and creating a new one.", zipEx)
-                    try {
-                        if (spreadsheetFile.exists()) {
-                            spreadsheetFile.delete()
-                        }
-                        createNewSpreadsheet()
-                    } catch (delEx: Exception) {
-                        Log.e("LocalFileStorageService", "Failed to delete corrupted spreadsheet file '${spreadsheetFile.absolutePath}' or create a new one.", delEx)
-                        throw RuntimeException("Corrupted spreadsheet (ZipException) encountered, failed to delete it and/or create a new one.", delEx)
-                    }
+                    recoverFromCorruptDatabase("not a valid zip/xlsx archive", zipEx)
                 } catch (noxmlEx: NotOfficeXmlFileException) {
-                     // Invalid file format detected.
-                    Log.w("LocalFileStorageService", "Spreadsheet file '${spreadsheetFile.absolutePath}' is not a valid OOXML file (NotOfficeXmlFileException). Deleting and creating a new one.", noxmlEx)
-                    try {
-                        if (spreadsheetFile.exists()) {
-                            spreadsheetFile.delete()
-                        }
-                        createNewSpreadsheet()
-                    } catch (delEx: Exception) {
-                        Log.e("LocalFileStorageService", "Failed to delete invalid OOXML spreadsheet file '${spreadsheetFile.absolutePath}' or create a new one.", delEx)
-                        throw RuntimeException("Invalid OOXML spreadsheet encountered, failed to delete it and/or create a new one.", delEx)
-                    }
+                    recoverFromCorruptDatabase("not a valid OOXML file", noxmlEx)
                 }
             }
         } catch (e: IOException) {
@@ -172,6 +154,80 @@ class LocalFileStorageService @Inject constructor(
         } catch (e: Exception) {
             Log.e("LocalFileStorageService", "An unexpected error occurred during spreadsheet initialization", e)
             throw RuntimeException("Failed to initialize spreadsheet due to an unexpected error", e)
+        }
+    }
+
+    /**
+     * Handles a database that will not open.
+     *
+     * Both corruption paths here used to run `spreadsheetFile.delete()` and
+     * then `createNewSpreadsheet()`. Every case, every evidence row and every
+     * exhibit in the app lives in this one workbook, so that turned an
+     * unreadable file into the unrecoverable loss of the user's entire case
+     * load -- no prompt, no backup, no copy retained. For an application whose
+     * purpose is safeguarding legal evidence that is the worst possible
+     * response to a read error.
+     *
+     * Instead: restore the last good backup if there is one, and otherwise
+     * move the unreadable file aside under a distinct name so it can be
+     * recovered by hand or by a repair tool. Nothing is ever deleted.
+     */
+    private fun recoverFromCorruptDatabase(reason: String, cause: Exception) {
+        Log.w(
+            "LocalFileStorageService",
+            "Database '${spreadsheetFile.absolutePath}' could not be opened ($reason).",
+            cause,
+        )
+
+        if (backupFile.exists() && backupFile.length() > 0L) {
+            val quarantined = quarantineFile()
+            try {
+                if (spreadsheetFile.exists()) spreadsheetFile.copyTo(quarantined, overwrite = true)
+                backupFile.copyTo(spreadsheetFile, overwrite = true)
+                Log.w(
+                    "LocalFileStorageService",
+                    "Restored the database from '${backupFile.name}'. The unreadable copy was " +
+                        "kept at '${quarantined.name}'.",
+                )
+                return
+            } catch (restoreEx: Exception) {
+                Log.e("LocalFileStorageService", "Restoring from backup failed.", restoreEx)
+            }
+        }
+
+        try {
+            if (spreadsheetFile.exists()) {
+                val quarantined = quarantineFile()
+                if (!spreadsheetFile.renameTo(quarantined)) {
+                    spreadsheetFile.copyTo(quarantined, overwrite = true)
+                    spreadsheetFile.delete()
+                }
+                Log.w(
+                    "LocalFileStorageService",
+                    "No usable backup. The unreadable database was preserved as " +
+                        "'${quarantined.name}' and an empty one created. User data has NOT " +
+                        "been discarded and may be recoverable from that file.",
+                )
+            }
+            createNewSpreadsheet()
+        } catch (ex: Exception) {
+            Log.e("LocalFileStorageService", "Could not quarantine the unreadable database.", ex)
+            throw RuntimeException(
+                "The database could not be opened ($reason) and could not be set aside safely. " +
+                    "Refusing to continue rather than risk discarding case data.",
+                cause,
+            )
+        }
+    }
+
+    /** A never-colliding name to preserve an unreadable database under. */
+    private fun quarantineFile(): File {
+        var index = 0
+        while (true) {
+            val suffix = if (index == 0) "" else "-$index"
+            val candidate = File(storageDir, "$SPREADSHEET_FILE_NAME.corrupt$suffix")
+            if (!candidate.exists()) return candidate
+            index++
         }
     }
 
@@ -199,6 +255,8 @@ class LocalFileStorageService @Inject constructor(
         private const val CASES_SHEET_NAME = "Cases"
         private const val EVIDENCE_SHEET_NAME = "Evidence"
         private const val ALLEGATIONS_SHEET_NAME = "Allegations"
+        const val SPREADSHEET_FILE_NAME = "lexorcist_data.xlsx"
+
         private const val TRANSCRIPT_EDITS_SHEET_NAME = "TranscriptEdits"
         private const val EXHIBITS_SHEET_NAME = "Exhibits"
 
@@ -209,8 +267,24 @@ class LocalFileStorageService @Inject constructor(
         private val EXHIBITS_HEADER = listOf("ExhibitID", "CaseID", "Name", "Description", "EvidenceIDs")
     }
 
+    /**
+     * Serialises every read and write of the workbook.
+     *
+     * Reads and writes both parse the entire workbook into memory, mutate it,
+     * and write the whole thing back. Without a lock, two coroutines doing
+     * read-modify-write concurrently -- which happens for real, because
+     * VideoProcessingWorker appends evidence from a WorkManager job while the
+     * user edits the same case in the foreground, and both land on
+     * Dispatchers.IO -- each read the file before the other's write, and
+     * whichever finished last silently discarded the other's change. Worse,
+     * two simultaneous FileOutputStreams on the same path could interleave and
+     * leave the file structurally invalid.
+     */
+    private val workbookMutex = Mutex()
+
     // Helper to safely read from the spreadsheet in a background thread.
     private suspend fun <T> readFromSpreadsheet(block: (XSSFWorkbook) -> T): Result<T> = withContext(Dispatchers.IO) {
+        workbookMutex.withLock {
         try {
             if (!spreadsheetFile.exists() || spreadsheetFile.length() == 0L) {
                 Log.w("LocalFileStorageService", "Spreadsheet file does not exist or is empty for read. Initializing with a new workbook.")
@@ -238,10 +312,32 @@ class LocalFileStorageService @Inject constructor(
             Log.e("LocalFileStorageService", "Error reading from spreadsheet", e)
             Result.Error(e)
         }
+        }
     }
 
-    // Helper to safely write to the spreadsheet in a background thread.
+    /** Sibling of the database holding the last known-good copy. */
+    private val backupFile: File get() = File(storageDir, "$SPREADSHEET_FILE_NAME.bak")
+
+    /**
+     * Helper to safely write to the spreadsheet in a background thread.
+     *
+     * The write is atomic and keeps a backup. The previous implementation did
+     * `FileOutputStream(spreadsheetFile).use { workbook.write(it) }`, which
+     * truncates the real database in place before writing a byte. An .xlsx is
+     * a ZIP archive, so a process death mid-write -- and Android kills
+     * backgrounded apps routinely -- left a truncated archive. On the next
+     * launch the ZipException handler in [initializeSpreadsheet] deleted the
+     * file and created an empty one. Since every case in the app lives in this
+     * single workbook, one interrupted save destroyed the user's entire case
+     * load, silently, with no backup to fall back to.
+     *
+     * Now: serialise the workbook to a temporary file in the same directory,
+     * fsync it, promote the current database to `.bak`, then rename the
+     * temporary file into place. A crash at any point leaves either the old
+     * database or the new one intact, never a half-written one.
+     */
     private suspend fun <T> writeToSpreadsheet(block: (XSSFWorkbook) -> T): Result<T> = withContext(Dispatchers.IO) {
+        workbookMutex.withLock {
         try {
             if (!spreadsheetFile.exists() || spreadsheetFile.length() == 0L) {
                 Log.w("LocalFileStorageService", "Spreadsheet file does not exist or is empty for write. Initializing with a new workbook.")
@@ -257,9 +353,13 @@ class LocalFileStorageService @Inject constructor(
                 }
             }
             val workbook = FileInputStream(spreadsheetFile).use { fis -> XSSFWorkbook(fis) }
-            val result = block(workbook)
-            FileOutputStream(spreadsheetFile).use { fos -> workbook.write(fos) }
-            workbook.close()
+            val result = try {
+                block(workbook)
+            } catch (e: Exception) {
+                workbook.close()
+                throw e
+            }
+            workbook.use { wb -> writeWorkbookAtomically(wb) }
             Result.Success(result)
         } catch (zipEx: ZipException) {
             Log.e("LocalFileStorageService", "Corrupted spreadsheet file encountered during write.", zipEx)
@@ -267,6 +367,46 @@ class LocalFileStorageService @Inject constructor(
         } catch (e: Exception) {
             Log.e("LocalFileStorageService", "Error writing to spreadsheet", e)
             Result.Error(e)
+        }
+        }
+    }
+
+    /**
+     * Serialises [workbook] over the database without ever leaving the real
+     * file in a partially written state.
+     */
+    private fun writeWorkbookAtomically(workbook: XSSFWorkbook) {
+        val tempFile = File(storageDir, "$SPREADSHEET_FILE_NAME.tmp")
+        if (tempFile.exists()) tempFile.delete()
+
+        FileOutputStream(tempFile).use { fos ->
+            workbook.write(fos)
+            fos.flush()
+            // Force the bytes to disk before the rename, so a power loss
+            // cannot leave a renamed-but-empty file.
+            fos.fd.sync()
+        }
+
+        if (tempFile.length() == 0L) {
+            tempFile.delete()
+            throw IOException("Refusing to replace the database with an empty file.")
+        }
+
+        if (spreadsheetFile.exists()) {
+            if (backupFile.exists()) backupFile.delete()
+            if (!spreadsheetFile.renameTo(backupFile)) {
+                // Fall back to a copy so a rename failure does not abort the save.
+                spreadsheetFile.copyTo(backupFile, overwrite = true)
+            }
+        }
+
+        if (!tempFile.renameTo(spreadsheetFile)) {
+            // Restore the backup rather than leaving no database at all.
+            if (backupFile.exists() && !spreadsheetFile.exists()) {
+                backupFile.copyTo(spreadsheetFile, overwrite = true)
+            }
+            tempFile.delete()
+            throw IOException("Could not move the new database into place.")
         }
     }
 
