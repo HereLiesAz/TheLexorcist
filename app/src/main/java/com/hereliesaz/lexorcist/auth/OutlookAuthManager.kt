@@ -27,23 +27,60 @@ class OutlookAuthManager @Inject constructor(
     private val _outlookSignInState = MutableStateFlow<OutlookSignInState>(OutlookSignInState.Idle)
     val outlookSignInState: StateFlow<OutlookSignInState> = _outlookSignInState.asStateFlow()
 
-    init {
-        PublicClientApplication.createSingleAccountPublicClientApplication(
-            context,
-            R.raw.auth_config_single_account,
-            object : IPublicClientApplication.ISingleAccountApplicationCreatedListener {
-                override fun onCreated(application: ISingleAccountPublicClientApplication) {
-                    msalInstance = application
-                }
+    /**
+     * True when this build ships the checked-in placeholder MSAL config.
+     *
+     * `auth_config_single_account.json` carries `"client_id": "YOUR_CLIENT_ID"`
+     * in the repository, because the real value belongs to an Azure app
+     * registration the maintainer holds. Without it Microsoft sign-in cannot
+     * work at all, and MSAL's own failure is an opaque `MsalClientException`
+     * that surfaced as "Authentication failed: ..." -- indistinguishable from
+     * a wrong password. Detecting it here lets the UI say what is actually
+     * wrong.
+     */
+    val isConfigured: Boolean by lazy {
+        try {
+            val config = context.resources.openRawResource(R.raw.auth_config_single_account)
+                .bufferedReader()
+                .use { it.readText() }
+            PLACEHOLDER_MARKERS.none { config.contains(it) }
+        } catch (e: Exception) {
+            Log.e(TAG, "Could not read the MSAL configuration", e)
+            false
+        }
+    }
 
-                override fun onError(exception: MsalException) {
-                    Log.e(TAG, "Error creating MSAL instance", exception)
-                    _outlookSignInState.value = OutlookSignInState.Error("MSAL initialization failed.", exception)
-                }
-            })
+    init {
+        if (!isConfigured) {
+            _outlookSignInState.value = OutlookSignInState.Error(
+                "Microsoft sign-in is not configured in this build.",
+                IllegalStateException("auth_config_single_account.json holds a placeholder client id"),
+            )
+        } else {
+            PublicClientApplication.createSingleAccountPublicClientApplication(
+                context,
+                R.raw.auth_config_single_account,
+                object : IPublicClientApplication.ISingleAccountApplicationCreatedListener {
+                    override fun onCreated(application: ISingleAccountPublicClientApplication) {
+                        msalInstance = application
+                    }
+
+                    override fun onError(exception: MsalException) {
+                        Log.e(TAG, "Error creating MSAL instance", exception)
+                        _outlookSignInState.value = OutlookSignInState.Error("MSAL initialization failed.", exception)
+                    }
+                })
+        }
     }
 
     suspend fun acquireToken(activity: Activity) {
+        if (!isConfigured) {
+            _outlookSignInState.value = OutlookSignInState.Error(
+                "Microsoft sign-in is not configured in this build.",
+                IllegalStateException("auth_config_single_account.json holds a placeholder client id"),
+            )
+            return
+        }
         _outlookSignInState.value = OutlookSignInState.InProgress
         suspendCoroutine<Unit> { continuation ->
             val scopes = listOf("Mail.Read")
@@ -102,5 +139,9 @@ class OutlookAuthManager @Inject constructor(
                 continuation.resumeWithException(exception)
             }
         }
+    }
+
+    private companion object {
+        val PLACEHOLDER_MARKERS = listOf("YOUR_CLIENT_ID", "_PLACEHOLDER_CLIENT_ID_")
     }
 }

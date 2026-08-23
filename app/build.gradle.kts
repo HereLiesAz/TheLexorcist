@@ -169,6 +169,22 @@ android {
     }
 }
 
+/*
+ * The Apache HTTP transport is unused: GoogleApiService and GmailService both
+ * construct NetHttpTransport. It arrives anyway through google-api-client and
+ * google-http-client, dragging in Apache HttpClient 4.5.x and HttpCore 4.4.x.
+ * 4.5.14 is the final release of that line, so the advisories open against it
+ * cannot be closed by a version bump -- only by not shipping it.
+ *
+ * R8 is told not to warn about the resulting absent references; nothing in the
+ * app reaches them, and the R8 step in CI would fail on the warnings otherwise.
+ */
+configurations.configureEach {
+    exclude(group = "com.google.http-client", module = "google-http-client-apache-v2")
+    exclude(group = "org.apache.httpcomponents", module = "httpclient")
+    exclude(group = "org.apache.httpcomponents", module = "httpcore")
+}
+
 dependencies {
 
     constraints {
@@ -203,6 +219,15 @@ dependencies {
         implementation("io.netty:netty-codec-http:4.1.136.Final") { because("CVE: Netty HTTP request smuggling / decompression") }
         implementation("io.netty:netty-codec:4.1.136.Final") { because("CVE: Netty codec resource exhaustion / zip bomb") }
         implementation("io.netty:netty-handler:4.1.136.Final") { because("CVE: Netty SslHandler / SNI allocation") }
+        implementation("com.google.protobuf:protobuf-javalite:3.25.5") {
+            because("CVE-2024-7254: unbounded recursion parsing untrusted protobuf (MediaPipe tasks-core pins 3.19.1). Held on the 3.x line: MediaPipe's generated code predates the 4.x runtime's gencode version check.")
+        }
+        implementation("org.apache.httpcomponents.core5:httpcore5:5.3.6") {
+            because("CVE: HTTP/1 header parsing memory exhaustion (arrives via MSAL)")
+        }
+        implementation("org.apache.httpcomponents.core5:httpcore5-h2:5.3.6") {
+            because("Align with the patched httpcore5")
+        }
     }
 
     implementation(libs.androidx.core.ktx)

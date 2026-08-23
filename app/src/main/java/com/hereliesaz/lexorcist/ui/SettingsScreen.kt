@@ -63,7 +63,6 @@ import com.hereliesaz.lexorcist.viewmodel.AuthViewModel
 import com.hereliesaz.lexorcist.model.OutlookSignInState
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
-import com.hereliesaz.lexorcist.viewmodel.OneDriveViewModel
 import com.hereliesaz.lexorcist.viewmodel.SettingsViewModel
 import java.util.Locale
 
@@ -74,7 +73,6 @@ fun SettingsScreen(
     mainViewModel: MainViewModel,
     settingsViewModel: SettingsViewModel = hiltViewModel(),
     authViewModel: AuthViewModel = hiltViewModel(),
-    oneDriveViewModel: OneDriveViewModel = hiltViewModel()
 ) {
     val themeMode by settingsViewModel.themeMode.collectAsState() // Used to determine current state for AzCycler logic if needed, though AzCycler manages its own display state.
     var showClearCacheDialog by remember { mutableStateOf(false) }
@@ -239,14 +237,13 @@ fun SettingsScreen(
             )
             Spacer(modifier = Modifier.height(8.dp))
             val selectedCloudProvider by settingsViewModel.selectedCloudProvider.collectAsState()
-            // Dropbox is enabled (PKCE + encrypted credential). OneDrive is dropped for now;
-            // flip showOneDrive to re-enable it once its Graph provider is implemented.
+            // OneDrive is gone rather than hidden. Its provider was a stub whose
+            // every method returned "not implemented", and there is no partial
+            // implementation to finish -- see the commit that removed it.
             val showDropbox = true
-            val showOneDrive = false
             val cloudProviders = buildList {
                 add("GoogleDrive")
                 if (showDropbox) add("Dropbox")
-                if (showOneDrive) add("OneDrive")
                 add("None")
             }
             AzCycler(
@@ -353,56 +350,6 @@ fun SettingsScreen(
             }
             } // end if (showDropbox)
 
-            if (showOneDrive) {
-            Spacer(modifier = Modifier.height(16.dp))
-            HorizontalDivider()
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // OneDrive
-            Text(
-                text = stringResource(R.string.onedrive),
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.fillMaxWidth(),
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            val oneDriveSignInState by oneDriveViewModel.oneDriveSignInState.collectAsState()
-
-            when (val stateVal = oneDriveSignInState) {
-                is com.hereliesaz.lexorcist.model.OneDriveSignInState.Idle -> {
-                    AzButton(
-                        onClick = {
-                            if (activity != null) {
-                                oneDriveViewModel.connectToOneDrive(activity)
-                            }
-                        },
-                        text = stringResource(R.string.connect_to_onedrive).uppercase(Locale.getDefault())
-                    )
-                }
-                is com.hereliesaz.lexorcist.model.OneDriveSignInState.InProgress -> {
-                    com.hereliesaz.aznavrail.AzLoad()
-                }
-                is com.hereliesaz.lexorcist.model.OneDriveSignInState.Success -> {
-                    Text(stringResource(R.string.connected_to_onedrive_as_placeholder, stateVal.accountName ?: stringResource(R.string.unknown_account)))
-                    Spacer(modifier = Modifier.height(8.dp))
-                    AzButton(
-                        onClick = { oneDriveViewModel.disconnectFromOneDrive() },
-                        text = stringResource(R.string.disconnect_from_onedrive).uppercase(Locale.getDefault())
-                    )
-                }
-                is com.hereliesaz.lexorcist.model.OneDriveSignInState.Error -> {
-                    Text(stringResource(R.string.error_connecting_to_onedrive_placeholder, stateVal.message ?: stringResource(R.string.unknown_error)))
-                    Spacer(modifier = Modifier.height(8.dp))
-                    AzButton(
-                        onClick = {
-                            if (activity != null) {
-                                oneDriveViewModel.connectToOneDrive(activity)
-                            }
-                        },
-                        text = stringResource(R.string.retry).uppercase(Locale.getDefault())
-                    )
-                }
-            }
-            } // end if (showOneDrive)
 
             Spacer(modifier = Modifier.height(16.dp))
             HorizontalDivider()

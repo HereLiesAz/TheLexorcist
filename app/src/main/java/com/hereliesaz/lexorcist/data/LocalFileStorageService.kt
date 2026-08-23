@@ -58,7 +58,6 @@ class LocalFileStorageService @Inject constructor(
     private val syncManager: SyncManager,
     @Named("googleDrive") private val googleDriveProvider: CloudStorageProvider,
     @Named("dropbox") private val dropboxProvider: CloudStorageProvider,
-    @Named("oneDrive") private val oneDriveProvider: CloudStorageProvider,
     private val workManager: WorkManager,
     private val cipherProvider: AndroidDatabaseCipherProvider,
     private val caseStorage: CaseStorage,
@@ -1168,7 +1167,6 @@ class LocalFileStorageService @Inject constructor(
         val cloudStorageProvider = when (selectedProviderName) {
             "GoogleDrive" -> googleDriveProvider
             "Dropbox" -> dropboxProvider
-            "OneDrive" -> oneDriveProvider
             else -> {
                 Log.i("LocalFileStorageService", "No cloud provider selected for synchronization.")
                 null

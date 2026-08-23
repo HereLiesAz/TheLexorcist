@@ -45,6 +45,13 @@
 -keep class org.openxmlformats.** { *; }
 -keep class org.apache.xmlbeans.** { *; }
 -keep class schemaorg_apache_xmlbeans.** { *; }
+# Apache HttpClient is excluded from the build (see app/build.gradle.kts): the
+# app uses NetHttpTransport, and 4.5.x has open advisories with no 4.x fix.
+# google-http-client still references the transport classes it can optionally
+# use, so those references are absent by design.
+-dontwarn org.apache.http.**
+-dontwarn com.google.api.client.http.apache.**
+
 -dontwarn org.apache.poi.**
 -dontwarn org.openxmlformats.**
 -dontwarn org.apache.xmlbeans.**

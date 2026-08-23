@@ -315,14 +315,8 @@ function onOpen() {}</string>
     <string name="dropbox_app_key">f0uqbas5hc8zihy</string>
     <string name="dropbox_auth_scheme">db-f0uqbas5hc8zihy</string>
     <string name="connect_to_dropbox">Connect to Dropbox</string>
-    <string name="onedrive">OneDrive</string>
-    <string name="connect_to_onedrive">Connect to OneDrive</string>
-    <string name="connecting_to_onedrive">Connecting to OneDrive…</string>
-    <string name="connected_to_onedrive_as_placeholder">Connected to OneDrive as: %1$s</string>
     <string name="unknown_account">Unknown Account</string>
     <string name="disconnectFromOneDrive">Disconnect from OneDrive</string>
-    <string name="disconnect_from_onedrive">Disconnect From OneDrive</string>
-    <string name="error_connecting_to_onedrive_placeholder">Error connecting to OneDrive: %1$s</string>
     <string name="unknown_error">Unknown Error</string>
     <string name="retry">Retry</string>
 
