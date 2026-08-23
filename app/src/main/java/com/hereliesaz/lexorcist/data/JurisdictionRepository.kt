@@ -1,5 +1,6 @@
 package com.hereliesaz.lexorcist.data
 
+import com.hereliesaz.lexorcist.utils.parseCsvLine
 import android.content.Context
 import com.hereliesaz.lexorcist.model.Court
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -24,11 +25,9 @@ class JurisdictionRepository @Inject constructor(
                         // Skip header line
                         reader.readLine()
 
-                        val regex = "\"(.*?)\"".toRegex()
                         var line: String?
                         while (reader.readLine().also { line = it } != null) {
-                            val matches = regex.findAll(line!!)
-                            val tokens = matches.map { it.groupValues[1] }.toList()
+                            val tokens = parseCsvLine(line!!)
 
                             if (tokens.size >= 2) {
                                 val court = Court(

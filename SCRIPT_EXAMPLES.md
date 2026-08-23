@@ -1,6 +1,27 @@
 # Scripting in The Lexorcist
 
-This document provides over 60 unique script examples for The Lexorcist's script builder. These scripts are designed to showcase the power and flexibility of the system, starting from simple keyword tagging and progressing to more complex, analytical, and even case-management-oriented functions.
+> **API note (corrected).**
+>
+> Earlier revisions of this document described three things the runtime did not
+> provide, so every example using them failed at runtime:
+>
+> * **`evidence.text`** — the Kotlin property is `content`. The script scope now
+>   exposes evidence as a plain JS object carrying **both** `content` and `text`,
+>   so the examples below work as written.
+> * **`case.evidence`** — `case` is a *reserved word* in JavaScript, so
+>   `case.evidence` is a syntax error before a script even runs; no runtime
+>   change could have made it work. It is now **`lex.case.evidence`**, with a
+>   `caseEvidence` global as an alternative. The examples have been corrected.
+> * **`lex.ui`** — the namespace was never registered on the scope, so
+>   `lex.ui.addOrUpdate(...)` threw `TypeError` on every call, including from two
+>   of the scripts seeded into every install. It is implemented now.
+>
+> The scripting API is covered by `ScriptRunnerApiTest`, which executes real
+> scripts through Rhino against each of these.
+
+
+
+This document provides worked script examples for The Lexorcist's script builder. (An earlier revision claimed "over 60 unique script examples"; the document contains around twenty. The 60-odd figure describes `app/src/main/assets/default_scripts.csv`, the seed library shipped with the app.) These scripts are designed to showcase the power and flexibility of the system, starting from simple keyword tagging and progressing to more complex, analytical, and even case-management-oriented functions.
 
 ## Scripting APIs
 
@@ -15,7 +36,7 @@ These examples use the legacy global functions. They are simple, direct, and per
 **Available Globals:**
 
 *   `evidence`: An object containing the current piece of evidence being processed.
-*   `case`: An object representing the entire case, including a list of all other evidence (`case.evidence`).
+*   `case`: An object representing the entire case, including a list of all other evidence (`lex.case.evidence`).
 *   `addTag(tagName)`: Adds a tag to the current evidence.
 *   `setSeverity(level)`: Sets a severity level for the evidence (e.g., "Low", "Medium", "High").
 *   `linkToAllegation(allegationName)`: Links the evidence to a specific allegation.
@@ -120,7 +141,7 @@ These examples use the legacy global functions. They are simple, direct, and per
     const match = evidence.text.match(/i saw you at (.+?)\b/i);
     if (match) {
         addTag(`Location Mention: ${match[1]}`);
-        const otherMentions = case.evidence.filter(e => e.tags.some(t => t.startsWith("Location Mention:")));
+        const otherMentions = lex.case.evidence.filter(e => e.tags.some(t => t.startsWith("Location Mention:")));
         if (otherMentions.length > 2) {
             addTag("Stalking Pattern");
             linkToAllegation("Stalking");
@@ -136,7 +157,7 @@ These examples use the legacy global functions. They are simple, direct, and per
     const promiseMatch = evidence.text.match(/i promise to (pay you|give you)(.+?)\b/i);
     if (promiseMatch) {
         const item = promiseMatch[2].trim();
-        const contradiction = case.evidence.find(e => {
+        const contradiction = lex.case.evidence.find(e => {
             const denialMatch = e.text.match(/i never promised to (pay you|give you)(.+?)\b/i);
             return denialMatch && denialMatch[2].trim() === item;
         });
@@ -191,7 +212,7 @@ For advanced functionality, scripts can use the global `lex` object, which provi
 *   **Script:**
     ```javascript
     const similarEvidence = [];
-    case.evidence.forEach(e => {
+    lex.case.evidence.forEach(e => {
         if (e.id !== evidence.id) { // Don't compare to itself
             const similarity = lex.ai.local.calculateSimilarity(evidence.text, e.text);
             if (similarity > 0.8) { // High similarity threshold

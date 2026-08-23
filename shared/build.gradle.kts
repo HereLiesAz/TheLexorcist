@@ -15,6 +15,18 @@ plugins {
 // the LexorcistShared framework with no further configuration.
 val isMacHost = org.gradle.internal.os.OperatingSystem.current().isMacOsX
 
+// Compose Multiplatform derives the generated `Res` class package from the
+// Gradle root project name, which here is "The Lexorcist". The space produces a
+// class named `the lexorcist/shared/generated/resources/Res$string`, and D8
+// rejects it: "Space characters in SimpleName ... are not allowed prior to DEX
+// version 040". Compilation succeeds and only the dex step fails, so this shows
+// up in a full assemble rather than at build time. Naming the package
+// explicitly avoids depending on the project name at all.
+compose.resources {
+    packageOfResClass = "com.hereliesaz.lexorcist.shared.resources"
+    publicResClass = false
+}
+
 kotlin {
     jvmToolchain(21)
 
