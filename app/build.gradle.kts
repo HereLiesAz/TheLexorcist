@@ -38,13 +38,46 @@ val localProperties = Properties().apply {
 
 var currentVersionCode = versionProps.getProperty("versionBuild", "1").toInt()
 
-// Automatically increment versionCode for release builds
-val isReleaseBuild = gradle.startParameter.taskNames.any { it.contains("Release", ignoreCase = true) }
-if (isReleaseBuild) {
-    currentVersionCode++
-    versionProps.setProperty("versionBuild", currentVersionCode.toString())
-    versionPropsFile.outputStream().use {
-        versionProps.store(it, "Auto-incremented by release build")
+// versionCode.
+//
+// An explicitly supplied -PversionBuild always wins. build.yml passes the git
+// commit count, which is deterministic for a given commit; nothing about the
+// build then depends on mutable state in the working tree.
+//
+// Failing that, a local release build auto-increments the tracked
+// version.properties, which is the behaviour this project has always had.
+//
+// Two guards on that auto-increment:
+//
+//   * Never in CI. The task-name test below matches ANY task containing
+//     "Release" -- including minifyReleaseWithR8, which the CI workflow runs on
+//     every push and pull request to catch R8 failures. Without this guard,
+//     every CI run mutates a tracked file, and the same commit produces a
+//     different versionCode on every build.
+//   * Only for tasks that actually produce a release artifact. Checking,
+//     linting or shrinking a release variant is not a release, and should not
+//     burn a version number.
+val explicitVersionBuild = (project.findProperty("versionBuild") as String?)?.toIntOrNull()
+
+val producesReleaseArtifact = gradle.startParameter.taskNames.any { task ->
+    val name = task.substringAfterLast(':')
+    name.startsWith("assemble", ignoreCase = true) ||
+        name.startsWith("bundle", ignoreCase = true) ||
+        name.startsWith("package", ignoreCase = true) ||
+        name.startsWith("publish", ignoreCase = true) ||
+        name.equals("build", ignoreCase = true)
+} && gradle.startParameter.taskNames.any { it.contains("Release", ignoreCase = true) }
+
+val runningInCi = System.getenv("CI") != null || System.getenv("GITHUB_ACTIONS") != null
+
+when {
+    explicitVersionBuild != null -> currentVersionCode = explicitVersionBuild
+    producesReleaseArtifact && !runningInCi -> {
+        currentVersionCode++
+        versionProps.setProperty("versionBuild", currentVersionCode.toString())
+        versionPropsFile.outputStream().use {
+            versionProps.store(it, "Auto-incremented by release build")
+        }
     }
 }
 
