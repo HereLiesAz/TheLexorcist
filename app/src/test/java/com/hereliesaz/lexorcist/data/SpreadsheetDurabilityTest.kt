@@ -1,15 +1,22 @@
 package com.hereliesaz.lexorcist.data
 
+import com.google.crypto.tink.KeyTemplates
+import com.google.crypto.tink.KeysetHandle
+import com.google.crypto.tink.StreamingAead
+import com.google.crypto.tink.streamingaead.StreamingAeadConfig
+import com.hereliesaz.lexorcist.data.crypto.StreamingAeadDatabaseCipher
 import org.apache.poi.ss.usermodel.WorkbookFactory
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.File
+import java.io.FileInputStream
 import java.io.FileOutputStream
 
 /**
@@ -171,6 +178,94 @@ class SpreadsheetDurabilityTest {
 
         assertEquals("real work", markerIn(File(dir, NAME)))
         assertTrue(quarantine.exists())
+    }
+
+
+    // ---------------------------------------------------------------------
+    // Encryption at rest: the same atomic-write algorithm, through a cipher.
+    // ---------------------------------------------------------------------
+
+    private fun cipher(): StreamingAeadDatabaseCipher {
+        StreamingAeadConfig.register()
+        return StreamingAeadDatabaseCipher(
+            KeysetHandle.generateNew(KeyTemplates.get("AES256_GCM_HKDF_4KB"))
+                .getPrimitive(StreamingAead::class.java),
+        )
+    }
+
+    /** Mirrors writeWorkbookAtomically once encryption is in play. */
+    private fun writeEncryptedAtomically(
+        dir: File,
+        name: String,
+        wb: XSSFWorkbook,
+        c: StreamingAeadDatabaseCipher,
+    ) {
+        val target = File(dir, name)
+        val backup = File(dir, "$name.bak")
+        val tmp = File(dir, "$name.tmp")
+        if (tmp.exists()) tmp.delete()
+
+        FileOutputStream(tmp).use { raw ->
+            c.encryptingStream(raw).use { out -> wb.write(out) }
+        }
+        // The encrypting stream closed `raw`; fsync a fresh descriptor.
+        FileOutputStream(tmp, true).use { it.fd.sync() }
+        check(tmp.length() > 0L)
+
+        if (target.exists()) {
+            if (backup.exists()) backup.delete()
+            if (!target.renameTo(backup)) target.copyTo(backup, overwrite = true)
+        }
+        check(tmp.renameTo(target))
+    }
+
+    private fun readEncrypted(file: File, c: StreamingAeadDatabaseCipher): String =
+        FileInputStream(file).use { raw ->
+            c.decryptingStream(raw).use { plain ->
+                XSSFWorkbook(plain).use { it.getSheet("Evidence").getRow(0).getCell(0).stringCellValue }
+            }
+        }
+
+    @Test
+    fun `an encrypted save round-trips and keeps a backup`() {
+        val dir = temp.newFolder()
+        val c = cipher()
+        workbookWith("first").use { writeEncryptedAtomically(dir, NAME, it, c) }
+        workbookWith("second").use { writeEncryptedAtomically(dir, NAME, it, c) }
+
+        assertEquals("second", readEncrypted(File(dir, NAME), c))
+        assertEquals("first", readEncrypted(File(dir, "$NAME.bak"), c))
+        assertFalse(File(dir, "$NAME.tmp").exists())
+    }
+
+    @Test
+    fun `an encrypted database is not readable as a workbook`() {
+        val dir = temp.newFolder()
+        val c = cipher()
+        workbookWith("Smith v Jones").use { writeEncryptedAtomically(dir, NAME, it, c) }
+
+        val target = File(dir, NAME)
+        assertNull("the database must not open as plain OOXML", runCatching { markerIn(target) }.getOrNull())
+        assertFalse(
+            "party names must not be readable in the file",
+            String(target.readBytes(), Charsets.ISO_8859_1).contains("Smith v Jones"),
+        )
+    }
+
+    @Test
+    fun `fsync after the encrypting stream closes would fail on the wrapped descriptor`() {
+        // Pins the bug the encryption work introduced and the tests caught: the
+        // Tink stream closes the FileOutputStream it wraps, so syncing that
+        // descriptor afterwards throws. Every save would have hit it.
+        val f = temp.newFile("x.bin")
+        var threw = false
+        FileOutputStream(f).use { raw ->
+            cipher().encryptingStream(raw).use { it.write("payload".toByteArray()) }
+            threw = runCatching { raw.fd.sync() }.isFailure
+        }
+        assertTrue("expected the closed descriptor to reject fsync", threw)
+        // ...and the supported way round it works.
+        FileOutputStream(f, true).use { it.fd.sync() }
     }
 
     private companion object {

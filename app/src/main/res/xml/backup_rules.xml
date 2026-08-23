@@ -1,21 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    Android Auto Backup rules.
+
+    These previously read:
+
+        include domain="sharedpref" path="."
+        include domain="file" path="."
+
+    which meant every case, every piece of evidence and the whole database were
+    copied to the user's Google account backup. The comment explaining it argued
+    only for preserving data across a device change; it did not weigh what
+    sending privileged legal material to a third-party backup means. Google
+    encrypts that backup, but under key material outside the app's and the law
+    firm's control. That is a materially different trust boundary from "on the
+    device", and not one to opt into silently on a client's behalf.
+
+    Nothing is backed up now. android:allowBackup="false" in the manifest is the
+    actual control; this file is kept, and kept empty of includes, so that
+    adding one has to be a deliberate edit rather than an inherited default.
+
+    Moving a case load between devices is served by the app's own cloud sync,
+    which the user opts into and which targets storage they control.
+-->
 <full-backup-content>
-    <!--
-    This file defines the rules for Android's Auto Backup feature.
-    The app uses a "local-first" approach, storing all critical user data,
-    including the main spreadsheet (`lexorcist_data.xlsx`), case data, raw evidence,
-    and user settings, on the device.
-
-    To ensure that all user data is preserved, we will back up:
-    - All shared preferences, which store user settings.
-    - All files in the app's internal storage, which includes the main spreadsheet
-      and all evidence files.
-    -->
-
-    <!-- Back up all shared preferences -->
-    <include domain="sharedpref" path="."/>
-
-    <!-- Back up all files in the app's internal storage -->
-    <include domain="file" path="."/>
-
+    <exclude domain="file" path="." />
+    <exclude domain="database" path="." />
+    <exclude domain="sharedpref" path="." />
+    <exclude domain="external" path="." />
 </full-backup-content>
