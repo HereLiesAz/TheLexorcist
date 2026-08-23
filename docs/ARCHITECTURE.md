@@ -1,63 +1,158 @@
 # Application Architecture
 
-## Overview
+## Modules
 
-The Lexorcist is a modern Android application built using the recommended **Guide to App Architecture** principles from Google. It follows the **MVVM (Model-View-ViewModel)** architectural pattern and leverages **Jetpack Compose** for the UI.
+```
+:shared   Kotlin/Compose Multiplatform. Android + JVM + iOS.
+:app      Android application. Platform integrations and the Hilt graph.
+```
 
-## Layers
+`:shared` holds everything that does not need a platform: domain models, the
+`LexResult` type, pure parsing and analysis, and Compose Multiplatform UI.
+`:app` holds everything that does: Google APIs, Apache POI, ML Kit, Rhino,
+Vosk, WorkManager, Activity and the Hilt dependency graph.
 
-The application is structured into three primary layers:
+Apple targets in `:shared` are declared only when the build runs on a macOS
+host, so Linux CI stays resolvable. Nothing in `commonMain` depends on that
+being true — the split is a build-host concern, not a code one.
 
-### 1. UI Layer
-*   **Components**: Activities (`MainActivity`), Composables (`CasesScreen`, `TimelineScreen`), and ViewModels (`CaseViewModel`, `ReviewViewModel`).
-*   **Responsibility**: Displays data to the user and captures user events.
-*   **State Management**: Uses `StateFlow` to expose immutable state snapshots to the UI.
-*   **UI Toolkit**: Jetpack Compose.
+Hilt lives in `:app` only. It is an Android-specific, KSP-based framework, so
+it cannot be used from common code. `:shared` uses plain constructor injection
+and interfaces; `:app` binds them.
 
-### 2. Domain Layer (Optional/Implicit)
-*   While not explicitly separated into a `domain` module, the `ViewModel`s and `UseCase`-like service classes (e.g., `CleanupService`, `ScriptRunner`) encapsulate business logic.
+## The `:app` layers
 
-### 3. Data Layer
-*   **Components**: Repositories (`CaseRepository`, `EvidenceRepository`), Data Sources (`LocalFileStorageService`, `GoogleApiService`), and Models (`Case`, `Evidence`).
-*   **Responsibility**: Manages application data, exposing it to the UI layer. Handles data retrieval, storage, and synchronization.
-*   **Single Source of Truth**: The `LocalFileStorageService` (backed by an Excel spreadsheet) acts as the primary local data source, synchronized with cloud providers.
+### UI
+Jetpack Compose, one Activity, no fragment back stack. `MainScreen` owns the
+`NavHost`. State is exposed from ViewModels as `StateFlow`.
 
-## Key Technologies
+One caveat worth knowing: screens reached through `composable { }` that take
+`caseViewModel: CaseViewModel = hiltViewModel()` get a **`NavBackStackEntry`-scoped
+instance**, not the Activity-scoped one `MainScreen` threads into its other
+screens. Fields mirrored from a `@Singleton` repository resync and hide this;
+plain per-instance `StateFlow`s such as `cleanupSuggestions` do not. Pass the
+ViewModel explicitly.
 
-*   **Dependency Injection**: **Hilt** is used for dependency injection throughout the app.
-*   **Asynchronous Programming**: **Kotlin Coroutines** and **Flow** are used for background tasks and reactive data streams.
-*   **Local Storage**:
-    *   **Excel (.xlsx)**: Used as the primary database format for portability and user accessibility.
-    *   **DataStore**: Used for simple key-value storage (e.g., script execution state).
-    *   **EncryptedSharedPreferences**: Used for storing sensitive credentials.
-*   **Cloud Integration**:
-    *   **Google Drive & Sheets API**: For cloud storage and synchronization.
-    *   **Microsoft Graph API**: For Outlook email import.
-    *   **Gmail API**: For Gmail import.
-*   **Machine Learning**: **ML Kit** is used for on-device OCR.
-*   **Scripting**: **Mozilla Rhino** is used to execute user-defined JavaScript automations in a secure sandbox.
+### Domain
+Business logic sits in service classes (`OcrProcessingService`, `ScriptRunner`,
+`CleanupService`, `PackagingService`) and, increasingly, in `:shared`.
 
-## Security Architecture
+### Data
+`StorageService` is the interface; `LocalFileStorageService` is the binding.
+Repositories sit above it. Cloud providers implement `CloudStorageProvider`.
 
-*   **Script Sandboxing**: The `ScriptRunner` service uses a `ClassShutter` to prevent user scripts from accessing Java classes, ensuring that scripts can only interact with the exposed safe API (`lex` object).
-*   **Path Sanitization**: The `LocalFileStorageService` strictly sanitizes all file paths and identifiers to prevent Path Traversal vulnerabilities.
-*   **Formula Injection Prevention**: Inputs written to spreadsheets are sanitized (by prepending `'`) to prevent CSV/Formula Injection attacks.
-*   **Encrypted Storage**: Sensitive authentication tokens are stored in `EncryptedSharedPreferences`.
+## Storage
 
-## Data Flow
+**Local-first.** All user data lives in a single `lexorcist_data.xlsx` in the
+app's storage directory, written with Apache POI. `LocalFileStorageService` is
+the only thing that touches it.
 
-1.  **User Action**: The user interacts with the UI (e.g., takes a photo).
-2.  **ViewModel**: The UI calls a method in `CaseViewModel`.
-3.  **Service/Repository**: The ViewModel delegates the work to a service (e.g., `OcrProcessingService`).
-4.  **Data Source**: The service uses `LocalFileStorageService` to save the file and metadata to the local Excel sheet.
-5.  **State Update**: The repository emits the updated data via a `Flow`.
-6.  **UI Update**: The ViewModel processes the Flow and updates its `StateFlow`, causing the Compose UI to recompose.
+Three properties that were not true before and are now:
 
-## Directory Structure
+- **Serialised.** Reads and writes hold a `Mutex`. `VideoProcessingWorker`
+  writes evidence from a WorkManager job while the user edits in the
+  foreground; without the lock those read-modify-write cycles interleaved and
+  silently dropped one side's changes.
+- **Atomic.** A save writes to a sibling `.tmp`, fsyncs, promotes the current
+  database to `.bak`, then renames into place. Nothing ever truncates the live
+  database.
+- **Non-destructive on corruption.** An unreadable database is restored from
+  `.bak` where possible, and otherwise moved aside as
+  `lexorcist_data.xlsx.corrupt`. It is never deleted.
 
-*   `di/`: Hilt modules for dependency injection.
-*   `ui/`: Composable screens and UI components.
-*   `viewmodel/`: ViewModels handling UI logic.
-*   `data/`: Repositories and data models.
-*   `service/`: Background services and business logic (OCR, Scripting, API clients).
-*   `utils/`: Utility classes and extensions.
+The honest assessment of this substrate is in `docs/performance.md`: the
+spreadsheet was chosen for portability, but portability is a property of an
+*export format*, not of a storage engine, and using it as the engine costs
+transactions, indexes, per-row writes and schema migration. An embedded
+database with an `.xlsx` export would serve the same goal better.
+
+### Cloud
+
+Google Drive is used as **whole-file backup storage** for the workbook and case
+folders, via `SyncManager`. It is not a row-level database.
+
+Note that a large part of `GoogleApiService` implements an abandoned
+"Sheets as a row-addressed database" design — the case registry, per-case
+evidence sheets, and row-level add/update/delete. Its only entry point is
+`SpreadsheetImportService`, which has no `@Inject` constructor, no Hilt
+provider and no caller, so none of it runs. Do not reason about the app's
+behaviour from that code.
+
+Sync is whole-file last-writer-wins with no merge. Two devices editing
+different cases offline will lose one side's work on the second sync. This is a
+known limitation, not a design intent.
+
+## Key technologies
+
+| Concern | Choice |
+| --- | --- |
+| Language / toolchain | Kotlin 2.3.21 on JDK 21 |
+| Multiplatform | Kotlin Multiplatform, Compose Multiplatform 1.11.1 |
+| Android build | AGP 9.3.1, Gradle 9.7.1 |
+| DI (`:app` only) | Hilt |
+| Async | Coroutines and Flow |
+| Local database | Apache POI `.xlsx` |
+| Preferences | DataStore; Tink / EncryptedSharedPreferences for credentials |
+| OCR | ML Kit on-device text recognition |
+| Speech to text | Vosk on-device |
+| Embeddings | MediaPipe `TextEmbedder` |
+| Scripting | Mozilla Rhino |
+| Documents | iText |
+
+Kotlin is held at 2.3.21 rather than 2.4.10 because KSP has no 2.4.x release and
+Hilt's annotation processor requires KSP. It is the only dependency deliberately
+behind latest stable, and a dependency forces it.
+
+## Security
+
+- **Script sandbox.** `ScriptRunner` installs a `ClassShutter` that blocks all
+  Java class access. It does **not** block network egress: the sandbox
+  deliberately exposes `lex.ai.generate` (a cloud Gemini call) and
+  `lex.google.runAppsScript` (an Apps Script Execution API call made with the
+  user's own OAuth credential). A script obtained from the shared "Extras"
+  spreadsheet runs with those capabilities. Treat the class-access block as one
+  control, not as isolation.
+- **Path sanitisation.** `sanitizeSafePathSegment` restricts path segments to
+  alphanumerics, dashes and underscores.
+- **Formula injection.** `SpreadsheetUtils.sanitizeForSpreadsheet` prefixes any
+  value starting with `=`, `+`, `-` or `@` with an apostrophe. Covered by
+  `FormulaInjectionTest`.
+- **Credentials at rest.** OAuth tokens go through `TinkSecureStorage`
+  (AES-256-GCM, Android Keystore).
+- **Evidence at rest is not encrypted**, and `android:allowBackup="true"` with
+  backup rules that include all app files means evidence and the case database
+  are included in Android Auto Backup. Both are open items.
+
+## Data flow
+
+1. The user captures or imports evidence.
+2. A ViewModel delegates to a service (`OcrProcessingService`,
+   `VoskTranscriptionService`, `VideoProcessingService`).
+3. The service extracts text, hashes the original, and resolves a document
+   date. **If no date can be established it records
+   `OcrProcessingService.DATE_NOT_ESTABLISHED` (`0L`)** — never the current
+   time. Anything rendering a chronology must exclude or label those items.
+4. Active scripts run over the extracted text and apply tags.
+5. `LocalFileStorageService` persists the row and copies the original into the
+   case's raw folder.
+6. Repositories emit through `Flow`; ViewModels map to `StateFlow`; Compose
+   recomposes.
+
+## Directory layout
+
+```
+shared/src/commonMain/kotlin/com/hereliesaz/lexorcist/
+  core/          LexResult, LexError
+  domain/model/  Evidence, Case, Exhibit, Allegation, Script, templates
+  domain/parse/  DateExtractor
+  ui/theme/      Compose Multiplatform theme
+  ui/timeline/   Multiplatform timeline
+
+app/src/main/java/com/hereliesaz/lexorcist/
+  di/            Hilt modules
+  ui/            Composable screens and components
+  viewmodel/     ViewModels
+  data/          Repositories, storage, cloud providers
+  service/       OCR, transcription, scripting, Google APIs
+  utils/         Helpers
+```
