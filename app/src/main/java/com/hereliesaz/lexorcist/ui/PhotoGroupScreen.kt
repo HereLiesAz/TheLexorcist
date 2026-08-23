@@ -35,13 +35,17 @@ fun PhotoGroupScreen(
 ) {
     val context = LocalContext.current
     val photoUris by photoGroupViewModel.photoUris.collectAsState()
-    var description by remember { mutableStateOf("") }
+    val description by photoGroupViewModel.description.collectAsState()
+    var captureLost by remember { mutableStateOf(false) }
 
     val takePictureLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture(),
         onResult = { success ->
-            if (success) {
-                photoGroupViewModel.latestTmpUri.value?.let { photoGroupViewModel.addPhoto(it) }
+            // A successful capture with no pending URI means the saved state
+            // was lost as well as the view model. Say so rather than dropping
+            // the photograph without a word, which is what this did before.
+            if (success && !photoGroupViewModel.onCaptureSucceeded()) {
+                captureLost = true
             }
         },
     )
@@ -75,11 +79,20 @@ fun PhotoGroupScreen(
         ) {
             OutlinedTextField(
                 value = description,
-                onValueChange = { description = it },
+                onValueChange = { photoGroupViewModel.setDescription(it) },
                 label = { Text("Description") },
                 modifier = Modifier.fillMaxWidth(),
                 textStyle = TextStyle(textAlign = TextAlign.End),
             )
+            if (captureLost) {
+                Text(
+                    text = "The last photo could not be recovered after the app was " +
+                        "interrupted. Please take it again.",
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.End,
+                )
+            }
             Spacer(modifier = Modifier.height(16.dp))
             LazyRow(
                 modifier = Modifier.fillMaxWidth(),
@@ -100,7 +113,11 @@ fun PhotoGroupScreen(
             ) {
                 AzButton(
                     onClick = {
-                        val tmpFile = File(context.cacheDir, "tmp_image_${System.currentTimeMillis()}.jpg")
+                        // filesDir, not cacheDir: the camera app runs while
+                        // this process may be killed, and the system is free to
+                        // clear the cache directory in the meantime.
+                        val captureDir = File(context.filesDir, "pending_captures").apply { mkdirs() }
+                        val tmpFile = File(captureDir, "capture_${System.currentTimeMillis()}.jpg")
                         val tmpUri = FileProvider.getUriForFile(context, "com.hereliesaz.lexorcist.fileprovider", tmpFile)
                         photoGroupViewModel.setLatestTmpUri(tmpUri)
                         takePictureLauncher.launch(tmpUri)
@@ -116,6 +133,7 @@ fun PhotoGroupScreen(
             AzButton(
                 onClick = {
                     caseViewModel.addPhotoGroupEvidence(photoUris, description, "")
+                    photoGroupViewModel.clear()
                     navController.popBackStack()
                 },
                 text = "Save",

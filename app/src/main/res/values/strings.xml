@@ -300,7 +300,7 @@ function onOpen() {}</string>
     <string name="storage_settings">Storage Settings</string>
     <string name="current_location_colon_placeholder">Current location: %1$s</string>
     <string name="default_text">Default</string>
-    <string name="change_storage_location">Change Storage Location</string>
+    <string name="storage_location_explanation">Case data is kept in the app\'s private storage, where other apps cannot read it and Android backup does not copy it. Use cloud sync to keep a copy elsewhere.</string>
     <string name="cloud_service_settings">Cloud Service Settings</string>
     <string name="google_account">Google Account</string>
     <string name="signed_in_as_placeholder">Signed in as: %1$s</string>

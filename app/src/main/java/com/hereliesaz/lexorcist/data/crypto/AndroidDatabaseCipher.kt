@@ -11,7 +11,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Supplies the real [DatabaseCipher], keyed from the Android Keystore.
+ * Supplies the real [FileCipher], keyed from the Android Keystore.
  *
  * Mirrors the arrangement `TinkSecureStorage` already uses for OAuth tokens: a
  * Tink keyset in its own SharedPreferences file, itself wrapped by a
@@ -25,7 +25,7 @@ constructor(
 ) {
 
     /**
-     * The cipher to use, or [NoOpDatabaseCipher] when no key could be obtained.
+     * The cipher to use, or [NoOpFileCipher] when no key could be obtained.
      *
      * Deliberately degrades to plaintext rather than throwing. This is
      * constructed on the storage path at startup, and the Android Keystore can
@@ -33,11 +33,11 @@ constructor(
      * there would mean the app cannot open any case at all. Losing encryption
      * on those devices leaves them exactly where every device was before this
      * existed, whereas failing hard loses the user their data access. The
-     * fallback is logged, and [DatabaseCipher.isEnabled] lets callers report it.
+     * fallback is logged, and [FileCipher.isEnabled] lets callers report it.
      */
-    val cipher: DatabaseCipher by lazy { build() }
+    val cipher: FileCipher by lazy { build() }
 
-    private fun build(): DatabaseCipher = try {
+    private fun build(): FileCipher = try {
         StreamingAeadConfig.register()
         val handle = AndroidKeysetManager.Builder()
             .withSharedPref(context, KEYSET_NAME, KEYSET_PREFS_NAME)
@@ -45,7 +45,7 @@ constructor(
             .withMasterKeyUri(MASTER_KEY_URI)
             .build()
             .keysetHandle
-        StreamingAeadDatabaseCipher(handle.getPrimitive(StreamingAead::class.java))
+        StreamingAeadFileCipher(handle.getPrimitive(StreamingAead::class.java))
     } catch (e: Exception) {
         // Note the difference from TinkSecureStorage's fallback: that one
         // discards the unreadable keyset and generates a fresh unencrypted one,
@@ -54,7 +54,7 @@ constructor(
         // the user's existing database is encrypted under, so the keyset is
         // left untouched and the failure is surfaced instead.
         Log.e(TAG, "Database keyset unavailable; the case database will not be encrypted.", e)
-        NoOpDatabaseCipher
+        NoOpFileCipher
     }
 
     private companion object {

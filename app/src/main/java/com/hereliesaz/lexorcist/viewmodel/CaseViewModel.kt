@@ -104,6 +104,8 @@ constructor(
     private val chatHistoryParser: ChatHistoryParser,
     private val gmailService: GmailService,
     private val outlookService: OutlookService,
+    private val evidenceFiles: com.hereliesaz.lexorcist.data.storage.EvidenceFiles,
+    private val caseStorage: com.hereliesaz.lexorcist.data.storage.CaseStorage,
     private val imapService: ImapService,
     private val outlookAuthManager: com.hereliesaz.lexorcist.auth.OutlookAuthManager,
     private val jurisdictionRepository: JurisdictionRepository,
@@ -410,13 +412,16 @@ constructor(
         viewModelScope.launch {
             try {
                 // getStorageLocation() returns a String? path (not a Flow); use it directly.
-                val savedLocation = settingsManager.getStorageLocation()
-                if (savedLocation.isNullOrEmpty()) {
-                    _storageLocation.value = applicationContext.filesDir.absolutePath
-                    Log.i("CaseViewModel", "Storage location initialized to default: ${_storageLocation.value}")
-                } else {
-                    _storageLocation.value = savedLocation
-                    Log.i("CaseViewModel", "Storage location loaded from settings: $savedLocation")
+                // The effective root, not the raw settings string: a value the
+                // app cannot use as a directory is ignored by CaseStorage, and
+                // displaying it would tell the user their data is somewhere it
+                // is not.
+                _storageLocation.value = caseStorage.root.absolutePath
+                if (caseStorage.customLocationIsUnusable) {
+                    Log.w(
+                        "CaseViewModel",
+                        "Ignoring a stored non-path storage location; using ${caseStorage.root}",
+                    )
                 }
             } catch (e: Exception) {
                 _storageLocation.value = applicationContext.filesDir.absolutePath
@@ -486,10 +491,38 @@ constructor(
     // The response I got earlier looked complete.
     // I will write the FULL file content now with the added KDoc.
 
-    fun packageFilesForCase(files: List<File>, packageName: String, extension: String) {
+    /** Every file belonging to a case, for the Finalize dialog to offer. */
+    fun caseFiles(caseSpreadsheetId: String): List<File> = caseStorage.caseFiles(caseSpreadsheetId)
+
+    /**
+     * Writes the selected case files into an archive at [destinationUri].
+     *
+     * [destinationUri] comes from the system file picker the Finalize dialog
+     * opens. It used to be discarded and the destination rebuilt as
+     * `Uri.parse("$storageLocation/$name.$ext")` -- a URI with no scheme, which
+     * `contentResolver.openOutputStream` cannot route to any provider. The
+     * resulting exception was thrown inside `viewModelScope.launch` with
+     * nothing to catch it, so finalizing a case took the app down instead of
+     * producing a package.
+     */
+    fun packageFilesForCase(
+        files: List<File>,
+        packageName: String,
+        extension: String,
+        destinationUri: android.net.Uri,
+    ) {
         viewModelScope.launch {
-            val destinationUri = android.net.Uri.parse("${storageLocation.value}/$packageName.$extension")
-            packagingService.createArchive(files, destinationUri)
+            globalLoadingState.pushLoading()
+            _userMessage.value = "Packaging $packageName.$extension..."
+            try {
+                packagingService.createArchive(files, destinationUri)
+                _userMessage.value = "Packaged ${files.size} file(s) into $packageName.$extension."
+            } catch (e: Exception) {
+                Log.e("CaseViewModel", "Failed to package case files", e)
+                _errorMessage.value = "Could not create the package: ${e.message}"
+            } finally {
+                globalLoadingState.popLoading()
+            }
         }
     }
 
@@ -600,17 +633,6 @@ constructor(
         }
     }
 
-    fun setStorageLocation(uri: android.net.Uri) {
-        viewModelScope.launch {
-            globalLoadingState.pushLoading()
-            try {
-                settingsManager.saveStorageLocation(uri.toString())
-                _storageLocation.value = uri.toString()
-            } finally {
-                globalLoadingState.popLoading()
-            }
-        }
-    }
 
     private fun clearCaseData() {
         viewModelScope.launch {
@@ -855,6 +877,16 @@ constructor(
 
                 if (case != null) {
                     Log.d("CaseViewModel", "Case is not null, proceeding to load filters/templates for ${case.name}")
+                    // Encrypt any evidence imported before evidence-at-rest
+                    // encryption existed. Done per case on open rather than as
+                    // a startup sweep, so a large case load is not re-encrypted
+                    // all at once and a failure is scoped to one case.
+                    withContext(Dispatchers.IO) {
+                        val migrated = evidenceFiles.migrateCase(case.spreadsheetId)
+                        if (migrated > 0) {
+                            logService.addLog("Encrypted $migrated previously unprotected evidence file(s).")
+                        }
+                    }
                     loadSheetFiltersFromRepository(case.spreadsheetId)
                     loadHtmlTemplatesFromRepository()
                     // Exhibit creation is now handled by the allegations collector,
@@ -1509,15 +1541,13 @@ constructor(
             _userMessage.value = "Merging image series into PDF..."
             try {
                 val case = selectedCase.value
-                val storagePath = storageLocation.value
-                if (case == null || storagePath == null) {
-                    _errorMessage.value = "Cannot merge series: Case or storage location is not set."
+                if (case == null) {
+                    _errorMessage.value = "Cannot merge series: no case is selected."
                     return@launch
                 }
 
                 val newEvidence = withContext(Dispatchers.IO) {
-                    val caseDir = File(storagePath, case.spreadsheetId)
-                    val rawDir = File(caseDir, "raw").apply { if (!exists()) mkdirs() }
+                    val rawDir = caseStorage.rawDirectory(case.spreadsheetId).apply { if (!exists()) mkdirs() }
                     val pdfFile = File(rawDir, "merged_series_${System.currentTimeMillis()}.pdf")
 
                     val pdfDocument = PdfDocument()

@@ -30,17 +30,17 @@ import java.security.GeneralSecurityException
  * memory — which is exactly why the cipher was written to take a
  * `StreamingAead` rather than reach for `AndroidKeysetManager` itself.
  */
-class DatabaseCipherTest {
+class FileCipherTest {
 
     @get:Rule
     val temp = TemporaryFolder()
 
-    private lateinit var cipher: StreamingAeadDatabaseCipher
+    private lateinit var cipher: StreamingAeadFileCipher
 
     @Before
     fun setUp() {
         StreamingAeadConfig.register()
-        cipher = StreamingAeadDatabaseCipher(newAead())
+        cipher = StreamingAeadFileCipher(newAead())
     }
 
     private fun newAead(): StreamingAead =
@@ -94,7 +94,7 @@ class DatabaseCipherTest {
         val f = temp.newFile("db.xlsx")
         workbook("confidential").use { writeEncrypted(f, it) }
 
-        val other = StreamingAeadDatabaseCipher(newAead())
+        val other = StreamingAeadFileCipher(newAead())
         val read = runCatching {
             FileInputStream(f).use { raw -> other.decryptingStream(raw).use { it.readBytes() } }
         }
@@ -106,7 +106,7 @@ class DatabaseCipherTest {
         val out = ByteArrayOutputStream()
         cipher.encryptingStream(out).use { it.write("hello".toByteArray()) }
 
-        val wrongContext = StreamingAeadDatabaseCipher(newAead(), "somewhere-else".toByteArray())
+        val wrongContext = StreamingAeadFileCipher(newAead(), "somewhere-else".toByteArray())
         val read = runCatching {
             wrongContext.decryptingStream(ByteArrayInputStream(out.toByteArray())).readBytes()
         }
@@ -135,20 +135,20 @@ class DatabaseCipherTest {
     fun `a plaintext workbook is recognised`() {
         val f = temp.newFile("plain.xlsx")
         workbook("legacy").use { wb -> FileOutputStream(f).use { wb.write(it) } }
-        assertTrue(DatabaseCipher.looksLikePlaintextWorkbook(f))
+        assertTrue(FileCipher.looksLikePlaintextWorkbook(f))
     }
 
     @Test
     fun `an encrypted workbook is not mistaken for plaintext`() {
         val f = temp.newFile("db.xlsx")
         workbook("current").use { writeEncrypted(f, it) }
-        assertFalse(DatabaseCipher.looksLikePlaintextWorkbook(f))
+        assertFalse(FileCipher.looksLikePlaintextWorkbook(f))
     }
 
     @Test
     fun `an empty or missing file is not mistaken for plaintext`() {
-        assertFalse(DatabaseCipher.looksLikePlaintextWorkbook(File(temp.root, "nope.xlsx")))
-        assertFalse(DatabaseCipher.looksLikePlaintextWorkbook(temp.newFile("empty.xlsx")))
+        assertFalse(FileCipher.looksLikePlaintextWorkbook(File(temp.root, "nope.xlsx")))
+        assertFalse(FileCipher.looksLikePlaintextWorkbook(temp.newFile("empty.xlsx")))
     }
 
     @Test
@@ -158,7 +158,7 @@ class DatabaseCipherTest {
 
         assertTrue(cipher.encryptInPlace(f))
 
-        assertFalse(DatabaseCipher.looksLikePlaintextWorkbook(f))
+        assertFalse(FileCipher.looksLikePlaintextWorkbook(f))
         assertEquals("cases from before the upgrade", readEncryptedMarker(f))
         assertFalse("no migration temp file should remain", File(temp.root, "db.xlsx.migrating").exists())
     }
@@ -177,12 +177,12 @@ class DatabaseCipherTest {
     @Test
     fun `the no-op cipher passes bytes through unchanged`() {
         val out = ByteArrayOutputStream()
-        NoOpDatabaseCipher.encryptingStream(out).write("plain".toByteArray())
+        NoOpFileCipher.encryptingStream(out).write("plain".toByteArray())
         assertEquals("plain", out.toString(Charsets.UTF_8.name()))
-        assertFalse(NoOpDatabaseCipher.isEnabled)
+        assertFalse(NoOpFileCipher.isEnabled)
         assertEquals(
             "plain",
-            NoOpDatabaseCipher.decryptingStream(ByteArrayInputStream("plain".toByteArray()))
+            NoOpFileCipher.decryptingStream(ByteArrayInputStream("plain".toByteArray()))
                 .readBytes().toString(Charsets.UTF_8),
         )
     }

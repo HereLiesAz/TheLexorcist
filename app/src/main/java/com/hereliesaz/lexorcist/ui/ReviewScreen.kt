@@ -263,11 +263,12 @@ fun ReviewScreen(
         var packageName by remember { mutableStateOf("") }
         var packageExtension by remember { mutableStateOf("zip") }
 
-        // Launcher to let user pick where to save the packaged file
+        // Launcher to let user pick where to save the packaged file. The URI it
+        // returns is the destination -- it used to be discarded.
         val packageLauncher = rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.CreateDocument("*/*"),
+            contract = ActivityResultContracts.CreateDocument("application/zip"),
         ) { uri ->
-            uri?.let { caseViewModel.packageFilesForCase(filesToPackage, packageName, packageExtension) }
+            uri?.let { caseViewModel.packageFilesForCase(filesToPackage, packageName, packageExtension, it) }
         }
 
         FinalizeCaseDialog(
@@ -572,16 +573,7 @@ fun PackageFilesDialog(
     onConfirm: (List<File>, String, String) -> Unit
 ) {
     val case by caseViewModel.selectedCase.collectAsState()
-    val files = remember(case) {
-        case?.let {
-            val caseDir = java.io.File(caseViewModel.storageLocation.value, it.spreadsheetId) // Assuming spreadsheetId as folder identifier
-            if (caseDir.exists() && caseDir.isDirectory) {
-                 caseDir.walk().filter { it.isFile }.toList()
-            } else {
-                emptyList()
-            }
-        } ?: emptyList()
-    }
+    val files = remember(case) { case?.let { caseViewModel.caseFiles(it.spreadsheetId) } ?: emptyList() }
     var selectedFiles by remember { mutableStateOf<List<File>>(emptyList()) }
     var packageName by remember { mutableStateOf("") }
     var extension by remember { mutableStateOf("zip") }

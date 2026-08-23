@@ -1,5 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    Scoped to the one directory that needs to be writable by another app.
+
+    This previously declared files-path and cache-path with path=".", which
+    exposes the whole of the app's private storage through the provider: the
+    case database, every original evidence file, and the Tink keyset
+    preferences. Only the camera hand-off needs FileProvider at all, and it
+    needs exactly one directory to write a capture into.
+
+    Evidence itself is served by EvidenceFileProvider, which decrypts on read
+    and refuses paths outside the storage root.
+-->
 <paths>
-    <files-path name="my_images" path="."/>
-    <cache-path name="my_cache_images" path="." />
+    <files-path name="pending_captures" path="pending_captures/" />
 </paths>

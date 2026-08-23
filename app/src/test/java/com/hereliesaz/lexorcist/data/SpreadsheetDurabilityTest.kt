@@ -4,7 +4,7 @@ import com.google.crypto.tink.KeyTemplates
 import com.google.crypto.tink.KeysetHandle
 import com.google.crypto.tink.StreamingAead
 import com.google.crypto.tink.streamingaead.StreamingAeadConfig
-import com.hereliesaz.lexorcist.data.crypto.StreamingAeadDatabaseCipher
+import com.hereliesaz.lexorcist.data.crypto.StreamingAeadFileCipher
 import org.apache.poi.ss.usermodel.WorkbookFactory
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import org.junit.Assert.assertEquals
@@ -185,9 +185,9 @@ class SpreadsheetDurabilityTest {
     // Encryption at rest: the same atomic-write algorithm, through a cipher.
     // ---------------------------------------------------------------------
 
-    private fun cipher(): StreamingAeadDatabaseCipher {
+    private fun cipher(): StreamingAeadFileCipher {
         StreamingAeadConfig.register()
-        return StreamingAeadDatabaseCipher(
+        return StreamingAeadFileCipher(
             KeysetHandle.generateNew(KeyTemplates.get("AES256_GCM_HKDF_4KB"))
                 .getPrimitive(StreamingAead::class.java),
         )
@@ -198,7 +198,7 @@ class SpreadsheetDurabilityTest {
         dir: File,
         name: String,
         wb: XSSFWorkbook,
-        c: StreamingAeadDatabaseCipher,
+        c: StreamingAeadFileCipher,
     ) {
         val target = File(dir, name)
         val backup = File(dir, "$name.bak")
@@ -219,7 +219,7 @@ class SpreadsheetDurabilityTest {
         check(tmp.renameTo(target))
     }
 
-    private fun readEncrypted(file: File, c: StreamingAeadDatabaseCipher): String =
+    private fun readEncrypted(file: File, c: StreamingAeadFileCipher): String =
         FileInputStream(file).use { raw ->
             c.decryptingStream(raw).use { plain ->
                 XSSFWorkbook(plain).use { it.getSheet("Evidence").getRow(0).getCell(0).stringCellValue }

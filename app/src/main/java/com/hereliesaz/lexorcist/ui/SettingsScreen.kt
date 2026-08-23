@@ -210,21 +210,21 @@ fun SettingsScreen(
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.fillMaxWidth(),
             )
+            // The folder picker that used to sit here launched OpenDocumentTree,
+            // which returns a Storage Access Framework tree URI. Nothing in the
+            // app could use one: every storage path builds a java.io.File, and a
+            // SAF tree is not a file path. Picking a folder therefore changed
+            // nothing, while breaking Finalize and cloud sync, both of which
+            // built File(<that URI>, caseId) and got a directory that never
+            // existed. Case data has always actually lived in the app's private
+            // storage, so that is what is shown.
             val storageLocation by caseViewModel.storageLocation.collectAsState()
-            val directoryPickerLauncher = rememberLauncherForActivityResult(
-                contract = ActivityResultContracts.OpenDocumentTree(),
-                onResult = { uri ->
-                    uri?.let {
-                        caseViewModel.setStorageLocation(it)
-                    }
-                }
-            )
             Spacer(modifier = Modifier.height(16.dp))
             Text(stringResource(R.string.current_location_colon_placeholder, storageLocation ?: stringResource(R.string.default_text)))
             Spacer(modifier = Modifier.height(8.dp))
-            AzButton(
-                onClick = { directoryPickerLauncher.launch(null) },
-                text = stringResource(R.string.change_storage_location).uppercase(Locale.getDefault())
+            Text(
+                text = stringResource(R.string.storage_location_explanation),
+                style = MaterialTheme.typography.bodySmall,
             )
 
             Spacer(modifier = Modifier.height(24.dp))
