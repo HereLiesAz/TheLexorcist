@@ -126,24 +126,14 @@ android {
         resources.excludes.add("google/protobuf/timestamp.proto")
         resources.excludes.add("google/protobuf/type.proto")
         resources.excludes.add("google/protobuf/wrappers.proto")
-        resources.excludes.add("META-INF/services/org.tensorflow.lite.TfLiteFlexDelegate")
     }
     lint {
         baseline = file("lint-baseline.xml")
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
-    buildToolsVersion = "36.1.0 rc1"
-    ndkVersion = "29.0.14033849 rc4"
-}
-
-// The litert runtime AAR bundles the org.tensorflow.lite API classes that also ship
-// in the standalone litert-api module (pulled in transitively), which collide at
-// checkDuplicateClasses. Drop the redundant standalone module.
-configurations.all {
-    exclude(group = "com.google.ai.edge.litert", module = "litert-api")
 }
 
 dependencies {
@@ -209,12 +199,13 @@ dependencies {
     // WorkManager Testing (version 2.10.4 matches your work-runtime-ktx)
     testImplementation(libs.androidx.work.testing)
     
-    // TensorFlow Lite / AI Edge Runtime
-    implementation(libs.litert) // com.google.ai.edge.litert:litert:2.0.2 (for runtime mgmt)
-    implementation("org.tensorflow:tensorflow-lite:${libs.versions.tensorflowLite.get()}")
-    implementation("org.tensorflow:tensorflow-lite-api:${libs.versions.tensorflowLite.get()}")
-    // REMOVED: implementation("com.google.android.gms:play-services-tflite-java:16.4.0")
-    // REMOVED: implementation("com.google.android.gms:play-services-tflite-support:16.4.0")
+    // Raw TensorFlow Lite / LiteRT interpreters were only ever used by
+    // LegalBertService, which loaded an asset (legal_bert.tflite) that does not
+    // exist in this repository, tokenised with a vocab.txt whose contents were
+    // the literal placeholder line "... (full vocabulary content) ...", and was
+    // injected by nothing outside its own test. All of it is gone; on-device
+    // embeddings come from MediaPipe's TextEmbedder in SemanticService, which
+    // is real and wired up.
 
     testImplementation(libs.androidx.arch.core.testing) // For InstantTaskExecutorRule
     testImplementation(libs.kotlinx.coroutines.test) // For coroutines testing (runTest, TestDispatchers)
@@ -340,11 +331,21 @@ dependencies {
     implementation(libs.grpc.core)
     implementation(libs.grpc.context)
 
-    implementation(libs.aznavrail)
+    implementation(libs.aznavrail) {
+        // AzNavRail 11.x is a Compose Multiplatform rewrite, but its JitPack
+        // module metadata lists the wasm-js artifact as a dependency of the
+        // root module rather than of the wasm variant, so Android resolution
+        // tries to fetch a wasm library and fails.
+        exclude(group = "com.github.hereliesaz.aznavrail", module = "aznavrail-cmp-wasm-js")
+    }
+
+    // Kotlin/Compose Multiplatform core: domain models, LexResult, the evidence
+    // pipeline contracts and the cross-platform UI.
+    implementation(project(":shared"))
 }
 
 kotlin {
-    jvmToolchain(17)
+    jvmToolchain(21)
     compilerOptions {
         freeCompilerArgs.add("-opt-in=androidx.compose.material3.ExperimentalMaterial3Api")
         freeCompilerArgs.add("-Xannotation-default-target=param-property")

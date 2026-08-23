@@ -19,7 +19,7 @@ jobs:
       uses: actions/setup-java@v4
       with:
         distribution: temurin
-        java-version: '17'
+        java-version: '21'
     - name: Make Gradle executable
       run: chmod +x ./gradlew
     # Release signing reads MY_KEYSTORE_FILE / MY_KEYSTORE_PASSWORD / MY_KEY_PASSWORD.

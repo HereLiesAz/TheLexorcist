@@ -360,4 +360,5 @@ function onOpen() {}</string>
     <string name="finalize">Finalize</string>
     <string name="suggest_an_edit">Suggest an Edit</string>
     <string name="processing_logs">Processing Logs</string>
+    <string name="date_not_established">Date not established</string>
 </resources>
