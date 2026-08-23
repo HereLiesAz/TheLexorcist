@@ -1,5 +1,7 @@
 package com.hereliesaz.lexorcist.service
 
+import com.hereliesaz.lexorcist.utils.parseCsvLine
+import com.hereliesaz.lexorcist.utils.unescapeCsvField
 import android.content.Context
 import android.util.Log
 import com.hereliesaz.lexorcist.data.SettingsManager
@@ -87,10 +89,10 @@ class DefaultExtrasSeeder @Inject constructor(
             context.assets.open("default_scripts.csv").use { inputStream ->
                 BufferedReader(InputStreamReader(inputStream)).use { reader ->
                     reader.readLine() // Skip header
-                    val regex = "\"(.*?)\"".toRegex()
                     var line: String?
                     while (reader.readLine().also { line = it } != null) {
-                        val tokens = regex.findAll(line!!).map { it.groupValues[1] }.toList()
+                        // See ScriptRepository: a real RFC 4180 split.
+                        val tokens = parseCsvLine(line!!)
                         if (tokens.size >= 5) {
                             val authorCombined = tokens[2]
                             val authorName = authorCombined.substringBefore(" <").trim()
@@ -100,7 +102,10 @@ class DefaultExtrasSeeder @Inject constructor(
                                 id = tokens[0],
                                 name = tokens[1],
                                 description = tokens[3],
-                                content = tokens[4],
+                                // See ScriptRepository: the CSV escapes
+                                // newlines, and an un-unescaped body will not
+                                // compile.
+                                content = tokens[4].unescapeCsvField(),
                                 authorName = authorName,
                                 authorEmail = authorEmail
                             ))
@@ -120,10 +125,10 @@ class DefaultExtrasSeeder @Inject constructor(
             context.assets.open("default_templates.csv").use { inputStream ->
                 BufferedReader(InputStreamReader(inputStream)).use { reader ->
                     reader.readLine() // Skip header
-                    val regex = "\"(.*?)\"".toRegex()
                     var line: String?
                     while (reader.readLine().also { line = it } != null) {
-                        val tokens = regex.findAll(line!!).map { it.groupValues[1] }.toList()
+                        // See ScriptRepository: a real RFC 4180 split.
+                        val tokens = parseCsvLine(line!!)
                         if (tokens.size >= 7) {
                             templates.add(Template(
                                 id = tokens[0],

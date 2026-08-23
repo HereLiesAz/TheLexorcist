@@ -1,5 +1,7 @@
 package com.hereliesaz.lexorcist.data
 
+import com.hereliesaz.lexorcist.utils.parseCsvLine
+import com.hereliesaz.lexorcist.utils.unescapeCsvField
 import android.content.Context
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -39,17 +41,24 @@ class ScriptRepository @Inject constructor(@ApplicationContext private val conte
                     // Skip header line
                     reader.readLine()
 
-                    val regex = "\"(.*?)\"".toRegex()
                     var line: String?
                     while (reader.readLine().also { line = it } != null) {
-                        val tokens = regex.findAll(line!!).map { it.groupValues[1] }.toList()
+                        // A real RFC 4180 split. The previous `"(.*?)"` regex
+                        // truncated every field at its first embedded `""`,
+                        // which mangled nearly every script in the file.
+                        val tokens = parseCsvLine(line!!)
 
                         if (tokens.size >= 5) {
                             val script = com.hereliesaz.lexorcist.model.Script(
                                 id = tokens[0],
                                 name = tokens[1],
                                 description = tokens[3],
-                                content = tokens[4],
+                                // Unescape: the CSV stores newlines as the two
+                                // characters \ and n. Passing the field
+                                // verbatim gave Rhino a literal backslash-n and
+                                // every seeded script failed to compile with
+                                // "illegal character: \".
+                                content = tokens[4].unescapeCsvField(),
                                 authorName = tokens[2], // Correctly assigned tokens[2]
                                 authorEmail = "" // Kept as is
                             )
