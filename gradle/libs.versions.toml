@@ -1,7 +1,10 @@
 
 [versions]
 androidApplication = "9.2.1"
-aznavrail = "10.1
+aznavrail = "9.5"
+dropboxCoreSdk = "7.0.0"
+browser = "1.10.0"
+datastorePreferences = "1.2.1"
 tinkAndroid = "1.21.0"
 errorProneAnnotations = "2.49.0"
 firebaseAuthKtx = "23.2.1"
