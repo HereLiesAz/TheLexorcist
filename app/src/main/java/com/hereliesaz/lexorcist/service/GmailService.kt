@@ -20,7 +20,9 @@ class GmailService @Inject constructor(
     private val httpTransport = NetHttpTransport()
 
     private fun getGmailService(): Gmail? {
-        return credentialHolder.credential?.let {
+        // The Gmail-scoped credential, not the general one: the mailbox scope is
+        // requested on first use rather than at sign-in.
+        return credentialHolder.gmailCredential()?.let {
             Gmail.Builder(httpTransport, jsonFactory, it)
                 .setApplicationName(applicationName)
                 .build()
