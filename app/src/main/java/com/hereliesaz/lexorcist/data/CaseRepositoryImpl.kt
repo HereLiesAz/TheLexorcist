@@ -276,8 +276,6 @@ class CaseRepositoryImpl @Inject constructor(
     override suspend fun refreshSheetFilters(spreadsheetId: String) { /* TODO */ }
     override suspend fun addSheetFilter(spreadsheetId: String, name: String, value: String) { /* TODO */ }
 
-    override fun getHtmlTemplates(): Flow<List<DriveFile>> = emptyFlow()
-    override suspend fun refreshHtmlTemplates() { /* TODO */ }
 
     override suspend fun addAllegation(allegation: Allegation) {
         val currentSelectedCaseId = _selectedCase.value?.spreadsheetId

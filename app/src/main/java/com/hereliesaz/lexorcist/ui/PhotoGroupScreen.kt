@@ -24,6 +24,8 @@ import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 import com.hereliesaz.lexorcist.viewmodel.PhotoGroupViewModel
 import java.io.File
+import androidx.compose.ui.res.stringResource
+import com.hereliesaz.lexorcist.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,13 +37,17 @@ fun PhotoGroupScreen(
 ) {
     val context = LocalContext.current
     val photoUris by photoGroupViewModel.photoUris.collectAsState()
-    var description by remember { mutableStateOf("") }
+    val description by photoGroupViewModel.description.collectAsState()
+    var captureLost by remember { mutableStateOf(false) }
 
     val takePictureLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture(),
         onResult = { success ->
-            if (success) {
-                photoGroupViewModel.latestTmpUri.value?.let { photoGroupViewModel.addPhoto(it) }
+            // A successful capture with no pending URI means the saved state
+            // was lost as well as the view model. Say so rather than dropping
+            // the photograph without a word, which is what this did before.
+            if (success && !photoGroupViewModel.onCaptureSucceeded()) {
+                captureLost = true
             }
         },
     )
@@ -75,11 +81,19 @@ fun PhotoGroupScreen(
         ) {
             OutlinedTextField(
                 value = description,
-                onValueChange = { description = it },
-                label = { Text("Description") },
+                onValueChange = { photoGroupViewModel.setDescription(it) },
+                label = { Text(stringResource(R.string.description)) },
                 modifier = Modifier.fillMaxWidth(),
                 textStyle = TextStyle(textAlign = TextAlign.End),
             )
+            if (captureLost) {
+                Text(
+                    text = stringResource(R.string.photo_capture_interrupted),
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.End,
+                )
+            }
             Spacer(modifier = Modifier.height(16.dp))
             LazyRow(
                 modifier = Modifier.fillMaxWidth(),
@@ -100,25 +114,30 @@ fun PhotoGroupScreen(
             ) {
                 AzButton(
                     onClick = {
-                        val tmpFile = File(context.cacheDir, "tmp_image_${System.currentTimeMillis()}.jpg")
+                        // filesDir, not cacheDir: the camera app runs while
+                        // this process may be killed, and the system is free to
+                        // clear the cache directory in the meantime.
+                        val captureDir = File(context.filesDir, "pending_captures").apply { mkdirs() }
+                        val tmpFile = File(captureDir, "capture_${System.currentTimeMillis()}.jpg")
                         val tmpUri = FileProvider.getUriForFile(context, "com.hereliesaz.lexorcist.fileprovider", tmpFile)
                         photoGroupViewModel.setLatestTmpUri(tmpUri)
                         takePictureLauncher.launch(tmpUri)
                     },
-                    text = "Take Photo",
+                    text = stringResource(R.string.take_picture),
                 )
                 AzButton(
                     onClick = { selectPictureLauncher.launch("image/*") },
-                    text = "Select Photos",
+                    text = stringResource(R.string.select_photos),
                 )
             }
             Spacer(modifier = Modifier.height(8.dp))
             AzButton(
                 onClick = {
                     caseViewModel.addPhotoGroupEvidence(photoUris, description, "")
+                    photoGroupViewModel.clear()
                     navController.popBackStack()
                 },
-                text = "Save",
+                text = stringResource(R.string.save),
                 modifier = Modifier.fillMaxWidth(),
             )
         }

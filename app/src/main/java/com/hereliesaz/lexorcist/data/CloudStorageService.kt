@@ -13,7 +13,6 @@ class CloudStorageService @Inject constructor(
     private val syncManager: SyncManager,
     @param:Named("googleDrive") private val googleDriveProvider: CloudStorageProvider,
     @param:Named("dropbox") private val dropboxProvider: CloudStorageProvider,
-    @param:Named("oneDrive") private val oneDriveProvider: CloudStorageProvider,
     private val settingsManager: SettingsManager
 ) : StorageService {
 
@@ -136,12 +135,11 @@ class CloudStorageService @Inject constructor(
         val cloudStorageProvider = when (selectedProvider) {
             "GoogleDrive" -> googleDriveProvider
             "Dropbox" -> dropboxProvider
-            "OneDrive" -> oneDriveProvider
             else -> null
         }
 
         return if (cloudStorageProvider != null) {
-            syncManager.synchronize(cloudStorageProvider, localFileStorageService)
+            syncManager.synchronize(cloudStorageProvider, localFileStorageService, selectedProvider ?: "unknown")
         } else {
             Result.Success(Unit) // No provider selected, so nothing to sync
         }

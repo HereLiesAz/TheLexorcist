@@ -64,7 +64,7 @@ fun EvidenceDetailsScreen(
             if (evidence.category in listOf("Image", "OCR Image") && evidence.sourceDocument.startsWith("content://")) {
                 Image(
                     painter = rememberAsyncImagePainter(model = evidence.sourceDocument.toUri()),
-                    contentDescription = "Evidence Image",
+                    contentDescription = stringResource(R.string.evidence_image),
                     modifier = Modifier.fillMaxWidth(), // Image takes full width
                     contentScale = ContentScale.Fit,
                 )
@@ -84,12 +84,12 @@ fun EvidenceDetailsScreen(
             OutlinedTextField(
                 value = commentary,
                 onValueChange = { commentary = it },
-                label = { Text("Commentary") },
+                label = { Text(stringResource(R.string.commentary)) },
                 modifier = Modifier.fillMaxWidth(), // TextField takes full width
                 textStyle = TextStyle(textAlign = TextAlign.End),
             )
             Spacer(modifier = Modifier.height(16.dp))
-            AzButton(onClick = { caseViewModel.updateCommentary(evidence.id, commentary) }, text = "Save Commentary")
+            AzButton(onClick = { caseViewModel.updateCommentary(evidence.id, commentary) }, text = stringResource(R.string.save_commentary))
             if (evidence.type == "audio") {
                 Spacer(modifier = Modifier.height(16.dp))
                 AzButton(

@@ -63,7 +63,6 @@ import com.hereliesaz.lexorcist.viewmodel.AuthViewModel
 import com.hereliesaz.lexorcist.model.OutlookSignInState
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
-import com.hereliesaz.lexorcist.viewmodel.OneDriveViewModel
 import com.hereliesaz.lexorcist.viewmodel.SettingsViewModel
 import java.util.Locale
 
@@ -74,7 +73,6 @@ fun SettingsScreen(
     mainViewModel: MainViewModel,
     settingsViewModel: SettingsViewModel = hiltViewModel(),
     authViewModel: AuthViewModel = hiltViewModel(),
-    oneDriveViewModel: OneDriveViewModel = hiltViewModel()
 ) {
     val themeMode by settingsViewModel.themeMode.collectAsState() // Used to determine current state for AzCycler logic if needed, though AzCycler manages its own display state.
     var showClearCacheDialog by remember { mutableStateOf(false) }
@@ -210,21 +208,21 @@ fun SettingsScreen(
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.fillMaxWidth(),
             )
+            // The folder picker that used to sit here launched OpenDocumentTree,
+            // which returns a Storage Access Framework tree URI. Nothing in the
+            // app could use one: every storage path builds a java.io.File, and a
+            // SAF tree is not a file path. Picking a folder therefore changed
+            // nothing, while breaking Finalize and cloud sync, both of which
+            // built File(<that URI>, caseId) and got a directory that never
+            // existed. Case data has always actually lived in the app's private
+            // storage, so that is what is shown.
             val storageLocation by caseViewModel.storageLocation.collectAsState()
-            val directoryPickerLauncher = rememberLauncherForActivityResult(
-                contract = ActivityResultContracts.OpenDocumentTree(),
-                onResult = { uri ->
-                    uri?.let {
-                        caseViewModel.setStorageLocation(it)
-                    }
-                }
-            )
             Spacer(modifier = Modifier.height(16.dp))
             Text(stringResource(R.string.current_location_colon_placeholder, storageLocation ?: stringResource(R.string.default_text)))
             Spacer(modifier = Modifier.height(8.dp))
-            AzButton(
-                onClick = { directoryPickerLauncher.launch(null) },
-                text = stringResource(R.string.change_storage_location).uppercase(Locale.getDefault())
+            Text(
+                text = stringResource(R.string.storage_location_explanation),
+                style = MaterialTheme.typography.bodySmall,
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -239,14 +237,13 @@ fun SettingsScreen(
             )
             Spacer(modifier = Modifier.height(8.dp))
             val selectedCloudProvider by settingsViewModel.selectedCloudProvider.collectAsState()
-            // Dropbox is enabled (PKCE + encrypted credential). OneDrive is dropped for now;
-            // flip showOneDrive to re-enable it once its Graph provider is implemented.
+            // OneDrive is gone rather than hidden. Its provider was a stub whose
+            // every method returned "not implemented", and there is no partial
+            // implementation to finish -- see the commit that removed it.
             val showDropbox = true
-            val showOneDrive = false
             val cloudProviders = buildList {
                 add("GoogleDrive")
                 if (showDropbox) add("Dropbox")
-                if (showOneDrive) add("OneDrive")
                 add("None")
             }
             AzCycler(
@@ -353,56 +350,6 @@ fun SettingsScreen(
             }
             } // end if (showDropbox)
 
-            if (showOneDrive) {
-            Spacer(modifier = Modifier.height(16.dp))
-            HorizontalDivider()
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // OneDrive
-            Text(
-                text = stringResource(R.string.onedrive),
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.fillMaxWidth(),
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            val oneDriveSignInState by oneDriveViewModel.oneDriveSignInState.collectAsState()
-
-            when (val stateVal = oneDriveSignInState) {
-                is com.hereliesaz.lexorcist.model.OneDriveSignInState.Idle -> {
-                    AzButton(
-                        onClick = {
-                            if (activity != null) {
-                                oneDriveViewModel.connectToOneDrive(activity)
-                            }
-                        },
-                        text = stringResource(R.string.connect_to_onedrive).uppercase(Locale.getDefault())
-                    )
-                }
-                is com.hereliesaz.lexorcist.model.OneDriveSignInState.InProgress -> {
-                    com.hereliesaz.aznavrail.AzLoad()
-                }
-                is com.hereliesaz.lexorcist.model.OneDriveSignInState.Success -> {
-                    Text(stringResource(R.string.connected_to_onedrive_as_placeholder, stateVal.accountName ?: stringResource(R.string.unknown_account)))
-                    Spacer(modifier = Modifier.height(8.dp))
-                    AzButton(
-                        onClick = { oneDriveViewModel.disconnectFromOneDrive() },
-                        text = stringResource(R.string.disconnect_from_onedrive).uppercase(Locale.getDefault())
-                    )
-                }
-                is com.hereliesaz.lexorcist.model.OneDriveSignInState.Error -> {
-                    Text(stringResource(R.string.error_connecting_to_onedrive_placeholder, stateVal.message ?: stringResource(R.string.unknown_error)))
-                    Spacer(modifier = Modifier.height(8.dp))
-                    AzButton(
-                        onClick = {
-                            if (activity != null) {
-                                oneDriveViewModel.connectToOneDrive(activity)
-                            }
-                        },
-                        text = stringResource(R.string.retry).uppercase(Locale.getDefault())
-                    )
-                }
-            }
-            } // end if (showOneDrive)
 
             Spacer(modifier = Modifier.height(16.dp))
             HorizontalDivider()
@@ -410,7 +357,7 @@ fun SettingsScreen(
 
             // Outlook
             Text(
-                text = "Outlook",
+                text = stringResource(R.string.outlook),
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -425,7 +372,7 @@ fun SettingsScreen(
                                 authViewModel.signInWithOutlook(activity)
                             }
                         },
-                        text = "Connect to Outlook".uppercase(Locale.getDefault())
+                        text = stringResource(R.string.connect_to_outlook).uppercase(Locale.getDefault())
                     )
                 }
                 is OutlookSignInState.InProgress -> {
@@ -436,7 +383,7 @@ fun SettingsScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     AzButton(
                         onClick = { authViewModel.signOutFromOutlook() },
-                        text = "Disconnect from Outlook".uppercase(Locale.getDefault())
+                        text = stringResource(R.string.disconnect_from_outlook).uppercase(Locale.getDefault())
                     )
                 }
                 is OutlookSignInState.Error -> {
@@ -525,7 +472,7 @@ fun LanguageModelDownloader(
                 horizontalArrangement = Arrangement.End
             ) {
                 Text(
-                    text = "Downloading: ${"%.0f".format(progress * 100)}%",
+                    text = stringResource(R.string.downloading_percent_format, "%.0f".format(progress * 100)),
                     style = MaterialTheme.typography.bodySmall
                 )
                 Spacer(modifier = Modifier.width(8.dp))

@@ -11,8 +11,10 @@ import androidx.work.WorkManager
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.hereliesaz.lexorcist.data.crypto.AndroidDatabaseCipherProvider
-import com.hereliesaz.lexorcist.data.crypto.DatabaseCipher
-import com.hereliesaz.lexorcist.data.crypto.StreamingAeadDatabaseCipher
+import com.hereliesaz.lexorcist.data.storage.CaseStorage
+import com.hereliesaz.lexorcist.data.storage.EvidenceFiles
+import com.hereliesaz.lexorcist.data.crypto.FileCipher
+import com.hereliesaz.lexorcist.data.crypto.StreamingAeadFileCipher
 import com.hereliesaz.lexorcist.service.VideoProcessingWorker
 import com.hereliesaz.lexorcist.utils.Result
 import com.hereliesaz.lexorcist.utils.SpreadsheetUtils
@@ -56,12 +58,13 @@ class LocalFileStorageService @Inject constructor(
     private val syncManager: SyncManager,
     @Named("googleDrive") private val googleDriveProvider: CloudStorageProvider,
     @Named("dropbox") private val dropboxProvider: CloudStorageProvider,
-    @Named("oneDrive") private val oneDriveProvider: CloudStorageProvider,
     private val workManager: WorkManager,
     private val cipherProvider: AndroidDatabaseCipherProvider,
+    private val caseStorage: CaseStorage,
+    private val evidenceFiles: EvidenceFiles,
 ) : StorageService {
 
-    private val cipher: DatabaseCipher get() = cipherProvider.cipher
+    private val cipher: FileCipher get() = cipherProvider.cipher
 
     /**
      * Where case data lives.
@@ -87,16 +90,7 @@ class LocalFileStorageService @Inject constructor(
      * process, so changing the location in Settings had no effect until the app
      * was killed.
      */
-    private val storageDir: File
-        get() {
-            val custom = settingsManager.getStorageLocation()
-                ?.takeIf { it.startsWith("/") }
-                ?.let { File(it) }
-                ?.takeIf { it.isDirectory || it.mkdirs() }
-            val dir = custom ?: context.filesDir
-            if (!dir.exists()) dir.mkdirs()
-            return dir
-        }
+    private val storageDir: File get() = caseStorage.root
 
     // The main database file.
     private val spreadsheetFile: File get() = File(storageDir, SPREADSHEET_FILE_NAME)
@@ -382,8 +376,8 @@ class LocalFileStorageService @Inject constructor(
     /** One-time upgrade of a pre-encryption database. */
     private fun migratePlaintextDatabaseIfNeeded() {
         val active = cipher
-        if (active !is StreamingAeadDatabaseCipher) return
-        if (!DatabaseCipher.looksLikePlaintextWorkbook(spreadsheetFile)) return
+        if (active !is StreamingAeadFileCipher) return
+        if (!FileCipher.looksLikePlaintextWorkbook(spreadsheetFile)) return
         try {
             if (active.encryptInPlace(spreadsheetFile)) {
                 Log.i("LocalFileStorageService", "Encrypted the existing database at rest.")
@@ -397,6 +391,49 @@ class LocalFileStorageService @Inject constructor(
 
     /** Sibling of the database holding the last known-good copy. */
     private val backupFile: File get() = File(storageDir, "$SPREADSHEET_FILE_NAME.bak")
+
+    // ---------------------------------------------------------------------
+    // Cloud sync access to the database.
+    //
+    // The database is encrypted under a key in this device's hardware
+    // keystore, which cannot be exported. Uploading the ciphertext would give
+    // the user a cloud copy that no other device -- and no restored device --
+    // could ever open, and that a fresh install would quarantine as corrupt.
+    // Sync therefore works in plaintext, which the privacy policy states.
+    // ---------------------------------------------------------------------
+
+    /** The database as plaintext bytes, for upload. */
+    suspend fun readDatabaseForSync(): ByteArray = withContext(Dispatchers.IO) {
+        workbookMutex.withLock {
+            migratePlaintextDatabaseIfNeeded()
+            FileInputStream(spreadsheetFile).use { raw ->
+                cipher.decryptingStream(raw).use { it.readBytes() }
+            }
+        }
+    }
+
+    /**
+     * Replaces the database with [plaintext], encrypting it.
+     *
+     * Rejects bytes that are not a readable workbook before touching the live
+     * file: a truncated or wrong-typed download must not be able to destroy a
+     * working database, and the previous implementation wrote whatever it
+     * received straight over it with `FileOutputStream`.
+     */
+    suspend fun writeDatabaseFromSync(plaintext: ByteArray): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val workbook = XSSFWorkbook(plaintext.inputStream())
+            workbookMutex.withLock { workbook.use { writeWorkbookAtomically(it) } }
+            Result.Success(Unit)
+        } catch (e: Exception) {
+            Log.e("LocalFileStorageService", "Refusing to install an unreadable database from the cloud.", e)
+            Result.Error(IOException("The database downloaded from the cloud could not be read.", e))
+        }
+    }
+
+    /** Writes [plaintext] to a sibling file rather than the live database. */
+    fun writeConflictCopy(plaintext: ByteArray, name: String): File =
+        File(storageDir, name).apply { writeBytes(plaintext) }
 
     /**
      * Helper to safely write to the spreadsheet in a background thread.
@@ -459,7 +496,7 @@ class LocalFileStorageService @Inject constructor(
         val tempFile = File(storageDir, "$SPREADSHEET_FILE_NAME.tmp")
         if (tempFile.exists()) tempFile.delete()
 
-        // Encrypted at rest. See DatabaseCipher for why the whole workbook --
+        // Encrypted at rest. See FileCipher for why the whole workbook --
         // parties, allegations, extracted text, transcripts -- was previously
         // readable by anything that could read the directory.
         //
@@ -974,8 +1011,8 @@ class LocalFileStorageService @Inject constructor(
             val sanitizedCaseId = sanitizeSafePathSegment(caseSpreadsheetId)
 
             // Create the case directory structure (files are stored in 'raw' subdir).
-            val caseDir = File(storageDir, sanitizedCaseId).apply { if (!exists()) mkdirs() }
-            val rawDir = File(caseDir, "raw").apply { if (!exists()) mkdirs() }
+            caseStorage.caseDirectory(sanitizedCaseId).apply { if (!exists()) mkdirs() }
+            val rawDir = caseStorage.rawDirectory(sanitizedCaseId).apply { if (!exists()) mkdirs() }
 
             val rawFileName = getDisplayName(context, fileUri)
             val baseName = rawFileName.substringBeforeLast('.')
@@ -1013,6 +1050,19 @@ class LocalFileStorageService @Inject constructor(
                 }
             }
 
+            // Encrypt the copy and address it through the evidence provider.
+            //
+            // This used to return `destinationFile.absolutePath`, which callers
+            // passed to `Uri.parse`. That yields a URI with no scheme, and every
+            // consumer opens evidence with `contentResolver.openInputStream` --
+            // which has no provider to route a schemeless URI to. Extracting EXIF
+            // dates, hashing for integrity and re-reading an imported image all
+            // failed on it.
+            val mediaUri = evidenceFiles.protect(destinationFile)
+                ?: return@withContext Result.Error(
+                    IOException("Stored file is outside the storage root: $destinationFile"),
+                )
+
             // Trigger video post-processing if applicable.
             if (mimeType.startsWith("video/")) {
                 val caseResult = getCaseBySpreadsheetId(caseSpreadsheetId)
@@ -1020,7 +1070,7 @@ class LocalFileStorageService @Inject constructor(
                     val caseDetails = caseResult.data
                     if (caseDetails != null) {
                         val workData = Data.Builder()
-                            .putString(VideoProcessingWorker.KEY_VIDEO_URI, destinationFile.toUri().toString())
+                            .putString(VideoProcessingWorker.KEY_VIDEO_URI, mediaUri.toString())
                             .putInt(VideoProcessingWorker.KEY_CASE_ID, caseDetails.id)
                             .putString(VideoProcessingWorker.KEY_CASE_NAME, caseDetails.name)
                             .putString(VideoProcessingWorker.KEY_SPREADSHEET_ID, caseSpreadsheetId)
@@ -1040,7 +1090,7 @@ class LocalFileStorageService @Inject constructor(
                 }
             }
 
-            Result.Success(destinationFile.absolutePath)
+            Result.Success(mediaUri.toString())
         } catch (e: Exception) {
             Log.e("LocalFileStorageService", "Error uploading file for case $caseSpreadsheetId, URI $fileUri", e)
             Result.Error(e)
@@ -1160,7 +1210,6 @@ class LocalFileStorageService @Inject constructor(
         val cloudStorageProvider = when (selectedProviderName) {
             "GoogleDrive" -> googleDriveProvider
             "Dropbox" -> dropboxProvider
-            "OneDrive" -> oneDriveProvider
             else -> {
                 Log.i("LocalFileStorageService", "No cloud provider selected for synchronization.")
                 null
@@ -1169,7 +1218,7 @@ class LocalFileStorageService @Inject constructor(
 
         return if (cloudStorageProvider != null) {
             Log.i("LocalFileStorageService", "Starting synchronization with $selectedProviderName.")
-            syncManager.synchronize(cloudStorageProvider, this) 
+            syncManager.synchronize(cloudStorageProvider, this, selectedProviderName ?: "unknown") 
         } else {
             Result.Success(Unit) 
         }

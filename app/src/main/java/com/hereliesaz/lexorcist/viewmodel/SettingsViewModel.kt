@@ -29,7 +29,6 @@ import javax.inject.Named
 class SettingsViewModel @Inject constructor(
     private val settingsManager: SettingsManager,
     @Named("dropbox") private val dropboxProvider: CloudStorageProvider,
-    @Named("oneDrive") private val oneDriveProvider: CloudStorageProvider,
     private val dropboxAuthManager: DropboxAuthManager,
     private val voskTranscriptionService: VoskTranscriptionService,
     private val extrasRepository: ExtrasRepository, // Injected ExtrasRepository
@@ -54,8 +53,6 @@ class SettingsViewModel @Inject constructor(
     private val _dropboxUploadStatus = MutableStateFlow<String?>(null)
     val dropboxUploadStatus: StateFlow<String?> = _dropboxUploadStatus.asStateFlow()
 
-    private val _oneDriveUploadStatus = MutableStateFlow<String?>(null)
-    val oneDriveUploadStatus: StateFlow<String?> = _oneDriveUploadStatus.asStateFlow()
 
     val isDropboxAuthenticated = dropboxAuthManager.isAuthenticated
     private val _dropboxUser = MutableStateFlow<CloudUser?>(null)
@@ -277,30 +274,6 @@ class SettingsViewModel @Inject constructor(
         _dropboxUploadStatus.value = null
     }
 
-    fun testOneDriveUpload() {
-        viewModelScope.launch {
-            val content = "Hello, OneDrive!".toByteArray()
-            _oneDriveUploadStatus.value = "Starting OneDrive upload..."
-            when (val result = oneDriveProvider.writeFile("root", "test.txt", "text/plain", content)) {
-                is Result.Loading -> {
-                    _oneDriveUploadStatus.value = "Uploading to OneDrive..."
-                }
-                is Result.Success -> {
-                    _oneDriveUploadStatus.value = "Successfully uploaded file to OneDrive with ID: ${result.data.id}"
-                }
-                is Result.Error -> {
-                    _oneDriveUploadStatus.value = "Error uploading file to OneDrive: ${result.exception.message}"
-                }
-                is Result.UserRecoverableError -> {
-                    _oneDriveUploadStatus.value = "A recoverable error occurred with OneDrive: ${result.exception.message}"
-                }
-            }
-        }
-    }
-
-    fun clearOneDriveUploadStatus() {
-        _oneDriveUploadStatus.value = null
-    }
 
     fun setAuthorName(name: String) {
         settingsManager.saveAuthorName(name)

@@ -1,164 +1,296 @@
 package com.hereliesaz.lexorcist.data
 
-import android.content.Context
-import android.net.Uri
-import androidx.core.net.toUri
+import android.util.Log
+import com.hereliesaz.lexorcist.data.storage.CaseStorage
+import com.hereliesaz.lexorcist.service.LogService
 import com.hereliesaz.lexorcist.utils.Result
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.io.FileOutputStream
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Two-way sync of the case database and case folders with a cloud provider.
+ *
+ * Rewritten because the previous implementation did not sync and, when it
+ * would have, lost data.
+ *
+ * It looked for the database under `getExternalFilesDir(null)`. Nothing writes
+ * there -- `LocalFileStorageService` uses `filesDir` -- so the very first
+ * statement, `if (!spreadsheetFile.exists()) return Success(Unit)`, returned
+ * "nothing to sync" every time and reported success. Cloud sync was a no-op
+ * that said it had worked.
+ *
+ * Had the paths agreed, the database resolution was
+ * `if (local.lastModified() > remote.modifiedTime) upload else download` --
+ * last writer wins, whole file. Two devices editing the same case load meant
+ * one of them lost everything it had added, with no copy kept and nothing
+ * said. [SyncState] now records what the previous sync saw, which is what
+ * makes "both sides changed" distinguishable from "one side changed", and a
+ * genuine conflict is preserved rather than resolved by timestamp.
+ */
 @Singleton
 class SyncManager @Inject constructor(
-    @ApplicationContext private val context: Context,
-    private val settingsManager: SettingsManager
+    private val caseStorage: CaseStorage,
+    private val syncState: SyncState,
+    private val logService: LogService,
 ) {
-    private val storageDir: File by lazy {
-        val customLocation = settingsManager.getStorageLocation()
-        val dir = customLocation?.toUri()?.path?.let { File(it) }
-            ?: context.getExternalFilesDir(null)
-            ?: context.filesDir
-        if (!dir.exists()) dir.mkdirs()
-        dir
+
+    suspend fun synchronize(
+        cloudStorageProvider: CloudStorageProvider,
+        localFileStorageService: LocalFileStorageService,
+        providerName: String,
+    ): Result<Unit> = withContext(Dispatchers.IO) {
+        val rootFolderId = when (val r = cloudStorageProvider.getRootFolderId()) {
+            is Result.Success -> r.data
+            is Result.Error -> return@withContext r
+            is Result.UserRecoverableError -> return@withContext r
+            is Result.Loading -> return@withContext Result.Error(IllegalStateException("Root folder still loading"))
+        }
+
+        when (val r = syncDatabase(cloudStorageProvider, localFileStorageService, rootFolderId, providerName)) {
+            is Result.Success -> Unit
+            is Result.Error -> return@withContext r
+            is Result.UserRecoverableError -> return@withContext r
+            is Result.Loading -> Unit
+        }
+
+        syncCaseFolders(cloudStorageProvider, localFileStorageService, rootFolderId)
     }
 
-    private val spreadsheetFile: File by lazy { File(storageDir, "lexorcist_data.xlsx") }
+    // -----------------------------------------------------------------
+    // The database
+    // -----------------------------------------------------------------
 
-    suspend fun synchronize(cloudStorageProvider: CloudStorageProvider, localFileStorageService: LocalFileStorageService): Result<Unit> = withContext(Dispatchers.IO) {
-        if (!spreadsheetFile.exists()) {
-            return@withContext Result.Success(Unit) // Nothing to sync
+    private suspend fun syncDatabase(
+        provider: CloudStorageProvider,
+        local: LocalFileStorageService,
+        rootFolderId: String,
+        providerName: String,
+    ): Result<Unit> {
+        if (!caseStorage.databaseFile.exists()) return Result.Success(Unit)
+
+        val plaintext = try {
+            local.readDatabaseForSync()
+        } catch (e: Exception) {
+            Log.e(TAG, "Could not read the database for sync", e)
+            return Result.Error(e)
         }
+        val localDigest = SyncState.digestOf(plaintext)
 
-        val rootFolderIdResult = cloudStorageProvider.getRootFolderId()
-        if (rootFolderIdResult is Result.Error) {
-            return@withContext rootFolderIdResult
+        val cloudFiles = when (val r = provider.listFiles(rootFolderId)) {
+            is Result.Success -> r.data
+            is Result.Error -> return r
+            is Result.UserRecoverableError -> return r
+            is Result.Loading -> return Result.Error(IllegalStateException("Listing still loading"))
         }
-        if (rootFolderIdResult is Result.UserRecoverableError) {
-            return@withContext rootFolderIdResult
-        }
+        val remote = cloudFiles.find { it.name == CaseStorage.DATABASE_FILE_NAME }
 
-        val rootFolderId = (rootFolderIdResult as Result.Success).data
+        val decision = decideDatabaseSync(
+            localDigest = localDigest,
+            lastSyncedDigest = syncState.lastSyncedDigest(providerName),
+            remoteExists = remote != null,
+            remoteModifiedTime = remote?.modifiedTime ?: 0L,
+            lastSyncedRemoteTime = syncState.lastSyncedRemoteTime(providerName),
+        )
 
-        val filesResult = cloudStorageProvider.listFiles(rootFolderId)
-        if (filesResult is Result.Error) {
-            return@withContext filesResult
-        }
-        if (filesResult is Result.UserRecoverableError) {
-            return@withContext filesResult
-        }
+        return when (decision) {
+            SyncDecision.UPLOAD_NEW ->
+                upload(provider, rootFolderId, plaintext, localDigest, providerName, remoteId = null)
 
-        val cloudFiles = (filesResult as Result.Success).data
-        val existingCloudFile = cloudFiles.find { it.name == "lexorcist_data.xlsx" }
+            SyncDecision.NOTHING_TO_DO -> Result.Success(Unit)
 
-        if (existingCloudFile != null) {
-            // Compare modification times
-            if (spreadsheetFile.lastModified() > existingCloudFile.modifiedTime) {
-                // Upload local file
-                val spreadsheetBytes = spreadsheetFile.readBytes()
-                cloudStorageProvider.updateFile(existingCloudFile.id, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", spreadsheetBytes)
-            } else if (spreadsheetFile.lastModified() < existingCloudFile.modifiedTime) {
-                // Download remote file
-                val downloadResult = cloudStorageProvider.readFile(existingCloudFile.id)
-                if (downloadResult is Result.Success) {
-                    FileOutputStream(spreadsheetFile).use { it.write(downloadResult.data) }
+            SyncDecision.UPLOAD ->
+                upload(provider, rootFolderId, plaintext, localDigest, providerName, remote!!.id)
+
+            SyncDecision.DOWNLOAD ->
+                download(provider, local, remote!!, providerName)
+
+            SyncDecision.CONFLICT -> {
+                // Both sides moved since the last sync. Neither copy is
+                // authoritative, so nothing is overwritten: the local database
+                // stays as it is and the cloud copy is written alongside it for
+                // the user to open and reconcile.
+                val bytes = when (val r = provider.readFile(remote!!.id)) {
+                    is Result.Success -> r.data
+                    is Result.Error -> return r
+                    is Result.UserRecoverableError -> return r
+                    is Result.Loading -> return Result.Error(IllegalStateException("Download still loading"))
                 }
+                val stamp = SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US).format(Date())
+                val copy = local.writeConflictCopy(bytes, "lexorcist_data.conflict-$stamp.xlsx")
+                val message = "This case database and the copy in $providerName have both " +
+                    "changed since they were last synced. Nothing has been overwritten. " +
+                    "The cloud version has been saved as ${copy.name}."
+                Log.w(TAG, message)
+                logService.addLog(message)
+                Result.Error(SyncConflictException(message, copy))
             }
+        }
+    }
+
+    private suspend fun upload(
+        provider: CloudStorageProvider,
+        rootFolderId: String,
+        plaintext: ByteArray,
+        digest: String,
+        providerName: String,
+        remoteId: String?,
+    ): Result<Unit> {
+        val result = if (remoteId == null) {
+            provider.writeFile(rootFolderId, CaseStorage.DATABASE_FILE_NAME, XLSX_MIME, plaintext)
         } else {
-            // Upload local file if it doesn't exist in the cloud
-            val spreadsheetBytes = spreadsheetFile.readBytes()
-            cloudStorageProvider.writeFile(rootFolderId, "lexorcist_data.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", spreadsheetBytes)
+            provider.updateFile(remoteId, XLSX_MIME, plaintext)
         }
-
-        val casesResult = localFileStorageService.getAllCases()
-        if (casesResult is Result.Success) {
-            val cases = casesResult.data
-            val cloudFoldersResult = cloudStorageProvider.listFiles(rootFolderId)
-            if (cloudFoldersResult is Result.Success) {
-                val cloudFolders = cloudFoldersResult.data
-                for (case in cases) {
-                    val caseFolder = File(storageDir, case.spreadsheetId)
-                    if (caseFolder.exists() && caseFolder.isDirectory) {
-                        var cloudCaseFolder = cloudFolders.find { it.name == case.spreadsheetId }
-                        val cloudCaseFolderId: String
-                        if (cloudCaseFolder == null) {
-                            val createFolderResult = cloudStorageProvider.createFolder(case.spreadsheetId, rootFolderId)
-                            if (createFolderResult is Result.Success) {
-                                cloudCaseFolderId = createFolderResult.data
-                            } else {
-                                continue // Skip to next case
-                            }
-                        } else {
-                            cloudCaseFolderId = cloudCaseFolder.id
-                        }
-
-                        val localFiles = caseFolder.listFiles() ?: emptyArray()
-                        val cloudFilesInFolderResult = cloudStorageProvider.listFiles(cloudCaseFolderId)
-                        if (cloudFilesInFolderResult is Result.Success) {
-                            val cloudFilesInFolder = cloudFilesInFolderResult.data
-                            // Upload new or updated local files
-                            for (localFile in localFiles) {
-                                if (localFile.isFile) { // Added check here
-                                    val cloudFile = cloudFilesInFolder.find { it.name == localFile.name }
-                                    if (cloudFile == null) {
-                                        // Upload new file
-                                        val fileBytes = localFile.readBytes()
-                                        val mimeType = getMimeType(localFile)
-                                        cloudStorageProvider.writeFile(cloudCaseFolderId, localFile.name, mimeType, fileBytes)
-                                    } else {
-                                        // Update existing file if modified
-                                        if (localFile.lastModified() > cloudFile.modifiedTime) {
-                                            val fileBytes = localFile.readBytes()
-                                            val mimeType = getMimeType(localFile)
-                                            cloudStorageProvider.updateFile(cloudFile.id, mimeType, fileBytes)
-                                        }
-                                    }
-                                }
-                            }
-                            // Download new or updated remote files
-                            for (cloudFile in cloudFilesInFolder) {
-                                val localFile = localFiles.find { it.name == cloudFile.name }
-                                if (localFile == null) {
-                                    // Download new file
-                                    val downloadResult = cloudStorageProvider.readFile(cloudFile.id)
-                                    if (downloadResult is Result.Success) {
-                                        val newLocalFile = File(caseFolder, cloudFile.name)
-                                        FileOutputStream(newLocalFile).use { it.write(downloadResult.data) }
-                                    }
-                                } else {
-                                    // Update existing file if modified
-                                    // Check if localFile is a file before comparing lastModified and writing
-                                    if (localFile.isFile && cloudFile.modifiedTime > localFile.lastModified()) {
-                                        val downloadResult = cloudStorageProvider.readFile(cloudFile.id)
-                                        if (downloadResult is Result.Success) {
-                                            FileOutputStream(localFile).use { it.write(downloadResult.data) }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+        return when (result) {
+            is Result.Success -> {
+                syncState.record(providerName, digest, result.data.modifiedTime)
+                Result.Success(Unit)
             }
-        } else if (casesResult is Result.Error) {
-            return@withContext casesResult
+            is Result.Error -> result
+            is Result.UserRecoverableError -> result
+            is Result.Loading -> Result.Error(IllegalStateException("Upload still loading"))
         }
-
-        Result.Success(Unit)
     }
 
-    private fun getMimeType(file: File): String {
-        return when (file.extension.lowercase()) {
-            "jpg", "jpeg" -> "image/jpeg"
-            "png" -> "image/png"
-            "mp3" -> "audio/mpeg"
-            "m4a" -> "audio/mp4"
-            "mp4" -> "video/mp4"
-            "xlsx" -> "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            else -> "application/octet-stream"
+    private suspend fun download(
+        provider: CloudStorageProvider,
+        local: LocalFileStorageService,
+        remote: CloudFile,
+        providerName: String,
+    ): Result<Unit> {
+        val bytes = when (val r = provider.readFile(remote.id)) {
+            is Result.Success -> r.data
+            is Result.Error -> return r
+            is Result.UserRecoverableError -> return r
+            is Result.Loading -> return Result.Error(IllegalStateException("Download still loading"))
         }
+        return when (val written = local.writeDatabaseFromSync(bytes)) {
+            is Result.Success -> {
+                syncState.record(providerName, SyncState.digestOf(bytes), remote.modifiedTime)
+                Result.Success(Unit)
+            }
+            is Result.Error -> written
+            is Result.UserRecoverableError -> written
+            is Result.Loading -> Result.Error(IllegalStateException("Write still loading"))
+        }
+    }
+
+    // -----------------------------------------------------------------
+    // Case folders
+    // -----------------------------------------------------------------
+
+    /**
+     * Evidence files are immutable once imported, so there is no merge to do:
+     * each side gains whatever the other has.
+     *
+     * A name that exists on both sides with different content is not treated as
+     * one file being newer than the other -- it is two different pieces of
+     * evidence that happen to share a name, and overwriting either would be
+     * destroying evidence. The downloaded one is kept under a suffixed name.
+     */
+    private suspend fun syncCaseFolders(
+        provider: CloudStorageProvider,
+        local: LocalFileStorageService,
+        rootFolderId: String,
+    ): Result<Unit> {
+        val cases = when (val r = local.getAllCases()) {
+            is Result.Success -> r.data
+            is Result.Error -> return r
+            is Result.UserRecoverableError -> return r
+            is Result.Loading -> return Result.Success(Unit)
+        }
+        val cloudFolders = when (val r = provider.listFiles(rootFolderId)) {
+            is Result.Success -> r.data
+            else -> return Result.Success(Unit)
+        }
+
+        for (case in cases) {
+            val caseFolder = caseStorage.caseDirectory(case.spreadsheetId)
+            if (!caseFolder.isDirectory) continue
+
+            val cloudCaseFolderId = cloudFolders.find { it.name == case.spreadsheetId }?.id
+                ?: when (val r = provider.createFolder(case.spreadsheetId, rootFolderId)) {
+                    is Result.Success -> r.data
+                    else -> continue
+                }
+
+            val cloudFilesInFolder = when (val r = provider.listFiles(cloudCaseFolderId)) {
+                is Result.Success -> r.data
+                else -> continue
+            }
+            val localFiles = caseFolder.listFiles()?.filter { it.isFile }.orEmpty()
+
+            for (localFile in localFiles) {
+                if (cloudFilesInFolder.none { it.name == localFile.name }) {
+                    provider.writeFile(
+                        cloudCaseFolderId,
+                        localFile.name,
+                        mimeTypeOf(localFile),
+                        localFile.readBytes(),
+                    )
+                }
+            }
+
+            for (cloudFile in cloudFilesInFolder) {
+                val existing = File(caseFolder, cloudFile.name)
+                if (!existing.exists()) {
+                    when (val r = provider.readFile(cloudFile.id)) {
+                        is Result.Success -> existing.writeBytes(r.data)
+                        else -> Unit
+                    }
+                    continue
+                }
+                if (existing.length() == cloudFile.size) continue
+                // Same name, different size: two distinct files. Keep both.
+                val alternate = uncollidedName(caseFolder, cloudFile.name)
+                when (val r = provider.readFile(cloudFile.id)) {
+                    is Result.Success -> {
+                        alternate.writeBytes(r.data)
+                        logService.addLog(
+                            "Kept a differing cloud copy of ${cloudFile.name} as ${alternate.name}.",
+                        )
+                    }
+                    else -> Unit
+                }
+            }
+        }
+        return Result.Success(Unit)
+    }
+
+    private fun uncollidedName(dir: File, name: String): File {
+        val base = name.substringBeforeLast('.')
+        val ext = name.substringAfterLast('.', "")
+        var i = 1
+        while (true) {
+            val suffix = if (ext.isEmpty()) "$base (cloud $i)" else "$base (cloud $i).$ext"
+            val candidate = File(dir, suffix)
+            if (!candidate.exists()) return candidate
+            i++
+        }
+    }
+
+    private fun mimeTypeOf(file: File): String = when (file.extension.lowercase()) {
+        "jpg", "jpeg" -> "image/jpeg"
+        "png" -> "image/png"
+        "mp3" -> "audio/mpeg"
+        "m4a" -> "audio/mp4"
+        "mp4" -> "video/mp4"
+        "pdf" -> "application/pdf"
+        "xlsx" -> XLSX_MIME
+        else -> "application/octet-stream"
+    }
+
+    private companion object {
+        const val TAG = "SyncManager"
+        const val XLSX_MIME =
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     }
 }
+
+/** Raised when both copies changed and neither was overwritten. */
+class SyncConflictException(message: String, val conflictCopy: File) : Exception(message)

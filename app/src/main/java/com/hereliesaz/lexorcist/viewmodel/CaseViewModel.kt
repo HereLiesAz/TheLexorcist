@@ -104,6 +104,10 @@ constructor(
     private val chatHistoryParser: ChatHistoryParser,
     private val gmailService: GmailService,
     private val outlookService: OutlookService,
+    private val evidenceFiles: com.hereliesaz.lexorcist.data.storage.EvidenceFiles,
+    private val templateRepository: com.hereliesaz.lexorcist.documents.TemplateRepository,
+    private val documentGenerator: com.hereliesaz.lexorcist.documents.DocumentGenerator,
+    private val caseStorage: com.hereliesaz.lexorcist.data.storage.CaseStorage,
     private val imapService: ImapService,
     private val outlookAuthManager: com.hereliesaz.lexorcist.auth.OutlookAuthManager,
     private val jurisdictionRepository: JurisdictionRepository,
@@ -276,8 +280,6 @@ constructor(
     val pertinentExhibitTypes: StateFlow<List<String>> = _pertinentExhibitTypes.asStateFlow()
 
     // --- Templates & Scripts ---
-    private val _htmlTemplates = MutableStateFlow<List<DriveFile>>(emptyList())
-    val htmlTemplates: StateFlow<List<DriveFile>> = _htmlTemplates.asStateFlow()
 
     private val _scripts = MutableStateFlow<List<Script>>(emptyList())
     val scripts: StateFlow<List<Script>> = _scripts.asStateFlow()
@@ -410,13 +412,16 @@ constructor(
         viewModelScope.launch {
             try {
                 // getStorageLocation() returns a String? path (not a Flow); use it directly.
-                val savedLocation = settingsManager.getStorageLocation()
-                if (savedLocation.isNullOrEmpty()) {
-                    _storageLocation.value = applicationContext.filesDir.absolutePath
-                    Log.i("CaseViewModel", "Storage location initialized to default: ${_storageLocation.value}")
-                } else {
-                    _storageLocation.value = savedLocation
-                    Log.i("CaseViewModel", "Storage location loaded from settings: $savedLocation")
+                // The effective root, not the raw settings string: a value the
+                // app cannot use as a directory is ignored by CaseStorage, and
+                // displaying it would tell the user their data is somewhere it
+                // is not.
+                _storageLocation.value = caseStorage.root.absolutePath
+                if (caseStorage.customLocationIsUnusable) {
+                    Log.w(
+                        "CaseViewModel",
+                        "Ignoring a stored non-path storage location; using ${caseStorage.root}",
+                    )
                 }
             } catch (e: Exception) {
                 _storageLocation.value = applicationContext.filesDir.absolutePath
@@ -486,10 +491,38 @@ constructor(
     // The response I got earlier looked complete.
     // I will write the FULL file content now with the added KDoc.
 
-    fun packageFilesForCase(files: List<File>, packageName: String, extension: String) {
+    /** Every file belonging to a case, for the Finalize dialog to offer. */
+    fun caseFiles(caseSpreadsheetId: String): List<File> = caseStorage.caseFiles(caseSpreadsheetId)
+
+    /**
+     * Writes the selected case files into an archive at [destinationUri].
+     *
+     * [destinationUri] comes from the system file picker the Finalize dialog
+     * opens. It used to be discarded and the destination rebuilt as
+     * `Uri.parse("$storageLocation/$name.$ext")` -- a URI with no scheme, which
+     * `contentResolver.openOutputStream` cannot route to any provider. The
+     * resulting exception was thrown inside `viewModelScope.launch` with
+     * nothing to catch it, so finalizing a case took the app down instead of
+     * producing a package.
+     */
+    fun packageFilesForCase(
+        files: List<File>,
+        packageName: String,
+        extension: String,
+        destinationUri: android.net.Uri,
+    ) {
         viewModelScope.launch {
-            val destinationUri = android.net.Uri.parse("${storageLocation.value}/$packageName.$extension")
-            packagingService.createArchive(files, destinationUri)
+            globalLoadingState.pushLoading()
+            _userMessage.value = "Packaging $packageName.$extension..."
+            try {
+                packagingService.createArchive(files, destinationUri)
+                _userMessage.value = "Packaged ${files.size} file(s) into $packageName.$extension."
+            } catch (e: Exception) {
+                Log.e("CaseViewModel", "Failed to package case files", e)
+                _errorMessage.value = "Could not create the package: ${e.message}"
+            } finally {
+                globalLoadingState.popLoading()
+            }
         }
     }
 
@@ -600,17 +633,6 @@ constructor(
         }
     }
 
-    fun setStorageLocation(uri: android.net.Uri) {
-        viewModelScope.launch {
-            globalLoadingState.pushLoading()
-            try {
-                settingsManager.saveStorageLocation(uri.toString())
-                _storageLocation.value = uri.toString()
-            } finally {
-                globalLoadingState.popLoading()
-            }
-        }
-    }
 
     private fun clearCaseData() {
         viewModelScope.launch {
@@ -618,7 +640,6 @@ constructor(
             try {
                 caseRepository.selectCase(null)
                 _sheetFilters.value = emptyList()
-                _htmlTemplates.value = emptyList()
                 _plaintiffs.value = ""
                 _defendants.value = ""
                 _court.value = ""
@@ -743,32 +764,6 @@ constructor(
         }
     }
 
-    fun loadHtmlTemplatesFromRepository() {
-        viewModelScope.launch {
-            globalLoadingState.pushLoading()
-            _processingState.value = ProcessingState.InProgress(0f)
-            _userMessage.value = "Loading HTML templates..."
-            try {
-                caseRepository.refreshHtmlTemplates()
-                caseRepository.getHtmlTemplates().collect {
-                    _htmlTemplates.value = it
-                }
-                _userMessage.value = "HTML templates loaded successfully."
-                _processingState.value = ProcessingState.Completed("HTML templates loaded successfully.")
-            } catch (e: Exception) {
-                val errorMsg = "Error loading HTML templates: ${e.message}"
-                Log.e("CaseViewModel", "Error loading HTML templates: $errorMsg", e)
-                _errorMessage.value = errorMsg
-                _userMessage.value = errorMsg
-                _processingState.value = ProcessingState.Failure(errorMsg)
-            } finally {
-                globalLoadingState.popLoading()
-                if (_processingState.value is ProcessingState.InProgress) {
-                    _processingState.value = ProcessingState.Idle
-                }
-            }
-        }
-    }
 
     fun importSpreadsheetWithRepository(spreadsheetId: String) {
         viewModelScope.launch {
@@ -855,15 +850,23 @@ constructor(
 
                 if (case != null) {
                     Log.d("CaseViewModel", "Case is not null, proceeding to load filters/templates for ${case.name}")
+                    // Encrypt any evidence imported before evidence-at-rest
+                    // encryption existed. Done per case on open rather than as
+                    // a startup sweep, so a large case load is not re-encrypted
+                    // all at once and a failure is scoped to one case.
+                    withContext(Dispatchers.IO) {
+                        val migrated = evidenceFiles.migrateCase(case.spreadsheetId)
+                        if (migrated > 0) {
+                            logService.addLog("Encrypted $migrated previously unprotected evidence file(s).")
+                        }
+                    }
                     loadSheetFiltersFromRepository(case.spreadsheetId)
-                    loadHtmlTemplatesFromRepository()
                     // Exhibit creation is now handled by the allegations collector,
                     // which is triggered when the case's allegations are loaded after selection.
                 } else {
                     Log.d("CaseViewModel", "Case is null, clearing filters/templates.")
                     _sheetFilters.value = emptyList()
-                    _htmlTemplates.value = emptyList()
-                }
+                    }
             } finally {
                 globalLoadingState.popLoading()
                 Log.d("CaseViewModel", "isLoading SET TO false in selectCase finally block for case: ${case?.name ?: "null"}")
@@ -1509,15 +1512,13 @@ constructor(
             _userMessage.value = "Merging image series into PDF..."
             try {
                 val case = selectedCase.value
-                val storagePath = storageLocation.value
-                if (case == null || storagePath == null) {
-                    _errorMessage.value = "Cannot merge series: Case or storage location is not set."
+                if (case == null) {
+                    _errorMessage.value = "Cannot merge series: no case is selected."
                     return@launch
                 }
 
                 val newEvidence = withContext(Dispatchers.IO) {
-                    val caseDir = File(storagePath, case.spreadsheetId)
-                    val rawDir = File(caseDir, "raw").apply { if (!exists()) mkdirs() }
+                    val rawDir = caseStorage.rawDirectory(case.spreadsheetId).apply { if (!exists()) mkdirs() }
                     val pdfFile = File(rawDir, "merged_series_${System.currentTimeMillis()}.pdf")
 
                     val pdfDocument = PdfDocument()
@@ -1625,40 +1626,69 @@ constructor(
         }
     }
 
-    fun generateDocument(exhibit: com.hereliesaz.lexorcist.data.Exhibit, template: com.google.api.services.drive.model.File) {
+    /** The templates the Generate Document dialog offers. */
+    val documentTemplates: List<com.hereliesaz.lexorcist.documents.DocumentTemplate>
+        get() = templateRepository.bundled()
+
+    private val _generatedDocument =
+        MutableStateFlow<com.hereliesaz.lexorcist.documents.GeneratedDocument?>(null)
+    val generatedDocument: StateFlow<com.hereliesaz.lexorcist.documents.GeneratedDocument?> =
+        _generatedDocument.asStateFlow()
+
+    fun clearGeneratedDocument() {
+        _generatedDocument.value = null
+    }
+
+    /**
+     * Fills a template with this case's details and writes it into the case folder.
+     *
+     * Replaces a path that could not run. It called
+     * `lex.google.runAppsScript(case.scriptId, "generateDocument", ...)` behind
+     * `val scriptId = currentCase.scriptId ?: return@launch`, and `scriptId` is
+     * set to null by the only case parser that runs -- so the function returned
+     * immediately, every time, without a message. The template list it drew
+     * from was populated by `refreshHtmlTemplates`, whose body was
+     * `{ /* TODO */ }`, so no template could be chosen either.
+     *
+     * Generation is now local: no Apps Script, no Drive, and it works offline.
+     */
+    fun generateDocument(
+        template: com.hereliesaz.lexorcist.documents.DocumentTemplate,
+        exhibit: com.hereliesaz.lexorcist.data.Exhibit?,
+    ) {
         viewModelScope.launch {
-            val currentCase = _vmSelectedCase.value // Directly access the mutable state flow's value
+            val currentCase = _vmSelectedCase.value
             if (currentCase == null) {
-                // Consider adding an error message to the user
+                _errorMessage.value = "Select a case before generating a document."
                 return@launch
             }
-
-            val scriptId = currentCase.scriptId ?: return@launch
-            val caseId = currentCase.id ?: return@launch
-            val templateId = template.id ?: return@launch
-
-            val scriptToRun = """
-                lex.google.runAppsScript(
-                    '$scriptId',
-                    'generateDocument',
-                    ['$caseId', '${exhibit.id}', '$templateId']
-                );
-            """.trimIndent()
-
-            when (val result = scriptRunner.runGenericScript(scriptToRun, emptyMap())) {
-                is Result.Success -> {
-                    logService.addLog("Document generated successfully: ${result.data}")
+            globalLoadingState.pushLoading()
+            _userMessage.value = "Generating ${template.name}..."
+            try {
+                val evidenceForExhibit = exhibit
+                    ?.let { ex -> _selectedCaseEvidenceListInternal.value.filter { it.id in ex.evidenceIds } }
+                    .orEmpty()
+                val document = documentGenerator.generate(
+                    case = currentCase,
+                    template = template,
+                    exhibit = exhibit,
+                    exhibitEvidence = evidenceForExhibit,
+                    allExhibits = _exhibits.value,
+                )
+                _generatedDocument.value = document
+                _userMessage.value = if (document.unresolved.isEmpty()) {
+                    "Generated ${document.html.name}."
+                } else {
+                    "Generated ${document.html.name}. " +
+                        "${document.unresolved.size} field(s) are left blank for you to complete: " +
+                        document.unresolved.joinToString(", ") { it.lowercase().replace('_', ' ') } + "."
                 }
-                is Result.Error -> {
-                    logService.addLog("Error generating document: ${result.exception.message}", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
-                }
-                is Result.UserRecoverableError -> {
-                    logService.addLog("User recoverable error generating document: ${result.exception.message}", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
-                    _userRecoverableAuthIntent.value = result.exception.intent
-                }
-                else -> {
-                    logService.addLog("Unknown error generating document", com.hereliesaz.lexorcist.model.LogLevel.ERROR)
-                }
+                logService.addLog("Generated document ${document.html.name}")
+            } catch (e: Exception) {
+                Log.e("CaseViewModel", "Document generation failed", e)
+                _errorMessage.value = "Could not generate the document: ${e.message}"
+            } finally {
+                globalLoadingState.popLoading()
             }
         }
     }

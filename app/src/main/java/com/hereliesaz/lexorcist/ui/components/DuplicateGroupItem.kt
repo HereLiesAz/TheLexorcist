@@ -16,6 +16,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.hereliesaz.aznavrail.AzButton
 import com.hereliesaz.lexorcist.model.CleanupSuggestion
+import androidx.compose.ui.res.stringResource
+import com.hereliesaz.lexorcist.R
 
 @Composable
 fun DuplicateGroupItem(group: CleanupSuggestion.DuplicateGroup, onMerge: () -> Unit) {
@@ -44,7 +46,7 @@ fun DuplicateGroupItem(group: CleanupSuggestion.DuplicateGroup, onMerge: () -> U
                 )
             }
             Spacer(modifier = Modifier.height(8.dp))
-            AzButton(onClick = onMerge, text = "Merge (Keep First, Delete Others)")
+            AzButton(onClick = onMerge, text = stringResource(R.string.merge_keep_first_delete_others))
         }
     }
 }

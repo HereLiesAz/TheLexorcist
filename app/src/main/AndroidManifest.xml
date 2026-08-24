@@ -75,6 +75,16 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <!--
+            Serves original evidence files, decrypting as they are read. Not
+            exported: other apps reach a file only through a URI grant attached
+            to a share intent the user started.
+        -->
+        <provider
+            android:name=".data.storage.EvidenceFileProvider"
+            android:authorities="com.hereliesaz.lexorcist.evidence"
+            android:exported="false"
+            android:grantUriPermissions="true" />
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="com.hereliesaz.lexorcist.fileprovider"

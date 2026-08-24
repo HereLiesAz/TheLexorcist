@@ -23,6 +23,8 @@ import androidx.compose.ui.unit.dp
 import com.hereliesaz.aznavrail.AzButton
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import java.io.File
+import androidx.compose.ui.res.stringResource
+import com.hereliesaz.lexorcist.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,16 +34,12 @@ fun FinalizeCaseDialog(
     onConfirm: (List<File>, String, String) -> Unit
 ) {
     val case by caseViewModel.selectedCase.collectAsState()
-    val files = remember(case) {
-        case?.let {
-            val caseDir = File(caseViewModel.storageLocation.value, it.spreadsheetId)
-            if (caseDir.exists() && caseDir.isDirectory) {
-                caseDir.walk().filter { file -> file.isFile }.toList()
-            } else {
-                emptyList()
-            }
-        } ?: emptyList()
-    }
+    // Asks the view model rather than rebuilding the path here. The previous
+    // version did `File(storageLocation.value, spreadsheetId)`, and after the
+    // user picks a folder in Settings that value is a Storage Access Framework
+    // tree URI, not a path -- so the directory never existed and this dialog
+    // always offered an empty list.
+    val files = remember(case) { case?.let { caseViewModel.caseFiles(it.spreadsheetId) } ?: emptyList() }
 
     var selectedFiles by remember { mutableStateOf<List<File>>(emptyList()) }
     var packageName by remember { mutableStateOf("") }
@@ -49,25 +47,25 @@ fun FinalizeCaseDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Finalize Case") },
+        title = { Text(stringResource(R.string.finalize_case)) },
         text = {
             Column {
                 OutlinedTextField(
                     value = packageName,
                     onValueChange = { packageName = it },
-                    label = { Text("Package Name") }
+                    label = { Text(stringResource(R.string.package_name)) }
                 )
                 Row {
                     RadioButton(
                         selected = extension == "zip",
                         onClick = { extension = "zip" }
                     )
-                    Text("ZIP")
+                    Text(stringResource(R.string.zip))
                     RadioButton(
                         selected = extension == "lex",
                         onClick = { extension = "lex" }
                     )
-                    Text("LEX")
+                    Text(stringResource(R.string.lex))
                 }
                 LazyColumn {
                     items(files) { file ->
@@ -96,11 +94,11 @@ fun FinalizeCaseDialog(
                         onDismiss()
                     }
                 },
-                text = "Package"
+                text = stringResource(R.string.package_action)
             )
         },
         dismissButton = {
-            AzButton(onClick = onDismiss, text = "Cancel")
+            AzButton(onClick = onDismiss, text = stringResource(R.string.cancel))
         }
     )
 }

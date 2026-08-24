@@ -7,6 +7,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.hereliesaz.lexorcist.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -22,7 +24,7 @@ fun ImapImportDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Import from IMAP") },
+        title = { Text(stringResource(R.string.import_from_imap)) },
         text = {
             Column {
                 Text("Enter your email credentials and search criteria.", style = MaterialTheme.typography.bodyMedium)
@@ -36,19 +38,19 @@ fun ImapImportDialog(
                 OutlinedTextField(
                     value = host,
                     onValueChange = { host = it },
-                    label = { Text("IMAP Server (e.g., imap.mail.com)") }
+                    label = { Text(stringResource(R.string.imap_server_e_g_imap_mail_com)) }
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = user,
                     onValueChange = { user = it },
-                    label = { Text("Email Address") }
+                    label = { Text(stringResource(R.string.email_address)) }
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = pass,
                     onValueChange = { pass = it },
-                    label = { Text("Password") },
+                    label = { Text(stringResource(R.string.password)) },
                     visualTransformation = PasswordVisualTransformation()
                 )
                 Spacer(modifier = Modifier.height(16.dp))
@@ -57,24 +59,24 @@ fun ImapImportDialog(
                 OutlinedTextField(
                     value = from,
                     onValueChange = { from = it },
-                    label = { Text("From") }
+                    label = { Text(stringResource(R.string.from)) }
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = subject,
                     onValueChange = { subject = it },
-                    label = { Text("Subject") }
+                    label = { Text(stringResource(R.string.subject)) }
                 )
             }
         },
         confirmButton = {
             Button(onClick = { onImport(host, user, pass, from, subject) }) {
-                Text("Import")
+                Text(stringResource(R.string.import_action))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(R.string.cancel))
             }
         }
     )

@@ -118,7 +118,7 @@ fun ScriptBuilderScreen(
             if (showLoadDialog) {
                 com.hereliesaz.lexorcist.ui.components.AzAlertDialog(
                     onDismissRequest = { showLoadDialog = false },
-                    title = { Text("Load Script") },
+                    title = { Text(stringResource(R.string.load_script)) },
                     text = {
                         LazyColumn {
                             items(allScripts) { script ->
@@ -132,7 +132,7 @@ fun ScriptBuilderScreen(
                     confirmButton = {
                         AzButton(
                             onClick = { showLoadDialog = false },
-                            text = "Cancel"
+                            text = stringResource(R.string.cancel)
                         )
                     },
                     dismissButton = {}
@@ -287,23 +287,23 @@ fun ScriptBuilderScreen(
             ) {
                 AzButton(
                     onClick = { viewModel.newScript() },
-                    text = "New"
+                    text = stringResource(R.string.create_new_case)
                 )
                 AzButton(
                     onClick = { showLoadDialog = true },
-                    text = "Load"
+                    text = stringResource(R.string.load)
                 )
                 AzButton(
                     onClick = { viewModel.saveScript() },
-                    text = "Save"
+                    text = stringResource(R.string.save)
                 )
                 AzButton(
                     onClick = { showShareDialog = true },
-                    text = "Share"
+                    text = stringResource(R.string.share)
                 )
                 AzButton(
                     onClick = { caseViewModel.rerunAllScriptsOnAllEvidence() },
-                    text = "Run"
+                    text = stringResource(R.string.run)
                 )
             }
         }
@@ -319,7 +319,7 @@ fun ScriptItem(script: Script, onClick: () -> Unit) {
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(text = script.name, style = MaterialTheme.typography.titleMedium)
-            Text(text = "by ${(script.authorName ?: "").ifBlank { script.authorEmail ?: "Unknown Author" }}", style = MaterialTheme.typography.bodySmall)
+            Text(text = stringResource(R.string.by_author_format, (script.authorName ?: "").ifBlank { script.authorEmail ?: stringResource(R.string.unknown_author) }), style = MaterialTheme.typography.bodySmall)
             Text(text = script.description, style = MaterialTheme.typography.bodyMedium, maxLines = 2)
         }
     }

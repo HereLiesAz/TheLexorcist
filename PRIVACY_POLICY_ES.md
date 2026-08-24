@@ -13,6 +13,11 @@ que la Aplicación «no recopila ninguna información de identificación persona
 que mencionaba Google Drive como único servicio de terceros. Ambas afirmaciones
 eran inexactas; las correcciones se describen a continuación.
 
+**Actualizada el 23-08-2026.** Los archivos de prueba originales ahora se cifran
+en reposo; el permiso de Google Drive se limita a los archivos que la Aplicación
+crea; el acceso a Gmail ya no se solicita al iniciar sesión; y OneDrive, que
+nunca llegó a implementarse, se ha eliminado.
+
 ## Qué recopila la Aplicación
 
 Todo lo siguiente se recopila únicamente cuando usted decide capturarlo o
@@ -51,12 +56,14 @@ Todos los datos del caso se almacenan **en su dispositivo**, en un archivo de
 base de datos llamado `lexorcist_data.xlsx` situado en el almacenamiento privado
 de la Aplicación, junto con los archivos de prueba originales.
 
-La base de datos está **cifrada en reposo** mediante una clave alojada en el
-almacén de claves por hardware de su dispositivo. Los archivos de prueba
-originales (fotografías, audio, vídeo) se guardan en el directorio privado de la
-Aplicación pero **todavía no se cifran individualmente**; están protegidos por
-el aislamiento de aplicaciones de Android, que impide que otras aplicaciones los
-lean, y por el cifrado del dispositivo.
+Tanto la base de datos como los archivos de prueba originales (fotografías,
+capturas de pantalla, audio, vídeo) están **cifrados en reposo**, cada uno con
+su propia clave alojada en el almacén de claves por hardware de su dispositivo.
+También están protegidos por el aislamiento de aplicaciones de Android, que
+impide que otras aplicaciones los lean, y por el cifrado del dispositivo.
+
+Las pruebas importadas antes de esta versión se vuelven a escribir cifradas la
+próxima vez que abra el caso al que pertenecen.
 
 Los datos del caso están **excluidos de la copia de seguridad automática de
 Android** y de la transferencia entre dispositivos. No se copian a la copia de
@@ -69,20 +76,27 @@ Nada sale de su dispositivo salvo que usted lo active.
 **Sincronización en la nube (opcional).** Si la activa, la base de datos y las
 carpetas de sus casos se suben al proveedor que elija y en el que inicie sesión:
 Google Drive o Dropbox. El Proveedor del Servicio no tiene acceso a ese
-almacenamiento.
+almacenamiento. Los archivos se descifran antes de subirlos, porque las claves
+residen en el almacén de claves por hardware de un solo dispositivo y no pueden
+salir de él; una copia cifrada en un dispositivo no podría abrirse en otro. Por
+tanto, lo que sincronice queda protegido por la seguridad de ese proveedor y por
+las credenciales de su cuenta, no por el cifrado local.
 
 **Acceso a la cuenta de Google.** Iniciar sesión con Google concede a la
 Aplicación:
 
-- Acceso completo a su Google Drive (lectura, escritura y borrado de **todos**
-  los archivos de esa cuenta, no solo de los creados por la Aplicación).
-- Acceso completo a sus Hojas de cálculo de Google.
-- Acceso de solo lectura a su Gmail.
+- Acceso a **los archivos que la propia Aplicación crea** en su Google Drive: su
+  carpeta, las carpetas de sus casos, la base de datos y las copias de pruebas
+  que suba. No puede leer, modificar ni borrar nada más de esa cuenta.
+- Acceso completo a sus Hojas de cálculo de Google. Es la única concesión amplia
+  que queda. Es necesaria para publicar un script o una plantilla en la lista
+  compartida que se describe más abajo, que es una hoja de cálculo que usted no
+  posee y a la que, por tanto, no puede llegar un permiso limitado a archivos
+  propios. Leer esa lista no utiliza su cuenta en absoluto.
 
-Si inicia sesión con una cuenta que contiene material de otros clientes, tenga
-en cuenta que la Aplicación posee una credencial lo bastante amplia para
-alcanzarlo. Restringir esto a los archivos creados por la Aplicación es una
-tarea pendiente conocida.
+El acceso de lectura a su Gmail **ya no se solicita al iniciar sesión**. Se pide
+por separado, la primera vez que importe correo, y solo entonces. Si nunca
+importa correo, nunca se le pide.
 
 **IA en la nube (opcional, mediante scripts).** El motor de scripts expone una
 función, `lex.ai.generate`, que envía texto a la API Gemini de Google. Un script
@@ -111,21 +125,22 @@ Según las funciones que utilice:
 
 - [Google (Drive, Sheets, Gmail, Apps Script, Firebase, Gemini)](https://www.google.com/policies/privacy/)
 - [Dropbox](https://www.dropbox.com/privacy)
-- [Microsoft (OneDrive, Outlook)](https://privacy.microsoft.com/privacystatement)
+- [Microsoft (Outlook)](https://privacy.microsoft.com/privacystatement): solo
+  para importar correo, y solo en una compilación configurada con un
+  identificador de aplicación de Microsoft.
 
 El Proveedor del Servicio no opera ningún servidor y no recibe ningún dato de la
 Aplicación.
 
 ## Seguridad
 
-La base de datos se cifra en reposo con una clave respaldada por hardware. Las
-credenciales OAuth se cifran por separado. La copia de seguridad automática está
-desactivada.
+La base de datos y los archivos de prueba originales se cifran en reposo, cada
+uno con su propia clave respaldada por hardware. Las credenciales OAuth se
+cifran por separado. La copia de seguridad automática está desactivada.
 
 Ningún método de almacenamiento o transmisión es completamente seguro, y el
 Proveedor del Servicio no puede garantizar una seguridad absoluta. En particular:
 
-- Los archivos de prueba originales no se cifran individualmente.
 - Un dispositivo rooteado, comprometido o desbloqueado en manos de otra persona
   no ofrece ninguna protección.
 - Todo lo que sincronice con un proveedor en la nube queda sujeto a la seguridad

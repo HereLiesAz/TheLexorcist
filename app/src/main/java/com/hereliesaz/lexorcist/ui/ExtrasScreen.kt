@@ -196,7 +196,7 @@ fun SearchBar(query: String, onQueryChange: (String) -> Unit) {
         leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
         trailingIcon = {
             if (query.isNotEmpty()) {
-                AzButton(onClick = { onQueryChange("") }, text = "X")
+                AzButton(onClick = { onQueryChange("") }, text = stringResource(R.string.x))
             }
         },
         singleLine = true
@@ -359,7 +359,7 @@ fun AddonListItem(
             Text(text = name, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.End)
             val authorDisplay = authorNameValue.ifBlank { authorEmailValue }
             if (authorDisplay.isNotBlank()) {
-                Text(text = "by $authorDisplay", style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.End)
+                Text(text = stringResource(R.string.by_author_format, authorDisplay), style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.End)
             }
             Text(text = description, style = MaterialTheme.typography.bodyMedium, maxLines = 2, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.End)
             Spacer(modifier = Modifier.height(8.dp))
@@ -397,7 +397,7 @@ fun ItemDetailsDialog(
                 Text(text = name, style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.End)
                 val authorDisplay = authorName.ifBlank { authorEmail }
                 if (authorDisplay.isNotBlank()) {
-                    Text(text = "by $authorDisplay", style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.End)
+                    Text(text = stringResource(R.string.by_author_format, authorDisplay), style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.End)
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(text = description, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.End)
@@ -435,7 +435,7 @@ fun RatingBar(
             IconButton(onClick = { onRate(index) }) {
                 Icon(
                     Icons.Default.Star,
-                    contentDescription = "Rate $index",
+                    contentDescription = stringResource(R.string.rate_index_format, index),
                     tint = if (index <= rating) MaterialTheme.colorScheme.primary else Color.Gray,
                     modifier = Modifier.size(24.dp)
                 )

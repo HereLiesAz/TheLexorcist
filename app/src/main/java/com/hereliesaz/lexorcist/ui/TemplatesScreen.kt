@@ -105,11 +105,11 @@ fun TemplatesScreen(
             )
             Spacer(modifier = Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
-                AzButton(onClick = { /* TODO */ }, text = "Create")
+                AzButton(onClick = { /* TODO */ }, text = stringResource(R.string.create))
                 Spacer(modifier = Modifier.width(8.dp))
-                AzButton(onClick = { /* TODO */ }, text = "Import")
+                AzButton(onClick = { /* TODO */ }, text = stringResource(R.string.import_action))
                 Spacer(modifier = Modifier.width(8.dp))
-                AzButton(onClick = { /* TODO */ }, text = "Request")
+                AzButton(onClick = { /* TODO */ }, text = stringResource(R.string.request))
             }
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -122,7 +122,7 @@ fun TemplatesScreen(
                     readOnly = true,
                     value = court.ifEmpty { "Select a Court" },
                     onValueChange = {},
-                    label = { Text("Court") },
+                    label = { Text(stringResource(R.string.court)) },
                     trailingIcon = {
                         ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
                     },
@@ -208,7 +208,7 @@ fun TemplateItem(
                     textAlign = TextAlign.End
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                AzButton(onClick = onShare, text = "Share")
+                AzButton(onClick = onShare, text = stringResource(R.string.share))
             }
         }
     }

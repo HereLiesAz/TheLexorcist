@@ -58,7 +58,7 @@ fun VideoEvidenceScreen(
         ) {
             if (selectedEvidence != null) {
                 Text(
-                    text = "Audio Transcript:",
+                    text = stringResource(R.string.audio_transcript),
                     style = MaterialTheme.typography.titleMedium,
                     textAlign = TextAlign.End,
                     modifier = Modifier.fillMaxWidth()
@@ -71,7 +71,7 @@ fun VideoEvidenceScreen(
                 )
 
                 Text(
-                    text = "Visual Text (OCR):",
+                    text = stringResource(R.string.visual_text_ocr),
                     style = MaterialTheme.typography.titleMedium,
                     textAlign = TextAlign.End,
                     modifier = Modifier.fillMaxWidth()
@@ -84,7 +84,7 @@ fun VideoEvidenceScreen(
                 )
             } else {
                 Text(
-                    text = "Evidence not found.",
+                    text = stringResource(R.string.evidence_not_found),
                     style = MaterialTheme.typography.bodyLarge,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()

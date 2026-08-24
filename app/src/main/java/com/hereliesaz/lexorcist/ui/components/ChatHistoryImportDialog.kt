@@ -15,6 +15,8 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import java.util.*
 import androidx.compose.ui.text.LinkAnnotation // Added for LinkAnnotation
+import androidx.compose.ui.res.stringResource
+import com.hereliesaz.lexorcist.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,10 +34,10 @@ fun ChatHistoryImportDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Import Chat History") },
+        title = { Text(stringResource(R.string.import_chat_history)) },
         text = {
             Column {
-                Text("To import your chat history, you first need to export it from the messaging app.")
+                Text(stringResource(R.string.to_import_your_chat_history_you_first_need_to_expo))
                 Spacer(modifier = Modifier.height(16.dp))
 
                 val annotatedString = buildAnnotatedString {
@@ -70,12 +72,12 @@ fun ChatHistoryImportDialog(
         },
         confirmButton = {
             Button(onClick = { filePickerLauncher.launch("*/*") }) {
-                Text("Import File")
+                Text(stringResource(R.string.import_file))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(R.string.cancel))
             }
         }
     )

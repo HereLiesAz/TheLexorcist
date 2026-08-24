@@ -119,7 +119,7 @@ fun CasesScreen(
             // FAB for creating a new case.
             AzButton(
                 onClick = { showCreateCaseDialog = true },
-                text = "New"
+                text = stringResource(R.string.create_new_case)
             )
         },
         floatingActionButtonPosition = FabPosition.End,

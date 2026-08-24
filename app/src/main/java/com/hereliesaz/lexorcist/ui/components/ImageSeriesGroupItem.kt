@@ -16,6 +16,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.hereliesaz.aznavrail.AzButton
 import com.hereliesaz.lexorcist.model.CleanupSuggestion
+import androidx.compose.ui.res.stringResource
+import com.hereliesaz.lexorcist.R
 
 @Composable
 fun ImageSeriesGroupItem(group: CleanupSuggestion.ImageSeriesGroup, onMerge: () -> Unit) {
@@ -44,7 +46,7 @@ fun ImageSeriesGroupItem(group: CleanupSuggestion.ImageSeriesGroup, onMerge: () 
                 )
             }
             Spacer(modifier = Modifier.height(8.dp))
-            AzButton(onClick = onMerge, text = "Combine into PDF")
+            AzButton(onClick = onMerge, text = stringResource(R.string.combine_into_pdf))
         }
     }
 }
