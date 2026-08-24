@@ -64,9 +64,7 @@ interface CaseRepository {
 
     suspend fun removeAllegation(allegation: Allegation)
 
-    fun getHtmlTemplates(): Flow<List<DriveFile>>
 
-    suspend fun refreshHtmlTemplates()
 
     suspend fun importSpreadsheet(spreadsheetId: String): Case?
 

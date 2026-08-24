@@ -300,6 +300,9 @@ function onOpen() {}</string>
     <string name="storage_settings">Storage Settings</string>
     <string name="current_location_colon_placeholder">Current location: %1$s</string>
     <string name="default_text">Default</string>
+    <string name="document_generated">Document generated</string>
+    <string name="document_fields_left_blank">These fields were left blank for you to complete: %1$s</string>
+    <string name="print_or_save_as_pdf">Print / Save as PDF</string>
     <string name="storage_location_explanation">Case data is kept in the app\'s private storage, where other apps cannot read it and Android backup does not copy it. Use cloud sync to keep a copy elsewhere.</string>
     <string name="cloud_service_settings">Cloud Service Settings</string>
     <string name="google_account">Google Account</string>

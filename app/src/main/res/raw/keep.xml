@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Tells the resource shrinker not to strip the bundled document templates.
+
+    TemplateRepository resolves them with `Resources.getIdentifier(name, "raw",
+    ...)` rather than `R.raw.template_x`, because the list is data (see
+    TemplateRepository.BUNDLED) rather than a fixed set of references in code.
+    The shrinker's static analysis cannot see a getIdentifier() call as a
+    reference, so without this every template_*.html would be removed from a
+    release build (isShrinkResources = true) and DocumentGenerator would fail
+    on every single one of them with "Missing template resource".
+-->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@raw/template_*" />
