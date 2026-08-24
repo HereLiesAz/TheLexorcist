@@ -21,6 +21,8 @@ import coil.compose.AsyncImage
 import com.hereliesaz.aznavrail.AzButton
 import com.hereliesaz.lexorcist.data.Evidence
 import com.hereliesaz.lexorcist.ui.components.AzAlertDialog
+import androidx.compose.ui.res.stringResource
+import com.hereliesaz.lexorcist.R
 
 @Composable
 fun EvidenceDetailsDialog(
@@ -33,7 +35,7 @@ fun EvidenceDetailsDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "Evidence Details",
+                text = stringResource(R.string.evidence_details),
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.End
             )
@@ -46,7 +48,7 @@ fun EvidenceDetailsDialog(
                 if (evidence.type == "image" || evidence.type == "ocr_image_from_video") {
                     AsyncImage(
                         model = evidence.sourceDocument,
-                        contentDescription = "Evidence Preview",
+                        contentDescription = stringResource(R.string.evidence_preview),
                         modifier = Modifier.fillMaxWidth(),
                         contentScale = ContentScale.Fit,
                     )
@@ -59,14 +61,14 @@ fun EvidenceDetailsDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                AzButton(onClick = onRemove, text = "Remove")
+                AzButton(onClick = onRemove, text = stringResource(R.string.remove))
             }
         },
         confirmButton = {
-            AzButton(onClick = onNavigateToEvidenceDetails, text = "View Full Details")
+            AzButton(onClick = onNavigateToEvidenceDetails, text = stringResource(R.string.view_full_details))
         },
         dismissButton = {
-            AzButton(onClick = onDismiss, text = "Close")
+            AzButton(onClick = onDismiss, text = stringResource(R.string.close))
         }
     )
 }

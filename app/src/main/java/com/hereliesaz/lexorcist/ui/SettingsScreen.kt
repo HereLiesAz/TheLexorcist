@@ -357,7 +357,7 @@ fun SettingsScreen(
 
             // Outlook
             Text(
-                text = "Outlook",
+                text = stringResource(R.string.outlook),
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -372,7 +372,7 @@ fun SettingsScreen(
                                 authViewModel.signInWithOutlook(activity)
                             }
                         },
-                        text = "Connect to Outlook".uppercase(Locale.getDefault())
+                        text = stringResource(R.string.connect_to_outlook).uppercase(Locale.getDefault())
                     )
                 }
                 is OutlookSignInState.InProgress -> {
@@ -383,7 +383,7 @@ fun SettingsScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     AzButton(
                         onClick = { authViewModel.signOutFromOutlook() },
-                        text = "Disconnect from Outlook".uppercase(Locale.getDefault())
+                        text = stringResource(R.string.disconnect_from_outlook).uppercase(Locale.getDefault())
                     )
                 }
                 is OutlookSignInState.Error -> {
@@ -472,7 +472,7 @@ fun LanguageModelDownloader(
                 horizontalArrangement = Arrangement.End
             ) {
                 Text(
-                    text = "Downloading: ${"%.0f".format(progress * 100)}%",
+                    text = stringResource(R.string.downloading_percent_format, "%.0f".format(progress * 100)),
                     style = MaterialTheme.typography.bodySmall
                 )
                 Spacer(modifier = Modifier.width(8.dp))

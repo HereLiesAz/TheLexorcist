@@ -19,6 +19,8 @@ import androidx.compose.ui.unit.dp
 import com.hereliesaz.aznavrail.AzButton
 import java.text.SimpleDateFormat
 import java.util.Locale
+import androidx.compose.ui.res.stringResource
+import com.hereliesaz.lexorcist.R
 
 @Composable
 fun ImportFilterDialog(
@@ -33,34 +35,34 @@ fun ImportFilterDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Filter Device Record Import") },
+        title = { Text(stringResource(R.string.filter_device_record_import)) },
         text = {
             Column {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Checkbox(checked = importSms, onCheckedChange = { importSms = it })
-                    Text("Import SMS")
+                    Text(stringResource(R.string.import_sms))
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Checkbox(checked = importCalls, onCheckedChange = { importCalls = it })
-                    Text("Import Call Logs")
+                    Text(stringResource(R.string.import_call_logs))
                 }
                 Spacer(modifier = Modifier.height(16.dp))
                 OutlinedTextField(
                     value = contact,
                     onValueChange = { contact = it },
-                    label = { Text("Contact/Number (optional)") }
+                    label = { Text(stringResource(R.string.contact_number_optional)) }
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = startDate,
                     onValueChange = { startDate = it },
-                    label = { Text("Start Date (YYYY-MM-DD)") }
+                    label = { Text(stringResource(R.string.start_date_yyyy_mm_dd)) }
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = endDate,
                     onValueChange = { endDate = it },
-                    label = { Text("End Date (YYYY-MM-DD)") }
+                    label = { Text(stringResource(R.string.end_date_yyyy_mm_dd)) }
                 )
             }
         },
@@ -72,13 +74,13 @@ fun ImportFilterDialog(
                     onImport(contact.ifBlank { null }, startMillis, endMillis, importSms, importCalls)
                     onDismiss()
                 },
-                text = "Import"
+                text = stringResource(R.string.import_action)
             )
         },
         dismissButton = {
             AzButton(
                 onClick = onDismiss,
-                text = "Cancel"
+                text = stringResource(R.string.cancel)
             )
         }
     )

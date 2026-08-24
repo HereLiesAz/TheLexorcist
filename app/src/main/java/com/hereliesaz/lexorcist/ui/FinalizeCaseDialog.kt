@@ -23,6 +23,8 @@ import androidx.compose.ui.unit.dp
 import com.hereliesaz.aznavrail.AzButton
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import java.io.File
+import androidx.compose.ui.res.stringResource
+import com.hereliesaz.lexorcist.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,25 +47,25 @@ fun FinalizeCaseDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Finalize Case") },
+        title = { Text(stringResource(R.string.finalize_case)) },
         text = {
             Column {
                 OutlinedTextField(
                     value = packageName,
                     onValueChange = { packageName = it },
-                    label = { Text("Package Name") }
+                    label = { Text(stringResource(R.string.package_name)) }
                 )
                 Row {
                     RadioButton(
                         selected = extension == "zip",
                         onClick = { extension = "zip" }
                     )
-                    Text("ZIP")
+                    Text(stringResource(R.string.zip))
                     RadioButton(
                         selected = extension == "lex",
                         onClick = { extension = "lex" }
                     )
-                    Text("LEX")
+                    Text(stringResource(R.string.lex))
                 }
                 LazyColumn {
                     items(files) { file ->
@@ -92,11 +94,11 @@ fun FinalizeCaseDialog(
                         onDismiss()
                     }
                 },
-                text = "Package"
+                text = stringResource(R.string.package_action)
             )
         },
         dismissButton = {
-            AzButton(onClick = onDismiss, text = "Cancel")
+            AzButton(onClick = onDismiss, text = stringResource(R.string.cancel))
         }
     )
 }

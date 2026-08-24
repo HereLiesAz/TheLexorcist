@@ -11,6 +11,8 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import com.hereliesaz.aznavrail.AzButton
+import androidx.compose.ui.res.stringResource
+import com.hereliesaz.lexorcist.R
 
 @Composable
 fun LocationHistoryInstructionsDialog(
@@ -35,7 +37,7 @@ fun LocationHistoryInstructionsDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Import Location History") },
+        title = { Text(stringResource(R.string.import_location_history)) },
         text = {
             Column {
                 Text(
@@ -50,11 +52,11 @@ fun LocationHistoryInstructionsDialog(
                     onImport()
                     onDismiss()
                 },
-                text = "Import"
+                text = stringResource(R.string.import_action)
             )
         },
         dismissButton = {
-            AzButton(onClick = onDismiss, text = "Cancel")
+            AzButton(onClick = onDismiss, text = stringResource(R.string.cancel))
         }
     )
 }

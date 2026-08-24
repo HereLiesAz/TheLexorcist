@@ -55,7 +55,7 @@ fun PlaceholderExtendedEvent() {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.Label,
-                    contentDescription = "Tags",
+                    contentDescription = stringResource(R.string.tags),
                     modifier = Modifier.size(16.dp)
                 )
                 Spacer(modifier = Modifier.width(4.dp))

@@ -15,6 +15,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.hereliesaz.lexorcist.model.Template
+import androidx.compose.ui.res.stringResource
+import com.hereliesaz.lexorcist.R
 
 @Composable
 fun TemplateEditor(
@@ -34,19 +36,19 @@ fun TemplateEditor(
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Name") },
+                    label = { Text(stringResource(R.string.share_addon_name_label)) },
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
-                    label = { Text("Description") },
+                    label = { Text(stringResource(R.string.description)) },
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = content,
                     onValueChange = { content = it },
-                    label = { Text("Content") },
+                    label = { Text(stringResource(R.string.content)) },
                     modifier = Modifier.height(200.dp),
                 )
             }
@@ -74,11 +76,11 @@ fun TemplateEditor(
                         )
                     onSave(newTemplate)
                 },
-                text = "Save"
+                text = stringResource(R.string.save)
             )
         },
         dismissButton = {
-            AzButton(onClick = onDismiss, text = "Cancel")
+            AzButton(onClick = onDismiss, text = stringResource(R.string.cancel))
         },
     )
 }

@@ -65,11 +65,11 @@ fun ScriptsScreen(caseViewModel: CaseViewModel = hiltViewModel()) {
             )
             Spacer(modifier = Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
-                AzButton(onClick = { /* TODO */ }, text = "Create")
+                AzButton(onClick = { /* TODO */ }, text = stringResource(R.string.create))
                 Spacer(modifier = Modifier.width(8.dp))
-                AzButton(onClick = { /* TODO */ }, text = "Import")
+                AzButton(onClick = { /* TODO */ }, text = stringResource(R.string.import_action))
                 Spacer(modifier = Modifier.width(8.dp))
-                AzButton(onClick = { /* TODO */ }, text = "Request")
+                AzButton(onClick = { /* TODO */ }, text = stringResource(R.string.request))
             }
             Spacer(modifier = Modifier.height(16.dp))
             LazyColumn {
@@ -115,7 +115,7 @@ fun ScriptItem(
             )
             Spacer(modifier = Modifier.height(8.dp))
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
-                AzButton(onClick = onShare, text = "Share")
+                AzButton(onClick = onShare, text = stringResource(R.string.share))
             }
         }
     }

@@ -14,6 +14,8 @@ import androidx.compose.ui.unit.dp
 import com.hereliesaz.lexorcist.data.Evidence
 import java.text.SimpleDateFormat
 import java.util.*
+import androidx.compose.ui.res.stringResource
+import com.hereliesaz.lexorcist.R
 
 @Composable
 fun ExtendedEvent(evidence: Evidence) {
@@ -66,7 +68,7 @@ fun ExtendedEvent(evidence: Evidence) {
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.Label,
-                        contentDescription = "Tags",
+                        contentDescription = stringResource(R.string.tags),
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))

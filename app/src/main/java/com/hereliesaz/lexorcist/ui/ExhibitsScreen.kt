@@ -241,7 +241,7 @@ fun ExhibitItem(
                 )
             }
             if (displayExhibit.caseExhibit != null) {
-                AzButton(onClick = { onDeleteClick(displayExhibit) }, text = "Del")
+                AzButton(onClick = { onDeleteClick(displayExhibit) }, text = stringResource(R.string.del))
             }
         }
     }
@@ -300,7 +300,7 @@ fun ExhibitDetailsDialog(
                                     overflow = TextOverflow.Ellipsis
                                 )
                                 IconButton(onClick = { onRemoveEvidence(evidence.id) }) {
-                                    Icon(Icons.Default.Delete, contentDescription = "Remove Evidence")
+                                    Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.remove_evidence))
                                 }
                             }
                         }
@@ -309,7 +309,7 @@ fun ExhibitDetailsDialog(
             }
         },
         confirmButton = {
-            AzButton(onClick = onDismiss, text = "Close")
+            AzButton(onClick = onDismiss, text = stringResource(R.string.close))
         },
         dismissButton = {}
     )
@@ -336,7 +336,7 @@ fun CleanUpTab(caseViewModel: CaseViewModel) {
         } else {
             AzButton(
                 onClick = { caseViewModel.generateCleanupSuggestions() },
-                text = "Scan"
+                text = stringResource(R.string.scan)
             )
         }
 
@@ -403,7 +403,7 @@ fun DuplicateGroupItem(
                 )
             }
             Spacer(modifier = Modifier.height(8.dp))
-            AzButton(onClick = { onMerge(group) }, text = "Merge (Keep First, Delete Others)")
+            AzButton(onClick = { onMerge(group) }, text = stringResource(R.string.merge_keep_first_delete_others))
         }
     }
 }
@@ -434,7 +434,7 @@ fun ImageSeriesGroupItem(
                 )
             }
             Spacer(modifier = Modifier.height(8.dp))
-            AzButton(onClick = { onMerge(group) }, text = "Combine into PDF")
+            AzButton(onClick = { onMerge(group) }, text = stringResource(R.string.combine_into_pdf))
         }
     }
 }
@@ -547,7 +547,7 @@ fun EvidenceDisplayItem(evidence: Evidence) {
             horizontalAlignment = Alignment.End
         ) {
             Text(
-                text = "Type: ${evidence.type}",
+                text = stringResource(R.string.type_format, evidence.type),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.secondary,
                 textAlign = TextAlign.End

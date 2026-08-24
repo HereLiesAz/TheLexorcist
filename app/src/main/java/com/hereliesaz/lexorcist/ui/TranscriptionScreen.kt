@@ -84,7 +84,7 @@ fun TranscriptionScreen(
                 }
                 is ProcessingState.Failure -> {
                     Text(
-                        text = "Transcription failed: ${state.error}",
+                        text = stringResource(R.string.transcription_failed_format, state.error),
                         color = MaterialTheme.colorScheme.error,
                         textAlign = TextAlign.Center
                     )
@@ -124,7 +124,7 @@ fun TranscriptionScreen(
                                 supportingText = if (showReasonError) {
                                     {
                                         Text(
-                                            text = "Reason is required",
+                                            text = stringResource(R.string.reason_is_required),
                                             textAlign = TextAlign.End,
                                             modifier = Modifier.fillMaxWidth(),
                                             color = MaterialTheme.colorScheme.error
@@ -200,7 +200,7 @@ fun TranscriptionScreen(
                                 supportingText = if (showReasonError) {
                                     {
                                         Text(
-                                            text = "Reason is required",
+                                            text = stringResource(R.string.reason_is_required),
                                             textAlign = TextAlign.End,
                                             modifier = Modifier.fillMaxWidth(),
                                             color = MaterialTheme.colorScheme.error
@@ -273,7 +273,7 @@ fun EditHistoryItem(edit: TranscriptEdit) {
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Reason: ${edit.reason}",
+                text = stringResource(R.string.reason_format, edit.reason),
                 style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
                 textAlign = TextAlign.End,
                 modifier = Modifier.fillMaxWidth()

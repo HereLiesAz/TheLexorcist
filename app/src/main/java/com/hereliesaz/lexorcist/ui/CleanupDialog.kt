@@ -16,6 +16,8 @@ import com.hereliesaz.aznavrail.AzButton
 import com.hereliesaz.lexorcist.model.CleanupSuggestion
 import com.hereliesaz.lexorcist.ui.components.AzAlertDialog
 import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
+import androidx.compose.ui.res.stringResource
+import com.hereliesaz.lexorcist.R
 
 @Composable
 fun CleanupDialog(
@@ -46,7 +48,7 @@ fun CleanupDialog(
                                 suggestion.evidence.forEach { evidence ->
                                     Text("- ${evidence.sourceDocument}", textAlign = TextAlign.End)
                                 }
-                                AzButton(onClick = { caseViewModel.deleteDuplicates(suggestion) }, text = "Delete Duplicates")
+                                AzButton(onClick = { caseViewModel.deleteDuplicates(suggestion) }, text = stringResource(R.string.delete_duplicates))
                             }
                         }
                         is CleanupSuggestion.ImageSeriesGroup -> {
@@ -55,7 +57,7 @@ fun CleanupDialog(
                                 suggestion.evidence.forEach { evidence ->
                                     Text("- ${evidence.sourceDocument}", textAlign = TextAlign.End)
                                 }
-                                AzButton(onClick = { caseViewModel.mergeImageSeries(suggestion, "") }, text = "Merge into PDF")
+                                AzButton(onClick = { caseViewModel.mergeImageSeries(suggestion, "") }, text = stringResource(R.string.merge_into_pdf))
                             }
                         }
                     }
@@ -64,7 +66,7 @@ fun CleanupDialog(
             }
         },
         confirmButton = {
-            AzButton(onClick = onDismiss, text = "Close")
+            AzButton(onClick = onDismiss, text = stringResource(R.string.close))
         },
         dismissButton = {}
     )

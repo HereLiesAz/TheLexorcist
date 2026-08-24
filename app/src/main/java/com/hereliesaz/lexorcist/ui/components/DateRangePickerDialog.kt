@@ -9,6 +9,8 @@ import androidx.compose.ui.unit.dp
 import com.hereliesaz.aznavrail.AzButton
 import java.text.SimpleDateFormat
 import java.util.*
+import androidx.compose.ui.res.stringResource
+import com.hereliesaz.lexorcist.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,12 +42,12 @@ fun DateRangePickerDialog(
                         }
                     }
                 }) {
-                    Text("OK")
+                    Text(stringResource(R.string.ok))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDatePicker = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         ) {
@@ -55,13 +57,13 @@ fun DateRangePickerDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Select Date Range") },
+        title = { Text(stringResource(R.string.select_date_range)) },
         text = {
             Column {
                 OutlinedTextField(
                     value = startDateString,
                     onValueChange = { },
-                    label = { Text("Start Date (YYYY-MM-DD)") },
+                    label = { Text(stringResource(R.string.start_date_yyyy_mm_dd)) },
                     readOnly = true,
                     modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
                         .clickable {
@@ -72,7 +74,7 @@ fun DateRangePickerDialog(
                 OutlinedTextField(
                     value = endDateString,
                     onValueChange = { },
-                    label = { Text("End Date (YYYY-MM-DD)") },
+                    label = { Text(stringResource(R.string.end_date_yyyy_mm_dd)) },
                     readOnly = true,
                     modifier = Modifier.fillMaxWidth()
                         .clickable {
@@ -105,11 +107,11 @@ fun DateRangePickerDialog(
                         // Handle parsing error
                     }
                 },
-                text = "OK"
+                text = stringResource(R.string.ok)
             )
         },
         dismissButton = {
-            AzButton(onClick = onDismiss, text = "Cancel")
+            AzButton(onClick = onDismiss, text = stringResource(R.string.cancel))
         }
     )
 }

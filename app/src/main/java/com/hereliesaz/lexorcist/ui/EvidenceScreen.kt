@@ -244,26 +244,26 @@ fun EvidenceScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    AzButton(onClick = { showAddTextEvidence = true }, text = "Text".uppercase(Locale.getDefault()))
-                    AzButton(onClick = { imagePickerLauncher.launch("image/*") }, text = "Image".uppercase(Locale.getDefault()))
-                    AzButton(onClick = { audioPickerLauncher.launch("audio/*") }, text = "Audio".uppercase(Locale.getDefault()))
-                    AzButton(onClick = { videoPickerLauncher.launch("video/*") }, text = "Video".uppercase(Locale.getDefault()))
-                    AzButton(onClick = { navController.navigate("photo_group") }, text = "Photo".uppercase(Locale.getDefault()))
-                    AzButton(onClick = { requestSmsPermissionLauncher.launch(Manifest.permission.READ_SMS) }, text = "SMS".uppercase(Locale.getDefault()))
-                    AzButton(onClick = { requestCallLogPermissionLauncher.launch(Manifest.permission.READ_CALL_LOG) }, text = "Calls".uppercase(Locale.getDefault()))
-                    AzButton(onClick = { showLocationInstructionsDialog = true }, text = "Location".uppercase(Locale.getDefault()))
-                    AzButton(onClick = { showChatImportDialog = true }, text = "Messages".uppercase(Locale.getDefault()))
-                    AzButton(onClick = { showGmailImportDialog = true }, text = "Gmail".uppercase(Locale.getDefault()))
+                    AzButton(onClick = { showAddTextEvidence = true }, text = stringResource(R.string.add_text_evidence).uppercase(Locale.getDefault()))
+                    AzButton(onClick = { imagePickerLauncher.launch("image/*") }, text = stringResource(R.string.add_image_evidence).uppercase(Locale.getDefault()))
+                    AzButton(onClick = { audioPickerLauncher.launch("audio/*") }, text = stringResource(R.string.add_audio_evidence).uppercase(Locale.getDefault()))
+                    AzButton(onClick = { videoPickerLauncher.launch("video/*") }, text = stringResource(R.string.add_video_evidence).uppercase(Locale.getDefault()))
+                    AzButton(onClick = { navController.navigate("photo_group") }, text = stringResource(R.string.photo).uppercase(Locale.getDefault()))
+                    AzButton(onClick = { requestSmsPermissionLauncher.launch(Manifest.permission.READ_SMS) }, text = stringResource(R.string.sms).uppercase(Locale.getDefault()))
+                    AzButton(onClick = { requestCallLogPermissionLauncher.launch(Manifest.permission.READ_CALL_LOG) }, text = stringResource(R.string.calls).uppercase(Locale.getDefault()))
+                    AzButton(onClick = { showLocationInstructionsDialog = true }, text = stringResource(R.string.location).uppercase(Locale.getDefault()))
+                    AzButton(onClick = { showChatImportDialog = true }, text = stringResource(R.string.messages).uppercase(Locale.getDefault()))
+                    AzButton(onClick = { showGmailImportDialog = true }, text = stringResource(R.string.gmail).uppercase(Locale.getDefault()))
                     val outlookSignInState by authViewModel.outlookSignInState.collectAsState()
                     if (outlookSignInState is OutlookSignInState.Success) {
                         AzButton(
                             onClick = { showOutlookImportDialog = true },
-                            text = "Outlook".uppercase(Locale.getDefault())
+                            text = stringResource(R.string.outlook).uppercase(Locale.getDefault())
                         )
                     }
                     AzButton(
                         onClick = { showImapImportDialog = true },
-                        text = "Email".uppercase(Locale.getDefault())
+                        text = stringResource(R.string.email).uppercase(Locale.getDefault())
                     )
                 }
             }
@@ -319,7 +319,7 @@ fun EvidenceScreen(
 
             if (showGmailImportDialog) {
                 EmailImportDialog(
-                    title = "Import from Gmail",
+                    title = stringResource(R.string.import_from_gmail),
                     onDismiss = { showGmailImportDialog = false },
                     onImport = { from, subject, before, after ->
                         showGmailImportDialog = false
@@ -335,7 +335,7 @@ fun EvidenceScreen(
 
             if (showOutlookImportDialog) {
                 EmailImportDialog(
-                    title = "Import from Outlook",
+                    title = stringResource(R.string.import_from_outlook),
                     onDismiss = { showOutlookImportDialog = false },
                     onImport = { from, subject, before, after ->
                         showOutlookImportDialog = false
@@ -397,7 +397,7 @@ fun EvidenceListItem(
         horizontalAlignment = Alignment.End,
     ) {
         Text(
-            text = "Type: ${evidence.type} | Added: $formattedDate",
+            text = stringResource(R.string.type_added_format, evidence.type, formattedDate),
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.End,
             modifier = Modifier.fillMaxWidth()
@@ -425,7 +425,7 @@ fun ProcessingProgressView(
                     horizontalArrangement = Arrangement.End
                 ) {
                     Text(
-                        text = "Processing: ${"%.0f".format(processingState.progress * 100)}%",
+                        text = stringResource(R.string.processing_percent_format, "%.0f".format(processingState.progress * 100)),
                         style = MaterialTheme.typography.bodySmall,
                         textAlign = TextAlign.End
                     )
@@ -439,7 +439,7 @@ fun ProcessingProgressView(
             }
             is ProcessingState.Completed -> {
                 Text(
-                    text = "Completed: ${processingState.result}",
+                    text = stringResource(R.string.completed_format, processingState.result),
                     style = MaterialTheme.typography.bodyMedium, 
                     color = MaterialTheme.colorScheme.primary, 
                     textAlign = TextAlign.End,
@@ -448,7 +448,7 @@ fun ProcessingProgressView(
             }
             is ProcessingState.Failure -> {
                 Text(
-                    text = "Failed: ${processingState.error}",
+                    text = stringResource(R.string.failed_format, processingState.error),
                     style = MaterialTheme.typography.bodyMedium, 
                     color = MaterialTheme.colorScheme.error,
                     textAlign = TextAlign.End,
@@ -458,7 +458,7 @@ fun ProcessingProgressView(
             ProcessingState.Idle -> {
                 if (logMessages.isEmpty()) { 
                     Text(
-                        text = "Idle",
+                        text = stringResource(R.string.idle),
                         style = MaterialTheme.typography.bodySmall,
                         textAlign = TextAlign.End,
                         modifier = Modifier.fillMaxWidth()
@@ -490,7 +490,7 @@ fun ProcessingProgressView(
                         LogLevel.WTF -> MaterialTheme.colorScheme.error
                     }
                     Text(
-                        text = "${SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date(logEntry.timestamp))} - ${logEntry.message}",
+                        text = stringResource(R.string.log_line_format, SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date(logEntry.timestamp)), logEntry.message),
                         style = MaterialTheme.typography.bodySmall,
                         color = color,
                         textAlign = TextAlign.End,

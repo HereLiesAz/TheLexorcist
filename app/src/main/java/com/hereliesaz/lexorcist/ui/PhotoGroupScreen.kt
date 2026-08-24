@@ -24,6 +24,8 @@ import com.hereliesaz.lexorcist.viewmodel.CaseViewModel
 import com.hereliesaz.lexorcist.viewmodel.MainViewModel
 import com.hereliesaz.lexorcist.viewmodel.PhotoGroupViewModel
 import java.io.File
+import androidx.compose.ui.res.stringResource
+import com.hereliesaz.lexorcist.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -80,14 +82,13 @@ fun PhotoGroupScreen(
             OutlinedTextField(
                 value = description,
                 onValueChange = { photoGroupViewModel.setDescription(it) },
-                label = { Text("Description") },
+                label = { Text(stringResource(R.string.description)) },
                 modifier = Modifier.fillMaxWidth(),
                 textStyle = TextStyle(textAlign = TextAlign.End),
             )
             if (captureLost) {
                 Text(
-                    text = "The last photo could not be recovered after the app was " +
-                        "interrupted. Please take it again.",
+                    text = stringResource(R.string.photo_capture_interrupted),
                     color = MaterialTheme.colorScheme.error,
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.End,
@@ -122,11 +123,11 @@ fun PhotoGroupScreen(
                         photoGroupViewModel.setLatestTmpUri(tmpUri)
                         takePictureLauncher.launch(tmpUri)
                     },
-                    text = "Take Photo",
+                    text = stringResource(R.string.take_picture),
                 )
                 AzButton(
                     onClick = { selectPictureLauncher.launch("image/*") },
-                    text = "Select Photos",
+                    text = stringResource(R.string.select_photos),
                 )
             }
             Spacer(modifier = Modifier.height(8.dp))
@@ -136,7 +137,7 @@ fun PhotoGroupScreen(
                     photoGroupViewModel.clear()
                     navController.popBackStack()
                 },
-                text = "Save",
+                text = stringResource(R.string.save),
                 modifier = Modifier.fillMaxWidth(),
             )
         }

@@ -14,6 +14,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.hereliesaz.lexorcist.R
 
 @Composable
 fun RecordAudioScreen(
@@ -40,9 +42,9 @@ fun RecordAudioScreen(
             Spacer(modifier = Modifier.height(halfScreenHeight)) // Push content to start halfway down
 
             if (isRecording) {
-                AzButton(onClick = onStopRecording, text = "Stop Recording")
+                AzButton(onClick = onStopRecording, text = stringResource(R.string.stop_recording))
             } else {
-                AzButton(onClick = onStartRecording, text = "Start Recording")
+                AzButton(onClick = onStartRecording, text = stringResource(R.string.start_recording))
             }
         }
     }
