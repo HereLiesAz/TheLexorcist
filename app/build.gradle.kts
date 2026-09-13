@@ -205,27 +205,27 @@ dependencies {
         // releases (Dependabot alerts). These are constraints, so they are no-ops for any
         // coordinate not actually present in the resolved graph. Dependabot remains the
         // source of truth for newer CVEs published after these pins.
-        implementation("org.bouncycastle:bcprov-jdk18on:1.85.2") { because("CVE: timing channel / resource consumption") }
-        implementation("org.bouncycastle:bcpkix-jdk18on:1.85.2") { because("CVE: BouncyCastle (MSAL/Graph, iText)") }
-        implementation("org.bouncycastle:bcutil-jdk18on:1.85.2") { because("CVE: BouncyCastle (MSAL/Graph)") }
-        implementation("org.bouncycastle:bcpg-jdk18on:1.85.2") { because("CVE: BouncyCastle uncontrolled resource consumption") }
-        implementation("org.bitbucket.b_c:jose4j:0.9.6") { because("CVE: jose4j DoS via compressed JWE (MSAL)") }
+        implementation("org.bouncycastle:bcprov-jdk18on:1.86") { because("CVE: timing channel / resource consumption") }
+        implementation("org.bouncycastle:bcpkix-jdk18on:1.86") { because("CVE: BouncyCastle (MSAL/Graph, iText)") }
+        implementation("org.bouncycastle:bcutil-jdk18on:1.86") { because("CVE: BouncyCastle (MSAL/Graph)") }
+        implementation("org.bouncycastle:bcpg-jdk18on:1.86") { because("CVE: BouncyCastle uncontrolled resource consumption") }
+        implementation("org.bitbucket.b_c:jose4j:0.9.7") { because("CVE: jose4j DoS via compressed JWE (MSAL)") }
         implementation("org.jdom:jdom2:2.0.6.1") { because("CVE-2021-33813: JDOM XXE (Apache POI)") }
         implementation("org.apache.commons:commons-lang3:3.20.0") { because("CVE: commons-lang3 uncontrolled recursion (POI)") }
         implementation("org.apache.commons:commons-compress:1.27.1") { because("CVE: commons-compress Pack200 OOM (POI)") }
         implementation("com.fasterxml.jackson.core:jackson-core:2.18.8") { because("CVE: jackson-core async parser DoS") }
         implementation("com.fasterxml.jackson.core:jackson-databind:2.18.8") { because("CVE: align jackson-databind with patched core") }
-        implementation("io.netty:netty-codec-http2:4.1.136.Final") { because("CVE: Netty HTTP/2 DoS family") }
-        implementation("io.netty:netty-codec-http:4.1.136.Final") { because("CVE: Netty HTTP request smuggling / decompression") }
-        implementation("io.netty:netty-codec:4.1.136.Final") { because("CVE: Netty codec resource exhaustion / zip bomb") }
-        implementation("io.netty:netty-handler:4.1.136.Final") { because("CVE: Netty SslHandler / SNI allocation") }
+        implementation("io.netty:netty-codec-http2:4.2.18.Final") { because("CVE: Netty HTTP/2 DoS family") }
+        implementation("io.netty:netty-codec-http:4.2.18.Final") { because("CVE: Netty HTTP request smuggling / decompression") }
+        implementation("io.netty:netty-codec:4.2.18.Final") { because("CVE: Netty codec resource exhaustion / zip bomb") }
+        implementation("io.netty:netty-handler:4.2.18.Final") { because("CVE: Netty SslHandler / SNI allocation") }
         implementation("com.google.protobuf:protobuf-javalite:3.25.5") {
             because("CVE-2024-7254: unbounded recursion parsing untrusted protobuf (MediaPipe tasks-core pins 3.19.1). Held on the 3.x line: MediaPipe's generated code predates the 4.x runtime's gencode version check.")
         }
-        implementation("org.apache.httpcomponents.core5:httpcore5:5.3.6") {
+        implementation("org.apache.httpcomponents.core5:httpcore5:5.4.3") {
             because("CVE: HTTP/1 header parsing memory exhaustion (arrives via MSAL)")
         }
-        implementation("org.apache.httpcomponents.core5:httpcore5-h2:5.3.6") {
+        implementation("org.apache.httpcomponents.core5:httpcore5-h2:5.4.3") {
             because("Align with the patched httpcore5")
         }
     }
