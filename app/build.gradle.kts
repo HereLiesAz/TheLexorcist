@@ -109,8 +109,10 @@ android {
         minSdk = 26
         targetSdk = 37
 
-        versionCode = 4
-        versionName = "0.9.2"
+        // Both come from version.properties (rewritten by the central release
+        // workflows); the Play release also passes -PversionBuild/-PversionName.
+        versionCode = currentVersionCode
+        versionName = (project.findProperty("versionName") as String?) ?: currentVersionName
 
         testInstrumentationRunner = "com.hereliesaz.lexorcist.HiltTestRunner"
     }

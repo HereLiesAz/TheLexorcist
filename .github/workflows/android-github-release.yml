@@ -1,0 +1,20 @@
+# The Lexorcist (com.hereliesaz.lexorcist): built, signed and published by
+# HereLiesAz/workflows (.github/workflows/android-github-release.yml): a GitHub Release with the signed APK.
+# This file is the trigger contract; the central sync replaces it with a tracker.
+name: Android GitHub Release
+on:
+  push:
+    branches: [main]
+    paths:
+      - "app/**"
+      - "shared/**"
+      - "gradle/**"
+      - "*.gradle.kts"
+      - "gradle.properties"
+  workflow_dispatch:
+permissions: {}
+jobs:
+  hand-off:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Android GitHub Release for The Lexorcist runs centrally in HereLiesAz/workflows."
